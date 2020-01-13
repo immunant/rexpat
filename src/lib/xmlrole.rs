@@ -179,71 +179,26 @@ pub struct prolog_state {
     pub documentEntity: libc::c_int,
     pub inEntityValue: libc::c_int,
 }
-use ::libc;
 
+pub use crate::ascii_h::{
+    ASCII_A, ASCII_B, ASCII_C, ASCII_D, ASCII_E, ASCII_F, ASCII_G, ASCII_I, ASCII_K, ASCII_L,
+    ASCII_M, ASCII_N, ASCII_O, ASCII_P, ASCII_Q, ASCII_R, ASCII_S, ASCII_T, ASCII_U, ASCII_X,
+    ASCII_Y,
+};
 pub use crate::expat_external_h::XML_Size;
-
-pub use crate::ascii_h::ASCII_A;
-pub use crate::ascii_h::ASCII_B;
-pub use crate::ascii_h::ASCII_C;
-pub use crate::ascii_h::ASCII_D;
-pub use crate::ascii_h::ASCII_E;
-pub use crate::ascii_h::ASCII_F;
-pub use crate::ascii_h::ASCII_G;
-pub use crate::ascii_h::ASCII_I;
-pub use crate::ascii_h::ASCII_K;
-pub use crate::ascii_h::ASCII_L;
-pub use crate::ascii_h::ASCII_M;
-pub use crate::ascii_h::ASCII_N;
-pub use crate::ascii_h::ASCII_O;
-pub use crate::ascii_h::ASCII_P;
-pub use crate::ascii_h::ASCII_Q;
-pub use crate::ascii_h::ASCII_R;
-pub use crate::ascii_h::ASCII_S;
-pub use crate::ascii_h::ASCII_T;
-pub use crate::ascii_h::ASCII_U;
-pub use crate::ascii_h::ASCII_X;
-pub use crate::ascii_h::ASCII_Y;
-pub use crate::src::lib::xmltok::encoding;
-pub use crate::src::lib::xmltok::position;
-pub use crate::src::lib::xmltok::XML_Convert_Result;
-pub use crate::src::lib::xmltok::ATTRIBUTE;
-pub use crate::src::lib::xmltok::ENCODING;
-pub use crate::src::lib::xmltok::POSITION;
-pub use crate::src::lib::xmltok::SCANNER;
-pub use crate::src::lib::xmltok::XML_CONVERT_COMPLETED;
-pub use crate::src::lib::xmltok::XML_CONVERT_INPUT_INCOMPLETE;
-pub use crate::src::lib::xmltok::XML_CONVERT_OUTPUT_EXHAUSTED;
-pub use crate::src::lib::xmltok::XML_TOK_BOM;
-pub use crate::src::lib::xmltok::XML_TOK_CLOSE_BRACKET;
-pub use crate::src::lib::xmltok::XML_TOK_CLOSE_PAREN;
-pub use crate::src::lib::xmltok::XML_TOK_CLOSE_PAREN_ASTERISK;
-pub use crate::src::lib::xmltok::XML_TOK_CLOSE_PAREN_PLUS;
-pub use crate::src::lib::xmltok::XML_TOK_CLOSE_PAREN_QUESTION;
-pub use crate::src::lib::xmltok::XML_TOK_COMMA;
-pub use crate::src::lib::xmltok::XML_TOK_COMMENT;
-pub use crate::src::lib::xmltok::XML_TOK_COND_SECT_CLOSE;
-pub use crate::src::lib::xmltok::XML_TOK_COND_SECT_OPEN;
-pub use crate::src::lib::xmltok::XML_TOK_DECL_CLOSE;
-pub use crate::src::lib::xmltok::XML_TOK_DECL_OPEN;
-pub use crate::src::lib::xmltok::XML_TOK_LITERAL;
-pub use crate::src::lib::xmltok::XML_TOK_NAME;
-pub use crate::src::lib::xmltok::XML_TOK_NAME_ASTERISK;
-pub use crate::src::lib::xmltok::XML_TOK_NAME_PLUS;
-pub use crate::src::lib::xmltok::XML_TOK_NAME_QUESTION;
-pub use crate::src::lib::xmltok::XML_TOK_NMTOKEN;
-pub use crate::src::lib::xmltok::XML_TOK_NONE;
-pub use crate::src::lib::xmltok::XML_TOK_OPEN_BRACKET;
-pub use crate::src::lib::xmltok::XML_TOK_OPEN_PAREN;
-pub use crate::src::lib::xmltok::XML_TOK_OR;
-pub use crate::src::lib::xmltok::XML_TOK_PARAM_ENTITY_REF;
-pub use crate::src::lib::xmltok::XML_TOK_PERCENT;
-pub use crate::src::lib::xmltok::XML_TOK_PI;
-pub use crate::src::lib::xmltok::XML_TOK_POUND_NAME;
-pub use crate::src::lib::xmltok::XML_TOK_PREFIXED_NAME;
-pub use crate::src::lib::xmltok::XML_TOK_XML_DECL;
-pub use crate::xmltok_h::XML_TOK_INSTANCE_START;
-pub use crate::xmltok_h::XML_TOK_PROLOG_S;
+pub use crate::src::lib::xmltok::{
+    encoding, position, XML_Convert_Result, ATTRIBUTE, ENCODING, POSITION, SCANNER,
+    XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_BOM,
+    XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,
+    XML_TOK_CLOSE_PAREN_PLUS, XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT,
+    XML_TOK_COND_SECT_CLOSE, XML_TOK_COND_SECT_OPEN, XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN,
+    XML_TOK_LITERAL, XML_TOK_NAME, XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS, XML_TOK_NAME_QUESTION,
+    XML_TOK_NMTOKEN, XML_TOK_NONE, XML_TOK_OPEN_BRACKET, XML_TOK_OPEN_PAREN, XML_TOK_OR,
+    XML_TOK_PARAM_ENTITY_REF, XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME,
+    XML_TOK_PREFIXED_NAME, XML_TOK_XML_DECL,
+};
+pub use crate::xmltok_h::{XML_TOK_INSTANCE_START, XML_TOK_PROLOG_S};
+use ::libc;
 /* not XML_DTD */
 /* not XML_DTD */
 

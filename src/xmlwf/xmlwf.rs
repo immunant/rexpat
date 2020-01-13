@@ -315,57 +315,23 @@ pub mod stdlib {
 
     pub type __off64_t = libc::c_long;
 }
-use ::c2rust_out::*;
 
+pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
+pub use crate::expat_h::{
+    XML_CharacterDataHandler, XML_CommentHandler, XML_DefaultHandler, XML_EndCdataSectionHandler,
+    XML_EndDoctypeDeclHandler, XML_EndElementHandler, XML_EndNamespaceDeclHandler,
+    XML_EntityDeclHandler, XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler,
+    XML_ParamEntityParsing, XML_Parser, XML_ProcessingInstructionHandler,
+    XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
+    XML_StartNamespaceDeclHandler, XML_UnknownEncodingHandler,
+};
 pub use crate::stddef_h::size_t;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::FILE;
-
-pub use crate::expat_external_h::XML_Char;
-pub use crate::expat_external_h::XML_Index;
-pub use crate::expat_external_h::XML_LChar;
-pub use crate::expat_external_h::XML_Size;
-pub use crate::expat_h::XML_CharacterDataHandler;
-pub use crate::expat_h::XML_CommentHandler;
-pub use crate::expat_h::XML_DefaultHandler;
-pub use crate::expat_h::XML_EndCdataSectionHandler;
-pub use crate::expat_h::XML_EndDoctypeDeclHandler;
-pub use crate::expat_h::XML_EndElementHandler;
-pub use crate::expat_h::XML_EndNamespaceDeclHandler;
-pub use crate::expat_h::XML_EntityDeclHandler;
-pub use crate::expat_h::XML_FeatureEnum;
-pub use crate::expat_h::XML_NotStandaloneHandler;
-pub use crate::expat_h::XML_NotationDeclHandler;
-pub use crate::expat_h::XML_ParamEntityParsing;
-pub use crate::expat_h::XML_Parser;
-pub use crate::expat_h::XML_ProcessingInstructionHandler;
-pub use crate::expat_h::XML_StartCdataSectionHandler;
-pub use crate::expat_h::XML_StartDoctypeDeclHandler;
-pub use crate::expat_h::XML_StartElementHandler;
-pub use crate::expat_h::XML_StartNamespaceDeclHandler;
-pub use crate::expat_h::XML_UnknownEncodingHandler;
-pub use crate::stdlib::__compar_fn_t;
-pub use crate::stdlib::fclose;
-pub use crate::stdlib::fopen;
-pub use crate::stdlib::fputs;
-pub use crate::stdlib::putc;
-pub use crate::stdlib::qsort;
-pub use crate::stdlib::setvbuf;
-pub use crate::stdlib::stderr;
-pub use crate::stdlib::stdout;
-pub use crate::stdlib::__ASSERT_FUNCTION;
-pub use crate::xmltchar_h::fputts;
-pub use crate::xmltchar_h::puttc;
-pub use crate::xmltchar_h::tcscat;
-pub use crate::xmltchar_h::tcschr;
-pub use crate::xmltchar_h::tcscmp;
-pub use crate::xmltchar_h::tfopen;
-pub use crate::xmltchar_h::tremove;
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __compar_fn_t, __off64_t, __off_t, fclose,
+    fopen, fputs, putc, qsort, setvbuf, stderr, stdout, FILE, __ASSERT_FUNCTION,
+};
+pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
+use ::c2rust_out::*;
 
 #[repr(C)]
 #[derive(Copy, Clone)]

@@ -1445,6 +1445,7 @@ pub mod siphash_h {
         }
         return 1 as libc::c_int;
     }
+
     use crate::stddef_h::size_t;
     use crate::stdlib::uint64_t;
     /* SIPHASH_H */
@@ -1452,69 +1453,30 @@ pub mod siphash_h {
     /* sip24_valid() */
 }
 
-pub use crate::stddef_h::ptrdiff_t;
-pub use crate::stddef_h::size_t;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::__uint64_t;
-pub use crate::stdlib::intptr_t;
-pub use crate::stdlib::uint64_t;
-pub use crate::stdlib::FILE;
-
-pub use crate::expat_external_h::XML_Char;
-pub use crate::expat_external_h::XML_Index;
-pub use crate::expat_external_h::XML_LChar;
-pub use crate::expat_external_h::XML_Size;
-pub use crate::expat_h::XML_AttlistDeclHandler;
-pub use crate::expat_h::XML_Bool;
-pub use crate::expat_h::XML_CharacterDataHandler;
-pub use crate::expat_h::XML_CommentHandler;
-pub use crate::expat_h::XML_Content;
-pub use crate::expat_h::XML_Content_Quant;
-pub use crate::expat_h::XML_Content_Type;
-pub use crate::expat_h::XML_DefaultHandler;
-pub use crate::expat_h::XML_ElementDeclHandler;
-pub use crate::expat_h::XML_EndCdataSectionHandler;
-pub use crate::expat_h::XML_EndDoctypeDeclHandler;
-pub use crate::expat_h::XML_EndElementHandler;
-pub use crate::expat_h::XML_EndNamespaceDeclHandler;
-pub use crate::expat_h::XML_EntityDeclHandler;
-pub use crate::expat_h::XML_Error;
-pub use crate::expat_h::XML_ExternalEntityRefHandler;
-pub use crate::expat_h::XML_FeatureEnum;
-pub use crate::expat_h::XML_NotStandaloneHandler;
-pub use crate::expat_h::XML_NotationDeclHandler;
-pub use crate::expat_h::XML_ParamEntityParsing;
-pub use crate::expat_h::XML_Parser;
-pub use crate::expat_h::XML_Parsing;
-pub use crate::expat_h::XML_ProcessingInstructionHandler;
-pub use crate::expat_h::XML_SkippedEntityHandler;
-pub use crate::expat_h::XML_StartCdataSectionHandler;
-pub use crate::expat_h::XML_StartDoctypeDeclHandler;
-pub use crate::expat_h::XML_StartElementHandler;
-pub use crate::expat_h::XML_StartNamespaceDeclHandler;
-pub use crate::expat_h::XML_Status;
-pub use crate::expat_h::XML_UnknownEncodingHandler;
-pub use crate::expat_h::XML_UnparsedEntityDeclHandler;
-pub use crate::expat_h::XML_XmlDeclHandler;
-pub use crate::minicheck_h::tcase_setup_function;
-pub use crate::minicheck_h::tcase_teardown_function;
-pub use crate::minicheck_h::tcase_test_function;
-pub use crate::minicheck_h::CK_NORMAL;
-pub use crate::minicheck_h::CK_SILENT;
-pub use crate::siphash_h::sip24_final;
-pub use crate::siphash_h::sip24_init;
-pub use crate::siphash_h::sip24_update;
-pub use crate::siphash_h::sip24_valid;
-pub use crate::siphash_h::sip_round;
-pub use crate::siphash_h::sip_tokey;
-pub use crate::siphash_h::siphash24;
-use crate::stdlib::stderr;
-use crate::stdlib::strncmp;
+pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
+pub use crate::expat_h::{
+    XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
+    XML_Content_Quant, XML_Content_Type, XML_DefaultHandler, XML_ElementDeclHandler,
+    XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
+    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ExternalEntityRefHandler,
+    XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing,
+    XML_Parser, XML_Parsing, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
+    XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
+    XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
+    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler,
+};
+pub use crate::minicheck_h::{
+    tcase_setup_function, tcase_teardown_function, tcase_test_function, CK_NORMAL, CK_SILENT,
+};
+pub use crate::siphash_h::{
+    sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash24,
+};
+pub use crate::stddef_h::{ptrdiff_t, size_t};
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __uint64_t, intptr_t,
+    uint64_t, FILE,
+};
+use crate::stdlib::{stderr, strncmp};
 /* Test attribute counts, indexing, etc */
 
 pub type AttrInfo = attrInfo;

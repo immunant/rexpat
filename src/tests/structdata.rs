@@ -15,21 +15,12 @@ pub struct StructData {
     pub max_count: libc::c_int,
     pub entries: *mut crate::src::tests::structdata::StructDataEntry,
 }
-use ::libc;
 
 pub use crate::expat_external_h::XML_Char;
-pub use crate::stddef_h::size_t;
-pub use crate::stddef_h::NULL;
-
 use crate::src::tests::minicheck::_fail_unless;
-use crate::stdlib::__assert_fail;
-use crate::stdlib::malloc;
-use crate::stdlib::memcpy;
-use crate::stdlib::realloc;
-use crate::stdlib::strlen;
-use ::libc::free;
-use ::libc::sprintf;
-use ::libc::strcmp;
+pub use crate::stddef_h::{size_t, NULL};
+use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
+use ::libc::{self, free, sprintf, strcmp};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
