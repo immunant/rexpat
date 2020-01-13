@@ -24,6 +24,33 @@ extern "C" {
     pub static mut stderr: *mut crate::stdlib::FILE;
 
     #[no_mangle]
+    pub fn fclose(__stream: *mut crate::stdlib::FILE) -> libc::c_int;
+
+    #[no_mangle]
+    pub fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut crate::stdlib::FILE;
+
+    #[no_mangle]
+    pub fn setvbuf(
+        __stream: *mut crate::stdlib::FILE,
+        __buf: *mut libc::c_char,
+        __modes: libc::c_int,
+        __n: crate::stddef_h::size_t,
+    ) -> libc::c_int;
+
+    #[no_mangle]
+    pub fn putc(__c: libc::c_int, __stream: *mut crate::stdlib::FILE) -> libc::c_int;
+
+    #[no_mangle]
+    pub fn fputs(__s: *const libc::c_char, __stream: *mut crate::stdlib::FILE) -> libc::c_int;
+    #[no_mangle]
+    pub fn qsort(
+        __base: *mut libc::c_void,
+        __nmemb: crate::stddef_h::size_t,
+        __size: crate::stddef_h::size_t,
+        __compar: crate::stdlib::__compar_fn_t,
+    );
+
+    #[no_mangle]
     pub fn fprintf(_: *mut crate::stdlib::FILE, _: *const libc::c_char, _: ...) -> libc::c_int;
     #[no_mangle]
     pub fn malloc(_: libc::c_ulong) -> *mut libc::c_void;
@@ -74,6 +101,14 @@ extern "C" {
         __nbytes: crate::stddef_h::size_t,
     ) -> crate::stdlib::ssize_t;
 }
+pub const __ASSERT_FUNCTION: [libc::c_char; 46] = unsafe {
+    *::std::mem::transmute::<&[u8; 46], &[libc::c_char; 46]>(
+        b"void attributeValue(FILE *, const XML_Char *)\x00",
+    )
+};
+pub type __compar_fn_t =
+    Option<unsafe extern "C" fn(_: *const libc::c_void, _: *const libc::c_void) -> libc::c_int>;
+
 // =============== BEGIN FILE_h ================
 pub type FILE = crate::stdlib::_IO_FILE;
 // ================ END FILE_h ================

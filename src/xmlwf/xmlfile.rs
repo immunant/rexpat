@@ -189,7 +189,7 @@ unsafe extern "C" fn externalEntityRefFilemap(
     args.parser = entParser;
     filename = resolveSystemId(base, systemId, &mut s);
     crate::src::lib::xmlparse::XML_SetBase(entParser, filename);
-    filemapRes = crate::src::xmlwf::readfilemap::filemap(
+    filemapRes = crate::readfilemap::filemap(
         filename,
         Some(
             processFile
@@ -339,10 +339,10 @@ pub unsafe extern "C" fn XML_ProcessFile(
         );
         ::libc::exit(1 as libc::c_int);
     }
-    if flags & crate::src::xmlwf::xmlfile::XML_EXTERNAL_ENTITIES as libc::c_uint != 0 {
+    if flags & crate::xmlfile::XML_EXTERNAL_ENTITIES as libc::c_uint != 0 {
         crate::src::lib::xmlparse::XML_SetExternalEntityRefHandler(
             parser,
-            if flags & crate::src::xmlwf::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
+            if flags & crate::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
                 Some(
                     externalEntityRefFilemap
                         as unsafe extern "C" fn(
@@ -367,7 +367,7 @@ pub unsafe extern "C" fn XML_ProcessFile(
             },
         );
     }
-    if flags & crate::src::xmlwf::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
+    if flags & crate::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
         let mut filemapRes: libc::c_int = 0;
         let mut args: PROCESS_ARGS = PROCESS_ARGS {
             parser: 0 as *mut crate::expat_h::XML_ParserStruct,
@@ -375,7 +375,7 @@ pub unsafe extern "C" fn XML_ProcessFile(
         };
         args.retPtr = &mut result;
         args.parser = parser;
-        filemapRes = crate::src::xmlwf::readfilemap::filemap(
+        filemapRes = crate::readfilemap::filemap(
             filename,
             Some(
                 processFile

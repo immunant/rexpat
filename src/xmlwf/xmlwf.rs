@@ -17,304 +17,12 @@
     ptr_wrapping_offset_from,
     register_tool
 )]
-pub mod expat_h {
-    pub type XML_Parser = *mut ::c2rust_out::expat_h::XML_ParserStruct;
-    /* atts is array of name/value pairs, terminated by 0;
-       names and values are 0 terminated.
-    */
 
-    pub type XML_StartElementHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *mut *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
+pub use c2rust_out::*;
 
-    pub type XML_EndElementHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-    /* s is not 0 terminated. */
-
-    pub type XML_CharacterDataHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: libc::c_int,
-        ) -> (),
-    >;
-    /* target and data are 0 terminated */
-
-    pub type XML_ProcessingInstructionHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-    /* data is 0 terminated */
-
-    pub type XML_CommentHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-
-    pub type XML_StartCdataSectionHandler =
-        Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
-
-    pub type XML_EndCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
-    /* This is called for any characters in the XML document for which
-       there is no applicable handler.  This includes both characters that
-       are part of markup which is of a kind that is not reported
-       (comments, markup declarations), or characters that are part of a
-       construct which could be reported but for which no handler has been
-       supplied. The characters are passed exactly as they were in the XML
-       document except that they will be encoded in UTF-8 or UTF-16.
-       Line boundaries are not normalized. Note that a byte order mark
-       character is not passed to the default handler. There are no
-       guarantees about how characters are divided between calls to the
-       default handler: for example, a comment might be split between
-       multiple calls.
-    */
-
-    pub type XML_DefaultHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: libc::c_int,
-        ) -> (),
-    >;
-    /* This is called for the start of the DOCTYPE declaration, before
-       any DTD or internal subset is parsed.
-    */
-
-    pub type XML_StartDoctypeDeclHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: libc::c_int,
-        ) -> (),
-    >;
-    /* This is called for the start of the DOCTYPE declaration when the
-       closing > is encountered, but after processing any external
-       subset.
-    */
-
-    pub type XML_EndDoctypeDeclHandler = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
-    /* This is called for entity declarations. The is_parameter_entity
-       argument will be non-zero if the entity is a parameter entity, zero
-       otherwise.
-
-       For internal entities (<!ENTITY foo "bar">), value will
-       be non-NULL and systemId, publicID, and notationName will be NULL.
-       The value string is NOT nul-terminated; the length is provided in
-       the value_length argument. Since it is legal to have zero-length
-       values, do not use this argument to test for internal entities.
-
-       For external entities, value will be NULL and systemId will be
-       non-NULL. The publicId argument will be NULL unless a public
-       identifier was provided. The notationName argument will have a
-       non-NULL value only for unparsed entity declarations.
-
-       Note that is_parameter_entity can't be changed to XML_Bool, since
-       that would break binary compatibility.
-    */
-
-    pub type XML_EntityDeclHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: libc::c_int,
-            _: *const crate::expat_external_h::XML_Char,
-            _: libc::c_int,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-    /* This is called for a declaration of notation.  The base argument is
-       whatever was set by XML_SetBase. The notationName will never be
-       NULL.  The other arguments can be.
-    */
-
-    pub type XML_NotationDeclHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-    /* When namespace processing is enabled, these are called once for
-       each namespace declaration. The call to the start and end element
-       handlers occur between the calls to the start and end namespace
-       declaration handlers. For an xmlns attribute, prefix will be
-       NULL.  For an xmlns="" attribute, uri will be NULL.
-    */
-
-    pub type XML_StartNamespaceDeclHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-
-    pub type XML_EndNamespaceDeclHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
-    /* This is called if the document is not standalone, that is, it has an
-       external subset or a reference to a parameter entity, but does not
-       have standalone="yes". If this handler returns XML_STATUS_ERROR,
-       then processing will not continue, and the parser will return a
-       XML_ERROR_NOT_STANDALONE error.
-       If parameter entity parsing is enabled, then in addition to the
-       conditions above this handler will only be called if the referenced
-       entity was actually read.
-    */
-
-    pub type XML_NotStandaloneHandler =
-        Option<unsafe extern "C" fn(_: *mut libc::c_void) -> libc::c_int>;
-    /* This is called for an encoding that is unknown to the parser.
-
-       The encodingHandlerData argument is that which was passed as the
-       second argument to XML_SetUnknownEncodingHandler.
-
-       The name argument gives the name of the encoding as specified in
-       the encoding declaration.
-
-       If the callback can provide information about the encoding, it must
-       fill in the XML_Encoding structure, and return XML_STATUS_OK.
-       Otherwise it must return XML_STATUS_ERROR.
-
-       If info does not describe a suitable encoding, then the parser will
-       return an XML_UNKNOWN_ENCODING error.
-    */
-
-    pub type XML_UnknownEncodingHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *mut ::c2rust_out::expat_h::XML_Encoding,
-        ) -> libc::c_int,
-    >;
-
-    pub type XML_ParamEntityParsing = libc::c_uint;
-    /* Added in Expat 1.95.5. */
-
-    pub type XML_FeatureEnum = libc::c_uint;
-}
-pub mod expat_external_h {
-    pub type XML_Char = libc::c_char;
-    pub type XML_LChar = libc::c_char;
-    /* XML_UNICODE */
-    /* Use large integers for file/stream positions. */
-
-    pub type XML_Index = libc::c_long;
-
-    pub type XML_Size = libc::c_ulong;
-}
-pub mod stddef_h {
-    pub type size_t = libc::c_ulong;
-}
-pub mod xmltchar_h {
-    pub const tfopen: unsafe extern "C" fn(
-        _: *const libc::c_char,
-        _: *const libc::c_char,
-    ) -> *mut crate::stdlib::FILE = crate::stdlib::fopen;
-
-    pub const fputts: unsafe extern "C" fn(
-        _: *const libc::c_char,
-        _: *mut crate::stdlib::FILE,
-    ) -> libc::c_int = crate::stdlib::fputs;
-
-    pub const puttc: unsafe extern "C" fn(
-        _: libc::c_int,
-        _: *mut crate::stdlib::FILE,
-    ) -> libc::c_int = crate::stdlib::putc;
-
-    pub const tcscmp: unsafe extern "C" fn(
-        _: *const libc::c_char,
-        _: *const libc::c_char,
-    ) -> libc::c_int = ::libc::strcmp;
-
-    pub const tcscat: unsafe extern "C" fn(
-        _: *mut libc::c_char,
-        _: *const libc::c_char,
-    ) -> *mut libc::c_char = ::libc::strcat;
-
-    pub const tcschr: unsafe extern "C" fn(
-        _: *const libc::c_char,
-        _: libc::c_int,
-    ) -> *mut libc::c_char = ::libc::strchr;
-
-    pub const tremove: unsafe extern "C" fn(_: *const libc::c_char) -> libc::c_int = ::libc::remove;
-}
-pub mod stdlib {
-    extern "C" {
-        #[no_mangle]
-        pub static mut stdout: *mut crate::stdlib::FILE;
-
-        #[no_mangle]
-        pub static mut stderr: *mut crate::stdlib::FILE;
-
-        #[no_mangle]
-        pub fn fclose(__stream: *mut crate::stdlib::FILE) -> libc::c_int;
-
-        #[no_mangle]
-        pub fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut crate::stdlib::FILE;
-
-        #[no_mangle]
-        pub fn setvbuf(
-            __stream: *mut crate::stdlib::FILE,
-            __buf: *mut libc::c_char,
-            __modes: libc::c_int,
-            __n: crate::stddef_h::size_t,
-        ) -> libc::c_int;
-
-        #[no_mangle]
-        pub fn putc(__c: libc::c_int, __stream: *mut crate::stdlib::FILE) -> libc::c_int;
-
-        #[no_mangle]
-        pub fn fputs(__s: *const libc::c_char, __stream: *mut crate::stdlib::FILE) -> libc::c_int;
-        #[no_mangle]
-        pub fn qsort(
-            __base: *mut libc::c_void,
-            __nmemb: crate::stddef_h::size_t,
-            __size: crate::stddef_h::size_t,
-            __compar: crate::stdlib::__compar_fn_t,
-        );
-        pub type _IO_marker;
-
-        pub type _IO_codecvt;
-
-        pub type _IO_wide_data;
-    }
-    pub type FILE = ::c2rust_out::stdlib::_IO_FILE;
-    pub const __ASSERT_FUNCTION: [libc::c_char; 46] = unsafe {
-        *::std::mem::transmute::<&[u8; 46], &[libc::c_char; 46]>(
-            b"void attributeValue(FILE *, const XML_Char *)\x00",
-        )
-    };
-    pub type __compar_fn_t =
-        Option<unsafe extern "C" fn(_: *const libc::c_void, _: *const libc::c_void) -> libc::c_int>;
-    pub type _IO_lock_t = ();
-    pub type __off_t = libc::c_long;
-
-    pub type __off64_t = libc::c_long;
-}
+pub mod codepage;
+pub mod readfilemap;
+pub mod xmlfile;
 
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
 pub use crate::expat_h::{
@@ -1331,7 +1039,7 @@ unsafe extern "C" fn unknownEncodingConvert(
     mut data: *mut libc::c_void,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
-    return ::c2rust_out::src::xmlwf::codepage::codepageConvert(*(data as *mut libc::c_int), p);
+    return crate::codepage::codepageConvert(*(data as *mut libc::c_int), p);
 }
 
 unsafe extern "C" fn unknownEncoding(
@@ -1370,7 +1078,7 @@ unsafe extern "C" fn unknownEncoding(
         }
         i += 1
     }
-    if ::c2rust_out::src::xmlwf::codepage::codepageMap(cp, (*info).map.as_mut_ptr()) == 0 {
+    if crate::codepage::codepageMap(cp, (*info).map.as_mut_ptr()) == 0 {
         return 0 as libc::c_int;
     }
     (*info).convert = Some(
@@ -1476,8 +1184,7 @@ unsafe fn main_0(
         ::c2rust_out::stddef_h::NULL as *const crate::expat_external_h::XML_Char;
     let mut encoding: *const crate::expat_external_h::XML_Char =
         ::c2rust_out::stddef_h::NULL as *const crate::expat_external_h::XML_Char;
-    let mut processFlags: libc::c_uint =
-        ::c2rust_out::src::xmlwf::xmlfile::XML_MAP_FILE as libc::c_uint;
+    let mut processFlags: libc::c_uint = crate::xmlfile::XML_MAP_FILE as libc::c_uint;
     let mut windowsCodePages: libc::c_int = 0 as libc::c_int;
     let mut outputType: libc::c_int = 0 as libc::c_int;
     let mut useNamespaces: libc::c_int = 0 as libc::c_int;
@@ -1518,7 +1225,7 @@ unsafe fn main_0(
         let mut current_block_46: u64;
         match *(*argv.offset(i as isize)).offset(j as isize) as libc::c_int {
             114 => {
-                processFlags &= !::c2rust_out::src::xmlwf::xmlfile::XML_MAP_FILE as libc::c_uint;
+                processFlags &= !crate::xmlfile::XML_MAP_FILE as libc::c_uint;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
@@ -1628,8 +1335,7 @@ unsafe fn main_0(
             4092296097885336037 =>
             /* fall through */
             {
-                processFlags |=
-                    ::c2rust_out::src::xmlwf::xmlfile::XML_EXTERNAL_ENTITIES as libc::c_uint;
+                processFlags |= crate::xmlfile::XML_EXTERNAL_ENTITIES as libc::c_uint;
                 j += 1
             }
             16871217396860862036 =>
@@ -1642,7 +1348,7 @@ unsafe fn main_0(
     }
     if i == argc {
         useStdin = 1 as libc::c_int;
-        processFlags &= !::c2rust_out::src::xmlwf::xmlfile::XML_MAP_FILE as libc::c_uint;
+        processFlags &= !crate::xmlfile::XML_MAP_FILE as libc::c_uint;
         i -= 1
     }
     while i < argc {
@@ -1660,7 +1366,7 @@ unsafe fn main_0(
             parser = ::c2rust_out::src::lib::xmlparse::XML_ParserCreate(encoding)
         }
         if parser.is_null() {
-            ::c2rust_out::src::xmlwf::xmlfile::perror(
+            crate::xmlfile::perror(
                 b"Could not instantiate parser\x00" as *const u8 as *const libc::c_char,
             );
             ::libc::exit(1 as libc::c_int);
@@ -1748,7 +1454,7 @@ unsafe fn main_0(
             userData.fp =
                 crate::stdlib::fopen(outName, b"wb\x00" as *const u8 as *const libc::c_char);
             if userData.fp.is_null() {
-                ::c2rust_out::src::xmlwf::xmlfile::perror(outName);
+                crate::xmlfile::perror(outName);
                 ::libc::exit(1 as libc::c_int);
             }
             crate::stdlib::setvbuf(
@@ -2060,7 +1766,7 @@ unsafe fn main_0(
                 0 as *mut libc::c_void,
             );
         }
-        result = ::c2rust_out::src::xmlwf::xmlfile::XML_ProcessFile(
+        result = crate::xmlfile::XML_ProcessFile(
             parser,
             if useStdin != 0 {
                 ::c2rust_out::stddef_h::NULL as *mut crate::expat_external_h::XML_Char

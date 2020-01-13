@@ -58,9 +58,4 @@ pub mod src {
         pub mod minicheck;
         pub mod structdata;
     } // mod tests
-    pub mod xmlwf {
-        pub mod codepage;
-        pub mod readfilemap;
-        pub mod xmlfile;
-    } // mod xmlwf
 } // mod src
