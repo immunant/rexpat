@@ -579,9 +579,9 @@ unsafe extern "C" fn prolog1(
 unsafe extern "C" fn prolog2(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -605,9 +605,9 @@ unsafe extern "C" fn prolog2(
 unsafe extern "C" fn doctype0(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -671,9 +671,9 @@ unsafe extern "C" fn doctype1(
 unsafe extern "C" fn doctype2(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -691,9 +691,9 @@ unsafe extern "C" fn doctype2(
 unsafe extern "C" fn doctype3(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -711,9 +711,9 @@ unsafe extern "C" fn doctype3(
 unsafe extern "C" fn doctype4(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -735,9 +735,9 @@ unsafe extern "C" fn doctype4(
 unsafe extern "C" fn doctype5(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -878,9 +878,9 @@ unsafe extern "C" fn externalSubset1(
 unsafe extern "C" fn entity0(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -902,9 +902,9 @@ unsafe extern "C" fn entity0(
 unsafe extern "C" fn entity1(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -965,9 +965,9 @@ unsafe extern "C" fn entity2(
 unsafe extern "C" fn entity3(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -985,9 +985,9 @@ unsafe extern "C" fn entity3(
 unsafe extern "C" fn entity4(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1041,9 +1041,9 @@ unsafe extern "C" fn entity5(
 unsafe extern "C" fn entity6(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1105,9 +1105,9 @@ unsafe extern "C" fn entity7(
 unsafe extern "C" fn entity8(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1125,9 +1125,9 @@ unsafe extern "C" fn entity8(
 unsafe extern "C" fn entity9(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1145,9 +1145,9 @@ unsafe extern "C" fn entity9(
 unsafe extern "C" fn entity10(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1169,9 +1169,9 @@ unsafe extern "C" fn entity10(
 unsafe extern "C" fn notation0(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1227,9 +1227,9 @@ unsafe extern "C" fn notation1(
 unsafe extern "C" fn notation2(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1247,9 +1247,9 @@ unsafe extern "C" fn notation2(
 unsafe extern "C" fn notation3(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1268,9 +1268,9 @@ unsafe extern "C" fn notation3(
 unsafe extern "C" fn notation4(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1297,9 +1297,9 @@ unsafe extern "C" fn notation4(
 unsafe extern "C" fn attlist0(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1317,9 +1317,9 @@ unsafe extern "C" fn attlist0(
 unsafe extern "C" fn attlist1(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1409,9 +1409,9 @@ unsafe extern "C" fn attlist2(
 unsafe extern "C" fn attlist3(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1431,9 +1431,9 @@ unsafe extern "C" fn attlist3(
 unsafe extern "C" fn attlist4(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1455,9 +1455,9 @@ unsafe extern "C" fn attlist4(
 unsafe extern "C" fn attlist5(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1475,9 +1475,9 @@ unsafe extern "C" fn attlist5(
 unsafe extern "C" fn attlist6(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1495,9 +1495,9 @@ unsafe extern "C" fn attlist6(
 unsafe extern "C" fn attlist7(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1572,9 +1572,9 @@ unsafe extern "C" fn attlist8(
 unsafe extern "C" fn attlist9(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1592,9 +1592,9 @@ unsafe extern "C" fn attlist9(
 unsafe extern "C" fn element0(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1706,9 +1706,9 @@ unsafe extern "C" fn element2(
 unsafe extern "C" fn element3(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1736,9 +1736,9 @@ unsafe extern "C" fn element3(
 unsafe extern "C" fn element4(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1756,9 +1756,9 @@ unsafe extern "C" fn element4(
 unsafe extern "C" fn element5(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1781,9 +1781,9 @@ unsafe extern "C" fn element5(
 unsafe extern "C" fn element6(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1819,9 +1819,9 @@ unsafe extern "C" fn element6(
 unsafe extern "C" fn element7(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1921,9 +1921,9 @@ unsafe extern "C" fn condSect0(
 unsafe extern "C" fn condSect1(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1944,9 +1944,9 @@ unsafe extern "C" fn condSect1(
 unsafe extern "C" fn condSect2(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => {
@@ -1965,9 +1965,9 @@ unsafe extern "C" fn condSect2(
 unsafe extern "C" fn declClose(
     mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
     mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     match tok {
         crate::xmltok_h::XML_TOK_PROLOG_S => return (*state).role_none,
@@ -2005,11 +2005,11 @@ unsafe extern "C" fn declClose(
  */
 
 unsafe extern "C" fn error(
-    mut state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
-    mut tok: libc::c_int,
-    mut ptr: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _state: *mut crate::src::lib::xmlrole::PROLOG_STATE,
+    mut _tok: libc::c_int,
+    mut _ptr: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
 ) -> libc::c_int {
     return crate::src::lib::xmlrole::XML_ROLE_NONE as libc::c_int;
 }

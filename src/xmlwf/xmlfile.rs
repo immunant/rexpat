@@ -28,15 +28,15 @@ pub use crate::src::lib::xmlparse::{
     XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
-use crate::src::xmlwf::readfilemap::filemap;
+
 pub use crate::stddef_h::{size_t, NULL};
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __ssize_t, fprintf,
     ssize_t, stderr, stdout, FILE, _IO_FILE,
 };
-use crate::stdlib::{malloc, read, strlen};
+
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
-use ::libc::{self, close, exit, free, open, strcpy, strrchr};
+use ::libc::{self};
 pub use ::libc::{perror, O_RDONLY};
 
 #[repr(C)]
@@ -168,7 +168,7 @@ unsafe extern "C" fn externalEntityRefFilemap(
     mut context: *const crate::expat_external_h::XML_Char,
     mut base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut result: libc::c_int = 0;
     let mut s: *mut crate::expat_external_h::XML_Char = 0 as *mut crate::expat_external_h::XML_Char;
@@ -304,7 +304,7 @@ unsafe extern "C" fn externalEntityRefStream(
     mut context: *const crate::expat_external_h::XML_Char,
     mut base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut s: *mut crate::expat_external_h::XML_Char = 0 as *mut crate::expat_external_h::XML_Char;
     let mut filename: *const crate::expat_external_h::XML_Char =

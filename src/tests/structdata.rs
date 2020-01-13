@@ -17,10 +17,10 @@ pub struct StructData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-use crate::src::tests::minicheck::_fail_unless;
+
 pub use crate::stddef_h::{size_t, NULL};
-use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
-use ::libc::{self, free, sprintf, strcmp};
+
+use ::libc::{self};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

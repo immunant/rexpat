@@ -83,8 +83,8 @@ pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
-use crate::stdlib::{feof, ferror, fread, stderr, stdin};
-use ::c2rust_out::*;
+
+
 /* Read an XML document from standard input and print an element
    outline on standard output.
    Must be used with Expat compiled for UTF-8 output.
@@ -128,7 +128,7 @@ pub static mut Buff: [libc::c_char; 8192] = [0; 8192];
 pub static mut Depth: libc::c_int = 0;
 
 unsafe extern "C" fn start(
-    mut data: *mut libc::c_void,
+    mut _data: *mut libc::c_void,
     mut el: *const crate::expat_external_h::XML_Char,
     mut attr: *mut *const crate::expat_external_h::XML_Char,
 ) {
@@ -153,13 +153,13 @@ unsafe extern "C" fn start(
 }
 
 unsafe extern "C" fn end(
-    mut data: *mut libc::c_void,
-    mut el: *const crate::expat_external_h::XML_Char,
+    mut _data: *mut libc::c_void,
+    mut _el: *const crate::expat_external_h::XML_Char,
 ) {
     Depth -= 1;
 }
 
-unsafe fn main_0(mut argc: libc::c_int, mut argv: *mut *mut libc::c_char) -> libc::c_int {
+unsafe fn main_0(mut _argc: libc::c_int, mut _argv: *mut *mut libc::c_char) -> libc::c_int {
     let mut p: crate::expat_h::XML_Parser = ::c2rust_out::src::lib::xmlparse::XML_ParserCreate(
         ::c2rust_out::stddef_h::NULL as *const crate::expat_external_h::XML_Char,
     );

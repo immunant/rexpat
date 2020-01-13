@@ -77,8 +77,8 @@ pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
-use crate::stdlib::{fread, stderr, stdin};
-use ::c2rust_out::*;
+
+
 /* This is simple demonstration of how to use expat. This program
    reads an XML document from standard input and writes a line with
    the name of each element to standard output indenting child
@@ -118,7 +118,7 @@ use ::c2rust_out::*;
 unsafe extern "C" fn startElement(
     mut userData: *mut libc::c_void,
     mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     let mut i: libc::c_int = 0;
     let mut depthPtr: *mut libc::c_int = userData as *mut libc::c_int;
@@ -133,13 +133,13 @@ unsafe extern "C" fn startElement(
 
 unsafe extern "C" fn endElement(
     mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _name: *const crate::expat_external_h::XML_Char,
 ) {
     let mut depthPtr: *mut libc::c_int = userData as *mut libc::c_int;
     *depthPtr -= 1 as libc::c_int;
 }
 
-unsafe fn main_0(mut argc: libc::c_int, mut argv: *mut *mut libc::c_char) -> libc::c_int {
+unsafe fn main_0(mut _argc: libc::c_int, mut _argv: *mut *mut libc::c_char) -> libc::c_int {
     let mut buf: [libc::c_char; 8192] = [0; 8192];
     let mut parser: crate::expat_h::XML_Parser = ::c2rust_out::src::lib::xmlparse::XML_ParserCreate(
         ::c2rust_out::stddef_h::NULL as *const crate::expat_external_h::XML_Char,

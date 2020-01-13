@@ -436,7 +436,7 @@ pub mod stdlib {
 
     pub type __off64_t = libc::c_long;
 }
-use ::c2rust_out::*;
+
 
 pub mod siphash_h {
 
@@ -1446,8 +1446,8 @@ pub mod siphash_h {
         return 1 as libc::c_int;
     }
 
-    use crate::stddef_h::size_t;
-    use crate::stdlib::uint64_t;
+    
+    
     /* SIPHASH_H */
     /* SIPHASH_MAIN */
     /* sip24_valid() */
@@ -1476,7 +1476,7 @@ pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __uint64_t, intptr_t,
     uint64_t, FILE,
 };
-use crate::stdlib::{stderr, strncmp};
+
 /* Test attribute counts, indexing, etc */
 
 pub type AttrInfo = attrInfo;
@@ -1823,54 +1823,54 @@ pub const DUMMY_END_DOCTYPE_DECL_HANDLER_FLAG: libc::c_ulong =
 pub const DUMMY_SKIP_HANDLER_FLAG: libc::c_ulong = (1 as libc::c_ulong) << 16 as libc::c_int;
 
 unsafe extern "C" fn dummy_xdecl_handler(
-    mut userData: *mut libc::c_void,
-    mut version: *const crate::expat_external_h::XML_Char,
-    mut encoding: *const crate::expat_external_h::XML_Char,
-    mut standalone: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _version: *const crate::expat_external_h::XML_Char,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
+    mut _standalone: libc::c_int,
 ) {
 }
 
 unsafe extern "C" fn dummy_start_doctype_handler(
-    mut userData: *mut libc::c_void,
-    mut doctypeName: *const crate::expat_external_h::XML_Char,
-    mut sysid: *const crate::expat_external_h::XML_Char,
-    mut pubid: *const crate::expat_external_h::XML_Char,
-    mut has_internal_subset: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _doctypeName: *const crate::expat_external_h::XML_Char,
+    mut _sysid: *const crate::expat_external_h::XML_Char,
+    mut _pubid: *const crate::expat_external_h::XML_Char,
+    mut _has_internal_subset: libc::c_int,
 ) {
     dummy_handler_flags |= DUMMY_START_DOCTYPE_HANDLER_FLAG;
 }
 
-unsafe extern "C" fn dummy_end_doctype_handler(mut userData: *mut libc::c_void) {
+unsafe extern "C" fn dummy_end_doctype_handler(mut _userData: *mut libc::c_void) {
     dummy_handler_flags |= DUMMY_END_DOCTYPE_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_entity_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut entityName: *const crate::expat_external_h::XML_Char,
-    mut is_parameter_entity: libc::c_int,
-    mut value: *const crate::expat_external_h::XML_Char,
-    mut value_length: libc::c_int,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
-    mut notationName: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _entityName: *const crate::expat_external_h::XML_Char,
+    mut _is_parameter_entity: libc::c_int,
+    mut _value: *const crate::expat_external_h::XML_Char,
+    mut _value_length: libc::c_int,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
+    mut _notationName: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_ENTITY_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_notation_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut notationName: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _notationName: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_NOTATION_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_element_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
     mut model: *mut crate::expat_h::XML_Content,
 ) {
     /* The content model must be freed by the handler.  Unfortunately
@@ -1885,71 +1885,71 @@ unsafe extern "C" fn dummy_element_decl_handler(
 }
 
 unsafe extern "C" fn dummy_attlist_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut elname: *const crate::expat_external_h::XML_Char,
-    mut attname: *const crate::expat_external_h::XML_Char,
-    mut att_type: *const crate::expat_external_h::XML_Char,
-    mut dflt: *const crate::expat_external_h::XML_Char,
-    mut isrequired: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _elname: *const crate::expat_external_h::XML_Char,
+    mut _attname: *const crate::expat_external_h::XML_Char,
+    mut _att_type: *const crate::expat_external_h::XML_Char,
+    mut _dflt: *const crate::expat_external_h::XML_Char,
+    mut _isrequired: libc::c_int,
 ) {
     dummy_handler_flags |= DUMMY_ATTLIST_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_comment_handler(
-    mut userData: *mut libc::c_void,
-    mut data: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _data: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_COMMENT_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_pi_handler(
-    mut userData: *mut libc::c_void,
-    mut target: *const crate::expat_external_h::XML_Char,
-    mut data: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _target: *const crate::expat_external_h::XML_Char,
+    mut _data: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_PI_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_start_element(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_START_ELEMENT_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_end_element(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
 ) {
 }
 
-unsafe extern "C" fn dummy_start_cdata_handler(mut userData: *mut libc::c_void) {
+unsafe extern "C" fn dummy_start_cdata_handler(mut _userData: *mut libc::c_void) {
     dummy_handler_flags |= DUMMY_START_CDATA_HANDLER_FLAG;
 }
 
-unsafe extern "C" fn dummy_end_cdata_handler(mut userData: *mut libc::c_void) {
+unsafe extern "C" fn dummy_end_cdata_handler(mut _userData: *mut libc::c_void) {
     dummy_handler_flags |= DUMMY_END_CDATA_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_cdata_handler(
-    mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
 }
 
 unsafe extern "C" fn dummy_start_namespace_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut prefix: *const crate::expat_external_h::XML_Char,
-    mut uri: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _prefix: *const crate::expat_external_h::XML_Char,
+    mut _uri: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_START_NS_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_end_namespace_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut prefix: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _prefix: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_END_NS_DECL_HANDLER_FLAG;
 }
@@ -1958,41 +1958,41 @@ unsafe extern "C" fn dummy_end_namespace_decl_handler(
  */
 
 unsafe extern "C" fn dummy_unparsed_entity_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut entityName: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
-    mut notationName: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _entityName: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
+    mut _notationName: *const crate::expat_external_h::XML_Char,
 ) {
     dummy_handler_flags |= DUMMY_UNPARSED_ENTITY_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_default_handler(
-    mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
 }
 
 unsafe extern "C" fn dummy_start_doctype_decl_handler(
-    mut userData: *mut libc::c_void,
-    mut doctypeName: *const crate::expat_external_h::XML_Char,
-    mut sysid: *const crate::expat_external_h::XML_Char,
-    mut pubid: *const crate::expat_external_h::XML_Char,
-    mut has_internal_subset: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _doctypeName: *const crate::expat_external_h::XML_Char,
+    mut _sysid: *const crate::expat_external_h::XML_Char,
+    mut _pubid: *const crate::expat_external_h::XML_Char,
+    mut _has_internal_subset: libc::c_int,
 ) {
     dummy_handler_flags |= DUMMY_START_DOCTYPE_DECL_HANDLER_FLAG;
 }
 
-unsafe extern "C" fn dummy_end_doctype_decl_handler(mut userData: *mut libc::c_void) {
+unsafe extern "C" fn dummy_end_doctype_decl_handler(mut _userData: *mut libc::c_void) {
     dummy_handler_flags |= DUMMY_END_DOCTYPE_DECL_HANDLER_FLAG;
 }
 
 unsafe extern "C" fn dummy_skip_handler(
-    mut userData: *mut libc::c_void,
-    mut entityName: *const crate::expat_external_h::XML_Char,
-    mut is_parameter_entity: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _entityName: *const crate::expat_external_h::XML_Char,
+    mut _is_parameter_entity: libc::c_int,
 ) {
     dummy_handler_flags |= DUMMY_SKIP_HANDLER_FLAG;
 }
@@ -2000,9 +2000,9 @@ unsafe extern "C" fn dummy_skip_handler(
 unsafe extern "C" fn external_entity_optioner(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut options: *mut ExtOption = *(parser as *mut *mut libc::c_void) as *mut ExtOption;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -2057,15 +2057,15 @@ static mut entity_value_to_match: *const crate::expat_external_h::XML_Char =
 static mut entity_match_flag: libc::c_int = ENTITY_MATCH_NOT_FOUND;
 
 unsafe extern "C" fn param_entity_match_handler(
-    mut userData: *mut libc::c_void,
+    mut _userData: *mut libc::c_void,
     mut entityName: *const crate::expat_external_h::XML_Char,
     mut is_parameter_entity: libc::c_int,
     mut value: *const crate::expat_external_h::XML_Char,
     mut value_length: libc::c_int,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
-    mut notationName: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
+    mut _notationName: *const crate::expat_external_h::XML_Char,
 ) {
     if is_parameter_entity == 0 || entity_name_to_match.is_null() || entity_value_to_match.is_null()
     {
@@ -2368,7 +2368,7 @@ unsafe extern "C" fn accumulate_characters(
 
 unsafe extern "C" fn accumulate_attribute(
     mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _name: *const crate::expat_external_h::XML_Char,
     mut atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     let mut storage: *mut ::c2rust_out::src::tests::chardata::CharData =
@@ -3345,7 +3345,7 @@ pub const STRUCT_END_TAG: libc::c_int = 1 as libc::c_int;
 unsafe extern "C" fn start_element_event_handler2(
     mut userData: *mut libc::c_void,
     mut name: *const crate::expat_external_h::XML_Char,
-    mut attr: *mut *const crate::expat_external_h::XML_Char,
+    mut _attr: *mut *const crate::expat_external_h::XML_Char,
 ) {
     let mut storage: *mut ::c2rust_out::src::tests::structdata::StructData =
         userData as *mut ::c2rust_out::src::tests::structdata::StructData;
@@ -3757,7 +3757,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
 unsafe extern "C" fn start_element_event_handler(
     mut userData: *mut libc::c_void,
     mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
         userData as *mut ::c2rust_out::src::tests::chardata::CharData
@@ -4223,8 +4223,8 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
 }
 
 unsafe extern "C" fn check_attr_contains_normalized_whitespace(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
     mut atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     let mut i: libc::c_int = 0;
@@ -4386,7 +4386,7 @@ unsafe extern "C" fn test_xmldecl_missing_value() {
 /* Regression test for SF bug #584832. */
 
 unsafe extern "C" fn UnknownEncodingHandler(
-    mut data: *mut libc::c_void,
+    mut _data: *mut libc::c_void,
     mut encoding: *const crate::expat_external_h::XML_Char,
     mut info: *mut ::c2rust_out::expat_h::XML_Encoding,
 ) -> libc::c_int {
@@ -4460,11 +4460,11 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
 }
 /* Test unrecognised encoding handler */
 
-unsafe extern "C" fn dummy_release(mut data: *mut libc::c_void) {}
+unsafe extern "C" fn dummy_release(mut _data: *mut libc::c_void) {}
 
 unsafe extern "C" fn UnrecognisedEncodingHandler(
-    mut data: *mut libc::c_void,
-    mut encoding: *const crate::expat_external_h::XML_Char,
+    mut _data: *mut libc::c_void,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
     mut info: *mut ::c2rust_out::expat_h::XML_Encoding,
 ) -> libc::c_int {
     (*info).data = ::c2rust_out::stddef_h::NULL as *mut libc::c_void;
@@ -4523,9 +4523,9 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
 unsafe extern "C" fn external_entity_loader(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut test_data: *mut ExtTest = *(parser as *mut *mut libc::c_void) as *mut ExtTest;
     let mut extparser: crate::expat_h::XML_Parser =
@@ -4711,9 +4711,9 @@ unsafe extern "C" fn test_ext_entity_set_bom() {
 unsafe extern "C" fn external_entity_faulter(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut ext_parser: crate::expat_h::XML_Parser =
         0 as *mut ::c2rust_out::expat_h::XML_ParserStruct;
@@ -5128,7 +5128,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
 }
 /* Test that an error is reported if our NotStandalone handler fails */
 
-unsafe extern "C" fn reject_not_standalone_handler(mut userData: *mut libc::c_void) -> libc::c_int {
+unsafe extern "C" fn reject_not_standalone_handler(mut _userData: *mut libc::c_void) -> libc::c_int {
     return ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
 }
 
@@ -5213,7 +5213,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
 }
 /* Test that no error is reported if our NotStandalone handler succeeds */
 
-unsafe extern "C" fn accept_not_standalone_handler(mut userData: *mut libc::c_void) -> libc::c_int {
+unsafe extern "C" fn accept_not_standalone_handler(mut _userData: *mut libc::c_void) -> libc::c_int {
     return ::c2rust_out::expat_h::XML_STATUS_OK_0;
 }
 
@@ -5819,9 +5819,9 @@ static mut resumable: crate::expat_h::XML_Bool =
     ::c2rust_out::expat_h::XML_FALSE as crate::expat_h::XML_Bool;
 
 unsafe extern "C" fn clearing_aborting_character_handler(
-    mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(g_parser, resumable);
     ::c2rust_out::src::lib::xmlparse::XML_SetCharacterDataHandler(
@@ -5982,9 +5982,9 @@ static mut abortable: crate::expat_h::XML_Bool =
     ::c2rust_out::expat_h::XML_FALSE as crate::expat_h::XML_Bool;
 
 unsafe extern "C" fn parser_stop_character_handler(
-    mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(g_parser, resumable);
     ::c2rust_out::src::lib::xmlparse::XML_SetCharacterDataHandler(
@@ -7313,8 +7313,8 @@ unsafe extern "C" fn test_memory_allocation() {
 
 unsafe extern "C" fn record_default_handler(
     mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
         userData as *mut ::c2rust_out::src::tests::chardata::CharData
@@ -7326,8 +7326,8 @@ unsafe extern "C" fn record_default_handler(
 
 unsafe extern "C" fn record_cdata_handler(
     mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
         userData as *mut ::c2rust_out::src::tests::chardata::CharData
@@ -7340,8 +7340,8 @@ unsafe extern "C" fn record_cdata_handler(
 
 unsafe extern "C" fn record_cdata_nodefault_handler(
     mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut len: libc::c_int,
+    mut _s: *const crate::expat_external_h::XML_Char,
+    mut _len: libc::c_int,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
         userData as *mut ::c2rust_out::src::tests::chardata::CharData
@@ -7353,7 +7353,7 @@ unsafe extern "C" fn record_cdata_nodefault_handler(
 
 unsafe extern "C" fn record_skip_handler(
     mut userData: *mut libc::c_void,
-    mut entityName: *const crate::expat_external_h::XML_Char,
+    mut _entityName: *const crate::expat_external_h::XML_Char,
     mut is_parameter_entity: libc::c_int,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
@@ -8168,11 +8168,11 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
 /* Test XML_UseForeignDTD with no external subset present */
 
 unsafe extern "C" fn external_entity_null_loader(
-    mut parser: crate::expat_h::XML_Parser,
-    mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _parser: crate::expat_h::XML_Parser,
+    mut _context: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     return ::c2rust_out::expat_h::XML_STATUS_OK_0;
 }
@@ -8835,9 +8835,9 @@ unsafe extern "C" fn test_cdata_default() {
 unsafe extern "C" fn external_entity_resetter(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const libc::c_char;
@@ -9011,7 +9011,7 @@ unsafe extern "C" fn test_subordinate_reset() {
 
 unsafe extern "C" fn entity_suspending_decl_handler(
     mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _name: *const crate::expat_external_h::XML_Char,
     mut model: *mut crate::expat_h::XML_Content,
 ) {
     let mut ext_parser: crate::expat_h::XML_Parser = userData as crate::expat_h::XML_Parser;
@@ -9063,9 +9063,9 @@ unsafe extern "C" fn entity_suspending_decl_handler(
 unsafe extern "C" fn external_entity_suspender(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const libc::c_char;
@@ -9166,9 +9166,9 @@ unsafe extern "C" fn test_subordinate_suspend() {
 
 unsafe extern "C" fn entity_suspending_xdecl_handler(
     mut userData: *mut libc::c_void,
-    mut version: *const crate::expat_external_h::XML_Char,
-    mut encoding: *const crate::expat_external_h::XML_Char,
-    mut standalone: libc::c_int,
+    mut _version: *const crate::expat_external_h::XML_Char,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
+    mut _standalone: libc::c_int,
 ) {
     let mut ext_parser: crate::expat_h::XML_Parser = userData as crate::expat_h::XML_Parser;
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(ext_parser, resumable);
@@ -9183,9 +9183,9 @@ unsafe extern "C" fn entity_suspending_xdecl_handler(
 unsafe extern "C" fn external_entity_suspend_xmldecl(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\x00" as *const u8 as *const libc::c_char;
@@ -9390,9 +9390,9 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
 unsafe extern "C" fn external_entity_suspending_faulter(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut ext_parser: crate::expat_h::XML_Parser =
         0 as *mut ::c2rust_out::expat_h::XML_ParserStruct;
@@ -9814,9 +9814,9 @@ unsafe extern "C" fn test_trailing_cr() {
 unsafe extern "C" fn external_entity_cr_catcher(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = b"\r\x00" as *const u8 as *const libc::c_char;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -9868,9 +9868,9 @@ unsafe extern "C" fn external_entity_cr_catcher(
 unsafe extern "C" fn external_entity_bad_cr_catcher(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = b"<tag>\r\x00" as *const u8 as *const libc::c_char;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -10206,9 +10206,9 @@ unsafe extern "C" fn test_trailing_rsqb() {
 unsafe extern "C" fn external_entity_rsqb_catcher(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = b"<tag>]\x00" as *const u8 as *const libc::c_char;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -10334,9 +10334,9 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
 unsafe extern "C" fn external_entity_good_cdata_ascii(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = b"<a><![CDATA[<greeting>Hello, world!</greeting>]]></a>\x00"
         as *const u8 as *const libc::c_char;
@@ -10466,8 +10466,8 @@ static mut xdecl_count: libc::c_int = 0 as libc::c_int;
 
 unsafe extern "C" fn xml_decl_handler(
     mut userData: *mut libc::c_void,
-    mut version: *const crate::expat_external_h::XML_Char,
-    mut encoding: *const crate::expat_external_h::XML_Char,
+    mut _version: *const crate::expat_external_h::XML_Char,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
     mut standalone: libc::c_int,
 ) {
     if userData != handler_data {
@@ -10494,8 +10494,8 @@ unsafe extern "C" fn xml_decl_handler(
 
 unsafe extern "C" fn param_check_skip_handler(
     mut userData: *mut libc::c_void,
-    mut entityName: *const crate::expat_external_h::XML_Char,
-    mut is_parameter_entity: libc::c_int,
+    mut _entityName: *const crate::expat_external_h::XML_Char,
+    mut _is_parameter_entity: libc::c_int,
 ) {
     if userData != handler_data {
         ::c2rust_out::src::tests::minicheck::_fail_unless(
@@ -10511,7 +10511,7 @@ unsafe extern "C" fn param_check_skip_handler(
 
 unsafe extern "C" fn data_check_comment_handler(
     mut userData: *mut libc::c_void,
-    mut data: *const crate::expat_external_h::XML_Char,
+    mut _data: *const crate::expat_external_h::XML_Char,
 ) {
     /* Check that the userData passed through is what we expect */
     if userData != handler_data {
@@ -10539,9 +10539,9 @@ unsafe extern "C" fn data_check_comment_handler(
 unsafe extern "C" fn external_entity_param_checker(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<!-- Subordinate parser -->\n<!ELEMENT doc (#PCDATA)*>\x00" as *const u8
@@ -10751,9 +10751,9 @@ unsafe extern "C" fn test_user_parameters() {
 unsafe extern "C" fn external_entity_ref_param_checker(
     mut parameter: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const libc::c_char;
@@ -11367,7 +11367,7 @@ unsafe extern "C" fn test_byte_info_at_error() {
 
 unsafe extern "C" fn byte_character_handler(
     mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
+    mut _s: *const crate::expat_external_h::XML_Char,
     mut len: libc::c_int,
 ) {
     let mut offset: libc::c_int = 0;
@@ -11588,9 +11588,9 @@ unsafe extern "C" fn test_predefined_entities() {
 unsafe extern "C" fn external_entity_param(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text1: *const libc::c_char =
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
@@ -11770,9 +11770,9 @@ unsafe extern "C" fn test_not_predefined_entities() {
 unsafe extern "C" fn external_entity_load_ignore(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\x00" as *const u8 as *const libc::c_char;
@@ -11937,9 +11937,9 @@ unsafe extern "C" fn test_ignore_section() {
 unsafe extern "C" fn external_entity_load_ignore_utf16(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let text: [libc::c_char; 73] =
         *::std::mem::transmute::<&[u8; 73],
@@ -12109,9 +12109,9 @@ unsafe extern "C" fn test_ignore_section_utf16() {
 unsafe extern "C" fn external_entity_load_ignore_utf16_be(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let text: [libc::c_char; 73] =
         *::std::mem::transmute::<&[u8; 73],
@@ -12372,9 +12372,9 @@ unsafe extern "C" fn test_bad_ignore_section() {
 unsafe extern "C" fn external_entity_valuer(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text1: *const libc::c_char =
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
@@ -12661,9 +12661,9 @@ unsafe extern "C" fn test_external_entity_values() {
 unsafe extern "C" fn external_entity_not_standalone(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text1: *const libc::c_char =
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00" as *const u8
@@ -12796,9 +12796,9 @@ unsafe extern "C" fn test_ext_entity_not_standalone() {
 unsafe extern "C" fn external_entity_value_aborter(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text1: *const libc::c_char =
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
@@ -13194,7 +13194,7 @@ unsafe extern "C" fn test_public_notation_no_sysid() {
 unsafe extern "C" fn record_element_start_handler(
     mut userData: *mut libc::c_void,
     mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     ::c2rust_out::src::tests::chardata::CharData_AppendXMLChars(
         userData as *mut ::c2rust_out::src::tests::chardata::CharData
@@ -13332,7 +13332,7 @@ unsafe extern "C" fn test_group_choice() {
 unsafe extern "C" fn external_entity_public(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
     mut publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
@@ -13589,9 +13589,9 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
 unsafe extern "C" fn external_entity_devaluer(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
     mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char =
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00" as *const u8
@@ -13747,10 +13747,10 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
 }
 
 unsafe extern "C" fn aborting_xdecl_handler(
-    mut userData: *mut libc::c_void,
-    mut version: *const crate::expat_external_h::XML_Char,
-    mut encoding: *const crate::expat_external_h::XML_Char,
-    mut standalone: libc::c_int,
+    mut _userData: *mut libc::c_void,
+    mut _version: *const crate::expat_external_h::XML_Char,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
+    mut _standalone: libc::c_int,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(g_parser, resumable);
     ::c2rust_out::src::lib::xmlparse::XML_SetXmlDeclHandler(
@@ -14003,7 +14003,7 @@ unsafe extern "C" fn test_suspend_epilog() {
 
 unsafe extern "C" fn suspending_end_handler(
     mut userData: *mut libc::c_void,
-    mut s: *const crate::expat_external_h::XML_Char,
+    mut _s: *const crate::expat_external_h::XML_Char,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(
         userData as crate::expat_h::XML_Parser,
@@ -14193,9 +14193,9 @@ unsafe extern "C" fn test_hash_collision() {
 /* Test resuming a parse suspended in entity substitution */
 
 unsafe extern "C" fn start_element_suspender(
-    mut userData: *mut libc::c_void,
+    mut _userData: *mut libc::c_void,
     mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     if ::libc::strcmp(name, b"suspend\x00" as *const u8 as *const libc::c_char) == 0 {
         ::c2rust_out::src::lib::xmlparse::XML_StopParser(
@@ -14376,8 +14376,8 @@ unsafe extern "C" fn test_resume_entity_with_syntax_error() {
 /* Test suspending and resuming in a parameter entity substitution */
 
 unsafe extern "C" fn element_decl_suspender(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
     mut model: *mut crate::expat_h::XML_Content,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_StopParser(
@@ -14721,9 +14721,9 @@ unsafe extern "C" fn test_skipped_external_entity() {
 unsafe extern "C" fn external_entity_oneshot_loader(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut test_data: *mut ExtHdlrData = *(parser as *mut *mut libc::c_void) as *mut ExtHdlrData;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -15672,15 +15672,15 @@ unsafe extern "C" fn test_utf16_le_comment() {
  */
 
 unsafe extern "C" fn failing_converter(
-    mut data: *mut libc::c_void,
-    mut s: *const libc::c_char,
+    mut _data: *mut libc::c_void,
+    mut _s: *const libc::c_char,
 ) -> libc::c_int {
     /* Always claim to have failed */
     return -(1 as libc::c_int);
 }
 
 unsafe extern "C" fn prefix_converter(
-    mut data: *mut libc::c_void,
+    mut _data: *mut libc::c_void,
     mut s: *const libc::c_char,
 ) -> libc::c_int {
     /* If the first byte is 0xff, raise an error */
@@ -16438,9 +16438,9 @@ unsafe extern "C" fn test_unknown_encoding_invalid_attr_value() {
 unsafe extern "C" fn external_entity_loader2(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut test_data: *mut ExtTest2 = *(parser as *mut *mut libc::c_void) as *mut ExtTest2;
     let mut extparser: crate::expat_h::XML_Parser =
@@ -17033,9 +17033,9 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
 unsafe extern "C" fn external_entity_faulter2(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut test_data: *mut ExtFaults2 = *(parser as *mut *mut libc::c_void) as *mut ExtFaults2;
     let mut extparser: crate::expat_h::XML_Parser =
@@ -17510,13 +17510,13 @@ unsafe extern "C" fn test_attr_after_solidus() {
 unsafe extern "C" fn accumulate_entity_decl(
     mut userData: *mut libc::c_void,
     mut entityName: *const crate::expat_external_h::XML_Char,
-    mut is_parameter_entity: libc::c_int,
+    mut _is_parameter_entity: libc::c_int,
     mut value: *const crate::expat_external_h::XML_Char,
     mut value_length: libc::c_int,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
-    mut notationName: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
+    mut _notationName: *const crate::expat_external_h::XML_Char,
 ) {
     let mut storage: *mut ::c2rust_out::src::tests::chardata::CharData =
         userData as *mut ::c2rust_out::src::tests::chardata::CharData;
@@ -18940,9 +18940,9 @@ unsafe extern "C" fn test_ns_tagname_overwrite_triplet() {
 /* Regression test for SF bug #620343. */
 
 unsafe extern "C" fn start_element_fail(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _name: *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     /* We should never get here. */
     ::c2rust_out::src::tests::minicheck::_fail_unless(
@@ -18956,8 +18956,8 @@ unsafe extern "C" fn start_element_fail(
 
 unsafe extern "C" fn start_ns_clearing_start_element(
     mut userData: *mut libc::c_void,
-    mut prefix: *const crate::expat_external_h::XML_Char,
-    mut uri: *const crate::expat_external_h::XML_Char,
+    mut _prefix: *const crate::expat_external_h::XML_Char,
+    mut _uri: *const crate::expat_external_h::XML_Char,
 ) {
     ::c2rust_out::src::lib::xmlparse::XML_SetStartElementHandler(
         userData as crate::expat_h::XML_Parser,
@@ -19037,9 +19037,9 @@ unsafe extern "C" fn test_start_ns_clears_start_element() {
 unsafe extern "C" fn external_entity_handler(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut callno: crate::stdlib::intptr_t = 1 as libc::c_int as libc::c_long
         + *(parser as *mut *mut libc::c_void) as crate::stdlib::intptr_t;
@@ -20749,8 +20749,8 @@ unsafe extern "C" fn test_misc_utf16le() {
 
 unsafe extern "C" fn start_element_issue_240(
     mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
-    mut atts: *mut *const crate::expat_external_h::XML_Char,
+    mut _name: *const crate::expat_external_h::XML_Char,
+    mut _atts: *mut *const crate::expat_external_h::XML_Char,
 ) {
     let mut mydata: *mut DataIssue240 = userData as *mut DataIssue240;
     (*mydata).deep += 1;
@@ -20758,7 +20758,7 @@ unsafe extern "C" fn start_element_issue_240(
 
 unsafe extern "C" fn end_element_issue_240(
     mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
+    mut _name: *const crate::expat_external_h::XML_Char,
 ) {
     let mut mydata: *mut DataIssue240 = userData as *mut DataIssue240;
     (*mydata).deep -= 1;
@@ -21118,8 +21118,8 @@ unsafe extern "C" fn test_alloc_parse_xdecl() {
  */
 
 unsafe extern "C" fn long_encoding_handler(
-    mut userData: *mut libc::c_void,
-    mut encoding: *const crate::expat_external_h::XML_Char,
+    mut _userData: *mut libc::c_void,
+    mut _encoding: *const crate::expat_external_h::XML_Char,
     mut info: *mut ::c2rust_out::expat_h::XML_Encoding,
 ) -> libc::c_int {
     let mut i: libc::c_int = 0;
@@ -21529,9 +21529,9 @@ unsafe extern "C" fn test_alloc_parse_comment_2() {
 unsafe extern "C" fn external_entity_duff_loader(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut new_parser: crate::expat_h::XML_Parser =
         0 as *mut ::c2rust_out::expat_h::XML_ParserStruct;
@@ -21719,9 +21719,9 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
 unsafe extern "C" fn external_entity_dbl_handler(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut callno: crate::stdlib::intptr_t =
         *(parser as *mut *mut libc::c_void) as crate::stdlib::intptr_t;
@@ -21874,9 +21874,9 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
 unsafe extern "C" fn external_entity_dbl_handler_2(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut callno: crate::stdlib::intptr_t =
         *(parser as *mut *mut libc::c_void) as crate::stdlib::intptr_t;
@@ -22015,9 +22015,9 @@ unsafe extern "C" fn test_alloc_external_entity() {
 unsafe extern "C" fn external_entity_alloc_set_encoding(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     /* As for external_entity_loader() */
     let mut text: *const libc::c_char =
@@ -22124,7 +22124,7 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
 }
 
 unsafe extern "C" fn unknown_released_encoding_handler(
-    mut data: *mut libc::c_void,
+    mut _data: *mut libc::c_void,
     mut encoding: *const crate::expat_external_h::XML_Char,
     mut info: *mut ::c2rust_out::expat_h::XML_Encoding,
 ) -> libc::c_int {
@@ -22622,9 +22622,9 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
 unsafe extern "C" fn external_entity_reallocator(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = get_buffer_test_text;
     let mut ext_parser: crate::expat_h::XML_Parser =
@@ -23144,9 +23144,9 @@ unsafe extern "C" fn test_alloc_parse_public_doctype_long_name() {
 unsafe extern "C" fn external_entity_alloc(
     mut parser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut publicId: *const crate::expat_external_h::XML_Char,
+    mut _base: *const crate::expat_external_h::XML_Char,
+    mut _systemId: *const crate::expat_external_h::XML_Char,
+    mut _publicId: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut text: *const libc::c_char = *(parser as *mut *mut libc::c_void) as *const libc::c_char;
     let mut ext_parser: crate::expat_h::XML_Parser =

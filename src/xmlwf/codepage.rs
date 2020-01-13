@@ -65,16 +65,16 @@ use ::libc;
 #[no_mangle]
 
 pub unsafe extern "C" fn codepageMap(
-    mut cp: libc::c_int,
-    mut map: *mut libc::c_int,
+    mut _cp: libc::c_int,
+    mut _map: *mut libc::c_int,
 ) -> libc::c_int {
     return 0 as libc::c_int;
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn codepageConvert(
-    mut cp: libc::c_int,
-    mut p: *const libc::c_char,
+    mut _cp: libc::c_int,
+    mut _p: *const libc::c_char,
 ) -> libc::c_int {
     return -(1 as libc::c_int);
 }

@@ -1107,8 +1107,8 @@ pub mod siphash_h {
         return H;
     }
 
-    use crate::stddef_h::size_t;
-    use crate::stdlib::uint64_t;
+    
+    
     /* SIPHASH_H */
     /* SIPHASH_MAIN */
     /* sip24_valid() */
@@ -1210,8 +1210,8 @@ pub use crate::stdlib::{
     __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
-use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read, realloc};
-use ::libc::{__errno_location, close, free, getenv, getpid, open, strcmp};
+
+
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 
 #[repr(C)]
@@ -1823,7 +1823,7 @@ unsafe extern "C" fn ENTROPY_DEBUG(
 }
 
 unsafe extern "C" fn generate_hash_secret_salt(
-    mut parser: crate::expat_h::XML_Parser,
+    mut _parser: crate::expat_h::XML_Parser,
 ) -> libc::c_ulong {
     let mut entropy: libc::c_ulong = 0;
     /* "Failproof" high quality providers: */
@@ -8853,9 +8853,9 @@ unsafe extern "C" fn internalEntityProcessor(
 
 unsafe extern "C" fn errorProcessor(
     mut parser: crate::expat_h::XML_Parser,
-    mut s: *const libc::c_char,
-    mut end: *const libc::c_char,
-    mut nextPtr: *mut *const libc::c_char,
+    mut _s: *const libc::c_char,
+    mut _end: *const libc::c_char,
+    mut _nextPtr: *mut *const libc::c_char,
 ) -> crate::expat_h::XML_Error {
     return (*parser).m_errorCode;
 }

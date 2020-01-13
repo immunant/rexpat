@@ -39,8 +39,8 @@ pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __jmp_buf, __jmp_buf_tag, __off64_t,
     __off_t, __sigset_t, _setjmp, jmp_buf, longjmp, FILE, _IO_FILE,
 };
-use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
-use ::libc::{self, free, printf};
+
+use ::libc::{self};
 /* Miniature re-implementation of the "check" library.
 
    This is intended to support just enough of check to run the Expat
@@ -393,9 +393,9 @@ pub unsafe extern "C" fn srunner_run_all(
 #[no_mangle]
 
 pub unsafe extern "C" fn _fail_unless(
-    mut condition: libc::c_int,
-    mut file: *const libc::c_char,
-    mut line: libc::c_int,
+    mut _condition: libc::c_int,
+    mut _file: *const libc::c_char,
+    mut _line: libc::c_int,
     mut msg: *const libc::c_char,
 ) {
     /* Always print the error message so it isn't lost.  In this case,

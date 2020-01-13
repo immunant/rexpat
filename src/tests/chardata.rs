@@ -7,9 +7,9 @@ pub struct CharData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-use crate::src::tests::minicheck::_fail_unless;
-use crate::stdlib::{__assert_fail, memcmp, memcpy};
-use ::libc::{self, sprintf};
+
+
+use ::libc::{self};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

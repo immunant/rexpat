@@ -988,7 +988,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn little2_checkPiTarget(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut tokPtr: *mut libc::c_int,
@@ -1037,7 +1037,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn big2_checkPiTarget(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut tokPtr: *mut libc::c_int,
@@ -1086,7 +1086,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn normal_checkPiTarget(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut tokPtr: *mut libc::c_int,
@@ -1942,7 +1942,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn big2_scanCdataSection(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1981,7 +1981,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn normal_scanCdataSection(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -2014,7 +2014,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn little2_scanCdataSection(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -12347,7 +12347,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn little2_charRefNumber(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
     ) -> libc::c_int {
         let mut result: libc::c_int = 0 as libc::c_int;
@@ -12429,7 +12429,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn normal_charRefNumber(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
     ) -> libc::c_int {
         let mut result: libc::c_int = 0 as libc::c_int;
@@ -12492,7 +12492,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn big2_charRefNumber(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
     ) -> libc::c_int {
         let mut result: libc::c_int = 0 as libc::c_int;
@@ -12571,7 +12571,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn little2_predefinedEntityName(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
     ) -> libc::c_int {
@@ -12679,7 +12679,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn normal_predefinedEntityName(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
     ) -> libc::c_int {
@@ -12737,7 +12737,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn big2_predefinedEntityName(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
     ) -> libc::c_int {
@@ -12845,7 +12845,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn normal_nameMatchesAscii(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr1: *const libc::c_char,
         mut end1: *const libc::c_char,
         mut ptr2: *const libc::c_char,
@@ -12883,7 +12883,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn big2_nameMatchesAscii(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr1: *const libc::c_char,
         mut end1: *const libc::c_char,
         mut ptr2: *const libc::c_char,
@@ -12905,7 +12905,7 @@ pub mod xmltok_impl_c {
     }
 
     pub unsafe extern "C" fn little2_nameMatchesAscii(
-        mut enc: *const crate::src::lib::xmltok::ENCODING,
+        mut _enc: *const crate::src::lib::xmltok::ENCODING,
         mut ptr1: *const libc::c_char,
         mut end1: *const libc::c_char,
         mut ptr2: *const libc::c_char,
@@ -13195,33 +13195,16 @@ pub mod xmltok_impl_c {
         }
     }
 
-    use crate::ascii_h::{
-        ASCII_A, ASCII_AMP, ASCII_APOS, ASCII_C, ASCII_D, ASCII_GT, ASCII_LSQB, ASCII_LT,
-        ASCII_QUOT, ASCII_SPACE, ASCII_T,
-    };
-    use crate::ascii_h_0::{ASCII_a, ASCII_0};
-    use crate::expat_external_h::XML_Size;
+    
+    
+    
     use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
     use crate::src::lib::xmltok::{
-        checkCharRefNumber, normal_encoding, unicode_byte_type, XML_TOK_INSTANCE_START,
-        XML_TOK_PROLOG_S,
+        checkCharRefNumber, normal_encoding, unicode_byte_type,
     };
-    use crate::stddef_h::size_t;
-    use crate::xmltok_h::{
-        XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_CDATA_SECT_CLOSE, XML_TOK_CDATA_SECT_OPEN,
-        XML_TOK_CHAR_REF, XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,
-        XML_TOK_CLOSE_PAREN_PLUS, XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT,
-        XML_TOK_COND_SECT_CLOSE, XML_TOK_COND_SECT_OPEN, XML_TOK_DATA_CHARS, XML_TOK_DATA_NEWLINE,
-        XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN, XML_TOK_EMPTY_ELEMENT_NO_ATTS,
-        XML_TOK_EMPTY_ELEMENT_WITH_ATTS, XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT,
-        XML_TOK_INVALID, XML_TOK_LITERAL, XML_TOK_NAME, XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS,
-        XML_TOK_NAME_QUESTION, XML_TOK_NMTOKEN, XML_TOK_NONE, XML_TOK_OPEN_BRACKET,
-        XML_TOK_OPEN_PAREN, XML_TOK_OR, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL,
-        XML_TOK_PARTIAL_CHAR, XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME,
-        XML_TOK_PREFIXED_NAME, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
-        XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL,
-    };
-    use crate::xmltok_impl_h::{BT_APOS, BT_EQUALS, BT_LF, BT_QUOT};
+    
+    
+    
     /* XML_TOK_IMPL_C */
     /* XML_TOK_IMPL_C */
     /* XML_TOK_IMPL_C */
@@ -14536,7 +14519,7 @@ pub use crate::src::lib::xmltok::xmltok_ns_c::{
 };
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-use crate::stdlib::memcpy;
+
 pub use crate::xmltok_impl_c::{
     inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
 };
@@ -14713,14 +14696,14 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 */
 
 unsafe extern "C" fn isNever(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
-    mut p: *const libc::c_char,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _p: *const libc::c_char,
 ) -> libc::c_int {
     return 0 as libc::c_int;
 }
 
 unsafe extern "C" fn utf8_isName2(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (namingBitmap[(((namePages[(*(p as *const libc::c_uchar)
@@ -14740,7 +14723,7 @@ unsafe extern "C" fn utf8_isName2(
 }
 
 unsafe extern "C" fn utf8_isName3(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (namingBitmap[(((namePages[(((*(p as *const libc::c_uchar)
@@ -14769,7 +14752,7 @@ pub const utf8_isName4: unsafe extern "C" fn(
 ) -> libc::c_int = isNever;
 
 unsafe extern "C" fn utf8_isNmstrt2(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (namingBitmap[(((nmstrtPages[(*(p as *const libc::c_uchar)
@@ -14789,7 +14772,7 @@ unsafe extern "C" fn utf8_isNmstrt2(
 }
 
 unsafe extern "C" fn utf8_isNmstrt3(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (namingBitmap[(((nmstrtPages[(((*(p as *const libc::c_uchar)
@@ -14818,7 +14801,7 @@ pub const utf8_isNmstrt4: unsafe extern "C" fn(
 ) -> libc::c_int = isNever;
 
 unsafe extern "C" fn utf8_isInvalid2(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return ((*(p as *const libc::c_uchar) as libc::c_int) < 0xc2 as libc::c_int
@@ -14831,7 +14814,7 @@ unsafe extern "C" fn utf8_isInvalid2(
 }
 
 unsafe extern "C" fn utf8_isInvalid3(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (*(p as *const libc::c_uchar).offset(2 as libc::c_int as isize) as libc::c_int
@@ -14870,7 +14853,7 @@ unsafe extern "C" fn utf8_isInvalid3(
 }
 
 unsafe extern "C" fn utf8_isInvalid4(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut p: *const libc::c_char,
 ) -> libc::c_int {
     return (*(p as *const libc::c_uchar).offset(3 as libc::c_int as isize) as libc::c_int
@@ -15015,7 +14998,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
 }
 
 unsafe extern "C" fn utf8_toUtf8(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_char,
@@ -17089,7 +17072,7 @@ static mut internal_utf8_encoding: normal_encoding = unsafe {
 pub const BT_COLON_5: libc::c_int = crate::xmltok_impl_h::BT_NMSTRT as libc::c_int;
 
 unsafe extern "C" fn latin1_toUtf8(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_char,
@@ -17129,7 +17112,7 @@ unsafe extern "C" fn latin1_toUtf8(
 }
 
 unsafe extern "C" fn latin1_toUtf16(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_ushort,
@@ -18166,7 +18149,7 @@ static mut latin1_encoding: normal_encoding = unsafe {
 pub const BT_COLON_1: libc::c_int = crate::xmltok_impl_h::BT_NMSTRT as libc::c_int;
 
 unsafe extern "C" fn ascii_toUtf8(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_char,
@@ -19233,7 +19216,7 @@ unsafe extern "C" fn unicode_byte_type(mut hi: libc::c_char, mut lo: libc::c_cha
 /* Avoid copying first half only of surrogate */
 
 unsafe extern "C" fn little2_toUtf8(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_char,
@@ -19362,7 +19345,7 @@ unsafe extern "C" fn little2_toUtf8(
 }
 
 unsafe extern "C" fn little2_toUtf16(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_ushort,
@@ -19402,7 +19385,7 @@ unsafe extern "C" fn little2_toUtf16(
 }
 
 unsafe extern "C" fn big2_toUtf8(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_char,
@@ -19531,7 +19514,7 @@ unsafe extern "C" fn big2_toUtf8(
 }
 
 unsafe extern "C" fn big2_toUtf16(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut fromP: *mut *const libc::c_char,
     mut fromLim: *const libc::c_char,
     mut toP: *mut *mut libc::c_ushort,
@@ -22662,7 +22645,7 @@ unsafe extern "C" fn streqci(
 }
 
 unsafe extern "C" fn initUpdatePosition(
-    mut enc: *const crate::src::lib::xmltok::ENCODING,
+    mut _enc: *const crate::src::lib::xmltok::ENCODING,
     mut ptr: *const libc::c_char,
     mut end: *const libc::c_char,
     mut pos: *mut crate::src::lib::xmltok::POSITION,
