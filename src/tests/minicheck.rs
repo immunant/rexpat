@@ -10,7 +10,7 @@ pub type tcase_test_function = Option<unsafe extern "C" fn() -> ()>;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct SRunner {
-    pub suite: *mut crate::src::tests::minicheck::Suite,
+    pub suite: *mut crate::minicheck::Suite,
     pub nchecks: libc::c_int,
     pub nfailures: libc::c_int,
 }
@@ -19,19 +19,19 @@ pub struct SRunner {
 #[derive(Copy, Clone)]
 pub struct Suite {
     pub name: *const libc::c_char,
-    pub tests: *mut crate::src::tests::minicheck::TCase,
+    pub tests: *mut crate::minicheck::TCase,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct TCase {
     pub name: *const libc::c_char,
-    pub setup: crate::src::tests::minicheck::tcase_setup_function,
-    pub teardown: crate::src::tests::minicheck::tcase_teardown_function,
-    pub tests: *mut crate::src::tests::minicheck::tcase_test_function,
+    pub setup: crate::minicheck::tcase_setup_function,
+    pub teardown: crate::minicheck::tcase_teardown_function,
+    pub tests: *mut crate::minicheck::tcase_test_function,
     pub ntests: libc::c_int,
     pub allocated: libc::c_int,
-    pub next_tcase: *mut crate::src::tests::minicheck::TCase,
+    pub next_tcase: *mut crate::minicheck::TCase,
 }
 
 pub use crate::stddef_h::{size_t, NULL};
@@ -80,12 +80,11 @@ use ::libc::{self};
 
 pub unsafe extern "C" fn suite_create(
     mut name: *const libc::c_char,
-) -> *mut crate::src::tests::minicheck::Suite {
-    let mut suite: *mut crate::src::tests::minicheck::Suite = crate::stdlib::calloc(
+) -> *mut crate::minicheck::Suite {
+    let mut suite: *mut crate::minicheck::Suite = crate::stdlib::calloc(
         1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::src::tests::minicheck::Suite>() as libc::c_ulong,
-    )
-        as *mut crate::src::tests::minicheck::Suite;
+        ::std::mem::size_of::<crate::minicheck::Suite>() as libc::c_ulong,
+    ) as *mut crate::minicheck::Suite;
     if !suite.is_null() {
         (*suite).name = name
     }
@@ -95,12 +94,11 @@ pub unsafe extern "C" fn suite_create(
 
 pub unsafe extern "C" fn tcase_create(
     mut name: *const libc::c_char,
-) -> *mut crate::src::tests::minicheck::TCase {
-    let mut tc: *mut crate::src::tests::minicheck::TCase = crate::stdlib::calloc(
+) -> *mut crate::minicheck::TCase {
+    let mut tc: *mut crate::minicheck::TCase = crate::stdlib::calloc(
         1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::src::tests::minicheck::TCase>() as libc::c_ulong,
-    )
-        as *mut crate::src::tests::minicheck::TCase;
+        ::std::mem::size_of::<crate::minicheck::TCase>() as libc::c_ulong,
+    ) as *mut crate::minicheck::TCase;
     if !tc.is_null() {
         (*tc).name = name
     }
@@ -109,8 +107,8 @@ pub unsafe extern "C" fn tcase_create(
 #[no_mangle]
 
 pub unsafe extern "C" fn suite_add_tcase(
-    mut suite: *mut crate::src::tests::minicheck::Suite,
-    mut tc: *mut crate::src::tests::minicheck::TCase,
+    mut suite: *mut crate::minicheck::Suite,
+    mut tc: *mut crate::minicheck::TCase,
 ) {
     if !suite.is_null() {
     } else {
@@ -157,9 +155,9 @@ pub unsafe extern "C" fn suite_add_tcase(
 #[no_mangle]
 
 pub unsafe extern "C" fn tcase_add_checked_fixture(
-    mut tc: *mut crate::src::tests::minicheck::TCase,
-    mut setup: crate::src::tests::minicheck::tcase_setup_function,
-    mut teardown: crate::src::tests::minicheck::tcase_teardown_function,
+    mut tc: *mut crate::minicheck::TCase,
+    mut setup: crate::minicheck::tcase_setup_function,
+    mut teardown: crate::minicheck::tcase_teardown_function,
 ) {
     if !tc.is_null() {
     } else {
@@ -176,8 +174,8 @@ pub unsafe extern "C" fn tcase_add_checked_fixture(
 #[no_mangle]
 
 pub unsafe extern "C" fn tcase_add_test(
-    mut tc: *mut crate::src::tests::minicheck::TCase,
-    mut test: crate::src::tests::minicheck::tcase_test_function,
+    mut tc: *mut crate::minicheck::TCase,
+    mut test: crate::minicheck::tcase_test_function,
 ) {
     if !tc.is_null() {
     } else {
@@ -194,13 +192,12 @@ pub unsafe extern "C" fn tcase_add_test(
     }
     if (*tc).allocated == (*tc).ntests {
         let mut nalloc: libc::c_int = (*tc).allocated + 100 as libc::c_int;
-        let mut new_size: crate::stddef_h::size_t = (::std::mem::size_of::<
-            crate::src::tests::minicheck::tcase_test_function,
-        >() as libc::c_ulong)
-            .wrapping_mul(nalloc as libc::c_ulong);
-        let mut new_tests: *mut crate::src::tests::minicheck::tcase_test_function =
+        let mut new_size: crate::stddef_h::size_t =
+            (::std::mem::size_of::<crate::minicheck::tcase_test_function>() as libc::c_ulong)
+                .wrapping_mul(nalloc as libc::c_ulong);
+        let mut new_tests: *mut crate::minicheck::tcase_test_function =
             crate::stdlib::realloc((*tc).tests as *mut libc::c_void, new_size)
-                as *mut crate::src::tests::minicheck::tcase_test_function;
+                as *mut crate::minicheck::tcase_test_function;
         if !new_tests.is_null() {
         } else {
             crate::stdlib::__assert_fail(
@@ -222,7 +219,7 @@ pub unsafe extern "C" fn tcase_add_test(
     (*tc).ntests += 1;
 }
 
-unsafe extern "C" fn tcase_free(mut tc: *mut crate::src::tests::minicheck::TCase) {
+unsafe extern "C" fn tcase_free(mut tc: *mut crate::minicheck::TCase) {
     if tc.is_null() {
         return;
     }
@@ -230,12 +227,12 @@ unsafe extern "C" fn tcase_free(mut tc: *mut crate::src::tests::minicheck::TCase
     ::libc::free(tc as *mut libc::c_void);
 }
 
-unsafe extern "C" fn suite_free(mut suite: *mut crate::src::tests::minicheck::Suite) {
+unsafe extern "C" fn suite_free(mut suite: *mut crate::minicheck::Suite) {
     if suite.is_null() {
         return;
     }
     while !(*suite).tests.is_null() {
-        let mut next: *mut crate::src::tests::minicheck::TCase = (*(*suite).tests).next_tcase;
+        let mut next: *mut crate::minicheck::TCase = (*(*suite).tests).next_tcase;
         tcase_free((*suite).tests);
         (*suite).tests = next
     }
@@ -244,13 +241,12 @@ unsafe extern "C" fn suite_free(mut suite: *mut crate::src::tests::minicheck::Su
 #[no_mangle]
 
 pub unsafe extern "C" fn srunner_create(
-    mut suite: *mut crate::src::tests::minicheck::Suite,
-) -> *mut crate::src::tests::minicheck::SRunner {
-    let mut runner: *mut crate::src::tests::minicheck::SRunner = crate::stdlib::calloc(
+    mut suite: *mut crate::minicheck::Suite,
+) -> *mut crate::minicheck::SRunner {
+    let mut runner: *mut crate::minicheck::SRunner = crate::stdlib::calloc(
         1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::src::tests::minicheck::SRunner>() as libc::c_ulong,
-    )
-        as *mut crate::src::tests::minicheck::SRunner;
+        ::std::mem::size_of::<crate::minicheck::SRunner>() as libc::c_ulong,
+    ) as *mut crate::minicheck::SRunner;
     if !runner.is_null() {
         (*runner).suite = suite
     }
@@ -284,11 +280,11 @@ pub unsafe extern "C" fn _check_set_test_info(
 }
 
 unsafe extern "C" fn add_failure(
-    mut runner: *mut crate::src::tests::minicheck::SRunner,
+    mut runner: *mut crate::minicheck::SRunner,
     mut verbosity: libc::c_int,
 ) {
     (*runner).nfailures += 1;
-    if verbosity >= crate::src::tests::minicheck::CK_VERBOSE {
+    if verbosity >= crate::minicheck::CK_VERBOSE {
         ::libc::printf(
             b"%s:%d: %s\n\x00" as *const u8 as *const libc::c_char,
             _check_current_filename,
@@ -300,13 +296,11 @@ unsafe extern "C" fn add_failure(
 #[no_mangle]
 
 pub unsafe extern "C" fn srunner_run_all(
-    mut runner: *mut crate::src::tests::minicheck::SRunner,
+    mut runner: *mut crate::minicheck::SRunner,
     mut verbosity: libc::c_int,
 ) {
-    let mut suite: *mut crate::src::tests::minicheck::Suite =
-        0 as *mut crate::src::tests::minicheck::Suite;
-    let mut tc: *mut crate::src::tests::minicheck::TCase =
-        0 as *mut crate::src::tests::minicheck::TCase;
+    let mut suite: *mut crate::minicheck::Suite = 0 as *mut crate::minicheck::Suite;
+    let mut tc: *mut crate::minicheck::TCase = 0 as *mut crate::minicheck::TCase;
     if !runner.is_null() {
     } else {
         crate::stdlib::__assert_fail(
@@ -321,10 +315,7 @@ pub unsafe extern "C" fn srunner_run_all(
         );
     }
     suite = (*runner).suite;
-    ::std::ptr::write_volatile(
-        &mut tc as *mut *mut crate::src::tests::minicheck::TCase,
-        (*suite).tests,
-    );
+    ::std::ptr::write_volatile(&mut tc as *mut *mut crate::minicheck::TCase, (*suite).tests);
     while !tc.is_null() {
         let mut i: libc::c_int = 0;
         let mut current_block_10: u64;
@@ -369,7 +360,7 @@ pub unsafe extern "C" fn srunner_run_all(
             )
         }
         ::std::ptr::write_volatile(
-            &mut tc as *mut *mut crate::src::tests::minicheck::TCase,
+            &mut tc as *mut *mut crate::minicheck::TCase,
             (*tc).next_tcase,
         )
     }
@@ -423,7 +414,7 @@ pub unsafe extern "C" fn _fail_unless(
 #[no_mangle]
 
 pub unsafe extern "C" fn srunner_ntests_failed(
-    mut runner: *mut crate::src::tests::minicheck::SRunner,
+    mut runner: *mut crate::minicheck::SRunner,
 ) -> libc::c_int {
     if !runner.is_null() {
     } else {
@@ -442,7 +433,7 @@ pub unsafe extern "C" fn srunner_ntests_failed(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn srunner_free(mut runner: *mut crate::src::tests::minicheck::SRunner) {
+pub unsafe extern "C" fn srunner_free(mut runner: *mut crate::minicheck::SRunner) {
     if runner.is_null() {
         return;
     }

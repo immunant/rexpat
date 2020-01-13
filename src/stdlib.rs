@@ -24,6 +24,10 @@ extern "C" {
     pub static mut stderr: *mut crate::stdlib::FILE;
 
     #[no_mangle]
+    pub fn strncmp(_: *const libc::c_char, _: *const libc::c_char, _: libc::c_ulong)
+        -> libc::c_int;
+
+    #[no_mangle]
     pub fn fclose(__stream: *mut crate::stdlib::FILE) -> libc::c_int;
 
     #[no_mangle]
@@ -225,3 +229,4 @@ pub type __blksize_t = libc::c_long;
 pub type __blkcnt_t = libc::c_long;
 pub type __ssize_t = libc::c_long;
 pub type __syscall_slong_t = libc::c_long;
+pub type intptr_t = libc::c_long;

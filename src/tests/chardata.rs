@@ -63,7 +63,7 @@ unsafe extern "C" fn xmlstrlen(mut s: *const crate::expat_external_h::XML_Char) 
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn CharData_Init(mut storage: *mut crate::src::tests::chardata::CharData) {
+pub unsafe extern "C" fn CharData_Init(mut storage: *mut crate::chardata::CharData) {
     if !storage.is_null() {
     } else {
         crate::stdlib::__assert_fail(
@@ -82,7 +82,7 @@ pub unsafe extern "C" fn CharData_Init(mut storage: *mut crate::src::tests::char
 #[no_mangle]
 
 pub unsafe extern "C" fn CharData_AppendXMLChars(
-    mut storage: *mut crate::src::tests::chardata::CharData,
+    mut storage: *mut crate::chardata::CharData,
     mut s: *const crate::expat_external_h::XML_Char,
     mut len: libc::c_int,
 ) {
@@ -178,7 +178,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
 #[no_mangle]
 
 pub unsafe extern "C" fn CharData_CheckXMLChars(
-    mut storage: *mut crate::src::tests::chardata::CharData,
+    mut storage: *mut crate::chardata::CharData,
     mut expected: *const crate::expat_external_h::XML_Char,
 ) -> libc::c_int {
     let mut buffer: [libc::c_char; 1024] = [0; 1024];
@@ -210,7 +210,7 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
             count,
             len,
         );
-        crate::src::tests::minicheck::_fail_unless(
+        crate::minicheck::_fail_unless(
             0 as libc::c_int,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const libc::c_char,
@@ -227,7 +227,7 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
         ),
     ) != 0 as libc::c_int
     {
-        crate::src::tests::minicheck::_fail_unless(
+        crate::minicheck::_fail_unless(
             0 as libc::c_int,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const libc::c_char,

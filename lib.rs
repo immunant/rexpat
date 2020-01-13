@@ -52,10 +52,4 @@ pub mod src {
         pub mod xmlrole;
         pub mod xmltok;
     } // mod lib
-    pub mod tests {
-        pub mod chardata;
-        pub mod memcheck;
-        pub mod minicheck;
-        pub mod structdata;
-    } // mod tests
 } // mod src
