@@ -1107,8 +1107,6 @@ pub mod siphash_h {
         return H;
     }
 
-    
-    
     /* SIPHASH_H */
     /* SIPHASH_MAIN */
     /* sip24_valid() */
@@ -1210,7 +1208,6 @@ pub use crate::stdlib::{
     __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
-
 
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 

@@ -78,7 +78,6 @@ pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
 
-
 /* This is simple demonstration of how to use expat. This program
    reads an XML document from standard input and writes a line with
    the name of each element to standard output indenting child

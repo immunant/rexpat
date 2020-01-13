@@ -84,7 +84,6 @@ pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
 
-
 /* Read an XML document from standard input and print an element
    outline on standard output.
    Must be used with Expat compiled for UTF-8 output.

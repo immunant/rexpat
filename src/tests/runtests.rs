@@ -437,7 +437,6 @@ pub mod stdlib {
     pub type __off64_t = libc::c_long;
 }
 
-
 pub mod siphash_h {
 
     /* struct sipkey */
@@ -1446,8 +1445,6 @@ pub mod siphash_h {
         return 1 as libc::c_int;
     }
 
-    
-    
     /* SIPHASH_H */
     /* SIPHASH_MAIN */
     /* sip24_valid() */
@@ -5128,7 +5125,9 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
 }
 /* Test that an error is reported if our NotStandalone handler fails */
 
-unsafe extern "C" fn reject_not_standalone_handler(mut _userData: *mut libc::c_void) -> libc::c_int {
+unsafe extern "C" fn reject_not_standalone_handler(
+    mut _userData: *mut libc::c_void,
+) -> libc::c_int {
     return ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
 }
 
@@ -5213,7 +5212,9 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
 }
 /* Test that no error is reported if our NotStandalone handler succeeds */
 
-unsafe extern "C" fn accept_not_standalone_handler(mut _userData: *mut libc::c_void) -> libc::c_int {
+unsafe extern "C" fn accept_not_standalone_handler(
+    mut _userData: *mut libc::c_void,
+) -> libc::c_int {
     return ::c2rust_out::expat_h::XML_STATUS_OK_0;
 }
 

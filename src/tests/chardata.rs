@@ -8,7 +8,6 @@ pub struct CharData {
 
 pub use crate::expat_external_h::XML_Char;
 
-
 use ::libc::{self};
 /*
                             __  __            _

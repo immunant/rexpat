@@ -332,7 +332,6 @@ pub use crate::stdlib::{
 };
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 
-
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct NotationList {
