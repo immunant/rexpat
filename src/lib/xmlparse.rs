@@ -1106,7 +1106,6 @@ pub mod siphash_h {
         (*H).c = 0 as libc::c_int as crate::stdlib::uint64_t;
         return H;
     }
-
     use crate::stddef_h::size_t;
     use crate::stdlib::uint64_t;
     /* SIPHASH_H */
@@ -1114,105 +1113,348 @@ pub mod siphash_h {
     /* sip24_valid() */
 }
 
-pub use crate::ascii_h::{
-    ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_h, ASCII_l, ASCII_m, ASCII_n, ASCII_o, ASCII_p,
-    ASCII_r, ASCII_s, ASCII_t, ASCII_w, ASCII_x, ASCII_0, ASCII_1, ASCII_2, ASCII_3, ASCII_8,
-    ASCII_9, ASCII_A, ASCII_C, ASCII_COLON, ASCII_COMMA, ASCII_D, ASCII_E, ASCII_EQUALS,
-    ASCII_EXCL, ASCII_F, ASCII_HASH, ASCII_I, ASCII_K, ASCII_L, ASCII_LPAREN, ASCII_M, ASCII_N,
-    ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_S, ASCII_SLASH, ASCII_T, ASCII_X, ASCII_Y,
-};
-pub use crate::expat_config_h::XML_CONTEXT_BYTES;
-pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
-pub use crate::expat_h::{
-    XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
-    XML_Content_Quant, XML_Content_Type, XML_DefaultHandler, XML_ElementDeclHandler, XML_Encoding,
-    XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
-    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_Expat_Version,
-    XML_ExternalEntityRefHandler, XML_Feature, XML_FeatureEnum, XML_Memory_Handling_Suite,
-    XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing, XML_Parser,
-    XML_Parsing, XML_ParsingStatus, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
-    XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
-    XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
-    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_CQUANT_NONE, XML_CQUANT_OPT,
-    XML_CQUANT_PLUS, XML_CQUANT_REP, XML_CTYPE_ANY, XML_CTYPE_CHOICE, XML_CTYPE_EMPTY,
-    XML_CTYPE_MIXED, XML_CTYPE_NAME, XML_CTYPE_SEQ, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY,
-    XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF, XML_ERROR_BAD_CHAR_REF, XML_ERROR_BINARY_ENTITY_REF,
-    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
-    XML_ERROR_ENTITY_DECLARED_IN_PE, XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-    XML_ERROR_FEATURE_REQUIRES_XML_DTD, XML_ERROR_FINISHED, XML_ERROR_INCOMPLETE_PE,
-    XML_ERROR_INCORRECT_ENCODING, XML_ERROR_INVALID_ARGUMENT, XML_ERROR_INVALID_TOKEN,
-    XML_ERROR_JUNK_AFTER_DOC_ELEMENT, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE,
-    XML_ERROR_NOT_STANDALONE, XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY,
-    XML_ERROR_PARAM_ENTITY_REF, XML_ERROR_PARTIAL_CHAR, XML_ERROR_PUBLICID,
-    XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
-    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
-    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
-    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
-    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNEXPECTED_STATE,
-    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL, XML_FALSE, XML_FEATURE_ATTR_INFO,
-    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
-    XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
-    XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
-    XML_INITIALIZED, XML_MAJOR_VERSION, XML_MICRO_VERSION, XML_MINOR_VERSION,
-    XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
-    XML_STATUS_OK, XML_STATUS_OK_0, XML_STATUS_SUSPENDED, XML_STATUS_SUSPENDED_0, XML_SUSPENDED,
-    XML_TRUE,
-};
+pub use crate::stddef_h::ptrdiff_t;
+pub use crate::stddef_h::size_t;
+pub use crate::stddef_h::NULL;
+pub use crate::stdlib::_IO_codecvt;
+pub use crate::stdlib::_IO_lock_t;
+pub use crate::stdlib::_IO_marker;
+pub use crate::stdlib::_IO_wide_data;
+pub use crate::stdlib::__off64_t;
+pub use crate::stdlib::__off_t;
+pub use crate::stdlib::__pid_t;
+pub use crate::stdlib::__ssize_t;
+pub use crate::stdlib::__suseconds_t;
+pub use crate::stdlib::__time_t;
+pub use crate::stdlib::__uint64_t;
+pub use crate::stdlib::fprintf;
+pub use crate::stdlib::ssize_t;
+pub use crate::stdlib::stderr;
+pub use crate::stdlib::FILE;
+pub use crate::stdlib::_IO_FILE;
+pub use ::libc::timeval;
+
+pub use crate::expat_external_h::XML_Char;
+pub use crate::expat_external_h::XML_Index;
+pub use crate::expat_external_h::XML_LChar;
+pub use crate::expat_external_h::XML_Size;
+pub use crate::expat_h::XML_AttlistDeclHandler;
+pub use crate::expat_h::XML_Bool;
+pub use crate::expat_h::XML_CharacterDataHandler;
+pub use crate::expat_h::XML_CommentHandler;
+pub use crate::expat_h::XML_Content;
+pub use crate::expat_h::XML_Content_Quant;
+pub use crate::expat_h::XML_Content_Type;
+pub use crate::expat_h::XML_DefaultHandler;
+pub use crate::expat_h::XML_ElementDeclHandler;
+pub use crate::expat_h::XML_Encoding;
+pub use crate::expat_h::XML_EndCdataSectionHandler;
+pub use crate::expat_h::XML_EndDoctypeDeclHandler;
+pub use crate::expat_h::XML_EndElementHandler;
+pub use crate::expat_h::XML_EndNamespaceDeclHandler;
+pub use crate::expat_h::XML_EntityDeclHandler;
+pub use crate::expat_h::XML_Error;
+pub use crate::expat_h::XML_Expat_Version;
+pub use crate::expat_h::XML_ExternalEntityRefHandler;
+pub use crate::expat_h::XML_Feature;
+pub use crate::expat_h::XML_FeatureEnum;
+pub use crate::expat_h::XML_Memory_Handling_Suite;
+pub use crate::expat_h::XML_NotStandaloneHandler;
+pub use crate::expat_h::XML_NotationDeclHandler;
+pub use crate::expat_h::XML_ParamEntityParsing;
+pub use crate::expat_h::XML_Parser;
+pub use crate::expat_h::XML_Parsing;
+pub use crate::expat_h::XML_ParsingStatus;
+pub use crate::expat_h::XML_ProcessingInstructionHandler;
+pub use crate::expat_h::XML_SkippedEntityHandler;
+pub use crate::expat_h::XML_StartCdataSectionHandler;
+pub use crate::expat_h::XML_StartDoctypeDeclHandler;
+pub use crate::expat_h::XML_StartElementHandler;
+pub use crate::expat_h::XML_StartNamespaceDeclHandler;
+pub use crate::expat_h::XML_Status;
+pub use crate::expat_h::XML_UnknownEncodingHandler;
+pub use crate::expat_h::XML_UnparsedEntityDeclHandler;
+pub use crate::expat_h::XML_XmlDeclHandler;
+pub use crate::expat_h::XML_cp;
+pub use crate::expat_h::XML_CQUANT_NONE;
+pub use crate::expat_h::XML_CQUANT_OPT;
+pub use crate::expat_h::XML_CQUANT_PLUS;
+pub use crate::expat_h::XML_CQUANT_REP;
+pub use crate::expat_h::XML_CTYPE_ANY;
+pub use crate::expat_h::XML_CTYPE_CHOICE;
+pub use crate::expat_h::XML_CTYPE_EMPTY;
+pub use crate::expat_h::XML_CTYPE_MIXED;
+pub use crate::expat_h::XML_CTYPE_NAME;
+pub use crate::expat_h::XML_CTYPE_SEQ;
+pub use crate::expat_h::XML_ERROR_ABORTED;
+pub use crate::expat_h::XML_ERROR_ASYNC_ENTITY;
+pub use crate::expat_h::XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF;
+pub use crate::expat_h::XML_ERROR_BAD_CHAR_REF;
+pub use crate::expat_h::XML_ERROR_BINARY_ENTITY_REF;
+pub use crate::expat_h::XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
+pub use crate::expat_h::XML_ERROR_DUPLICATE_ATTRIBUTE;
+pub use crate::expat_h::XML_ERROR_ENTITY_DECLARED_IN_PE;
+pub use crate::expat_h::XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+pub use crate::expat_h::XML_ERROR_FEATURE_REQUIRES_XML_DTD;
+pub use crate::expat_h::XML_ERROR_FINISHED;
+pub use crate::expat_h::XML_ERROR_INCOMPLETE_PE;
+pub use crate::expat_h::XML_ERROR_INCORRECT_ENCODING;
+pub use crate::expat_h::XML_ERROR_INVALID_ARGUMENT;
+pub use crate::expat_h::XML_ERROR_INVALID_TOKEN;
+pub use crate::expat_h::XML_ERROR_JUNK_AFTER_DOC_ELEMENT;
+pub use crate::expat_h::XML_ERROR_MISPLACED_XML_PI;
+pub use crate::expat_h::XML_ERROR_NONE;
+pub use crate::expat_h::XML_ERROR_NOT_STANDALONE;
+pub use crate::expat_h::XML_ERROR_NOT_SUSPENDED;
+pub use crate::expat_h::XML_ERROR_NO_ELEMENTS;
+pub use crate::expat_h::XML_ERROR_NO_MEMORY;
+pub use crate::expat_h::XML_ERROR_PARAM_ENTITY_REF;
+pub use crate::expat_h::XML_ERROR_PARTIAL_CHAR;
+pub use crate::expat_h::XML_ERROR_PUBLICID;
+pub use crate::expat_h::XML_ERROR_RECURSIVE_ENTITY_REF;
+pub use crate::expat_h::XML_ERROR_RESERVED_NAMESPACE_URI;
+pub use crate::expat_h::XML_ERROR_RESERVED_PREFIX_XML;
+pub use crate::expat_h::XML_ERROR_RESERVED_PREFIX_XMLNS;
+pub use crate::expat_h::XML_ERROR_SUSPENDED;
+pub use crate::expat_h::XML_ERROR_SUSPEND_PE;
+pub use crate::expat_h::XML_ERROR_SYNTAX;
+pub use crate::expat_h::XML_ERROR_TAG_MISMATCH;
+pub use crate::expat_h::XML_ERROR_TEXT_DECL;
+pub use crate::expat_h::XML_ERROR_UNBOUND_PREFIX;
+pub use crate::expat_h::XML_ERROR_UNCLOSED_CDATA_SECTION;
+pub use crate::expat_h::XML_ERROR_UNCLOSED_TOKEN;
+pub use crate::expat_h::XML_ERROR_UNDECLARING_PREFIX;
+pub use crate::expat_h::XML_ERROR_UNDEFINED_ENTITY;
+pub use crate::expat_h::XML_ERROR_UNEXPECTED_STATE;
+pub use crate::expat_h::XML_ERROR_UNKNOWN_ENCODING;
+pub use crate::expat_h::XML_ERROR_XML_DECL;
+pub use crate::expat_h::XML_FALSE;
+pub use crate::expat_h::XML_FEATURE_ATTR_INFO;
+pub use crate::expat_h::XML_FEATURE_CONTEXT_BYTES;
+pub use crate::expat_h::XML_FEATURE_DTD;
+pub use crate::expat_h::XML_FEATURE_END;
+pub use crate::expat_h::XML_FEATURE_LARGE_SIZE;
+pub use crate::expat_h::XML_FEATURE_MIN_SIZE;
+pub use crate::expat_h::XML_FEATURE_NS;
+pub use crate::expat_h::XML_FEATURE_SIZEOF_XML_CHAR;
+pub use crate::expat_h::XML_FEATURE_SIZEOF_XML_LCHAR;
+pub use crate::expat_h::XML_FEATURE_UNICODE;
+pub use crate::expat_h::XML_FEATURE_UNICODE_WCHAR_T;
+pub use crate::expat_h::XML_FINISHED;
+pub use crate::expat_h::XML_INITIALIZED;
+pub use crate::expat_h::XML_MAJOR_VERSION;
+pub use crate::expat_h::XML_MICRO_VERSION;
+pub use crate::expat_h::XML_MINOR_VERSION;
+pub use crate::expat_h::XML_PARAM_ENTITY_PARSING_ALWAYS;
+pub use crate::expat_h::XML_PARAM_ENTITY_PARSING_NEVER;
+pub use crate::expat_h::XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE;
+pub use crate::expat_h::XML_PARSING;
+pub use crate::expat_h::XML_STATUS_ERROR;
+pub use crate::expat_h::XML_STATUS_ERROR_0;
+pub use crate::expat_h::XML_STATUS_OK;
+pub use crate::expat_h::XML_STATUS_OK_0;
+pub use crate::expat_h::XML_STATUS_SUSPENDED;
+pub use crate::expat_h::XML_STATUS_SUSPENDED_0;
+pub use crate::expat_h::XML_SUSPENDED;
+pub use crate::expat_h::XML_TRUE;
 pub use crate::internal::__INT_MAX__;
-pub use crate::siphash_h::{siphash, sipkey};
-pub use crate::src::lib::xmlparse::siphash_h::{
-    sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash24,
-};
-pub use crate::src::lib::xmlrole::{
-    prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
-    PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME, XML_ROLE_ATTLIST_NONE,
-    XML_ROLE_ATTRIBUTE_ENUM_VALUE, XML_ROLE_ATTRIBUTE_NAME, XML_ROLE_ATTRIBUTE_NOTATION_VALUE,
-    XML_ROLE_ATTRIBUTE_TYPE_CDATA, XML_ROLE_ATTRIBUTE_TYPE_ENTITIES,
-    XML_ROLE_ATTRIBUTE_TYPE_ENTITY, XML_ROLE_ATTRIBUTE_TYPE_ID, XML_ROLE_ATTRIBUTE_TYPE_IDREF,
-    XML_ROLE_ATTRIBUTE_TYPE_IDREFS, XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN,
-    XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS, XML_ROLE_COMMENT, XML_ROLE_CONTENT_ANY,
-    XML_ROLE_CONTENT_ELEMENT, XML_ROLE_CONTENT_ELEMENT_OPT, XML_ROLE_CONTENT_ELEMENT_PLUS,
-    XML_ROLE_CONTENT_ELEMENT_REP, XML_ROLE_CONTENT_EMPTY, XML_ROLE_CONTENT_PCDATA,
-    XML_ROLE_DEFAULT_ATTRIBUTE_VALUE, XML_ROLE_DOCTYPE_CLOSE, XML_ROLE_DOCTYPE_INTERNAL_SUBSET,
-    XML_ROLE_DOCTYPE_NAME, XML_ROLE_DOCTYPE_NONE, XML_ROLE_DOCTYPE_PUBLIC_ID,
-    XML_ROLE_DOCTYPE_SYSTEM_ID, XML_ROLE_ELEMENT_NAME, XML_ROLE_ELEMENT_NONE,
-    XML_ROLE_ENTITY_COMPLETE, XML_ROLE_ENTITY_NONE, XML_ROLE_ENTITY_NOTATION_NAME,
-    XML_ROLE_ENTITY_PUBLIC_ID, XML_ROLE_ENTITY_SYSTEM_ID, XML_ROLE_ENTITY_VALUE, XML_ROLE_ERROR,
-    XML_ROLE_FIXED_ATTRIBUTE_VALUE, XML_ROLE_GENERAL_ENTITY_NAME, XML_ROLE_GROUP_CHOICE,
-    XML_ROLE_GROUP_CLOSE, XML_ROLE_GROUP_CLOSE_OPT, XML_ROLE_GROUP_CLOSE_PLUS,
-    XML_ROLE_GROUP_CLOSE_REP, XML_ROLE_GROUP_OPEN, XML_ROLE_GROUP_SEQUENCE, XML_ROLE_IGNORE_SECT,
-    XML_ROLE_IMPLIED_ATTRIBUTE_VALUE, XML_ROLE_INNER_PARAM_ENTITY_REF, XML_ROLE_INSTANCE_START,
-    XML_ROLE_NONE, XML_ROLE_NOTATION_NAME, XML_ROLE_NOTATION_NONE, XML_ROLE_NOTATION_NO_SYSTEM_ID,
-    XML_ROLE_NOTATION_PUBLIC_ID, XML_ROLE_NOTATION_SYSTEM_ID, XML_ROLE_PARAM_ENTITY_NAME,
-    XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI, XML_ROLE_REQUIRED_ATTRIBUTE_VALUE, XML_ROLE_TEXT_DECL,
-    XML_ROLE_XML_DECL,
-};
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    XmlGetUtf8InternalEncoding, XmlGetUtf8InternalEncodingNS, XmlInitEncoding, XmlInitEncodingNS,
-    XmlParseXmlDecl, XmlParseXmlDeclNS,
-};
-pub use crate::src::lib::xmltok::{
-    encoding, position, XML_Convert_Result, XmlInitUnknownEncoding, XmlInitUnknownEncodingNS,
-    XmlSizeOfUnknownEncoding, XmlUtf8Encode, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING,
-    POSITION, SCANNER, XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE,
-    XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_BOM, XML_TOK_CDATA_SECT_CLOSE,
-    XML_TOK_CDATA_SECT_OPEN, XML_TOK_CHAR_REF, XML_TOK_COMMENT, XML_TOK_DATA_CHARS,
-    XML_TOK_DATA_NEWLINE, XML_TOK_EMPTY_ELEMENT_NO_ATTS, XML_TOK_EMPTY_ELEMENT_WITH_ATTS,
-    XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT, XML_TOK_INSTANCE_START,
-    XML_TOK_INVALID, XML_TOK_NONE, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL, XML_TOK_PARTIAL_CHAR,
-    XML_TOK_PI, XML_TOK_PROLOG_S, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
-    XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL,
-};
-pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __pid_t, __ssize_t,
-    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
-    ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
-};
-use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read, realloc};
-use ::libc::{__errno_location, close, free, getenv, getpid, open, strcmp};
-pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
+pub use crate::siphash_h::siphash;
+pub use crate::siphash_h::sipkey;
+pub use crate::src::lib::xmlparse::siphash_h::sip24_final;
+pub use crate::src::lib::xmlparse::siphash_h::sip24_init;
+pub use crate::src::lib::xmlparse::siphash_h::sip24_update;
+pub use crate::src::lib::xmlparse::siphash_h::sip24_valid;
+pub use crate::src::lib::xmlparse::siphash_h::sip_round;
+pub use crate::src::lib::xmlparse::siphash_h::sip_tokey;
+pub use crate::src::lib::xmlparse::siphash_h::siphash24;
+pub use crate::src::lib::xmlrole::prolog_state;
+pub use crate::src::lib::xmlrole::C2RustUnnamed_0;
+pub use crate::src::lib::xmlrole::XmlPrologStateInit;
+pub use crate::src::lib::xmlrole::XmlPrologStateInitExternalEntity;
+pub use crate::src::lib::xmlrole::PROLOG_STATE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTLIST_ELEMENT_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTLIST_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_ENUM_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_NOTATION_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_CDATA;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_ENTITIES;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_ENTITY;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_IDREF;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_IDREFS;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN;
+pub use crate::src::lib::xmlrole::XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS;
+pub use crate::src::lib::xmlrole::XML_ROLE_COMMENT;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_ANY;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_ELEMENT;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_ELEMENT_OPT;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_ELEMENT_PLUS;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_ELEMENT_REP;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_EMPTY;
+pub use crate::src::lib::xmlrole::XML_ROLE_CONTENT_PCDATA;
+pub use crate::src::lib::xmlrole::XML_ROLE_DEFAULT_ATTRIBUTE_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_CLOSE;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_PUBLIC_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_DOCTYPE_SYSTEM_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_ELEMENT_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_ELEMENT_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_COMPLETE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_NOTATION_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_PUBLIC_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_SYSTEM_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_ENTITY_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_ERROR;
+pub use crate::src::lib::xmlrole::XML_ROLE_FIXED_ATTRIBUTE_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_GENERAL_ENTITY_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_CHOICE;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_CLOSE;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_CLOSE_OPT;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_CLOSE_PLUS;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_CLOSE_REP;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_OPEN;
+pub use crate::src::lib::xmlrole::XML_ROLE_GROUP_SEQUENCE;
+pub use crate::src::lib::xmlrole::XML_ROLE_IGNORE_SECT;
+pub use crate::src::lib::xmlrole::XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_INNER_PARAM_ENTITY_REF;
+pub use crate::src::lib::xmlrole::XML_ROLE_INSTANCE_START;
+pub use crate::src::lib::xmlrole::XML_ROLE_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_NOTATION_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_NOTATION_NONE;
+pub use crate::src::lib::xmlrole::XML_ROLE_NOTATION_NO_SYSTEM_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_NOTATION_PUBLIC_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_NOTATION_SYSTEM_ID;
+pub use crate::src::lib::xmlrole::XML_ROLE_PARAM_ENTITY_NAME;
+pub use crate::src::lib::xmlrole::XML_ROLE_PARAM_ENTITY_REF;
+pub use crate::src::lib::xmlrole::XML_ROLE_PI;
+pub use crate::src::lib::xmlrole::XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
+pub use crate::src::lib::xmlrole::XML_ROLE_TEXT_DECL;
+pub use crate::src::lib::xmlrole::XML_ROLE_XML_DECL;
+pub use crate::src::lib::xmltok::encoding;
+pub use crate::src::lib::xmltok::position;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlInitEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlInitEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlParseXmlDecl;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlParseXmlDeclNS;
+pub use crate::src::lib::xmltok::XML_Convert_Result;
+pub use crate::src::lib::xmltok::XmlInitUnknownEncoding;
+pub use crate::src::lib::xmltok::XmlInitUnknownEncodingNS;
+pub use crate::src::lib::xmltok::XmlSizeOfUnknownEncoding;
+pub use crate::src::lib::xmltok::XmlUtf8Encode;
+pub use crate::src::lib::xmltok::ATTRIBUTE;
+pub use crate::src::lib::xmltok::CONVERTER;
+pub use crate::src::lib::xmltok::ENCODING;
+pub use crate::src::lib::xmltok::INIT_ENCODING;
+pub use crate::src::lib::xmltok::POSITION;
+pub use crate::src::lib::xmltok::SCANNER;
+pub use crate::src::lib::xmltok::XML_CONVERT_COMPLETED;
+pub use crate::src::lib::xmltok::XML_CONVERT_INPUT_INCOMPLETE;
+pub use crate::src::lib::xmltok::XML_CONVERT_OUTPUT_EXHAUSTED;
+pub use crate::src::lib::xmltok::XML_TOK_ATTRIBUTE_VALUE_S;
+pub use crate::src::lib::xmltok::XML_TOK_BOM;
+pub use crate::src::lib::xmltok::XML_TOK_CDATA_SECT_CLOSE;
+pub use crate::src::lib::xmltok::XML_TOK_CDATA_SECT_OPEN;
+pub use crate::src::lib::xmltok::XML_TOK_CHAR_REF;
+pub use crate::src::lib::xmltok::XML_TOK_COMMENT;
+pub use crate::src::lib::xmltok::XML_TOK_DATA_CHARS;
+pub use crate::src::lib::xmltok::XML_TOK_DATA_NEWLINE;
+pub use crate::src::lib::xmltok::XML_TOK_EMPTY_ELEMENT_NO_ATTS;
+pub use crate::src::lib::xmltok::XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
+pub use crate::src::lib::xmltok::XML_TOK_END_TAG;
+pub use crate::src::lib::xmltok::XML_TOK_ENTITY_REF;
+pub use crate::src::lib::xmltok::XML_TOK_IGNORE_SECT;
+pub use crate::src::lib::xmltok::XML_TOK_INSTANCE_START;
+pub use crate::src::lib::xmltok::XML_TOK_INVALID;
+pub use crate::src::lib::xmltok::XML_TOK_NONE;
+pub use crate::src::lib::xmltok::XML_TOK_PARAM_ENTITY_REF;
+pub use crate::src::lib::xmltok::XML_TOK_PARTIAL;
+pub use crate::src::lib::xmltok::XML_TOK_PARTIAL_CHAR;
+pub use crate::src::lib::xmltok::XML_TOK_PI;
+pub use crate::src::lib::xmltok::XML_TOK_PROLOG_S;
+pub use crate::src::lib::xmltok::XML_TOK_START_TAG_NO_ATTS;
+pub use crate::src::lib::xmltok::XML_TOK_START_TAG_WITH_ATTS;
+pub use crate::src::lib::xmltok::XML_TOK_TRAILING_CR;
+pub use crate::src::lib::xmltok::XML_TOK_TRAILING_RSQB;
+pub use crate::src::lib::xmltok::XML_TOK_XML_DECL;
+use crate::stdlib::__assert_fail;
+pub use crate::stdlib::__timezone_ptr_t;
+pub use crate::stdlib::gettimeofday;
+use crate::stdlib::memcmp;
+use crate::stdlib::memcpy;
+use crate::stdlib::memmove;
+use crate::stdlib::memset;
+pub use crate::stdlib::timezone;
+pub use crate::stdlib::uint64_t;
+use ::libc::strcmp;
+pub use ::libc::INT_MAX;
+
+pub use crate::expat_config_h::XML_CONTEXT_BYTES;
+use crate::stdlib::malloc;
+use crate::stdlib::read;
+use crate::stdlib::realloc;
+use ::libc::__errno_location;
+use ::libc::close;
+use ::libc::free;
+use ::libc::getenv;
+use ::libc::getpid;
+use ::libc::open;
+pub use ::libc::EINTR;
+pub use ::libc::O_RDONLY;
+
+pub use crate::ascii_h::ASCII_a;
+pub use crate::ascii_h::ASCII_c;
+pub use crate::ascii_h::ASCII_e;
+pub use crate::ascii_h::ASCII_g;
+pub use crate::ascii_h::ASCII_h;
+pub use crate::ascii_h::ASCII_l;
+pub use crate::ascii_h::ASCII_m;
+pub use crate::ascii_h::ASCII_n;
+pub use crate::ascii_h::ASCII_o;
+pub use crate::ascii_h::ASCII_p;
+pub use crate::ascii_h::ASCII_r;
+pub use crate::ascii_h::ASCII_s;
+pub use crate::ascii_h::ASCII_t;
+pub use crate::ascii_h::ASCII_w;
+pub use crate::ascii_h::ASCII_x;
+pub use crate::ascii_h::ASCII_0;
+pub use crate::ascii_h::ASCII_1;
+pub use crate::ascii_h::ASCII_2;
+pub use crate::ascii_h::ASCII_3;
+pub use crate::ascii_h::ASCII_8;
+pub use crate::ascii_h::ASCII_9;
+pub use crate::ascii_h::ASCII_A;
+pub use crate::ascii_h::ASCII_C;
+pub use crate::ascii_h::ASCII_COLON;
+pub use crate::ascii_h::ASCII_COMMA;
+pub use crate::ascii_h::ASCII_D;
+pub use crate::ascii_h::ASCII_E;
+pub use crate::ascii_h::ASCII_EQUALS;
+pub use crate::ascii_h::ASCII_EXCL;
+pub use crate::ascii_h::ASCII_F;
+pub use crate::ascii_h::ASCII_HASH;
+pub use crate::ascii_h::ASCII_I;
+pub use crate::ascii_h::ASCII_K;
+pub use crate::ascii_h::ASCII_L;
+pub use crate::ascii_h::ASCII_LPAREN;
+pub use crate::ascii_h::ASCII_M;
+pub use crate::ascii_h::ASCII_N;
+pub use crate::ascii_h::ASCII_O;
+pub use crate::ascii_h::ASCII_PERIOD;
+pub use crate::ascii_h::ASCII_PIPE;
+pub use crate::ascii_h::ASCII_R;
+pub use crate::ascii_h::ASCII_S;
+pub use crate::ascii_h::ASCII_SLASH;
+pub use crate::ascii_h::ASCII_T;
+pub use crate::ascii_h::ASCII_X;
+pub use crate::ascii_h::ASCII_Y;
+pub use crate::stdlib::getrandom;
+pub use crate::stdlib::GRND_NONBLOCK;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1784,7 +2026,7 @@ unsafe extern "C" fn gather_time_entropy() -> libc::c_ulong {
             b"gettimeofday_res == 0\x00" as *const u8 as *const libc::c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00" as *const u8
                 as *const libc::c_char,
-            791 as libc::c_int as libc::c_uint,
+            782 as libc::c_int as libc::c_uint,
             (*::std::mem::transmute::<&[u8; 40], &[libc::c_char; 40]>(
                 b"unsigned long gather_time_entropy(void)\x00",
             ))
@@ -2746,7 +2988,7 @@ pub unsafe extern "C" fn XML_GetBase(
 /* Returns the number of the attribute/value pairs passed in last call
    to the XML_StartElementHandler that were specified in the start-tag
    rather than defaulted. Each attribute/value pair counts as 2; thus
-   this corresponds to an index into the atts array passed to the
+   this correspondds to an index into the atts array passed to the
    XML_StartElementHandler.  Returns -1 if parser == NULL.
 */
 #[no_mangle]
@@ -2762,7 +3004,7 @@ pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(
 /* Returns the index of the ID attribute passed in the last call to
    XML_StartElementHandler, or -1 if there is no ID attribute or
    parser == NULL.  Each attribute/value pair counts as 2; thus this
-   corresponds to an index into the atts array passed to the
+   correspondds to an index into the atts array passed to the
    XML_StartElementHandler.
 */
 #[no_mangle]
@@ -3691,7 +3933,7 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
             b"status != NULL\x00" as *const u8 as *const libc::c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00" as *const u8
                 as *const libc::c_char,
-            2123 as libc::c_int as libc::c_uint,
+            2113 as libc::c_int as libc::c_uint,
             (*::std::mem::transmute::<&[u8; 59], &[libc::c_char; 59]>(
                 b"void XML_GetParsingStatus(XML_Parser, XML_ParsingStatus *)\x00",
             ))
@@ -7996,7 +8238,7 @@ unsafe extern "C" fn doProlog(
                                           *const u8 as *const libc::c_char,
                                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00"
                                           as *const u8 as *const libc::c_char,
-                                      4800 as libc::c_int as libc::c_uint,
+                                      4790 as libc::c_int as libc::c_uint,
                                       (*::std::mem::transmute::<&[u8; 136],
                                                                 &[libc::c_char; 136]>(b"enum XML_Error doProlog(XML_Parser, const ENCODING *, const char *, const char *, int, const char *, const char **, XML_Bool, XML_Bool)\x00")).as_ptr());
                     }

@@ -272,7 +272,7 @@ pub type XML_EndDoctypeDeclHandler = Option<unsafe extern "C" fn(_: *mut libc::c
 
    For internal entities (<!ENTITY foo "bar">), value will
    be non-NULL and systemId, publicID, and notationName will be NULL.
-   The value string is NOT null-terminated; the length is provided in
+   The value string is NOT nul-terminated; the length is provided in
    the value_length argument. Since it is legal to have zero-length
    values, do not use this argument to test for internal entities.
 

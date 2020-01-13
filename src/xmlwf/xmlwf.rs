@@ -114,7 +114,7 @@ pub mod expat_h {
 
        For internal entities (<!ENTITY foo "bar">), value will
        be non-NULL and systemId, publicID, and notationName will be NULL.
-       The value string is NOT null-terminated; the length is provided in
+       The value string is NOT nul-terminated; the length is provided in
        the value_length argument. Since it is legal to have zero-length
        values, do not use this argument to test for internal entities.
 
@@ -315,23 +315,57 @@ pub mod stdlib {
 
     pub type __off64_t = libc::c_long;
 }
-
-pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
-pub use crate::expat_h::{
-    XML_CharacterDataHandler, XML_CommentHandler, XML_DefaultHandler, XML_EndCdataSectionHandler,
-    XML_EndDoctypeDeclHandler, XML_EndElementHandler, XML_EndNamespaceDeclHandler,
-    XML_EntityDeclHandler, XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler,
-    XML_ParamEntityParsing, XML_Parser, XML_ProcessingInstructionHandler,
-    XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
-    XML_StartNamespaceDeclHandler, XML_UnknownEncodingHandler,
-};
-pub use crate::stddef_h::size_t;
-pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __compar_fn_t, __off64_t, __off_t, fclose,
-    fopen, fputs, putc, qsort, setvbuf, stderr, stdout, FILE, __ASSERT_FUNCTION,
-};
-pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 use ::c2rust_out::*;
+
+pub use crate::stddef_h::size_t;
+pub use crate::stdlib::_IO_codecvt;
+pub use crate::stdlib::_IO_lock_t;
+pub use crate::stdlib::_IO_marker;
+pub use crate::stdlib::_IO_wide_data;
+pub use crate::stdlib::__off64_t;
+pub use crate::stdlib::__off_t;
+pub use crate::stdlib::FILE;
+
+pub use crate::expat_external_h::XML_Char;
+pub use crate::expat_external_h::XML_Index;
+pub use crate::expat_external_h::XML_LChar;
+pub use crate::expat_external_h::XML_Size;
+pub use crate::expat_h::XML_CharacterDataHandler;
+pub use crate::expat_h::XML_CommentHandler;
+pub use crate::expat_h::XML_DefaultHandler;
+pub use crate::expat_h::XML_EndCdataSectionHandler;
+pub use crate::expat_h::XML_EndDoctypeDeclHandler;
+pub use crate::expat_h::XML_EndElementHandler;
+pub use crate::expat_h::XML_EndNamespaceDeclHandler;
+pub use crate::expat_h::XML_EntityDeclHandler;
+pub use crate::expat_h::XML_FeatureEnum;
+pub use crate::expat_h::XML_NotStandaloneHandler;
+pub use crate::expat_h::XML_NotationDeclHandler;
+pub use crate::expat_h::XML_ParamEntityParsing;
+pub use crate::expat_h::XML_Parser;
+pub use crate::expat_h::XML_ProcessingInstructionHandler;
+pub use crate::expat_h::XML_StartCdataSectionHandler;
+pub use crate::expat_h::XML_StartDoctypeDeclHandler;
+pub use crate::expat_h::XML_StartElementHandler;
+pub use crate::expat_h::XML_StartNamespaceDeclHandler;
+pub use crate::expat_h::XML_UnknownEncodingHandler;
+pub use crate::stdlib::__compar_fn_t;
+pub use crate::stdlib::fclose;
+pub use crate::stdlib::fopen;
+pub use crate::stdlib::fputs;
+pub use crate::stdlib::putc;
+pub use crate::stdlib::qsort;
+pub use crate::stdlib::setvbuf;
+pub use crate::stdlib::stderr;
+pub use crate::stdlib::stdout;
+pub use crate::stdlib::__ASSERT_FUNCTION;
+pub use crate::xmltchar_h::fputts;
+pub use crate::xmltchar_h::puttc;
+pub use crate::xmltchar_h::tcscat;
+pub use crate::xmltchar_h::tcschr;
+pub use crate::xmltchar_h::tcscmp;
+pub use crate::xmltchar_h::tfopen;
+pub use crate::xmltchar_h::tremove;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1462,7 +1496,7 @@ unsafe extern "C" fn usage(
     mut rc: libc::c_int,
 ) {
     ::c2rust_out::stdlib::fprintf(crate::stdlib::stderr as *mut ::c2rust_out::stdlib::_IO_FILE,
-            b"usage: %s [-s] [-n] [-p] [-x] [-e ENCODING] [-w] [-r] [-d DIRECTORY]\n             [-c | -m | -t] [-N]\n             [FILE [FILE ...]]\n\nxmlwf - Determines if an XML document is well-formed\n\npositional arguments:\n  FILE          file to process (default: STDIN)\n\ninput control arguments:\n  -s            print an error if the document is not [s]tandalone\n  -n            enable [n]amespace processing\n  -p            enable processing external DTDs and [p]arameter entities\n  -x            enable processing of e[x]ternal entities\n  -e ENCODING   override any in-document [e]ncoding declaration\n  -w            enable support for [W]indows code pages\n  -r            disable memory-mapping and use normal file [r]ead IO calls instead\n\noutput control arguments:\n  -d DIRECTORY  output [d]estination directory\n  -c            write a [c]opy of input XML, not canonical XML\n  -m            write [m]eta XML, not canonical XML\n  -t            write no XML output for [t]iming of plain parsing\n  -N            enable adding doctype and [n]otation declarations\n\ninfo arguments:\n  -h            show this [h]elp message and exit\n  -v            show program\'s [v]ersion number and exit\n\nxmlwf of libexpat is software libre, licensed under the MIT license.\nPlease report bugs at https://github.com/libexpat/libexpat/issues.  Thank you!\n\x00"
+            b"usage: %s [-s] [-n] [-p] [-x] [-e ENCODING] [-w] [-r] [-d DIRECTORY]\n             [-c | -m | -t] [-N]\n             [FILE [FILE ...]]\n\nxmlwf - Determines if an XML document is well-formed\n\npositional arguments:\n  FILE          files to process (default: STDIN)\n\ninput control arguments:\n  -s            print an error if the document is not [s]tandalone\n  -n            enable [n]amespace processing\n  -p            enable processing external DTDs and [p]arameter entities\n  -x            enable processing of e[x]ternal entities\n  -e ENCODING   override any in-document [e]ncoding declaration\n  -w            enable support for [W]indows code pages\n  -r            disable memory-mapping and use normal file [r]ead IO calls instead\n\noutput control arguments:\n  -d DIRECTORY  output [d]estination directory\n  -c            write a [c]opy of input XML, not canonical XML\n  -m            write [m]eta XML, not canonical XML\n  -t            write no XML output for [t]iming of plain parsing\n  -N            enable adding doctype and [n]otation declarations\n\ninfo arguments:\n  -h            show this [h]elp message and exit\n  -v            show program\'s [v]ersion number and exit\n\nlibexpat is software libre, licensed under the MIT license.\nPlease report bugs at https://github.com/libexpat/libexpat/issues.  Thank you!\n\x00"
                 as *const u8 as *const libc::c_char, prog);
     ::libc::exit(rc);
 }

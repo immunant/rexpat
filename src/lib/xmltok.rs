@@ -13195,33 +13195,78 @@ pub mod xmltok_impl_c {
         }
     }
 
-    use crate::ascii_h::{
-        ASCII_A, ASCII_AMP, ASCII_APOS, ASCII_C, ASCII_D, ASCII_GT, ASCII_LSQB, ASCII_LT,
-        ASCII_QUOT, ASCII_SPACE, ASCII_T,
-    };
-    use crate::ascii_h_0::{ASCII_a, ASCII_0};
+    use crate::ascii_h::ASCII_A;
+    use crate::ascii_h::ASCII_AMP;
+    use crate::ascii_h::ASCII_APOS;
+    use crate::ascii_h::ASCII_C;
+    use crate::ascii_h::ASCII_D;
+    use crate::ascii_h::ASCII_GT;
+    use crate::ascii_h::ASCII_LSQB;
+    use crate::ascii_h::ASCII_LT;
+    use crate::ascii_h::ASCII_QUOT;
+    use crate::ascii_h::ASCII_SPACE;
+    use crate::ascii_h::ASCII_T;
+    use crate::ascii_h_0::ASCII_a;
+    use crate::ascii_h_0::ASCII_0;
     use crate::expat_external_h::XML_Size;
-    use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
-    use crate::src::lib::xmltok::{
-        checkCharRefNumber, normal_encoding, unicode_byte_type, XML_TOK_INSTANCE_START,
-        XML_TOK_PROLOG_S,
-    };
+    use crate::src::lib::xmltok::checkCharRefNumber;
+    use crate::src::lib::xmltok::nametab_h::namePages;
+    use crate::src::lib::xmltok::nametab_h::namingBitmap;
+    use crate::src::lib::xmltok::nametab_h::nmstrtPages;
+    use crate::src::lib::xmltok::normal_encoding;
+    use crate::src::lib::xmltok::unicode_byte_type;
+    use crate::src::lib::xmltok::XML_TOK_INSTANCE_START;
+    use crate::src::lib::xmltok::XML_TOK_PROLOG_S;
     use crate::stddef_h::size_t;
-    use crate::xmltok_h::{
-        XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_CDATA_SECT_CLOSE, XML_TOK_CDATA_SECT_OPEN,
-        XML_TOK_CHAR_REF, XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,
-        XML_TOK_CLOSE_PAREN_PLUS, XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT,
-        XML_TOK_COND_SECT_CLOSE, XML_TOK_COND_SECT_OPEN, XML_TOK_DATA_CHARS, XML_TOK_DATA_NEWLINE,
-        XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN, XML_TOK_EMPTY_ELEMENT_NO_ATTS,
-        XML_TOK_EMPTY_ELEMENT_WITH_ATTS, XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT,
-        XML_TOK_INVALID, XML_TOK_LITERAL, XML_TOK_NAME, XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS,
-        XML_TOK_NAME_QUESTION, XML_TOK_NMTOKEN, XML_TOK_NONE, XML_TOK_OPEN_BRACKET,
-        XML_TOK_OPEN_PAREN, XML_TOK_OR, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL,
-        XML_TOK_PARTIAL_CHAR, XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME,
-        XML_TOK_PREFIXED_NAME, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
-        XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL,
-    };
-    use crate::xmltok_impl_h::{BT_APOS, BT_EQUALS, BT_LF, BT_QUOT};
+    use crate::xmltok_h::XML_TOK_ATTRIBUTE_VALUE_S;
+    use crate::xmltok_h::XML_TOK_CDATA_SECT_CLOSE;
+    use crate::xmltok_h::XML_TOK_CDATA_SECT_OPEN;
+    use crate::xmltok_h::XML_TOK_CHAR_REF;
+    use crate::xmltok_h::XML_TOK_CLOSE_BRACKET;
+    use crate::xmltok_h::XML_TOK_CLOSE_PAREN;
+    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_ASTERISK;
+    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_PLUS;
+    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_QUESTION;
+    use crate::xmltok_h::XML_TOK_COMMA;
+    use crate::xmltok_h::XML_TOK_COMMENT;
+    use crate::xmltok_h::XML_TOK_COND_SECT_CLOSE;
+    use crate::xmltok_h::XML_TOK_COND_SECT_OPEN;
+    use crate::xmltok_h::XML_TOK_DATA_CHARS;
+    use crate::xmltok_h::XML_TOK_DATA_NEWLINE;
+    use crate::xmltok_h::XML_TOK_DECL_CLOSE;
+    use crate::xmltok_h::XML_TOK_DECL_OPEN;
+    use crate::xmltok_h::XML_TOK_EMPTY_ELEMENT_NO_ATTS;
+    use crate::xmltok_h::XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
+    use crate::xmltok_h::XML_TOK_END_TAG;
+    use crate::xmltok_h::XML_TOK_ENTITY_REF;
+    use crate::xmltok_h::XML_TOK_IGNORE_SECT;
+    use crate::xmltok_h::XML_TOK_INVALID;
+    use crate::xmltok_h::XML_TOK_LITERAL;
+    use crate::xmltok_h::XML_TOK_NAME;
+    use crate::xmltok_h::XML_TOK_NAME_ASTERISK;
+    use crate::xmltok_h::XML_TOK_NAME_PLUS;
+    use crate::xmltok_h::XML_TOK_NAME_QUESTION;
+    use crate::xmltok_h::XML_TOK_NMTOKEN;
+    use crate::xmltok_h::XML_TOK_NONE;
+    use crate::xmltok_h::XML_TOK_OPEN_BRACKET;
+    use crate::xmltok_h::XML_TOK_OPEN_PAREN;
+    use crate::xmltok_h::XML_TOK_OR;
+    use crate::xmltok_h::XML_TOK_PARAM_ENTITY_REF;
+    use crate::xmltok_h::XML_TOK_PARTIAL;
+    use crate::xmltok_h::XML_TOK_PARTIAL_CHAR;
+    use crate::xmltok_h::XML_TOK_PERCENT;
+    use crate::xmltok_h::XML_TOK_PI;
+    use crate::xmltok_h::XML_TOK_POUND_NAME;
+    use crate::xmltok_h::XML_TOK_PREFIXED_NAME;
+    use crate::xmltok_h::XML_TOK_START_TAG_NO_ATTS;
+    use crate::xmltok_h::XML_TOK_START_TAG_WITH_ATTS;
+    use crate::xmltok_h::XML_TOK_TRAILING_CR;
+    use crate::xmltok_h::XML_TOK_TRAILING_RSQB;
+    use crate::xmltok_h::XML_TOK_XML_DECL;
+    use crate::xmltok_impl_h::BT_APOS;
+    use crate::xmltok_impl_h::BT_EQUALS;
+    use crate::xmltok_impl_h::BT_LF;
+    use crate::xmltok_impl_h::BT_QUOT;
     /* XML_TOK_IMPL_C */
     /* XML_TOK_IMPL_C */
     /* XML_TOK_IMPL_C */
@@ -14484,68 +14529,241 @@ pub mod xmltok_ns_c {
         );
     }
 
-    use crate::src::lib::xmltok::{
-        doParseXmlDecl, getEncodingIndex, initScan, initUpdatePosition, internal_little2_encoding,
-        internal_little2_encoding_ns, internal_utf8_encoding, internal_utf8_encoding_ns, streqci,
-        ENCODING, INIT_ENCODING, KW_UTF_16, POSITION, UNKNOWN_ENC, XML_CONTENT_STATE,
-        XML_PROLOG_STATE,
-    };
+    use crate::src::lib::xmltok::doParseXmlDecl;
+    use crate::src::lib::xmltok::getEncodingIndex;
+    use crate::src::lib::xmltok::initScan;
+    use crate::src::lib::xmltok::initUpdatePosition;
+    use crate::src::lib::xmltok::internal_little2_encoding;
+    use crate::src::lib::xmltok::internal_little2_encoding_ns;
+    use crate::src::lib::xmltok::internal_utf8_encoding;
+    use crate::src::lib::xmltok::internal_utf8_encoding_ns;
+    use crate::src::lib::xmltok::streqci;
+    use crate::src::lib::xmltok::ENCODING;
+    use crate::src::lib::xmltok::INIT_ENCODING;
+    use crate::src::lib::xmltok::KW_UTF_16;
+    use crate::src::lib::xmltok::POSITION;
+    use crate::src::lib::xmltok::UNKNOWN_ENC;
+    use crate::src::lib::xmltok::XML_CONTENT_STATE;
+    use crate::src::lib::xmltok::XML_PROLOG_STATE;
     /* XML_TOK_NS_C */
     /* XML_TOK_NS_C */
 }
-
-pub use crate::ascii_h::{
-    ASCII_b, ASCII_d, ASCII_f, ASCII_i, ASCII_n, ASCII_o, ASCII_q, ASCII_r, ASCII_s, ASCII_t,
-    ASCII_v, ASCII_y, ASCII_z, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_A, ASCII_AMP, ASCII_APOS,
-    ASCII_C, ASCII_COLON, ASCII_D, ASCII_EQUALS, ASCII_GT, ASCII_I, ASCII_LSQB, ASCII_LT,
-    ASCII_MINUS, ASCII_O, ASCII_PERIOD, ASCII_QUOT, ASCII_S, ASCII_SPACE, ASCII_T, ASCII_U,
-    ASCII_UNDERSCORE, ASCII_Z,
-};
-pub use crate::ascii_h_0::{
-    ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_l, ASCII_m, ASCII_x, ASCII_0, ASCII_1, ASCII_2,
-    ASCII_3, ASCII_8, ASCII_9, ASCII_B, ASCII_E, ASCII_F, ASCII_L, ASCII_M, ASCII_X,
-};
 pub use crate::expat_external_h::XML_Size;
-pub use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
-pub use crate::src::lib::xmltok::xmltok_impl_c::{
-    big2_attributeValueTok, big2_cdataSectionTok, big2_charRefNumber, big2_checkPiTarget,
-    big2_contentTok, big2_entityValueTok, big2_getAtts, big2_ignoreSectionTok, big2_isPublicId,
-    big2_nameLength, big2_nameMatchesAscii, big2_predefinedEntityName, big2_prologTok,
-    big2_scanAtts, big2_scanCdataSection, big2_scanCharRef, big2_scanComment, big2_scanDecl,
-    big2_scanEndTag, big2_scanHexCharRef, big2_scanLit, big2_scanLt, big2_scanPercent, big2_scanPi,
-    big2_scanPoundName, big2_scanRef, big2_skipS, big2_updatePosition, little2_attributeValueTok,
-    little2_cdataSectionTok, little2_charRefNumber, little2_checkPiTarget, little2_contentTok,
-    little2_entityValueTok, little2_getAtts, little2_ignoreSectionTok, little2_isPublicId,
-    little2_nameLength, little2_nameMatchesAscii, little2_predefinedEntityName, little2_prologTok,
-    little2_scanAtts, little2_scanCdataSection, little2_scanCharRef, little2_scanComment,
-    little2_scanDecl, little2_scanEndTag, little2_scanHexCharRef, little2_scanLit, little2_scanLt,
-    little2_scanPercent, little2_scanPi, little2_scanPoundName, little2_scanRef, little2_skipS,
-    little2_updatePosition, normal_attributeValueTok, normal_cdataSectionTok, normal_charRefNumber,
-    normal_checkPiTarget, normal_contentTok, normal_entityValueTok, normal_getAtts,
-    normal_ignoreSectionTok, normal_isPublicId, normal_nameLength, normal_nameMatchesAscii,
-    normal_predefinedEntityName, normal_prologTok, normal_scanAtts, normal_scanCdataSection,
-    normal_scanCharRef, normal_scanComment, normal_scanDecl, normal_scanEndTag,
-    normal_scanHexCharRef, normal_scanLit, normal_scanLt, normal_scanPercent, normal_scanPi,
-    normal_scanPoundName, normal_scanRef, normal_skipS, normal_updatePosition,
-};
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    encodings, encodingsNS, findEncoding, findEncodingNS, initScanContent, initScanContentNS,
-    initScanProlog, initScanPrologNS, XmlGetUtf16InternalEncoding, XmlGetUtf16InternalEncodingNS,
-    XmlGetUtf8InternalEncoding, XmlGetUtf8InternalEncodingNS, XmlInitEncoding, XmlInitEncodingNS,
-    XmlParseXmlDecl, XmlParseXmlDeclNS,
-};
-pub use crate::stdbool_h::{false_0, true_0};
-pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
+pub use crate::stddef_h::ptrdiff_t;
+pub use crate::stddef_h::size_t;
+pub use crate::stddef_h::NULL;
+
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_attributeValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_cdataSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_charRefNumber;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_checkPiTarget;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_contentTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_entityValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_getAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_ignoreSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_isPublicId;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_nameLength;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_nameMatchesAscii;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_predefinedEntityName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_prologTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanCdataSection;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanComment;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanDecl;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanEndTag;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanHexCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanLit;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanLt;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanPercent;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanPi;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanPoundName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_scanRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_skipS;
+pub use crate::src::lib::xmltok::xmltok_impl_c::big2_updatePosition;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_attributeValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_cdataSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_charRefNumber;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_checkPiTarget;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_contentTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_entityValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_getAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_ignoreSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_isPublicId;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_nameLength;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_nameMatchesAscii;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_predefinedEntityName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_prologTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanCdataSection;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanComment;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanDecl;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanEndTag;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanHexCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanLit;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanLt;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanPercent;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanPi;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanPoundName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_scanRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_skipS;
+pub use crate::src::lib::xmltok::xmltok_impl_c::little2_updatePosition;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_attributeValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_cdataSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_charRefNumber;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_checkPiTarget;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_contentTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_entityValueTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_getAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_ignoreSectionTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_isPublicId;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_nameLength;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_nameMatchesAscii;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_predefinedEntityName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_prologTok;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanAtts;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanCdataSection;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanComment;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanDecl;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanEndTag;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanHexCharRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanLit;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanLt;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanPercent;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanPi;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanPoundName;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_scanRef;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_skipS;
+pub use crate::src::lib::xmltok::xmltok_impl_c::normal_updatePosition;
 use crate::stdlib::memcpy;
-pub use crate::xmltok_impl_c::{
-    inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
-};
-pub use crate::xmltok_impl_h::{
-    C2RustUnnamed_2, BT_AMP, BT_APOS, BT_AST, BT_COLON_0, BT_COMMA, BT_CR, BT_DIGIT, BT_EQUALS,
-    BT_EXCL, BT_GT, BT_HEX, BT_LEAD2, BT_LEAD3, BT_LEAD4, BT_LF, BT_LPAR, BT_LSQB, BT_LT,
-    BT_MALFORM, BT_MINUS, BT_NAME, BT_NMSTRT, BT_NONASCII, BT_NONXML, BT_NUM, BT_OTHER, BT_PERCNT,
-    BT_PLUS, BT_QUEST, BT_QUOT, BT_RPAR, BT_RSQB, BT_S, BT_SEMI, BT_SOL, BT_TRAIL, BT_VERBAR,
-};
+pub use crate::xmltok_impl_c::inName;
+pub use crate::xmltok_impl_c::inName_0;
+pub use crate::xmltok_impl_c::inName_1;
+pub use crate::xmltok_impl_c::inValue;
+pub use crate::xmltok_impl_c::inValue_0;
+pub use crate::xmltok_impl_c::inValue_1;
+pub use crate::xmltok_impl_c::other;
+pub use crate::xmltok_impl_c::other_0;
+pub use crate::xmltok_impl_c::other_1;
+pub use crate::xmltok_impl_h::C2RustUnnamed_2;
+pub use crate::xmltok_impl_h::BT_AMP;
+pub use crate::xmltok_impl_h::BT_APOS;
+pub use crate::xmltok_impl_h::BT_AST;
+pub use crate::xmltok_impl_h::BT_COLON_0;
+pub use crate::xmltok_impl_h::BT_COMMA;
+pub use crate::xmltok_impl_h::BT_CR;
+pub use crate::xmltok_impl_h::BT_DIGIT;
+pub use crate::xmltok_impl_h::BT_EQUALS;
+pub use crate::xmltok_impl_h::BT_EXCL;
+pub use crate::xmltok_impl_h::BT_GT;
+pub use crate::xmltok_impl_h::BT_HEX;
+pub use crate::xmltok_impl_h::BT_LEAD2;
+pub use crate::xmltok_impl_h::BT_LEAD3;
+pub use crate::xmltok_impl_h::BT_LEAD4;
+pub use crate::xmltok_impl_h::BT_LF;
+pub use crate::xmltok_impl_h::BT_LPAR;
+pub use crate::xmltok_impl_h::BT_LSQB;
+pub use crate::xmltok_impl_h::BT_LT;
+pub use crate::xmltok_impl_h::BT_MALFORM;
+pub use crate::xmltok_impl_h::BT_MINUS;
+pub use crate::xmltok_impl_h::BT_NAME;
+pub use crate::xmltok_impl_h::BT_NMSTRT;
+pub use crate::xmltok_impl_h::BT_NONASCII;
+pub use crate::xmltok_impl_h::BT_NONXML;
+pub use crate::xmltok_impl_h::BT_NUM;
+pub use crate::xmltok_impl_h::BT_OTHER;
+pub use crate::xmltok_impl_h::BT_PERCNT;
+pub use crate::xmltok_impl_h::BT_PLUS;
+pub use crate::xmltok_impl_h::BT_QUEST;
+pub use crate::xmltok_impl_h::BT_QUOT;
+pub use crate::xmltok_impl_h::BT_RPAR;
+pub use crate::xmltok_impl_h::BT_RSQB;
+pub use crate::xmltok_impl_h::BT_S;
+pub use crate::xmltok_impl_h::BT_SEMI;
+pub use crate::xmltok_impl_h::BT_SOL;
+pub use crate::xmltok_impl_h::BT_TRAIL;
+pub use crate::xmltok_impl_h::BT_VERBAR;
+
+pub use crate::ascii_h::ASCII_b;
+pub use crate::ascii_h::ASCII_d;
+pub use crate::ascii_h::ASCII_f;
+pub use crate::ascii_h::ASCII_i;
+pub use crate::ascii_h::ASCII_n;
+pub use crate::ascii_h::ASCII_o;
+pub use crate::ascii_h::ASCII_q;
+pub use crate::ascii_h::ASCII_r;
+pub use crate::ascii_h::ASCII_s;
+pub use crate::ascii_h::ASCII_t;
+pub use crate::ascii_h::ASCII_v;
+pub use crate::ascii_h::ASCII_y;
+pub use crate::ascii_h::ASCII_z;
+pub use crate::ascii_h::ASCII_4;
+pub use crate::ascii_h::ASCII_5;
+pub use crate::ascii_h::ASCII_6;
+pub use crate::ascii_h::ASCII_7;
+pub use crate::ascii_h::ASCII_A;
+pub use crate::ascii_h::ASCII_AMP;
+pub use crate::ascii_h::ASCII_APOS;
+pub use crate::ascii_h::ASCII_C;
+pub use crate::ascii_h::ASCII_COLON;
+pub use crate::ascii_h::ASCII_D;
+pub use crate::ascii_h::ASCII_EQUALS;
+pub use crate::ascii_h::ASCII_GT;
+pub use crate::ascii_h::ASCII_I;
+pub use crate::ascii_h::ASCII_LSQB;
+pub use crate::ascii_h::ASCII_LT;
+pub use crate::ascii_h::ASCII_MINUS;
+pub use crate::ascii_h::ASCII_O;
+pub use crate::ascii_h::ASCII_PERIOD;
+pub use crate::ascii_h::ASCII_QUOT;
+pub use crate::ascii_h::ASCII_S;
+pub use crate::ascii_h::ASCII_SPACE;
+pub use crate::ascii_h::ASCII_T;
+pub use crate::ascii_h::ASCII_U;
+pub use crate::ascii_h::ASCII_UNDERSCORE;
+pub use crate::ascii_h::ASCII_Z;
+pub use crate::ascii_h_0::ASCII_a;
+pub use crate::ascii_h_0::ASCII_c;
+pub use crate::ascii_h_0::ASCII_e;
+pub use crate::ascii_h_0::ASCII_g;
+pub use crate::ascii_h_0::ASCII_l;
+pub use crate::ascii_h_0::ASCII_m;
+pub use crate::ascii_h_0::ASCII_x;
+pub use crate::ascii_h_0::ASCII_0;
+pub use crate::ascii_h_0::ASCII_1;
+pub use crate::ascii_h_0::ASCII_2;
+pub use crate::ascii_h_0::ASCII_3;
+pub use crate::ascii_h_0::ASCII_8;
+pub use crate::ascii_h_0::ASCII_9;
+pub use crate::ascii_h_0::ASCII_B;
+pub use crate::ascii_h_0::ASCII_E;
+pub use crate::ascii_h_0::ASCII_F;
+pub use crate::ascii_h_0::ASCII_L;
+pub use crate::ascii_h_0::ASCII_M;
+pub use crate::ascii_h_0::ASCII_X;
+pub use crate::src::lib::xmltok::nametab_h::namePages;
+pub use crate::src::lib::xmltok::nametab_h::namingBitmap;
+pub use crate::src::lib::xmltok::nametab_h::nmstrtPages;
+pub use crate::src::lib::xmltok::xmltok_ns_c::encodings;
+pub use crate::src::lib::xmltok::xmltok_ns_c::encodingsNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::findEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::findEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::initScanContent;
+pub use crate::src::lib::xmltok::xmltok_ns_c::initScanContentNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::initScanProlog;
+pub use crate::src::lib::xmltok::xmltok_ns_c::initScanPrologNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf16InternalEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf16InternalEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlInitEncoding;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlInitEncodingNS;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlParseXmlDecl;
+pub use crate::src::lib::xmltok::xmltok_ns_c::XmlParseXmlDeclNS;
+pub use crate::stdbool_h::false_0;
+pub use crate::stdbool_h::true_0;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -19205,11 +19423,11 @@ pub const BT_COLON_4: libc::c_int = crate::xmltok_impl_h::BT_NMSTRT as libc::c_i
 unsafe extern "C" fn unicode_byte_type(mut hi: libc::c_char, mut lo: libc::c_char) -> libc::c_int {
     match hi as libc::c_uchar as libc::c_int {
         216 | 217 | 218 | 219 => {
-            /* 0xD800-0xDBFF first 16-bit code unit or high surrogate (W1) */
+            /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
             return crate::xmltok_impl_h::BT_LEAD4 as libc::c_int;
         }
         220 | 221 | 222 | 223 => {
-            /* 0xDC00-0xDFFF second 16-bit code unit or low surrogate (W2) */
+            /* 0xDC00–0xDFFF second 16-bit code unit or low surrogate (W2) */
             return crate::xmltok_impl_h::BT_TRAIL as libc::c_int;
         }
         255 => {

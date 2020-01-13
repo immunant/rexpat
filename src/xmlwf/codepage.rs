@@ -61,7 +61,7 @@ use ::libc;
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-/* defined(_WIN32) */
+/* not _WIN32 */
 #[no_mangle]
 
 pub unsafe extern "C" fn codepageMap(
@@ -78,3 +78,4 @@ pub unsafe extern "C" fn codepageConvert(
 ) -> libc::c_int {
     return -(1 as libc::c_int);
 }
+/* not _WIN32 */
