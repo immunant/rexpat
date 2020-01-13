@@ -33,33 +33,14 @@ pub struct TCase {
     pub allocated: libc::c_int,
     pub next_tcase: *mut crate::src::tests::minicheck::TCase,
 }
-use ::libc;
 
-pub use crate::stddef_h::size_t;
-pub use crate::stddef_h::NULL;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-pub use crate::stdlib::__jmp_buf;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::__sigset_t;
-pub use crate::stdlib::FILE;
-pub use crate::stdlib::_IO_FILE;
-
-use crate::stdlib::__assert_fail;
-pub use crate::stdlib::__jmp_buf_tag;
-pub use crate::stdlib::_setjmp;
-use crate::stdlib::calloc;
-use crate::stdlib::fprintf;
-pub use crate::stdlib::jmp_buf;
-pub use crate::stdlib::longjmp;
-use crate::stdlib::realloc;
-use crate::stdlib::stderr;
-use crate::stdlib::strlen;
-use ::libc::free;
-use ::libc::printf;
+pub use crate::stddef_h::{size_t, NULL};
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __jmp_buf, __jmp_buf_tag, __off64_t,
+    __off_t, __sigset_t, _setjmp, jmp_buf, longjmp, FILE, _IO_FILE,
+};
+use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
+use ::libc::{self, free, printf};
 /* Miniature re-implementation of the "check" library.
 
    This is intended to support just enough of check to run the Expat

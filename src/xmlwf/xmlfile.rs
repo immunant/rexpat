@@ -2,110 +2,42 @@
 pub const XML_MAP_FILE: libc::c_int = 0o1 as libc::c_int;
 
 pub const XML_EXTERNAL_ENTITIES: libc::c_int = 0o2 as libc::c_int;
-use ::libc;
 
-pub use crate::stddef_h::size_t;
-pub use crate::stddef_h::NULL;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::__ssize_t;
-pub use crate::stdlib::FILE;
-pub use crate::stdlib::_IO_FILE;
-
-pub use crate::expat_external_h::XML_Char;
-pub use crate::expat_external_h::XML_LChar;
-pub use crate::expat_external_h::XML_Size;
-pub use crate::expat_h::XML_Error;
-pub use crate::expat_h::XML_ExternalEntityRefHandler;
-pub use crate::expat_h::XML_GetErrorColumnNumber;
-pub use crate::expat_h::XML_GetErrorLineNumber;
-pub use crate::expat_h::XML_Parser;
-pub use crate::expat_h::XML_ParserStruct;
-pub use crate::expat_h::XML_Status;
-pub use crate::expat_h::XML_ERROR_ABORTED;
-pub use crate::expat_h::XML_ERROR_ASYNC_ENTITY;
-pub use crate::expat_h::XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF;
-pub use crate::expat_h::XML_ERROR_BAD_CHAR_REF;
-pub use crate::expat_h::XML_ERROR_BINARY_ENTITY_REF;
-pub use crate::expat_h::XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
-pub use crate::expat_h::XML_ERROR_DUPLICATE_ATTRIBUTE;
-pub use crate::expat_h::XML_ERROR_ENTITY_DECLARED_IN_PE;
-pub use crate::expat_h::XML_ERROR_EXTERNAL_ENTITY_HANDLING;
-pub use crate::expat_h::XML_ERROR_FEATURE_REQUIRES_XML_DTD;
-pub use crate::expat_h::XML_ERROR_FINISHED;
-pub use crate::expat_h::XML_ERROR_INCOMPLETE_PE;
-pub use crate::expat_h::XML_ERROR_INCORRECT_ENCODING;
-pub use crate::expat_h::XML_ERROR_INVALID_ARGUMENT;
-pub use crate::expat_h::XML_ERROR_INVALID_TOKEN;
-pub use crate::expat_h::XML_ERROR_JUNK_AFTER_DOC_ELEMENT;
-pub use crate::expat_h::XML_ERROR_MISPLACED_XML_PI;
-pub use crate::expat_h::XML_ERROR_NONE;
-pub use crate::expat_h::XML_ERROR_NOT_STANDALONE;
-pub use crate::expat_h::XML_ERROR_NOT_SUSPENDED;
-pub use crate::expat_h::XML_ERROR_NO_ELEMENTS;
-pub use crate::expat_h::XML_ERROR_NO_MEMORY;
-pub use crate::expat_h::XML_ERROR_PARAM_ENTITY_REF;
-pub use crate::expat_h::XML_ERROR_PARTIAL_CHAR;
-pub use crate::expat_h::XML_ERROR_PUBLICID;
-pub use crate::expat_h::XML_ERROR_RECURSIVE_ENTITY_REF;
-pub use crate::expat_h::XML_ERROR_RESERVED_NAMESPACE_URI;
-pub use crate::expat_h::XML_ERROR_RESERVED_PREFIX_XML;
-pub use crate::expat_h::XML_ERROR_RESERVED_PREFIX_XMLNS;
-pub use crate::expat_h::XML_ERROR_SUSPENDED;
-pub use crate::expat_h::XML_ERROR_SUSPEND_PE;
-pub use crate::expat_h::XML_ERROR_SYNTAX;
-pub use crate::expat_h::XML_ERROR_TAG_MISMATCH;
-pub use crate::expat_h::XML_ERROR_TEXT_DECL;
-pub use crate::expat_h::XML_ERROR_UNBOUND_PREFIX;
-pub use crate::expat_h::XML_ERROR_UNCLOSED_CDATA_SECTION;
-pub use crate::expat_h::XML_ERROR_UNCLOSED_TOKEN;
-pub use crate::expat_h::XML_ERROR_UNDECLARING_PREFIX;
-pub use crate::expat_h::XML_ERROR_UNDEFINED_ENTITY;
-pub use crate::expat_h::XML_ERROR_UNEXPECTED_STATE;
-pub use crate::expat_h::XML_ERROR_UNKNOWN_ENCODING;
-pub use crate::expat_h::XML_ERROR_XML_DECL;
-pub use crate::expat_h::XML_STATUS_ERROR;
-pub use crate::expat_h::XML_STATUS_ERROR_0;
-pub use crate::expat_h::XML_STATUS_OK;
-pub use crate::expat_h::XML_STATUS_SUSPENDED;
-pub use crate::src::lib::xmlparse::XML_ErrorString;
-pub use crate::src::lib::xmlparse::XML_ExternalEntityParserCreate;
-pub use crate::src::lib::xmlparse::XML_GetBuffer;
-pub use crate::src::lib::xmlparse::XML_GetCurrentColumnNumber;
-pub use crate::src::lib::xmlparse::XML_GetCurrentLineNumber;
-pub use crate::src::lib::xmlparse::XML_GetErrorCode;
-pub use crate::src::lib::xmlparse::XML_Parse;
-pub use crate::src::lib::xmlparse::XML_ParseBuffer;
-pub use crate::src::lib::xmlparse::XML_ParserFree;
-pub use crate::src::lib::xmlparse::XML_SetBase;
-pub use crate::src::lib::xmlparse::XML_SetExternalEntityRefHandler;
-pub use crate::stdlib::fprintf;
-use crate::stdlib::malloc;
-pub use crate::stdlib::ssize_t;
-pub use crate::stdlib::stderr;
-pub use crate::stdlib::stdout;
-use crate::stdlib::strlen;
-use ::libc::exit;
-use ::libc::free;
-use ::libc::open;
-pub use ::libc::perror;
-use ::libc::strcpy;
-use ::libc::strrchr;
-pub use ::libc::O_RDONLY;
-
+pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use crate::expat_h::{
+    XML_Error, XML_ExternalEntityRefHandler, XML_GetErrorColumnNumber, XML_GetErrorLineNumber,
+    XML_Parser, XML_ParserStruct, XML_Status, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY,
+    XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF, XML_ERROR_BAD_CHAR_REF, XML_ERROR_BINARY_ENTITY_REF,
+    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
+    XML_ERROR_ENTITY_DECLARED_IN_PE, XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+    XML_ERROR_FEATURE_REQUIRES_XML_DTD, XML_ERROR_FINISHED, XML_ERROR_INCOMPLETE_PE,
+    XML_ERROR_INCORRECT_ENCODING, XML_ERROR_INVALID_ARGUMENT, XML_ERROR_INVALID_TOKEN,
+    XML_ERROR_JUNK_AFTER_DOC_ELEMENT, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE,
+    XML_ERROR_NOT_STANDALONE, XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY,
+    XML_ERROR_PARAM_ENTITY_REF, XML_ERROR_PARTIAL_CHAR, XML_ERROR_PUBLICID,
+    XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
+    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
+    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
+    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
+    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNEXPECTED_STATE,
+    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
+    XML_STATUS_OK, XML_STATUS_SUSPENDED,
+};
+pub use crate::src::lib::xmlparse::{
+    XML_ErrorString, XML_ExternalEntityParserCreate, XML_GetBuffer, XML_GetCurrentColumnNumber,
+    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParseBuffer, XML_ParserFree,
+    XML_SetBase, XML_SetExternalEntityRefHandler,
+};
 use crate::src::xmlwf::readfilemap::filemap;
-use crate::stdlib::read;
-pub use crate::xmltchar_h::ftprintf;
-pub use crate::xmltchar_h::tcscpy;
-pub use crate::xmltchar_h::tcslen;
-pub use crate::xmltchar_h::tcsrchr;
-pub use crate::xmltchar_h::topen;
-pub use crate::xmltchar_h::tperror;
-use ::libc::close;
+pub use crate::stddef_h::{size_t, NULL};
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __ssize_t, fprintf,
+    ssize_t, stderr, stdout, FILE, _IO_FILE,
+};
+use crate::stdlib::{malloc, read, strlen};
+pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
+use ::libc::{self, close, exit, free, open, strcpy, strrchr};
+pub use ::libc::{perror, O_RDONLY};
 
 #[repr(C)]
 #[derive(Copy, Clone)]

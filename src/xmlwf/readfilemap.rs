@@ -1,47 +1,15 @@
-use ::libc;
-
-pub use crate::stddef_h::size_t;
-pub use crate::stdlib::__blkcnt_t;
-pub use crate::stdlib::__blksize_t;
-pub use crate::stdlib::__dev_t;
-pub use crate::stdlib::__gid_t;
-pub use crate::stdlib::__ino_t;
-pub use crate::stdlib::__mode_t;
-pub use crate::stdlib::__nlink_t;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::__ssize_t;
-pub use crate::stdlib::__syscall_slong_t;
-pub use crate::stdlib::__time_t;
-pub use crate::stdlib::__uid_t;
-pub use crate::stdlib::ssize_t;
-pub use ::libc::timespec;
-
-pub use crate::internal::__INT_MAX__;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-use crate::stdlib::fstat;
-pub use crate::stdlib::stat;
-pub use crate::stdlib::FILE;
-pub use crate::stdlib::_IO_FILE;
-pub use crate::stdlib::__S_IFMT;
-use ::libc::open;
-pub use ::libc::O_RDONLY;
-
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
-use crate::stdlib::fprintf;
-use crate::stdlib::malloc;
-use crate::stdlib::read;
-use crate::stdlib::stderr;
-pub use crate::xmltchar_h::ftprintf;
-pub use crate::xmltchar_h::topen;
-pub use crate::xmltchar_h::tperror;
-use ::libc::close;
-use ::libc::free;
-use ::libc::perror;
-pub use ::libc::INT_MAX;
+pub use crate::internal::__INT_MAX__;
+pub use crate::stddef_h::size_t;
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
+    __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
+    __uid_t, ssize_t, stat, FILE, _IO_FILE, __S_IFMT,
+};
+use crate::stdlib::{fprintf, fstat, malloc, read, stderr};
+pub use crate::xmltchar_h::{ftprintf, topen, tperror};
+use ::libc::{self, close, free, open, perror};
+pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

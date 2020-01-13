@@ -1,11 +1,6 @@
-use ::libc;
-
-pub use crate::stddef_h::size_t;
-pub use crate::stddef_h::NULL;
-use crate::stdlib::malloc;
-use crate::stdlib::realloc;
-use ::libc::free;
-use ::libc::printf;
+pub use crate::stddef_h::{size_t, NULL};
+use crate::stdlib::{malloc, realloc};
+use ::libc::{self, free, printf};
 /* Debug allocators for the Expat test suite
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

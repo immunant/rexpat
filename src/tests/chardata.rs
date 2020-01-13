@@ -5,15 +5,11 @@ pub struct CharData {
     pub count: libc::c_int,
     pub data: [crate::expat_external_h::XML_Char; 2048],
 }
-use ::libc;
 
 pub use crate::expat_external_h::XML_Char;
-
 use crate::src::tests::minicheck::_fail_unless;
-use crate::stdlib::__assert_fail;
-use crate::stdlib::memcmp;
-use crate::stdlib::memcpy;
-use ::libc::sprintf;
+use crate::stdlib::{__assert_fail, memcmp, memcpy};
+use ::libc::{self, sprintf};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

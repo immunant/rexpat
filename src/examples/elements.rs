@@ -68,28 +68,17 @@ pub mod stdlib {
 
     pub type __off64_t = libc::c_long;
 }
-use ::c2rust_out::*;
 
+pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use crate::expat_h::{
+    XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler, XML_Status,
+};
 pub use crate::stddef_h::size_t;
-pub use crate::stdlib::_IO_codecvt;
-pub use crate::stdlib::_IO_lock_t;
-pub use crate::stdlib::_IO_marker;
-pub use crate::stdlib::_IO_wide_data;
-pub use crate::stdlib::__off64_t;
-pub use crate::stdlib::__off_t;
-pub use crate::stdlib::FILE;
-
-pub use crate::expat_external_h::XML_Char;
-pub use crate::expat_external_h::XML_LChar;
-pub use crate::expat_external_h::XML_Size;
-pub use crate::expat_h::XML_EndElementHandler;
-pub use crate::expat_h::XML_Error;
-pub use crate::expat_h::XML_Parser;
-pub use crate::expat_h::XML_StartElementHandler;
-pub use crate::expat_h::XML_Status;
-use crate::stdlib::fread;
-use crate::stdlib::stderr;
-use crate::stdlib::stdin;
+pub use crate::stdlib::{
+    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
+};
+use crate::stdlib::{fread, stderr, stdin};
+use ::c2rust_out::*;
 /* This is simple demonstration of how to use expat. This program
    reads an XML document from standard input and writes a line with
    the name of each element to standard output indenting child
