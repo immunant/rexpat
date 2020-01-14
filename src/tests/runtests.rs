@@ -98,7 +98,7 @@ pub mod siphash_h {
     use crate::stddef_h::size_t;
     use crate::stdlib::uint64_t;
     use ::c2rust_out::siphash_h::{siphash, sipkey};
-    use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
+    use libc::{c_char, c_int, c_uchar, c_ulong, c_void};
     pub unsafe extern "C" fn sip_tokey(
         mut key: *mut sipkey,
         mut src: *const c_void,
