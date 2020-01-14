@@ -1,9 +1,4 @@
 // =============== BEGIN xmltok_h ================
-
-/* first line and first column are 0 not 1 */
-
-/* and therefore potentially input remaining as well */
-
 /*
                         __  __            _
                      ___\ \/ /_ __   __ _| |_
@@ -37,156 +32,95 @@
 */
 
 /* The following token may be returned by XmlContentTok */
-pub const XML_TOK_TRAILING_RSQB: libc::c_int = -5;
-/* ] or ]] at the end of the scan; might be                               \
-start of illegal ]]> sequence */
+pub const XML_TOK_TRAILING_RSQB: libc::c_int = -5; /* ] or ]] at the end of the scan; might be
+                                                   start of illegal ]]> sequence */
 
 /* The following tokens may be returned by both XmlPrologTok and
    XmlContentTok.
 */
-pub const XML_TOK_NONE: libc::c_int = -4;
-/* The string to be scanned is empty */
-
-pub const XML_TOK_TRAILING_CR: libc::c_int = -3;
-/* A CR at the end of the scan;                \
-might be part of CRLF sequence */
-pub const XML_TOK_PARTIAL_CHAR: libc::c_int = -2;
-/* only part of a multibyte sequence */
-
-pub const XML_TOK_PARTIAL: libc::c_int = -1;
-/* only part of a token */
-
+pub const XML_TOK_NONE: libc::c_int = -4; /* The string to be scanned is empty */
+pub const XML_TOK_TRAILING_CR: libc::c_int = -3; /* A CR at the end of the scan;
+                                                  * might be part of CRLF sequence */
+pub const XML_TOK_PARTIAL_CHAR: libc::c_int = -2; /* only part of a multibyte sequence */
+pub const XML_TOK_PARTIAL: libc::c_int = -1; /* only part of a token */
 pub const XML_TOK_INVALID: libc::c_int = 0;
+
 /* The following tokens are returned by XmlContentTok; some are also
    returned by XmlAttributeValueTok, XmlEntityTok, XmlCdataSectionTok.
 */
 
 pub const XML_TOK_START_TAG_WITH_ATTS: libc::c_int = 1;
-
 pub const XML_TOK_START_TAG_NO_ATTS: libc::c_int = 2;
-
-pub const XML_TOK_EMPTY_ELEMENT_WITH_ATTS: libc::c_int = 3;
-/* empty element tag <e/> */
-
+pub const XML_TOK_EMPTY_ELEMENT_WITH_ATTS: libc::c_int = 3; /* empty element tag <e/> */
 pub const XML_TOK_EMPTY_ELEMENT_NO_ATTS: libc::c_int = 4;
-
 pub const XML_TOK_END_TAG: libc::c_int = 5;
-
 pub const XML_TOK_DATA_CHARS: libc::c_int = 6;
-
 pub const XML_TOK_DATA_NEWLINE: libc::c_int = 7;
-
 pub const XML_TOK_CDATA_SECT_OPEN: libc::c_int = 8;
-
 pub const XML_TOK_ENTITY_REF: libc::c_int = 9;
+pub const XML_TOK_CHAR_REF: libc::c_int = 10; /* numeric character reference */
 
-pub const XML_TOK_CHAR_REF: libc::c_int = 10;
-/* numeric character reference */
 /* The following tokens may be returned by both XmlPrologTok and
    XmlContentTok.
 */
-
-pub const XML_TOK_PI: libc::c_int = 11;
-/* processing instruction */
-
-pub const XML_TOK_XML_DECL: libc::c_int = 12;
-/* XML decl or text decl */
-
+pub const XML_TOK_PI: libc::c_int = 11; /* processing instruction */
+pub const XML_TOK_XML_DECL: libc::c_int = 12; /* XML decl or text decl */
 pub const XML_TOK_COMMENT: libc::c_int = 13;
+pub const XML_TOK_BOM: libc::c_int = 14; /* Byte order mark */
 
-pub const XML_TOK_BOM: libc::c_int = 14;
-/* Byte order mark */
 /* The following tokens are returned only by XmlPrologTok */
-
 pub const XML_TOK_PROLOG_S: libc::c_int = 15 as libc::c_int;
-
-pub const XML_TOK_DECL_OPEN: libc::c_int = 16;
-
-pub const XML_TOK_DECL_CLOSE: libc::c_int = 17;
-
+pub const XML_TOK_DECL_OPEN: libc::c_int = 16; /* <!foo */
+pub const XML_TOK_DECL_CLOSE: libc::c_int = 17; /* > */
 pub const XML_TOK_NAME: libc::c_int = 18;
-
 pub const XML_TOK_NMTOKEN: libc::c_int = 19;
-
-pub const XML_TOK_POUND_NAME: libc::c_int = 20;
-
-pub const XML_TOK_OR: libc::c_int = 21;
-
+pub const XML_TOK_POUND_NAME: libc::c_int = 20; /* #name */
+pub const XML_TOK_OR: libc::c_int = 21; /* | */
 pub const XML_TOK_PERCENT: libc::c_int = 22;
-
 pub const XML_TOK_OPEN_PAREN: libc::c_int = 23;
-
 pub const XML_TOK_CLOSE_PAREN: libc::c_int = 24;
-
 pub const XML_TOK_OPEN_BRACKET: libc::c_int = 25;
-
 pub const XML_TOK_CLOSE_BRACKET: libc::c_int = 26;
-
 pub const XML_TOK_LITERAL: libc::c_int = 27;
-/* <!foo */
-/* > */
-/* #name */
-/* | */
-
 pub const XML_TOK_PARAM_ENTITY_REF: libc::c_int = 28;
+pub const XML_TOK_INSTANCE_START: libc::c_int = 29;
 
-pub const XML_TOK_INSTANCE_START: libc::c_int = 29 as libc::c_int;
-
-pub const XML_TOK_NAME_QUESTION: libc::c_int = 30;
-
-pub const XML_TOK_NAME_ASTERISK: libc::c_int = 31;
-
-pub const XML_TOK_NAME_PLUS: libc::c_int = 32;
-
-pub const XML_TOK_COND_SECT_OPEN: libc::c_int = 33;
-
-pub const XML_TOK_COND_SECT_CLOSE: libc::c_int = 34;
-
-pub const XML_TOK_CLOSE_PAREN_QUESTION: libc::c_int = 35;
-
-pub const XML_TOK_CLOSE_PAREN_ASTERISK: libc::c_int = 36;
-
-pub const XML_TOK_CLOSE_PAREN_PLUS: libc::c_int = 37;
-
-pub const XML_TOK_COMMA: libc::c_int = 38;
 /* The following occur only in element type declarations */
-/* name? */
-/* name* */
-/* name+ */
-/* <![ */
-/* ]]> */
-/* )? */
-/* )* */
-/* )+ */
+pub const XML_TOK_NAME_QUESTION: libc::c_int = 30; /* name? */
+pub const XML_TOK_NAME_ASTERISK: libc::c_int = 31; /* name* */
+pub const XML_TOK_NAME_PLUS: libc::c_int = 32; /* name+ */
+pub const XML_TOK_COND_SECT_OPEN: libc::c_int = 33; /* <![ */
+pub const XML_TOK_COND_SECT_CLOSE: libc::c_int = 34; /* ]]> */
+pub const XML_TOK_CLOSE_PAREN_QUESTION: libc::c_int = 35; /* )? */
+pub const XML_TOK_CLOSE_PAREN_ASTERISK: libc::c_int = 36; /* )* */
+pub const XML_TOK_CLOSE_PAREN_PLUS: libc::c_int = 37; /* )+ */
+pub const XML_TOK_COMMA: libc::c_int = 38;
+
 /* The following token is returned only by XmlAttributeValueTok */
-
 pub const XML_TOK_ATTRIBUTE_VALUE_S: libc::c_int = 39;
-/* The following token is returned only by XmlCdataSectionTok */
 
+/* The following token is returned only by XmlCdataSectionTok */
 pub const XML_TOK_CDATA_SECT_CLOSE: libc::c_int = 40;
 
-pub const XML_TOK_PREFIXED_NAME: libc::c_int = 41;
 /* With namespace processing this is returned by XmlPrologTok for a
    name with a colon.
 */
-
+pub const XML_TOK_PREFIXED_NAME: libc::c_int = 41;
 pub const XML_TOK_IGNORE_SECT: libc::c_int = 42;
+pub const XML_PROLOG_STATE: libc::c_int = 0;
+pub const XML_CONTENT_STATE: libc::c_int = 1;
 
-pub const XML_PROLOG_STATE: libc::c_int = 0 as libc::c_int;
-
-pub const XML_CONTENT_STATE: libc::c_int = 1 as libc::c_int;
-/* XML_DTD */
-/* not XML_DTD */
-/* not XML_DTD */
-/* XML_DTD */
 /* The size of the buffer passed to XmlUtf8Encode must be at least this. */
+pub const XML_UTF8_ENCODE_MAX: libc::c_int = 4;
 /* The size of the buffer passed to XmlUtf16Encode must be at least this. */
+pub const XML_UTF16_ENCODE_MAX: libc::c_int = 2;
 
 pub type POSITION = crate::src::lib::xmltok::position;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct position {
+    /* first line and first column are 0 not 1 */
     pub lineNumber: crate::expat_external_h::XML_Size,
     pub columnNumber: crate::expat_external_h::XML_Size,
 }
@@ -212,12 +146,9 @@ pub type SCANNER = Option<
 >;
 
 pub type XML_Convert_Result = libc::c_uint;
-
 pub const XML_CONVERT_COMPLETED: crate::src::lib::xmltok::XML_Convert_Result = 0;
-
 pub const XML_CONVERT_INPUT_INCOMPLETE: crate::src::lib::xmltok::XML_Convert_Result = 1;
-
-pub const XML_CONVERT_OUTPUT_EXHAUSTED: crate::src::lib::xmltok::XML_Convert_Result = 2;
+pub const XML_CONVERT_OUTPUT_EXHAUSTED: crate::src::lib::xmltok::XML_Convert_Result = 2; /* and therefore potentially input remaining as well */
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -313,7 +244,8 @@ pub struct INIT_ENCODING {
 
 pub type CONVERTER =
     Option<unsafe extern "C" fn(_: *mut libc::c_void, _: *const libc::c_char) -> libc::c_int>;
-use ::libc;
+
+// =============== END xmltok_h ================
 
 pub mod xmltok_impl_c {
 
