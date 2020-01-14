@@ -2602,12 +2602,12 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LCha
         XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
             b"cannot change setting once parsing has begun\x00".as_ptr() as *const c_char
         }
+        /* Added in 1.95.7. */
         XML_ERROR_UNBOUND_PREFIX => {
-            /* Added in 1.95.7. */
             b"unbound prefix\x00".as_ptr() as *const c_char
         }
+        /* Added in 1.95.8. */
         XML_ERROR_UNDECLARING_PREFIX => {
-            /* Added in 1.95.8. */
             b"must not undeclare prefix\x00".as_ptr() as *const c_char
         }
         XML_ERROR_INCOMPLETE_PE => {
@@ -2641,9 +2641,8 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LCha
             b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr()
                 as *const c_char
         }
-        XML_ERROR_INVALID_ARGUMENT => {
-            /* Added in 2.2.5. */
-            /* Constant added in 2.2.1, already */
+        /* Added in 2.2.5. */
+        XML_ERROR_INVALID_ARGUMENT => { /* Constant added in 2.2.1, already */
             b"invalid argument\x00".as_ptr() as *const c_char
         }
         _ => NULL as *const XML_LChar,
