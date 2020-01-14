@@ -66,11 +66,11 @@ use libc::{c_char, c_int};
 #[no_mangle]
 
 pub unsafe extern "C" fn codepageMap(mut _cp: c_int, mut _map: *mut c_int) -> c_int {
-    return 0 as c_int;
+    return 0i32;
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn codepageConvert(mut _cp: c_int, mut _p: *const c_char) -> c_int {
-    return -(1 as c_int);
+    return -(1i32);
 }
 /* not _WIN32 */

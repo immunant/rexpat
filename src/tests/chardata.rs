@@ -46,21 +46,21 @@ use ::libc;
 */
 
 unsafe extern "C" fn xmlstrlen(mut s: *const XML_Char) -> c_int {
-    let mut len: c_int = 0 as c_int;
+    let mut len: c_int = 0i32;
     if !s.is_null() {
     } else {
         __assert_fail(
             b"s != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            47 as c_int as c_uint,
+            47u32,
             (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
                 b"int xmlstrlen(const XML_Char *)\x00",
             ))
             .as_ptr(),
         );
     }
-    while *s.offset(len as isize) as c_int != 0 as c_int {
+    while *s.offset(len as isize) as c_int != 0i32 {
         len += 1
     }
     return len;
@@ -74,14 +74,14 @@ pub unsafe extern "C" fn CharData_Init(mut storage: *mut CharData) {
             b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            55 as c_int as c_uint,
+            55u32,
             (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(
                 b"void CharData_Init(CharData *)\x00",
             ))
             .as_ptr(),
         );
     }
-    (*storage).count = -(1 as c_int);
+    (*storage).count = -(1i32);
 }
 #[no_mangle]
 
@@ -97,7 +97,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
             b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            63 as c_int as c_uint,
+            63u32,
             (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
                 b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
             ))
@@ -110,7 +110,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
             b"s != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            64 as c_int as c_uint,
+            64u32,
             (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
                 b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
             ))
@@ -119,16 +119,16 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     }
     maxchars = (::std::mem::size_of::<[XML_Char; 2048]>() as c_ulong)
         .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong) as c_int;
-    if (*storage).count < 0 as c_int {
-        (*storage).count = 0 as c_int
+    if (*storage).count < 0i32 {
+        (*storage).count = 0i32
     }
-    if len < 0 as c_int {
+    if len < 0i32 {
         len = xmlstrlen(s)
     }
     if len + (*storage).count > maxchars {
         len = maxchars - (*storage).count
     }
-    if len + (*storage).count < ::std::mem::size_of::<[XML_Char; 2048]>() as c_ulong as c_int {
+    if len + (*storage).count <  ::std::mem::size_of::<[XML_Char; 2048]>() as c_int {
         memcpy(
             (*storage)
                 .data
@@ -188,15 +188,15 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
             b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            85 as c_int as c_uint,
+            85u32,
             (*::std::mem::transmute::<&[u8; 57], &[c_char; 57]>(
                 b"int CharData_CheckXMLChars(CharData *, const XML_Char *)\x00",
             ))
             .as_ptr(),
         );
     }
-    count = if (*storage).count < 0 as c_int {
-        0 as c_int
+    count = if (*storage).count < 0i32 {
+        0i32
     } else {
         (*storage).count
     };
@@ -209,28 +209,28 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
             len,
         );
         _fail_unless(
-            0 as c_int,
+            0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            90 as c_int,
+            90i32,
             buffer.as_mut_ptr(),
         );
-        return 0 as c_int;
+        return 0i32;
     }
     if memcmp(
         expected as *const c_void,
         (*storage).data.as_mut_ptr() as *const c_void,
         (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-    ) != 0 as c_int
+    ) != 0i32
     {
         _fail_unless(
-            0 as c_int,
+            0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
                 as *const u8 as *const c_char,
-            94 as c_int,
+            94i32,
             b"got bad data bytes\x00" as *const u8 as *const c_char,
         );
-        return 0 as c_int;
+        return 0i32;
     }
-    return 1 as c_int;
+    return 1i32;
 }

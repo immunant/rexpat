@@ -50,7 +50,7 @@ use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
 pub const _EXPAT_read: unsafe extern "C" fn(_: c_int, _: *mut c_void, _: size_t) -> ssize_t = read;
 /* not S_ISREG */
 
-pub const O_BINARY: c_int = 0 as c_int;
+pub const O_BINARY: c_int = 0i32;
 #[no_mangle]
 
 pub unsafe extern "C" fn filemap(
@@ -91,41 +91,41 @@ pub unsafe extern "C" fn filemap(
     };
     let mut p: *mut c_void = 0 as *mut c_void;
     fd = open(name, O_RDONLY | O_BINARY);
-    if fd < 0 as c_int {
+    if fd < 0i32 {
         perror(name);
-        return 0 as c_int;
+        return 0i32;
     }
-    if fstat(fd, &mut sb) < 0 as c_int {
+    if fstat(fd, &mut sb) < 0i32 {
         perror(name);
         close(fd);
-        return 0 as c_int;
+        return 0i32;
     }
-    if !(sb.st_mode & __S_IFMT as c_uint == 0o100000 as c_int as c_uint) {
+    if !(sb.st_mode & __S_IFMT as c_uint == 0o100000u32) {
         fprintf(
             stderr,
             b"%s: not a regular file\n\x00" as *const u8 as *const c_char,
             name,
         );
         close(fd);
-        return 0 as c_int;
+        return 0i32;
     }
     if sb.st_size > XML_MAX_CHUNK_LEN as c_long {
         close(fd);
-        return 2 as c_int;
+        return 2i32;
         /* Cannot be passed to XML_Parse in one go */
     }
     nbytes = sb.st_size as size_t;
     /* malloc will return NULL with nbytes == 0, handle files with size 0 */
-    if nbytes == 0 as c_int as c_ulong {
-        static mut c: c_char = '\u{0}' as i32 as c_char;
+    if nbytes == 0u64 {
+        static mut c: c_char =  '\u{0}' as c_char;
         processor.expect("non-null function pointer")(
             &c as *const c_char as *const c_void,
-            0 as c_int as size_t,
+            0u64,
             name,
             arg,
         );
         close(fd);
-        return 1 as c_int;
+        return 1i32;
     }
     p = malloc(nbytes);
     if p.is_null() {
@@ -135,14 +135,14 @@ pub unsafe extern "C" fn filemap(
             name,
         );
         close(fd);
-        return 0 as c_int;
+        return 0i32;
     }
     n = read(fd, p, nbytes);
-    if n < 0 as c_int as c_long {
+    if n < 0i64 {
         perror(name);
         free(p);
         close(fd);
-        return 0 as c_int;
+        return 0i32;
     }
     if n != nbytes as ssize_t {
         fprintf(
@@ -152,10 +152,10 @@ pub unsafe extern "C" fn filemap(
         );
         free(p);
         close(fd);
-        return 0 as c_int;
+        return 0i32;
     }
     processor.expect("non-null function pointer")(p, nbytes, name, arg);
     free(p);
     close(fd);
-    return 1 as c_int;
+    return 1i32;
 }

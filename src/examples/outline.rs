@@ -126,7 +126,7 @@ pub use crate::stdlib::{
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pub const BUFFSIZE: c_int = 8192 as c_int;
+pub const BUFFSIZE: c_int = 8192i32;
 #[no_mangle]
 
 pub static mut Buff: [c_char; 8192] = [0; 8192];
@@ -140,20 +140,20 @@ unsafe extern "C" fn start(
     mut attr: *mut *const XML_Char,
 ) {
     let mut i: c_int = 0;
-    i = 0 as c_int;
+    i = 0i32;
     while i < Depth {
         printf(b"  \x00" as *const u8 as *const c_char);
         i += 1
     }
     printf(b"%s\x00" as *const u8 as *const c_char, el);
-    i = 0 as c_int;
+    i = 0i32;
     while !(*attr.offset(i as isize)).is_null() {
         printf(
             b" %s=\'%s\'\x00" as *const u8 as *const c_char,
             *attr.offset(i as isize),
-            *attr.offset((i + 1 as c_int) as isize),
+            *attr.offset((i + 1i32) as isize),
         );
-        i += 2 as c_int
+        i += 2i32
     }
     printf(b"\n\x00" as *const u8 as *const c_char);
     Depth += 1;
@@ -167,10 +167,11 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut p: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
     if p.is_null() {
         fprintf(
-            crate::stdlib::stderr as *mut _IO_FILE,
+            
+            crate::stdlib::stderr,
             b"Couldn\'t allocate memory for parser\n\x00" as *const u8 as *const c_char,
         );
-        exit(-(1 as c_int));
+        exit(-(1i32));
     }
     XML_SetElementHandler(
         p,
@@ -189,33 +190,35 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         let mut len: c_int = 0;
         len = crate::stdlib::fread(
             Buff.as_mut_ptr() as *mut c_void,
-            1 as c_int as c_ulong,
+            1u64,
             BUFFSIZE as c_ulong,
             crate::stdlib::stdin,
         ) as c_int;
         if crate::stdlib::ferror(crate::stdlib::stdin) != 0 {
             fprintf(
-                crate::stdlib::stderr as *mut _IO_FILE,
+                
+                crate::stdlib::stderr,
                 b"Read error\n\x00" as *const u8 as *const c_char,
             );
-            exit(-(1 as c_int));
+            exit(-(1i32));
         }
         done = crate::stdlib::feof(crate::stdlib::stdin) as XML_Bool;
-        if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) as c_uint == XML_STATUS_ERROR_0 as c_uint {
+        if  XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_STATUS_ERROR_0 as c_uint {
             fprintf(
-                crate::stdlib::stderr as *mut _IO_FILE,
+                
+                crate::stdlib::stderr,
                 b"Parse error at line %lu:\n%s\n\x00" as *const u8 as *const c_char,
                 XML_GetCurrentLineNumber(p),
                 XML_ErrorString(XML_GetErrorCode(p)),
             );
-            exit(-(1 as c_int));
+            exit(-(1i32));
         }
         if done != 0 {
             break;
         }
     }
     XML_ParserFree(p);
-    return 0 as c_int;
+    return 0i32;
 }
 #[main]
 pub fn main() {
@@ -231,7 +234,8 @@ pub fn main() {
     unsafe {
         ::std::process::exit(main_0(
             (args.len() - 1) as libc::c_int,
-            args.as_mut_ptr() as *mut *mut libc::c_char,
-        ) as i32)
+            
+            args.as_mut_ptr(),
+        ))
     }
 }

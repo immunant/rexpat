@@ -129,25 +129,25 @@ unsafe extern "C" fn startElement(
 ) {
     let mut i: c_int = 0;
     let mut depthPtr: *mut c_int = userData as *mut c_int;
-    i = 0 as c_int;
+    i = 0i32;
     while i < *depthPtr {
         putchar('\t' as i32);
         i += 1
     }
     printf(b"%s\n\x00" as *const u8 as *const c_char, name);
-    *depthPtr += 1 as c_int;
+    *depthPtr += 1i32;
 }
 
 unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML_Char) {
     let mut depthPtr: *mut c_int = userData as *mut c_int;
-    *depthPtr -= 1 as c_int;
+    *depthPtr -= 1i32;
 }
 
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut buf: [c_char; 8192] = [0; 8192];
     let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
     let mut done: XML_Bool = 0;
-    let mut depth: c_int = 0 as c_int;
+    let mut depth: c_int = 0i32;
     XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
     XML_SetElementHandler(
         parser,
@@ -164,29 +164,30 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     loop {
         let mut len: size_t = crate::stdlib::fread(
             buf.as_mut_ptr() as *mut c_void,
-            1 as c_int as c_ulong,
+            1u64,
             ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
             crate::stdlib::stdin,
         );
         done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
-        if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int) as c_uint
+        if  XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
             == XML_STATUS_ERROR_0 as c_uint
         {
             fprintf(
-                crate::stdlib::stderr as *mut _IO_FILE,
+                
+                crate::stdlib::stderr,
                 b"%s at line %lu\n\x00" as *const u8 as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
                 XML_GetCurrentLineNumber(parser),
             );
             XML_ParserFree(parser);
-            return 1 as c_int;
+            return 1i32;
         }
         if !(done == 0) {
             break;
         }
     }
     XML_ParserFree(parser);
-    return 0 as c_int;
+    return 0i32;
 }
 #[main]
 pub fn main() {
@@ -202,7 +203,8 @@ pub fn main() {
     unsafe {
         ::std::process::exit(main_0(
             (args.len() - 1) as libc::c_int,
-            args.as_mut_ptr() as *mut *mut libc::c_char,
-        ) as i32)
+            
+            args.as_mut_ptr(),
+        ))
     }
 }

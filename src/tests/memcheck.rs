@@ -166,7 +166,7 @@ pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t
         /* By definition, this is equivalent to malloc(size) */
         return tracking_malloc(size);
     }
-    if size == 0 as c_int as c_ulong {
+    if size == 0u64 {
         /* By definition, this is equivalent to free(ptr) */
         tracking_free(ptr);
         return NULL as *mut c_void;
@@ -219,7 +219,7 @@ pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t
 pub unsafe extern "C" fn tracking_report() -> c_int {
     let mut entry: *mut AllocationEntry = 0 as *mut AllocationEntry;
     if alloc_head.is_null() {
-        return 1 as c_int;
+        return 1i32;
     }
     /* Otherwise we have allocations that haven't been freed */
     entry = alloc_head;
@@ -231,5 +231,5 @@ pub unsafe extern "C" fn tracking_report() -> c_int {
         );
         entry = (*entry).next
     }
-    return 0 as c_int;
+    return 0i32;
 }
