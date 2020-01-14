@@ -134,7 +134,7 @@ unsafe extern "C" fn startElement(
         putchar('\t' as i32);
         i += 1
     }
-    printf(b"%s\n\x00" as *const u8 as *const c_char, name);
+    printf(b"%s\n\x00".as_ptr() as *const c_char, name);
     *depthPtr += 1;
 }
 
@@ -174,7 +174,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         {
             fprintf(
                 crate::stdlib::stderr,
-                b"%s at line %lu\n\x00" as *const u8 as *const c_char,
+                
+                b"%s at line %lu\n\x00".as_ptr() as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
                 XML_GetCurrentLineNumber(parser),
             );

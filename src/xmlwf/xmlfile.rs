@@ -89,7 +89,8 @@ unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XM
     if !message.is_null() {
         fprintf(
             stdout,
-            b"%s:%lu:%lu: %s\n\x00" as *const u8 as *const c_char,
+            
+            b"%s:%lu:%lu: %s\n\x00".as_ptr() as *const c_char,
             filename,
             XML_GetCurrentLineNumber(parser),
             XML_GetCurrentColumnNumber(parser),
@@ -98,7 +99,8 @@ unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XM
     } else {
         fprintf(
             stderr,
-            b"%s: (unknown message %d)\n\x00" as *const u8 as *const c_char,
+            
+            b"%s: (unknown message %d)\n\x00".as_ptr() as *const c_char,
             filename,
             code,
         );
@@ -190,7 +192,8 @@ unsafe extern "C" fn externalEntityRefFilemap(
         2 => {
             fprintf(
                 stderr,
-                b"%s: file too large for memory-mapping, switching to streaming\n\x00" as *const u8
+                
+                b"%s: file too large for memory-mapping, switching to streaming\n\x00".as_ptr()
                     as *const c_char,
                 filename,
             );
@@ -222,11 +225,13 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             }
             fprintf(
                 stderr,
-                b"%s: out of memory\n\x00" as *const u8 as *const c_char,
+                
+                b"%s: out of memory\n\x00".as_ptr() as *const c_char,
                 if !filename.is_null() {
                     filename
                 } else {
-                    b"xmlwf\x00" as *const u8 as *const c_char
+                    
+                    b"xmlwf\x00".as_ptr() as *const c_char
                 },
             );
             return 0i32;
@@ -236,7 +241,8 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             perror(if !filename.is_null() {
                 filename
             } else {
-                b"STDIN\x00" as *const u8 as *const c_char
+                
+                b"STDIN\x00".as_ptr() as *const c_char
             });
             if !filename.is_null() {
                 close(fd);
@@ -249,7 +255,8 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
                 if !filename.is_null() {
                     filename
                 } else {
-                    b"STDIN\x00" as *const u8 as *const c_char
+                    
+                    b"STDIN\x00".as_ptr() as *const c_char
                 },
             );
             if !filename.is_null() {
@@ -298,7 +305,8 @@ pub unsafe extern "C" fn XML_ProcessFile(
     if XML_SetBase(parser, filename) as u64 == 0 {
         fprintf(
             stderr,
-            b"%s: out of memory\x00" as *const u8 as *const c_char,
+            
+            b"%s: out of memory\x00".as_ptr() as *const c_char,
             filename,
         );
         exit(1i32);
@@ -357,8 +365,8 @@ pub unsafe extern "C" fn XML_ProcessFile(
             2 => {
                 fprintf(
                     stderr,
-                    b"%s: file too large for memory-mapping, switching to streaming\n\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"%s: file too large for memory-mapping, switching to streaming\n\x00".as_ptr() as *const c_char,
                     filename,
                 );
                 result = processStream(filename, parser)

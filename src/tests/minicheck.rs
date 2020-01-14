@@ -104,9 +104,10 @@ pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCa
     if !suite.is_null() {
     } else {
         __assert_fail(
-            b"suite != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"suite != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             66u32,
             (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
@@ -117,9 +118,10 @@ pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCa
     if !tc.is_null() {
     } else {
         __assert_fail(
-            b"tc != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"tc != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             67u32,
             (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
@@ -130,9 +132,10 @@ pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCa
     if (*tc).next_tcase.is_null() {
     } else {
         __assert_fail(
-            b"tc->next_tcase == NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"tc->next_tcase == NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             68u32,
             (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
@@ -152,9 +155,9 @@ pub unsafe extern "C" fn tcase_add_checked_fixture(
 ) {
     if !tc.is_null() {
     } else {
-        __assert_fail(b"tc != NULL\x00" as *const u8 as *const c_char,
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                          as *const u8 as *const c_char,
+        __assert_fail(b"tc != NULL\x00".as_ptr() as *const c_char,
+                      
+                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
                       77u32,
                       (*::std::mem::transmute::<&[u8; 87],
                                                 &[c_char; 87]>(b"void tcase_add_checked_fixture(TCase *, tcase_setup_function, tcase_teardown_function)\x00")).as_ptr());
@@ -168,9 +171,10 @@ pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test
     if !tc.is_null() {
     } else {
         __assert_fail(
-            b"tc != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"tc != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             84u32,
             (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
                 b"void tcase_add_test(TCase *, tcase_test_function)\x00",
@@ -187,9 +191,10 @@ pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test
         if !new_tests.is_null() {
         } else {
             __assert_fail(
-                b"new_tests != NULL\x00" as *const u8 as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"new_tests != NULL\x00".as_ptr() as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
                 89u32,
                 (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
                     b"void tcase_add_test(TCase *, tcase_test_function)\x00",
@@ -263,7 +268,8 @@ unsafe extern "C" fn add_failure(mut runner: *mut SRunner, mut verbosity: c_int)
     (*runner).nfailures += 1;
     if verbosity >= CK_VERBOSE {
         printf(
-            b"%s:%d: %s\n\x00" as *const u8 as *const c_char,
+            
+            b"%s:%d: %s\n\x00".as_ptr() as *const c_char,
             _check_current_filename,
             _check_current_lineno,
             _check_current_function,
@@ -278,9 +284,10 @@ pub unsafe extern "C" fn srunner_run_all(mut runner: *mut SRunner, mut verbosity
     if !runner.is_null() {
     } else {
         __assert_fail(
-            b"runner != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"runner != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             156u32,
             (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                 b"void srunner_run_all(SRunner *, int)\x00",
@@ -340,7 +347,8 @@ pub unsafe extern "C" fn srunner_run_all(mut runner: *mut SRunner, mut verbosity
         let mut percentage: c_double = passed as c_double / (*runner).nchecks as c_double;
         let mut display: c_int = (percentage * 100f64) as c_int;
         printf(
-            b"%d%%: Checks: %d, Failed: %d\n\x00" as *const u8 as *const c_char,
+            
+            b"%d%%: Checks: %d, Failed: %d\n\x00".as_ptr() as *const c_char,
             display,
             (*runner).nchecks,
             (*runner).nfailures,
@@ -367,12 +375,15 @@ pub unsafe extern "C" fn _fail_unless(
             (*msg.offset(strlen(msg).wrapping_sub(1u64) as isize) as c_int == '\n' as i32) as c_int;
         fprintf(
             stderr,
-            b"ERROR: %s%s\x00" as *const u8 as *const c_char,
+            
+            b"ERROR: %s%s\x00".as_ptr() as *const c_char,
             msg,
             if has_newline != 0 {
-                b"\x00" as *const u8 as *const c_char
+                
+                b"\x00".as_ptr() as *const c_char
             } else {
-                b"\n\x00" as *const u8 as *const c_char
+                
+                b"\n\x00".as_ptr() as *const c_char
             },
         );
     }
@@ -384,9 +395,10 @@ pub unsafe extern "C" fn srunner_ntests_failed(mut runner: *mut SRunner) -> c_in
     if !runner.is_null() {
     } else {
         __assert_fail(
-            b"runner != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"runner != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
             217u32,
             (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                 b"int srunner_ntests_failed(SRunner *)\x00",

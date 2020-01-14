@@ -413,7 +413,8 @@ pub mod siphash_h {
         let mut i: size_t = 0;
         sip_tokey(
             &mut k,
-            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00" as *const u8
+            
+            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr()
                 as *const c_void,
         );
         i = 0;
@@ -654,10 +655,11 @@ unsafe extern "C" fn basic_setup() {
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             115i32,
-            b"Parser not created.\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created.\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -682,7 +684,8 @@ unsafe extern "C" fn _xml_failure(
     let mut err: XML_Error = XML_GetErrorCode(parser);
     sprintf(
         buffer.as_mut_ptr(),
-        b"    %d: %s (line %lu, offset %lu)\n    reported from %s, line %d\n\x00" as *const u8
+        
+        b"    %d: %s (line %lu, offset %lu)\n    reported from %s, line %d\n\x00".as_ptr()
             as *const c_char,
         err,
         XML_ErrorString(err),
@@ -978,10 +981,12 @@ unsafe extern "C" fn external_entity_optioner(
     }
     crate::minicheck::_fail_unless(
         0,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         432,
-        b"No suitable option found\x00" as *const u8 as *const c_char,
+        
+        b"No suitable option found\x00".as_ptr() as *const c_char,
     );
     return XML_STATUS_ERROR_0;
 }
@@ -1038,7 +1043,8 @@ unsafe extern "C" fn param_entity_match_handler(
 unsafe extern "C" fn test_nul_byte() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_nul_byte\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         480,
     );
@@ -1054,17 +1060,18 @@ unsafe extern "C" fn test_nul_byte() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             486i32,
-            b"Parser did not report error on NUL-byte.\x00" as *const u8 as *const c_char,
+            
+            b"Parser did not report error on NUL-byte.\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             488i32,
         );
     };
@@ -1073,16 +1080,20 @@ unsafe extern "C" fn test_nul_byte() {
 unsafe extern "C" fn test_u0000_char() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 16], &[c_char; 16]>(b"test_u0000_char\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         492,
     );
     /* test that a NUL byte (in US-ASCII data) is an error */
     _expect_failure(
-        b"<doc>&#0;</doc>\x00" as *const u8 as *const c_char,
+        
+        b"<doc>&#0;</doc>\x00".as_ptr() as *const c_char,
         XML_ERROR_BAD_CHAR_REF,
-        b"Parser did not report error on NUL-byte.\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report error on NUL-byte.\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         495,
     );
@@ -1091,17 +1102,19 @@ unsafe extern "C" fn test_u0000_char() {
 unsafe extern "C" fn test_siphash_self() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_siphash_self\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         499,
     );
     if sip24_valid() == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             501i32,
-            b"SipHash self-test failed\x00" as *const u8 as *const c_char,
+            
+            b"SipHash self-test failed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -1109,7 +1122,8 @@ unsafe extern "C" fn test_siphash_self() {
 unsafe extern "C" fn test_siphash_spec() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_siphash_spec\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         505,
     );
@@ -1131,7 +1145,8 @@ unsafe extern "C" fn test_siphash_spec() {
     let mut key: sipkey = sipkey { k: [0; 2] };
     sip_tokey(
         &mut key,
-        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00" as *const u8
+        
+        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr()
             as *const c_void,
     );
     sip24_init(&mut state, &mut key);
@@ -1147,20 +1162,22 @@ unsafe extern "C" fn test_siphash_spec() {
     if sip24_final(&mut state) != expected {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             526i32,
-            b"sip24_final failed spec test\n\x00" as *const u8 as *const c_char,
+            
+            b"sip24_final failed spec test\n\x00".as_ptr() as *const c_char,
         );
     }
     /* Cover wrapper */
     if siphash24(message.as_ptr() as *const c_void, len, &mut key) != expected {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             530i32,
-            b"siphash24 failed spec test\n\x00" as *const u8 as *const c_char,
+            
+            b"siphash24 failed spec test\n\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -1168,19 +1185,20 @@ unsafe extern "C" fn test_siphash_spec() {
 unsafe extern "C" fn test_bom_utf8() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_bom_utf8\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         534,
     );
     /* This test is really just making sure we don't core on a UTF-8 BOM. */
-    let mut text: *const c_char = b"\xef\xbb\xbf<e/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"\xef\xbb\xbf<e/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             540i32,
         );
     };
@@ -1189,7 +1207,8 @@ unsafe extern "C" fn test_bom_utf8() {
 unsafe extern "C" fn test_bom_utf16_be() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bom_utf16_be\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         544,
     );
@@ -1204,8 +1223,8 @@ unsafe extern "C" fn test_bom_utf16_be() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             549i32,
         );
     };
@@ -1214,7 +1233,8 @@ unsafe extern "C" fn test_bom_utf16_be() {
 unsafe extern "C" fn test_bom_utf16_le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bom_utf16_le\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         553,
     );
@@ -1229,8 +1249,8 @@ unsafe extern "C" fn test_bom_utf16_le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             558i32,
         );
     };
@@ -1240,7 +1260,8 @@ unsafe extern "C" fn test_bom_utf16_le() {
 unsafe extern "C" fn test_nobom_utf16_le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_nobom_utf16_le\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         563,
     );
@@ -1255,8 +1276,8 @@ unsafe extern "C" fn test_nobom_utf16_le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             567i32,
         );
     };
@@ -1393,20 +1414,23 @@ unsafe extern "C" fn _run_ext_character_check(
 unsafe extern "C" fn test_danish_latin1() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_danish_latin1\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         659,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e>J\xf8rgen \xe6\xf8\xe5\xc6\xd8\xc5</e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e>J\xf8rgen \xe6\xf8\xe5\xc6\xd8\xc5</e>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"J\xc3\xb8rgen \xc3\xa6\xc3\xb8\xc3\xa5\xc3\x86\xc3\x98\xc3\x85\x00" as *const u8
+        
+        b"J\xc3\xb8rgen \xc3\xa6\xc3\xb8\xc3\xa5\xc3\x86\xc3\x98\xc3\x85\x00".as_ptr()
             as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         669,
     );
@@ -1419,19 +1443,22 @@ unsafe extern "C" fn test_french_charref_hexidecimal() {
             b"test_french_charref_hexidecimal\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         674,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#xE9;&#xE8;&#xE0;&#xE7;&#xEA;&#xC8;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#xE9;&#xE8;&#xE0;&#xE7;&#xEA;&#xC8;</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00" as *const u8 as *const c_char;
+        
+        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         683,
     );
@@ -1441,19 +1468,22 @@ unsafe extern "C" fn test_french_charref_decimal() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_french_charref_decimal\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         687,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#233;&#232;&#224;&#231;&#234;&#200;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#233;&#232;&#224;&#231;&#234;&#200;</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00" as *const u8 as *const c_char;
+        
+        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         696,
     );
@@ -1462,19 +1492,22 @@ unsafe extern "C" fn test_french_charref_decimal() {
 unsafe extern "C" fn test_french_latin1() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_french_latin1\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         700,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>\xe9\xe8\xe0\xe7\xea\xc8</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>\xe9\xe8\xe0\xe7\xea\xc8</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00" as *const u8 as *const c_char;
+        
+        b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         709,
     );
@@ -1483,18 +1516,21 @@ unsafe extern "C" fn test_french_latin1() {
 unsafe extern "C" fn test_french_utf8() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 17], &[c_char; 17]>(b"test_french_utf8\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         713,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>\xc3\xa9</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>\xc3\xa9</doc>\x00".as_ptr()
             as *const c_char;
-    let mut expected: *const XML_Char = b"\xc3\xa9\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa9\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         721,
     );
@@ -1509,16 +1545,18 @@ unsafe extern "C" fn test_utf8_false_rejection() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_utf8_false_rejection\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         730,
     );
-    let mut text: *const c_char = b"<doc>\xef\xba\xbf</doc>\x00" as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"\xef\xba\xbf\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>\xef\xba\xbf</doc>\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"\xef\xba\xbf\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         737,
     );
@@ -1532,7 +1570,8 @@ unsafe extern "C" fn test_utf8_false_rejection() {
 unsafe extern "C" fn test_illegal_utf8() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_illegal_utf8\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         746,
     );
@@ -1542,7 +1581,8 @@ unsafe extern "C" fn test_illegal_utf8() {
     while i <= 255 {
         sprintf(
             text.as_mut_ptr(),
-            b"<e>%ccd</e>\x00" as *const u8 as *const c_char,
+            
+            b"<e>%ccd</e>\x00".as_ptr() as *const c_char,
             i,
         );
         if _XML_Parse_SINGLE_BYTES(
@@ -1554,23 +1594,24 @@ unsafe extern "C" fn test_illegal_utf8() {
         {
             sprintf(
                 text.as_mut_ptr(),
-                b"expected token error for \'%c\' (ordinal %d) in UTF-8 text\x00" as *const u8
+                
+                b"expected token error for \'%c\' (ordinal %d) in UTF-8 text\x00".as_ptr()
                     as *const c_char,
                 i,
                 i,
             );
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 756i32,
                 text.as_mut_ptr(),
             );
         } else if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 758i32,
             );
         }
@@ -1601,7 +1642,8 @@ pub const UTF8_LEAD_4: [c_char; 2] =
 unsafe extern "C" fn test_utf8_auto_align() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_utf8_auto_align\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         772,
     );
@@ -1609,7 +1651,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         {
             let mut init = TestCase {
                 expectedMovementInChars: 0i64,
-                input: b"\x00" as *const u8 as *const c_char,
+                input:  b"\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -1630,7 +1672,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         {
             let mut init = TestCase {
                 expectedMovementInChars: 0i64,
-                input: b"\xdf\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xdf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -1644,14 +1686,14 @@ unsafe extern "C" fn test_utf8_auto_align() {
         {
             let mut init = TestCase {
                 expectedMovementInChars: -2i64,
-                input: b"\xef\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xef\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
                 expectedMovementInChars: 0i64,
-                input: b"\xef\xbf\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xef\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -1665,21 +1707,21 @@ unsafe extern "C" fn test_utf8_auto_align() {
         {
             let mut init = TestCase {
                 expectedMovementInChars: -2i64,
-                input: b"\xf7\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xf7\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
                 expectedMovementInChars: -3i64,
-                input: b"\xf7\xbf\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xf7\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
                 expectedMovementInChars: 0i64,
-                input: b"\xf7\xbf\xbf\xbf\x00" as *const u8 as *const c_char,
+                input:  b"\xf7\xbf\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -1700,30 +1742,31 @@ unsafe extern "C" fn test_utf8_auto_align() {
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
             success = false_0 != 0;
-            printf(b"[-] UTF-8 case %2u: Expected movement by %2d chars, actually moved by %2d chars: \"\x00"
-                       as *const u8 as *const c_char,
+            printf(b"[-] UTF-8 case %2u: Expected movement by %2d chars, actually moved by %2d chars: \"\x00".as_ptr() as *const c_char,
                    i.wrapping_add(1u64) as
                        c_uint,
                    cases[i as usize].expectedMovementInChars as c_int,
                    actualMovementInChars as c_int);
             while j < strlen(cases[i as usize].input) {
                 printf(
-                    b"\\x%02x\x00" as *const u8 as *const c_char,
+                    
+                    b"\\x%02x\x00".as_ptr() as *const c_char,
                     *cases[i as usize].input.offset(j as isize) as c_uchar as c_int,
                 );
                 j = j.wrapping_add(1)
             }
-            printf(b"\"\n\x00" as *const u8 as *const c_char);
+            printf(b"\"\n\x00".as_ptr() as *const c_char);
         }
         i = i.wrapping_add(1)
     }
     if !success {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             821i32,
-            b"UTF-8 auto-alignment is not bullet-proof\n\x00" as *const u8 as *const c_char,
+            
+            b"UTF-8 auto-alignment is not bullet-proof\n\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -1731,7 +1774,8 @@ unsafe extern "C" fn test_utf8_auto_align() {
 unsafe extern "C" fn test_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 11], &[c_char; 11]>(b"test_utf16\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         826,
     );
@@ -1743,7 +1787,7 @@ unsafe extern "C" fn test_utf16() {
     let mut text: [c_char; 141] =
         *::std::mem::transmute::<&[u8; 141],
                                  &mut [c_char; 141]>(b"\x00<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00U\x00T\x00F\x00-\x001\x006\x00\'\x00?\x00>\x00\n\x00<\x00d\x00o\x00c\x00 \x00a\x00=\x00\'\x001\x002\x003\x00\'\x00>\x00s\x00o\x00m\x00e\x00 \xff!\x00 \x00t\x00e\x00x\x00t\x00<\x00/\x00d\x00o\x00c\x00>\x00"); /* epilog */
-    let mut expected: *const XML_Char = b"some \xef\xbc\xa1 text\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"some \xef\xbc\xa1 text\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -1769,8 +1813,8 @@ unsafe extern "C" fn test_utf16() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             852i32,
         );
     }
@@ -1781,7 +1825,8 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_utf16_le_epilog_newline\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         857,
     );
@@ -1794,10 +1839,11 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             864i32,
-            b"bad value of first_chunk_bytes\x00" as *const u8 as *const c_char,
+            
+            b"bad value of first_chunk_bytes\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(
@@ -1809,8 +1855,8 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             867i32,
         );
     } else {
@@ -1826,8 +1872,8 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
         if rc == XML_STATUS_ERROR_0 as c_uint {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 874i32,
             );
         }
@@ -1838,12 +1884,12 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
 unsafe extern "C" fn test_not_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 15], &[c_char; 15]>(b"test_not_utf16\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         880,
     );
-    let mut text: *const c_char = b"<?xml version=\'1.0\' encoding=\'utf-16\'?><doc>Hi</doc>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<?xml version=\'1.0\' encoding=\'utf-16\'?><doc>Hi</doc>\x00".as_ptr() as *const c_char;
     /* Use a handler to provoke the appropriate code paths */
     XML_SetXmlDeclHandler(
         g_parser,
@@ -1860,8 +1906,10 @@ unsafe extern "C" fn test_not_utf16() {
     _expect_failure(
         text,
         XML_ERROR_INCORRECT_ENCODING,
-        b"UTF-16 declared in UTF-8 not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"UTF-16 declared in UTF-8 not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         887,
     );
@@ -1871,30 +1919,35 @@ unsafe extern "C" fn test_not_utf16() {
 unsafe extern "C" fn test_bad_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bad_encoding\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         892,
     );
-    let mut text: *const c_char = b"<doc>Hi</doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>Hi</doc>\x00".as_ptr() as *const c_char;
     if XML_SetEncoding(
         g_parser,
-        b"unknown-encoding\x00" as *const u8 as *const c_char,
+        
+        b"unknown-encoding\x00".as_ptr() as *const c_char,
     ) as u64
         == 0
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             896i32,
-            b"XML_SetEncoding failed\x00" as *const u8 as *const c_char,
+            
+            b"XML_SetEncoding failed\x00".as_ptr() as *const c_char,
         );
     }
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         898,
     );
@@ -1904,21 +1957,23 @@ unsafe extern "C" fn test_bad_encoding() {
 unsafe extern "C" fn test_latin1_umlauts() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_latin1_umlauts\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         903,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e a=\'\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; >\'\n  >\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; ></e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e a=\'\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; >\'\n  >\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; ></e>\x00".as_ptr() as *const c_char;
     /* Expected results in UTF-8 */
     let mut expected: *const XML_Char =
-        b"\xc3\xa4 \xc3\xb6 \xc3\xbc \xc3\xa4 \xc3\xb6 \xc3\xbc \xc3\xa4 \xc3\xb6 \xc3\xbc >\x00"
-            as *const u8 as *const c_char;
+        
+        b"\xc3\xa4 \xc3\xb6 \xc3\xbc \xc3\xa4 \xc3\xb6 \xc3\xbc \xc3\xa4 \xc3\xb6 \xc3\xbc >\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         918,
     );
@@ -1926,7 +1981,8 @@ unsafe extern "C" fn test_latin1_umlauts() {
     _run_attribute_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         920,
     );
@@ -1942,7 +1998,8 @@ unsafe extern "C" fn test_latin1_umlauts() {
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         924,
     );
@@ -1957,7 +2014,8 @@ unsafe extern "C" fn test_latin1_umlauts() {
     _run_attribute_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         927,
     );
@@ -1968,18 +2026,22 @@ unsafe extern "C" fn test_long_utf8_character() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_long_utf8_character\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         932,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<do\xf0\x90\x80\x80/>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<do\xf0\x90\x80\x80/>\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"4-byte UTF-8 character in element name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"4-byte UTF-8 character in element name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         938,
     );
@@ -1992,20 +2054,22 @@ unsafe extern "C" fn test_long_latin1_attribute() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_long_latin1_attribute\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         945,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xe4\'>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xe4\'>\n</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xc3\xa4\x00"
-            as *const u8 as *const c_char;
+        
+        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xc3\xa4\x00".as_ptr() as *const c_char;
     _run_attribute_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         995,
     );
@@ -2018,21 +2082,23 @@ unsafe extern "C" fn test_long_ascii_attribute() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_long_ascii_attribute\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1002,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\'>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\'>\n</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\x00"
-            as *const u8 as *const c_char;
+        
+        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\x00".as_ptr() as *const c_char;
     /* clang-format on */
     _run_attribute_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1046,
     );
@@ -2043,19 +2109,20 @@ unsafe extern "C" fn test_line_number_after_parse() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_line_number_after_parse\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1051,
     );
-    let mut text: *const c_char = b"<tag>\n\n\n</tag>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<tag>\n\n\n</tag>\x00".as_ptr() as *const c_char;
     let mut lineno: XML_Size = 0;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1059i32,
         );
     }
@@ -2064,13 +2131,14 @@ unsafe extern "C" fn test_line_number_after_parse() {
         let mut buffer: [c_char; 100] = [0; 100];
         sprintf(
             buffer.as_mut_ptr(),
-            b"expected 4 lines, saw %lu\x00" as *const u8 as *const c_char,
+            
+            b"expected 4 lines, saw %lu\x00".as_ptr() as *const c_char,
             lineno,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1064i32,
             buffer.as_mut_ptr(),
         );
@@ -2082,19 +2150,20 @@ unsafe extern "C" fn test_column_number_after_parse() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_column_number_after_parse\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1070,
     );
-    let mut text: *const c_char = b"<tag></tag>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<tag></tag>\x00".as_ptr() as *const c_char;
     let mut colno: XML_Size = 0;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1076i32,
         );
     }
@@ -2103,13 +2172,14 @@ unsafe extern "C" fn test_column_number_after_parse() {
         let mut buffer: [c_char; 100] = [0; 100];
         sprintf(
             buffer.as_mut_ptr(),
-            b"expected 11 columns, saw %lu\x00" as *const u8 as *const c_char,
+            
+            b"expected 11 columns, saw %lu\x00".as_ptr() as *const c_char,
             colno,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1081i32,
             buffer.as_mut_ptr(),
         );
@@ -2158,17 +2228,19 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
             b"test_line_and_column_numbers_inside_handlers\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1105,
     );
     let mut text: *const c_char =
-        b"<a>\n  <b>\r\n    <c/>\r  </b>\n  <d>\n    <f/>\n  </d>\n</a>\x00" as *const u8
+        
+        b"<a>\n  <b>\r\n    <c/>\r  </b>\n  <d>\n    <f/>\n  </d>\n</a>\x00".as_ptr()
             as *const c_char;
     let expected: [crate::structdata::StructDataEntry; 10] = [
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"a\x00" as *const u8 as *const c_char,
+                str_0:  b"a\x00".as_ptr() as *const c_char,
                 data0: 0,
                 data1: 1,
                 data2: STRUCT_START_TAG,
@@ -2177,7 +2249,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"b\x00" as *const u8 as *const c_char,
+                str_0:  b"b\x00".as_ptr() as *const c_char,
                 data0: 2,
                 data1: 2,
                 data2: STRUCT_START_TAG,
@@ -2186,7 +2258,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"c\x00" as *const u8 as *const c_char,
+                str_0:  b"c\x00".as_ptr() as *const c_char,
                 data0: 4,
                 data1: 3,
                 data2: STRUCT_START_TAG,
@@ -2195,7 +2267,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"c\x00" as *const u8 as *const c_char,
+                str_0:  b"c\x00".as_ptr() as *const c_char,
                 data0: 8,
                 data1: 3,
                 data2: STRUCT_END_TAG,
@@ -2204,7 +2276,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"b\x00" as *const u8 as *const c_char,
+                str_0:  b"b\x00".as_ptr() as *const c_char,
                 data0: 2,
                 data1: 4,
                 data2: STRUCT_END_TAG,
@@ -2213,7 +2285,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"d\x00" as *const u8 as *const c_char,
+                str_0:  b"d\x00".as_ptr() as *const c_char,
                 data0: 2,
                 data1: 5,
                 data2: STRUCT_START_TAG,
@@ -2222,7 +2294,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"f\x00" as *const u8 as *const c_char,
+                str_0:  b"f\x00".as_ptr() as *const c_char,
                 data0: 4,
                 data1: 6,
                 data2: STRUCT_START_TAG,
@@ -2231,7 +2303,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"f\x00" as *const u8 as *const c_char,
+                str_0:  b"f\x00".as_ptr() as *const c_char,
                 data0: 8,
                 data1: 6,
                 data2: STRUCT_END_TAG,
@@ -2240,7 +2312,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"d\x00" as *const u8 as *const c_char,
+                str_0:  b"d\x00".as_ptr() as *const c_char,
                 data0: 2,
                 data1: 7,
                 data2: STRUCT_END_TAG,
@@ -2249,7 +2321,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
         },
         {
             let mut init = crate::structdata::StructDataEntry {
-                str_0: b"a\x00" as *const u8 as *const c_char,
+                str_0:  b"a\x00".as_ptr() as *const c_char,
                 data0: 0,
                 data1: 8,
                 data2: STRUCT_END_TAG,
@@ -2294,8 +2366,8 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1129i32,
         );
     }
@@ -2312,21 +2384,23 @@ unsafe extern "C" fn test_line_number_after_error() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_line_number_after_error\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1137,
     ); /* missing </b> */
-    let mut text: *const c_char = b"<a>\n  <b>\n  </a>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<a>\n  <b>\n  </a>\x00".as_ptr() as *const c_char;
     let mut lineno: XML_Size = 0;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         != XML_STATUS_ERROR_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1144i32,
-            b"Expected a parse error\x00" as *const u8 as *const c_char,
+            
+            b"Expected a parse error\x00".as_ptr() as *const c_char,
         );
     }
     lineno = XML_GetCurrentLineNumber(g_parser);
@@ -2334,13 +2408,14 @@ unsafe extern "C" fn test_line_number_after_error() {
         let mut buffer: [c_char; 100] = [0; 100];
         sprintf(
             buffer.as_mut_ptr(),
-            b"expected 3 lines, saw %lu\x00" as *const u8 as *const c_char,
+            
+            b"expected 3 lines, saw %lu\x00".as_ptr() as *const c_char,
             lineno,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1150i32,
             buffer.as_mut_ptr(),
         );
@@ -2352,21 +2427,23 @@ unsafe extern "C" fn test_column_number_after_error() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_column_number_after_error\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1156,
     ); /* missing </b> */
-    let mut text: *const c_char = b"<a>\n  <b>\n  </a>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<a>\n  <b>\n  </a>\x00".as_ptr() as *const c_char;
     let mut colno: XML_Size = 0;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         != XML_STATUS_ERROR_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1163i32,
-            b"Expected a parse error\x00" as *const u8 as *const c_char,
+            
+            b"Expected a parse error\x00".as_ptr() as *const c_char,
         );
     }
     colno = XML_GetCurrentColumnNumber(g_parser);
@@ -2374,13 +2451,14 @@ unsafe extern "C" fn test_column_number_after_error() {
         let mut buffer: [c_char; 100] = [0; 100];
         sprintf(
             buffer.as_mut_ptr(),
-            b"expected 4 columns, saw %lu\x00" as *const u8 as *const c_char,
+            
+            b"expected 4 columns, saw %lu\x00".as_ptr() as *const c_char,
             colno,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1169i32,
             buffer.as_mut_ptr(),
         );
@@ -2392,7 +2470,8 @@ unsafe extern "C" fn test_really_long_lines() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_really_long_lines\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1175,
     );
@@ -2402,15 +2481,15 @@ unsafe extern "C" fn test_really_long_lines() {
        this avoids writing bugs in buffer-filling code.
     */
     let mut text: *const c_char =
-        b"<e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1205i32,
         );
     };
@@ -2421,7 +2500,8 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_really_long_encoded_lines\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1210,
     );
@@ -2431,8 +2511,8 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
      */
     let mut buffer: *mut c_void = 0 as *mut c_void;
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00".as_ptr() as *const c_char;
     let mut parse_len: c_int = strlen(text) as c_int;
     /* Need a cdata handler to provoke the code path we want to test */
     XML_SetCharacterDataHandler(
@@ -2446,18 +2526,20 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1245i32,
-            b"Could not allocate parse buffer\x00" as *const u8 as *const c_char,
+            
+            b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
         __assert_fail(
-            b"buffer != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"buffer != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1246u32,
             (*::std::mem::transmute::<&[u8; 42], &[c_char; 42]>(
                 b"void test_really_long_encoded_lines(void)\x00",
@@ -2469,8 +2551,8 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
     if XML_ParseBuffer(g_parser, parse_len, XML_TRUE as c_int) == XML_STATUS_ERROR_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1249i32,
         );
     };
@@ -2496,7 +2578,7 @@ unsafe extern "C" fn end_element_event_handler(
     mut name: *const XML_Char,
 ) {
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
-    crate::chardata::CharData_AppendXMLChars(storage, b"/\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"/\x00".as_ptr() as *const c_char, 1);
     crate::chardata::CharData_AppendXMLChars(storage, name, -(1));
 }
 
@@ -2504,13 +2586,15 @@ unsafe extern "C" fn test_end_element_events() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_end_element_events\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1271,
     );
     let mut text: *const c_char =
-        b"<a><b><c/></b><d><f/></d></a>\x00" as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"/c/b/f/d/a\x00" as *const u8 as *const c_char;
+        
+        b"<a><b><c/></b><d><f/></d></a>\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"/c/b/f/d/a\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -2532,8 +2616,8 @@ unsafe extern "C" fn test_end_element_events() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1281i32,
         );
     }
@@ -2588,12 +2672,13 @@ unsafe extern "C" fn is_whitespace_normalized(
 /* Check the attribute whitespace checker: */
 
 unsafe extern "C" fn testhelper_is_whitespace_normalized() {
-    if is_whitespace_normalized(b"abc\x00" as *const u8 as *const c_char, 0) != 0 {
+    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 0) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc\"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1328u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2601,12 +2686,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc\x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1329u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2614,12 +2700,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc def ghi\x00" as *const u8 as *const c_char, 0) != 0 {
+    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 0) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1330u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2627,12 +2714,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc def ghi\x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1331u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2640,13 +2728,14 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b" abc def ghi\x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" abc def ghi\"), 0)\x00" as *const u8
+            
+            b"! is_whitespace_normalized(XCS(\" abc def ghi\"), 0)\x00".as_ptr()
                 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1332u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2654,12 +2743,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b" abc def ghi\x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\" abc def ghi\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\" abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1333u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2667,13 +2757,14 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc  def ghi\x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc  def ghi\"), 0)\x00" as *const u8
+            
+            b"! is_whitespace_normalized(XCS(\"abc  def ghi\"), 0)\x00".as_ptr()
                 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1334u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2681,12 +2772,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc  def ghi\x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc  def ghi\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc  def ghi\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1335u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2694,13 +2786,14 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc def ghi \x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc def ghi \"), 0)\x00" as *const u8
+            
+            b"! is_whitespace_normalized(XCS(\"abc def ghi \"), 0)\x00".as_ptr()
                 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1336u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2708,12 +2801,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc def ghi \x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi \"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\"abc def ghi \"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1337u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2721,12 +2815,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b" \x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" \"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\" \"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1338u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2734,12 +2829,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b" \x00" as *const u8 as *const c_char, 1) != 0 {
+    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 1) != 0 {
     } else {
         __assert_fail(
-            b"is_whitespace_normalized(XCS(\" \"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"is_whitespace_normalized(XCS(\" \"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1339u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2747,12 +2843,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\t\x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\t\"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1340u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2760,12 +2857,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\t\x00" as *const u8 as *const c_char, 1) == 0 {
+    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 1) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\t\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1341u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2773,12 +2871,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\n\x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\n\"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1342u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2786,12 +2885,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\n\x00" as *const u8 as *const c_char, 1) == 0 {
+    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 1) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\n\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1343u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2799,12 +2899,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\r\x00" as *const u8 as *const c_char, 0) == 0 {
+    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 0) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 0)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\r\"), 0)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1344u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2812,12 +2913,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"\r\x00" as *const u8 as *const c_char, 1) == 0 {
+    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 1) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"\\r\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1345u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2825,12 +2927,13 @@ unsafe extern "C" fn testhelper_is_whitespace_normalized() {
             .as_ptr(),
         );
     }
-    if is_whitespace_normalized(b"abc\t def\x00" as *const u8 as *const c_char, 1) == 0 {
+    if is_whitespace_normalized(b"abc\t def\x00".as_ptr() as *const c_char, 1) == 0 {
     } else {
         __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc\\t def\"), 1)\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"! is_whitespace_normalized(XCS(\"abc\\t def\"), 1)\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1346u32,
             (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
                 b"void testhelper_is_whitespace_normalized(void)\x00",
@@ -2850,22 +2953,23 @@ unsafe extern "C" fn check_attr_contains_normalized_whitespace(
     while !(*atts.offset(i as isize)).is_null() {
         let mut attrname: *const XML_Char = *atts.offset(i as isize);
         let mut value: *const XML_Char = *atts.offset((i + 1) as isize);
-        if strcmp(b"attr\x00" as *const u8 as *const c_char, attrname) == 0
-            || strcmp(b"ents\x00" as *const u8 as *const c_char, attrname) == 0
-            || strcmp(b"refs\x00" as *const u8 as *const c_char, attrname) == 0
+        if strcmp(b"attr\x00".as_ptr() as *const c_char, attrname) == 0
+            || strcmp(b"ents\x00".as_ptr() as *const c_char, attrname) == 0
+            || strcmp(b"refs\x00".as_ptr() as *const c_char, attrname) == 0
         {
             if is_whitespace_normalized(value, 0) == 0 {
                 let mut buffer: [c_char; 256] = [0; 256];
                 sprintf(
                     buffer.as_mut_ptr(),
-                    b"attribute value not normalized: %s=\'%s\'\x00" as *const u8 as *const c_char,
+                    
+                    b"attribute value not normalized: %s=\'%s\'\x00".as_ptr() as *const c_char,
                     attrname,
                     value,
                 );
                 crate::minicheck::_fail_unless(
                     0i32,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     1367i32,
                     buffer.as_mut_ptr(),
                 );
@@ -2881,13 +2985,14 @@ unsafe extern "C" fn test_attr_whitespace_normalization() {
             b"test_attr_whitespace_normalization\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1373,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ATTLIST doc\n            attr NMTOKENS #REQUIRED\n            ents ENTITIES #REQUIRED\n            refs IDREFS   #REQUIRED>\n]>\n<doc attr=\'    a  b c\t\td\te\t\' refs=\' id-1   \t  id-2\t\t\'  \n     ents=\' ent-1   \t\r\n            ent-2  \' >\n  <e id=\'id-1\'/>\n  <e id=\'id-2\'/>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ATTLIST doc\n            attr NMTOKENS #REQUIRED\n            ents ENTITIES #REQUIRED\n            refs IDREFS   #REQUIRED>\n]>\n<doc attr=\'    a  b c\t\td\te\t\' refs=\' id-1   \t  id-2\t\t\'  \n     ents=\' ent-1   \t\r\n            ent-2  \' >\n  <e id=\'id-1\'/>\n  <e id=\'id-2\'/>\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetStartElementHandler(
         g_parser,
         Some(
@@ -2904,8 +3009,8 @@ unsafe extern "C" fn test_attr_whitespace_normalization() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1392i32,
         );
     };
@@ -2918,15 +3023,19 @@ unsafe extern "C" fn test_xmldecl_misplaced() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_xmldecl_misplaced\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1400,
     );
     _expect_failure(
-        b"\n<?xml version=\'1.0\'?>\n<a/>\x00" as *const u8 as *const c_char,
+        
+        b"\n<?xml version=\'1.0\'?>\n<a/>\x00".as_ptr() as *const c_char,
         XML_ERROR_MISPLACED_XML_PI,
-        b"failed to report misplaced XML declaration\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"failed to report misplaced XML declaration\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1405,
     );
@@ -2935,15 +3044,19 @@ unsafe extern "C" fn test_xmldecl_misplaced() {
 unsafe extern "C" fn test_xmldecl_invalid() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_xmldecl_invalid\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1409,
     );
     _expect_failure(
-        b"<?xml version=\'1.0\' \xc3\xa7?>\n<doc/>\x00" as *const u8 as *const c_char,
+        
+        b"<?xml version=\'1.0\' \xc3\xa7?>\n<doc/>\x00".as_ptr() as *const c_char,
         XML_ERROR_XML_DECL,
-        b"Failed to report invalid XML declaration\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Failed to report invalid XML declaration\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1411,
     );
@@ -2953,15 +3066,19 @@ unsafe extern "C" fn test_xmldecl_missing_attr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_xmldecl_missing_attr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1415,
     );
     _expect_failure(
-        b"<?xml =\'1.0\'?>\n<doc/>\n\x00" as *const u8 as *const c_char,
+        
+        b"<?xml =\'1.0\'?>\n<doc/>\n\x00".as_ptr() as *const c_char,
         XML_ERROR_XML_DECL,
-        b"Failed to report missing XML declaration attribute\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Failed to report missing XML declaration attribute\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1417,
     );
@@ -2971,16 +3088,20 @@ unsafe extern "C" fn test_xmldecl_missing_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_xmldecl_missing_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1421,
     );
     _expect_failure(
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone?>\n<doc/>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone?>\n<doc/>\x00".as_ptr()
             as *const c_char,
         XML_ERROR_XML_DECL,
-        b"Failed to report missing attribute value\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Failed to report missing attribute value\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1425,
     );
@@ -2994,7 +3115,8 @@ unsafe extern "C" fn UnknownEncodingHandler(
 ) -> c_int {
     if strcmp(
         encoding,
-        b"unsupported-encoding\x00" as *const u8 as *const c_char,
+        
+        b"unsupported-encoding\x00".as_ptr() as *const c_char,
     ) == 0
     {
         let mut i: c_int = 0;
@@ -3023,13 +3145,14 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
             b"test_unknown_encoding_internal_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1446,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -3047,8 +3170,8 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1454i32,
         );
     };
@@ -3077,13 +3200,14 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
             b"test_unrecognised_encoding_internal_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1475,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -3101,10 +3225,11 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1483i32,
-            b"Unrecognised encoding not rejected\x00" as *const u8 as *const c_char,
+            
+            b"Unrecognised encoding not rejected\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -3127,20 +3252,22 @@ unsafe extern "C" fn external_entity_loader(
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1500i32,
-            b"Could not create external entity parser.\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser.\x00".as_ptr() as *const c_char,
         );
     }
     if !(*test_data).encoding.is_null() {
         if XML_SetEncoding(extparser, (*test_data).encoding) as u64 == 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 1503i32,
-                b"XML_SetEncoding() ignored for external entity\x00" as *const u8 as *const c_char,
+                
+                b"XML_SetEncoding() ignored for external entity\x00".as_ptr() as *const c_char,
             );
         }
     }
@@ -3153,8 +3280,8 @@ unsafe extern "C" fn external_entity_loader(
     {
         _xml_failure(
             extparser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1508,
         );
         return XML_STATUS_ERROR_0;
@@ -3167,23 +3294,24 @@ unsafe extern "C" fn test_ext_entity_set_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ext_entity_set_encoding\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1515,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00" as *const u8
+            parse_text:  b"<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00".as_ptr()
                 as *const c_char,
-            encoding: b"utf-8\x00" as *const u8 as *const c_char,
+            encoding:  b"utf-8\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
-    let mut expected: *const XML_Char = b"\xc3\xa9\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa9\x00".as_ptr() as *const c_char;
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -3201,7 +3329,8 @@ unsafe extern "C" fn test_ext_entity_set_encoding() {
         text,
         &mut test_data,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1532,
     );
@@ -3212,13 +3341,14 @@ unsafe extern "C" fn test_ext_entity_no_handler() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_ext_entity_no_handler\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1537,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -3228,8 +3358,10 @@ unsafe extern "C" fn test_ext_entity_no_handler() {
     );
     _run_character_check(
         text,
-        b"\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1544,
     );
@@ -3240,23 +3372,24 @@ unsafe extern "C" fn test_ext_entity_set_bom() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_ext_entity_set_bom\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1549,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"\xef\xbb\xbf<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00" as *const u8
+            parse_text:  b"\xef\xbb\xbf<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00".as_ptr()
                 as *const c_char,
-            encoding: b"utf-8\x00" as *const u8 as *const c_char,
+            encoding:  b"utf-8\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
-    let mut expected: *const XML_Char = b"\xc3\xa9\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa9\x00".as_ptr() as *const c_char;
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -3274,7 +3407,8 @@ unsafe extern "C" fn test_ext_entity_set_bom() {
         text,
         &mut test_data,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1565,
     );
@@ -3297,20 +3431,22 @@ unsafe extern "C" fn external_entity_faulter(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1589i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if !(*fault).encoding.is_null() {
         if XML_SetEncoding(ext_parser, (*fault).encoding) as u64 == 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 1592i32,
-                b"XML_SetEncoding failed\x00" as *const u8 as *const c_char,
+                
+                b"XML_SetEncoding failed\x00".as_ptr() as *const c_char,
             );
         }
     }
@@ -3323,8 +3459,8 @@ unsafe extern "C" fn external_entity_faulter(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1597i32,
             (*fault).fail_text,
         );
@@ -3332,8 +3468,8 @@ unsafe extern "C" fn external_entity_faulter(
     if XML_GetErrorCode(ext_parser) != (*fault).error {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1599i32,
         );
     }
@@ -3345,18 +3481,19 @@ unsafe extern "C" fn test_ext_entity_bad_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ext_entity_bad_encoding\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1605,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
-            parse_text: b"<?xml encoding=\'iso-8859-3\'?>u\x00" as *const u8 as *const c_char,
-            fail_text: b"Unsupported encoding not faulted\x00" as *const u8 as *const c_char,
-            encoding: b"unknown\x00" as *const u8 as *const c_char,
+            parse_text:  b"<?xml encoding=\'iso-8859-3\'?>u\x00".as_ptr() as *const c_char,
+            fail_text:  b"Unsupported encoding not faulted\x00".as_ptr() as *const c_char,
+            encoding:  b"unknown\x00".as_ptr() as *const c_char,
             error: XML_ERROR_UNKNOWN_ENCODING,
         };
         init
@@ -3378,8 +3515,10 @@ unsafe extern "C" fn test_ext_entity_bad_encoding() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Bad encoding should not have been accepted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad encoding should not have been accepted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1617,
     );
@@ -3390,18 +3529,19 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_ext_entity_bad_encoding_2\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1622,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
-            fail_text: b"Unknown encoding not faulted\x00" as *const u8 as *const c_char,
-            encoding: b"unknown-encoding\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
+            fail_text:  b"Unknown encoding not faulted\x00".as_ptr() as *const c_char,
+            encoding:  b"unknown-encoding\x00".as_ptr() as *const c_char,
             error: XML_ERROR_UNKNOWN_ENCODING,
         };
         init
@@ -3424,8 +3564,10 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Bad encoding not faulted in external entity handler\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad encoding not faulted in external entity handler\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1634,
     );
@@ -3440,19 +3582,21 @@ unsafe extern "C" fn test_wfc_undeclared_entity_unread_external_subset() {
             b"test_wfc_undeclared_entity_unread_external_subset\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1641,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1647i32,
         );
     };
@@ -3467,15 +3611,19 @@ unsafe extern "C" fn test_wfc_undeclared_entity_no_external_subset() {
             b"test_wfc_undeclared_entity_no_external_subset\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1654,
     );
     _expect_failure(
-        b"<doc>&entity;</doc>\x00" as *const u8 as *const c_char,
+        
+        b"<doc>&entity;</doc>\x00".as_ptr() as *const c_char,
         XML_ERROR_UNDEFINED_ENTITY,
-        b"Parser did not report undefined entity w/out a DTD.\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report undefined entity w/out a DTD.\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1656,
     );
@@ -3490,18 +3638,21 @@ unsafe extern "C" fn test_wfc_undeclared_entity_standalone() {
             b"test_wfc_undeclared_entity_standalone\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1663,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNDEFINED_ENTITY,
-        b"Parser did not report undefined entity (standalone).\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report undefined entity (standalone).\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1670,
     );
@@ -3516,16 +3667,17 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
             b"test_wfc_undeclared_entity_with_external_subset_standalone\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1677,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -3549,8 +3701,10 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
     _expect_failure(
         text,
         XML_ERROR_UNDEFINED_ENTITY,
-        b"Parser did not report undefined entity (external DTD).\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report undefined entity (external DTD).\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1688,
     );
@@ -3565,16 +3719,17 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
             b"test_entity_with_external_subset_unless_standalone\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1695,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ENTITY entity \'bar\'>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ENTITY entity \'bar\'>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -3598,8 +3753,10 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
     _expect_failure(
         text,
         XML_ERROR_UNDEFINED_ENTITY,
-        b"Parser did not report undefined entity\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report undefined entity\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1707,
     );
@@ -3614,16 +3771,17 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
             b"test_wfc_undeclared_entity_with_external_subset\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1714,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -3646,8 +3804,10 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
     _run_ext_character_check(
         text,
         &mut test_data,
-        b"\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1722,
     );
@@ -3664,16 +3824,17 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
             b"test_not_standalone_handler_reject\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1733,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -3701,8 +3862,10 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
     _expect_failure(
         text,
         XML_ERROR_NOT_STANDALONE,
-        b"NotStandalone handler failed to reject\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"NotStandalone handler failed to reject\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1744,
     );
@@ -3715,8 +3878,10 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
     _expect_failure(
         text,
         XML_ERROR_NOT_STANDALONE,
-        b"NotStandalone handler failed to reject\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"NotStandalone handler failed to reject\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1750,
     );
@@ -3733,16 +3898,17 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
             b"test_not_standalone_handler_accept\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1761,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -3769,8 +3935,10 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
     _run_ext_character_check(
         text,
         &mut test_data,
-        b"\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1770,
     );
@@ -3782,8 +3950,10 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
     );
     _run_character_check(
         text,
-        b"\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1775,
     );
@@ -3795,18 +3965,21 @@ unsafe extern "C" fn test_wfc_no_recursive_entity_refs() {
             b"test_wfc_no_recursive_entity_refs\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1779,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#38;entity;\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#38;entity;\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_RECURSIVE_ENTITY_REF,
-        b"Parser did not report recursive entity reference.\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parser did not report recursive entity reference.\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1786,
     );
@@ -3817,18 +3990,19 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ext_entity_invalid_parse\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1791,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let faults: [ExtFaults; 4] = [
         {
             let mut init = ext_faults {
-                parse_text: b"<\x00" as *const u8 as *const c_char,
-                fail_text: b"Incomplete element declaration not faulted\x00" as *const u8
+                parse_text:  b"<\x00".as_ptr() as *const c_char,
+                fail_text:  b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
@@ -3837,8 +4011,8 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<\xe2\x82\x00" as *const u8 as *const c_char,
-                fail_text: b"Incomplete character not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"<\xe2\x82\x00".as_ptr() as *const c_char,
+                fail_text:  b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
@@ -3846,8 +4020,8 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<tag>\xe2\x82\x00" as *const u8 as *const c_char,
-                fail_text: b"Incomplete character in CDATA not faulted\x00" as *const u8
+                parse_text:  b"<tag>\xe2\x82\x00".as_ptr() as *const c_char,
+                fail_text:  b"Incomplete character in CDATA not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
@@ -3884,9 +4058,10 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
         _expect_failure(
             text,
             XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-            b"Parser did not report external entity error\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"Parser did not report external entity error\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1811,
         );
         XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -3899,13 +4074,14 @@ unsafe extern "C" fn test_dtd_default_handling() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_dtd_default_handling\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1818,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]><doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]><doc/>\x00".as_ptr() as *const c_char;
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -4012,8 +4188,10 @@ unsafe extern "C" fn test_dtd_default_handling() {
     );
     _run_character_check(
         text,
-        b"\n\n\n\n\n\n\n<doc/>\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\n\n\n\n\n\n\n<doc/>\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1839,
     );
@@ -4031,28 +4209,31 @@ unsafe extern "C" fn verify_attlist_decl_handler(
     if strcmp(element_name, (*at).element_name) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1861i32,
-            b"Unexpected element name in attribute declaration\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected element name in attribute declaration\x00".as_ptr() as *const c_char,
         );
     }
     if strcmp(attr_name, (*at).attr_name) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1863i32,
-            b"Unexpected attribute name in attribute declaration\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected attribute name in attribute declaration\x00".as_ptr() as *const c_char,
         );
     }
     if strcmp(attr_type, (*at).attr_type) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1865i32,
-            b"Unexpected attribute type in attribute declaration\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected attribute type in attribute declaration\x00".as_ptr() as *const c_char,
         );
     }
     if default_value.is_null() && !(*at).default_value.is_null()
@@ -4061,19 +4242,21 @@ unsafe extern "C" fn verify_attlist_decl_handler(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1869i32,
-            b"Unexpected default value in attribute declaration\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected default value in attribute declaration\x00".as_ptr() as *const c_char,
         );
     }
     if is_required != (*at).is_required as c_int {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1871i32,
-            b"Requirement mismatch in attribute declaration\x00" as *const u8 as *const c_char,
+            
+            b"Requirement mismatch in attribute declaration\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -4082,21 +4265,23 @@ unsafe extern "C" fn test_dtd_attr_handling() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_dtd_attr_handling\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1874,
     );
     let mut prolog: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n\x00".as_ptr() as *const c_char;
     let mut attr_data: [AttTest; 5] = [
         {
             let mut init = AttTest {
                 definition:
-                    b"<!ATTLIST doc a ( one | two | three ) #REQUIRED>\n]><doc a=\'two\'/>\x00"
-                        as *const u8 as *const c_char,
-                element_name: b"doc\x00" as *const u8 as *const c_char,
-                attr_name: b"a\x00" as *const u8 as *const c_char,
-                attr_type: b"(one|two|three)\x00" as *const u8 as *const c_char,
+                    
+                    b"<!ATTLIST doc a ( one | two | three ) #REQUIRED>\n]><doc a=\'two\'/>\x00".as_ptr() as *const c_char,
+                element_name:  b"doc\x00".as_ptr() as *const c_char,
+                attr_name:  b"a\x00".as_ptr() as *const c_char,
+                attr_type:  b"(one|two|three)\x00".as_ptr() as *const c_char,
                 default_value: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 is_required: XML_TRUE,
             };
@@ -4105,14 +4290,17 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         {
             let mut init =
                  AttTest{definition:
-                             b"<!NOTATION foo SYSTEM \'http://example.org/foo\'>\n<!ATTLIST doc a NOTATION (foo) #IMPLIED>\n]><doc/>\x00"
-                                 as *const u8 as *const c_char,
+                             
+                             b"<!NOTATION foo SYSTEM \'http://example.org/foo\'>\n<!ATTLIST doc a NOTATION (foo) #IMPLIED>\n]><doc/>\x00".as_ptr() as *const c_char,
                          element_name:
-                             b"doc\x00" as *const u8 as *const c_char,
+                             
+                             b"doc\x00".as_ptr() as *const c_char,
                          attr_name:
-                             b"a\x00" as *const u8 as *const c_char,
+                             
+                             b"a\x00".as_ptr() as *const c_char,
                          attr_type:
-                             b"NOTATION(foo)\x00" as *const u8 as
+                             
+                             b"NOTATION(foo)\x00".as_ptr() as
                                  *const c_char,
                          default_value: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                          is_required: XML_FALSE,};
@@ -4120,24 +4308,24 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         },
         {
             let mut init = AttTest {
-                definition: b"<!ATTLIST doc a NOTATION (foo) \'bar\'>\n]><doc/>\x00" as *const u8
+                definition:  b"<!ATTLIST doc a NOTATION (foo) \'bar\'>\n]><doc/>\x00".as_ptr()
                     as *const c_char,
-                element_name: b"doc\x00" as *const u8 as *const c_char,
-                attr_name: b"a\x00" as *const u8 as *const c_char,
-                attr_type: b"NOTATION(foo)\x00" as *const u8 as *const c_char,
-                default_value: b"bar\x00" as *const u8 as *const c_char,
+                element_name:  b"doc\x00".as_ptr() as *const c_char,
+                attr_name:  b"a\x00".as_ptr() as *const c_char,
+                attr_type:  b"NOTATION(foo)\x00".as_ptr() as *const c_char,
+                default_value:  b"bar\x00".as_ptr() as *const c_char,
                 is_required: XML_FALSE,
             };
             init
         },
         {
             let mut init = AttTest {
-                definition: b"<!ATTLIST doc a CDATA \'\xdb\xb2\'>\n]><doc/>\x00" as *const u8
+                definition:  b"<!ATTLIST doc a CDATA \'\xdb\xb2\'>\n]><doc/>\x00".as_ptr()
                     as *const c_char,
-                element_name: b"doc\x00" as *const u8 as *const c_char,
-                attr_name: b"a\x00" as *const u8 as *const c_char,
-                attr_type: b"CDATA\x00" as *const u8 as *const c_char,
-                default_value: b"\xdb\xb2\x00" as *const u8 as *const c_char,
+                element_name:  b"doc\x00".as_ptr() as *const c_char,
+                attr_name:  b"a\x00".as_ptr() as *const c_char,
+                attr_type:  b"CDATA\x00".as_ptr() as *const c_char,
+                default_value:  b"\xdb\xb2\x00".as_ptr() as *const c_char,
                 is_required: XML_FALSE,
             };
             init
@@ -4177,8 +4365,8 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 1912i32,
             );
         }
@@ -4191,8 +4379,8 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 1916i32,
             );
         }
@@ -4213,20 +4401,21 @@ unsafe extern "C" fn test_empty_ns_without_namespaces() {
             b"test_empty_ns_without_namespaces\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1928,
     );
     let mut text: *const c_char =
-        b"<doc xmlns:prefix=\'http://example.org/\'>\n  <e xmlns:prefix=\'\'/>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc xmlns:prefix=\'http://example.org/\'>\n  <e xmlns:prefix=\'\'/>\n</doc>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1935i32,
         );
     };
@@ -4242,28 +4431,29 @@ unsafe extern "C" fn test_ns_in_attribute_default_without_namespaces() {
             b"test_ns_in_attribute_default_without_namespaces\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1943,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE e:element [\n  <!ATTLIST e:element\n    xmlns:e CDATA \'http://example.org/\'>\n      ]>\n<e:element/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE e:element [\n  <!ATTLIST e:element\n    xmlns:e CDATA \'http://example.org/\'>\n      ]>\n<e:element/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             1952i32,
         );
     };
 }
 
 static mut long_character_data_text: *const c_char =
-    b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><s>012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789</s>\x00"
-        as *const u8 as *const c_char;
+    
+    b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><s>012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789</s>\x00".as_ptr() as *const c_char;
 
 static mut resumable: XML_Bool = XML_FALSE;
 
@@ -4289,7 +4479,8 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
             b"test_stop_parser_between_char_data_calls\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         1994,
     );
@@ -4313,16 +4504,16 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2007i32,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_ABORTED {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2009i32,
         );
     };
@@ -4336,7 +4527,8 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
             b"test_suspend_parser_between_char_data_calls\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2015,
     );
@@ -4360,16 +4552,16 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2028i32,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2030i32,
         );
     }
@@ -4379,20 +4571,22 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2034i32,
-            b"Attempt to continue parse while suspended not faulted\x00" as *const u8
+            
+            b"Attempt to continue parse while suspended not faulted\x00".as_ptr()
                 as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2036i32,
-            b"Suspended parse not faulted with correct error\x00" as *const u8 as *const c_char,
+            
+            b"Suspended parse not faulted with correct error\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -4416,17 +4610,18 @@ unsafe extern "C" fn parser_stop_character_handler(
         if XML_StopParser(g_parser, XML_FALSE) != XML_STATUS_ERROR_0 as c_uint {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2052i32,
-                b"Aborting aborted parser not faulted\x00" as *const u8 as *const c_char,
+                
+                b"Aborting aborted parser not faulted\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(g_parser) != XML_ERROR_FINISHED {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2054i32,
             );
         }
@@ -4435,8 +4630,8 @@ unsafe extern "C" fn parser_stop_character_handler(
         if XML_StopParser(g_parser, XML_FALSE) == XML_STATUS_ERROR_0 as c_uint {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2058i32,
             );
         }
@@ -4445,17 +4640,18 @@ unsafe extern "C" fn parser_stop_character_handler(
         if XML_StopParser(g_parser, XML_TRUE) != XML_STATUS_ERROR_0 as c_uint {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2062i32,
-                b"Suspending suspended parser not faulted\x00" as *const u8 as *const c_char,
+                
+                b"Suspending suspended parser not faulted\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2064i32,
             );
         }
@@ -4469,7 +4665,8 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
             b"test_repeated_stop_parser_between_char_data_calls\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2069,
     );
@@ -4488,10 +4685,11 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2077i32,
-            b"Failed to double-stop parser\x00" as *const u8 as *const c_char,
+            
+            b"Failed to double-stop parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -4509,10 +4707,11 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2085i32,
-            b"Failed to double-suspend parser\x00" as *const u8 as *const c_char,
+            
+            b"Failed to double-suspend parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -4530,10 +4729,11 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2093i32,
-            b"Failed to suspend-abort parser\x00" as *const u8 as *const c_char,
+            
+            b"Failed to suspend-abort parser\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -4541,14 +4741,17 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
 unsafe extern "C" fn test_good_cdata_ascii() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_good_cdata_ascii\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2097,
     );
     let mut text: *const c_char =
-        b"<a><![CDATA[<greeting>Hello, world!</greeting>]]></a>\x00" as *const u8 as *const c_char;
+        
+        b"<a><![CDATA[<greeting>Hello, world!</greeting>]]></a>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<greeting>Hello, world!</greeting>\x00" as *const u8 as *const c_char;
+        
+        b"<greeting>Hello, world!</greeting>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -4579,8 +4782,8 @@ unsafe extern "C" fn test_good_cdata_ascii() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2111i32,
         );
     }
@@ -4611,8 +4814,8 @@ unsafe extern "C" fn test_good_cdata_ascii() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2123i32,
         );
     }
@@ -4622,7 +4825,8 @@ unsafe extern "C" fn test_good_cdata_ascii() {
 unsafe extern "C" fn test_good_cdata_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_good_cdata_utf16\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2128,
     );
@@ -4633,7 +4837,7 @@ unsafe extern "C" fn test_good_cdata_utf16() {
     let text: [c_char; 129] =
         *::std::mem::transmute::<&[u8; 129],
                                  &[c_char; 129]>(b"\x00<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00u\x00t\x00f\x00-\x001\x006\x00\'\x00?\x00>\x00\n\x00<\x00a\x00>\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00h\x00e\x00l\x00l\x00o\x00]\x00]\x00>\x00<\x00/\x00a\x00>\x00");
-    let mut expected: *const XML_Char = b"hello\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"hello\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -4659,8 +4863,8 @@ unsafe extern "C" fn test_good_cdata_utf16() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2150i32,
         );
     }
@@ -4671,7 +4875,8 @@ unsafe extern "C" fn test_good_cdata_utf16_le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_good_cdata_utf16_le\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2155,
     );
@@ -4682,7 +4887,7 @@ unsafe extern "C" fn test_good_cdata_utf16_le() {
     let text: [c_char; 129] =
         *::std::mem::transmute::<&[u8; 129],
                                  &[c_char; 129]>(b"<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00u\x00t\x00f\x00-\x001\x006\x00\'\x00?\x00>\x00\n\x00<\x00a\x00>\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00h\x00e\x00l\x00l\x00o\x00]\x00]\x00>\x00<\x00/\x00a\x00>\x00\x00");
-    let mut expected: *const XML_Char = b"hello\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"hello\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -4708,8 +4913,8 @@ unsafe extern "C" fn test_good_cdata_utf16_le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2177i32,
         );
     }
@@ -4721,7 +4926,8 @@ unsafe extern "C" fn test_good_cdata_utf16_le() {
 unsafe extern "C" fn test_long_cdata_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_long_cdata_utf16\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2187,
     );
@@ -4735,8 +4941,8 @@ unsafe extern "C" fn test_long_cdata_utf16() {
         *::std::mem::transmute::<&[u8; 2197],
                                  &[c_char; 2197]>(b"\x00<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00u\x00t\x00f\x00-\x001\x006\x00\'\x00?\x00>\x00<\x00a\x00>\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00]\x00]\x00>\x00<\x00/\x00a\x00>\x00");
     let mut expected: *const XML_Char =
-        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\x00"
-            as *const u8 as *const c_char;
+        
+        b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\x00".as_ptr() as *const c_char;
     /* clang-format on */
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
@@ -4762,18 +4968,20 @@ unsafe extern "C" fn test_long_cdata_utf16() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2248i32,
-            b"Could not allocate parse buffer\x00" as *const u8 as *const c_char,
+            
+            b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
         __assert_fail(
-            b"buffer != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"buffer != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2249u32,
             (*::std::mem::transmute::<&[u8; 33], &[c_char; 33]>(
                 b"void test_long_cdata_utf16(void)\x00",
@@ -4794,8 +5002,8 @@ unsafe extern "C" fn test_long_cdata_utf16() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2252i32,
         );
     }
@@ -4807,7 +5015,8 @@ unsafe extern "C" fn test_multichar_cdata_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_multichar_cdata_utf16\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2258,
     );
@@ -4826,7 +5035,8 @@ unsafe extern "C" fn test_multichar_cdata_utf16() {
         *::std::mem::transmute::<&[u8; 127],
                                  &[c_char; 127]>(b"\x00<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00u\x00t\x00f\x00-\x001\x006\x00\'\x00?\x00>\x00\n\x00<\x00a\x00>\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\xd84\xdd^\xd84\xdd_\x00]\x00]\x00>\x00<\x00/\x00a\x00>\x00");
     let mut expected: *const XML_Char =
-        b"\xf0\x9d\x85\x9e\xf0\x9d\x85\x9f\x00" as *const u8 as *const c_char;
+        
+        b"\xf0\x9d\x85\x9e\xf0\x9d\x85\x9f\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -4852,8 +5062,8 @@ unsafe extern "C" fn test_multichar_cdata_utf16() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2292i32,
         );
     }
@@ -4865,7 +5075,8 @@ unsafe extern "C" fn test_utf16_bad_surrogate_pair() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_utf16_bad_surrogate_pair\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2298,
     );
@@ -4889,17 +5100,18 @@ unsafe extern "C" fn test_utf16_bad_surrogate_pair() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2319i32,
-            b"Reversed UTF-16 surrogate pair not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Reversed UTF-16 surrogate pair not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2321i32,
         );
     };
@@ -4908,154 +5120,155 @@ unsafe extern "C" fn test_utf16_bad_surrogate_pair() {
 unsafe extern "C" fn test_bad_cdata() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 15], &[c_char; 15]>(b"test_bad_cdata\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2325,
     );
     let mut cases: [CaseData; 21] = [
         {
             let mut init = CaseData {
-                text: b"<a><\x00" as *const u8 as *const c_char,
+                text:  b"<a><\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><!\x00" as *const u8 as *const c_char,
+                text:  b"<a><!\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![\x00" as *const u8 as *const c_char,
+                text:  b"<a><![\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![C\x00" as *const u8 as *const c_char,
+                text:  b"<a><![C\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CD\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CD\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDA\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDA\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDAT\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDAT\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[]\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[]\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[]]\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[]]\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><!<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><!<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![C<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![C<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CD<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CD<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDA<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDA<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDAT<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDAT<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[]<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[]<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
-                text: b"<a><![CDATA[]]<a/>\x00" as *const u8 as *const c_char,
+                text:  b"<a><![CDATA[]]<a/>\x00".as_ptr() as *const c_char,
                 expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
@@ -5076,9 +5289,10 @@ unsafe extern "C" fn test_bad_cdata() {
         if actualStatus == XML_STATUS_ERROR {
         } else {
             __assert_fail(
-                b"actualStatus == XML_STATUS_ERROR\x00" as *const u8 as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"actualStatus == XML_STATUS_ERROR\x00".as_ptr() as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2363u32,
                 (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(
                     b"void test_bad_cdata(void)\x00",
@@ -5090,7 +5304,8 @@ unsafe extern "C" fn test_bad_cdata() {
             let mut message: [c_char; 100] = [0; 100];
             sprintf(
                 message.as_mut_ptr(),
-                b"Expected error %d but got error %d for case %u: \"%s\"\n\x00" as *const u8
+                
+                b"Expected error %d but got error %d for case %u: \"%s\"\n\x00".as_ptr()
                     as *const c_char,
                 cases[i as usize].expectedError,
                 actualError,
@@ -5099,8 +5314,8 @@ unsafe extern "C" fn test_bad_cdata() {
             );
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2371i32,
                 message.as_mut_ptr(),
             );
@@ -5114,7 +5329,8 @@ unsafe extern "C" fn test_bad_cdata() {
 unsafe extern "C" fn test_bad_cdata_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_bad_cdata_utf16\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2380,
     );
@@ -5125,7 +5341,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 1u64,
-                text: b"\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5133,7 +5349,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 2u64,
-                text: b"\x00<\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5141,7 +5357,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 3u64,
-                text: b"\x00<\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5149,7 +5365,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 4u64,
-                text: b"\x00<\x00!\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5157,7 +5373,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 5u64,
-                text: b"\x00<\x00!\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5165,7 +5381,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 6u64,
-                text: b"\x00<\x00!\x00[\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5173,7 +5389,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 7u64,
-                text: b"\x00<\x00!\x00[\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5181,7 +5397,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 8u64,
-                text: b"\x00<\x00!\x00[\x00C\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5189,7 +5405,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 9u64,
-                text: b"\x00<\x00!\x00[\x00C\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5197,7 +5413,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 10u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5205,7 +5421,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 11u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5213,7 +5429,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 12u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5221,7 +5437,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 13u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5229,7 +5445,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 14u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5237,7 +5453,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 15u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5245,7 +5461,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 16u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00" as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -5253,7 +5469,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 17u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_TOKEN,
             };
@@ -5262,7 +5478,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 18u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
@@ -5271,7 +5487,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 19u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
@@ -5280,7 +5496,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 20u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
@@ -5289,7 +5505,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 21u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd8\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd8\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
@@ -5298,7 +5514,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 22u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\x00" as *const u8
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_ERROR_PARTIAL_CHAR,
             };
@@ -5307,8 +5523,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 23u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd\x00"
-                    as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_PARTIAL_CHAR,
             };
             init
@@ -5316,8 +5531,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             let mut init = CaseData_0 {
                 text_bytes: 24u64,
-                text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd^\x00"
-                    as *const u8 as *const c_char,
+                text:  b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd^\x00".as_ptr() as *const c_char,
                 expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
             };
             init
@@ -5340,8 +5554,8 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2432i32,
             );
         }
@@ -5354,9 +5568,10 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         if actual_status == XML_STATUS_ERROR {
         } else {
             __assert_fail(
-                b"actual_status == XML_STATUS_ERROR\x00" as *const u8 as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"actual_status == XML_STATUS_ERROR\x00".as_ptr() as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2435u32,
                 (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
                     b"void test_bad_cdata_utf16(void)\x00",
@@ -5369,7 +5584,8 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut message: [c_char; 1024] = [0; 1024];
             sprintf(
                 message.as_mut_ptr(),
-                b"Expected error %d (%s), got %d (%s) for case %lu\n\x00" as *const u8
+                
+                b"Expected error %d (%s), got %d (%s) for case %lu\n\x00".as_ptr()
                     as *const c_char,
                 cases[i as usize].expected_error,
                 XML_ErrorString(cases[i as usize].expected_error),
@@ -5379,8 +5595,8 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             );
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2446i32,
                 message.as_mut_ptr(),
             );
@@ -5391,8 +5607,8 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
 }
 
 static mut long_cdata_text: *const c_char =
-    b"<s><![CDATA[012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789]]></s>\x00"
-        as *const u8 as *const c_char;
+    
+    b"<s><![CDATA[012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789]]></s>\x00".as_ptr() as *const c_char;
 /* Test stopping the parser in cdata handler */
 
 unsafe extern "C" fn test_stop_parser_between_cdata_calls() {
@@ -5401,7 +5617,8 @@ unsafe extern "C" fn test_stop_parser_between_cdata_calls() {
             b"test_stop_parser_between_cdata_calls\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2478,
     );
@@ -5417,8 +5634,10 @@ unsafe extern "C" fn test_stop_parser_between_cdata_calls() {
     _expect_failure(
         text,
         XML_ERROR_ABORTED,
-        b"Parse not aborted in CDATA handler\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parse not aborted in CDATA handler\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2483,
     );
@@ -5431,7 +5650,8 @@ unsafe extern "C" fn test_suspend_parser_between_cdata_calls() {
             b"test_suspend_parser_between_cdata_calls\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2488,
     );
@@ -5450,24 +5670,25 @@ unsafe extern "C" fn test_suspend_parser_between_cdata_calls() {
         if result == XML_STATUS_ERROR_0 as c_uint {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2497i32,
             );
         }
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2498i32,
-            b"Parse not suspended in CDATA handler\x00" as *const u8 as *const c_char,
+            
+            b"Parse not suspended in CDATA handler\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2501i32,
         );
     };
@@ -5478,7 +5699,8 @@ unsafe extern "C" fn test_memory_allocation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_memory_allocation\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2506,
     );
@@ -5487,10 +5709,11 @@ unsafe extern "C" fn test_memory_allocation() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2511i32,
-            b"Allocation failed\x00" as *const u8 as *const c_char,
+            
+            b"Allocation failed\x00".as_ptr() as *const c_char,
         );
     } else {
         /* Try writing to memory; some OSes try to cheat! */
@@ -5499,35 +5722,37 @@ unsafe extern "C" fn test_memory_allocation() {
         *buffer.offset(2) = 'S' as c_char;
         *buffer.offset(3) = 'T' as c_char;
         *buffer.offset(4) = '\u{0}' as c_char;
-        if strcmp(buffer, b"TEST\x00" as *const u8 as *const c_char) != 0 {
+        if strcmp(buffer,  b"TEST\x00".as_ptr() as *const c_char) != 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2520i32,
-                b"Memory not writable\x00" as *const u8 as *const c_char,
+                
+                b"Memory not writable\x00".as_ptr() as *const c_char,
             );
         } else {
             p = XML_MemRealloc(g_parser, buffer as *mut c_void, 512) as *mut c_char;
             if p.is_null() {
                 crate::minicheck::_fail_unless(
                     0i32,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     2524i32,
-                    b"Reallocation failed\x00" as *const u8 as *const c_char,
+                    
+                    b"Reallocation failed\x00".as_ptr() as *const c_char,
                 );
             } else {
                 /* Write again, just to be sure */
                 buffer = p;
                 *buffer.offset(0) = 'V' as c_char;
-                if strcmp(buffer, b"VEST\x00" as *const u8 as *const c_char) != 0 {
+                if strcmp(buffer,  b"VEST\x00".as_ptr() as *const c_char) != 0 {
                     crate::minicheck::_fail_unless(0i32,
-                                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                                     as *const u8 as *const c_char,
+                                 
+                                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                  2530i32,
-                                 b"Reallocated memory not writable\x00" as
-                                     *const u8 as *const c_char);
+                                 
+                                 b"Reallocated memory not writable\x00".as_ptr() as *const c_char);
                 }
             }
         }
@@ -5542,7 +5767,8 @@ unsafe extern "C" fn record_default_handler(
 ) {
     crate::chardata::CharData_AppendXMLChars(
         userData as *mut crate::chardata::CharData,
-        b"D\x00" as *const u8 as *const c_char,
+        
+        b"D\x00".as_ptr() as *const c_char,
         1,
     );
 }
@@ -5554,7 +5780,8 @@ unsafe extern "C" fn record_cdata_handler(
 ) {
     crate::chardata::CharData_AppendXMLChars(
         userData as *mut crate::chardata::CharData,
-        b"C\x00" as *const u8 as *const c_char,
+        
+        b"C\x00".as_ptr() as *const c_char,
         1,
     );
     XML_DefaultCurrent(g_parser);
@@ -5567,7 +5794,8 @@ unsafe extern "C" fn record_cdata_nodefault_handler(
 ) {
     crate::chardata::CharData_AppendXMLChars(
         userData as *mut crate::chardata::CharData,
-        b"c\x00" as *const u8 as *const c_char,
+        
+        b"c\x00".as_ptr() as *const c_char,
         1,
     );
 }
@@ -5580,9 +5808,11 @@ unsafe extern "C" fn record_skip_handler(
     crate::chardata::CharData_AppendXMLChars(
         userData as *mut crate::chardata::CharData,
         if is_parameter_entity != 0 {
-            b"E\x00" as *const u8 as *const c_char
+            
+            b"E\x00".as_ptr() as *const c_char
         } else {
-            b"e\x00" as *const u8 as *const c_char
+            
+            b"e\x00".as_ptr() as *const c_char
         },
         1,
     );
@@ -5592,13 +5822,15 @@ unsafe extern "C" fn record_skip_handler(
 unsafe extern "C" fn test_default_current() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_default_current\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2570,
     );
-    let mut text: *const c_char = b"<doc>hell]</doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>hell]</doc>\x00".as_ptr() as *const c_char;
     let mut entity_text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY entity \'&#37;\'>\n]>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [\n<!ENTITY entity \'&#37;\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
@@ -5628,14 +5860,15 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2584i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DCDCDCDCDCDD\x00" as *const u8 as *const c_char,
+        
+        b"DCDCDCDCDCDD\x00".as_ptr() as *const c_char,
     );
     /* Again, without the defaulting */
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -5663,14 +5896,15 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2595i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DcccccD\x00" as *const u8 as *const c_char,
+        
+        b"DcccccD\x00".as_ptr() as *const c_char,
     );
     /* Now with an internal entity to complicate matters */
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -5702,15 +5936,16 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2607i32,
         );
     }
     /* The default handler suppresses the entity */
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DDDDDDDDDDDDDDDDDDD\x00" as *const u8 as *const c_char,
+        
+        b"DDDDDDDDDDDDDDDDDDD\x00".as_ptr() as *const c_char,
     );
     /* Again, with a skip handler */
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -5749,15 +5984,16 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2621i32,
         );
     }
     /* The default handler suppresses the entity */
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DDDDDDDDDDDDDDDDDeD\x00" as *const u8 as *const c_char,
+        
+        b"DDDDDDDDDDDDDDDDDeD\x00".as_ptr() as *const c_char,
     );
     /* This time, allow the entity through */
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -5789,14 +6025,15 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2634i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DDDDDDDDDDDDDDDDDCDD\x00" as *const u8 as *const c_char,
+        
+        b"DDDDDDDDDDDDDDDDDCDD\x00".as_ptr() as *const c_char,
     );
     /* Finally, without passing the cdata to the default handler */
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -5828,14 +6065,15 @@ unsafe extern "C" fn test_default_current() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2646i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"DDDDDDDDDDDDDDDDDcD\x00" as *const u8 as *const c_char,
+        
+        b"DDDDDDDDDDDDDDDDDcD\x00".as_ptr() as *const c_char,
     );
 }
 /* Test DTD element parsing code paths */
@@ -5843,13 +6081,14 @@ unsafe extern "C" fn test_default_current() {
 unsafe extern "C" fn test_dtd_elements() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_dtd_elements\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2652,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (chapter)>\n<!ELEMENT chapter (#PCDATA)>\n]>\n<doc><chapter>Wombats are go</chapter></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (chapter)>\n<!ELEMENT chapter (#PCDATA)>\n]>\n<doc><chapter>Wombats are go</chapter></doc>\x00".as_ptr() as *const c_char;
     XML_SetElementDeclHandler(
         g_parser,
         transmute(Some(
@@ -5866,8 +6105,8 @@ unsafe extern "C" fn test_dtd_elements() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2662i32,
         );
     };
@@ -5877,16 +6116,18 @@ unsafe extern "C" fn test_dtd_elements() {
 unsafe extern "C" fn test_set_foreign_dtd() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_set_foreign_dtd\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2667,
     );
     let mut text1: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n\x00" as *const u8 as *const c_char;
-    let mut text2: *const c_char = b"<doc>&entity;</doc>\x00" as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n\x00".as_ptr() as *const c_char;
+    let mut text2: *const c_char =  b"<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -5920,10 +6161,11 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2680i32,
-            b"Could not set foreign DTD\x00" as *const u8 as *const c_char,
+            
+            b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
@@ -5931,8 +6173,8 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2683i32,
         );
     }
@@ -5942,20 +6184,22 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2690i32,
-            b"Failed to reject late foreign DTD setting\x00" as *const u8 as *const c_char,
+            
+            b"Failed to reject late foreign DTD setting\x00".as_ptr() as *const c_char,
         );
     }
     /* Ditto for the hash salt */
     if XML_SetHashSalt(g_parser, 0x23456789) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2693i32,
-            b"Failed to reject late hash salt change\x00" as *const u8 as *const c_char,
+            
+            b"Failed to reject late hash salt change\x00".as_ptr() as *const c_char,
         );
     }
     /* Now finish the parse */
@@ -5964,8 +6208,8 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2698i32,
         );
     };
@@ -5978,16 +6222,18 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
             b"test_foreign_dtd_not_standalone\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2703,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -6015,17 +6261,20 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
     if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2713i32,
-            b"Could not set foreign DTD\x00" as *const u8 as *const c_char,
+            
+            b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
         );
     }
     _expect_failure(
         text,
         XML_ERROR_NOT_STANDALONE,
-        b"NotStandalonehandler failed to reject\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"NotStandalonehandler failed to reject\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2715,
     );
@@ -6036,17 +6285,19 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_invalid_foreign_dtd\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2720,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtFaults = {
         let mut init = ext_faults {
-            parse_text: b"$\x00" as *const u8 as *const c_char,
-            fail_text: b"Dollar not faulted\x00" as *const u8 as *const c_char,
+            parse_text:  b"$\x00".as_ptr() as *const c_char,
+            fail_text:  b"Dollar not faulted\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_INVALID_TOKEN,
         };
@@ -6071,8 +6322,10 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Bad DTD should not have been accepted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad DTD should not have been accepted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2731,
     );
@@ -6083,17 +6336,18 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_foreign_dtd_with_doctype\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2736,
     );
     let mut text1: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc [<!ENTITY entity \'hello world\'>]>\n\x00"
-            as *const u8 as *const c_char;
-    let mut text2: *const c_char = b"<doc>&entity;</doc>\x00" as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc [<!ENTITY entity \'hello world\'>]>\n\x00".as_ptr() as *const c_char;
+    let mut text2: *const c_char =  b"<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char,
+            parse_text:  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -6127,10 +6381,11 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2750i32,
-            b"Could not set foreign DTD\x00" as *const u8 as *const c_char,
+            
+            b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
@@ -6138,8 +6393,8 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2753i32,
         );
     }
@@ -6149,20 +6404,22 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2760i32,
-            b"Failed to reject late foreign DTD setting\x00" as *const u8 as *const c_char,
+            
+            b"Failed to reject late foreign DTD setting\x00".as_ptr() as *const c_char,
         );
     }
     /* Ditto for the hash salt */
     if XML_SetHashSalt(g_parser, 0x23456789) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2763i32,
-            b"Failed to reject late hash salt change\x00" as *const u8 as *const c_char,
+            
+            b"Failed to reject late hash salt change\x00".as_ptr() as *const c_char,
         );
     }
     /* Now finish the parse */
@@ -6171,8 +6428,8 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2768i32,
         );
     };
@@ -6195,12 +6452,12 @@ unsafe extern "C" fn test_foreign_dtd_without_external_subset() {
             b"test_foreign_dtd_without_external_subset\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2785,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc [<!ENTITY foo \'bar\'>]>\n<doc>&foo;</doc>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc [<!ENTITY foo \'bar\'>]>\n<doc>&foo;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetUserData(g_parser, ::c2rust_out::stddef_h::NULL as *mut c_void);
     XML_SetExternalEntityRefHandler(
@@ -6222,8 +6479,8 @@ unsafe extern "C" fn test_foreign_dtd_without_external_subset() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2795i32,
         );
     };
@@ -6233,12 +6490,14 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_empty_foreign_dtd\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2799,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -6258,8 +6517,10 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
     _expect_failure(
         text,
         XML_ERROR_UNDEFINED_ENTITY,
-        b"Undefined entity not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Undefined entity not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2807,
     );
@@ -6269,29 +6530,32 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
 unsafe extern "C" fn test_set_base() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_set_base\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2812,
     );
     let mut old_base: *const XML_Char = 0 as *const XML_Char;
-    let mut new_base: *const XML_Char = b"/local/file/name.xml\x00" as *const u8 as *const c_char;
+    let mut new_base: *const XML_Char =  b"/local/file/name.xml\x00".as_ptr() as *const c_char;
     old_base = XML_GetBase(g_parser);
     if XML_SetBase(g_parser, new_base) != XML_STATUS_OK_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2818i32,
-            b"Unable to set base\x00" as *const u8 as *const c_char,
+            
+            b"Unable to set base\x00".as_ptr() as *const c_char,
         );
     }
     if strcmp(XML_GetBase(g_parser), new_base) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2820i32,
-            b"Base setting not correct\x00" as *const u8 as *const c_char,
+            
+            b"Base setting not correct\x00".as_ptr() as *const c_char,
         );
     }
     if XML_SetBase(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char)
@@ -6299,19 +6563,21 @@ unsafe extern "C" fn test_set_base() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2822i32,
-            b"Unable to NULL base\x00" as *const u8 as *const c_char,
+            
+            b"Unable to NULL base\x00".as_ptr() as *const c_char,
         );
     }
     if !XML_GetBase(g_parser).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2824i32,
-            b"Base setting not nulled\x00" as *const u8 as *const c_char,
+            
+            b"Base setting not nulled\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetBase(g_parser, old_base);
@@ -6336,10 +6602,11 @@ unsafe extern "C" fn counting_start_element_handler(
     if (*info).name.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2855i32,
-            b"Element not recognised\x00" as *const u8 as *const c_char,
+            
+            b"Element not recognised\x00".as_ptr() as *const c_char,
         );
     }
     /* The attribute count is twice what you might expect.  It is a
@@ -6352,10 +6619,11 @@ unsafe extern "C" fn counting_start_element_handler(
     if (*info).attr_count * 2 != count {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2864,
-            b"Not got expected attribute count\x00" as *const u8 as *const c_char,
+            
+            b"Not got expected attribute count\x00".as_ptr() as *const c_char,
         );
         return;
     }
@@ -6363,20 +6631,22 @@ unsafe extern "C" fn counting_start_element_handler(
     if id == -(1) && !(*info).id_name.is_null() {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2869,
-            b"ID not present\x00" as *const u8 as *const c_char,
+            
+            b"ID not present\x00".as_ptr() as *const c_char,
         );
         return;
     }
     if id != -(1) && strcmp(*atts.offset(id as isize), (*info).id_name) != 0 {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2873,
-            b"ID does not have the correct name\x00" as *const u8 as *const c_char,
+            
+            b"ID does not have the correct name\x00".as_ptr() as *const c_char,
         );
         return;
     }
@@ -6392,20 +6662,22 @@ unsafe extern "C" fn counting_start_element_handler(
         if (*attr).name.is_null() {
             crate::minicheck::_fail_unless(
                 0,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2884,
-                b"Attribute not recognised\x00" as *const u8 as *const c_char,
+                
+                b"Attribute not recognised\x00".as_ptr() as *const c_char,
             );
             return;
         }
         if strcmp(*atts.offset(1), (*attr).value) != 0 {
             crate::minicheck::_fail_unless(
                 0,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 2888,
-                b"Attribute has wrong value\x00" as *const u8 as *const c_char,
+                
+                b"Attribute has wrong value\x00".as_ptr() as *const c_char,
             );
             return;
         }
@@ -6418,32 +6690,33 @@ unsafe extern "C" fn counting_start_element_handler(
 unsafe extern "C" fn test_attributes() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 16], &[c_char; 16]>(b"test_attributes\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2896,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (tag)>\n<!ATTLIST doc id ID #REQUIRED>\n]><doc a=\'1\' id=\'one\' b=\'2\'><tag c=\'3\'/></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (tag)>\n<!ATTLIST doc id ID #REQUIRED>\n]><doc a=\'1\' id=\'one\' b=\'2\'><tag c=\'3\'/></doc>\x00".as_ptr() as *const c_char;
     let mut doc_info: [AttrInfo; 4] = [
         {
             let mut init = attrInfo {
-                name: b"a\x00" as *const u8 as *const c_char,
-                value: b"1\x00" as *const u8 as *const c_char,
+                name:  b"a\x00".as_ptr() as *const c_char,
+                value:  b"1\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = attrInfo {
-                name: b"b\x00" as *const u8 as *const c_char,
-                value: b"2\x00" as *const u8 as *const c_char,
+                name:  b"b\x00".as_ptr() as *const c_char,
+                value:  b"2\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = attrInfo {
-                name: b"id\x00" as *const u8 as *const c_char,
-                value: b"one\x00" as *const u8 as *const c_char,
+                name:  b"id\x00".as_ptr() as *const c_char,
+                value:  b"one\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -6458,8 +6731,8 @@ unsafe extern "C" fn test_attributes() {
     let mut tag_info: [AttrInfo; 2] = [
         {
             let mut init = attrInfo {
-                name: b"c\x00" as *const u8 as *const c_char,
-                value: b"3\x00" as *const u8 as *const c_char,
+                name:  b"c\x00".as_ptr() as *const c_char,
+                value:  b"3\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -6474,16 +6747,16 @@ unsafe extern "C" fn test_attributes() {
     let mut info: [ElementInfo; 3] = [
         {
             let mut init = elementInfo {
-                name: b"doc\x00" as *const u8 as *const c_char,
+                name:  b"doc\x00".as_ptr() as *const c_char,
                 attr_count: 3,
-                id_name: b"id\x00" as *const u8 as *const c_char,
+                id_name:  b"id\x00".as_ptr() as *const c_char,
                 attributes: ::c2rust_out::stddef_h::NULL as *mut AttrInfo,
             };
             init
         },
         {
             let mut init = elementInfo {
-                name: b"tag\x00" as *const u8 as *const c_char,
+                name:  b"tag\x00".as_ptr() as *const c_char,
                 attr_count: 1,
                 id_name: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 attributes: ::c2rust_out::stddef_h::NULL as *mut AttrInfo,
@@ -6519,8 +6792,8 @@ unsafe extern "C" fn test_attributes() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2919i32,
         );
     };
@@ -6532,13 +6805,14 @@ unsafe extern "C" fn test_attributes() {
 unsafe extern "C" fn test_reset_in_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_reset_in_entity\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2926,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
         finalBuffer: 0,
@@ -6556,8 +6830,8 @@ unsafe extern "C" fn test_reset_in_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2938i32,
         );
     }
@@ -6565,10 +6839,11 @@ unsafe extern "C" fn test_reset_in_entity() {
     if status.parsing != XML_SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2941i32,
-            b"Parsing status not SUSPENDED\x00" as *const u8 as *const c_char,
+            
+            b"Parsing status not SUSPENDED\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -6576,10 +6851,11 @@ unsafe extern "C" fn test_reset_in_entity() {
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2945i32,
-            b"Parsing status doesn\'t reset to INITIALIZED\x00" as *const u8 as *const c_char,
+            
+            b"Parsing status doesn\'t reset to INITIALIZED\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -6589,11 +6865,12 @@ unsafe extern "C" fn test_resume_invalid_parse() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_resume_invalid_parse\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2950,
     ); /* Missing closing wedge */
-    let mut text: *const c_char = b"<doc>Hello</doc\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>Hello</doc\x00".as_ptr() as *const c_char;
     resumable = XML_TRUE;
     XML_SetCharacterDataHandler(
         g_parser,
@@ -6607,27 +6884,29 @@ unsafe extern "C" fn test_resume_invalid_parse() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2957i32,
         );
     }
     if XML_ResumeParser(g_parser) == XML_STATUS_OK_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2959i32,
-            b"Resumed invalid parse not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Resumed invalid parse not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_UNCLOSED_TOKEN {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2961i32,
-            b"Invalid parse not correctly faulted\x00" as *const u8 as *const c_char,
+            
+            b"Invalid parse not correctly faulted\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -6637,11 +6916,12 @@ unsafe extern "C" fn test_resume_resuspended() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_resume_resuspended\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2966,
     );
-    let mut text: *const c_char = b"<doc>Hello<meep/>world</doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>Hello<meep/>world</doc>\x00".as_ptr() as *const c_char;
     resumable = XML_TRUE;
     XML_SetCharacterDataHandler(
         g_parser,
@@ -6655,8 +6935,8 @@ unsafe extern "C" fn test_resume_resuspended() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2973i32,
         );
     }
@@ -6671,18 +6951,19 @@ unsafe extern "C" fn test_resume_resuspended() {
     if XML_ResumeParser(g_parser) != XML_STATUS_SUSPENDED_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2977i32,
-            b"Resumption not suspended\x00" as *const u8 as *const c_char,
+            
+            b"Resumption not suspended\x00".as_ptr() as *const c_char,
         );
     }
     /* This one should succeed and finish up */
     if XML_ResumeParser(g_parser) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2980i32,
         );
     };
@@ -6692,14 +6973,17 @@ unsafe extern "C" fn test_resume_resuspended() {
 unsafe extern "C" fn test_cdata_default() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_cdata_default\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         2985,
     );
     let mut text: *const c_char =
-        b"<doc><![CDATA[Hello\nworld]]></doc>\x00" as *const u8 as *const c_char;
+        
+        b"<doc><![CDATA[Hello\nworld]]></doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<doc><![CDATA[Hello\nworld]]></doc>\x00" as *const u8 as *const c_char;
+        
+        b"<doc><![CDATA[Hello\nworld]]></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -6721,8 +7005,8 @@ unsafe extern "C" fn test_cdata_default() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             2996i32,
         );
     }
@@ -6737,7 +7021,7 @@ unsafe extern "C" fn external_entity_resetter(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
@@ -6751,20 +7035,22 @@ unsafe extern "C" fn external_entity_resetter(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3015i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3018,
-            b"Parsing status is not INITIALIZED\x00" as *const u8 as *const c_char,
+            
+            b"Parsing status is not INITIALIZED\x00".as_ptr() as *const c_char,
         );
         return XML_STATUS_ERROR_0;
     }
@@ -6773,8 +7059,8 @@ unsafe extern "C" fn external_entity_resetter(
     {
         _xml_failure(
             parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3023,
         );
         return XML_STATUS_ERROR_0;
@@ -6783,10 +7069,11 @@ unsafe extern "C" fn external_entity_resetter(
     if status.parsing != XML_FINISHED {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3028,
-            b"Parsing status is not FINISHED\x00" as *const u8 as *const c_char,
+            
+            b"Parsing status is not FINISHED\x00".as_ptr() as *const c_char,
         );
         return XML_STATUS_ERROR_0;
     }
@@ -6796,19 +7083,21 @@ unsafe extern "C" fn external_entity_resetter(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3034i32,
-            b"Parsing when finished not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Parsing when finished not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(ext_parser) != XML_ERROR_FINISHED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3036i32,
-            b"Parsing when finished faulted with wrong code\x00" as *const u8 as *const c_char,
+            
+            b"Parsing when finished faulted with wrong code\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(ext_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -6816,10 +7105,11 @@ unsafe extern "C" fn external_entity_resetter(
     if status.parsing != XML_FINISHED {
         crate::minicheck::_fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3040,
-            b"Parsing status not still FINISHED\x00" as *const u8 as *const c_char,
+            
+            b"Parsing status not still FINISHED\x00".as_ptr() as *const c_char,
         );
         return XML_STATUS_ERROR_0;
     }
@@ -6831,13 +7121,14 @@ unsafe extern "C" fn test_subordinate_reset() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_subordinate_reset\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3047,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -6857,8 +7148,8 @@ unsafe extern "C" fn test_subordinate_reset() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3056i32,
         );
     };
@@ -6874,20 +7165,22 @@ unsafe extern "C" fn entity_suspending_decl_handler(
     if XML_StopParser(ext_parser, XML_TRUE) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3069i32,
-            b"Attempting to suspend a subordinate parser not faulted\x00" as *const u8
+            
+            b"Attempting to suspend a subordinate parser not faulted\x00".as_ptr()
                 as *const c_char,
         );
     }
     if XML_GetErrorCode(ext_parser) != XML_ERROR_SUSPEND_PE {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3071i32,
-            b"Suspending subordinate parser get wrong code\x00" as *const u8 as *const c_char,
+            
+            b"Suspending subordinate parser get wrong code\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetElementDeclHandler(
@@ -6906,7 +7199,7 @@ unsafe extern "C" fn external_entity_suspender(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -6916,10 +7209,11 @@ unsafe extern "C" fn external_entity_suspender(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3088i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetElementDeclHandler(
@@ -6939,8 +7233,8 @@ unsafe extern "C" fn external_entity_suspender(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3093,
         );
         return XML_STATUS_ERROR_0;
@@ -6953,13 +7247,14 @@ unsafe extern "C" fn test_subordinate_suspend() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_subordinate_suspend\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3100,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -6979,8 +7274,8 @@ unsafe extern "C" fn test_subordinate_suspend() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3109i32,
         );
     };
@@ -7012,7 +7307,8 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\x00" as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
@@ -7027,10 +7323,11 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3141i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetXmlDeclHandler(
@@ -7052,45 +7349,48 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
         if rc == XML_STATUS_ERROR_0 as c_uint {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 3148i32,
             );
         }
         if status.parsing != XML_SUSPENDED {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 3150i32,
-                b"Ext Parsing status not SUSPENDED\x00" as *const u8 as *const c_char,
+                
+                b"Ext Parsing status not SUSPENDED\x00".as_ptr() as *const c_char,
             );
         }
     } else {
         if rc != XML_STATUS_ERROR_0 as c_uint {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 3153i32,
-                b"Ext parsing not aborted\x00" as *const u8 as *const c_char,
+                
+                b"Ext parsing not aborted\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(ext_parser) != XML_ERROR_ABORTED {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 3155i32,
             );
         }
         if status.parsing != XML_FINISHED {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 3157i32,
-                b"Ext Parsing status not FINISHED\x00" as *const u8 as *const c_char,
+                
+                b"Ext Parsing status not FINISHED\x00".as_ptr() as *const c_char,
             );
         }
     }
@@ -7102,13 +7402,14 @@ unsafe extern "C" fn test_subordinate_xdecl_suspend() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_subordinate_xdecl_suspend\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3164,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -7129,8 +7430,8 @@ unsafe extern "C" fn test_subordinate_xdecl_suspend() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3176i32,
         );
     };
@@ -7140,13 +7441,14 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_subordinate_xdecl_abort\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3180,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -7167,8 +7469,8 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3192i32,
         );
     };
@@ -7194,10 +7496,11 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3212i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetXmlDeclHandler(
@@ -7218,18 +7521,19 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3218i32,
-            b"Could not allocate parse buffer\x00" as *const u8 as *const c_char,
+            
+            b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
-        __assert_fail(b"buffer != NULL\x00" as *const u8 as
+        __assert_fail(b"buffer != NULL\x00".as_ptr() as
                           *const c_char,
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                          as *const u8 as *const c_char,
+                      
+                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       3219u32,
                       (*::std::mem::transmute::<&[u8; 123],
                                                 &[c_char; 123]>(b"int external_entity_suspending_faulter(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
@@ -7244,25 +7548,26 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3222i32,
-            b"XML declaration did not suspend\x00" as *const u8 as *const c_char,
+            
+            b"XML declaration did not suspend\x00".as_ptr() as *const c_char,
         );
     }
     if XML_ResumeParser(ext_parser) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3224i32,
         );
     }
     if XML_ParseBuffer(ext_parser, 0, XML_TRUE as c_int) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3226i32,
             (*fault).fail_text,
         );
@@ -7270,8 +7575,8 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     if XML_GetErrorCode(ext_parser) != (*fault).error {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3228i32,
         );
     }
@@ -7285,19 +7590,20 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
             b"test_ext_entity_invalid_suspended_parse\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3234,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut faults: [ExtFaults; 3] = [
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><\x00".as_ptr()
                     as *const c_char,
-                fail_text: b"Incomplete element declaration not faulted\x00" as *const u8
+                fail_text:  b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
@@ -7306,9 +7612,9 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\xe2\x82\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\xe2\x82\x00".as_ptr()
                     as *const c_char,
-                fail_text: b"Incomplete character not faulted\x00" as *const u8 as *const c_char,
+                fail_text:  b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
@@ -7345,9 +7651,10 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
         _expect_failure(
             text,
             XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-            b"Parser did not report external entity error\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"Parser did not report external entity error\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3255,
         );
         XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -7360,34 +7667,37 @@ unsafe extern "C" fn test_explicit_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_explicit_encoding\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3262,
     );
-    let mut text1: *const c_char = b"<doc>Hello \x00" as *const u8 as *const c_char;
-    let mut text2: *const c_char = b" World</doc>\x00" as *const u8 as *const c_char;
+    let mut text1: *const c_char =  b"<doc>Hello \x00".as_ptr() as *const c_char;
+    let mut text2: *const c_char =  b" World</doc>\x00".as_ptr() as *const c_char;
     /* Just check that we can set the encoding to NULL before starting */
     if XML_SetEncoding(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char)
         != XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3268i32,
-            b"Failed to initialise encoding to NULL\x00" as *const u8 as *const c_char,
+            
+            b"Failed to initialise encoding to NULL\x00".as_ptr() as *const c_char,
         );
     }
     /* Say we are UTF-8 */
-    if XML_SetEncoding(g_parser, b"utf-8\x00" as *const u8 as *const c_char)
+    if XML_SetEncoding(g_parser,  b"utf-8\x00".as_ptr() as *const c_char)
         != XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3271i32,
-            b"Failed to set explicit encoding\x00" as *const u8 as *const c_char,
+            
+            b"Failed to set explicit encoding\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
@@ -7395,21 +7705,22 @@ unsafe extern "C" fn test_explicit_encoding() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3274i32,
         );
     }
     /* Try to switch encodings mid-parse */
-    if XML_SetEncoding(g_parser, b"us-ascii\x00" as *const u8 as *const c_char)
+    if XML_SetEncoding(g_parser,  b"us-ascii\x00".as_ptr() as *const c_char)
         != XML_STATUS_ERROR_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3277i32,
-            b"Allowed encoding change\x00" as *const u8 as *const c_char,
+            
+            b"Allowed encoding change\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
@@ -7417,8 +7728,8 @@ unsafe extern "C" fn test_explicit_encoding() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3280i32,
         );
     }
@@ -7428,10 +7739,11 @@ unsafe extern "C" fn test_explicit_encoding() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3283i32,
-            b"Failed to unset encoding\x00" as *const u8 as *const c_char,
+            
+            b"Failed to unset encoding\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -7454,11 +7766,12 @@ unsafe extern "C" fn cr_cdata_handler(
 unsafe extern "C" fn test_trailing_cr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 17], &[c_char; 17]>(b"test_trailing_cr\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3299,
     );
-    let mut text: *const c_char = b"<doc>\r\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>\r\x00".as_ptr() as *const c_char;
     let mut found_cr: c_int = 0;
     /* Try with a character handler, for code coverage */
     XML_SetCharacterDataHandler(
@@ -7475,19 +7788,21 @@ unsafe extern "C" fn test_trailing_cr() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3309i32,
-            b"Failed to fault unclosed doc\x00" as *const u8 as *const c_char,
+            
+            b"Failed to fault unclosed doc\x00".as_ptr() as *const c_char,
         );
     }
     if found_cr == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3311i32,
-            b"Did not catch the carriage return\x00" as *const u8 as *const c_char,
+            
+            b"Did not catch the carriage return\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -7506,19 +7821,21 @@ unsafe extern "C" fn test_trailing_cr() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3320i32,
-            b"Failed to fault unclosed doc\x00" as *const u8 as *const c_char,
+            
+            b"Failed to fault unclosed doc\x00".as_ptr() as *const c_char,
         );
     }
     if found_cr == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3322i32,
-            b"Did not catch default carriage return\x00" as *const u8 as *const c_char,
+            
+            b"Did not catch default carriage return\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -7531,7 +7848,7 @@ unsafe extern "C" fn external_entity_cr_catcher(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"\r\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -7541,10 +7858,11 @@ unsafe extern "C" fn external_entity_cr_catcher(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3339i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetCharacterDataHandler(
@@ -7559,8 +7877,8 @@ unsafe extern "C" fn external_entity_cr_catcher(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3343i32,
         );
     }
@@ -7575,7 +7893,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<tag>\r\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<tag>\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -7585,10 +7903,11 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3360i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetCharacterDataHandler(
@@ -7603,17 +7922,18 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3364i32,
-            b"Async entity error not caught\x00" as *const u8 as *const c_char,
+            
+            b"Async entity error not caught\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(ext_parser) != XML_ERROR_ASYNC_ENTITY {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3366i32,
         );
     }
@@ -7625,13 +7945,14 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_ext_entity_trailing_cr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3371,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_cr: c_int = 0;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7654,18 +7975,19 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3384i32,
         );
     }
     if found_cr == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3386i32,
-            b"No carriage return found\x00" as *const u8 as *const c_char,
+            
+            b"No carriage return found\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -7691,18 +8013,19 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3396i32,
         );
     }
     if found_cr == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3398i32,
-            b"No carriage return found\x00" as *const u8 as *const c_char,
+            
+            b"No carriage return found\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -7722,11 +8045,12 @@ unsafe extern "C" fn rsqb_handler(
 unsafe extern "C" fn test_trailing_rsqb() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_trailing_rsqb\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3411,
     );
-    let mut text8: *const c_char = b"<doc>]\x00" as *const u8 as *const c_char;
+    let mut text8: *const c_char =  b"<doc>]\x00".as_ptr() as *const c_char;
     let text16: [c_char; 15] = *::std::mem::transmute::<&[u8; 15], &[c_char; 15]>(
         b"\xff\xfe<\x00d\x00o\x00c\x00>\x00]\x00\x00",
     );
@@ -7744,19 +8068,21 @@ unsafe extern "C" fn test_trailing_rsqb() {
     if _XML_Parse_SINGLE_BYTES(g_parser, text8, text8_len, XML_TRUE) == XML_STATUS_OK_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3422i32,
-            b"Failed to fault unclosed doc\x00" as *const u8 as *const c_char,
+            
+            b"Failed to fault unclosed doc\x00".as_ptr() as *const c_char,
         );
     }
     if found_rsqb == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3424i32,
-            b"Did not catch the right square bracket\x00" as *const u8 as *const c_char,
+            
+            b"Did not catch the right square bracket\x00".as_ptr() as *const c_char,
         );
     }
     /* Try again with a different encoding */
@@ -7779,19 +8105,21 @@ unsafe extern "C" fn test_trailing_rsqb() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3434i32,
-            b"Failed to fault unclosed doc\x00" as *const u8 as *const c_char,
+            
+            b"Failed to fault unclosed doc\x00".as_ptr() as *const c_char,
         );
     }
     if found_rsqb == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3436i32,
-            b"Did not catch the right square bracket\x00" as *const u8 as *const c_char,
+            
+            b"Did not catch the right square bracket\x00".as_ptr() as *const c_char,
         );
     }
     /* And finally with a default handler */
@@ -7814,19 +8142,21 @@ unsafe extern "C" fn test_trailing_rsqb() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3446i32,
-            b"Failed to fault unclosed doc\x00" as *const u8 as *const c_char,
+            
+            b"Failed to fault unclosed doc\x00".as_ptr() as *const c_char,
         );
     }
     if found_rsqb == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3448i32,
-            b"Did not catch the right square bracket\x00" as *const u8 as *const c_char,
+            
+            b"Did not catch the right square bracket\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -7839,7 +8169,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<tag>]\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<tag>]\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -7849,10 +8179,11 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3465i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetCharacterDataHandler(
@@ -7867,17 +8198,18 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3469i32,
-            b"Async entity error not caught\x00" as *const u8 as *const c_char,
+            
+            b"Async entity error not caught\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(ext_parser) != XML_ERROR_ASYNC_ENTITY {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3471i32,
         );
     }
@@ -7889,13 +8221,14 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ext_entity_trailing_rsqb\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3476,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_rsqb: c_int = 0;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7918,18 +8251,19 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3489i32,
         );
     }
     if found_rsqb == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3491i32,
-            b"No right square bracket found\x00" as *const u8 as *const c_char,
+            
+            b"No right square bracket found\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -7943,9 +8277,11 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text: *const c_char =
-        b"<a><![CDATA[<greeting>Hello, world!</greeting>]]></a>\x00" as *const u8 as *const c_char;
+        
+        b"<a><![CDATA[<greeting>Hello, world!</greeting>]]></a>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<greeting>Hello, world!</greeting>\x00" as *const u8 as *const c_char;
+        
+        b"<greeting>Hello, world!</greeting>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -7960,10 +8296,11 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3511i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     XML_SetUserData(
@@ -7982,8 +8319,8 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3517i32,
         );
     }
@@ -7996,13 +8333,14 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_ext_entity_good_cdata\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3524,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -8022,8 +8360,8 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3534i32,
         );
     };
@@ -8051,19 +8389,21 @@ unsafe extern "C" fn xml_decl_handler(
     if userData != handler_data {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3554i32,
-            b"User data (xml decl) not correctly set\x00" as *const u8 as *const c_char,
+            
+            b"User data (xml decl) not correctly set\x00".as_ptr() as *const c_char,
         );
     }
     if standalone != -(1) {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3556i32,
-            b"Standalone not flagged as not present in XML decl\x00" as *const u8 as *const c_char,
+            
+            b"Standalone not flagged as not present in XML decl\x00".as_ptr() as *const c_char,
         );
     }
     xdecl_count += 1;
@@ -8077,10 +8417,11 @@ unsafe extern "C" fn param_check_skip_handler(
     if userData != handler_data {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3566i32,
-            b"User data (skip) not correctly set\x00" as *const u8 as *const c_char,
+            
+            b"User data (skip) not correctly set\x00".as_ptr() as *const c_char,
         );
     }
     skip_count += 1;
@@ -8094,20 +8435,22 @@ unsafe extern "C" fn data_check_comment_handler(
     if userData != handler_data {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3575i32,
-            b"User data (parser) not correctly set\x00" as *const u8 as *const c_char,
+            
+            b"User data (parser) not correctly set\x00".as_ptr() as *const c_char,
         );
     }
     /* Check that the user data in the parser is appropriate */
     if *(userData as *mut *mut c_void) != 1i32 as *mut c_void {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3578i32,
-            b"User data in parser not correctly set\x00" as *const u8 as *const c_char,
+            
+            b"User data in parser not correctly set\x00".as_ptr() as *const c_char,
         );
     }
     comment_count += 1;
@@ -8121,7 +8464,8 @@ unsafe extern "C" fn external_entity_param_checker(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text: *const c_char =
-        b"<!-- Subordinate parser -->\n<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char;
+        
+        b"<!-- Subordinate parser -->\n<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -8131,10 +8475,11 @@ unsafe extern "C" fn external_entity_param_checker(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3595i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     handler_data = ext_parser as *mut c_void;
@@ -8143,8 +8488,8 @@ unsafe extern "C" fn external_entity_param_checker(
     {
         _xml_failure(
             parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3599,
         );
         return XML_STATUS_ERROR_0;
@@ -8157,15 +8502,17 @@ unsafe extern "C" fn external_entity_param_checker(
 unsafe extern "C" fn test_user_parameters() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_user_parameters\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3607,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!-- Primary parse -->\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!-- Primary parse -->\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;\x00".as_ptr() as *const c_char;
     let mut epilog: *const c_char =
-        b"<!-- Back to primary parser -->\n</doc>\x00" as *const u8 as *const c_char;
+        
+        b"<!-- Back to primary parser -->\n</doc>\x00".as_ptr() as *const c_char;
     comment_count = 0;
     skip_count = 0;
     xdecl_count = 0;
@@ -8217,28 +8564,30 @@ unsafe extern "C" fn test_user_parameters() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3628i32,
         );
     }
     if comment_count != 2 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3630i32,
-            b"Comment handler not invoked enough times\x00" as *const u8 as *const c_char,
+            
+            b"Comment handler not invoked enough times\x00".as_ptr() as *const c_char,
         );
     }
     /* Ensure we can't change policy mid-parse */
     if XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_NEVER) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3633i32,
-            b"Changed param entity parsing policy while parsing\x00" as *const u8 as *const c_char,
+            
+            b"Changed param entity parsing policy while parsing\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, epilog, strlen(epilog) as c_int, XML_TRUE)
@@ -8246,36 +8595,39 @@ unsafe extern "C" fn test_user_parameters() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3636i32,
         );
     }
     if comment_count != 3 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3638i32,
-            b"Comment handler not invoked enough times\x00" as *const u8 as *const c_char,
+            
+            b"Comment handler not invoked enough times\x00".as_ptr() as *const c_char,
         );
     }
     if skip_count != 1 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3640i32,
-            b"Skip handler not invoked enough times\x00" as *const u8 as *const c_char,
+            
+            b"Skip handler not invoked enough times\x00".as_ptr() as *const c_char,
         );
     }
     if xdecl_count != 1 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3642i32,
-            b"XML declaration handler not invoked\x00" as *const u8 as *const c_char,
+            
+            b"XML declaration handler not invoked\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8296,15 +8648,16 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     mut _systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if parameter as *mut c_void != handler_data {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3667i32,
-            b"External entity ref handler parameter not correct\x00" as *const u8 as *const c_char,
+            
+            b"External entity ref handler parameter not correct\x00".as_ptr() as *const c_char,
         );
     }
     /* Here we use the global 'parser' variable */
@@ -8316,10 +8669,11 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3672i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
@@ -8327,8 +8681,8 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3675i32,
         );
     }
@@ -8340,13 +8694,14 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ext_entity_ref_parameter\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3681,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -8371,8 +8726,8 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3695i32,
         );
     }
@@ -8399,8 +8754,8 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3705i32,
         );
     };
@@ -8410,12 +8765,13 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
 unsafe extern "C" fn test_empty_parse() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 17], &[c_char; 17]>(b"test_empty_parse\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3710,
     );
-    let mut text: *const c_char = b"<doc></doc>\x00" as *const u8 as *const c_char;
-    let mut partial: *const c_char = b"<doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\x00".as_ptr() as *const c_char;
+    let mut partial: *const c_char =  b"<doc>\x00".as_ptr() as *const c_char;
     if XML_Parse(
         g_parser,
         ::c2rust_out::stddef_h::NULL as *const c_char,
@@ -8425,10 +8781,11 @@ unsafe extern "C" fn test_empty_parse() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3715i32,
-            b"Parsing empty string faulted\x00" as *const u8 as *const c_char,
+            
+            b"Parsing empty string faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_Parse(
@@ -8440,19 +8797,21 @@ unsafe extern "C" fn test_empty_parse() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3717i32,
-            b"Parsing final empty string not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Parsing final empty string not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NO_ELEMENTS {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3719i32,
-            b"Parsing final empty string faulted for wrong reason\x00" as *const u8
+            
+            b"Parsing final empty string faulted for wrong reason\x00".as_ptr()
                 as *const c_char,
         );
     }
@@ -8463,8 +8822,8 @@ unsafe extern "C" fn test_empty_parse() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3725i32,
         );
     }
@@ -8477,10 +8836,11 @@ unsafe extern "C" fn test_empty_parse() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3727i32,
-            b"Parsing final empty string faulted\x00" as *const u8 as *const c_char,
+            
+            b"Parsing final empty string faulted\x00".as_ptr() as *const c_char,
         );
     }
     /* Now try with invalid text before the empty end */
@@ -8490,8 +8850,8 @@ unsafe extern "C" fn test_empty_parse() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3734i32,
         );
     }
@@ -8504,10 +8864,11 @@ unsafe extern "C" fn test_empty_parse() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3736i32,
-            b"Parsing final incomplete empty string not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Parsing final incomplete empty string not faulted\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8537,15 +8898,16 @@ unsafe extern "C" fn get_feature(
  */
 
 static mut get_buffer_test_text: *const c_char =
-    b"<documentwitharidiculouslylongelementnametoteaseaparticularcorneroftheallocationinXML_GetBuffersothatwecanimprovethecoverageyetagain012345678901123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789>\n<ef0\x00"
-        as *const u8 as *const c_char;
+    
+    b"<documentwitharidiculouslylongelementnametoteaseaparticularcorneroftheallocationinXML_GetBuffersothatwecanimprovethecoverageyetagain012345678901123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789>\n<ef0\x00".as_ptr() as *const c_char;
 /* 0x420 */
 /* Test odd corners of the XML_GetBuffer interface */
 
 unsafe extern "C" fn test_get_buffer_1() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_get_buffer_1\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3786,
     );
@@ -8556,10 +8918,11 @@ unsafe extern "C" fn test_get_buffer_1() {
     if !XML_GetBuffer(g_parser, -(12)).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3793i32,
-            b"Negative length buffer not failed\x00" as *const u8 as *const c_char,
+            
+            b"Negative length buffer not failed\x00".as_ptr() as *const c_char,
         );
     }
     /* Now get a small buffer and extend it past valid length */
@@ -8567,18 +8930,20 @@ unsafe extern "C" fn test_get_buffer_1() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3798i32,
-            b"1.5K buffer failed\x00" as *const u8 as *const c_char,
+            
+            b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
         __assert_fail(
-            b"buffer != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"buffer != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3799u32,
             (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
                 b"void test_get_buffer_1(void)\x00",
@@ -8592,18 +8957,19 @@ unsafe extern "C" fn test_get_buffer_1() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3803i32,
         );
     }
     if !XML_GetBuffer(g_parser, INT_MAX).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3805i32,
-            b"INT_MAX buffer not failed\x00" as *const u8 as *const c_char,
+            
+            b"INT_MAX buffer not failed\x00".as_ptr() as *const c_char,
         );
     }
     /* Now try extending it a more reasonable but still too large
@@ -8627,20 +8993,22 @@ unsafe extern "C" fn test_get_buffer_1() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3820i32,
-            b"INT_MAX- buffer not failed\x00" as *const u8 as *const c_char,
+            
+            b"INT_MAX- buffer not failed\x00".as_ptr() as *const c_char,
         );
     }
     /* Now try extending it a carefully crafted amount */
     if XML_GetBuffer(g_parser, 1000).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3824i32,
-            b"1000 buffer failed\x00" as *const u8 as *const c_char,
+            
+            b"1000 buffer failed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8649,7 +9017,8 @@ unsafe extern "C" fn test_get_buffer_1() {
 unsafe extern "C" fn test_get_buffer_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_get_buffer_2\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3829,
     );
@@ -8660,18 +9029,20 @@ unsafe extern "C" fn test_get_buffer_2() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3836i32,
-            b"1.5K buffer failed\x00" as *const u8 as *const c_char,
+            
+            b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
         __assert_fail(
-            b"buffer != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"buffer != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3837u32,
             (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
                 b"void test_get_buffer_2(void)\x00",
@@ -8685,8 +9056,8 @@ unsafe extern "C" fn test_get_buffer_2() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3841i32,
         );
     }
@@ -8694,10 +9065,11 @@ unsafe extern "C" fn test_get_buffer_2() {
     if XML_GetBuffer(g_parser, 1024).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3845i32,
-            b"1024 buffer failed\x00" as *const u8 as *const c_char,
+            
+            b"1024 buffer failed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8706,18 +9078,20 @@ unsafe extern "C" fn test_get_buffer_2() {
 unsafe extern "C" fn test_byte_info_at_end() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_byte_info_at_end\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3850,
     );
-    let mut text: *const c_char = b"<doc></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\x00".as_ptr() as *const c_char;
     if XML_GetCurrentByteIndex(g_parser) != -1 || XML_GetCurrentByteCount(g_parser) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3855i32,
-            b"Byte index/count incorrect at start of parse\x00" as *const u8 as *const c_char,
+            
+            b"Byte index/count incorrect at start of parse\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
@@ -8725,8 +9099,8 @@ unsafe extern "C" fn test_byte_info_at_end() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3858i32,
         );
     }
@@ -8734,19 +9108,21 @@ unsafe extern "C" fn test_byte_info_at_end() {
     if XML_GetCurrentByteCount(g_parser) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3861i32,
-            b"Terminal byte count incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Terminal byte count incorrect\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetCurrentByteIndex(g_parser) != strlen(text) as XML_Index {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3863i32,
-            b"Terminal byte index incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Terminal byte index incorrect\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8759,38 +9135,42 @@ unsafe extern "C" fn test_byte_info_at_error() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_byte_info_at_error\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3870,
     );
-    let mut text: *const c_char = b"<doc></wombat></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></wombat></doc>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3875i32,
-            b"Syntax error not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Syntax error not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetCurrentByteCount(g_parser) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3877i32,
-            b"Error byte count incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Error byte count incorrect\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetCurrentByteIndex(g_parser) as c_ulong != strlen(PRE_ERROR_STR.as_ptr()) {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3879i32,
-            b"Error byte index incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Error byte index incorrect\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8808,55 +9188,61 @@ unsafe extern "C" fn byte_character_handler(
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3902i32,
-            b"Failed to get context buffer\x00" as *const u8 as *const c_char,
+            
+            b"Failed to get context buffer\x00".as_ptr() as *const c_char,
         );
     }
     if offset != (*data).start_element_len {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3904i32,
-            b"Context offset in unexpected position\x00" as *const u8 as *const c_char,
+            
+            b"Context offset in unexpected position\x00".as_ptr() as *const c_char,
         );
     }
     if len != (*data).cdata_len {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3906i32,
-            b"CDATA length reported incorrectly\x00" as *const u8 as *const c_char,
+            
+            b"CDATA length reported incorrectly\x00".as_ptr() as *const c_char,
         );
     }
     if size != (*data).total_string_len {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3908i32,
-            b"Context size is not full buffer\x00" as *const u8 as *const c_char,
+            
+            b"Context size is not full buffer\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetCurrentByteIndex(g_parser) != offset as c_long {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3910i32,
-            b"Character byte index incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Character byte index incorrect\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetCurrentByteCount(g_parser) != len {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3912i32,
-            b"Character byte count incorrect\x00" as *const u8 as *const c_char,
+            
+            b"Character byte count incorrect\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -8871,11 +9257,12 @@ unsafe extern "C" fn test_byte_info_at_cdata() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_byte_info_at_cdata\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3923,
     );
-    let mut text: *const c_char = b"<e>Hello</e>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<e>Hello</e>\x00".as_ptr() as *const c_char;
     let mut offset: c_int = 0;
     let mut size: c_int = 0;
     let mut data: ByteTestData = ByteTestData {
@@ -8887,10 +9274,11 @@ unsafe extern "C" fn test_byte_info_at_cdata() {
     if !XML_GetInputContext(g_parser, &mut offset, &mut size).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3930i32,
-            b"Unexpected context at start of parse\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected context at start of parse\x00".as_ptr() as *const c_char,
         );
     }
     data.start_element_len = strlen(START_ELEMENT.as_ptr()) as c_int;
@@ -8909,8 +9297,8 @@ unsafe extern "C" fn test_byte_info_at_cdata() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3938i32,
         );
     };
@@ -8921,15 +9309,18 @@ unsafe extern "C" fn test_predefined_entities() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_predefined_entities\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3946,
     );
     let mut text: *const c_char =
-        b"<doc>&lt;&gt;&amp;&quot;&apos;</doc>\x00" as *const u8 as *const c_char;
+        
+        b"<doc>&lt;&gt;&amp;&quot;&apos;</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<doc>&lt;&gt;&amp;&quot;&apos;</doc>\x00" as *const u8 as *const c_char;
-    let mut result: *const XML_Char = b"<>&\"\'\x00" as *const u8 as *const c_char;
+        
+        b"<doc>&lt;&gt;&amp;&quot;&apos;</doc>\x00".as_ptr() as *const c_char;
+    let mut result: *const XML_Char =  b"<>&\"\'\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -8954,8 +9345,8 @@ unsafe extern "C" fn test_predefined_entities() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3960i32,
         );
     }
@@ -8966,7 +9357,8 @@ unsafe extern "C" fn test_predefined_entities() {
     _run_character_check(
         text,
         result,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         3966,
     );
@@ -8988,10 +9380,11 @@ unsafe extern "C" fn external_entity_param(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b"<!ELEMENT el EMPTY>\n<el/>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!ELEMENT el EMPTY>\n<el/>\n\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if systemId.is_null() {
         return XML_STATUS_OK_0;
@@ -9004,59 +9397,63 @@ unsafe extern "C" fn external_entity_param(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             3997i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if strcmp(systemId, b"004-1.ent\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(systemId,  b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
         if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
         {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4002i32,
-                b"Inner DTD with invalid tag not rejected\x00" as *const u8 as *const c_char,
+                
+                b"Inner DTD with invalid tag not rejected\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(ext_parser) != XML_ERROR_EXTERNAL_ENTITY_HANDLING {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4004i32,
             );
         }
-    } else if strcmp(systemId, b"004-2.ent\x00" as *const u8 as *const c_char) == 0 {
+    } else if strcmp(systemId,  b"004-2.ent\x00".as_ptr() as *const c_char) == 0 {
         if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
         {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4008i32,
-                b"Invalid tag in external param not rejected\x00" as *const u8 as *const c_char,
+                
+                b"Invalid tag in external param not rejected\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(ext_parser) != XML_ERROR_SYNTAX {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4010i32,
             );
         }
     } else {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4012i32,
-            b"Unknown system ID\x00" as *const u8 as *const c_char,
+            
+            b"Unknown system ID\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserFree(ext_parser);
@@ -9067,12 +9464,14 @@ unsafe extern "C" fn test_invalid_tag_in_dtd() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_invalid_tag_in_dtd\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4019,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -9090,8 +9489,10 @@ unsafe extern "C" fn test_invalid_tag_in_dtd() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Invalid tag IN DTD external param not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid tag IN DTD external param not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4026,
     );
@@ -9102,15 +9503,20 @@ unsafe extern "C" fn test_not_predefined_entities() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_not_predefined_entities\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4031,
     );
     let mut text: [*const c_char; 5] = [
-        b"<doc>&pt;</doc>\x00" as *const u8 as *const c_char,
-        b"<doc>&amo;</doc>\x00" as *const u8 as *const c_char,
-        b"<doc>&quid;</doc>\x00" as *const u8 as *const c_char,
-        b"<doc>&apod;</doc>\x00" as *const u8 as *const c_char,
+        
+        b"<doc>&pt;</doc>\x00".as_ptr() as *const c_char,
+        
+        b"<doc>&amo;</doc>\x00".as_ptr() as *const c_char,
+        
+        b"<doc>&quid;</doc>\x00".as_ptr() as *const c_char,
+        
+        b"<doc>&apod;</doc>\x00".as_ptr() as *const c_char,
         ::c2rust_out::stddef_h::NULL as *const c_char,
     ];
     let mut i: c_int = 0;
@@ -9118,9 +9524,10 @@ unsafe extern "C" fn test_not_predefined_entities() {
         _expect_failure(
             text[i as usize],
             XML_ERROR_UNDEFINED_ENTITY,
-            b"Undefined entity not rejected\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"Undefined entity not rejected\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4038,
         );
         XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -9137,7 +9544,8 @@ unsafe extern "C" fn external_entity_load_ignore(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text: *const c_char =
-        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\x00" as *const u8 as *const c_char;
+        
+        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -9147,10 +9555,11 @@ unsafe extern "C" fn external_entity_load_ignore(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4058i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
@@ -9158,8 +9567,8 @@ unsafe extern "C" fn external_entity_load_ignore(
     {
         _xml_failure(
             parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4061i32,
         );
     }
@@ -9170,14 +9579,15 @@ unsafe extern "C" fn external_entity_load_ignore(
 unsafe extern "C" fn test_ignore_section() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_ignore_section\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4067,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc><e>&entity;</e></doc>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc><e>&entity;</e></doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&entity;\x00" as *const u8 as *const c_char;
+        
+        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&entity;\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -9256,8 +9666,8 @@ unsafe extern "C" fn test_ignore_section() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4086i32,
         );
     }
@@ -9283,10 +9693,11 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4108i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(
@@ -9298,8 +9709,8 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
     {
         _xml_failure(
             parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4111i32,
         );
     }
@@ -9311,7 +9722,8 @@ unsafe extern "C" fn test_ignore_section_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_ignore_section_utf16\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4117,
     );
@@ -9319,7 +9731,8 @@ unsafe extern "C" fn test_ignore_section_utf16() {
         *::std::mem::transmute::<&[u8; 85],
                                  &[c_char; 85]>(b"<\x00!\x00D\x00O\x00C\x00T\x00Y\x00P\x00E\x00 \x00d\x00 \x00S\x00Y\x00S\x00T\x00E\x00M\x00 \x00\'\x00s\x00\'\x00>\x00\n\x00<\x00d\x00>\x00<\x00e\x00>\x00&\x00e\x00n\x00;\x00<\x00/\x00e\x00>\x00<\x00/\x00d\x00>\x00\x00");
     let mut expected: *const XML_Char =
-        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&en;\x00" as *const u8 as *const c_char;
+        
+        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&en;\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -9402,8 +9815,8 @@ unsafe extern "C" fn test_ignore_section_utf16() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4139i32,
         );
     }
@@ -9429,10 +9842,11 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4161i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if _XML_Parse_SINGLE_BYTES(
@@ -9444,8 +9858,8 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
     {
         _xml_failure(
             parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4164i32,
         );
     }
@@ -9457,7 +9871,8 @@ unsafe extern "C" fn test_ignore_section_utf16_be() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ignore_section_utf16_be\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4170,
     );
@@ -9465,7 +9880,8 @@ unsafe extern "C" fn test_ignore_section_utf16_be() {
         *::std::mem::transmute::<&[u8; 85],
                                  &[c_char; 85]>(b"\x00<\x00!\x00D\x00O\x00C\x00T\x00Y\x00P\x00E\x00 \x00d\x00 \x00S\x00Y\x00S\x00T\x00E\x00M\x00 \x00\'\x00s\x00\'\x00>\x00\n\x00<\x00d\x00>\x00<\x00e\x00>\x00&\x00e\x00n\x00;\x00<\x00/\x00e\x00>\x00<\x00/\x00d\x00>\x00");
     let mut expected: *const XML_Char =
-        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&en;\x00" as *const u8 as *const c_char;
+        
+        b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\n&en;\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -9548,8 +9964,8 @@ unsafe extern "C" fn test_ignore_section_utf16_be() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4193i32,
         );
     }
@@ -9561,17 +9977,17 @@ unsafe extern "C" fn test_bad_ignore_section() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_bad_ignore_section\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4199,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc><e>&entity;</e></doc>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc><e>&entity;</e></doc>\x00".as_ptr() as *const c_char;
     let mut faults: [ExtFaults; 4] = [
         {
             let mut init = ext_faults {
-                parse_text: b"<![IGNORE[<!ELEM\x00" as *const u8 as *const c_char,
-                fail_text: b"Broken-off declaration not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"<![IGNORE[<!ELEM\x00".as_ptr() as *const c_char,
+                fail_text:  b"Broken-off declaration not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_SYNTAX,
             };
@@ -9579,8 +9995,8 @@ unsafe extern "C" fn test_bad_ignore_section() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<![IGNORE[\x01]]>\x00" as *const u8 as *const c_char,
-                fail_text: b"Invalid XML character not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"<![IGNORE[\x01]]>\x00".as_ptr() as *const c_char,
+                fail_text:  b"Invalid XML character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
             };
@@ -9588,8 +10004,8 @@ unsafe extern "C" fn test_bad_ignore_section() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<![IGNORE[\xe2\x82\x00" as *const u8 as *const c_char,
-                fail_text: b"Partial XML character not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"<![IGNORE[\xe2\x82\x00".as_ptr() as *const c_char,
+                fail_text:  b"Partial XML character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
@@ -9626,9 +10042,10 @@ unsafe extern "C" fn test_bad_ignore_section() {
         _expect_failure(
             text,
             XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-            b"Incomplete IGNORE section not failed\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"Incomplete IGNORE section not failed\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4218,
         );
         XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -9645,8 +10062,8 @@ unsafe extern "C" fn external_entity_valuer(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if systemId.is_null() {
         return XML_STATUS_OK_0;
@@ -9659,24 +10076,25 @@ unsafe extern "C" fn external_entity_valuer(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4241i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if strcmp(systemId, b"004-1.ent\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(systemId,  b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
         if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
             == XML_STATUS_ERROR_0 as c_uint
         {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4245i32,
             );
         }
-    } else if strcmp(systemId, b"004-2.ent\x00" as *const u8 as *const c_char) == 0 {
+    } else if strcmp(systemId,  b"004-2.ent\x00".as_ptr() as *const c_char) == 0 {
         let mut fault: *mut ExtFaults = *(parser as *mut *mut c_void) as *mut ExtFaults;
         let mut status: XML_Status = XML_STATUS_ERROR;
         let mut error: XML_Error = XML_ERROR_NONE;
@@ -9690,8 +10108,8 @@ unsafe extern "C" fn external_entity_valuer(
             if status == XML_STATUS_ERROR_0 as c_uint {
                 _xml_failure(
                     ext_parser,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     4255i32,
                 );
             }
@@ -9699,8 +10117,8 @@ unsafe extern "C" fn external_entity_valuer(
             if status != XML_STATUS_ERROR_0 as c_uint {
                 crate::minicheck::_fail_unless(
                     0i32,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     4258i32,
                     (*fault).fail_text,
                 );
@@ -9711,8 +10129,8 @@ unsafe extern "C" fn external_entity_valuer(
             {
                 _xml_failure(
                     ext_parser,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     4263i32,
                 );
             }
@@ -9726,16 +10144,18 @@ unsafe extern "C" fn test_external_entity_values() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_external_entity_values\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4271,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
     let mut data_004_2: [ExtFaults; 12] = [
         {
             let mut init = ext_faults {
-                parse_text: b"<!ATTLIST doc a1 CDATA \'value\'>\x00" as *const u8 as *const c_char,
+                parse_text:  b"<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
                 fail_text: ::c2rust_out::stddef_h::NULL as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
@@ -9744,8 +10164,8 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<!ATTLIST $doc a1 CDATA \'value\'>\x00" as *const u8 as *const c_char,
-                fail_text: b"Invalid token not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"<!ATTLIST $doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
+                fail_text:  b"Invalid token not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
             };
@@ -9753,8 +10173,8 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"\'wombat\x00" as *const u8 as *const c_char,
-                fail_text: b"Unterminated string not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"\'wombat\x00".as_ptr() as *const c_char,
+                fail_text:  b"Unterminated string not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
             };
@@ -9762,8 +10182,8 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"\xe2\x82\x00" as *const u8 as *const c_char,
-                fail_text: b"Partial UTF-8 character not faulted\x00" as *const u8 as *const c_char,
+                parse_text:  b"\xe2\x82\x00".as_ptr() as *const c_char,
+                fail_text:  b"Partial UTF-8 character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
@@ -9771,7 +10191,7 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\x00".as_ptr()
                     as *const c_char,
                 fail_text: ::c2rust_out::stddef_h::NULL as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
@@ -9781,8 +10201,8 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml?>\x00" as *const u8 as *const c_char,
-                fail_text: b"Malformed XML declaration not faulted\x00" as *const u8
+                parse_text:  b"<?xml?>\x00".as_ptr() as *const c_char,
+                fail_text:  b"Malformed XML declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_XML_DECL,
@@ -9791,7 +10211,7 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"\xef\xbb\xbf<!ATTLIST doc a1 CDATA \'value\'>\x00" as *const u8
+                parse_text:  b"\xef\xbb\xbf<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr()
                     as *const c_char,
                 fail_text: ::c2rust_out::stddef_h::NULL as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
@@ -9801,9 +10221,9 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n$\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n$\x00".as_ptr()
                     as *const c_char,
-                fail_text: b"Invalid token after text declaration not faulted\x00" as *const u8
+                fail_text:  b"Invalid token after text declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
@@ -9812,9 +10232,9 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\'wombat\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\'wombat\x00".as_ptr()
                     as *const c_char,
-                fail_text: b"Unterminated string after text decl not faulted\x00" as *const u8
+                fail_text:  b"Unterminated string after text decl not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
@@ -9823,9 +10243,9 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\xe2\x82\x00" as *const u8
+                parse_text:  b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\xe2\x82\x00".as_ptr()
                     as *const c_char,
-                fail_text: b"Partial UTF-8 character after text decl not faulted\x00" as *const u8
+                fail_text:  b"Partial UTF-8 character after text decl not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
@@ -9834,8 +10254,8 @@ unsafe extern "C" fn test_external_entity_values() {
         },
         {
             let mut init = ext_faults {
-                parse_text: b"%e1;\x00" as *const u8 as *const c_char,
-                fail_text: b"Recursive parameter entity not faulted\x00" as *const u8
+                parse_text:  b"%e1;\x00".as_ptr() as *const c_char,
+                fail_text:  b"Recursive parameter entity not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_RECURSIVE_ENTITY_REF,
@@ -9878,8 +10298,8 @@ unsafe extern "C" fn test_external_entity_values() {
         {
             _xml_failure(
                 g_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4308i32,
             );
         }
@@ -9897,10 +10317,12 @@ unsafe extern "C" fn external_entity_not_standalone(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00" as *const u8
+        
+        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00".as_ptr()
             as *const c_char;
     let mut text2: *const c_char =
-        b"<!ATTLIST doc a1 CDATA \'value\'>\x00" as *const u8 as *const c_char;
+        
+        b"<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if systemId.is_null() {
         return XML_STATUS_OK_0;
@@ -9913,13 +10335,14 @@ unsafe extern "C" fn external_entity_not_standalone(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4331i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if strcmp(systemId, b"foo\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(systemId,  b"foo\x00".as_ptr() as *const c_char) == 0 {
         XML_SetNotStandaloneHandler(
             ext_parser,
             Some(reject_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
@@ -9929,17 +10352,18 @@ unsafe extern "C" fn external_entity_not_standalone(
         {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4336i32,
-                b"Expected not standalone rejection\x00" as *const u8 as *const c_char,
+                
+                b"Expected not standalone rejection\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(ext_parser) != XML_ERROR_NOT_STANDALONE {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4338i32,
             );
         }
@@ -9952,14 +10376,14 @@ unsafe extern "C" fn external_entity_not_standalone(
         XML_ParserFree(ext_parser);
         return XML_STATUS_ERROR_0;
     } else {
-        if strcmp(systemId, b"bar\x00" as *const u8 as *const c_char) == 0 {
+        if strcmp(systemId,  b"bar\x00".as_ptr() as *const c_char) == 0 {
             if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, XML_TRUE)
                 == XML_STATUS_ERROR_0 as c_uint
             {
                 _xml_failure(
                     ext_parser,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     4345i32,
                 );
             }
@@ -9973,12 +10397,14 @@ unsafe extern "C" fn test_ext_entity_not_standalone() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_ext_entity_not_standalone\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4352,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -9996,8 +10422,10 @@ unsafe extern "C" fn test_ext_entity_not_standalone() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Standalone rejection not caught\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Standalone rejection not caught\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4359,
     );
@@ -10011,10 +10439,11 @@ unsafe extern "C" fn external_entity_value_aborter(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\x00" as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if systemId.is_null() {
         return XML_STATUS_OK_0;
@@ -10027,25 +10456,26 @@ unsafe extern "C" fn external_entity_value_aborter(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4380i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if strcmp(systemId, b"004-1.ent\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(systemId,  b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
         if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
             == XML_STATUS_ERROR_0 as c_uint
         {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4384i32,
             );
         }
     }
-    if strcmp(systemId, b"004-2.ent\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(systemId,  b"004-2.ent\x00".as_ptr() as *const c_char) == 0 {
         XML_SetXmlDeclHandler(
             ext_parser,
             Some(
@@ -10064,17 +10494,18 @@ unsafe extern "C" fn external_entity_value_aborter(
         {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4391i32,
-                b"Aborted parse not faulted\x00" as *const u8 as *const c_char,
+                
+                b"Aborted parse not faulted\x00".as_ptr() as *const c_char,
             );
         }
         if XML_GetErrorCode(ext_parser) != XML_ERROR_ABORTED {
             _xml_failure(
                 ext_parser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 4393i32,
             );
         }
@@ -10087,12 +10518,14 @@ unsafe extern "C" fn test_ext_entity_value_abort() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_ext_entity_value_abort\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4400,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -10113,8 +10546,8 @@ unsafe extern "C" fn test_ext_entity_value_abort() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4409i32,
         );
     };
@@ -10124,13 +10557,14 @@ unsafe extern "C" fn test_bad_public_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_bad_public_doctype\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4413,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'{BadName}\' \'test\'>\n<doc></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'{BadName}\' \'test\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     /* Setting a handler provokes a particular code path */
     XML_SetDoctypeDeclHandler(
         g_parser,
@@ -10149,8 +10583,10 @@ unsafe extern "C" fn test_bad_public_doctype() {
     _expect_failure(
         text,
         XML_ERROR_PUBLICID,
-        b"Bad Public ID not failed\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad Public ID not failed\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4421,
     );
@@ -10161,24 +10597,26 @@ unsafe extern "C" fn test_attribute_enum_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_attribute_enum_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4426,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtTest = {
         let mut init =
                 ExtTest{parse_text:
-                            b"<!ELEMENT animal (#PCDATA|a)*>\n<!ELEMENT a EMPTY>\n<!ATTLIST animal xml:space (default|preserve) \'preserve\'>\x00"
-                                as *const u8 as *const c_char,
+                            
+                            b"<!ELEMENT animal (#PCDATA|a)*>\n<!ELEMENT a EMPTY>\n<!ATTLIST animal xml:space (default|preserve) \'preserve\'>\x00".as_ptr() as *const c_char,
                         encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                         storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,};
         init
     };
     let mut expected: *const XML_Char =
-        b"This is a \n      \n\nyellow tiger\x00" as *const u8 as *const c_char;
+        
+        b"This is a \n      \n\nyellow tiger\x00".as_ptr() as *const c_char;
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -10213,7 +10651,8 @@ unsafe extern "C" fn test_attribute_enum_value() {
         text,
         &mut dtd_data,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4442,
     );
@@ -10230,17 +10669,21 @@ unsafe extern "C" fn test_predefined_entity_redefinition() {
             b"test_predefined_entity_redefinition\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4451,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY apos \'foo\'>\n]>\n<doc>&apos;</doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [\n<!ENTITY apos \'foo\'>\n]>\n<doc>&apos;</doc>\x00".as_ptr()
             as *const c_char;
     _run_character_check(
         text,
-        b"\'\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\'\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4456,
     );
@@ -10253,12 +10696,12 @@ unsafe extern "C" fn test_dtd_stop_processing() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_dtd_stop_processing\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4463,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc [\n%foo;\n<!ENTITY bar \'bas\'>\n]><doc/>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc [\n%foo;\n<!ENTITY bar \'bas\'>\n]><doc/>\x00".as_ptr() as *const c_char;
     XML_SetEntityDeclHandler(
         g_parser,
         Some(
@@ -10282,18 +10725,19 @@ unsafe extern "C" fn test_dtd_stop_processing() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4473i32,
         );
     }
     if dummy_handler_flags != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4475i32,
-            b"DTD processing still going after undefined PE\x00" as *const u8 as *const c_char,
+            
+            b"DTD processing still going after undefined PE\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10303,13 +10747,14 @@ unsafe extern "C" fn test_public_notation_no_sysid() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_public_notation_no_sysid\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4480,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!NOTATION note PUBLIC \'foo\'>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!NOTATION note PUBLIC \'foo\'>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     dummy_handler_flags = 0;
     XML_SetNotationDeclHandler(
         g_parser,
@@ -10329,18 +10774,19 @@ unsafe extern "C" fn test_public_notation_no_sysid() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4490i32,
         );
     }
     if dummy_handler_flags != DUMMY_NOTATION_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4492i32,
-            b"Notation declaration handler not called\x00" as *const u8 as *const c_char,
+            
+            b"Notation declaration handler not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10360,13 +10806,14 @@ unsafe extern "C" fn record_element_start_handler(
 unsafe extern "C" fn test_nested_groups() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_nested_groups\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4503,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -10404,22 +10851,24 @@ unsafe extern "C" fn test_nested_groups() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4523i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"doce\x00" as *const u8 as *const c_char,
+        
+        b"doce\x00".as_ptr() as *const c_char,
     );
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4526i32,
-            b"Element handler not fired\x00" as *const u8 as *const c_char,
+            
+            b"Element handler not fired\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10427,13 +10876,14 @@ unsafe extern "C" fn test_nested_groups() {
 unsafe extern "C" fn test_group_choice() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_group_choice\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4530,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (a|b|c)+>\n<!ELEMENT a EMPTY>\n<!ELEMENT b (#PCDATA)>\n<!ELEMENT c ANY>\n]>\n<doc>\n<a/>\n<b attr=\'foo\'>This is a foo</b>\n<c></c>\n</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (a|b|c)+>\n<!ELEMENT a EMPTY>\n<!ELEMENT b (#PCDATA)>\n<!ELEMENT c ANY>\n]>\n<doc>\n<a/>\n<b attr=\'foo\'>This is a foo</b>\n<c></c>\n</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetElementDeclHandler(
         g_parser,
         transmute(Some(
@@ -10451,18 +10901,19 @@ unsafe extern "C" fn test_group_choice() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4547i32,
         );
     }
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4549i32,
-            b"Element handler flag not raised\x00" as *const u8 as *const c_char,
+            
+            b"Element handler flag not raised\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10476,7 +10927,8 @@ unsafe extern "C" fn external_entity_public(
 ) -> c_int {
     let mut text1: *const c_char = *(parser as *mut *mut c_void) as *const c_char;
     let mut text2: *const c_char =
-        b"<!ATTLIST doc a CDATA \'value\'>\x00" as *const u8 as *const c_char;
+        
+        b"<!ATTLIST doc a CDATA \'value\'>\x00".as_ptr() as *const c_char;
     let mut text: *const c_char = ::c2rust_out::stddef_h::NULL as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut parse_res: c_int = 0;
@@ -10491,27 +10943,29 @@ unsafe extern "C" fn external_entity_public(
     if !systemId.is_null()
         && strcmp(
             systemId,
-            b"http://example.org/\x00" as *const u8 as *const c_char,
+            
+            b"http://example.org/\x00".as_ptr() as *const c_char,
         ) == 0
     {
         text = text1
-    } else if !publicId.is_null() && strcmp(publicId, b"foo\x00" as *const u8 as *const c_char) == 0
+    } else if !publicId.is_null() && strcmp(publicId,  b"foo\x00".as_ptr() as *const c_char) == 0
     {
         text = text2
     } else {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4572i32,
-            b"Unexpected parameters to external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected parameters to external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if !text.is_null() {
     } else {
-        __assert_fail(b"text != NULL\x00" as *const u8 as *const c_char,
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                          as *const u8 as *const c_char,
+        __assert_fail(b"text != NULL\x00".as_ptr() as *const c_char,
+                      
+                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       4573u32,
                       (*::std::mem::transmute::<&[u8; 111],
                                                 &[c_char; 111]>(b"int external_entity_public(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
@@ -10527,13 +10981,14 @@ unsafe extern "C" fn test_standalone_parameter_entity() {
             b"test_standalone_parameter_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4580,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/\' [\n<!ENTITY % entity \'<!ELEMENT doc (#PCDATA)>\'>\n%entity;\n]>\n<doc></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/\' [\n<!ENTITY % entity \'<!ELEMENT doc (#PCDATA)>\'>\n%entity;\n]>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut dtd_data: [c_char; 22] =
         *::std::mem::transmute::<&[u8; 22], &mut [c_char; 22]>(b"<!ENTITY % e1 \'foo\'>\n\x00");
     XML_SetUserData(g_parser, dtd_data.as_mut_ptr() as *mut c_void);
@@ -10556,8 +11011,8 @@ unsafe extern "C" fn test_standalone_parameter_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4594i32,
         );
     };
@@ -10569,16 +11024,17 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_skipped_parameter_entity\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4600,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"%pe2;\x00" as *const u8 as *const c_char,
+            parse_text:  b"%pe2;\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -10612,18 +11068,19 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4615i32,
         );
     }
     if dummy_handler_flags != DUMMY_SKIP_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4617i32,
-            b"Skip handler not executed\x00" as *const u8 as *const c_char,
+            
+            b"Skip handler not executed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10635,17 +11092,18 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
             b"test_recursive_external_parameter_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4622,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtFaults = {
         let mut init = ext_faults {
-            parse_text: b"<!ENTITY % pe2 \'&#37;pe2;\'>\n%pe2;\x00" as *const u8 as *const c_char,
-            fail_text: b"Recursive external parameter entity not faulted\x00" as *const u8
+            parse_text:  b"<!ENTITY % pe2 \'&#37;pe2;\'>\n%pe2;\x00".as_ptr() as *const c_char,
+            fail_text:  b"Recursive external parameter entity not faulted\x00".as_ptr()
                 as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_RECURSIVE_ENTITY_REF,
@@ -10670,8 +11128,10 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Recursive external parameter not spotted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Recursive external parameter not spotted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4636,
     );
@@ -10685,20 +11145,20 @@ unsafe extern "C" fn external_entity_devaluer(
     mut systemId: *const XML_Char,
     mut _publicId: *const XML_Char,
 ) -> c_int {
-    let mut text: *const c_char = b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'bar\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut clear_handler: intptr_t = *(parser as *mut *mut c_void) as intptr_t;
-    if systemId.is_null() || strcmp(systemId, b"bar\x00" as *const u8 as *const c_char) == 0 {
+    if systemId.is_null() || strcmp(systemId,  b"bar\x00".as_ptr() as *const c_char) == 0 {
         return XML_STATUS_OK_0;
     }
-    if strcmp(systemId, b"foo\x00" as *const u8 as *const c_char) != 0 {
+    if strcmp(systemId,  b"foo\x00".as_ptr() as *const c_char) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4656i32,
-            b"Unexpected system ID\x00" as *const u8 as *const c_char,
+            
+            b"Unexpected system ID\x00".as_ptr() as *const c_char,
         );
     }
     ext_parser = XML_ExternalEntityParserCreate(
@@ -10709,10 +11169,11 @@ unsafe extern "C" fn external_entity_devaluer(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4659i32,
-            b"Could note create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could note create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if clear_handler != 0 {
@@ -10728,8 +11189,8 @@ unsafe extern "C" fn external_entity_devaluer(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4664i32,
         );
     }
@@ -10743,12 +11204,14 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
             b"test_undefined_ext_entity_in_external_dtd\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4670,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\n\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -10769,8 +11232,8 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4679i32,
         );
     }
@@ -10798,8 +11261,8 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4690i32,
         );
     };
@@ -10824,7 +11287,8 @@ unsafe extern "C" fn aborting_xdecl_handler(
 unsafe extern "C" fn test_suspend_xdecl() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_suspend_xdecl\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4706,
     );
@@ -10847,16 +11311,16 @@ unsafe extern "C" fn test_suspend_xdecl() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4713i32,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4715i32,
         );
     }
@@ -10866,19 +11330,21 @@ unsafe extern "C" fn test_suspend_xdecl() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4719i32,
-            b"Attempt to parse while suspended not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Attempt to parse while suspended not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4721i32,
-            b"Suspended parse not faulted with correct error\x00" as *const u8 as *const c_char,
+            
+            b"Suspended parse not faulted with correct error\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -10906,11 +11372,12 @@ unsafe extern "C" fn selective_aborting_default_handler(
 unsafe extern "C" fn test_abort_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_abort_epilog\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4737,
     );
-    let mut text: *const c_char = b"<doc></doc>\n\r\n\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\n\r\n\x00".as_ptr() as *const c_char;
     let mut match_0: [XML_Char; 2] =
         *::std::mem::transmute::<&[u8; 2], &mut [XML_Char; 2]>(b"\r\x00");
     XML_SetDefaultHandler(
@@ -10927,17 +11394,18 @@ unsafe extern "C" fn test_abort_epilog() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4746i32,
-            b"Abort not triggered\x00" as *const u8 as *const c_char,
+            
+            b"Abort not triggered\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_ABORTED {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4748i32,
         );
     };
@@ -10947,11 +11415,12 @@ unsafe extern "C" fn test_abort_epilog() {
 unsafe extern "C" fn test_abort_epilog_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_abort_epilog_2\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4753,
     );
-    let mut text: *const c_char = b"<doc></doc>\n\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\n\x00".as_ptr() as *const c_char;
     let mut match_0: [XML_Char; 2] =
         *::std::mem::transmute::<&[u8; 2], &mut [XML_Char; 2]>(b"\n\x00");
     XML_SetDefaultHandler(
@@ -10966,8 +11435,10 @@ unsafe extern "C" fn test_abort_epilog_2() {
     _expect_failure(
         text,
         XML_ERROR_ABORTED,
-        b"Abort not triggered\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Abort not triggered\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4760,
     );
@@ -10977,11 +11448,12 @@ unsafe extern "C" fn test_abort_epilog_2() {
 unsafe extern "C" fn test_suspend_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_suspend_epilog\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4765,
     );
-    let mut text: *const c_char = b"<doc></doc>\n\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\n\x00".as_ptr() as *const c_char;
     let mut match_0: [XML_Char; 2] =
         *::std::mem::transmute::<&[u8; 2], &mut [XML_Char; 2]>(b"\n\x00");
     XML_SetDefaultHandler(
@@ -10998,8 +11470,8 @@ unsafe extern "C" fn test_suspend_epilog() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4774i32,
         );
     };
@@ -11013,11 +11485,12 @@ unsafe extern "C" fn test_suspend_in_sole_empty_tag() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_suspend_in_sole_empty_tag\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4784,
     );
-    let mut text: *const c_char = b"<doc/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc/>\x00".as_ptr() as *const c_char;
     let mut rc: XML_Status = XML_STATUS_ERROR;
     XML_SetEndElementHandler(
         g_parser,
@@ -11031,34 +11504,36 @@ unsafe extern "C" fn test_suspend_in_sole_empty_tag() {
     if rc == XML_STATUS_ERROR_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4792i32,
         );
     } else if rc != XML_STATUS_SUSPENDED_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4794i32,
-            b"Suspend not triggered\x00" as *const u8 as *const c_char,
+            
+            b"Suspend not triggered\x00".as_ptr() as *const c_char,
         );
     }
     rc = XML_ResumeParser(g_parser);
     if rc == XML_STATUS_ERROR_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4797i32,
         );
     } else if rc != XML_STATUS_OK_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4799i32,
-            b"Resume failed\x00" as *const u8 as *const c_char,
+            
+            b"Resume failed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -11067,16 +11542,19 @@ unsafe extern "C" fn test_unfinished_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_unfinished_epilog\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4803,
     );
-    let mut text: *const c_char = b"<doc></doc><\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc><\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNCLOSED_TOKEN,
-        b"Incomplete epilog entry not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Incomplete epilog entry not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4807,
     );
@@ -11086,19 +11564,20 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_partial_char_in_epilog\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4811,
     );
-    let mut text: *const c_char = b"<doc></doc>\xe2\x82\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc></doc>\xe2\x82\x00".as_ptr() as *const c_char;
     /* First check that no fault is raised if the parse is not finished */
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4817i32,
         );
     }
@@ -11106,17 +11585,18 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
     if XML_ParseBuffer(g_parser, 0, XML_TRUE as c_int) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4820i32,
-            b"Partial character in epilog not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Partial character in epilog not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_PARTIAL_CHAR {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4822i32,
         );
     };
@@ -11125,7 +11605,8 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
 unsafe extern "C" fn test_hash_collision() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_hash_collision\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4826,
     );
@@ -11138,16 +11619,16 @@ unsafe extern "C" fn test_hash_collision() {
      * not always.  This is an attempt to provide insurance.
      */
     let mut text: *const c_char =
-        b"<doc>\n<a1/><a2/><a3/><a4/><a5/><a6/><a7/><a8/>\n<b1></b1><b2 attr=\'foo\'>This is a foo</b2><b3></b3><b4></b4>\n<b5></b5><b6></b6><b7></b7><b8></b8>\n<c1/><c2/><c3/><c4/><c5/><c6/><c7/><c8/>\n<d1/><d2/><d3/><d4/><d5/><d6/><d7/>\n<d8>This triggers the table growth and collides with b2</d8>\n</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc>\n<a1/><a2/><a3/><a4/><a5/><a6/><a7/><a8/>\n<b1></b1><b2 attr=\'foo\'>This is a foo</b2><b3></b3><b4></b4>\n<b5></b5><b6></b6><b7></b7><b8></b8>\n<c1/><c2/><c3/><c4/><c5/><c6/><c7/><c8/>\n<d1/><d2/><d3/><d4/><d5/><d6/><d7/>\n<d8>This triggers the table growth and collides with b2</d8>\n</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetHashSalt(g_parser, (0xffffffff) << 32 | 0xff99fc90);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4849i32,
         );
     };
@@ -11159,10 +11640,10 @@ unsafe extern "C" fn start_element_suspender(
     mut name: *const XML_Char,
     mut _atts: *mut *const XML_Char,
 ) {
-    if strcmp(name, b"suspend\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(name,  b"suspend\x00".as_ptr() as *const c_char) == 0 {
         XML_StopParser(g_parser, XML_TRUE);
     }
-    if strcmp(name, b"abort\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(name,  b"abort\x00".as_ptr() as *const c_char) == 0 {
         XML_StopParser(g_parser, XML_FALSE);
     };
 }
@@ -11173,15 +11654,16 @@ unsafe extern "C" fn test_suspend_resume_internal_entity() {
             b"test_suspend_resume_internal_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4866,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY foo \'<suspend>Hi<suspend>Ho</suspend></suspend>\'>\n]>\n<doc>&foo;</doc>\n\x00"
-            as *const u8 as *const c_char;
-    let mut expected1: *const XML_Char = b"Hi\x00" as *const u8 as *const c_char;
-    let mut expected2: *const XML_Char = b"HiHo\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY foo \'<suspend>Hi<suspend>Ho</suspend></suspend>\'>\n]>\n<doc>&foo;</doc>\n\x00".as_ptr() as *const c_char;
+    let mut expected1: *const XML_Char =  b"Hi\x00".as_ptr() as *const c_char;
+    let mut expected2: *const XML_Char =  b"HiHo\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -11214,20 +11696,21 @@ unsafe extern "C" fn test_suspend_resume_internal_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4882i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"\x00" as *const u8 as *const c_char,
+        
+        b"\x00".as_ptr() as *const c_char,
     );
     if XML_ResumeParser(g_parser) != XML_STATUS_SUSPENDED_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4885i32,
         );
     }
@@ -11235,8 +11718,8 @@ unsafe extern "C" fn test_suspend_resume_internal_entity() {
     if XML_ResumeParser(g_parser) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4888i32,
         );
     }
@@ -11250,13 +11733,14 @@ unsafe extern "C" fn test_resume_entity_with_syntax_error() {
             b"test_resume_entity_with_syntax_error\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4894,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY foo \'<suspend>Hi</wombat>\'>\n]>\n<doc>&foo;</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY foo \'<suspend>Hi</wombat>\'>\n]>\n<doc>&foo;</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetStartElementHandler(
         g_parser,
         Some(
@@ -11273,25 +11757,26 @@ unsafe extern "C" fn test_resume_entity_with_syntax_error() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4903i32,
         );
     }
     if XML_ResumeParser(g_parser) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4905i32,
-            b"Syntax error in entity not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Syntax error in entity not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_TAG_MISMATCH {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4907i32,
         );
     };
@@ -11313,14 +11798,15 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
             b"test_suspend_resume_parameter_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4921,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY % foo \'<!ELEMENT doc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</doc>\x00"
-            as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"Hello, world\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY % foo \'<!ELEMENT doc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"Hello, world\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -11354,20 +11840,21 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4937i32,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"\x00" as *const u8 as *const c_char,
+        
+        b"\x00".as_ptr() as *const c_char,
     );
     if XML_ResumeParser(g_parser) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4940i32,
         );
     }
@@ -11378,27 +11865,29 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
 unsafe extern "C" fn test_restart_on_error() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_restart_on_error\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4946,
     );
-    let mut text: *const c_char = b"<$doc><doc></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<$doc><doc></doc>\x00".as_ptr() as *const c_char;
     if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
         != XML_STATUS_ERROR_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4951i32,
-            b"Invalid tag name not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Invalid tag name not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4953i32,
         );
     }
@@ -11411,17 +11900,18 @@ unsafe extern "C" fn test_restart_on_error() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4955i32,
-            b"Restarting invalid parse not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Restarting invalid parse not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4957i32,
         );
     };
@@ -11434,18 +11924,22 @@ unsafe extern "C" fn test_reject_lt_in_attribute_value() {
             b"test_reject_lt_in_attribute_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4962,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'<bar>\'>]>\n<doc></doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'<bar>\'>]>\n<doc></doc>\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Bad attribute default not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad attribute default not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4967,
     );
@@ -11457,18 +11951,22 @@ unsafe extern "C" fn test_reject_unfinished_param_in_att_value() {
             b"test_reject_unfinished_param_in_att_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4971,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'&foo\'>]>\n<doc></doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'&foo\'>]>\n<doc></doc>\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Bad attribute default not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad attribute default not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4976,
     );
@@ -11478,18 +11976,19 @@ unsafe extern "C" fn test_trailing_cr_in_att_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_trailing_cr_in_att_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4980,
     );
-    let mut text: *const c_char = b"<doc a=\'value\r\'/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc a=\'value\r\'/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             4985i32,
         );
     };
@@ -11504,21 +12003,22 @@ unsafe extern "C" fn test_standalone_internal_entity() {
             b"test_standalone_internal_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         4992,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' standalone=\'yes\' ?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY % pe \'<!ATTLIST doc att2 CDATA \"&ge;\">\'>\n  <!ENTITY ge \'AttDefaultValue\'>\n  %pe;\n]>\n<doc att2=\'any\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' standalone=\'yes\' ?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY % pe \'<!ATTLIST doc att2 CDATA \"&ge;\">\'>\n  <!ENTITY ge \'AttDefaultValue\'>\n  %pe;\n]>\n<doc att2=\'any\'/>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5005i32,
         );
     };
@@ -11529,16 +12029,18 @@ unsafe extern "C" fn test_skipped_external_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_skipped_external_entity\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5010,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ELEMENT doc EMPTY>\n<!ENTITY % e2 \'%e1;\'>\n\x00" as *const u8
+            parse_text:  b"<!ELEMENT doc EMPTY>\n<!ENTITY % e2 \'%e1;\'>\n\x00".as_ptr()
                 as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
@@ -11565,8 +12067,8 @@ unsafe extern "C" fn test_skipped_external_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5022i32,
         );
     };
@@ -11589,10 +12091,11 @@ unsafe extern "C" fn external_entity_oneshot_loader(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5044i32,
-            b"Could not create external entity parser.\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser.\x00".as_ptr() as *const c_char,
         );
     }
     /* Use the requested entity parser for further externals */
@@ -11606,8 +12109,8 @@ unsafe extern "C" fn external_entity_oneshot_loader(
     {
         _xml_failure(
             ext_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5050i32,
         );
     }
@@ -11621,18 +12124,20 @@ unsafe extern "C" fn test_skipped_null_loaded_ext_entity() {
             b"test_skipped_null_loaded_ext_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5057,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtHdlrData = {
         let mut init =
                 ext_hdlr_data{parse_text:
-                                  b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00"
-                                      as *const u8 as *const c_char,
+                                  
+                                  b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00".as_ptr() as *const c_char,
                               handler:
                                   Some(external_entity_null_loader as
                                            unsafe extern "C" fn(_: XML_Parser,
@@ -11667,8 +12172,8 @@ unsafe extern "C" fn test_skipped_null_loaded_ext_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5071i32,
         );
     };
@@ -11680,18 +12185,20 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
             b"test_skipped_unloaded_ext_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5075,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtHdlrData = {
         let mut init =
                 ext_hdlr_data{parse_text:
-                                  b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00"
-                                      as *const u8 as *const c_char,
+                                  
+                                  b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00".as_ptr() as *const c_char,
                               handler:
                                   ::std::mem::transmute::<libc::intptr_t,
                                                           XML_ExternalEntityRefHandler>(::c2rust_out::stddef_h::NULL
@@ -11719,8 +12226,8 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5089i32,
         );
     };
@@ -11735,16 +12242,17 @@ unsafe extern "C" fn test_param_entity_with_trailing_cr() {
             b"test_param_entity_with_trailing_cr\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5096,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
-            parse_text: b"<!ENTITY % pe \'<!ATTLIST doc att CDATA \"default\">\r\'>\n%pe;\n\x00"
-                as *const u8 as *const c_char,
+            parse_text:  b"<!ENTITY % pe \'<!ATTLIST doc att CDATA \"default\">\r\'>\n%pe;\n\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
         };
@@ -11782,35 +12290,38 @@ unsafe extern "C" fn test_param_entity_with_trailing_cr() {
                 ) -> (),
         ),
     );
-    entity_name_to_match = b"pe\x00" as *const u8 as *const c_char;
+    entity_name_to_match =  b"pe\x00".as_ptr() as *const c_char;
     entity_value_to_match =
-        b"<!ATTLIST doc att CDATA \"default\">\n\x00" as *const u8 as *const c_char;
+        
+        b"<!ATTLIST doc att CDATA \"default\">\n\x00".as_ptr() as *const c_char;
     entity_match_flag = ENTITY_MATCH_NOT_FOUND;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5115i32,
         );
     }
     if entity_match_flag == ENTITY_MATCH_FAIL {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5117i32,
-            b"Parameter entity CR->NEWLINE conversion failed\x00" as *const u8 as *const c_char,
+            
+            b"Parameter entity CR->NEWLINE conversion failed\x00".as_ptr() as *const c_char,
         );
     } else if entity_match_flag == ENTITY_MATCH_NOT_FOUND {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5119i32,
-            b"Parameter entity not parsed\x00" as *const u8 as *const c_char,
+            
+            b"Parameter entity not parsed\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -11819,18 +12330,21 @@ unsafe extern "C" fn test_invalid_character_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_invalid_character_entity\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5125,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#x110000;\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#x110000;\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_BAD_CHAR_REF,
-        b"Out of range character reference not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5132,
     );
@@ -11842,18 +12356,22 @@ unsafe extern "C" fn test_invalid_character_entity_2() {
             b"test_invalid_character_entity_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5136,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#xg0;\'>\n]>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#xg0;\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Out of range character reference not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5143,
     );
@@ -11865,7 +12383,8 @@ unsafe extern "C" fn test_invalid_character_entity_3() {
             b"test_invalid_character_entity_3\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5147,
     );
@@ -11881,17 +12400,18 @@ unsafe extern "C" fn test_invalid_character_entity_3() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5163i32,
-            b"Invalid start of entity name not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Invalid start of entity name not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_UNDEFINED_ENTITY {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5165i32,
         );
     };
@@ -11903,18 +12423,21 @@ unsafe extern "C" fn test_invalid_character_entity_4() {
             b"test_invalid_character_entity_4\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5169,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#1114112;\'>\n]>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY entity \'&#1114112;\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_BAD_CHAR_REF,
-        b"Out of range character reference not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5176,
     );
@@ -11925,14 +12448,17 @@ unsafe extern "C" fn test_pi_handled_in_default() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_pi_handled_in_default\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5181,
     );
     let mut text: *const c_char =
-        b"<?test processing instruction?>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<?test processing instruction?>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<?test processing instruction?>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<?test processing instruction?>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -11954,8 +12480,8 @@ unsafe extern "C" fn test_pi_handled_in_default() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5191i32,
         );
     }
@@ -11969,14 +12495,17 @@ unsafe extern "C" fn test_comment_handled_in_default() {
             b"test_comment_handled_in_default\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5197,
     );
     let mut text: *const c_char =
-        b"<!-- This is a comment -->\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!-- This is a comment -->\n<doc/>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"<!-- This is a comment -->\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!-- This is a comment -->\n<doc/>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -11998,8 +12527,8 @@ unsafe extern "C" fn test_comment_handled_in_default() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5207i32,
         );
     }
@@ -12014,22 +12543,25 @@ unsafe extern "C" fn accumulate_pi_characters(
 ) {
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
     crate::chardata::CharData_AppendXMLChars(storage, target, -(1));
-    crate::chardata::CharData_AppendXMLChars(storage, b": \x00" as *const u8 as *const c_char, 2);
+    crate::chardata::CharData_AppendXMLChars(storage,  b": \x00".as_ptr() as *const c_char, 2);
     crate::chardata::CharData_AppendXMLChars(storage, data, -(1));
-    crate::chardata::CharData_AppendXMLChars(storage, b"\n\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"\n\x00".as_ptr() as *const c_char, 1);
 }
 
 unsafe extern "C" fn test_pi_yml() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 12], &[c_char; 12]>(b"test_pi_yml\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5224,
     );
     let mut text: *const c_char =
-        b"<?yml something like data?><doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<?yml something like data?><doc/>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"yml: something like data\n\x00" as *const u8 as *const c_char;
+        
+        b"yml: something like data\n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12055,8 +12587,8 @@ unsafe extern "C" fn test_pi_yml() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5234i32,
         );
     }
@@ -12066,14 +12598,17 @@ unsafe extern "C" fn test_pi_yml() {
 unsafe extern "C" fn test_pi_xnl() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 12], &[c_char; 12]>(b"test_pi_xnl\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5239,
     );
     let mut text: *const c_char =
-        b"<?xnl nothing like data?><doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<?xnl nothing like data?><doc/>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"xnl: nothing like data\n\x00" as *const u8 as *const c_char;
+        
+        b"xnl: nothing like data\n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12099,8 +12634,8 @@ unsafe extern "C" fn test_pi_xnl() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5249i32,
         );
     }
@@ -12110,14 +12645,17 @@ unsafe extern "C" fn test_pi_xnl() {
 unsafe extern "C" fn test_pi_xmm() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 12], &[c_char; 12]>(b"test_pi_xmm\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5254,
     );
     let mut text: *const c_char =
-        b"<?xmm everything like data?><doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<?xmm everything like data?><doc/>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"xmm: everything like data\n\x00" as *const u8 as *const c_char;
+        
+        b"xmm: everything like data\n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12143,8 +12681,8 @@ unsafe extern "C" fn test_pi_xmm() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5264i32,
         );
     }
@@ -12154,7 +12692,8 @@ unsafe extern "C" fn test_pi_xmm() {
 unsafe extern "C" fn test_utf16_pi() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_utf16_pi\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5269,
     );
@@ -12162,7 +12701,8 @@ unsafe extern "C" fn test_utf16_pi() {
         b"<\x00?\x00\x04\x0e\x08\x0e?\x00>\x00<\x00q\x00/\x00>\x00\x00",
     );
     let mut expected: *const XML_Char =
-        b"\xe0\xb8\x84\xe0\xb8\x88: \n\x00" as *const u8 as *const c_char;
+        
+        b"\xe0\xb8\x84\xe0\xb8\x88: \n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12192,8 +12732,8 @@ unsafe extern "C" fn test_utf16_pi() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5290i32,
         );
     }
@@ -12203,7 +12743,8 @@ unsafe extern "C" fn test_utf16_pi() {
 unsafe extern "C" fn test_utf16_be_pi() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 17], &[c_char; 17]>(b"test_utf16_be_pi\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5295,
     );
@@ -12211,7 +12752,8 @@ unsafe extern "C" fn test_utf16_be_pi() {
         b"\x00<\x00?\x0e\x04\x0e\x08\x00?\x00>\x00<\x00q\x00/\x00>\x00",
     );
     let mut expected: *const XML_Char =
-        b"\xe0\xb8\x84\xe0\xb8\x88: \n\x00" as *const u8 as *const c_char;
+        
+        b"\xe0\xb8\x84\xe0\xb8\x88: \n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12241,8 +12783,8 @@ unsafe extern "C" fn test_utf16_be_pi() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5316i32,
         );
     }
@@ -12258,14 +12800,15 @@ unsafe extern "C" fn accumulate_comment(mut userData: *mut c_void, mut data: *co
 unsafe extern "C" fn test_utf16_be_comment() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_utf16_be_comment\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5329,
     );
     let text: [c_char; 51] =
         *::std::mem::transmute::<&[u8; 51],
                                  &[c_char; 51]>(b"\x00<\x00!\x00-\x00-\x00 \x00C\x00o\x00m\x00m\x00e\x00n\x00t\x00 \x00A\x00 \x00-\x00-\x00>\x00\n\x00<\x00d\x00o\x00c\x00/\x00>\x00");
-    let mut expected: *const XML_Char = b" Comment A \x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b" Comment A \x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12288,8 +12831,8 @@ unsafe extern "C" fn test_utf16_be_comment() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5343i32,
         );
     }
@@ -12299,14 +12842,15 @@ unsafe extern "C" fn test_utf16_be_comment() {
 unsafe extern "C" fn test_utf16_le_comment() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_utf16_le_comment\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5348,
     );
     let text: [c_char; 51] =
         *::std::mem::transmute::<&[u8; 51],
                                  &[c_char; 51]>(b"<\x00!\x00-\x00-\x00 \x00C\x00o\x00m\x00m\x00e\x00n\x00t\x00 \x00B\x00 \x00-\x00-\x00>\x00\n\x00<\x00d\x00o\x00c\x00/\x00>\x00\x00");
-    let mut expected: *const XML_Char = b" Comment B \x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b" Comment B \x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12329,8 +12873,8 @@ unsafe extern "C" fn test_utf16_le_comment() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5362i32,
         );
     }
@@ -12361,15 +12905,16 @@ unsafe extern "C" fn MiscEncodingHandler(
 ) -> c_int {
     let mut i: c_int = 0;
     let mut high_map: c_int = -(2);
-    if strcmp(encoding, b"invalid-9\x00" as *const u8 as *const c_char) == 0
-        || strcmp(encoding, b"ascii-like\x00" as *const u8 as *const c_char) == 0
-        || strcmp(encoding, b"invalid-len\x00" as *const u8 as *const c_char) == 0
-        || strcmp(encoding, b"invalid-a\x00" as *const u8 as *const c_char) == 0
+    if strcmp(encoding,  b"invalid-9\x00".as_ptr() as *const c_char) == 0
+        || strcmp(encoding,  b"ascii-like\x00".as_ptr() as *const c_char) == 0
+        || strcmp(encoding,  b"invalid-len\x00".as_ptr() as *const c_char) == 0
+        || strcmp(encoding,  b"invalid-a\x00".as_ptr() as *const c_char) == 0
         || strcmp(
             encoding,
-            b"invalid-surrogate\x00" as *const u8 as *const c_char,
+            
+            b"invalid-surrogate\x00".as_ptr() as *const c_char,
         ) == 0
-        || strcmp(encoding, b"invalid-high\x00" as *const u8 as *const c_char) == 0
+        || strcmp(encoding,  b"invalid-high\x00".as_ptr() as *const c_char) == 0
     {
         high_map = -(1)
     }
@@ -12383,15 +12928,15 @@ unsafe extern "C" fn MiscEncodingHandler(
         i += 1
     }
     /* If required, put an invalid value in the ASCII entries */
-    if strcmp(encoding, b"invalid-9\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(encoding,  b"invalid-9\x00".as_ptr() as *const c_char) == 0 {
         (*info).map[9] = 5
     }
     /* If required, have a top-bit set character starts a 5-byte sequence */
-    if strcmp(encoding, b"invalid-len\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(encoding,  b"invalid-len\x00".as_ptr() as *const c_char) == 0 {
         (*info).map[0x81] = -(5)
     }
     /* If required, make a top-bit set character a valid ASCII character */
-    if strcmp(encoding, b"invalid-a\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(encoding,  b"invalid-a\x00".as_ptr() as *const c_char) == 0 {
         (*info).map[0x82] = 'a' as i32
     }
     /* If required, give a top-bit set character a forbidden value,
@@ -12399,13 +12944,14 @@ unsafe extern "C" fn MiscEncodingHandler(
      */
     if strcmp(
         encoding,
-        b"invalid-surrogate\x00" as *const u8 as *const c_char,
+        
+        b"invalid-surrogate\x00".as_ptr() as *const c_char,
     ) == 0
     {
         (*info).map[0x83] = 0xd801
     }
     /* If required, give a top-bit set character too high a value */
-    if strcmp(encoding, b"invalid-high\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(encoding,  b"invalid-high\x00".as_ptr() as *const c_char) == 0 {
         (*info).map[0x84] = 0x10101
     }
     (*info).data = data;
@@ -12413,11 +12959,11 @@ unsafe extern "C" fn MiscEncodingHandler(
         libc::intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
     >(::c2rust_out::stddef_h::NULL as libc::intptr_t);
-    if strcmp(encoding, b"failing-conv\x00" as *const u8 as *const c_char) == 0 {
+    if strcmp(encoding,  b"failing-conv\x00".as_ptr() as *const c_char) == 0 {
         (*info).convert = Some(
             failing_converter as unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int,
         )
-    } else if strcmp(encoding, b"prefix-conv\x00" as *const u8 as *const c_char) == 0 {
+    } else if strcmp(encoding,  b"prefix-conv\x00".as_ptr() as *const c_char) == 0 {
         (*info).convert = Some(
             prefix_converter as unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int,
         )
@@ -12436,12 +12982,14 @@ unsafe extern "C" fn test_missing_encoding_conversion_fn() {
             b"test_missing_encoding_conversion_fn\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5435,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'no-conv\'?>\n<doc>\x81</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'no-conv\'?>\n<doc>\x81</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12464,8 +13012,10 @@ unsafe extern "C" fn test_missing_encoding_conversion_fn() {
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Encoding with missing convert() not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Encoding with missing convert() not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5447,
     );
@@ -12477,12 +13027,14 @@ unsafe extern "C" fn test_failing_encoding_conversion_fn() {
             b"test_failing_encoding_conversion_fn\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5451,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'failing-conv\'?>\n<doc>\x81</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'failing-conv\'?>\n<doc>\x81</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12504,8 +13056,10 @@ unsafe extern "C" fn test_failing_encoding_conversion_fn() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Encoding with failing convert() not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Encoding with failing convert() not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5462,
     );
@@ -12516,13 +13070,14 @@ unsafe extern "C" fn test_unknown_encoding_success() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_unknown_encoding_success\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5467,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<\x81d\x80oc>Hello, world</\x81d\x80oc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<\x81d\x80oc>Hello, world</\x81d\x80oc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12537,8 +13092,10 @@ unsafe extern "C" fn test_unknown_encoding_success() {
     );
     _run_character_check(
         text,
-        b"Hello, world\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Hello, world\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5473,
     );
@@ -12549,13 +13106,14 @@ unsafe extern "C" fn test_unknown_encoding_bad_name() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_unknown_encoding_bad_name\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5478,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<\xffdoc>Hello, world</\xffdoc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<\xffdoc>Hello, world</\xffdoc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12571,8 +13129,10 @@ unsafe extern "C" fn test_unknown_encoding_bad_name() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Bad name start in unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad name start in unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5484,
     );
@@ -12585,13 +13145,14 @@ unsafe extern "C" fn test_unknown_encoding_bad_name_2() {
             b"test_unknown_encoding_bad_name_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5489,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<d\xffoc>Hello, world</d\xffoc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<d\xffoc>Hello, world</d\xffoc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12607,8 +13168,10 @@ unsafe extern "C" fn test_unknown_encoding_bad_name_2() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Bad name in unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad name in unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5495,
     );
@@ -12623,15 +13186,17 @@ unsafe extern "C" fn test_unknown_encoding_long_name_1() {
             b"test_unknown_encoding_long_name_1\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5502,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>Hi</abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>Hi</abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"abcdefghabcdefghabcdefghijklmnop\x00" as *const u8 as *const c_char;
+        
+        b"abcdefghabcdefghabcdefghijklmnop\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12669,8 +13234,8 @@ unsafe extern "C" fn test_unknown_encoding_long_name_1() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5516i32,
         );
     }
@@ -12686,15 +13251,17 @@ unsafe extern "C" fn test_unknown_encoding_long_name_2() {
             b"test_unknown_encoding_long_name_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5524,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijklmnop>Hi</abcdefghabcdefghabcdefghijklmnop>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijklmnop>Hi</abcdefghabcdefghabcdefghijklmnop>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"abcdefghabcdefghabcdefghijklmnop\x00" as *const u8 as *const c_char;
+        
+        b"abcdefghabcdefghabcdefghijklmnop\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -12732,8 +13299,8 @@ unsafe extern "C" fn test_unknown_encoding_long_name_2() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5538i32,
         );
     }
@@ -12744,12 +13311,14 @@ unsafe extern "C" fn test_invalid_unknown_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_invalid_unknown_encoding\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5543,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'invalid-9\'?>\n<doc>Hello world</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'invalid-9\'?>\n<doc>Hello world</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12766,8 +13335,10 @@ unsafe extern "C" fn test_invalid_unknown_encoding() {
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Invalid unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5549,
     );
@@ -12777,12 +13348,14 @@ unsafe extern "C" fn test_unknown_ascii_encoding_ok() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_unknown_ascii_encoding_ok\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5553,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'ascii-like\'?>\n<doc>Hello, world</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'ascii-like\'?>\n<doc>Hello, world</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12798,8 +13371,10 @@ unsafe extern "C" fn test_unknown_ascii_encoding_ok() {
     );
     _run_character_check(
         text,
-        b"Hello, world\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Hello, world\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5558,
     );
@@ -12811,13 +13386,14 @@ unsafe extern "C" fn test_unknown_ascii_encoding_fail() {
             b"test_unknown_ascii_encoding_fail\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5562,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'ascii-like\'?>\n<doc>Hello, \x80 world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'ascii-like\'?>\n<doc>Hello, \x80 world</doc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12833,8 +13409,10 @@ unsafe extern "C" fn test_unknown_ascii_encoding_fail() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid character not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid character not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5568,
     );
@@ -12846,13 +13424,14 @@ unsafe extern "C" fn test_unknown_encoding_invalid_length() {
             b"test_unknown_encoding_invalid_length\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5572,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'invalid-len\'?>\n<doc>Hello, world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'invalid-len\'?>\n<doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12868,8 +13447,10 @@ unsafe extern "C" fn test_unknown_encoding_invalid_length() {
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Invalid unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5578,
     );
@@ -12881,12 +13462,14 @@ unsafe extern "C" fn test_unknown_encoding_invalid_topbit() {
             b"test_unknown_encoding_invalid_topbit\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5582,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'invalid-a\'?>\n<doc>Hello, world</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'invalid-a\'?>\n<doc>Hello, world</doc>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12903,8 +13486,10 @@ unsafe extern "C" fn test_unknown_encoding_invalid_topbit() {
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Invalid unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5588,
     );
@@ -12916,13 +13501,14 @@ unsafe extern "C" fn test_unknown_encoding_invalid_surrogate() {
             b"test_unknown_encoding_invalid_surrogate\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5592,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'invalid-surrogate\'?>\n<doc>Hello, \x82 world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'invalid-surrogate\'?>\n<doc>Hello, \x82 world</doc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12938,8 +13524,10 @@ unsafe extern "C" fn test_unknown_encoding_invalid_surrogate() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5598,
     );
@@ -12951,13 +13539,14 @@ unsafe extern "C" fn test_unknown_encoding_invalid_high() {
             b"test_unknown_encoding_invalid_high\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5602,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'invalid-high\'?>\n<doc>Hello, world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'invalid-high\'?>\n<doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -12973,8 +13562,10 @@ unsafe extern "C" fn test_unknown_encoding_invalid_high() {
     _expect_failure(
         text,
         XML_ERROR_UNKNOWN_ENCODING,
-        b"Invalid unknown encoding not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5608,
     );
@@ -12986,12 +13577,14 @@ unsafe extern "C" fn test_unknown_encoding_invalid_attr_value() {
             b"test_unknown_encoding_invalid_attr_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5612,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<doc attr=\'\xff0\'/>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<doc attr=\'\xff0\'/>\x00".as_ptr()
             as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -13008,8 +13601,10 @@ unsafe extern "C" fn test_unknown_encoding_invalid_attr_value() {
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid attribute valid not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid attribute valid not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5618,
     );
@@ -13032,20 +13627,22 @@ unsafe extern "C" fn external_entity_loader2(
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5647i32,
-            b"Coulr not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Coulr not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if !(*test_data).encoding.is_null() {
         if XML_SetEncoding(extparser, (*test_data).encoding) as u64 == 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 5650i32,
-                b"XML_SetEncoding() ignored for external entity\x00" as *const u8 as *const c_char,
+                
+                b"XML_SetEncoding() ignored for external entity\x00".as_ptr() as *const c_char,
             );
         }
     }
@@ -13059,8 +13656,8 @@ unsafe extern "C" fn external_entity_loader2(
         {
             _xml_failure(
                 extparser,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 5656i32,
             );
         }
@@ -13073,8 +13670,8 @@ unsafe extern "C" fn external_entity_loader2(
     {
         _xml_failure(
             extparser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5661i32,
         );
     }
@@ -13098,25 +13695,26 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom() {
             b"test_ext_entity_latin1_utf16le_bom\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5675,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\xff\xfeL \x00" as *const u8 as *const c_char,
+            parse_text:  b"\xff\xfeL \x00".as_ptr() as *const c_char,
             parse_len: 4,
-            encoding: b"iso-8859-1\x00" as *const u8 as *const c_char,
+            encoding:  b"iso-8859-1\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
     };
     /* In UTF-8, y-diaeresis is 0xc3 0xbf, lowercase thorn is 0xc3 0xbe */
-    let mut expected: *const XML_Char = b"\xc3\xbf\xc3\xbeL \x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xbf\xc3\xbeL \x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13149,8 +13747,8 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5701i32,
         );
     }
@@ -13163,25 +13761,26 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom() {
             b"test_ext_entity_latin1_utf16be_bom\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5706,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\xfe\xff L\x00" as *const u8 as *const c_char,
+            parse_text:  b"\xfe\xff L\x00".as_ptr() as *const c_char,
             parse_len: 4,
-            encoding: b"iso-8859-1\x00" as *const u8 as *const c_char,
+            encoding:  b"iso-8859-1\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
     };
     /* In UTF-8, y-diaeresis is 0xc3 0xbf, lowercase thorn is 0xc3 0xbe */
-    let mut expected: *const XML_Char = b"\xc3\xbe\xc3\xbf L\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xbe\xc3\xbf L\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13214,8 +13813,8 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5732i32,
         );
     }
@@ -13232,25 +13831,26 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom2() {
             b"test_ext_entity_latin1_utf16le_bom2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5741,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\xff\xfeL \x00" as *const u8 as *const c_char,
+            parse_text:  b"\xff\xfeL \x00".as_ptr() as *const c_char,
             parse_len: 4,
-            encoding: b"iso-8859-1\x00" as *const u8 as *const c_char,
+            encoding:  b"iso-8859-1\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_FULL_BUFFER,
         };
         init
     };
     /* In UTF-8, y-diaeresis is 0xc3 0xbf, lowercase thorn is 0xc3 0xbe */
-    let mut expected: *const XML_Char = b"\xc3\xbf\xc3\xbeL \x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xbf\xc3\xbeL \x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13283,8 +13883,8 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom2() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5767i32,
         );
     }
@@ -13297,25 +13897,26 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom2() {
             b"test_ext_entity_latin1_utf16be_bom2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5772,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\xfe\xff L\x00" as *const u8 as *const c_char,
+            parse_text:  b"\xfe\xff L\x00".as_ptr() as *const c_char,
             parse_len: 4,
-            encoding: b"iso-8859-1\x00" as *const u8 as *const c_char,
+            encoding:  b"iso-8859-1\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_FULL_BUFFER,
         };
         init
     };
     /* In UTF-8, y-diaeresis is 0xc3 0xbf, lowercase thorn is 0xc3 0xbe */
-    let mut expected: *const XML_Char = b"\xc3\xbe\xc3\xbf L\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xbe\xc3\xbf L\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13348,8 +13949,8 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom2() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5798i32,
         );
     }
@@ -13361,25 +13962,27 @@ unsafe extern "C" fn test_ext_entity_utf16_be() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_ext_entity_utf16_be\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5804,
     ); /* U+3E00 */
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"<\x00e\x00/\x00>\x00\x00" as *const u8 as *const c_char,
+            parse_text:  b"<\x00e\x00/\x00>\x00\x00".as_ptr() as *const c_char,
             parse_len: 8,
-            encoding: b"utf-16be\x00" as *const u8 as *const c_char,
+            encoding:  b"utf-16be\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
     };
     let mut expected: *const XML_Char =
-        b"\xe3\xb0\x80\xe6\x94\x80\xe2\xbc\x80\xe3\xb8\x80\x00" as *const u8 as *const c_char;
+        
+        b"\xe3\xb0\x80\xe6\x94\x80\xe2\xbc\x80\xe3\xb8\x80\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13412,8 +14015,8 @@ unsafe extern "C" fn test_ext_entity_utf16_be() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5828i32,
         );
     }
@@ -13425,25 +14028,27 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_ext_entity_utf16_le\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5834,
     ); /* U+3E00 */
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\x00<\x00e\x00/\x00>\x00" as *const u8 as *const c_char,
+            parse_text:  b"\x00<\x00e\x00/\x00>\x00".as_ptr() as *const c_char,
             parse_len: 8,
-            encoding: b"utf-16le\x00" as *const u8 as *const c_char,
+            encoding:  b"utf-16le\x00".as_ptr() as *const c_char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
     };
     let mut expected: *const XML_Char =
-        b"\xe3\xb0\x80\xe6\x94\x80\xe2\xbc\x80\xe3\xb8\x80\x00" as *const u8 as *const c_char;
+        
+        b"\xe3\xb0\x80\xe6\x94\x80\xe2\xbc\x80\xe3\xb8\x80\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13476,8 +14081,8 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5858i32,
         );
     }
@@ -13501,20 +14106,22 @@ unsafe extern "C" fn external_entity_faulter2(
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5890i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     if !(*test_data).encoding.is_null() {
         if XML_SetEncoding(extparser, (*test_data).encoding) as u64 == 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 5893i32,
-                b"XML_SetEncoding() ignored for external entity\x00" as *const u8 as *const c_char,
+                
+                b"XML_SetEncoding() ignored for external entity\x00".as_ptr() as *const c_char,
             );
         }
     }
@@ -13527,8 +14134,8 @@ unsafe extern "C" fn external_entity_faulter2(
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5898i32,
             (*test_data).fail_text,
         );
@@ -13536,8 +14143,8 @@ unsafe extern "C" fn external_entity_faulter2(
     if XML_GetErrorCode(extparser) != (*test_data).error {
         _xml_failure(
             extparser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5900i32,
         );
     }
@@ -13549,18 +14156,19 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ext_entity_utf16_unknown\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5906,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtFaults2 = {
         let mut init = ExtFaults2 {
-            parse_text: b"a\x00b\x00c\x00\x00" as *const u8 as *const c_char,
+            parse_text:  b"a\x00b\x00c\x00\x00".as_ptr() as *const c_char,
             parse_len: 6,
-            fail_text: b"Invalid character in entity not faulted\x00" as *const u8 as *const c_char,
+            fail_text:  b"Invalid character in entity not faulted\x00".as_ptr() as *const c_char,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_INVALID_TOKEN,
         };
@@ -13583,8 +14191,10 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Invalid character should not have been accepted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid character should not have been accepted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5918,
     );
@@ -13595,16 +14205,17 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ext_entity_utf8_non_bom\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5923,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
-            parse_text: b"\xef\xbb\x80\x00" as *const u8 as *const c_char,
+            parse_text:  b"\xef\xbb\x80\x00".as_ptr() as *const c_char,
             parse_len: 3,
             encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
             storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
@@ -13612,7 +14223,7 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
         };
         init
     };
-    let mut expected: *const XML_Char = b"\xef\xbb\x80\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xef\xbb\x80\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13645,8 +14256,8 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5945i32,
         );
     }
@@ -13658,17 +14269,20 @@ unsafe extern "C" fn test_utf8_in_cdata_section() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_utf8_in_cdata_section\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5951,
     );
     let mut text: *const c_char =
-        b"<doc><![CDATA[one \xc3\xa9 two]]></doc>\x00" as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"one \xc3\xa9 two\x00" as *const u8 as *const c_char;
+        
+        b"<doc><![CDATA[one \xc3\xa9 two]]></doc>\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"one \xc3\xa9 two\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5959,
     );
@@ -13679,17 +14293,20 @@ unsafe extern "C" fn test_utf8_in_cdata_section_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_utf8_in_cdata_section_2\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5964,
     );
     let mut text: *const c_char =
-        b"<doc><![CDATA[\xc3\xa9]\xc3\xa9two]]></doc>\x00" as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"\xc3\xa9]\xc3\xa9two\x00" as *const u8 as *const c_char;
+        
+        b"<doc><![CDATA[\xc3\xa9]\xc3\xa9two]]></doc>\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa9]\xc3\xa9two\x00".as_ptr() as *const c_char;
     _run_character_check(
         text,
         expected,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5972,
     );
@@ -13701,7 +14318,7 @@ unsafe extern "C" fn record_element_end_handler(
     mut name: *const XML_Char,
 ) {
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
-    crate::chardata::CharData_AppendXMLChars(storage, b"/\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"/\x00".as_ptr() as *const c_char, 1);
     crate::chardata::CharData_AppendXMLChars(storage, name, -(1));
 }
 
@@ -13711,12 +14328,13 @@ unsafe extern "C" fn test_trailing_spaces_in_elements() {
             b"test_trailing_spaces_in_elements\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         5985,
     );
-    let mut text: *const c_char = b"<doc   >Hi</doc >\x00" as *const u8 as *const c_char;
-    let mut expected: *const XML_Char = b"doc/doc\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc   >Hi</doc >\x00".as_ptr() as *const c_char;
+    let mut expected: *const XML_Char =  b"doc/doc\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13746,8 +14364,8 @@ unsafe extern "C" fn test_trailing_spaces_in_elements() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             5996i32,
         );
     }
@@ -13757,14 +14375,15 @@ unsafe extern "C" fn test_trailing_spaces_in_elements() {
 unsafe extern "C" fn test_utf16_attribute() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_utf16_attribute\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6001,
     );
     let text: [c_char; 23] = *::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(
         b"<\x00d\x00 \x00\x04\x0e\x08\x0e=\x00\'\x00a\x00\'\x00/\x00>\x00\x00",
     );
-    let mut expected: *const XML_Char = b"a\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"a\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13794,8 +14413,8 @@ unsafe extern "C" fn test_utf16_attribute() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6016i32,
         );
     }
@@ -13806,7 +14425,8 @@ unsafe extern "C" fn test_utf16_second_attr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_utf16_second_attr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6021,
     );
@@ -13817,7 +14437,7 @@ unsafe extern "C" fn test_utf16_second_attr() {
     let text: [c_char; 35] =
         *::std::mem::transmute::<&[u8; 35],
                                  &[c_char; 35]>(b"<\x00d\x00 \x00a\x00=\x00\'\x001\x00\'\x00 \x00\x04\x0e\x08\x0e=\x00\'\x002\x00\'\x00/\x00>\x00\x00");
-    let mut expected: *const XML_Char = b"1\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"1\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13847,8 +14467,8 @@ unsafe extern "C" fn test_utf16_second_attr() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6036i32,
         );
     }
@@ -13859,17 +14479,21 @@ unsafe extern "C" fn test_attr_after_solidus() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_attr_after_solidus\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6041,
     );
     let mut text: *const c_char =
-        b"<doc attr1=\'a\' / attr2=\'b\'>\x00" as *const u8 as *const c_char;
+        
+        b"<doc attr1=\'a\' / attr2=\'b\'>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Misplaced / not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Misplaced / not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6044,
     );
@@ -13888,15 +14512,16 @@ unsafe extern "C" fn accumulate_entity_decl(
 ) {
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
     crate::chardata::CharData_AppendXMLChars(storage, entityName, -(1));
-    crate::chardata::CharData_AppendXMLChars(storage, b"=\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"=\x00".as_ptr() as *const c_char, 1);
     crate::chardata::CharData_AppendXMLChars(storage, value, value_length);
-    crate::chardata::CharData_AppendXMLChars(storage, b"\n\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"\n\x00".as_ptr() as *const c_char, 1);
 }
 
 unsafe extern "C" fn test_utf16_pe() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_utf16_pe\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6067,
     );
@@ -13913,7 +14538,8 @@ unsafe extern "C" fn test_utf16_pe() {
         *::std::mem::transmute::<&[u8; 155],
                                  &[c_char; 155]>(b"\x00<\x00!\x00D\x00O\x00C\x00T\x00Y\x00P\x00E\x00 \x00d\x00o\x00c\x00 \x00[\x00\n\x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00%\x00 \x0e\x04\x0e\x08\x00 \x00\'\x00<\x00!\x00E\x00L\x00E\x00M\x00E\x00N\x00T\x00 \x00d\x00o\x00c\x00 \x00(\x00#\x00P\x00C\x00D\x00A\x00T\x00A\x00)\x00>\x00\'\x00>\x00\n\x00%\x0e\x04\x0e\x08\x00;\x00\n\x00]\x00>\x00\n\x00<\x00d\x00o\x00c\x00>\x00<\x00/\x00d\x00o\x00c\x00>\x00");
     let mut expected: *const XML_Char =
-        b"\xe0\xb8\x84\xe0\xb8\x88=<!ELEMENT doc (#PCDATA)>\n\x00" as *const u8 as *const c_char;
+        
+        b"\xe0\xb8\x84\xe0\xb8\x88=<!ELEMENT doc (#PCDATA)>\n\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -13949,8 +14575,8 @@ unsafe extern "C" fn test_utf16_pe() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6097i32,
         );
     }
@@ -13962,18 +14588,22 @@ unsafe extern "C" fn test_bad_attr_desc_keyword() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_bad_attr_desc_keyword\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6103,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ATTLIST doc attr CDATA #!IMPLIED>\n]>\n<doc />\x00" as *const u8
+        
+        b"<!DOCTYPE doc [\n  <!ATTLIST doc attr CDATA #!IMPLIED>\n]>\n<doc />\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Bad keyword !IMPLIED not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad keyword !IMPLIED not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6110,
     );
@@ -13989,7 +14619,8 @@ unsafe extern "C" fn test_bad_attr_desc_keyword_utf16() {
             b"test_bad_attr_desc_keyword_utf16\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6118,
     );
@@ -14012,17 +14643,18 @@ unsafe extern "C" fn test_bad_attr_desc_keyword_utf16() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6134i32,
-            b"Invalid UTF16 attribute keyword not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Invalid UTF16 attribute keyword not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_SYNTAX {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6136i32,
         );
     };
@@ -14034,13 +14666,14 @@ unsafe extern "C" fn test_bad_attr_desc_keyword_utf16() {
 unsafe extern "C" fn test_bad_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 17], &[c_char; 17]>(b"test_bad_doctype\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6143,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<!DOCTYPE doc [ \x80D ]><doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<!DOCTYPE doc [ \x80D ]><doc/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -14056,8 +14689,10 @@ unsafe extern "C" fn test_bad_doctype() {
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"Invalid bytes in DOCTYPE not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid bytes in DOCTYPE not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6149,
     );
@@ -14067,7 +14702,8 @@ unsafe extern "C" fn test_bad_doctype_utf16() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_bad_doctype_utf16\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6153,
     );
@@ -14083,17 +14719,18 @@ unsafe extern "C" fn test_bad_doctype_utf16() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6166i32,
-            b"Invalid bytes in DOCTYPE not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Invalid bytes in DOCTYPE not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_SYNTAX {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6168i32,
         );
     };
@@ -14102,17 +14739,19 @@ unsafe extern "C" fn test_bad_doctype_utf16() {
 unsafe extern "C" fn test_bad_doctype_plus() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_bad_doctype_plus\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6172,
     );
-    let mut text: *const c_char = b"<!DOCTYPE 1+ [ <!ENTITY foo \'bar\'> ]>\n<1+>&foo;</1+>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE 1+ [ <!ENTITY foo \'bar\'> ]>\n<1+>&foo;</1+>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"\'+\' in document name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\'+\' in document name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6177,
     );
@@ -14121,17 +14760,19 @@ unsafe extern "C" fn test_bad_doctype_plus() {
 unsafe extern "C" fn test_bad_doctype_star() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_bad_doctype_star\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6181,
     );
-    let mut text: *const c_char = b"<!DOCTYPE 1* [ <!ENTITY foo \'bar\'> ]>\n<1*>&foo;</1*>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE 1* [ <!ENTITY foo \'bar\'> ]>\n<1*>&foo;</1*>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"\'*\' in document name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\'*\' in document name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6186,
     );
@@ -14141,17 +14782,19 @@ unsafe extern "C" fn test_bad_doctype_query() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_bad_doctype_query\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6190,
     );
-    let mut text: *const c_char = b"<!DOCTYPE 1? [ <!ENTITY foo \'bar\'> ]>\n<1?>&foo;</1?>\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE 1? [ <!ENTITY foo \'bar\'> ]>\n<1?>&foo;</1?>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"\'?\' in document name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"\'?\' in document name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6195,
     );
@@ -14163,19 +14806,20 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
             b"test_unknown_encoding_bad_ignore\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6199,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?><!DOCTYPE doc SYSTEM \'foo\'><doc><e>&entity;</e></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?><!DOCTYPE doc SYSTEM \'foo\'><doc><e>&entity;</e></doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
-            parse_text: b"<![IGNORE[<!ELEMENT \xffG (#PCDATA)*>]]>\x00" as *const u8
+            parse_text:  b"<![IGNORE[<!ELEMENT \xffG (#PCDATA)*>]]>\x00".as_ptr()
                 as *const c_char,
-            fail_text: b"Invalid character not faulted\x00" as *const u8 as *const c_char,
-            encoding: b"prefix-conv\x00" as *const u8 as *const c_char,
+            fail_text:  b"Invalid character not faulted\x00".as_ptr() as *const c_char,
+            encoding:  b"prefix-conv\x00".as_ptr() as *const c_char,
             error: XML_ERROR_INVALID_TOKEN,
         };
         init
@@ -14210,8 +14854,10 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Bad IGNORE section with unknown encoding not failed\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Bad IGNORE section with unknown encoding not failed\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6212,
     );
@@ -14221,14 +14867,15 @@ unsafe extern "C" fn test_entity_in_utf16_be_attr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_entity_in_utf16_be_attr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6216,
     );
     let text: [c_char; 55] =
         *::std::mem::transmute::<&[u8; 55],
                                  &[c_char; 55]>(b"\x00<\x00e\x00 \x00a\x00=\x00\'\x00&\x00#\x002\x002\x008\x00;\x00 \x00&\x00#\x00x\x000\x000\x00E\x004\x00;\x00\'\x00>\x00<\x00/\x00e\x00>\x00");
-    let mut expected: *const XML_Char = b"\xc3\xa4 \xc3\xa4\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa4 \xc3\xa4\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -14258,8 +14905,8 @@ unsafe extern "C" fn test_entity_in_utf16_be_attr() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6233i32,
         );
     }
@@ -14270,14 +14917,15 @@ unsafe extern "C" fn test_entity_in_utf16_le_attr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_entity_in_utf16_le_attr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6238,
     );
     let text: [c_char; 55] =
         *::std::mem::transmute::<&[u8; 55],
                                  &[c_char; 55]>(b"<\x00e\x00 \x00a\x00=\x00\'\x00&\x00#\x002\x002\x008\x00;\x00 \x00&\x00#\x00x\x000\x000\x00E\x004\x00;\x00\'\x00>\x00<\x00/\x00e\x00>\x00\x00");
-    let mut expected: *const XML_Char = b"\xc3\xa4 \xc3\xa4\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"\xc3\xa4 \xc3\xa4\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -14307,8 +14955,8 @@ unsafe extern "C" fn test_entity_in_utf16_le_attr() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6255i32,
         );
     }
@@ -14319,7 +14967,8 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_entity_public_utf16_be\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6260,
     );
@@ -14329,15 +14978,15 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
     let mut test_data: ExtTest2 = {
         let mut init =
                 ExtTest2{parse_text:
-                             b"\x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00"
-                                 as *const u8 as *const c_char,
+                             
+                             b"\x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00".as_ptr() as *const c_char,
                          parse_len: 34,
                          encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                          storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
                          flags: EE_PARSE_NONE,};
         init
     };
-    let mut expected: *const XML_Char = b"baz\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"baz\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -14375,8 +15024,8 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6287i32,
         );
     }
@@ -14387,7 +15036,8 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_entity_public_utf16_le\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6292,
     );
@@ -14397,15 +15047,15 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
     let mut test_data: ExtTest2 = {
         let mut init =
                 ExtTest2{parse_text:
-                             b"<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00\x00"
-                                 as *const u8 as *const c_char,
+                             
+                             b"<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00\x00".as_ptr() as *const c_char,
                          parse_len: 34,
                          encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                          storage: ::c2rust_out::stddef_h::NULL as *mut crate::chardata::CharData,
                          flags: EE_PARSE_NONE,};
         init
     };
-    let mut expected: *const XML_Char = b"baz\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"baz\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -14443,8 +15093,8 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6319i32,
         );
     }
@@ -14457,16 +15107,19 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
 unsafe extern "C" fn test_short_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_short_doctype\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6327,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"DOCTYPE without subset not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"DOCTYPE without subset not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6330,
     );
@@ -14475,16 +15128,19 @@ unsafe extern "C" fn test_short_doctype() {
 unsafe extern "C" fn test_short_doctype_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_short_doctype_2\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6334,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc PUBLIC></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc PUBLIC></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"DOCTYPE without Public ID not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"DOCTYPE without Public ID not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6337,
     );
@@ -14493,16 +15149,19 @@ unsafe extern "C" fn test_short_doctype_2() {
 unsafe extern "C" fn test_short_doctype_3() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_short_doctype_3\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6341,
     );
-    let mut text: *const c_char = b"<!DOCTYPE doc SYSTEM></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<!DOCTYPE doc SYSTEM></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"DOCTYPE without System ID not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"DOCTYPE without System ID not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6344,
     );
@@ -14511,17 +15170,21 @@ unsafe extern "C" fn test_short_doctype_3() {
 unsafe extern "C" fn test_long_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_long_doctype\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6348,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc PUBLIC \'foo\' \'bar\' \'baz\'></doc>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc PUBLIC \'foo\' \'bar\' \'baz\'></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"DOCTYPE with extra ID not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"DOCTYPE with extra ID not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6350,
     );
@@ -14530,17 +15193,21 @@ unsafe extern "C" fn test_long_doctype() {
 unsafe extern "C" fn test_bad_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 16], &[c_char; 16]>(b"test_bad_entity\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6354,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY foo PUBLIC>\n]>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY foo PUBLIC>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"ENTITY without Public ID is not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6360,
     );
@@ -14550,17 +15217,21 @@ unsafe extern "C" fn test_bad_entity() {
 unsafe extern "C" fn test_bad_entity_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bad_entity_2\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6365,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY % foo bar>\n]>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY % foo bar>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"ENTITY without Public ID is not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6371,
     );
@@ -14569,17 +15240,21 @@ unsafe extern "C" fn test_bad_entity_2() {
 unsafe extern "C" fn test_bad_entity_3() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bad_entity_3\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6375,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY % foo PUBLIC>\n]>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY % foo PUBLIC>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"Parameter ENTITY without Public ID is not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parameter ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6381,
     );
@@ -14588,17 +15263,21 @@ unsafe extern "C" fn test_bad_entity_3() {
 unsafe extern "C" fn test_bad_entity_4() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bad_entity_4\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6385,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY % foo SYSTEM>\n]>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY % foo SYSTEM>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"Parameter ENTITY without Public ID is not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Parameter ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6391,
     );
@@ -14607,17 +15286,21 @@ unsafe extern "C" fn test_bad_entity_4() {
 unsafe extern "C" fn test_bad_notation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_bad_notation\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6395,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!NOTATION n SYSTEM>\n]>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!NOTATION n SYSTEM>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"Notation without System ID is not rejected\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Notation without System ID is not rejected\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6401,
     );
@@ -14651,17 +15334,18 @@ unsafe extern "C" fn test_default_doctype_handler() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_default_doctype_handler\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6426,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc PUBLIC \'pubname\' \'test.dtd\' [\n  <!ENTITY foo \'bar\'>\n]>\n<doc>&foo;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc PUBLIC \'pubname\' \'test.dtd\' [\n  <!ENTITY foo \'bar\'>\n]>\n<doc>&foo;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: [DefaultCheck; 3] = [
         {
             let mut init = default_check {
-                expected: b"\'pubname\'\x00" as *const u8 as *const c_char,
+                expected:  b"\'pubname\'\x00".as_ptr() as *const c_char,
                 expectedLen: 9,
                 seen: XML_FALSE,
             };
@@ -14669,7 +15353,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
         },
         {
             let mut init = default_check {
-                expected: b"\'test.dtd\'\x00" as *const u8 as *const c_char,
+                expected:  b"\'test.dtd\'\x00".as_ptr() as *const c_char,
                 expectedLen: 10,
                 seen: XML_FALSE,
             };
@@ -14718,8 +15402,8 @@ unsafe extern "C" fn test_default_doctype_handler() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6441i32,
         );
     }
@@ -14728,10 +15412,11 @@ unsafe extern "C" fn test_default_doctype_handler() {
         if test_data[i as usize].seen == 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 6444i32,
-                b"Default handler not run for public !DOCTYPE\x00" as *const u8 as *const c_char,
+                
+                b"Default handler not run for public !DOCTYPE\x00".as_ptr() as *const c_char,
             );
         }
         i += 1
@@ -14742,11 +15427,12 @@ unsafe extern "C" fn test_empty_element_abort() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_empty_element_abort\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6448,
     );
-    let mut text: *const c_char = b"<abort/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<abort/>\x00".as_ptr() as *const c_char;
     XML_SetStartElementHandler(
         g_parser,
         Some(
@@ -14763,10 +15449,11 @@ unsafe extern "C" fn test_empty_element_abort() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6454i32,
-            b"Expected to error on abort\x00" as *const u8 as *const c_char,
+            
+            b"Expected to error on abort\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -14782,10 +15469,11 @@ unsafe extern "C" fn namespace_setup() {
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6466i32,
-            b"Parser not created.\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created.\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -14813,13 +15501,14 @@ unsafe extern "C" fn triplet_start_checker(
     if strcmp(*elemstr.offset(0), name) != 0 {
         sprintf(
             buffer.as_mut_ptr(),
-            b"unexpected start string: \'%s\'\x00" as *const u8 as *const c_char,
+            
+            b"unexpected start string: \'%s\'\x00".as_ptr() as *const c_char,
             name,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6489i32,
             buffer.as_mut_ptr(),
         );
@@ -14827,13 +15516,14 @@ unsafe extern "C" fn triplet_start_checker(
     if strcmp(*elemstr.offset(1), *atts.offset(0)) != 0 {
         sprintf(
             buffer.as_mut_ptr(),
-            b"unexpected attribute string: \'%s\'\x00" as *const u8 as *const c_char,
+            
+            b"unexpected attribute string: \'%s\'\x00".as_ptr() as *const c_char,
             *atts.offset(0isize),
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6493i32,
             buffer.as_mut_ptr(),
         );
@@ -14851,13 +15541,14 @@ unsafe extern "C" fn triplet_end_checker(mut userData: *mut c_void, mut name: *c
         let mut buffer: [c_char; 1024] = [0; 1024];
         sprintf(
             buffer.as_mut_ptr(),
-            b"unexpected end string: \'%s\'\x00" as *const u8 as *const c_char,
+            
+            b"unexpected end string: \'%s\'\x00".as_ptr() as *const c_char,
             name,
         );
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6508i32,
             buffer.as_mut_ptr(),
         );
@@ -14869,17 +15560,20 @@ unsafe extern "C" fn test_return_ns_triplet() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_return_ns_triplet\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6513,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'>\x00"
-            as *const u8 as *const c_char;
-    let mut epilog: *const c_char = b"</foo:e>\x00" as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'>\x00".as_ptr() as *const c_char;
+    let mut epilog: *const c_char =  b"</foo:e>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
-        b"http://example.org/ e foo\x00" as *const u8 as *const c_char,
-        b"http://example.org/ a bar\x00" as *const u8 as *const c_char,
+        
+        b"http://example.org/ e foo\x00".as_ptr() as *const c_char,
+        
+        b"http://example.org/ a bar\x00".as_ptr() as *const c_char,
     ];
     XML_SetReturnNSTriplet(g_parser, XML_TRUE);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
@@ -14918,18 +15612,19 @@ unsafe extern "C" fn test_return_ns_triplet() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6529i32,
         );
     }
     if triplet_start_flag == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6531i32,
-            b"triplet_start_checker not invoked\x00" as *const u8 as *const c_char,
+            
+            b"triplet_start_checker not invoked\x00".as_ptr() as *const c_char,
         );
     }
     /* Check that unsetting "return triplets" fails while still parsing */
@@ -14939,27 +15634,29 @@ unsafe extern "C" fn test_return_ns_triplet() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6536i32,
         );
     }
     if triplet_end_flag == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6538i32,
-            b"triplet_end_checker not invoked\x00" as *const u8 as *const c_char,
+            
+            b"triplet_end_checker not invoked\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_START_NS_DECL_HANDLER_FLAG | DUMMY_END_NS_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6541i32,
-            b"Namespace handlers not called\x00" as *const u8 as *const c_char,
+            
+            b"Namespace handlers not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -14972,27 +15669,29 @@ unsafe extern "C" fn overwrite_start_checker(
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
     crate::chardata::CharData_AppendXMLChars(
         storage,
-        b"start \x00" as *const u8 as *const c_char,
+        
+        b"start \x00".as_ptr() as *const c_char,
         6,
     );
     crate::chardata::CharData_AppendXMLChars(storage, name, -(1));
     while !(*atts).is_null() {
         crate::chardata::CharData_AppendXMLChars(
             storage,
-            b"\nattribute \x00" as *const u8 as *const c_char,
+            
+            b"\nattribute \x00".as_ptr() as *const c_char,
             11,
         );
         crate::chardata::CharData_AppendXMLChars(storage, *atts, -(1));
         atts = atts.offset(2)
     }
-    crate::chardata::CharData_AppendXMLChars(storage, b"\n\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"\n\x00".as_ptr() as *const c_char, 1);
 }
 
 unsafe extern "C" fn overwrite_end_checker(mut userData: *mut c_void, mut name: *const XML_Char) {
     let mut storage: *mut crate::chardata::CharData = userData as *mut crate::chardata::CharData;
-    crate::chardata::CharData_AppendXMLChars(storage, b"end \x00" as *const u8 as *const c_char, 4);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"end \x00".as_ptr() as *const c_char, 4);
     crate::chardata::CharData_AppendXMLChars(storage, name, -(1));
-    crate::chardata::CharData_AppendXMLChars(storage, b"\n\x00" as *const u8 as *const c_char, 1);
+    crate::chardata::CharData_AppendXMLChars(storage,  b"\n\x00".as_ptr() as *const c_char, 1);
 }
 
 unsafe extern "C" fn run_ns_tagname_overwrite_test(
@@ -15027,8 +15726,8 @@ unsafe extern "C" fn run_ns_tagname_overwrite_test(
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6576i32,
         );
     }
@@ -15040,16 +15739,17 @@ unsafe extern "C" fn test_ns_tagname_overwrite() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_ns_tagname_overwrite\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6581,
     );
     let mut text: *const c_char =
-        b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00".as_ptr() as *const c_char;
     let mut result: *const XML_Char =
-        b"start http://example.org/ e\nstart http://example.org/ f\nattribute http://example.org/ attr\nend http://example.org/ f\nstart http://example.org/ g\nattribute http://example.org/ attr2\nend http://example.org/ g\nend http://example.org/ e\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"start http://example.org/ e\nstart http://example.org/ f\nattribute http://example.org/ attr\nend http://example.org/ f\nstart http://example.org/ g\nattribute http://example.org/ attr2\nend http://example.org/ g\nend http://example.org/ e\n\x00".as_ptr() as *const c_char;
     run_ns_tagname_overwrite_test(text, result);
 }
 /* Regression test for SF bug #566334. */
@@ -15060,16 +15760,17 @@ unsafe extern "C" fn test_ns_tagname_overwrite_triplet() {
             b"test_ns_tagname_overwrite_triplet\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6599,
     );
     let mut text: *const c_char =
-        b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00".as_ptr() as *const c_char;
     let mut result: *const XML_Char =
-        b"start http://example.org/ e n\nstart http://example.org/ f n\nattribute http://example.org/ attr n\nend http://example.org/ f n\nstart http://example.org/ g n\nattribute http://example.org/ attr2 n\nend http://example.org/ g n\nend http://example.org/ e n\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"start http://example.org/ e n\nstart http://example.org/ f n\nattribute http://example.org/ attr n\nend http://example.org/ f n\nstart http://example.org/ g n\nattribute http://example.org/ attr2 n\nend http://example.org/ g n\nend http://example.org/ e n\n\x00".as_ptr() as *const c_char;
     XML_SetReturnNSTriplet(g_parser, XML_TRUE);
     run_ns_tagname_overwrite_test(text, result);
 }
@@ -15083,10 +15784,12 @@ unsafe extern "C" fn start_element_fail(
     /* We should never get here. */
     crate::minicheck::_fail_unless(
         0,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6626,
-        b"should never reach start_element_fail()\x00" as *const u8 as *const c_char,
+        
+        b"should never reach start_element_fail()\x00".as_ptr() as *const c_char,
     );
 }
 
@@ -15109,7 +15812,8 @@ unsafe extern "C" fn test_start_ns_clears_start_element() {
             b"test_start_ns_clears_start_element\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6637,
     );
@@ -15118,7 +15822,8 @@ unsafe extern "C" fn test_start_ns_clears_start_element() {
        taken.
     */
     let mut text: *const c_char =
-        b"<e xmlns=\'http://example.org/\'></e>\x00" as *const u8 as *const c_char;
+        
+        b"<e xmlns=\'http://example.org/\'></e>\x00".as_ptr() as *const c_char;
     XML_SetStartElementHandler(
         g_parser,
         Some(
@@ -15154,8 +15859,8 @@ unsafe extern "C" fn test_start_ns_clears_start_element() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6650i32,
         );
     };
@@ -15173,11 +15878,11 @@ unsafe extern "C" fn external_entity_handler(
     let mut text: *const c_char = 0 as *const c_char;
     let mut p2: XML_Parser = 0 as *mut XML_ParserStruct;
     if callno == 1 {
-        text = b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00"
-            as *const u8 as *const c_char
+        text =  b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00".as_ptr() as *const c_char
     } else {
         text =
-            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00" as *const u8 as *const c_char
+            
+            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char
     }
     XML_SetUserData(parser, callno as *mut c_void);
     p2 = XML_ExternalEntityParserCreate(
@@ -15190,8 +15895,8 @@ unsafe extern "C" fn external_entity_handler(
     {
         _xml_failure(
             p2,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6678,
         );
         return XML_STATUS_ERROR_0;
@@ -15206,13 +15911,14 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
             b"test_default_ns_from_ext_subset_and_ext_ge\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6685,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -15245,8 +15951,8 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6701i32,
         );
     };
@@ -15259,19 +15965,22 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_1() {
             b"test_ns_prefix_with_empty_uri_1\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6706,
     );
     let mut text: *const c_char =
-        b"<doc xmlns:prefix=\'http://example.org/\'>\n  <e xmlns:prefix=\'\'/>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc xmlns:prefix=\'http://example.org/\'>\n  <e xmlns:prefix=\'\'/>\n</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNDECLARING_PREFIX,
-        b"Did not report re-setting namespace URI with prefix to \'\'.\x00" as *const u8
+        
+        b"Did not report re-setting namespace URI with prefix to \'\'.\x00".as_ptr()
             as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6713,
     );
@@ -15284,18 +15993,22 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_2() {
             b"test_ns_prefix_with_empty_uri_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6718,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<docelem xmlns:pre=\'\'/>\x00" as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<docelem xmlns:pre=\'\'/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNDECLARING_PREFIX,
-        b"Did not report setting namespace URI with prefix to \'\'.\x00" as *const u8
+        
+        b"Did not report setting namespace URI with prefix to \'\'.\x00".as_ptr()
             as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6723,
     );
@@ -15308,19 +16021,22 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_3() {
             b"test_ns_prefix_with_empty_uri_3\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6728,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ELEMENT doc EMPTY>\n  <!ATTLIST doc\n    xmlns:prefix CDATA \'\'>\n]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ELEMENT doc EMPTY>\n  <!ATTLIST doc\n    xmlns:prefix CDATA \'\'>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNDECLARING_PREFIX,
-        b"Didn\'t report attr default setting NS w/ prefix to \'\'.\x00" as *const u8
+        
+        b"Didn\'t report attr default setting NS w/ prefix to \'\'.\x00".as_ptr()
             as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6737,
     );
@@ -15333,18 +16049,19 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_4() {
             b"test_ns_prefix_with_empty_uri_4\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6742,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    xmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    xmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00".as_ptr() as *const c_char;
     /* Packaged info expected by the end element handler;
     the weird structuring lets us re-use the triplet_end_checker()
     function also used for another test. */
     let mut elemstr: [*const XML_Char; 1] =
-        [b"http://example.org/ doc prefix\x00" as *const u8 as *const c_char];
+        [b"http://example.org/ doc prefix\x00".as_ptr() as *const c_char];
     XML_SetReturnNSTriplet(g_parser, XML_TRUE);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
     XML_SetEndElementHandler(
@@ -15356,8 +16073,8 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_4() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6758i32,
         );
     };
@@ -15368,29 +16085,31 @@ unsafe extern "C" fn test_ns_unbound_prefix() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_ns_unbound_prefix\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6763,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    notxmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    notxmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         != XML_STATUS_ERROR_0 as c_uint
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6773i32,
-            b"Unbound prefix incorrectly passed\x00" as *const u8 as *const c_char,
+            
+            b"Unbound prefix incorrectly passed\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_UNBOUND_PREFIX {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6775i32,
         );
     };
@@ -15400,12 +16119,14 @@ unsafe extern "C" fn test_ns_default_with_empty_uri() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_ns_default_with_empty_uri\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6779,
     );
     let mut text: *const c_char =
-        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\'/>\n</doc>\x00" as *const u8
+        
+        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\'/>\n</doc>\x00".as_ptr()
             as *const c_char;
     /* Add some handlers to exercise extra code paths */
     XML_SetStartNamespaceDeclHandler(
@@ -15431,8 +16152,8 @@ unsafe extern "C" fn test_ns_default_with_empty_uri() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6789i32,
         );
     };
@@ -15445,18 +16166,21 @@ unsafe extern "C" fn test_ns_duplicate_attrs_diff_prefixes() {
             b"test_ns_duplicate_attrs_diff_prefixes\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6794,
     );
     let mut text: *const c_char =
-        b"<doc xmlns:a=\'http://example.org/a\'\n     xmlns:b=\'http://example.org/a\'\n     a:a=\'v\' b:a=\'v\' />\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc xmlns:a=\'http://example.org/a\'\n     xmlns:b=\'http://example.org/a\'\n     a:a=\'v\' b:a=\'v\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_DUPLICATE_ATTRIBUTE,
-        b"did not report multiple attributes with same URI+name\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"did not report multiple attributes with same URI+name\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6799,
     );
@@ -15466,7 +16190,8 @@ unsafe extern "C" fn test_ns_duplicate_hashes() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_ns_duplicate_hashes\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6803,
     );
@@ -15487,15 +16212,16 @@ unsafe extern "C" fn test_ns_duplicate_hashes() {
      * same modulo 8.
      */
     let mut text: *const c_char =
-        b"<doc xmlns:a=\'http://example.org/a\'\n     a:a=\'v\' a:i=\'w\' />\x00" as *const u8
+        
+        b"<doc xmlns:a=\'http://example.org/a\'\n     a:a=\'v\' a:i=\'w\' />\x00".as_ptr()
             as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6824i32,
         );
     };
@@ -15508,16 +16234,19 @@ unsafe extern "C" fn test_ns_unbound_prefix_on_attribute() {
             b"test_ns_unbound_prefix_on_attribute\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6829,
     );
-    let mut text: *const c_char = b"<doc a:attr=\'\'/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc a:attr=\'\'/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNBOUND_PREFIX,
-        b"did not report unbound prefix on attribute\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"did not report unbound prefix on attribute\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6832,
     );
@@ -15530,16 +16259,19 @@ unsafe extern "C" fn test_ns_unbound_prefix_on_element() {
             b"test_ns_unbound_prefix_on_element\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6837,
     );
-    let mut text: *const c_char = b"<a:doc/>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<a:doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_UNBOUND_PREFIX,
-        b"did not report unbound prefix on element\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"did not report unbound prefix on element\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6840,
     );
@@ -15552,7 +16284,8 @@ unsafe extern "C" fn test_ns_unbound_prefix_on_element() {
 unsafe extern "C" fn test_ns_parser_reset() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_ns_parser_reset\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6848,
     );
@@ -15564,10 +16297,11 @@ unsafe extern "C" fn test_ns_parser_reset() {
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6853i32,
-            b"parsing status doesn\'t start INITIALIZED\x00" as *const u8 as *const c_char,
+            
+            b"parsing status doesn\'t start INITIALIZED\x00".as_ptr() as *const c_char,
         );
     }
     test_return_ns_triplet();
@@ -15575,10 +16309,11 @@ unsafe extern "C" fn test_ns_parser_reset() {
     if status.parsing != XML_FINISHED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6857i32,
-            b"parsing status doesn\'t end FINISHED\x00" as *const u8 as *const c_char,
+            
+            b"parsing status doesn\'t end FINISHED\x00".as_ptr() as *const c_char,
         );
     }
     XML_ParserReset(g_parser, ::c2rust_out::stddef_h::NULL as *const XML_Char);
@@ -15586,10 +16321,11 @@ unsafe extern "C" fn test_ns_parser_reset() {
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6861i32,
-            b"parsing status doesn\'t reset to INITIALIZED\x00" as *const u8 as *const c_char,
+            
+            b"parsing status doesn\'t reset to INITIALIZED\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -15598,17 +16334,19 @@ unsafe extern "C" fn test_ns_parser_reset() {
 unsafe extern "C" fn test_ns_long_element() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_ns_long_element\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6866,
     );
     let mut text: *const c_char =
-        b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
-        b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00"
-            as *const u8 as *const c_char,
-        b"http://example.org/ a bar\x00" as *const u8 as *const c_char,
+        
+        b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00".as_ptr() as *const c_char,
+        
+        b"http://example.org/ a bar\x00".as_ptr() as *const c_char,
     ];
     XML_SetReturnNSTriplet(g_parser, XML_TRUE);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
@@ -15629,8 +16367,8 @@ unsafe extern "C" fn test_ns_long_element() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6882i32,
         );
     };
@@ -15641,20 +16379,22 @@ unsafe extern "C" fn test_ns_mixed_prefix_atts() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_ns_mixed_prefix_atts\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6887,
     );
     let mut text: *const c_char =
-        b"<e a=\'12\' bar:b=\'13\'\n xmlns:bar=\'http://example.org/\'></e>\x00" as *const u8
+        
+        b"<e a=\'12\' bar:b=\'13\'\n xmlns:bar=\'http://example.org/\'></e>\x00".as_ptr()
             as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6894i32,
         );
     };
@@ -15668,20 +16408,21 @@ unsafe extern "C" fn test_ns_extend_uri_buffer() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_ns_extend_uri_buffer\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6902,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\'> <foo:thisisalongenoughnametotriggerallocationaction   foo:a=\'12\' /></foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\'> <foo:thisisalongenoughnametotriggerallocationaction   foo:a=\'12\' /></foo:e>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6909i32,
         );
     };
@@ -15694,21 +16435,26 @@ unsafe extern "C" fn test_ns_reserved_attributes() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_ns_reserved_attributes\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6916,
     );
     let mut text1: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' xmlns:xmlns=\'12\' />\x00" as *const u8
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' xmlns:xmlns=\'12\' />\x00".as_ptr()
             as *const c_char;
     let mut text2: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' foo:xmlns=\'12\' />\x00" as *const u8
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' foo:xmlns=\'12\' />\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text1,
         XML_ERROR_RESERVED_PREFIX_XMLNS,
-        b"xmlns not rejected as an attribute\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"xmlns not rejected as an attribute\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6922,
     );
@@ -15718,8 +16464,8 @@ unsafe extern "C" fn test_ns_reserved_attributes() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             6926i32,
         );
     };
@@ -15730,23 +16476,28 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ns_reserved_attributes_2\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6931,
     );
     let mut text1: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\'  xmlns:xml=\'http://example.org/\' />\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\'  xmlns:xml=\'http://example.org/\' />\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b"<foo:e xmlns:foo=\'http://www.w3.org/XML/1998/namespace\' />\x00" as *const u8
+        
+        b"<foo:e xmlns:foo=\'http://www.w3.org/XML/1998/namespace\' />\x00".as_ptr()
             as *const c_char;
     let mut text3: *const c_char =
-        b"<foo:e xmlns:foo=\'http://www.w3.org/2000/xmlns/\' />\x00" as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://www.w3.org/2000/xmlns/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text1,
         XML_ERROR_RESERVED_PREFIX_XML,
-        b"xml not rejected as an attribute\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"xml not rejected as an attribute\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6939,
     );
@@ -15754,8 +16505,10 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
     _expect_failure(
         text2,
         XML_ERROR_RESERVED_NAMESPACE_URI,
-        b"Use of w3.org URL not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Use of w3.org URL not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6942,
     );
@@ -15763,8 +16516,10 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
     _expect_failure(
         text3,
         XML_ERROR_RESERVED_NAMESPACE_URI,
-        b"Use of w3.org xmlns URL not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Use of w3.org xmlns URL not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6945,
     );
@@ -15776,7 +16531,8 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_ns_extremely_long_prefix\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         6951,
     );
@@ -15785,18 +16541,18 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
      * for all compilers.
      */
     let mut text1: *const c_char =
-        b"<doc ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:a=\'12\'\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:a=\'12\'\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b" xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo\'\n></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b" xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo\'\n></doc>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7032i32,
         );
     }
@@ -15805,8 +16561,8 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7035i32,
         );
     };
@@ -15819,13 +16575,14 @@ unsafe extern "C" fn test_ns_unknown_encoding_success() {
             b"test_ns_unknown_encoding_success\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7040,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<foo:e xmlns:foo=\'http://example.org/\'>Hi</foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<foo:e xmlns:foo=\'http://example.org/\'>Hi</foo:e>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
         transmute(Some(
@@ -15840,8 +16597,10 @@ unsafe extern "C" fn test_ns_unknown_encoding_success() {
     );
     _run_character_check(
         text,
-        b"Hi\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Hi\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7045,
     );
@@ -15851,17 +16610,19 @@ unsafe extern "C" fn test_ns_unknown_encoding_success() {
 unsafe extern "C" fn test_ns_double_colon() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_ns_double_colon\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7050,
     );
-    let mut text: *const c_char = b"<foo:e xmlns:foo=\'http://example.org/\' foo:a:b=\'bar\' />\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<foo:e xmlns:foo=\'http://example.org/\' foo:a:b=\'bar\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Double colon in attribute name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Double colon in attribute name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7054,
     );
@@ -15871,17 +16632,21 @@ unsafe extern "C" fn test_ns_double_colon_element() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ns_double_colon_element\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7058,
     );
     let mut text: *const c_char =
-        b"<foo:bar:e xmlns:foo=\'http://example.org/\' />\x00" as *const u8 as *const c_char;
+        
+        b"<foo:bar:e xmlns:foo=\'http://example.org/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Double colon in element name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Double colon in element name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7062,
     );
@@ -15892,17 +16657,19 @@ unsafe extern "C" fn test_ns_bad_attr_leafname() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_ns_bad_attr_leafname\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7067,
     );
-    let mut text: *const c_char = b"<foo:e xmlns:foo=\'http://example.org/\' foo:?ar=\'baz\' />\x00"
-        as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<foo:e xmlns:foo=\'http://example.org/\' foo:?ar=\'baz\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid character in leafname not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid character in leafname not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7071,
     );
@@ -15912,17 +16679,21 @@ unsafe extern "C" fn test_ns_bad_element_leafname() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ns_bad_element_leafname\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7075,
     );
     let mut text: *const c_char =
-        b"<foo:?oc xmlns:foo=\'http://example.org/\' />\x00" as *const u8 as *const c_char;
+        
+        b"<foo:?oc xmlns:foo=\'http://example.org/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid character in element leafname not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid character in element leafname not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7079,
     );
@@ -15933,14 +16704,15 @@ unsafe extern "C" fn test_ns_utf16_leafname() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_ns_utf16_leafname\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7084,
     );
     let text: [c_char; 59] =
         *::std::mem::transmute::<&[u8; 59],
                                  &[c_char; 59]>(b"<\x00n\x00:\x00e\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00n\x00=\x00\'\x00U\x00R\x00I\x00\'\x00 \x00n\x00:\x00\x04\x0e=\x00\'\x00a\x00\'\x00 \x00/\x00>\x00\x00");
-    let mut expected: *const XML_Char = b"a\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"a\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -15970,8 +16742,8 @@ unsafe extern "C" fn test_ns_utf16_leafname() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7099i32,
         );
     }
@@ -15982,14 +16754,15 @@ unsafe extern "C" fn test_ns_utf16_element_leafname() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_ns_utf16_element_leafname\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7104,
     );
     let text: [c_char; 41] =
         *::std::mem::transmute::<&[u8; 41],
                                  &[c_char; 41]>(b"\x00<\x00n\x00:\x0e\x04\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00n\x00=\x00\'\x00U\x00R\x00I\x00\'\x00/\x00>\x00");
-    let mut expected: *const XML_Char = b"URI \xe0\xb8\x84\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"URI \xe0\xb8\x84\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -16019,8 +16792,8 @@ unsafe extern "C" fn test_ns_utf16_element_leafname() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7122i32,
         );
     }
@@ -16030,14 +16803,15 @@ unsafe extern "C" fn test_ns_utf16_element_leafname() {
 unsafe extern "C" fn test_ns_utf16_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_ns_utf16_doctype\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7127,
     );
     let text: [c_char; 155] =
         *::std::mem::transmute::<&[u8; 155],
                                  &[c_char; 155]>(b"\x00<\x00!\x00D\x00O\x00C\x00T\x00Y\x00P\x00E\x00 \x00f\x00o\x00o\x00:\x0e\x04\x00 \x00[\x00 \x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00b\x00a\x00r\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00 \x00]\x00>\x00\n\x00<\x00f\x00o\x00o\x00:\x0e\x04\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00f\x00o\x00o\x00=\x00\'\x00U\x00R\x00I\x00\'\x00>\x00&\x00b\x00a\x00r\x00;\x00<\x00/\x00f\x00o\x00o\x00:\x0e\x04\x00>\x00");
-    let mut expected: *const XML_Char = b"URI \xe0\xb8\x84\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"URI \xe0\xb8\x84\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -16079,8 +16853,8 @@ unsafe extern "C" fn test_ns_utf16_doctype() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7153i32,
         );
     }
@@ -16091,18 +16865,22 @@ unsafe extern "C" fn test_ns_invalid_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_ns_invalid_doctype\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7158,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE foo:!bad [ <!ENTITY bar \'baz\' ]>\n<foo:!bad>&bar;</foo:!bad>\x00" as *const u8
+        
+        b"<!DOCTYPE foo:!bad [ <!ENTITY bar \'baz\' ]>\n<foo:!bad>&bar;</foo:!bad>\x00".as_ptr()
             as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_INVALID_TOKEN,
-        b"Invalid character in document local name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Invalid character in document local name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7163,
     );
@@ -16112,18 +16890,21 @@ unsafe extern "C" fn test_ns_double_colon_doctype() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_ns_double_colon_doctype\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7167,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE foo:a:doc [ <!ENTITY bar \'baz\' ]>\n<foo:a:doc>&bar;</foo:a:doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE foo:a:doc [ <!ENTITY bar \'baz\' ]>\n<foo:a:doc>&bar;</foo:a:doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
         XML_ERROR_SYNTAX,
-        b"Double colon in document name not faulted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Double colon in document name not faulted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7172,
     );
@@ -16166,7 +16947,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_misc_alloc_create_parser\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7205,
     );
@@ -16199,18 +16981,20 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7218i32,
-            b"Parser unexpectedly ignored failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parser unexpectedly ignored failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7220i32,
-            b"Parser not created with max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created with max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16222,7 +17006,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
             b"test_misc_alloc_create_parser_with_encoding\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7225,
     );
@@ -16243,7 +17028,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
-            b"us-ascii\x00" as *const u8 as *const c_char,
+            
+            b"us-ascii\x00".as_ptr() as *const c_char,
             &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
             ::c2rust_out::stddef_h::NULL as *const XML_Char,
         );
@@ -16255,18 +17041,20 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7238i32,
-            b"Parser ignored failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parser ignored failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7240i32,
-            b"Parser not created with max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created with max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16277,7 +17065,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
 unsafe extern "C" fn test_misc_null_parser() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_misc_null_parser\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7247,
     );
@@ -16289,26 +17078,29 @@ unsafe extern "C" fn test_misc_error_string() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_misc_error_string\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7253,
     );
     if !XML_ErrorString(4294967295).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7255i32,
-            b"Negative error code not rejected\x00" as *const u8 as *const c_char,
+            
+            b"Negative error code not rejected\x00".as_ptr() as *const c_char,
         );
     }
     if !XML_ErrorString(100).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7257i32,
-            b"Large error code not rejected\x00" as *const u8 as *const c_char,
+            
+            b"Large error code not rejected\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16386,7 +17178,8 @@ unsafe extern "C" fn versions_equal(
 unsafe extern "C" fn test_misc_version() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_misc_version\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7317,
     );
@@ -16404,18 +17197,20 @@ unsafe extern "C" fn test_misc_version() {
     if version_text.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7324i32,
-            b"Could not obtain version text\x00" as *const u8 as *const c_char,
+            
+            b"Could not obtain version text\x00".as_ptr() as *const c_char,
         );
     }
     if !version_text.is_null() {
     } else {
         __assert_fail(
-            b"version_text != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"version_text != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7325u32,
             (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
                 b"void test_misc_version(void)\x00",
@@ -16426,34 +17221,38 @@ unsafe extern "C" fn test_misc_version() {
     if parse_version(version_text, &mut parsed_version) == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7327i32,
-            b"Unable to parse version text\x00" as *const u8 as *const c_char,
+            
+            b"Unable to parse version text\x00".as_ptr() as *const c_char,
         );
     }
     if versions_equal(&mut read_version, &mut parsed_version) == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7329i32,
-            b"Version mismatch\x00" as *const u8 as *const c_char,
+            
+            b"Version mismatch\x00".as_ptr() as *const c_char,
         );
     }
     if strcmp(
         version_text,
-        b"expat_2.2.9\x00" as *const u8 as *const c_char,
+        
+        b"expat_2.2.9\x00".as_ptr() as *const c_char,
     ) != 0
     {
         /* Silence compiler warning with the following assignment */
         /* needs bump on releases */
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7333i32,
-            b"XML_*_VERSION in expat.h out of sync?\n\x00" as *const u8 as *const c_char,
+            
+            b"XML_*_VERSION in expat.h out of sync?\n\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16462,7 +17261,8 @@ unsafe extern "C" fn test_misc_version() {
 unsafe extern "C" fn test_misc_features() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_misc_features\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7345,
     );
@@ -16472,10 +17272,11 @@ unsafe extern "C" fn test_misc_features() {
     if features.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7351i32,
-            b"Failed to get feature information\x00" as *const u8 as *const c_char,
+            
+            b"Failed to get feature information\x00".as_ptr() as *const c_char,
         );
     } else {
         /* Loop through the features checking what we can */
@@ -16485,22 +17286,22 @@ unsafe extern "C" fn test_misc_features() {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_Char>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
-                                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                                         as *const u8 as *const c_char,
+                                     
+                                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                      7358i32,
-                                     b"Incorrect size of XML_Char\x00" as
-                                         *const u8 as *const c_char);
+                                     
+                                     b"Incorrect size of XML_Char\x00".as_ptr() as *const c_char);
                     }
                 }
                 7 => {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_LChar>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
-                                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                                         as *const u8 as *const c_char,
+                                     
+                                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                      7362i32,
-                                     b"Incorrect size of XML_LChar\x00" as
-                                         *const u8 as *const c_char);
+                                     
+                                     b"Incorrect size of XML_LChar\x00".as_ptr() as *const c_char);
                     }
                 }
                 _ => {}
@@ -16517,12 +17318,14 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_misc_attribute_leak\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7376,
     );
     let mut text: *const c_char =
-        b"<D xmlns:L=\"D\" l:a=\'\' L:a=\'\'/>\x00" as *const u8 as *const c_char;
+        
+        b"<D xmlns:L=\"D\" l:a=\'\' L:a=\'\'/>\x00".as_ptr() as *const c_char;
     let mut memsuite: XML_Memory_Handling_Suite = {
         let mut init = XML_Memory_Handling_Suite {
             malloc_fcn: Some(
@@ -16539,15 +17342,19 @@ unsafe extern "C" fn test_misc_attribute_leak() {
         init
     };
     g_parser = XML_ParserCreate_MM(
-        b"UTF-8\x00" as *const u8 as *const c_char,
+        
+        b"UTF-8\x00".as_ptr() as *const c_char,
         &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
-        b"\n\x00" as *const u8 as *const c_char,
+        
+        b"\n\x00".as_ptr() as *const c_char,
     );
     _expect_failure(
         text,
         XML_ERROR_UNBOUND_PREFIX,
-        b"Unbound prefixes not found\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Unbound prefixes not found\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7382,
     );
@@ -16557,10 +17364,11 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     if crate::memcheck::tracking_report() == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7388i32,
-            b"Memory leak found\x00" as *const u8 as *const c_char,
+            
+            b"Memory leak found\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16569,26 +17377,28 @@ unsafe extern "C" fn test_misc_attribute_leak() {
 unsafe extern "C" fn test_misc_utf16le() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_misc_utf16le\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7393,
     );
     let text: [c_char; 61] =
         *::std::mem::transmute::<&[u8; 61],
                                  &[c_char; 61]>(b"<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00?\x00>\x00<\x00q\x00>\x00H\x00i\x00<\x00/\x00q\x00>\x00\x00");
-    let mut expected: *const XML_Char = b"Hi\x00" as *const u8 as *const c_char;
+    let mut expected: *const XML_Char =  b"Hi\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
     };
-    g_parser = XML_ParserCreate(b"UTF-16LE\x00" as *const u8 as *const c_char);
+    g_parser = XML_ParserCreate(b"UTF-16LE\x00".as_ptr() as *const c_char);
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7404i32,
-            b"Parser not created\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created\x00".as_ptr() as *const c_char,
         );
     }
     crate::chardata::CharData_Init(&mut storage as *mut _);
@@ -16612,8 +17422,8 @@ unsafe extern "C" fn test_misc_utf16le() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7411i32,
         );
     }
@@ -16643,14 +17453,15 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_1() {
             b"test_misc_stop_during_end_handler_issue_240_1\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7441,
     );
     let mut parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut mydata: *mut DataIssue240 = 0 as *mut DataIssue240;
     let mut result: XML_Status = XML_STATUS_ERROR;
-    let doc1: *const c_char = b"<doc><e1/><e><foo/></e></doc>\x00" as *const u8 as *const c_char;
+    let doc1: *const c_char =  b"<doc><e1/><e><foo/></e></doc>\x00".as_ptr() as *const c_char;
     parser = XML_ParserCreate(::c2rust_out::stddef_h::NULL as *const XML_Char);
     XML_SetElementHandler(
         parser,
@@ -16676,10 +17487,11 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_1() {
     if result != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7458i32,
-            b"Stopping the parser did not work as expected\x00" as *const u8 as *const c_char,
+            
+            b"Stopping the parser did not work as expected\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16690,14 +17502,15 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_2() {
             b"test_misc_stop_during_end_handler_issue_240_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7462,
     );
     let mut parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut mydata: *mut DataIssue240 = 0 as *mut DataIssue240;
     let mut result: XML_Status = XML_STATUS_ERROR;
-    let doc2: *const c_char = b"<doc><elem/></doc>\x00" as *const u8 as *const c_char;
+    let doc2: *const c_char =  b"<doc><elem/></doc>\x00".as_ptr() as *const c_char;
     parser = XML_ParserCreate(::c2rust_out::stddef_h::NULL as *const XML_Char);
     XML_SetElementHandler(
         parser,
@@ -16723,10 +17536,11 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_2() {
     if result != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7479i32,
-            b"Stopping the parser did not work as expected\x00" as *const u8 as *const c_char,
+            
+            b"Stopping the parser did not work as expected\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16737,20 +17551,24 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
             b"test_misc_deny_internal_entity_closing_doctype_issue_317\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7484,
     );
     let inputOne: *const c_char =
-        b"<!DOCTYPE d [\n<!ENTITY % e \']><d/>\'>\n\n%e;\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE d [\n<!ENTITY % e \']><d/>\'>\n\n%e;\x00".as_ptr() as *const c_char;
     let inputTwo: *const c_char =
-        b"<!DOCTYPE d [\n<!ENTITY % e1 \']><d/>\'><!ENTITY % e2 \'&e1;\'>\n\n%e2;\x00" as *const u8
+        
+        b"<!DOCTYPE d [\n<!ENTITY % e1 \']><d/>\'><!ENTITY % e2 \'&e1;\'>\n\n%e2;\x00".as_ptr()
             as *const c_char;
     let inputThree: *const c_char =
-        b"<!DOCTYPE d [\n<!ENTITY % e \']><d\'>\n\n%e;\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE d [\n<!ENTITY % e \']><d\'>\n\n%e;\x00".as_ptr() as *const c_char;
     let inputIssue317: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY % foo \']>\n<doc>Hell<oc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</dVc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY % foo \']>\n<doc>Hell<oc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</dVc>\x00".as_ptr() as *const c_char;
     let inputs: [*const c_char; 4] = [inputOne, inputTwo, inputThree, inputIssue317];
     let mut inputIndex: size_t = 0;
     while inputIndex
@@ -16768,22 +17586,24 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         if setParamEntityResult != 1 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7519i32,
-                b"Failed to set XML_PARAM_ENTITY_PARSING_ALWAYS.\x00" as *const u8 as *const c_char,
+                
+                b"Failed to set XML_PARAM_ENTITY_PARSING_ALWAYS.\x00".as_ptr() as *const c_char,
             );
         }
         parseResult = XML_Parse(parser, input, strlen(input) as c_int, 0);
         if parseResult != XML_STATUS_ERROR_0 as c_uint {
-            parseResult = XML_Parse(parser, b"\x00" as *const u8 as *const c_char, 0, 1);
+            parseResult = XML_Parse(parser,  b"\x00".as_ptr() as *const c_char, 0, 1);
             if parseResult != XML_STATUS_ERROR_0 as c_uint {
                 crate::minicheck::_fail_unless(
                     0i32,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     7525i32,
-                    b"Parsing was expected to fail but succeeded.\x00" as *const u8
+                    
+                    b"Parsing was expected to fail but succeeded.\x00".as_ptr()
                         as *const c_char,
                 );
             }
@@ -16791,10 +17611,11 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         if XML_GetErrorCode(parser) != XML_ERROR_INVALID_TOKEN {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7530i32,
-                b"Error code does not match XML_ERROR_INVALID_TOKEN\x00" as *const u8
+                
+                b"Error code does not match XML_ERROR_INVALID_TOKEN\x00".as_ptr()
                     as *const c_char,
             );
         }
@@ -16802,10 +17623,11 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         if lineNumber != 4 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7534i32,
-                b"XML_GetCurrentLineNumber does not work as expected.\x00" as *const u8
+                
+                b"XML_GetCurrentLineNumber does not work as expected.\x00".as_ptr()
                     as *const c_char,
             );
         }
@@ -16813,10 +17635,11 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         if columnNumber != 0 {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7538i32,
-                b"XML_GetCurrentColumnNumber does not work as expected.\x00" as *const u8
+                
+                b"XML_GetCurrentColumnNumber does not work as expected.\x00".as_ptr()
                     as *const c_char,
             );
         }
@@ -16847,10 +17670,11 @@ unsafe extern "C" fn alloc_setup() {
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7555i32,
-            b"Parser not created\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16864,12 +17688,14 @@ unsafe extern "C" fn test_alloc_parse_xdecl() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_alloc_parse_xdecl\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7564,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world</doc>\x00".as_ptr()
             as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
@@ -16905,19 +17731,21 @@ unsafe extern "C" fn test_alloc_parse_xdecl() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7585i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7587i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -16952,13 +17780,14 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_alloc_parse_xdecl_2\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7609,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'ThisIsAStupidlyLongEncodingNameIntendedToTriggerPoolGrowth123456ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN\'?><doc>Hello, world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'ThisIsAStupidlyLongEncodingNameIntendedToTriggerPoolGrowth123456ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN\'?><doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -17001,19 +17830,21 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7646i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7648i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17022,13 +17853,14 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
 unsafe extern "C" fn test_alloc_parse_pi() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_alloc_parse_pi\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7653,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<?pi unknown?>\n<doc>Hello, world</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<?pi unknown?>\n<doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -17058,19 +17890,21 @@ unsafe extern "C" fn test_alloc_parse_pi() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7673i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7675i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17078,13 +17912,14 @@ unsafe extern "C" fn test_alloc_parse_pi() {
 unsafe extern "C" fn test_alloc_parse_pi_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_alloc_parse_pi_2\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7679,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world<?pi unknown?>\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world<?pi unknown?>\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -17114,19 +17949,21 @@ unsafe extern "C" fn test_alloc_parse_pi_2() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7699i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7701i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17134,13 +17971,14 @@ unsafe extern "C" fn test_alloc_parse_pi_2() {
 unsafe extern "C" fn test_alloc_parse_pi_3() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_alloc_parse_pi_3\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7705,
     );
     let mut text: *const c_char =
-        b"<?This processing instruction should be long enough to ensure thatit triggers the growth of an internal string pool when the      allocator fails at a cruicial moment FGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPQ?><doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?This processing instruction should be long enough to ensure thatit triggers the growth of an internal string pool when the      allocator fails at a cruicial moment FGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPQ?><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -17170,19 +18008,21 @@ unsafe extern "C" fn test_alloc_parse_pi_3() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7740i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7742i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17191,13 +18031,14 @@ unsafe extern "C" fn test_alloc_parse_comment() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_alloc_parse_comment\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7746,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!-- Test parsing this comment --><doc>Hi</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!-- Test parsing this comment --><doc>Hi</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -17223,19 +18064,21 @@ unsafe extern "C" fn test_alloc_parse_comment() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7764i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7766i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17244,13 +18087,14 @@ unsafe extern "C" fn test_alloc_parse_comment_2() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_parse_comment_2\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7770,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world<!-- Parse this comment too --></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world<!-- Parse this comment too --></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -17276,19 +18120,21 @@ unsafe extern "C" fn test_alloc_parse_comment_2() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7790i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7792i32,
-            b"Parse failed with max allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max allocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17322,18 +18168,20 @@ unsafe extern "C" fn external_entity_duff_loader(
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7817i32,
-            b"External parser creation ignored failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"External parser creation ignored failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7819i32,
-            b"Extern parser not created with max allocation count\x00" as *const u8
+            
+            b"Extern parser not created with max allocation count\x00".as_ptr()
                 as *const c_char,
         );
     }
@@ -17352,13 +18200,14 @@ unsafe extern "C" fn test_alloc_create_external_parser() {
             b"test_alloc_create_external_parser\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7831,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut foo_text: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
@@ -17381,10 +18230,11 @@ unsafe extern "C" fn test_alloc_create_external_parser() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7842i32,
-            b"External parser allocator returned success incorrectly\x00" as *const u8
+            
+            b"External parser allocator returned success incorrectly\x00".as_ptr()
                 as *const c_char,
         );
     };
@@ -17395,13 +18245,14 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_alloc_run_external_parser\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7848,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut foo_text: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
     let mut i: c_uint = 0;
@@ -17437,18 +18288,20 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7869i32,
-            b"Parsing ignored failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parsing ignored failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7871i32,
-            b"Parsing failed with allocation count 10\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed with allocation count 10\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17467,8 +18320,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
     let max_alloc_count: c_int = 20;
     if callno == 0 {
         /* First time through, check how many calls to malloc occur */
-        text = b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00"
-            as *const u8 as *const c_char;
+        text =  b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00".as_ptr() as *const c_char;
         allocation_count = 10000;
         new_parser = XML_ExternalEntityParserCreate(
             parser,
@@ -17478,10 +18330,11 @@ unsafe extern "C" fn external_entity_dbl_handler(
         if new_parser.is_null() {
             crate::minicheck::_fail_unless(
                 0,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7896,
-                b"Unable to allocate first external parser\x00" as *const u8 as *const c_char,
+                
+                b"Unable to allocate first external parser\x00".as_ptr() as *const c_char,
             );
             return XML_STATUS_ERROR_0;
         }
@@ -17489,7 +18342,8 @@ unsafe extern "C" fn external_entity_dbl_handler(
         XML_SetUserData(parser, (10000i64 - allocation_count) as *mut c_void);
     } else {
         text =
-            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00" as *const u8 as *const c_char;
+            
+            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         /* Try at varying levels to exercise more code paths */
         i = 0;
         while i < max_alloc_count {
@@ -17507,10 +18361,11 @@ unsafe extern "C" fn external_entity_dbl_handler(
         if i == 0 {
             crate::minicheck::_fail_unless(
                 0,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 7912,
-                b"Second external parser unexpectedly created\x00" as *const u8 as *const c_char,
+                
+                b"Second external parser unexpectedly created\x00".as_ptr() as *const c_char,
             );
             XML_ParserFree(new_parser);
             return XML_STATUS_ERROR_0;
@@ -17518,10 +18373,11 @@ unsafe extern "C" fn external_entity_dbl_handler(
             if i == max_alloc_count {
                 crate::minicheck::_fail_unless(
                     0,
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                        as *const u8 as *const c_char,
+                    
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                     7916,
-                    b"Second external parser not created\x00" as *const u8 as *const c_char,
+                    
+                    b"Second external parser not created\x00".as_ptr() as *const c_char,
                 );
                 return XML_STATUS_ERROR_0;
             }
@@ -17533,8 +18389,8 @@ unsafe extern "C" fn external_entity_dbl_handler(
     {
         _xml_failure(
             new_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7924,
         );
         return XML_STATUS_ERROR_0;
@@ -17552,13 +18408,14 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
             b"test_alloc_dtd_copy_default_atts\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7934,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -17579,8 +18436,8 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             7948i32,
         );
     };
@@ -17599,8 +18456,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
     let mut rv: XML_Status = XML_STATUS_ERROR;
     if callno == 0 {
         /* Try different allocation levels for whole exercise */
-        text = b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00"
-            as *const u8 as *const c_char;
+        text =  b"<!ELEMENT doc (e+)>\n<!ATTLIST doc xmlns CDATA #IMPLIED>\n<!ELEMENT e EMPTY>\n\x00".as_ptr() as *const c_char;
         XML_SetUserData(parser, 1i64 as *mut c_void);
         new_parser = XML_ExternalEntityParserCreate(
             parser,
@@ -17614,7 +18470,8 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
     } else {
         /* Just run through once */
         text =
-            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00" as *const u8 as *const c_char;
+            
+            b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         new_parser = XML_ExternalEntityParserCreate(
             parser,
             context,
@@ -17637,13 +18494,14 @@ unsafe extern "C" fn test_alloc_external_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_external_entity\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         7990,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let alloc_test_max_repeats: c_int = 50;
     i = 0;
@@ -17679,19 +18537,21 @@ unsafe extern "C" fn test_alloc_external_entity() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8016i32,
-            b"External entity parsed despite duff allocator\x00" as *const u8 as *const c_char,
+            
+            b"External entity parsed despite duff allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == alloc_test_max_repeats {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8018i32,
-            b"External entity not parsed at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"External entity not parsed at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17706,7 +18566,8 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
 ) -> c_int {
     /* As for external_entity_loader() */
     let mut text: *const c_char =
-        b"<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00" as *const u8 as *const c_char;
+        
+        b"<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_Status = XML_STATUS_ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
@@ -17717,7 +18578,7 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
     if ext_parser.is_null() {
         return XML_STATUS_ERROR_0;
     }
-    if XML_SetEncoding(ext_parser, b"utf-8\x00" as *const u8 as *const c_char) as u64 == 0 {
+    if XML_SetEncoding(ext_parser,  b"utf-8\x00".as_ptr() as *const c_char) as u64 == 0 {
         XML_ParserFree(ext_parser);
         return XML_STATUS_ERROR_0;
     }
@@ -17735,13 +18596,14 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
             b"test_alloc_ext_entity_set_encoding\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8052,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_allocation_count: c_int = 30;
     i = 0;
@@ -17774,19 +18636,21 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8073i32,
-            b"Encoding check succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Encoding check succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_allocation_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8075i32,
-            b"Encoding failed at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Encoding failed at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17798,7 +18662,8 @@ unsafe extern "C" fn unknown_released_encoding_handler(
 ) -> c_int {
     if strcmp(
         encoding,
-        b"unsupported-encoding\x00" as *const u8 as *const c_char,
+        
+        b"unsupported-encoding\x00".as_ptr() as *const c_char,
     ) == 0
     {
         let mut i: c_int = 0;
@@ -17825,13 +18690,14 @@ unsafe extern "C" fn test_alloc_internal_entity() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_internal_entity\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8099,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_uint = 0;
     let max_alloc_count: c_uint = 20;
     i = 0;
@@ -17862,18 +18728,20 @@ unsafe extern "C" fn test_alloc_internal_entity() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8118i32,
-            b"Internal entity worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Internal entity worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8120i32,
-            b"Internal entity failed at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Internal entity failed at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -17887,15 +18755,17 @@ unsafe extern "C" fn test_alloc_dtd_default_handling() {
             b"test_alloc_dtd_default_handling\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8127,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ENTITY e1 SYSTEM \'http://example.org/e\' NDATA n>\n<!ELEMENT doc (#PCDATA)>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]>\n<doc><![CDATA[text in doc]]></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ENTITY e1 SYSTEM \'http://example.org/e\' NDATA n>\n<!ELEMENT doc (#PCDATA)>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]>\n<doc><![CDATA[text in doc]]></doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        b"\n\n\n\n\n\n\n\n\n<doc>text in doc</doc>\x00" as *const u8 as *const c_char;
+        
+        b"\n\n\n\n\n\n\n\n\n<doc>text in doc</doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -18044,19 +18914,21 @@ unsafe extern "C" fn test_alloc_dtd_default_handling() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8170i32,
-            b"Default DTD parsed despite allocation failures\x00" as *const u8 as *const c_char,
+            
+            b"Default DTD parsed despite allocation failures\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8172i32,
-            b"Default DTD not parsed with maximum alloc count\x00" as *const u8 as *const c_char,
+            
+            b"Default DTD not parsed with maximum alloc count\x00".as_ptr() as *const c_char,
         );
     }
     crate::chardata::CharData_CheckXMLChars(&mut storage as *mut _, expected);
@@ -18075,10 +18947,11 @@ unsafe extern "C" fn test_alloc_dtd_default_handling() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8181i32,
-            b"Not all handlers were called\x00" as *const u8 as *const c_char,
+            
+            b"Not all handlers were called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18088,7 +18961,8 @@ unsafe extern "C" fn test_alloc_explicit_encoding() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_alloc_explicit_encoding\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8186,
     );
@@ -18097,7 +18971,7 @@ unsafe extern "C" fn test_alloc_explicit_encoding() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if XML_SetEncoding(g_parser, b"us-ascii\x00" as *const u8 as *const c_char)
+        if XML_SetEncoding(g_parser,  b"us-ascii\x00".as_ptr() as *const c_char)
             == XML_STATUS_OK_0 as c_uint
         {
             break;
@@ -18107,18 +18981,20 @@ unsafe extern "C" fn test_alloc_explicit_encoding() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8196i32,
-            b"Encoding set despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Encoding set despite failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8198i32,
-            b"Encoding not set at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Encoding not set at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18127,11 +19003,12 @@ unsafe extern "C" fn test_alloc_explicit_encoding() {
 unsafe extern "C" fn test_alloc_set_base() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_alloc_set_base\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8203,
     );
-    let mut new_base: *const XML_Char = b"/local/file/name.xml\x00" as *const u8 as *const c_char;
+    let mut new_base: *const XML_Char =  b"/local/file/name.xml\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 5;
     i = 0;
@@ -18145,18 +19022,20 @@ unsafe extern "C" fn test_alloc_set_base() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8214i32,
-            b"Base set despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Base set despite failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8216i32,
-            b"Base not set with max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Base not set with max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18166,7 +19045,8 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_alloc_realloc_buffer\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8221,
     );
@@ -18182,18 +19062,20 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
         if buffer.is_null() {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 8232i32,
-                b"1.5K buffer reallocation failed\x00" as *const u8 as *const c_char,
+                
+                b"1.5K buffer reallocation failed\x00".as_ptr() as *const c_char,
             );
         }
         if !buffer.is_null() {
         } else {
             __assert_fail(
-                b"buffer != NULL\x00" as *const u8 as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"buffer != NULL\x00".as_ptr() as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 8233u32,
                 (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                     b"void test_alloc_realloc_buffer(void)\x00",
@@ -18216,18 +19098,20 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8244i32,
-            b"Parse succeeded with no reallocation\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded with no reallocation\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8246i32,
-            b"Parse failed with max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed with max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18252,10 +19136,11 @@ unsafe extern "C" fn external_entity_reallocator(
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8265i32,
-            b"Could not create external entity parser\x00" as *const u8 as *const c_char,
+            
+            b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
     reallocation_count = *(parser as *mut *mut c_void) as intptr_t;
@@ -18263,18 +19148,19 @@ unsafe extern "C" fn external_entity_reallocator(
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8270i32,
-            b"Buffer allocation failed\x00" as *const u8 as *const c_char,
+            
+            b"Buffer allocation failed\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
-        __assert_fail(b"buffer != NULL\x00" as *const u8 as
+        __assert_fail(b"buffer != NULL\x00".as_ptr() as
                           *const c_char,
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                          as *const u8 as *const c_char,
+                      
+                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       8271u32,
                       (*::std::mem::transmute::<&[u8; 116],
                                                 &[c_char; 116]>(b"int external_entity_reallocator(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
@@ -18296,13 +19182,14 @@ unsafe extern "C" fn test_alloc_ext_entity_realloc_buffer() {
             b"test_alloc_ext_entity_realloc_buffer\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8279,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -18334,19 +19221,21 @@ unsafe extern "C" fn test_alloc_ext_entity_realloc_buffer() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8298i32,
-            b"Succeeded with no reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Succeeded with no reallocations\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8300i32,
-            b"Failed with max reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Failed with max reallocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18358,13 +19247,14 @@ unsafe extern "C" fn test_alloc_realloc_many_attributes() {
             b"test_alloc_realloc_many_attributes\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8305,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ATTLIST doc za CDATA \'default\'>\n<!ATTLIST doc zb CDATA \'def2\'>\n<!ATTLIST doc zc CDATA \'def3\'>\n]>\n<doc a=\'1\'     b=\'2\'     c=\'3\'     d=\'4\'     e=\'5\'     f=\'6\'     g=\'7\'     h=\'8\'     i=\'9\'     j=\'10\'     k=\'11\'     l=\'12\'     m=\'13\'     n=\'14\'     p=\'15\'     q=\'16\'     r=\'17\'     s=\'18\'></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ATTLIST doc za CDATA \'default\'>\n<!ATTLIST doc zb CDATA \'def2\'>\n<!ATTLIST doc zc CDATA \'def3\'>\n]>\n<doc a=\'1\'     b=\'2\'     c=\'3\'     d=\'4\'     e=\'5\'     f=\'6\'     g=\'7\'     h=\'8\'     i=\'9\'     j=\'10\'     k=\'11\'     l=\'12\'     m=\'13\'     n=\'14\'     p=\'15\'     q=\'16\'     r=\'17\'     s=\'18\'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -18383,19 +19273,21 @@ unsafe extern "C" fn test_alloc_realloc_many_attributes() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8343i32,
-            b"Parse succeeded despite no reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite no reallocations\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8345i32,
-            b"Parse failed at max reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at max reallocations\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18405,12 +19297,14 @@ unsafe extern "C" fn test_alloc_public_entity_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(b"test_alloc_public_entity_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8350,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00".as_ptr()
             as *const c_char;
     let mut dtd_text: [c_char; 1109] =
         *::std::mem::transmute::<&[u8; 1109],
@@ -18467,28 +19361,31 @@ unsafe extern "C" fn test_alloc_public_entity_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8395i32,
-            b"Parsing worked despite failing allocation\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocation\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8397i32,
-            b"Parsing failed at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed at max allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_ENTITY_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8399i32,
-            b"Entity declaration handler not called\x00" as *const u8 as *const c_char,
+            
+            b"Entity declaration handler not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18499,12 +19396,14 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
             b"test_alloc_realloc_subst_public_entity_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8403,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc></doc>\n\x00".as_ptr()
             as *const c_char;
     let mut dtd_text: [c_char; 2108] =
         *::std::mem::transmute::<&[u8; 2108],
@@ -18542,19 +19441,21 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8459i32,
-            b"Parsing worked despite failing reallocation\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8461i32,
-            b"Parsing failed at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18565,13 +19466,14 @@ unsafe extern "C" fn test_alloc_parse_public_doctype() {
             b"test_alloc_parse_public_doctype\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8465,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'test\'>\n<doc></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'test\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
     i = 0;
@@ -18605,19 +19507,21 @@ unsafe extern "C" fn test_alloc_parse_public_doctype() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8504i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8506i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags
@@ -18625,10 +19529,11 @@ unsafe extern "C" fn test_alloc_parse_public_doctype() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8510i32,
-            b"Doctype handler functions not called\x00" as *const u8 as *const c_char,
+            
+            b"Doctype handler functions not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18639,13 +19544,14 @@ unsafe extern "C" fn test_alloc_parse_public_doctype_long_name() {
             b"test_alloc_parse_public_doctype_long_name\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8514,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/foo\' \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n<doc></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/foo\' \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
     i = 0;
@@ -18678,19 +19584,21 @@ unsafe extern "C" fn test_alloc_parse_public_doctype_long_name() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8552i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8554i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18723,12 +19631,14 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_set_foreign_dtd\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8579,
     );
     let mut text1: *const c_char =
-        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00" as *const u8
+        
+        b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
     let mut text2: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
@@ -18755,10 +19665,11 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
         if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
             crate::minicheck::_fail_unless(
                 0i32,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    as *const u8 as *const c_char,
+                
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                 8592i32,
-                b"Could not set foreign DTD\x00" as *const u8 as *const c_char,
+                
+                b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
             );
         }
         if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_TRUE)
@@ -18774,19 +19685,21 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8601i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8603i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18798,13 +19711,14 @@ unsafe extern "C" fn test_alloc_attribute_enum_value() {
             b"test_alloc_attribute_enum_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8608,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00".as_ptr() as *const c_char;
     let mut dtd_text: [c_char; 108] =
         *::std::mem::transmute::<&[u8; 108],
                                  &mut [c_char; 108]>(b"<!ELEMENT animal (#PCDATA|a)*>\n<!ELEMENT a EMPTY>\n<!ATTLIST animal xml:space (default|preserve) \'preserve\'>\x00");
@@ -18856,19 +19770,21 @@ unsafe extern "C" fn test_alloc_attribute_enum_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8633i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8635i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18880,13 +19796,14 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
             b"test_alloc_realloc_attribute_enum_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8640,
     );
     let mut text: *const c_char =
-        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a yellow tiger</animal>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a yellow tiger</animal>\x00".as_ptr() as *const c_char;
     /* We wish to define a collection of attribute enums that will
      * cause the string pool storing them to have to expand.  This
      * means more than 1024 bytes, including the parentheses and
@@ -18943,19 +19860,21 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8689i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8691i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -18967,7 +19886,8 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
             b"test_alloc_realloc_implied_attribute\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8696,
     );
@@ -18977,8 +19897,8 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
      * otherwise a different code path will pick up the realloc.
      */
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) #IMPLIED>\n]><doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) #IMPLIED>\n]><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -19011,19 +19931,21 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8739i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8741i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19035,7 +19957,8 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
             b"test_alloc_realloc_default_attribute\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8746,
     );
@@ -19045,8 +19968,8 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
      * otherwise a different code path will pick up the realloc.
      */
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\'>\n]><doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\'>\n]><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -19079,19 +20002,21 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8789i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8791i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19100,13 +20025,14 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
 unsafe extern "C" fn test_alloc_notation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 20], &[c_char; 20]>(b"test_alloc_notation\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8796,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!NOTATION ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'http://example.org/n\'>\n<!ENTITY e SYSTEM \'http://example.org/e\' NDATA ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!NOTATION ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'http://example.org/n\'>\n<!ENTITY e SYSTEM \'http://example.org/e\' NDATA ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -19156,28 +20082,31 @@ unsafe extern "C" fn test_alloc_notation() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8854i32,
-            b"Parse succeeded despite allocation failures\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite allocation failures\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8856i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_ENTITY_DECL_HANDLER_FLAG | DUMMY_NOTATION_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8859i32,
-            b"Entity declaration handler not called\x00" as *const u8 as *const c_char,
+            
+            b"Entity declaration handler not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19187,13 +20116,14 @@ unsafe extern "C" fn test_alloc_public_notation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_public_notation\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8864,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!NOTATION note PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'foo\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!NOTATION note PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'foo\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -19226,28 +20156,31 @@ unsafe extern "C" fn test_alloc_public_notation() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8904i32,
-            b"Parse succeeded despite allocation failures\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite allocation failures\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8906i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_NOTATION_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8908i32,
-            b"Notation handler not called\x00" as *const u8 as *const c_char,
+            
+            b"Notation handler not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19257,13 +20190,14 @@ unsafe extern "C" fn test_alloc_system_notation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_system_notation\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8913,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!NOTATION note SYSTEM \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!NOTATION note SYSTEM \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -19296,28 +20230,31 @@ unsafe extern "C" fn test_alloc_system_notation() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8953i32,
-            b"Parse succeeded despite allocation failures\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite allocation failures\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8955i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_NOTATION_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8957i32,
-            b"Notation handler not called\x00" as *const u8 as *const c_char,
+            
+            b"Notation handler not called\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19326,13 +20263,14 @@ unsafe extern "C" fn test_alloc_nested_groups() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_alloc_nested_groups\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         8961,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -19383,32 +20321,36 @@ unsafe extern "C" fn test_alloc_nested_groups() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8992i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8994i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"doce\x00" as *const u8 as *const c_char,
+        
+        b"doce\x00".as_ptr() as *const c_char,
     );
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             8997i32,
-            b"Element handler not fired\x00" as *const u8 as *const c_char,
+            
+            b"Element handler not fired\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19419,13 +20361,14 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
             b"test_alloc_realloc_nested_groups\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9001,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
         data: [0; 2048],
@@ -19476,32 +20419,36 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9032i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9034i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     }
     crate::chardata::CharData_CheckXMLChars(
         &mut storage as *mut _,
-        b"doce\x00" as *const u8 as *const c_char,
+        
+        b"doce\x00".as_ptr() as *const c_char,
     );
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9037i32,
-            b"Element handler not fired\x00" as *const u8 as *const c_char,
+            
+            b"Element handler not fired\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19510,13 +20457,14 @@ unsafe extern "C" fn test_alloc_large_group() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_alloc_large_group\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9041,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 50;
     i = 0;
@@ -19547,28 +20495,31 @@ unsafe extern "C" fn test_alloc_large_group() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9069i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9071i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9073i32,
-            b"Element handler flag not raised\x00" as *const u8 as *const c_char,
+            
+            b"Element handler flag not raised\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19579,13 +20530,14 @@ unsafe extern "C" fn test_alloc_realloc_group_choice() {
             b"test_alloc_realloc_group_choice\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9077,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n<b2 attr=\'foo\'>This is a foo</b2>\n<c3></c3>\n</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n<b2 attr=\'foo\'>This is a foo</b2>\n<c3></c3>\n</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -19616,28 +20568,31 @@ unsafe extern "C" fn test_alloc_realloc_group_choice() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9107i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9109i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_ELEMENT_DECL_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9111i32,
-            b"Element handler flag not raised\x00" as *const u8 as *const c_char,
+            
+            b"Element handler flag not raised\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19646,12 +20601,14 @@ unsafe extern "C" fn test_alloc_pi_in_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 24], &[c_char; 24]>(b"test_alloc_pi_in_epilog\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9115,
     );
     let mut text: *const c_char =
-        b"<doc></doc>\n<?pi in epilog?>\x00" as *const u8 as *const c_char;
+        
+        b"<doc></doc>\n<?pi in epilog?>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -19682,28 +20639,31 @@ unsafe extern "C" fn test_alloc_pi_in_epilog() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9133i32,
-            b"Parse completed despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse completed despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9135i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_PI_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9137i32,
-            b"Processing instruction handler not invoked\x00" as *const u8 as *const c_char,
+            
+            b"Processing instruction handler not invoked\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19712,12 +20672,14 @@ unsafe extern "C" fn test_alloc_comment_in_epilog() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_alloc_comment_in_epilog\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9141,
     );
     let mut text: *const c_char =
-        b"<doc></doc>\n<!-- comment in epilog -->\x00" as *const u8 as *const c_char;
+        
+        b"<doc></doc>\n<!-- comment in epilog -->\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -19744,28 +20706,31 @@ unsafe extern "C" fn test_alloc_comment_in_epilog() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9159i32,
-            b"Parse completed despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse completed despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9161i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     }
     if dummy_handler_flags != DUMMY_COMMENT_HANDLER_FLAG {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9163i32,
-            b"Processing instruction handler not invoked\x00" as *const u8 as *const c_char,
+            
+            b"Processing instruction handler not invoked\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19776,13 +20741,14 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
             b"test_alloc_realloc_long_attribute_value\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9167,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [<!ENTITY foo \'This entity will be substituted as an attribute value, and is   calculated to be exactly long enough that the terminating NUL   that the library adds internally will trigger the string pool togrow. GHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<doc a=\'&foo;\'></doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [<!ENTITY foo \'This entity will be substituted as an attribute value, and is   calculated to be exactly long enough that the terminating NUL   that the library adds internally will trigger the string pool togrow. GHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<doc a=\'&foo;\'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -19801,19 +20767,21 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9202i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9204i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19824,11 +20792,12 @@ unsafe extern "C" fn test_alloc_attribute_whitespace() {
             b"test_alloc_attribute_whitespace\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9208,
     );
-    let mut text: *const c_char = b"<doc a=\' \'></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc a=\' \'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -19847,19 +20816,21 @@ unsafe extern "C" fn test_alloc_attribute_whitespace() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9223i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9225i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19870,11 +20841,12 @@ unsafe extern "C" fn test_alloc_attribute_predefined_entity() {
             b"test_alloc_attribute_predefined_entity\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9229,
     );
-    let mut text: *const c_char = b"<doc a=\'&amp;\'></doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc a=\'&amp;\'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
     i = 0;
@@ -19893,19 +20865,21 @@ unsafe extern "C" fn test_alloc_attribute_predefined_entity() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9244i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9246i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19920,13 +20894,14 @@ unsafe extern "C" fn test_alloc_long_attr_default_with_char_ref() {
             b"test_alloc_long_attr_default_with_char_ref\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9254,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHI&#x31;\'>]>\n<doc/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHI&#x31;\'>]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -19945,19 +20920,21 @@ unsafe extern "C" fn test_alloc_long_attr_default_with_char_ref() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9289i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9291i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -19969,13 +20946,14 @@ unsafe extern "C" fn test_alloc_long_attr_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_long_attr_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9298,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE test [<!ENTITY foo \'\nABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<test a=\'&foo;\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE test [<!ENTITY foo \'\nABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
     i = 0;
@@ -19994,19 +20972,21 @@ unsafe extern "C" fn test_alloc_long_attr_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9333i32,
-            b"Parse succeeded despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing allocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9335i32,
-            b"Parse failed at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20020,20 +21000,23 @@ unsafe extern "C" fn test_alloc_nested_entities() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 27], &[c_char; 27]>(b"test_alloc_nested_entities\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9344,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00" as *const u8
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/one.ent\'>\n<doc />\x00".as_ptr()
             as *const c_char;
     let mut test_data: ExtFaults = {
         let mut init =
                 ext_faults{parse_text:
-                               b"<!ENTITY % pe1 \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\x00"
-                                   as *const u8 as *const c_char,
+                               
+                               b"<!ENTITY % pe1 \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\x00".as_ptr() as *const c_char,
                            fail_text:
-                               b"Memory Fail not faulted\x00" as *const u8 as
+                               
+                               b"Memory Fail not faulted\x00".as_ptr() as
                                    *const c_char,
                            encoding: ::c2rust_out::stddef_h::NULL as *const XML_Char,
                            error: XML_ERROR_NO_MEMORY,};
@@ -20059,8 +21042,10 @@ unsafe extern "C" fn test_alloc_nested_entities() {
     _expect_failure(
         text,
         XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-        b"Entity allocation failure not noted\x00" as *const u8 as *const c_char,
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"Entity allocation failure not noted\x00".as_ptr() as *const c_char,
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9377,
     );
@@ -20072,12 +21057,14 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
             b"test_alloc_realloc_param_entity_newline\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9381,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut dtd_text: [c_char; 1048] =
         *::std::mem::transmute::<&[u8; 1048],
                                  &mut [c_char; 1048]>(b"<!ENTITY % pe \'<!ATTLIST doc att CDATA \"This default value is carefully crafted so that the carriage    return right at the end of the entity string causes an internal string pool to have to grow.  This allows us to test the alloc  failure path from that point. OPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDE\">\n\'>%pe;\n\x00");
@@ -20114,19 +21101,21 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9421i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9423i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20137,12 +21126,14 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
             b"test_alloc_realloc_ce_extends_pe\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9427,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00" as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'http://example.org/\'>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut dtd_text: [c_char; 1056] =
         *::std::mem::transmute::<&[u8; 1056],
                                  &mut [c_char; 1056]>(b"<!ENTITY % pe \'<!ATTLIST doc att CDATA \"This default value is carefully crafted so that the character   entity at the end causes an internal string pool to have to     grow.  This allows us to test the allocation failure path from  that point onwards. EFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFG&#x51;\">\n\'>%pe;\n\x00");
@@ -20179,19 +21170,21 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9467i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9469i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20200,13 +21193,14 @@ unsafe extern "C" fn test_alloc_realloc_attributes() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_alloc_realloc_attributes\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9473,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ATTLIST doc\n    a1  (a|b|c)   \'a\'\n    a2  (foo|bar) #IMPLIED\n    a3  NMTOKEN   #IMPLIED\n    a4  NMTOKENS  #IMPLIED\n    a5  ID        #IMPLIED\n    a6  IDREF     #IMPLIED\n    a7  IDREFS    #IMPLIED\n    a8  ENTITY    #IMPLIED\n    a9  ENTITIES  #IMPLIED\n    a10 CDATA     #IMPLIED\n  >]>\n<doc>wombat</doc>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ATTLIST doc\n    a1  (a|b|c)   \'a\'\n    a2  (foo|bar) #IMPLIED\n    a3  NMTOKEN   #IMPLIED\n    a4  NMTOKENS  #IMPLIED\n    a5  ID        #IMPLIED\n    a6  IDREF     #IMPLIED\n    a7  IDREFS    #IMPLIED\n    a8  ENTITY    #IMPLIED\n    a9  ENTITIES  #IMPLIED\n    a10 CDATA     #IMPLIED\n  >]>\n<doc>wombat</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 5;
     i = 0;
@@ -20225,19 +21219,21 @@ unsafe extern "C" fn test_alloc_realloc_attributes() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9502i32,
-            b"Parse succeeded despite failing reallocator\x00" as *const u8 as *const c_char,
+            
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9504i32,
-            b"Parse failed at maximum reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parse failed at maximum reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20246,13 +21242,14 @@ unsafe extern "C" fn test_alloc_long_doc_name() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_alloc_long_doc_name\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9508,
     );
     let mut text: *const c_char =
-        b"<LongRootElementNameThatWillCauseTheNextAllocationToExpandTheStringPoolForTheDTDQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ a=\'1\'/>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<LongRootElementNameThatWillCauseTheNextAllocationToExpandTheStringPoolForTheDTDQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ a=\'1\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
     i = 0;
@@ -20271,18 +21268,20 @@ unsafe extern "C" fn test_alloc_long_doc_name() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9541i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9543i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20290,18 +21289,20 @@ unsafe extern "C" fn test_alloc_long_doc_name() {
 unsafe extern "C" fn test_alloc_long_base() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 21], &[c_char; 21]>(b"test_alloc_long_base\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9547,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY e SYSTEM \'foo\'>\n]>\n<doc>&e;</doc>\x00" as *const u8
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY e SYSTEM \'foo\'>\n]>\n<doc>&e;</doc>\x00".as_ptr()
             as *const c_char;
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
     let mut base: *const XML_Char =
-        b"LongBaseURI/that/will/overflow/an/internal/buffer/and/cause/it/to/have/to/grow/PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\x00"
-            as *const u8 as *const c_char;
+        
+        b"LongBaseURI/that/will/overflow/an/internal/buffer/and/cause/it/to/have/to/grow/PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\x00".as_ptr() as *const c_char;
     /* clang-format on */
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
@@ -20340,18 +21341,20 @@ unsafe extern "C" fn test_alloc_long_base() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9593i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9595i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20360,13 +21363,14 @@ unsafe extern "C" fn test_alloc_long_public_id() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_alloc_long_public_id\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9599,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY e PUBLIC \'LongPublicIDThatShouldResultInAnInternalStringPoolGrowingAtASpecificMomentKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\' \'bar\'>\n]>\n<doc>&e;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY e PUBLIC \'LongPublicIDThatShouldResultInAnInternalStringPoolGrowingAtASpecificMomentKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\' \'bar\'>\n]>\n<doc>&e;</doc>\x00".as_ptr() as *const c_char;
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
     let mut i: c_int = 0;
@@ -20402,18 +21406,20 @@ unsafe extern "C" fn test_alloc_long_public_id() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9640i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9642i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20422,13 +21428,14 @@ unsafe extern "C" fn test_alloc_long_entity_value() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(b"test_alloc_long_entity_value\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9646,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ENTITY e1 \'Long entity value that should provoke a string pool to grow while setting up to parse the external entity below. xyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ENTITY e1 \'Long entity value that should provoke a string pool to grow while setting up to parse the external entity below. xyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00".as_ptr() as *const c_char;
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
     let mut i: c_int = 0;
@@ -20464,18 +21471,20 @@ unsafe extern "C" fn test_alloc_long_entity_value() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9688i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9690i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20484,25 +21493,26 @@ unsafe extern "C" fn test_alloc_long_notation() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_alloc_long_notation\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9694,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!NOTATION note SYSTEM \'ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e1 SYSTEM \'foo\' NDATA ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!NOTATION note SYSTEM \'ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e1 SYSTEM \'foo\' NDATA ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"Entity Foo\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"Entity Foo\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = ExtOption {
-                system_id: b"bar\x00" as *const u8 as *const c_char,
-                parse_text: b"Entity Bar\x00" as *const u8 as *const c_char,
+                system_id:  b"bar\x00".as_ptr() as *const c_char,
+                parse_text:  b"Entity Bar\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -20547,18 +21557,20 @@ unsafe extern "C" fn test_alloc_long_notation() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9757i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9759i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20586,10 +21598,11 @@ unsafe extern "C" fn nsalloc_setup() {
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9773i32,
-            b"Parser not created\x00" as *const u8 as *const c_char,
+            
+            b"Parser not created\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20604,12 +21617,14 @@ unsafe extern "C" fn nsalloc_teardown() {
 unsafe extern "C" fn test_nsalloc_xmlns() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 19], &[c_char; 19]>(b"test_nsalloc_xmlns\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9784,
     );
     let mut text: *const c_char =
-        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\'/>\n</doc>\x00" as *const u8
+        
+        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\'/>\n</doc>\x00".as_ptr()
             as *const c_char;
     let mut i: c_uint = 0;
     let max_alloc_count: c_uint = 30;
@@ -20641,18 +21656,20 @@ unsafe extern "C" fn test_nsalloc_xmlns() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9807i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9809i32,
-            b"Parsing failed even at maximum allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at maximum allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20662,11 +21679,12 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_nsalloc_parse_buffer\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9814,
     );
-    let mut text: *const c_char = b"<doc>Hello</doc>\x00" as *const u8 as *const c_char;
+    let mut text: *const c_char =  b"<doc>Hello</doc>\x00".as_ptr() as *const c_char;
     let mut buffer: *mut c_void = 0 as *mut c_void;
     /* Try a parse before the start of the world */
     /* (Exercises new code path) */
@@ -20674,19 +21692,21 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     if XML_ParseBuffer(g_parser, 0, XML_FALSE as c_int) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9822i32,
-            b"Pre-init XML_ParseBuffer not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Pre-init XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NO_MEMORY {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9824i32,
-            b"Pre-init XML_ParseBuffer faulted for wrong reason\x00" as *const u8 as *const c_char,
+            
+            b"Pre-init XML_ParseBuffer faulted for wrong reason\x00".as_ptr() as *const c_char,
         );
     }
     /* Now with actual memory allocation */
@@ -20694,8 +21714,8 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     if XML_ParseBuffer(g_parser, 0, XML_FALSE as c_int) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9829i32,
         );
     }
@@ -20703,17 +21723,18 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     if XML_ResumeParser(g_parser) != XML_STATUS_ERROR_0 as c_uint {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9833i32,
-            b"Resuming unsuspended parser not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Resuming unsuspended parser not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NOT_SUSPENDED {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9835i32,
         );
     }
@@ -20730,18 +21751,20 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9842i32,
-            b"Could not acquire parse buffer\x00" as *const u8 as *const c_char,
+            
+            b"Could not acquire parse buffer\x00".as_ptr() as *const c_char,
         );
     }
     if !buffer.is_null() {
     } else {
         __assert_fail(
-            b"buffer != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"buffer != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9843u32,
             (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                 b"void test_nsalloc_parse_buffer(void)\x00",
@@ -20755,16 +21778,16 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9847i32,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9849i32,
         );
     }
@@ -20773,27 +21796,29 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9852i32,
-            b"Suspended XML_ParseBuffer not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Suspended XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9854i32,
         );
     }
     if !XML_GetBuffer(g_parser, strlen(text) as c_int).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9856i32,
-            b"Suspended XML_GetBuffer not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Suspended XML_GetBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
     /* Get it going again and complete the world */
@@ -20806,8 +21831,8 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     if XML_ResumeParser(g_parser) != XML_STATUS_OK_0 as c_uint {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9861i32,
         );
     }
@@ -20816,27 +21841,29 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9864i32,
-            b"Post-finishing XML_ParseBuffer not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Post-finishing XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
     if XML_GetErrorCode(g_parser) != XML_ERROR_FINISHED {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9866i32,
         );
     }
     if !XML_GetBuffer(g_parser, strlen(text) as c_int).is_null() {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9868i32,
-            b"Post-finishing XML_GetBuffer not faulted\x00" as *const u8 as *const c_char,
+            
+            b"Post-finishing XML_GetBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20846,13 +21873,14 @@ unsafe extern "C" fn test_nsalloc_long_prefix() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 25], &[c_char; 25]>(b"test_nsalloc_long_prefix\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9873,
     );
     let mut text: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -20871,18 +21899,20 @@ unsafe extern "C" fn test_nsalloc_long_prefix() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9942i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             9944i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20891,13 +21921,14 @@ unsafe extern "C" fn test_nsalloc_long_prefix() {
 unsafe extern "C" fn test_nsalloc_long_uri() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 22], &[c_char; 22]>(b"test_nsalloc_long_uri\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         9949,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\' bar:a=\'12\'\nxmlns:bar=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\'></foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\' bar:a=\'12\'\nxmlns:bar=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -20916,18 +21947,20 @@ unsafe extern "C" fn test_nsalloc_long_uri() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10002i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10004i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20937,13 +21970,14 @@ unsafe extern "C" fn test_nsalloc_long_attr() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 23], &[c_char; 23]>(b"test_nsalloc_long_attr\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10009,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' bar:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'12\'\nxmlns:bar=\'http://example.org/\'></foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' bar:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'12\'\nxmlns:bar=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -20962,18 +21996,20 @@ unsafe extern "C" fn test_nsalloc_long_attr() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10045i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10047i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -20983,17 +22019,18 @@ unsafe extern "C" fn test_nsalloc_long_attr_prefix() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_nsalloc_long_attr_prefix\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10052,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:a=\'12\'\nxmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:a=\'12\'\nxmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] =
-        [b"http://example.org/ e foo\x00" as *const u8 as *const c_char,
-         b"http://example.org/ a ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ\x00"
-             as *const u8 as *const c_char];
+        [b"http://example.org/ e foo\x00".as_ptr() as *const c_char,
+         
+         b"http://example.org/ a ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ\x00".as_ptr() as *const c_char];
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -21029,18 +22066,20 @@ unsafe extern "C" fn test_nsalloc_long_attr_prefix() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10131i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10133i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21052,13 +22091,14 @@ unsafe extern "C" fn test_nsalloc_realloc_attributes() {
             b"test_nsalloc_realloc_attributes\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10138,
     );
     let mut text: *const c_char =
-        b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'></foo:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
@@ -21077,18 +22117,20 @@ unsafe extern "C" fn test_nsalloc_realloc_attributes() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10155i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10157i32,
-            b"Parsing failed at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21098,17 +22140,19 @@ unsafe extern "C" fn test_nsalloc_long_element() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_nsalloc_long_element\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10162,
     );
     let mut text: *const c_char =
-        b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
-        b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00"
-            as *const u8 as *const c_char,
-        b"http://example.org/ a bar\x00" as *const u8 as *const c_char,
+        
+        b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00".as_ptr() as *const c_char,
+        
+        b"http://example.org/ a bar\x00".as_ptr() as *const c_char,
     ];
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 30;
@@ -21145,18 +22189,20 @@ unsafe extern "C" fn test_nsalloc_long_element() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10188i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10190i32,
-            b"Parsing failed at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21177,16 +22223,18 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
             b"test_nsalloc_realloc_binding_uri\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10204,
     );
     let mut first: *const c_char =
-        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\' />\n</doc>\x00" as *const u8
+        
+        b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\' />\n</doc>\x00".as_ptr()
             as *const c_char;
     let mut second: *const c_char =
-        b"<doc xmlns=\'http://example.org/long/enough/URI/to/reallocate/\'>\n  <e xmlns=\'\' />\n</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<doc xmlns=\'http://example.org/long/enough/URI/to/reallocate/\'>\n  <e xmlns=\'\' />\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_uint = 0;
     let max_realloc_count: c_uint = 10;
     /* First, do a full parse that will leave bindings around */
@@ -21195,8 +22243,8 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
     {
         _xml_failure(
             g_parser,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10218i32,
         );
     }
@@ -21215,18 +22263,20 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10229i32,
-            b"Parsing worked despite failing reallocation\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10231i32,
-            b"Parsing failed at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21238,13 +22288,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_prefix() {
             b"test_nsalloc_realloc_long_prefix\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10236,
     );
     let mut text: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 12;
     i = 0;
@@ -21263,18 +22314,20 @@ unsafe extern "C" fn test_nsalloc_realloc_long_prefix() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10305i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10307i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21286,13 +22339,14 @@ unsafe extern "C" fn test_nsalloc_realloc_longer_prefix() {
             b"test_nsalloc_realloc_longer_prefix\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10312,
     );
     let mut text: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 12;
     i = 0;
@@ -21311,18 +22365,20 @@ unsafe extern "C" fn test_nsalloc_realloc_longer_prefix() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10381i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10383i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21331,16 +22387,17 @@ unsafe extern "C" fn test_nsalloc_long_namespace() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 28], &[c_char; 28]>(b"test_nsalloc_long_namespace\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10387,
     );
     let mut text1: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'>\n\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'>\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:attr=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:attr=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -21361,18 +22418,20 @@ unsafe extern "C" fn test_nsalloc_long_namespace() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10495i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10497i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21386,13 +22445,14 @@ unsafe extern "C" fn test_nsalloc_less_long_namespace() {
             b"test_nsalloc_less_long_namespace\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10504,
     );
     let mut text: *const c_char =
-        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678=\'http://example.org/\'>\n<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:att=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678=\'http://example.org/\'>\n<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:att=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
     i = 0;
@@ -21411,18 +22471,20 @@ unsafe extern "C" fn test_nsalloc_less_long_namespace() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10568i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10570i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21431,25 +22493,26 @@ unsafe extern "C" fn test_nsalloc_long_context() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(b"test_nsalloc_long_context\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10574,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ATTLIST doc baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\' baz=\'2\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ATTLIST doc baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\' baz=\'2\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<!ELEMENT e EMPTY>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<!ELEMENT e EMPTY>\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = ExtOption {
-                system_id: b"bar\x00" as *const u8 as *const c_char,
-                parse_text: b"<e/>\x00" as *const u8 as *const c_char,
+                system_id:  b"bar\x00".as_ptr() as *const c_char,
+                parse_text:  b"<e/>\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -21494,18 +22557,20 @@ unsafe extern "C" fn test_nsalloc_long_context() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10620i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10622i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21517,15 +22582,15 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<!ELEMENT e EMPTY>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<!ELEMENT e EMPTY>\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = ExtOption {
-                system_id: b"bar\x00" as *const u8 as *const c_char,
-                parse_text: b"<e/>\x00" as *const u8 as *const c_char,
+                system_id:  b"bar\x00".as_ptr() as *const c_char,
+                parse_text:  b"<e/>\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -21570,18 +22635,20 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10649i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10651i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21592,13 +22659,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context() {
             b"test_nsalloc_realloc_long_context\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10654,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21608,13 +22676,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_2() {
             b"test_nsalloc_realloc_long_context_2\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10685,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJK\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJK\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21624,13 +22693,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_3() {
             b"test_nsalloc_realloc_long_context_3\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10716,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGH\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGH\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21640,13 +22710,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_4() {
             b"test_nsalloc_realloc_long_context_4\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10747,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21656,13 +22727,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_5() {
             b"test_nsalloc_realloc_long_context_5\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10778,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABC\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABC\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21672,13 +22744,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_6() {
             b"test_nsalloc_realloc_long_context_6\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10809,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21688,13 +22761,14 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_7() {
             b"test_nsalloc_realloc_long_context_7\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10839,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLM\'>\n&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLM\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
 
@@ -21704,25 +22778,26 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
             b"test_nsalloc_realloc_long_ge_name\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10870,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/baz\'>\n&ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/baz\'>\n&ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<!ELEMENT el EMPTY>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<!ELEMENT el EMPTY>\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = ExtOption {
-                system_id: b"bar\x00" as *const u8 as *const c_char,
-                parse_text: b"<el/>\x00" as *const u8 as *const c_char,
+                system_id:  b"bar\x00".as_ptr() as *const c_char,
+                parse_text:  b"<el/>\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -21767,18 +22842,20 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10932i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             10934i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21794,21 +22871,22 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
             b"test_nsalloc_realloc_long_context_in_dtd\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         10943,
     );
     let mut text1: *const c_char =
-        b"<!DOCTYPE ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc [\n  <!ENTITY First SYSTEM \'foo/First\'>\n]>\n<ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo/Second\'>&First;\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc [\n  <!ENTITY First SYSTEM \'foo/First\'>\n]>\n<ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo/Second\'>&First;\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        b"</ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"</ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 2] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo/First\x00" as *const u8 as *const c_char,
-                parse_text: b"Hello world\x00" as *const u8 as *const c_char,
+                system_id:  b"foo/First\x00".as_ptr() as *const c_char,
+                parse_text:  b"Hello world\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -21855,18 +22933,20 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11040i32,
-            b"Parsing worked despite failing reallocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11042i32,
-            b"Parsing failed even at max reallocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max reallocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21877,18 +22957,19 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
             b"test_nsalloc_long_default_in_ext\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         11046,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc [\n  <!ATTLIST e a1 CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n  <!ENTITY x SYSTEM \'foo\'>\n]>\n<doc>&x;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc [\n  <!ATTLIST e a1 CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n  <!ENTITY x SYSTEM \'foo\'>\n]>\n<doc>&x;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 2] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<e/>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<e/>\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -21933,18 +23014,20 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11089i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11091i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -21955,28 +23038,30 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
             b"test_nsalloc_long_systemid_in_ext\x00",
         ))
         .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         11095,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n]>\n<doc>&en;</doc>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<!ELEMENT e EMPTY>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<!ELEMENT e EMPTY>\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init =
                  ExtOption{system_id:
-                               b"ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\x00"
-                                   as *const u8 as *const c_char,
+                               
+                               b"ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\x00".as_ptr() as *const c_char,
                            parse_text:
-                               b"<e/>\x00" as *const u8 as
+                               
+                               b"<e/>\x00".as_ptr() as
                                    *const c_char,};
             init
         },
@@ -22021,18 +23106,20 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11158i32,
-            b"Parsing worked despite failing allocations\x00" as *const u8 as *const c_char,
+            
+            b"Parsing worked despite failing allocations\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11160i32,
-            b"Parsing failed even at max allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Parsing failed even at max allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
@@ -22044,25 +23131,26 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 30], &[c_char; 30]>(b"test_nsalloc_prefixed_element\x00"))
             .as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00" as *const u8
+        
+        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
         11167,
     );
     let mut text: *const c_char =
-        b"<!DOCTYPE pfx:element SYSTEM \'foo\' [\n  <!ATTLIST pfx:element baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<pfx:element xmlns:pfx=\'http://example.org/\' baz=\'2\'>\n&en;</pfx:element>\x00"
-            as *const u8 as *const c_char;
+        
+        b"<!DOCTYPE pfx:element SYSTEM \'foo\' [\n  <!ATTLIST pfx:element baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<pfx:element xmlns:pfx=\'http://example.org/\' baz=\'2\'>\n&en;</pfx:element>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
             let mut init = ExtOption {
-                system_id: b"foo\x00" as *const u8 as *const c_char,
-                parse_text: b"<!ELEMENT e EMPTY>\x00" as *const u8 as *const c_char,
+                system_id:  b"foo\x00".as_ptr() as *const c_char,
+                parse_text:  b"<!ELEMENT e EMPTY>\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = ExtOption {
-                system_id: b"bar\x00" as *const u8 as *const c_char,
-                parse_text: b"<e/>\x00" as *const u8 as *const c_char,
+                system_id:  b"bar\x00".as_ptr() as *const c_char,
+                parse_text:  b"<e/>\x00".as_ptr() as *const c_char,
             };
             init
         },
@@ -22107,35 +23195,38 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
     if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11194i32,
-            b"Success despite failing allocator\x00" as *const u8 as *const c_char,
+            
+            b"Success despite failing allocator\x00".as_ptr() as *const c_char,
         );
     } else if i == max_alloc_count {
         crate::minicheck::_fail_unless(
             0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
             11196i32,
-            b"Failed even at full allocation count\x00" as *const u8 as *const c_char,
+            
+            b"Failed even at full allocation count\x00".as_ptr() as *const c_char,
         );
     };
 }
 
 unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
     let mut s: *mut crate::minicheck::Suite =
-        crate::minicheck::suite_create(b"basic\x00" as *const u8 as *const c_char);
+        crate::minicheck::suite_create(b"basic\x00".as_ptr() as *const c_char);
     let mut tc_basic: *mut crate::minicheck::TCase =
-        crate::minicheck::tcase_create(b"basic tests\x00" as *const u8 as *const c_char);
+        crate::minicheck::tcase_create(b"basic tests\x00".as_ptr() as *const c_char);
     let mut tc_namespace: *mut crate::minicheck::TCase =
-        crate::minicheck::tcase_create(b"XML namespaces\x00" as *const u8 as *const c_char);
+        crate::minicheck::tcase_create(b"XML namespaces\x00".as_ptr() as *const c_char);
     let mut tc_misc: *mut crate::minicheck::TCase =
-        crate::minicheck::tcase_create(b"miscellaneous tests\x00" as *const u8 as *const c_char);
+        crate::minicheck::tcase_create(b"miscellaneous tests\x00".as_ptr() as *const c_char);
     let mut tc_alloc: *mut crate::minicheck::TCase =
-        crate::minicheck::tcase_create(b"allocation tests\x00" as *const u8 as *const c_char);
+        crate::minicheck::tcase_create(b"allocation tests\x00".as_ptr() as *const c_char);
     let mut tc_nsalloc: *mut crate::minicheck::TCase = crate::minicheck::tcase_create(
-        b"namespace allocation tests\x00" as *const u8 as *const c_char,
+        
+        b"namespace allocation tests\x00".as_ptr() as *const c_char,
     );
     crate::minicheck::suite_add_tcase(s, tc_basic);
     crate::minicheck::tcase_add_checked_fixture(
@@ -23509,18 +24600,19 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     i = 1;
     while i < argc {
         let mut opt: *mut c_char = *argv.offset(i as isize);
-        if strcmp(opt, b"-v\x00" as *const u8 as *const c_char) == 0
-            || strcmp(opt, b"--verbose\x00" as *const u8 as *const c_char) == 0
+        if strcmp(opt,  b"-v\x00".as_ptr() as *const c_char) == 0
+            || strcmp(opt,  b"--verbose\x00".as_ptr() as *const c_char) == 0
         {
             verbosity = crate::minicheck::CK_VERBOSE
-        } else if strcmp(opt, b"-q\x00" as *const u8 as *const c_char) == 0
-            || strcmp(opt, b"--quiet\x00" as *const u8 as *const c_char) == 0
+        } else if strcmp(opt,  b"-q\x00".as_ptr() as *const c_char) == 0
+            || strcmp(opt,  b"--quiet\x00".as_ptr() as *const c_char) == 0
         {
             verbosity = CK_SILENT
         } else {
             fprintf(
                 stderr,
-                b"runtests: unknown option \'%s\'\n\x00" as *const u8 as *const c_char,
+                
+                b"runtests: unknown option \'%s\'\n\x00".as_ptr() as *const c_char,
                 opt,
             );
             return 2i32;
@@ -23529,7 +24621,8 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     }
     if verbosity != CK_SILENT {
         printf(
-            b"Expat version: %s\n\x00" as *const u8 as *const c_char,
+            
+            b"Expat version: %s\n\x00".as_ptr() as *const c_char,
             XML_ExpatVersion(),
         );
     }

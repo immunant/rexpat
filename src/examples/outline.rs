@@ -142,20 +142,21 @@ unsafe extern "C" fn start(
     let mut i: c_int = 0;
     i = 0;
     while i < Depth {
-        printf(b"  \x00" as *const u8 as *const c_char);
+        printf(b"  \x00".as_ptr() as *const c_char);
         i += 1
     }
-    printf(b"%s\x00" as *const u8 as *const c_char, el);
+    printf(b"%s\x00".as_ptr() as *const c_char, el);
     i = 0;
     while !(*attr.offset(i as isize)).is_null() {
         printf(
-            b" %s=\'%s\'\x00" as *const u8 as *const c_char,
+            
+            b" %s=\'%s\'\x00".as_ptr() as *const c_char,
             *attr.offset(i as isize),
             *attr.offset((i + 1i32) as isize),
         );
         i += 2
     }
-    printf(b"\n\x00" as *const u8 as *const c_char);
+    printf(b"\n\x00".as_ptr() as *const c_char);
     Depth += 1;
 }
 
@@ -168,7 +169,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     if p.is_null() {
         fprintf(
             crate::stdlib::stderr,
-            b"Couldn\'t allocate memory for parser\n\x00" as *const u8 as *const c_char,
+            
+            b"Couldn\'t allocate memory for parser\n\x00".as_ptr() as *const c_char,
         );
         exit(-(1i32));
     }
@@ -196,7 +198,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         if crate::stdlib::ferror(crate::stdlib::stdin) != 0 {
             fprintf(
                 crate::stdlib::stderr,
-                b"Read error\n\x00" as *const u8 as *const c_char,
+                
+                b"Read error\n\x00".as_ptr() as *const c_char,
             );
             exit(-(1i32));
         }
@@ -204,7 +207,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_STATUS_ERROR_0 as c_uint {
             fprintf(
                 crate::stdlib::stderr,
-                b"Parse error at line %lu:\n%s\n\x00" as *const u8 as *const c_char,
+                
+                b"Parse error at line %lu:\n%s\n\x00".as_ptr() as *const c_char,
                 XML_GetCurrentLineNumber(p),
                 XML_ErrorString(XML_GetErrorCode(p)),
             );

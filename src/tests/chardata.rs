@@ -50,9 +50,10 @@ unsafe extern "C" fn xmlstrlen(mut s: *const XML_Char) -> c_int {
     if !s.is_null() {
     } else {
         __assert_fail(
-            b"s != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"s != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             47u32,
             (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
                 b"int xmlstrlen(const XML_Char *)\x00",
@@ -71,9 +72,10 @@ pub unsafe extern "C" fn CharData_Init(mut storage: *mut CharData) {
     if !storage.is_null() {
     } else {
         __assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"storage != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             55u32,
             (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(
                 b"void CharData_Init(CharData *)\x00",
@@ -94,9 +96,10 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     if !storage.is_null() {
     } else {
         __assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"storage != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             63u32,
             (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
                 b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
@@ -107,9 +110,10 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     if !s.is_null() {
     } else {
         __assert_fail(
-            b"s != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"s != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             64u32,
             (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
                 b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
@@ -185,9 +189,10 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
     if !storage.is_null() {
     } else {
         __assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"storage != NULL\x00".as_ptr() as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             85u32,
             (*::std::mem::transmute::<&[u8; 57], &[c_char; 57]>(
                 b"int CharData_CheckXMLChars(CharData *, const XML_Char *)\x00",
@@ -203,15 +208,16 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
     if len != count {
         sprintf(
             buffer.as_mut_ptr(),
-            b"wrong number of data characters: got %d, expected %d\x00" as *const u8
+            
+            b"wrong number of data characters: got %d, expected %d\x00".as_ptr()
                 as *const c_char,
             count,
             len,
         );
         _fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             90,
             buffer.as_mut_ptr(),
         );
@@ -225,10 +231,11 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
     {
         _fail_unless(
             0,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00"
-                as *const u8 as *const c_char,
+            
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr() as *const c_char,
             94,
-            b"got bad data bytes\x00" as *const u8 as *const c_char,
+            
+            b"got bad data bytes\x00".as_ptr() as *const c_char,
         );
         return 0i32;
     }
