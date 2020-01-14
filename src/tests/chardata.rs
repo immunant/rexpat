@@ -3,7 +3,7 @@
 use crate::minicheck::_fail_unless;
 use crate::stdlib::{__assert_fail, memcmp, memcpy};
 use ::libc::sprintf;
-use libc::{c_char, c_int, c_uint, c_ulong, c_void};
+use libc::{c_char, c_int, c_ulong, c_void};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct CharData {

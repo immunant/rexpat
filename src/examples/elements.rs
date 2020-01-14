@@ -16,7 +16,7 @@ use ::c2rust_out::src::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
 };
 use ::c2rust_out::stddef_h::NULL;
-use ::c2rust_out::stdlib::{fprintf, _IO_FILE};
+use ::c2rust_out::stdlib::{fprintf};
 use ::libc::{printf, putchar};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};

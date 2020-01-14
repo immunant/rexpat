@@ -97,7 +97,7 @@ pub use crate::stdlib::{
 use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read, realloc};
 use ::libc::{self, __errno_location, close, free, getenv, getpid, open, strcmp};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ulonglong, c_void, intptr_t};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 
 #[repr(C)]
 #[derive(Copy, Clone)]

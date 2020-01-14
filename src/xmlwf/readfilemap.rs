@@ -10,7 +10,7 @@ use crate::stdlib::{fprintf, fstat, malloc, read, stderr};
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
 use ::libc::{self, close, free, open, perror};
 pub use ::libc::{timespec, INT_MAX, O_RDONLY};
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
+use libc::{c_char, c_int, c_long, c_uint, c_void};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

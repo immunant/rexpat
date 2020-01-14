@@ -366,7 +366,7 @@ pub mod xmltok_impl_c {
         inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
     };
     use crate::xmltok_impl_h::{C2RustUnnamed_2, BT_APOS, BT_EQUALS, BT_LF, BT_QUOT};
-    use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong};
+    use libc::{c_char, c_int, c_long, c_uchar, c_ulong};
     pub unsafe extern "C" fn big2_scanComment(
         mut enc: *const ENCODING,
         mut ptr: *const c_char,
@@ -11811,7 +11811,7 @@ pub mod nametab_h {
        USE OR OTHER DEALINGS IN THE SOFTWARE.
     */
 
-    use libc::{c_int, c_uchar, c_uint};
+    use libc::{c_uchar, c_uint};
     pub static mut namingBitmap: [c_uint; 320] = [
         0u32,
         0u32,

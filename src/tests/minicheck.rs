@@ -3,7 +3,7 @@
 use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
 use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
-use libc::{c_char, c_double, c_int, c_uint, c_ulong, c_void};
+use libc::{c_char, c_double, c_int, c_ulong, c_void};
 pub const CK_VERBOSE: c_int = 2i32;
 
 pub type tcase_setup_function = Option<unsafe extern "C" fn() -> ()>;
