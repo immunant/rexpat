@@ -102,12 +102,17 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_ParserStruct {
+    /* The first member must be m_userData so that the XML_GetUserData
+       macro works. */
     pub m_userData: *mut c_void,
     pub m_handlerArg: *mut c_void,
     pub m_buffer: *mut c_char,
     pub m_mem: XML_Memory_Handling_Suite,
+    /* first character to be parsed */
     pub m_bufferPtr: *const c_char,
+    /* past last character to be parsed */
     pub m_bufferEnd: *mut c_char,
+    /* allocated end of m_buffer */
     pub m_bufferLim: *const c_char,
     pub m_parseEndByteIndex: XML_Index,
     pub m_parseEndPtr: *const c_char,
@@ -254,6 +259,7 @@ pub struct prefix {
     pub name: *const XML_Char,
     pub binding: *mut BINDING,
 }
+
 /* TAG represents an open element.
    The name of the element is stored in both the document and API
    encodings.  The memory buffer 'buf' is a separately-allocated
@@ -267,7 +273,6 @@ pub struct prefix {
    A parser re-uses these structures, maintaining a list of allocated
    TAG objects in a free list.
 */
-
 pub type TAG = tag;
 
 #[repr(C)]
