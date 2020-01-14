@@ -35,7 +35,6 @@ use ::c2rust_out::src::lib::xmlparse::{
 use ::c2rust_out::stdlib::{__assert_fail, malloc, memcpy, strlen};
 use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
 
-
 use ::std::mem::transmute;
 
 pub use c2rust_out::*;

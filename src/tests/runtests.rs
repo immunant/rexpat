@@ -19,8 +19,7 @@
 )]
 
 use crate::stdlib::{stderr, strncmp};
-use ::c2rust_out::ascii_h::ASCII_PERIOD;
-use ::c2rust_out::ascii_h_0::{ASCII_0, ASCII_9};
+use ::c2rust_out::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::c2rust_out::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_Memory_Handling_Suite, XML_ParserStruct,
     XML_ParsingStatus, XML_cp, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY, XML_ERROR_BAD_CHAR_REF,
@@ -66,9 +65,7 @@ use ::c2rust_out::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, reall
 pub use ::c2rust_out::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
 
-
 use ::std::mem::transmute;
-
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
@@ -17304,7 +17301,7 @@ unsafe extern "C" fn parse_version(
         return XML_FALSE;
     }
     while *version_text as c_int != 0 as c_int {
-        if *version_text as c_int >= ASCII_0 && *version_text as c_int <= ASCII_9 {
+        if *version_text >= ASCII_0 && *version_text <= ASCII_9 {
             break;
         }
         version_text = version_text.offset(1)
@@ -17314,39 +17311,39 @@ unsafe extern "C" fn parse_version(
     }
     /* version_struct->major = strtoul(version_text, 10, &version_text) */
     (*version_struct).major = 0 as c_int;
-    while *version_text as c_int >= ASCII_0 && *version_text as c_int <= ASCII_9 {
+    while *version_text >= ASCII_0 && *version_text <= ASCII_9 {
         let fresh2 = version_text;
         version_text = version_text.offset(1);
         (*version_struct).major =
-            10 as c_int * (*version_struct).major + (*fresh2 as c_int - ASCII_0)
+            10 as c_int * (*version_struct).major + (*fresh2 as c_int - ASCII_0 as c_int)
     }
     let fresh3 = version_text;
     version_text = version_text.offset(1);
-    if *fresh3 as c_int != ASCII_PERIOD {
+    if *fresh3 != ASCII_PERIOD {
         return XML_FALSE;
     }
     /* Now for the minor version number */
     (*version_struct).minor = 0 as c_int;
-    while *version_text as c_int >= ASCII_0 && *version_text as c_int <= ASCII_9 {
+    while *version_text >= ASCII_0 && *version_text <= ASCII_9 {
         let fresh4 = version_text;
         version_text = version_text.offset(1);
         (*version_struct).minor =
-            10 as c_int * (*version_struct).minor + (*fresh4 as c_int - ASCII_0)
+            10 as c_int * (*version_struct).minor + (*fresh4 as c_int - ASCII_0 as c_int)
     }
     let fresh5 = version_text;
     version_text = version_text.offset(1);
-    if *fresh5 as c_int != ASCII_PERIOD {
+    if *fresh5 != ASCII_PERIOD {
         return XML_FALSE;
     }
     /* Finally the micro version number */
     (*version_struct).micro = 0 as c_int;
-    while *version_text as c_int >= ASCII_0 && *version_text as c_int <= ASCII_9 {
+    while *version_text >= ASCII_0 && *version_text <= ASCII_9 {
         let fresh6 = version_text;
         version_text = version_text.offset(1);
         (*version_struct).micro =
-            10 as c_int * (*version_struct).micro + (*fresh6 as c_int - ASCII_0)
+            10 as c_int * (*version_struct).micro + (*fresh6 as c_int - ASCII_0 as c_int)
     }
-    if *version_text as c_int != 0 as c_int {
+    if *version_text != 0 {
         return XML_FALSE;
     }
     return XML_TRUE;

@@ -16,8 +16,6 @@
 
 #[path = "src/ascii_h.rs"]
 pub mod ascii_h;
-#[path = "src/ascii_h_0.rs"]
-pub mod ascii_h_0;
 #[path = "src/expat_config_h.rs"]
 pub mod expat_config_h;
 #[path = "src/expat_external_h.rs"]

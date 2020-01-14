@@ -6341,7 +6341,7 @@ unsafe extern "C" fn doProlog(
             50 => {
                 if *(*parser)
                     .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize) as c_int
+                    .offset((*parser).m_prologState.level as isize)
                     == ASCII_PIPE
                 {
                     return XML_ERROR_SYNTAX;
@@ -6357,7 +6357,7 @@ unsafe extern "C" fn doProlog(
             49 => {
                 if *(*parser)
                     .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize) as c_int
+                    .offset((*parser).m_prologState.level as isize)
                     == ASCII_COMMA
                 {
                     return XML_ERROR_SYNTAX;

@@ -338,13 +338,13 @@ pub mod xmltok_impl_c {
 
     use super::{ATTRIBUTE, ENCODING, POSITION, XML_TOK_INSTANCE_START, XML_TOK_PROLOG_S};
     use crate::ascii_h::{
+        ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_l, ASCII_m, ASCII_x, ASCII_0, ASCII_1, ASCII_2,
+        ASCII_3, ASCII_8, ASCII_9, ASCII_B, ASCII_E, ASCII_F, ASCII_L, ASCII_M, ASCII_X,
+    };
+    use crate::ascii_h::{
         ASCII_b, ASCII_d, ASCII_f, ASCII_q, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_A, ASCII_AMP,
         ASCII_APOS, ASCII_C, ASCII_D, ASCII_GT, ASCII_LSQB, ASCII_LT, ASCII_QUOT, ASCII_SPACE,
         ASCII_T,
-    };
-    use crate::ascii_h_0::{
-        ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_l, ASCII_m, ASCII_x, ASCII_0, ASCII_1, ASCII_2,
-        ASCII_3, ASCII_8, ASCII_9, ASCII_B, ASCII_E, ASCII_F, ASCII_L, ASCII_M, ASCII_X,
     };
     use crate::expat_external_h::XML_Size;
     use crate::stddef_h::size_t;
@@ -862,9 +862,9 @@ pub mod xmltok_impl_c {
             return 1 as c_int;
         }
         match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(0 as c_int as isize) as c_int
+            *ptr.offset(0 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_x => {}
             ASCII_X => upper = 1 as c_int,
@@ -872,9 +872,9 @@ pub mod xmltok_impl_c {
         }
         ptr = ptr.offset(2 as c_int as isize);
         match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(0 as c_int as isize) as c_int
+            *ptr.offset(0 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_m => {}
             ASCII_M => upper = 1 as c_int,
@@ -882,9 +882,9 @@ pub mod xmltok_impl_c {
         }
         ptr = ptr.offset(2 as c_int as isize);
         match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(0 as c_int as isize) as c_int
+            *ptr.offset(0 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_l => {}
             ASCII_L => upper = 1 as c_int,
@@ -909,9 +909,9 @@ pub mod xmltok_impl_c {
             return 1 as c_int;
         }
         match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(1 as c_int as isize) as c_int
+            *ptr.offset(1 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_x => {}
             ASCII_X => upper = 1 as c_int,
@@ -919,9 +919,9 @@ pub mod xmltok_impl_c {
         }
         ptr = ptr.offset(2 as c_int as isize);
         match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(1 as c_int as isize) as c_int
+            *ptr.offset(1 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_m => {}
             ASCII_M => upper = 1 as c_int,
@@ -929,9 +929,9 @@ pub mod xmltok_impl_c {
         }
         ptr = ptr.offset(2 as c_int as isize);
         match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-            *ptr.offset(1 as c_int as isize) as c_int
+            *ptr.offset(1 as c_int as isize)
         } else {
-            -(1 as c_int)
+            -1
         } {
             ASCII_l => {}
             ASCII_L => upper = 1 as c_int,
@@ -955,19 +955,19 @@ pub mod xmltok_impl_c {
         if end.wrapping_offset_from(ptr) as c_long != (1 as c_int * 3 as c_int) as c_long {
             return 1 as c_int;
         }
-        match *ptr as c_int {
+        match *ptr {
             ASCII_x => {}
             ASCII_X => upper = 1 as c_int,
             _ => return 1 as c_int,
         }
         ptr = ptr.offset(1 as c_int as isize);
-        match *ptr as c_int {
+        match *ptr {
             ASCII_m => {}
             ASCII_M => upper = 1 as c_int,
             _ => return 1 as c_int,
         }
         ptr = ptr.offset(1 as c_int as isize);
-        match *ptr as c_int {
+        match *ptr {
             ASCII_l => {}
             ASCII_L => upper = 1 as c_int,
             _ => return 1 as c_int,
@@ -10395,7 +10395,7 @@ pub mod xmltok_impl_c {
                     if (if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
                         *ptr.offset(1 as c_int as isize) as c_int
                     } else {
-                        -(1 as c_int)
+                        -1
                     }) & !(0x7f as c_int)
                         == 0
                     {
@@ -10417,7 +10417,7 @@ pub mod xmltok_impl_c {
                     match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
                         *ptr.offset(1 as c_int as isize) as c_int
                     } else {
-                        -(1 as c_int)
+                        -1
                     } {
                         36 => {}
                         64 => {}
@@ -10469,7 +10469,7 @@ pub mod xmltok_impl_c {
                     if (if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
                         *ptr.offset(0 as c_int as isize) as c_int
                     } else {
-                        -(1 as c_int)
+                        -1
                     }) & !(0x7f as c_int)
                         == 0
                     {
@@ -10487,7 +10487,7 @@ pub mod xmltok_impl_c {
                     match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
                         *ptr.offset(0 as c_int as isize) as c_int
                     } else {
-                        -(1 as c_int)
+                        -1
                     } {
                         36 | 64 => {}
                         _ => {
@@ -10670,8 +10670,8 @@ pub mod xmltok_impl_c {
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
-                            || *ptr as c_int != ASCII_SPACE
-                            || *ptr.offset(1 as c_int as isize) as c_int == ASCII_SPACE
+                            || *ptr != ASCII_SPACE
+                            || *ptr.offset(1 as c_int as isize) == ASCII_SPACE
                             || (*(enc as *mut normal_encoding)).type_0
                                 [*ptr.offset(1 as c_int as isize) as c_uchar as usize]
                                 as c_int
@@ -10816,18 +10816,17 @@ pub mod xmltok_impl_c {
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
                             || (if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-                                *ptr.offset(0 as c_int as isize) as c_int
+                                *ptr.offset(0 as c_int as isize)
                             } else {
-                                -(1 as c_int)
+                                -1
                             }) != ASCII_SPACE
                             || (if *ptr.offset(2 as c_int as isize).offset(1 as c_int as isize)
                                 as c_int
                                 == 0 as c_int
                             {
                                 *ptr.offset(2 as c_int as isize).offset(0 as c_int as isize)
-                                    as c_int
                             } else {
-                                -(1 as c_int)
+                                -1
                             }) == ASCII_SPACE
                             || (if *ptr.offset(2 as c_int as isize).offset(1 as c_int as isize)
                                 as c_int
@@ -10974,18 +10973,17 @@ pub mod xmltok_impl_c {
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
                             || (if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-                                *ptr.offset(1 as c_int as isize) as c_int
+                                *ptr.offset(1 as c_int as isize)
                             } else {
-                                -(1 as c_int)
+                                -1
                             }) != ASCII_SPACE
                             || (if *ptr.offset(2 as c_int as isize).offset(0 as c_int as isize)
                                 as c_int
                                 == 0 as c_int
                             {
                                 *ptr.offset(2 as c_int as isize).offset(1 as c_int as isize)
-                                    as c_int
                             } else {
-                                -(1 as c_int)
+                                -1
                             }) == ASCII_SPACE
                             || (if *ptr.offset(2 as c_int as isize).offset(0 as c_int as isize)
                                 as c_int
@@ -11040,29 +11038,29 @@ pub mod xmltok_impl_c {
             while !(*ptr.offset(1 as c_int as isize) as c_int == 0 as c_int
                 && *ptr.offset(0 as c_int as isize) as c_int == 0x3b as c_int)
             {
-                let mut c: c_int = if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-                    *ptr.offset(0 as c_int as isize) as c_int
+                let mut c = if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
+                    *ptr.offset(0 as c_int as isize)
                 } else {
-                    -(1 as c_int)
+                    -1
                 };
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
                         result <<= 4 as c_int;
-                        result |= c - ASCII_0
+                        result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_A)
+                        result += 10 as c_int + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_a)
+                        result += 10 as c_int + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(2 as c_int as isize)
             }
@@ -11073,12 +11071,12 @@ pub mod xmltok_impl_c {
                 let mut c_0: c_int = if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
                     *ptr.offset(0 as c_int as isize) as c_int
                 } else {
-                    -(1 as c_int)
+                    -1
                 };
                 result *= 10 as c_int;
-                result += c_0 - ASCII_0;
+                result += c_0 - ASCII_0 as c_int;
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(2 as c_int as isize)
             }
@@ -11095,25 +11093,25 @@ pub mod xmltok_impl_c {
         if *ptr as c_int == 0x78 as c_int {
             ptr = ptr.offset(1 as c_int as isize);
             while !(*ptr as c_int == 0x3b as c_int) {
-                let mut c: c_int = *ptr as c_int;
+                let mut c = *ptr;
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
                         result <<= 4 as c_int;
-                        result |= c - ASCII_0
+                        result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_A)
+                        result += 10 as c_int + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_a)
+                        result += 10 as c_int + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(1 as c_int as isize)
             }
@@ -11121,9 +11119,9 @@ pub mod xmltok_impl_c {
             while !(*ptr as c_int == 0x3b as c_int) {
                 let mut c_0: c_int = *ptr as c_int;
                 result *= 10 as c_int;
-                result += c_0 - ASCII_0;
+                result += c_0 - ASCII_0 as c_int;
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(1 as c_int as isize)
             }
@@ -11144,29 +11142,29 @@ pub mod xmltok_impl_c {
             while !(*ptr.offset(0 as c_int as isize) as c_int == 0 as c_int
                 && *ptr.offset(1 as c_int as isize) as c_int == 0x3b as c_int)
             {
-                let mut c: c_int = if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-                    *ptr.offset(1 as c_int as isize) as c_int
+                let mut c = if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
+                    *ptr.offset(1 as c_int as isize)
                 } else {
-                    -(1 as c_int)
+                    -1
                 };
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
                         result <<= 4 as c_int;
-                        result |= c - ASCII_0
+                        result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_A)
+                        result += 10 as c_int + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
                         result <<= 4 as c_int;
-                        result += 10 as c_int + (c - ASCII_a)
+                        result += 10 as c_int + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(2 as c_int as isize)
             }
@@ -11174,15 +11172,15 @@ pub mod xmltok_impl_c {
             while !(*ptr.offset(0 as c_int as isize) as c_int == 0 as c_int
                 && *ptr.offset(1 as c_int as isize) as c_int == 0x3b as c_int)
             {
-                let mut c_0: c_int = if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-                    *ptr.offset(1 as c_int as isize) as c_int
+                let mut c_0 = if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
+                    *ptr.offset(1 as c_int as isize)
                 } else {
-                    -(1 as c_int)
+                    -1
                 };
                 result *= 10 as c_int;
-                result += c_0 - ASCII_0;
+                result += (c_0 - ASCII_0) as c_int;
                 if result >= 0x110000 as c_int {
-                    return -(1 as c_int);
+                    return -1;
                 }
                 ptr = ptr.offset(2 as c_int as isize)
             }
@@ -11203,12 +11201,12 @@ pub mod xmltok_impl_c {
                         == 0x74 as c_int
                 {
                     match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-                        *ptr.offset(0 as c_int as isize) as c_int
+                        *ptr.offset(0 as c_int as isize)
                     } else {
-                        -(1 as c_int)
+                        -1
                     } {
-                        ASCII_l => return ASCII_LT,
-                        ASCII_g => return ASCII_GT,
+                        ASCII_l => return ASCII_LT as c_int,
+                        ASCII_g => return ASCII_GT as c_int,
                         _ => {}
                     }
                 }
@@ -11225,16 +11223,16 @@ pub mod xmltok_impl_c {
                         if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int
                             && *ptr.offset(0 as c_int as isize) as c_int == 0x70 as c_int
                         {
-                            return ASCII_AMP;
+                            return ASCII_AMP as c_int;
                         }
                     }
                 }
             }
             4 => {
                 match if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int {
-                    *ptr.offset(0 as c_int as isize) as c_int
+                    *ptr.offset(0 as c_int as isize)
                 } else {
-                    -(1 as c_int)
+                    -1
                 } {
                     ASCII_q => {
                         ptr = ptr.offset(2 as c_int as isize);
@@ -11249,7 +11247,7 @@ pub mod xmltok_impl_c {
                                 if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int
                                     && *ptr.offset(0 as c_int as isize) as c_int == 0x74 as c_int
                                 {
-                                    return ASCII_QUOT;
+                                    return ASCII_QUOT as c_int;
                                 }
                             }
                         }
@@ -11267,7 +11265,7 @@ pub mod xmltok_impl_c {
                                 if *ptr.offset(1 as c_int as isize) as c_int == 0 as c_int
                                     && *ptr.offset(0 as c_int as isize) as c_int == 0x73 as c_int
                                 {
-                                    return ASCII_APOS;
+                                    return ASCII_APOS as c_int;
                                 }
                             }
                         }
@@ -11288,9 +11286,9 @@ pub mod xmltok_impl_c {
         match end.wrapping_offset_from(ptr) as c_long / 1 as c_int as c_long {
             2 => {
                 if *ptr.offset(1 as c_int as isize) as c_int == 0x74 as c_int {
-                    match *ptr as c_int {
-                        ASCII_l => return ASCII_LT,
-                        ASCII_g => return ASCII_GT,
+                    match *ptr {
+                        ASCII_l => return ASCII_LT as c_int,
+                        ASCII_g => return ASCII_GT as c_int,
                         _ => {}
                     }
                 }
@@ -11301,12 +11299,12 @@ pub mod xmltok_impl_c {
                     if *ptr as c_int == 0x6d as c_int {
                         ptr = ptr.offset(1 as c_int as isize);
                         if *ptr as c_int == 0x70 as c_int {
-                            return ASCII_AMP;
+                            return ASCII_AMP as c_int;
                         }
                     }
                 }
             }
-            4 => match *ptr as c_int {
+            4 => match *ptr {
                 ASCII_q => {
                     ptr = ptr.offset(1 as c_int as isize);
                     if *ptr as c_int == 0x75 as c_int {
@@ -11314,7 +11312,7 @@ pub mod xmltok_impl_c {
                         if *ptr as c_int == 0x6f as c_int {
                             ptr = ptr.offset(1 as c_int as isize);
                             if *ptr as c_int == 0x74 as c_int {
-                                return ASCII_QUOT;
+                                return ASCII_QUOT as c_int;
                             }
                         }
                     }
@@ -11326,7 +11324,7 @@ pub mod xmltok_impl_c {
                         if *ptr as c_int == 0x6f as c_int {
                             ptr = ptr.offset(1 as c_int as isize);
                             if *ptr as c_int == 0x73 as c_int {
-                                return ASCII_APOS;
+                                return ASCII_APOS as c_int;
                             }
                         }
                     }
@@ -11351,12 +11349,12 @@ pub mod xmltok_impl_c {
                         == 0x74 as c_int
                 {
                     match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-                        *ptr.offset(1 as c_int as isize) as c_int
+                        *ptr.offset(1 as c_int as isize)
                     } else {
-                        -(1 as c_int)
+                        -1
                     } {
-                        ASCII_l => return ASCII_LT,
-                        ASCII_g => return ASCII_GT,
+                        ASCII_l => return ASCII_LT as c_int,
+                        ASCII_g => return ASCII_GT as c_int,
                         _ => {}
                     }
                 }
@@ -11373,16 +11371,16 @@ pub mod xmltok_impl_c {
                         if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int
                             && *ptr.offset(1 as c_int as isize) as c_int == 0x70 as c_int
                         {
-                            return ASCII_AMP;
+                            return ASCII_AMP as c_int;
                         }
                     }
                 }
             }
             4 => {
                 match if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int {
-                    *ptr.offset(1 as c_int as isize) as c_int
+                    *ptr.offset(1 as c_int as isize)
                 } else {
-                    -(1 as c_int)
+                    -1
                 } {
                     ASCII_q => {
                         ptr = ptr.offset(2 as c_int as isize);
@@ -11397,7 +11395,7 @@ pub mod xmltok_impl_c {
                                 if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int
                                     && *ptr.offset(1 as c_int as isize) as c_int == 0x74 as c_int
                                 {
-                                    return ASCII_QUOT;
+                                    return ASCII_QUOT as c_int;
                                 }
                             }
                         }
@@ -11415,7 +11413,7 @@ pub mod xmltok_impl_c {
                                 if *ptr.offset(0 as c_int as isize) as c_int == 0 as c_int
                                     && *ptr.offset(1 as c_int as isize) as c_int == 0x73 as c_int
                                 {
-                                    return ASCII_APOS;
+                                    return ASCII_APOS as c_int;
                                 }
                             }
                         }
@@ -13025,15 +13023,13 @@ pub mod xmltok_ns_c {
 }
 
 pub use crate::ascii_h::{
-    ASCII_b, ASCII_d, ASCII_f, ASCII_i, ASCII_n, ASCII_o, ASCII_q, ASCII_r, ASCII_s, ASCII_t,
-    ASCII_v, ASCII_y, ASCII_z, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_A, ASCII_AMP, ASCII_APOS,
-    ASCII_C, ASCII_COLON, ASCII_D, ASCII_EQUALS, ASCII_GT, ASCII_I, ASCII_LSQB, ASCII_LT,
-    ASCII_MINUS, ASCII_O, ASCII_PERIOD, ASCII_QUOT, ASCII_S, ASCII_SPACE, ASCII_T, ASCII_U,
-    ASCII_UNDERSCORE, ASCII_Z,
-};
-pub use crate::ascii_h_0::{
-    ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_l, ASCII_m, ASCII_x, ASCII_0, ASCII_1, ASCII_2,
-    ASCII_3, ASCII_8, ASCII_9, ASCII_B, ASCII_E, ASCII_F, ASCII_L, ASCII_M, ASCII_X,
+    ASCII_a, ASCII_b, ASCII_c, ASCII_d, ASCII_e, ASCII_f, ASCII_g, ASCII_i, ASCII_l, ASCII_m,
+    ASCII_n, ASCII_o, ASCII_q, ASCII_r, ASCII_s, ASCII_t, ASCII_v, ASCII_x, ASCII_y, ASCII_z,
+    ASCII_0, ASCII_1, ASCII_2, ASCII_3, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_8, ASCII_9,
+    ASCII_A, ASCII_AMP, ASCII_APOS, ASCII_B, ASCII_C, ASCII_COLON, ASCII_D, ASCII_E, ASCII_EQUALS,
+    ASCII_F, ASCII_GT, ASCII_I, ASCII_L, ASCII_LSQB, ASCII_LT, ASCII_M, ASCII_MINUS, ASCII_O,
+    ASCII_PERIOD, ASCII_QUOT, ASCII_S, ASCII_SPACE, ASCII_T, ASCII_U, ASCII_UNDERSCORE, ASCII_X,
+    ASCII_Z,
 };
 pub use crate::expat_external_h::XML_Size;
 pub use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
@@ -13399,7 +13395,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
     let mut fromLim: *const c_char = *fromLimRef;
     let mut walked: size_t = 0 as c_int as size_t;
     while fromLim > from {
-        let prev: c_uchar = *fromLim.offset(-(1 as c_int) as isize) as c_uchar;
+        let prev: c_uchar = *fromLim.offset(-1 as isize) as c_uchar;
         if prev as c_uint & 0xf8 as c_uint == 0xf0 as c_uint {
             /* 4-byte character, lead by 0b11110xxx byte */
             if walked.wrapping_add(1 as c_int as c_ulong) >= 4 as c_int as c_ulong {
@@ -20230,15 +20226,15 @@ unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_
         let fresh59 = s2;
         s2 = s2.offset(1);
         let mut c2: c_char = *fresh59;
-        if ASCII_a <= c1 as c_int && c1 as c_int <= ASCII_z {
-            c1 = (c1 as c_int + (ASCII_A - ASCII_a)) as c_char
+        if ASCII_a <= c1 && c1 <= ASCII_z {
+            c1 = (c1 as c_int + (ASCII_A - ASCII_a) as c_int) as c_char
         }
-        if ASCII_a <= c2 as c_int && c2 as c_int <= ASCII_z {
+        if ASCII_a <= c2 && c2 <= ASCII_z {
             /* The following line will never get executed.  streqci() is
              * only called from two places, both of which guarantee to put
              * upper-case strings into s2.
              */
-            c2 = (c2 as c_int + (ASCII_A - ASCII_a)) as c_char
+            c2 = (c2 as c_int + (ASCII_A - ASCII_a) as c_int) as c_char
         }
         if c1 as c_int != c2 as c_int {
             return 0 as c_int;
@@ -20274,7 +20270,7 @@ unsafe extern "C" fn toAscii(
         p.offset(1 as c_int as isize),
     );
     if p == buf.as_mut_ptr() {
-        return -(1 as c_int);
+        return -1;
     } else {
         return buf[0 as c_int as usize] as c_int;
     };
@@ -20323,11 +20319,11 @@ unsafe extern "C" fn parsePseudoAttribute(
     *namePtr = ptr;
     loop {
         c = toAscii(enc, ptr, end);
-        if c == -(1 as c_int) {
+        if c == -1 {
             *nextTokPtr = ptr;
             return 0 as c_int;
         }
-        if c == ASCII_EQUALS {
+        if c == ASCII_EQUALS as c_int {
             *nameEndPtr = ptr;
             break;
         } else if isSpace(c) != 0 {
@@ -20339,7 +20335,7 @@ unsafe extern "C" fn parsePseudoAttribute(
                     break;
                 }
             }
-            if c != ASCII_EQUALS {
+            if c != ASCII_EQUALS as c_int {
                 *nextTokPtr = ptr;
                 return 0 as c_int;
             }
@@ -20358,7 +20354,7 @@ unsafe extern "C" fn parsePseudoAttribute(
         ptr = ptr.offset((*enc).minBytesPerChar as isize);
         c = toAscii(enc, ptr, end)
     }
-    if c != ASCII_QUOT && c != ASCII_APOS {
+    if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
         *nextTokPtr = ptr;
         return 0 as c_int;
     }
@@ -20370,12 +20366,12 @@ unsafe extern "C" fn parsePseudoAttribute(
         if c == open as c_int {
             break;
         }
-        if !(ASCII_a <= c && c <= ASCII_z)
-            && !(ASCII_A <= c && c <= ASCII_Z)
-            && !(ASCII_0 <= c && c <= ASCII_9)
-            && c != ASCII_PERIOD
-            && c != ASCII_MINUS
-            && c != ASCII_UNDERSCORE
+        if !(ASCII_a as c_int <= c && c <= ASCII_z as c_int)
+            && !(ASCII_A as c_int <= c && c <= ASCII_Z as c_int)
+            && !(ASCII_0 as c_int <= c && c <= ASCII_9 as c_int)
+            && c != ASCII_PERIOD as c_int
+            && c != ASCII_MINUS as c_int
+            && c != ASCII_UNDERSCORE as c_int
         {
             *nextTokPtr = ptr;
             return 0 as c_int;
@@ -20505,7 +20501,9 @@ unsafe extern "C" fn doParseXmlDecl(
     ) != 0
     {
         let mut c: c_int = toAscii(enc, val, end);
-        if !(ASCII_a <= c && c <= ASCII_z) && !(ASCII_A <= c && c <= ASCII_Z) {
+        if !(ASCII_a as c_int <= c && c <= ASCII_z as c_int)
+            && !(ASCII_A as c_int <= c && c <= ASCII_Z as c_int)
+        {
             *badPtr = val;
             return 0 as c_int;
         }
@@ -20584,15 +20582,15 @@ unsafe extern "C" fn doParseXmlDecl(
 
 unsafe extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 as c_int {
-        216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -(1 as c_int),
+        216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
         0 => {
             if latin1_encoding.type_0[result as usize] as c_int == BT_NONXML as c_int {
-                return -(1 as c_int);
+                return -1;
             }
         }
         255 => {
             if result == 0xfffe as c_int || result == 0xffff as c_int {
-                return -(1 as c_int);
+                return -1;
             }
         }
         _ => {}
@@ -20786,7 +20784,7 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
     i = 0 as c_int;
     while i < 256 as c_int {
         let mut c: c_int = *table.offset(i as isize);
-        if c == -(1 as c_int) {
+        if c == -1 {
             (*e).normal.type_0[i as usize] = BT_MALFORM as c_int as c_uchar;
             /* This shouldn't really get used. */
             (*e).utf16[i as usize] = 0xffff as c_int as c_ushort;

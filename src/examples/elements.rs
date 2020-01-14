@@ -19,9 +19,6 @@ use ::c2rust_out::stddef_h::NULL;
 use ::c2rust_out::stdlib::{fprintf, _IO_FILE};
 use ::libc::{printf, putchar};
 
-
-
-
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 pub mod expat_h {
 
