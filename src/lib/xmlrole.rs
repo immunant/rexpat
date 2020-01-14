@@ -250,398 +250,226 @@ pub type PROLOG_HANDLER = unsafe extern "C" fn(
 
 */
 
-static mut KW_ANY: [c_char; 4] = [
-    
-    ASCII_A,
-    
-    ASCII_N,
-    
-    ASCII_Y,
-    
-    '\u{0}' as c_char,
-];
+static mut KW_ANY: [c_char; 4] = [ASCII_A, ASCII_N, ASCII_Y, '\u{0}' as c_char];
 
 static mut KW_ATTLIST: [c_char; 8] = [
-    
     ASCII_A,
-    
     ASCII_T,
-    
     ASCII_T,
-    
     ASCII_L,
-    
     ASCII_I,
-    
     ASCII_S,
-    
     ASCII_T,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_CDATA: [c_char; 6] = [
-    
     ASCII_C,
-    
     ASCII_D,
-    
     ASCII_A,
-    
     ASCII_T,
-    
     ASCII_A,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_DOCTYPE: [c_char; 8] = [
-    
     ASCII_D,
-    
     ASCII_O,
-    
     ASCII_C,
-    
     ASCII_T,
-    
     ASCII_Y,
-    
     ASCII_P,
-    
     ASCII_E,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_ELEMENT: [c_char; 8] = [
-    
     ASCII_E,
-    
     ASCII_L,
-    
     ASCII_E,
-    
     ASCII_M,
-    
     ASCII_E,
-    
     ASCII_N,
-    
     ASCII_T,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_EMPTY: [c_char; 6] = [
-    
     ASCII_E,
-    
     ASCII_M,
-    
     ASCII_P,
-    
     ASCII_T,
-    
     ASCII_Y,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_ENTITIES: [c_char; 9] = [
-    
     ASCII_E,
-    
     ASCII_N,
-    
     ASCII_T,
-    
     ASCII_I,
-    
     ASCII_T,
-    
     ASCII_I,
-    
     ASCII_E,
-    
     ASCII_S,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_ENTITY: [c_char; 7] = [
-    
     ASCII_E,
-    
     ASCII_N,
-    
     ASCII_T,
-    
     ASCII_I,
-    
     ASCII_T,
-    
     ASCII_Y,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_FIXED: [c_char; 6] = [
-    
     ASCII_F,
-    
     ASCII_I,
-    
     ASCII_X,
-    
     ASCII_E,
-    
     ASCII_D,
-    
     '\u{0}' as c_char,
 ];
 
-static mut KW_ID: [c_char; 3] = [
-    
-    ASCII_I,
-    
-    ASCII_D,
-    
-    '\u{0}' as c_char,
-];
+static mut KW_ID: [c_char; 3] = [ASCII_I, ASCII_D, '\u{0}' as c_char];
 
 static mut KW_IDREF: [c_char; 6] = [
-    
     ASCII_I,
-    
     ASCII_D,
-    
     ASCII_R,
-    
     ASCII_E,
-    
     ASCII_F,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_IDREFS: [c_char; 7] = [
-    
     ASCII_I,
-    
     ASCII_D,
-    
     ASCII_R,
-    
     ASCII_E,
-    
     ASCII_F,
-    
     ASCII_S,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_IGNORE: [c_char; 7] = [
-    
     ASCII_I,
-    
     ASCII_G,
-    
     ASCII_N,
-    
     ASCII_O,
-    
     ASCII_R,
-    
     ASCII_E,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_IMPLIED: [c_char; 8] = [
-    
     ASCII_I,
-    
     ASCII_M,
-    
     ASCII_P,
-    
     ASCII_L,
-    
     ASCII_I,
-    
     ASCII_E,
-    
     ASCII_D,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_INCLUDE: [c_char; 8] = [
-    
     ASCII_I,
-    
     ASCII_N,
-    
     ASCII_C,
-    
     ASCII_L,
-    
     ASCII_U,
-    
     ASCII_D,
-    
     ASCII_E,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_NDATA: [c_char; 6] = [
-    
     ASCII_N,
-    
     ASCII_D,
-    
     ASCII_A,
-    
     ASCII_T,
-    
     ASCII_A,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_NMTOKEN: [c_char; 8] = [
-    
     ASCII_N,
-    
     ASCII_M,
-    
     ASCII_T,
-    
     ASCII_O,
-    
     ASCII_K,
-    
     ASCII_E,
-    
     ASCII_N,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_NMTOKENS: [c_char; 9] = [
-    
     ASCII_N,
-    
     ASCII_M,
-    
     ASCII_T,
-    
     ASCII_O,
-    
     ASCII_K,
-    
     ASCII_E,
-    
     ASCII_N,
-    
     ASCII_S,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_NOTATION: [c_char; 9] = [
-    
     ASCII_N,
-    
     ASCII_O,
-    
     ASCII_T,
-    
     ASCII_A,
-    
     ASCII_T,
-    
     ASCII_I,
-    
     ASCII_O,
-    
     ASCII_N,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_PCDATA: [c_char; 7] = [
-    
     ASCII_P,
-    
     ASCII_C,
-    
     ASCII_D,
-    
     ASCII_A,
-    
     ASCII_T,
-    
     ASCII_A,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_PUBLIC: [c_char; 7] = [
-    
     ASCII_P,
-    
     ASCII_U,
-    
     ASCII_B,
-    
     ASCII_L,
-    
     ASCII_I,
-    
     ASCII_C,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_REQUIRED: [c_char; 9] = [
-    
     ASCII_R,
-    
     ASCII_E,
-    
     ASCII_Q,
-    
     ASCII_U,
-    
     ASCII_I,
-    
     ASCII_R,
-    
     ASCII_E,
-    
     ASCII_D,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_SYSTEM: [c_char; 7] = [
-    
     ASCII_S,
-    
     ASCII_Y,
-    
     ASCII_S,
-    
     ASCII_T,
-    
     ASCII_E,
-    
     ASCII_M,
-    
     '\u{0}' as c_char,
 ];
 
@@ -655,21 +483,21 @@ unsafe extern "C" fn prolog0(
     match tok {
         XML_TOK_PROLOG_S => {
             (*state).handler = Some(prolog1 as PROLOG_HANDLER); /* LCOV_EXCL_LINE */
-            return  XML_ROLE_NONE;
+            return XML_ROLE_NONE;
         }
         super::xmltok::XML_TOK_XML_DECL => {
             (*state).handler = Some(prolog1 as PROLOG_HANDLER);
-            return  XML_ROLE_XML_DECL;
+            return XML_ROLE_XML_DECL;
         }
         super::xmltok::XML_TOK_PI => {
             (*state).handler = Some(prolog1 as PROLOG_HANDLER);
-            return  XML_ROLE_PI;
+            return XML_ROLE_PI;
         }
         super::xmltok::XML_TOK_COMMENT => {
             (*state).handler = Some(prolog1 as PROLOG_HANDLER);
-            return  XML_ROLE_COMMENT;
+            return XML_ROLE_COMMENT;
         }
-        super::xmltok::XML_TOK_BOM => return  XML_ROLE_NONE,
+        super::xmltok::XML_TOK_BOM => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -679,12 +507,12 @@ unsafe extern "C" fn prolog0(
             ) == 0)
             {
                 (*state).handler = Some(doctype0 as PROLOG_HANDLER);
-                return  XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE_DOCTYPE_NONE;
             }
         }
         XML_TOK_INSTANCE_START => {
             (*state).handler = Some(error as PROLOG_HANDLER);
-            return  XML_ROLE_INSTANCE_START;
+            return XML_ROLE_INSTANCE_START;
         }
         _ => {}
     }
@@ -699,9 +527,9 @@ unsafe extern "C" fn prolog1(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
-        super::xmltok::XML_TOK_PI => return  XML_ROLE_PI,
-        super::xmltok::XML_TOK_COMMENT => return  XML_ROLE_COMMENT,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
+        super::xmltok::XML_TOK_PI => return XML_ROLE_PI,
+        super::xmltok::XML_TOK_COMMENT => return XML_ROLE_COMMENT,
         super::xmltok::XML_TOK_BOM => {
             /* This case can never arise.  To reach this role function, the
              * parse must have passed through prolog0 and therefore have had
@@ -710,7 +538,7 @@ unsafe extern "C" fn prolog1(
              * technically it should be interpreted as a non-breaking space),
              * so will be rejected by the tokenizing stages.
              */
-            return  XML_ROLE_NONE;
+            return XML_ROLE_NONE;
         }
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii.expect("non-null function pointer")(
@@ -721,12 +549,12 @@ unsafe extern "C" fn prolog1(
             ) == 0)
             {
                 (*state).handler = Some(doctype0 as PROLOG_HANDLER);
-                return  XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE_DOCTYPE_NONE;
             }
         }
         XML_TOK_INSTANCE_START => {
             (*state).handler = Some(error as PROLOG_HANDLER);
-            return  XML_ROLE_INSTANCE_START;
+            return XML_ROLE_INSTANCE_START;
         }
         _ => {}
     }
@@ -741,12 +569,12 @@ unsafe extern "C" fn prolog2(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
-        super::xmltok::XML_TOK_PI => return  XML_ROLE_PI,
-        super::xmltok::XML_TOK_COMMENT => return  XML_ROLE_COMMENT,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
+        super::xmltok::XML_TOK_PI => return XML_ROLE_PI,
+        super::xmltok::XML_TOK_COMMENT => return XML_ROLE_COMMENT,
         XML_TOK_INSTANCE_START => {
             (*state).handler = Some(error as PROLOG_HANDLER);
-            return  XML_ROLE_INSTANCE_START;
+            return XML_ROLE_INSTANCE_START;
         }
         _ => {}
     }
@@ -761,10 +589,10 @@ unsafe extern "C" fn doctype0(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(doctype1 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_NAME;
+            return XML_ROLE_DOCTYPE_NAME;
         }
         _ => {}
     }
@@ -779,14 +607,14 @@ unsafe extern "C" fn doctype1(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_OPEN_BRACKET => {
             (*state).handler = Some(internalSubset as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
+            return XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
         }
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = Some(prolog2 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE_DOCTYPE_CLOSE;
         }
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
@@ -797,7 +625,7 @@ unsafe extern "C" fn doctype1(
             ) != 0
             {
                 (*state).handler = Some(doctype3 as PROLOG_HANDLER);
-                return  XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE_DOCTYPE_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -807,7 +635,7 @@ unsafe extern "C" fn doctype1(
             ) != 0
             {
                 (*state).handler = Some(doctype2 as PROLOG_HANDLER);
-                return  XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE_DOCTYPE_NONE;
             }
         }
         _ => {}
@@ -823,10 +651,10 @@ unsafe extern "C" fn doctype2(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(doctype3 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_PUBLIC_ID;
+            return XML_ROLE_DOCTYPE_PUBLIC_ID;
         }
         _ => {}
     }
@@ -841,10 +669,10 @@ unsafe extern "C" fn doctype3(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(doctype4 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_SYSTEM_ID;
+            return XML_ROLE_DOCTYPE_SYSTEM_ID;
         }
         _ => {}
     }
@@ -859,14 +687,14 @@ unsafe extern "C" fn doctype4(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_OPEN_BRACKET => {
             (*state).handler = Some(internalSubset as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
+            return XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
         }
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = Some(prolog2 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE_DOCTYPE_CLOSE;
         }
         _ => {}
     }
@@ -881,10 +709,10 @@ unsafe extern "C" fn doctype5(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_DOCTYPE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = Some(prolog2 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE_DOCTYPE_CLOSE;
         }
         _ => {}
     }
@@ -899,7 +727,7 @@ unsafe extern "C" fn internalSubset(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -909,7 +737,7 @@ unsafe extern "C" fn internalSubset(
             ) != 0
             {
                 (*state).handler = Some(entity0 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -919,7 +747,7 @@ unsafe extern "C" fn internalSubset(
             ) != 0
             {
                 (*state).handler = Some(attlist0 as PROLOG_HANDLER);
-                return  XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE_ATTLIST_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -929,7 +757,7 @@ unsafe extern "C" fn internalSubset(
             ) != 0
             {
                 (*state).handler = Some(element0 as PROLOG_HANDLER);
-                return  XML_ROLE_ELEMENT_NONE;
+                return XML_ROLE_ELEMENT_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -939,17 +767,17 @@ unsafe extern "C" fn internalSubset(
             ) != 0
             {
                 (*state).handler = Some(notation0 as PROLOG_HANDLER);
-                return  XML_ROLE_NOTATION_NONE;
+                return XML_ROLE_NOTATION_NONE;
             }
         }
-        super::xmltok::XML_TOK_PI => return  XML_ROLE_PI,
-        super::xmltok::XML_TOK_COMMENT => return  XML_ROLE_COMMENT,
-        super::xmltok::XML_TOK_PARAM_ENTITY_REF => return  XML_ROLE_PARAM_ENTITY_REF,
+        super::xmltok::XML_TOK_PI => return XML_ROLE_PI,
+        super::xmltok::XML_TOK_COMMENT => return XML_ROLE_COMMENT,
+        super::xmltok::XML_TOK_PARAM_ENTITY_REF => return XML_ROLE_PARAM_ENTITY_REF,
         super::xmltok::XML_TOK_CLOSE_BRACKET => {
             (*state).handler = Some(doctype5 as PROLOG_HANDLER);
-            return  XML_ROLE_DOCTYPE_NONE;
+            return XML_ROLE_DOCTYPE_NONE;
         }
-        super::xmltok::XML_TOK_NONE => return  XML_ROLE_NONE,
+        super::xmltok::XML_TOK_NONE => return XML_ROLE_NONE,
         _ => {}
     }
     return common(state, tok);
@@ -964,7 +792,7 @@ unsafe extern "C" fn externalSubset0(
 ) -> c_int {
     (*state).handler = Some(externalSubset1 as PROLOG_HANDLER);
     if tok == super::xmltok::XML_TOK_XML_DECL {
-        return  XML_ROLE_TEXT_DECL;
+        return XML_ROLE_TEXT_DECL;
     }
     return externalSubset1(state, tok, ptr, end, enc);
 }
@@ -979,19 +807,19 @@ unsafe extern "C" fn externalSubset1(
     match tok {
         super::xmltok::XML_TOK_COND_SECT_OPEN => {
             (*state).handler = Some(condSect0 as PROLOG_HANDLER);
-            return  XML_ROLE_NONE;
+            return XML_ROLE_NONE;
         }
         super::xmltok::XML_TOK_COND_SECT_CLOSE => {
             if !((*state).includeLevel == 0u32) {
                 (*state).includeLevel = (*state).includeLevel.wrapping_sub(1u32);
-                return  XML_ROLE_NONE;
+                return XML_ROLE_NONE;
             }
         }
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_CLOSE_BRACKET => {}
         super::xmltok::XML_TOK_NONE => {
             if !((*state).includeLevel != 0) {
-                return  XML_ROLE_NONE;
+                return XML_ROLE_NONE;
             }
         }
         _ => return internalSubset(state, tok, ptr, end, enc),
@@ -1008,14 +836,14 @@ unsafe extern "C" fn entity0(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_PERCENT => {
             (*state).handler = Some(entity1 as PROLOG_HANDLER);
-            return  XML_ROLE_ENTITY_NONE;
+            return XML_ROLE_ENTITY_NONE;
         }
         super::xmltok::XML_TOK_NAME => {
             (*state).handler = Some(entity2 as PROLOG_HANDLER);
-            return  XML_ROLE_GENERAL_ENTITY_NAME;
+            return XML_ROLE_GENERAL_ENTITY_NAME;
         }
         _ => {}
     }
@@ -1030,10 +858,10 @@ unsafe extern "C" fn entity1(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
             (*state).handler = Some(entity7 as PROLOG_HANDLER);
-            return  XML_ROLE_PARAM_ENTITY_NAME;
+            return XML_ROLE_PARAM_ENTITY_NAME;
         }
         _ => {}
     }
@@ -1048,7 +876,7 @@ unsafe extern "C" fn entity2(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1058,7 +886,7 @@ unsafe extern "C" fn entity2(
             ) != 0
             {
                 (*state).handler = Some(entity4 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1068,13 +896,13 @@ unsafe extern "C" fn entity2(
             ) != 0
             {
                 (*state).handler = Some(entity3 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
         }
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ENTITY_NONE;
-            return  XML_ROLE_ENTITY_VALUE;
+            (*state).role_none = XML_ROLE_ENTITY_NONE;
+            return XML_ROLE_ENTITY_VALUE;
         }
         _ => {}
     }
@@ -1089,10 +917,10 @@ unsafe extern "C" fn entity3(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(entity4 as PROLOG_HANDLER);
-            return  XML_ROLE_ENTITY_PUBLIC_ID;
+            return XML_ROLE_ENTITY_PUBLIC_ID;
         }
         _ => {}
     }
@@ -1107,10 +935,10 @@ unsafe extern "C" fn entity4(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(entity5 as PROLOG_HANDLER);
-            return  XML_ROLE_ENTITY_SYSTEM_ID;
+            return XML_ROLE_ENTITY_SYSTEM_ID;
         }
         _ => {}
     }
@@ -1125,14 +953,14 @@ unsafe extern "C" fn entity5(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = if (*state).documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return  XML_ROLE_ENTITY_COMPLETE;
+            return XML_ROLE_ENTITY_COMPLETE;
         }
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
@@ -1143,7 +971,7 @@ unsafe extern "C" fn entity5(
             ) != 0
             {
                 (*state).handler = Some(entity6 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
         }
         _ => {}
@@ -1159,11 +987,11 @@ unsafe extern "C" fn entity6(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ENTITY_NONE;
-            return  XML_ROLE_ENTITY_NOTATION_NAME;
+            (*state).role_none = XML_ROLE_ENTITY_NONE;
+            return XML_ROLE_ENTITY_NOTATION_NAME;
         }
         _ => {}
     }
@@ -1178,7 +1006,7 @@ unsafe extern "C" fn entity7(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1188,7 +1016,7 @@ unsafe extern "C" fn entity7(
             ) != 0
             {
                 (*state).handler = Some(entity9 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1198,13 +1026,13 @@ unsafe extern "C" fn entity7(
             ) != 0
             {
                 (*state).handler = Some(entity8 as PROLOG_HANDLER);
-                return  XML_ROLE_ENTITY_NONE;
+                return XML_ROLE_ENTITY_NONE;
             }
         }
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ENTITY_NONE;
-            return  XML_ROLE_ENTITY_VALUE;
+            (*state).role_none = XML_ROLE_ENTITY_NONE;
+            return XML_ROLE_ENTITY_VALUE;
         }
         _ => {}
     }
@@ -1219,10 +1047,10 @@ unsafe extern "C" fn entity8(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(entity9 as PROLOG_HANDLER);
-            return  XML_ROLE_ENTITY_PUBLIC_ID;
+            return XML_ROLE_ENTITY_PUBLIC_ID;
         }
         _ => {}
     }
@@ -1237,10 +1065,10 @@ unsafe extern "C" fn entity9(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(entity10 as PROLOG_HANDLER);
-            return  XML_ROLE_ENTITY_SYSTEM_ID;
+            return XML_ROLE_ENTITY_SYSTEM_ID;
         }
         _ => {}
     }
@@ -1255,14 +1083,14 @@ unsafe extern "C" fn entity10(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ENTITY_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = if (*state).documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return  XML_ROLE_ENTITY_COMPLETE;
+            return XML_ROLE_ENTITY_COMPLETE;
         }
         _ => {}
     }
@@ -1277,10 +1105,10 @@ unsafe extern "C" fn notation0(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NOTATION_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_NAME => {
             (*state).handler = Some(notation1 as PROLOG_HANDLER);
-            return  XML_ROLE_NOTATION_NAME;
+            return XML_ROLE_NOTATION_NAME;
         }
         _ => {}
     }
@@ -1295,7 +1123,7 @@ unsafe extern "C" fn notation1(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NOTATION_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1305,7 +1133,7 @@ unsafe extern "C" fn notation1(
             ) != 0
             {
                 (*state).handler = Some(notation3 as PROLOG_HANDLER);
-                return  XML_ROLE_NOTATION_NONE;
+                return XML_ROLE_NOTATION_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1315,7 +1143,7 @@ unsafe extern "C" fn notation1(
             ) != 0
             {
                 (*state).handler = Some(notation2 as PROLOG_HANDLER);
-                return  XML_ROLE_NOTATION_NONE;
+                return XML_ROLE_NOTATION_NONE;
             }
         }
         _ => {}
@@ -1331,10 +1159,10 @@ unsafe extern "C" fn notation2(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NOTATION_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(notation4 as PROLOG_HANDLER);
-            return  XML_ROLE_NOTATION_PUBLIC_ID;
+            return XML_ROLE_NOTATION_PUBLIC_ID;
         }
         _ => {}
     }
@@ -1349,11 +1177,11 @@ unsafe extern "C" fn notation3(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NOTATION_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_NOTATION_NONE;
-            return  XML_ROLE_NOTATION_SYSTEM_ID;
+            (*state).role_none = XML_ROLE_NOTATION_NONE;
+            return XML_ROLE_NOTATION_SYSTEM_ID;
         }
         _ => {}
     }
@@ -1368,11 +1196,11 @@ unsafe extern "C" fn notation4(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NOTATION_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_NOTATION_NONE;
-            return  XML_ROLE_NOTATION_SYSTEM_ID;
+            (*state).role_none = XML_ROLE_NOTATION_NONE;
+            return XML_ROLE_NOTATION_SYSTEM_ID;
         }
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = if (*state).documentEntity != 0 {
@@ -1380,7 +1208,7 @@ unsafe extern "C" fn notation4(
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return  XML_ROLE_NOTATION_NO_SYSTEM_ID;
+            return XML_ROLE_NOTATION_NO_SYSTEM_ID;
         }
         _ => {}
     }
@@ -1395,10 +1223,10 @@ unsafe extern "C" fn attlist0(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(attlist1 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_ELEMENT_NAME;
+            return XML_ROLE_ATTLIST_ELEMENT_NAME;
         }
         _ => {}
     }
@@ -1413,18 +1241,18 @@ unsafe extern "C" fn attlist1(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_DECL_CLOSE => {
             (*state).handler = if (*state).documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(attlist2 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTRIBUTE_NAME;
+            return XML_ROLE_ATTRIBUTE_NAME;
         }
         _ => {}
     }
@@ -1439,7 +1267,7 @@ unsafe extern "C" fn attlist2(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_NAME => {
             static mut types: [*const c_char; 8] = unsafe {
                 [
@@ -1468,7 +1296,7 @@ unsafe extern "C" fn attlist2(
                 ) != 0
                 {
                     (*state).handler = Some(attlist8 as PROLOG_HANDLER);
-                    return  XML_ROLE_ATTRIBUTE_TYPE_CDATA + i;
+                    return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i;
                 }
                 i += 1
             }
@@ -1480,12 +1308,12 @@ unsafe extern "C" fn attlist2(
             ) != 0
             {
                 (*state).handler = Some(attlist5 as PROLOG_HANDLER);
-                return  XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE_ATTLIST_NONE;
             }
         }
         super::xmltok::XML_TOK_OPEN_PAREN => {
             (*state).handler = Some(attlist3 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1500,12 +1328,12 @@ unsafe extern "C" fn attlist3(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_NMTOKEN
         | super::xmltok::XML_TOK_NAME
         | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(attlist4 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTRIBUTE_ENUM_VALUE;
+            return XML_ROLE_ATTRIBUTE_ENUM_VALUE;
         }
         _ => {}
     }
@@ -1520,14 +1348,14 @@ unsafe extern "C" fn attlist4(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN => {
             (*state).handler = Some(attlist8 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         super::xmltok::XML_TOK_OR => {
             (*state).handler = Some(attlist3 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1542,10 +1370,10 @@ unsafe extern "C" fn attlist5(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_OPEN_PAREN => {
             (*state).handler = Some(attlist6 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1560,10 +1388,10 @@ unsafe extern "C" fn attlist6(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_NAME => {
             (*state).handler = Some(attlist7 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTRIBUTE_NOTATION_VALUE;
+            return XML_ROLE_ATTRIBUTE_NOTATION_VALUE;
         }
         _ => {}
     }
@@ -1578,14 +1406,14 @@ unsafe extern "C" fn attlist7(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN => {
             (*state).handler = Some(attlist8 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         super::xmltok::XML_TOK_OR => {
             (*state).handler = Some(attlist6 as PROLOG_HANDLER);
-            return  XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE_ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1601,7 +1429,7 @@ unsafe extern "C" fn attlist8(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1611,7 +1439,7 @@ unsafe extern "C" fn attlist8(
             ) != 0
             {
                 (*state).handler = Some(attlist1 as PROLOG_HANDLER);
-                return  XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
+                return XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1621,7 +1449,7 @@ unsafe extern "C" fn attlist8(
             ) != 0
             {
                 (*state).handler = Some(attlist1 as PROLOG_HANDLER);
-                return  XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
+                return XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1631,12 +1459,12 @@ unsafe extern "C" fn attlist8(
             ) != 0
             {
                 (*state).handler = Some(attlist9 as PROLOG_HANDLER);
-                return  XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE_ATTLIST_NONE;
             }
         }
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(attlist1 as PROLOG_HANDLER);
-            return  XML_ROLE_DEFAULT_ATTRIBUTE_VALUE;
+            return XML_ROLE_DEFAULT_ATTRIBUTE_VALUE;
         }
         _ => {}
     }
@@ -1651,10 +1479,10 @@ unsafe extern "C" fn attlist9(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ATTLIST_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_LITERAL => {
             (*state).handler = Some(attlist1 as PROLOG_HANDLER);
-            return  XML_ROLE_FIXED_ATTRIBUTE_VALUE;
+            return XML_ROLE_FIXED_ATTRIBUTE_VALUE;
         }
         _ => {}
     }
@@ -1669,10 +1497,10 @@ unsafe extern "C" fn element0(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(element1 as PROLOG_HANDLER);
-            return  XML_ROLE_ELEMENT_NAME;
+            return XML_ROLE_ELEMENT_NAME;
         }
         _ => {}
     }
@@ -1687,7 +1515,7 @@ unsafe extern "C" fn element1(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1697,8 +1525,8 @@ unsafe extern "C" fn element1(
             ) != 0
             {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE;
-                return  XML_ROLE_CONTENT_EMPTY;
+                (*state).role_none = XML_ROLE_ELEMENT_NONE;
+                return XML_ROLE_CONTENT_EMPTY;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1708,14 +1536,14 @@ unsafe extern "C" fn element1(
             ) != 0
             {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE;
-                return  XML_ROLE_CONTENT_ANY;
+                (*state).role_none = XML_ROLE_ELEMENT_NONE;
+                return XML_ROLE_CONTENT_ANY;
             }
         }
         super::xmltok::XML_TOK_OPEN_PAREN => {
             (*state).handler = Some(element2 as PROLOG_HANDLER);
             (*state).level = 1u32;
-            return  XML_ROLE_GROUP_OPEN;
+            return XML_ROLE_GROUP_OPEN;
         }
         _ => {}
     }
@@ -1730,7 +1558,7 @@ unsafe extern "C" fn element2(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1740,29 +1568,29 @@ unsafe extern "C" fn element2(
             ) != 0
             {
                 (*state).handler = Some(element3 as PROLOG_HANDLER);
-                return  XML_ROLE_CONTENT_PCDATA;
+                return XML_ROLE_CONTENT_PCDATA;
             }
         }
         super::xmltok::XML_TOK_OPEN_PAREN => {
             (*state).level = 2u32;
             (*state).handler = Some(element6 as PROLOG_HANDLER);
-            return  XML_ROLE_GROUP_OPEN;
+            return XML_ROLE_GROUP_OPEN;
         }
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE_CONTENT_ELEMENT;
         }
         super::xmltok::XML_TOK_NAME_QUESTION => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_OPT;
+            return XML_ROLE_CONTENT_ELEMENT_OPT;
         }
         super::xmltok::XML_TOK_NAME_ASTERISK => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_REP;
+            return XML_ROLE_CONTENT_ELEMENT_REP;
         }
         super::xmltok::XML_TOK_NAME_PLUS => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_PLUS;
+            return XML_ROLE_CONTENT_ELEMENT_PLUS;
         }
         _ => {}
     }
@@ -1777,20 +1605,20 @@ unsafe extern "C" fn element3(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ELEMENT_NONE;
-            return  XML_ROLE_GROUP_CLOSE;
+            (*state).role_none = XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE_GROUP_CLOSE;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_ASTERISK => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ELEMENT_NONE;
-            return  XML_ROLE_GROUP_CLOSE_REP;
+            (*state).role_none = XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE_GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK_OR => {
             (*state).handler = Some(element4 as PROLOG_HANDLER);
-            return  XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE_ELEMENT_NONE;
         }
         _ => {}
     }
@@ -1805,10 +1633,10 @@ unsafe extern "C" fn element4(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(element5 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE_CONTENT_ELEMENT;
         }
         _ => {}
     }
@@ -1823,15 +1651,15 @@ unsafe extern "C" fn element5(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN_ASTERISK => {
             (*state).handler = Some(declClose as PROLOG_HANDLER);
-            (*state).role_none =  XML_ROLE_ELEMENT_NONE;
-            return  XML_ROLE_GROUP_CLOSE_REP;
+            (*state).role_none = XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE_GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK_OR => {
             (*state).handler = Some(element4 as PROLOG_HANDLER);
-            return  XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE_ELEMENT_NONE;
         }
         _ => {}
     }
@@ -1846,26 +1674,26 @@ unsafe extern "C" fn element6(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_OPEN_PAREN => {
             (*state).level = (*state).level.wrapping_add(1u32);
-            return  XML_ROLE_GROUP_OPEN;
+            return XML_ROLE_GROUP_OPEN;
         }
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE_CONTENT_ELEMENT;
         }
         super::xmltok::XML_TOK_NAME_QUESTION => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_OPT;
+            return XML_ROLE_CONTENT_ELEMENT_OPT;
         }
         super::xmltok::XML_TOK_NAME_ASTERISK => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_REP;
+            return XML_ROLE_CONTENT_ELEMENT_REP;
         }
         super::xmltok::XML_TOK_NAME_PLUS => {
             (*state).handler = Some(element7 as PROLOG_HANDLER);
-            return  XML_ROLE_CONTENT_ELEMENT_PLUS;
+            return XML_ROLE_CONTENT_ELEMENT_PLUS;
         }
         _ => {}
     }
@@ -1880,46 +1708,46 @@ unsafe extern "C" fn element7(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_ELEMENT_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN => {
             (*state).level = (*state).level.wrapping_sub(1u32);
             if (*state).level == 0u32 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE
+                (*state).role_none = XML_ROLE_ELEMENT_NONE
             }
-            return  XML_ROLE_GROUP_CLOSE;
+            return XML_ROLE_GROUP_CLOSE;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_ASTERISK => {
             (*state).level = (*state).level.wrapping_sub(1u32);
             if (*state).level == 0u32 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE
+                (*state).role_none = XML_ROLE_ELEMENT_NONE
             }
-            return  XML_ROLE_GROUP_CLOSE_REP;
+            return XML_ROLE_GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_QUESTION => {
             (*state).level = (*state).level.wrapping_sub(1u32);
             if (*state).level == 0u32 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE
+                (*state).role_none = XML_ROLE_ELEMENT_NONE
             }
-            return  XML_ROLE_GROUP_CLOSE_OPT;
+            return XML_ROLE_GROUP_CLOSE_OPT;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_PLUS => {
             (*state).level = (*state).level.wrapping_sub(1u32);
             if (*state).level == 0u32 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
-                (*state).role_none =  XML_ROLE_ELEMENT_NONE
+                (*state).role_none = XML_ROLE_ELEMENT_NONE
             }
-            return  XML_ROLE_GROUP_CLOSE_PLUS;
+            return XML_ROLE_GROUP_CLOSE_PLUS;
         }
         super::xmltok::XML_TOK_COMMA => {
             (*state).handler = Some(element6 as PROLOG_HANDLER);
-            return  XML_ROLE_GROUP_SEQUENCE;
+            return XML_ROLE_GROUP_SEQUENCE;
         }
         super::xmltok::XML_TOK_OR => {
             (*state).handler = Some(element6 as PROLOG_HANDLER);
-            return  XML_ROLE_GROUP_CHOICE;
+            return XML_ROLE_GROUP_CHOICE;
         }
         _ => {}
     }
@@ -1934,7 +1762,7 @@ unsafe extern "C" fn condSect0(
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_NAME => {
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1944,7 +1772,7 @@ unsafe extern "C" fn condSect0(
             ) != 0
             {
                 (*state).handler = Some(condSect1 as PROLOG_HANDLER);
-                return  XML_ROLE_NONE;
+                return XML_ROLE_NONE;
             }
             if (*enc).nameMatchesAscii.expect("non-null function pointer")(
                 enc,
@@ -1954,7 +1782,7 @@ unsafe extern "C" fn condSect0(
             ) != 0
             {
                 (*state).handler = Some(condSect2 as PROLOG_HANDLER);
-                return  XML_ROLE_NONE;
+                return XML_ROLE_NONE;
             }
         }
         _ => {}
@@ -1970,11 +1798,11 @@ unsafe extern "C" fn condSect1(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_OPEN_BRACKET => {
             (*state).handler = Some(externalSubset1 as PROLOG_HANDLER);
             (*state).includeLevel = (*state).includeLevel.wrapping_add(1u32);
-            return  XML_ROLE_NONE;
+            return XML_ROLE_NONE;
         }
         _ => {}
     }
@@ -1989,10 +1817,10 @@ unsafe extern "C" fn condSect2(
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
-        XML_TOK_PROLOG_S => return  XML_ROLE_NONE,
+        XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_OPEN_BRACKET => {
             (*state).handler = Some(externalSubset1 as PROLOG_HANDLER);
-            return  XML_ROLE_IGNORE_SECT;
+            return XML_ROLE_IGNORE_SECT;
         }
         _ => {}
     }
@@ -2049,16 +1877,16 @@ unsafe extern "C" fn error(
     mut _end: *const c_char,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
-    return  XML_ROLE_NONE;
+    return XML_ROLE_NONE;
 }
 /* LCOV_EXCL_STOP */
 
 unsafe extern "C" fn common(mut state: *mut PROLOG_STATE, mut tok: c_int) -> c_int {
     if (*state).documentEntity == 0 && tok == super::xmltok::XML_TOK_PARAM_ENTITY_REF {
-        return  XML_ROLE_INNER_PARAM_ENTITY_REF;
+        return XML_ROLE_INNER_PARAM_ENTITY_REF;
     }
     (*state).handler = Some(error as PROLOG_HANDLER);
-    return  XML_ROLE_ERROR;
+    return XML_ROLE_ERROR;
 }
 #[no_mangle]
 

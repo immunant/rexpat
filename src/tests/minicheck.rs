@@ -83,10 +83,7 @@ use ::libc;
 #[no_mangle]
 
 pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
-    let mut suite: *mut Suite = calloc(
-        1,
-        ::std::mem::size_of::<Suite>() as c_ulong,
-    ) as *mut Suite;
+    let mut suite: *mut Suite = calloc(1, ::std::mem::size_of::<Suite>() as c_ulong) as *mut Suite;
     if !suite.is_null() {
         (*suite).name = name
     }
@@ -95,10 +92,7 @@ pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
 #[no_mangle]
 
 pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
-    let mut tc: *mut TCase = calloc(
-        1,
-        ::std::mem::size_of::<TCase>() as c_ulong,
-    ) as *mut TCase;
+    let mut tc: *mut TCase = calloc(1, ::std::mem::size_of::<TCase>() as c_ulong) as *mut TCase;
     if !tc.is_null() {
         (*tc).name = name
     }
@@ -233,10 +227,8 @@ unsafe extern "C" fn suite_free(mut suite: *mut Suite) {
 #[no_mangle]
 
 pub unsafe extern "C" fn srunner_create(mut suite: *mut Suite) -> *mut SRunner {
-    let mut runner: *mut SRunner = calloc(
-        1,
-        ::std::mem::size_of::<SRunner>() as c_ulong,
-    ) as *mut SRunner;
+    let mut runner: *mut SRunner =
+        calloc(1, ::std::mem::size_of::<SRunner>() as c_ulong) as *mut SRunner;
     if !runner.is_null() {
         (*runner).suite = suite
     }
@@ -372,8 +364,7 @@ pub unsafe extern "C" fn _fail_unless(
     */
     if !msg.is_null() {
         let has_newline: c_int =
-            (*msg.offset(strlen(msg).wrapping_sub(1u64) as isize) as c_int
-                == '\n' as i32) as c_int;
+            (*msg.offset(strlen(msg).wrapping_sub(1u64) as isize) as c_int == '\n' as i32) as c_int;
         fprintf(
             stderr,
             b"ERROR: %s%s\x00" as *const u8 as *const c_char,

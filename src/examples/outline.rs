@@ -16,7 +16,7 @@ use ::c2rust_out::src::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler,
 };
 use ::c2rust_out::stddef_h::NULL;
-use ::c2rust_out::stdlib::{fprintf};
+use ::c2rust_out::stdlib::fprintf;
 use ::libc::{exit, printf};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
@@ -167,7 +167,6 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut p: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
     if p.is_null() {
         fprintf(
-            
             crate::stdlib::stderr,
             b"Couldn\'t allocate memory for parser\n\x00" as *const u8 as *const c_char,
         );
@@ -196,16 +195,14 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         ) as c_int;
         if crate::stdlib::ferror(crate::stdlib::stdin) != 0 {
             fprintf(
-                
                 crate::stdlib::stderr,
                 b"Read error\n\x00" as *const u8 as *const c_char,
             );
             exit(-(1i32));
         }
         done = crate::stdlib::feof(crate::stdlib::stdin) as XML_Bool;
-        if  XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_STATUS_ERROR_0 as c_uint {
+        if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_STATUS_ERROR_0 as c_uint {
             fprintf(
-                
                 crate::stdlib::stderr,
                 b"Parse error at line %lu:\n%s\n\x00" as *const u8 as *const c_char,
                 XML_GetCurrentLineNumber(p),
@@ -231,11 +228,5 @@ pub fn main() {
         );
     }
     args.push(::std::ptr::null_mut());
-    unsafe {
-        ::std::process::exit(main_0(
-            (args.len() - 1) as libc::c_int,
-            
-            args.as_mut_ptr(),
-        ))
-    }
+    unsafe { ::std::process::exit(main_0((args.len() - 1) as libc::c_int, args.as_mut_ptr())) }
 }

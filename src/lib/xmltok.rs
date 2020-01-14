@@ -374,23 +374,17 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
-            if !(*ptr.offset(0) as c_int == 0
-                && *ptr.offset(1) as c_int == 0x2d)
-            {
+            if !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x2d) {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             ptr = ptr.offset(2);
             while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
                     5 => {
                         if (end.wrapping_offset_from(ptr) as c_long) < 2 {
@@ -416,23 +410,15 @@ pub mod xmltok_impl_c {
                     }
                     27 => {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x2d
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x2d {
                             ptr = ptr.offset(2);
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
-                            if !(*ptr.offset(0) as c_int == 0
-                                && *ptr.offset(1) as c_int == 0x3e)
-                            {
+                            if !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e) {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
@@ -454,9 +440,7 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
-            if !(*ptr.offset(1) as c_int == 0
-                && *ptr.offset(0) as c_int == 0x2d)
-            {
+            if !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x2d) {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
@@ -465,10 +449,7 @@ pub mod xmltok_impl_c {
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
                     5 => {
                         if (end.wrapping_offset_from(ptr) as c_long) < 2 {
@@ -494,23 +475,15 @@ pub mod xmltok_impl_c {
                     }
                     27 => {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x2d
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x2d {
                             ptr = ptr.offset(2);
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
-                            if !(*ptr.offset(1) as c_int == 0
-                                && *ptr.offset(0) as c_int == 0x3e)
-                            {
+                            if !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e) {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
@@ -587,16 +560,12 @@ pub mod xmltok_impl_c {
                     }
                     27 => {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         if *ptr as c_int == 0x2d {
                             ptr = ptr.offset(1);
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 1) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
                             if !(*ptr as c_int == 0x3e) {
@@ -642,9 +611,7 @@ pub mod xmltok_impl_c {
             's_151: {
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     30 => {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         /* don't allow <!ENTITY% foo "whatever"> */
@@ -693,14 +660,9 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
-            27 => {
-                return little2_scanComment(enc, ptr.offset(2), end, nextTokPtr)
-            }
+            27 => return little2_scanComment(enc, ptr.offset(2), end, nextTokPtr),
             20 => {
                 *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COND_SECT_OPEN;
@@ -716,29 +678,18 @@ pub mod xmltok_impl_c {
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
                     30 => {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        match if *ptr.offset(2).offset(1)
-                            as c_int
-                            == 0
-                        {
+                        match if *ptr.offset(2).offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
                                 [*ptr.offset(2) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(2).offset(1),
-                                *ptr.offset(2).offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(2).offset(1), *ptr.offset(2).offset(0))
                         } {
                             21 | 9 | 10 | 30 => {
                                 *nextTokPtr = ptr;
@@ -774,13 +725,9 @@ pub mod xmltok_impl_c {
             return XML_TOK_PARTIAL;
         }
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             27 => return big2_scanComment(enc, ptr.offset(2), end, nextTokPtr),
             20 => {
@@ -796,35 +743,21 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             's_151: {
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
                     30 => {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        match if *ptr.offset(2).offset(0)
-                            as c_int
-                            == 0
-                        {
-                            (*(enc as *mut normal_encoding)).type_0[*ptr
-                                .offset(2)
-                                .offset(1)
-                                as c_uchar
-                                as usize] as c_int
+                        match if *ptr.offset(2).offset(0) as c_int == 0 {
+                            (*(enc as *mut normal_encoding)).type_0
+                                [*ptr.offset(2).offset(1) as c_uchar as usize]
+                                as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(2).offset(0),
-                                *ptr.offset(2).offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(2).offset(0), *ptr.offset(2).offset(1))
                         } {
                             21 | 9 | 10 | 30 => {
                                 *nextTokPtr = ptr;
@@ -997,19 +930,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -1067,21 +994,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -1131,35 +1051,27 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(2);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                         match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         } {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(4)
@@ -1175,9 +1087,7 @@ pub mod xmltok_impl_c {
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if *ptr.offset(1) as c_int == 0
-                                    && *ptr.offset(0) as c_int == 0x3e
-                                {
+                                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e {
                                     *nextTokPtr = ptr.offset(2);
                                     return tok;
                                 }
@@ -1193,14 +1103,10 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x3e
-                    {
+                    if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e {
                         *nextTokPtr = ptr.offset(2);
                         return tok;
                     }
@@ -1239,22 +1145,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_32: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -1310,24 +1209,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_118: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -1377,36 +1268,28 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(2);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                         match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         } {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(4)
@@ -1422,9 +1305,7 @@ pub mod xmltok_impl_c {
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if *ptr.offset(0) as c_int == 0
-                                    && *ptr.offset(1) as c_int == 0x3e
-                                {
+                                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e {
                                     *nextTokPtr = ptr.offset(2);
                                     return tok;
                                 }
@@ -1440,14 +1321,10 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x3e
-                    {
+                    if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e {
                         *nextTokPtr = ptr.offset(2);
                         return tok;
                     }
@@ -1610,15 +1487,12 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(1);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
                         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                         {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -1633,8 +1507,7 @@ pub mod xmltok_impl_c {
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -1649,8 +1522,7 @@ pub mod xmltok_impl_c {
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -1691,9 +1563,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if *ptr as c_int == 0x3e {
@@ -1724,20 +1594,8 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        pub static mut CDATA_LSQB: [c_char; 6] = [
-            
-            ASCII_C,
-            
-            ASCII_D,
-            
-            ASCII_A,
-            
-            ASCII_T,
-            
-            ASCII_A,
-            
-            ASCII_LSQB,
-        ];
+        pub static mut CDATA_LSQB: [c_char; 6] =
+            [ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A, ASCII_LSQB];
         let mut i: c_int = 0;
         /* CDATA[ */
         /* CDATA[ */
@@ -1766,20 +1624,8 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        pub static mut CDATA_LSQB: [c_char; 6] = [
-            
-            ASCII_C,
-            
-            ASCII_D,
-            
-            ASCII_A,
-            
-            ASCII_T,
-            
-            ASCII_A,
-            
-            ASCII_LSQB,
-        ];
+        pub static mut CDATA_LSQB: [c_char; 6] =
+            [ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A, ASCII_LSQB];
         let mut i: c_int = 0;
         if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
@@ -1803,20 +1649,8 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        pub static mut CDATA_LSQB: [c_char; 6] = [
-            
-            ASCII_C,
-            
-            ASCII_D,
-            
-            ASCII_A,
-            
-            ASCII_T,
-            
-            ASCII_A,
-            
-            ASCII_LSQB,
-        ];
+        pub static mut CDATA_LSQB: [c_char; 6] =
+            [ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A, ASCII_LSQB];
         let mut i: c_int = 0;
         if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
@@ -1846,7 +1680,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -1856,32 +1690,21 @@ pub mod xmltok_impl_c {
             }
         }
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
-                if *ptr.offset(0) as c_int == 0
-                    && *ptr.offset(1) as c_int == 0x5d
-                {
+                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x5d {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e) {
                         ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr.offset(2);
@@ -1891,19 +1714,14 @@ pub mod xmltok_impl_c {
             }
             9 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 if (if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 }) == BT_LF as c_int
                 {
                     ptr = ptr.offset(2)
@@ -1941,36 +1759,26 @@ pub mod xmltok_impl_c {
         }
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
                     ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
                     ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -1997,7 +1805,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -2009,29 +1817,19 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
-                if *ptr.offset(1) as c_int == 0
-                    && *ptr.offset(0) as c_int == 0x5d
-                {
+                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x5d {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e) {
                         ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr.offset(2);
@@ -2041,17 +1839,13 @@ pub mod xmltok_impl_c {
             }
             9 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 if (if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 }) == BT_LF as c_int
                 {
                     ptr = ptr.offset(2)
@@ -2091,33 +1885,24 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
                     ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
                     ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -2144,7 +1929,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 1 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (1i32 - 1) as c_ulong != 0 {
                 n &= !(1i32 - 1) as c_ulong;
                 if n == 0 {
@@ -2156,15 +1941,12 @@ pub mod xmltok_impl_c {
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             4 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 if *ptr as c_int == 0x5d {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if !(*ptr as c_int == 0x3e) {
@@ -2177,8 +1959,7 @@ pub mod xmltok_impl_c {
             }
             9 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
@@ -2428,9 +2209,7 @@ pub mod xmltok_impl_c {
                 }
                 21 | 9 | 10 => {
                     ptr = ptr.offset(1);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
                         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                         {
@@ -2486,22 +2265,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_32: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -2557,24 +2329,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_73: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -2620,18 +2384,13 @@ pub mod xmltok_impl_c {
                 }
                 21 | 9 | 10 => {
                     ptr = ptr.offset(2);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                         match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         } {
                             21 | 9 | 10 => {}
                             11 => {
@@ -2681,19 +2440,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -2751,21 +2504,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -2811,17 +2557,12 @@ pub mod xmltok_impl_c {
                 }
                 21 | 9 | 10 => {
                     ptr = ptr.offset(2);
-                    while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
-                    {
+                    while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                         match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         } {
                             21 | 9 | 10 => {}
                             11 => {
@@ -2871,10 +2612,7 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 25 | 24 => {}
                 _ => {
@@ -2887,10 +2625,7 @@ pub mod xmltok_impl_c {
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
                     25 | 24 => {}
                     18 => {
@@ -2916,13 +2651,9 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 25 | 24 => {}
                 _ => {
@@ -2933,14 +2664,10 @@ pub mod xmltok_impl_c {
             ptr = ptr.offset(2);
             while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
                     25 | 24 => {}
                     18 => {
@@ -3001,23 +2728,13 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
-            if *ptr.offset(1) as c_int == 0
-                && *ptr.offset(0) as c_int == 0x78
-            {
-                return little2_scanHexCharRef(
-                    enc,
-                    ptr.offset(2isize),
-                    end,
-                    nextTokPtr,
-                );
+            if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x78 {
+                return little2_scanHexCharRef(enc, ptr.offset(2isize), end, nextTokPtr);
             }
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 25 => {}
                 _ => {
@@ -3030,10 +2747,7 @@ pub mod xmltok_impl_c {
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
                     25 => {}
                     18 => {
@@ -3058,19 +2772,13 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
-            if *ptr.offset(0) as c_int == 0
-                && *ptr.offset(1) as c_int == 0x78
-            {
+            if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x78 {
                 return big2_scanHexCharRef(enc, ptr.offset(2isize), end, nextTokPtr);
             }
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 25 => {}
                 _ => {
@@ -3081,14 +2789,10 @@ pub mod xmltok_impl_c {
             ptr = ptr.offset(2);
             while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
                     25 => {}
                     18 => {
@@ -3114,12 +2818,7 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             if *ptr as c_int == 0x78 {
-                return normal_scanHexCharRef(
-                    enc,
-                    ptr.offset(1isize),
-                    end,
-                    nextTokPtr,
-                );
+                return normal_scanHexCharRef(enc, ptr.offset(1isize), end, nextTokPtr);
             }
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 25 => {}
@@ -3314,19 +3013,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -3370,9 +3063,7 @@ pub mod xmltok_impl_c {
                 ptr = ptr.offset(4);
                 current_block_33 = 18377268871191777778;
             }
-            19 => {
-                return little2_scanCharRef(enc, ptr.offset(2), end, nextTokPtr)
-            }
+            19 => return little2_scanCharRef(enc, ptr.offset(2), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
@@ -3387,21 +3078,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3473,22 +3157,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_33: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -3545,24 +3222,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_64: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3636,24 +3305,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_186: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3704,33 +3365,23 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_64: u64;
                     match if *ptr.offset(0) as c_int == 0 {
-                        (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1) as c_uchar as usize]
+                        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(0),
-                            *ptr.offset(1),
-                        )
+                        unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                     } {
                         29 => {
-                            if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(0) as c_uchar as usize]
+                            if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                                 as c_int)
                                 << 3)
-                                + (*ptr.offset(1) as c_uchar as c_int
-                                    >> 5))
+                                + (*ptr.offset(1) as c_uchar as c_int >> 5))
                                 as usize]
-                                & (1)
-                                    << (*ptr.offset(1) as c_uchar as c_int
-                                        & 0x1f)
+                                & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -3789,9 +3440,7 @@ pub mod xmltok_impl_c {
                     loop {
                         let mut t: c_int = 0;
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t = if *ptr.offset(0) as c_int == 0 {
@@ -3799,10 +3448,7 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         };
                         if t == BT_EQUALS as c_int {
                             break;
@@ -3835,9 +3481,7 @@ pub mod xmltok_impl_c {
                     hadColon = 0;
                     loop {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         open = if *ptr.offset(0) as c_int == 0 {
@@ -3845,10 +3489,7 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         };
                         if open == BT_QUOT as c_int || open == BT_APOS as c_int {
                             break;
@@ -3868,9 +3509,7 @@ pub mod xmltok_impl_c {
                     /* in attribute value */
                     {
                         let mut t_0: c_int = 0;
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t_0 = if *ptr.offset(0) as c_int == 0 {
@@ -3878,32 +3517,26 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         };
                         if t_0 == open {
                             break;
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(4)
@@ -3913,12 +3546,8 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                             3 => {
-                                let mut tok: c_int = big2_scanRef(
-                                    enc,
-                                    ptr.offset(2),
-                                    end,
-                                    &mut ptr,
-                                );
+                                let mut tok: c_int =
+                                    big2_scanRef(enc, ptr.offset(2), end, &mut ptr);
                                 if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
@@ -3934,20 +3563,14 @@ pub mod xmltok_impl_c {
                         }
                     }
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     match if *ptr.offset(0) as c_int == 0 {
-                        (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1) as c_uchar as usize]
+                        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(0),
-                            *ptr.offset(1),
-                        )
+                        unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                     } {
                         21 | 9 | 10 => {
                             loop
@@ -3966,24 +3589,16 @@ pub mod xmltok_impl_c {
                                         [*ptr.offset(1) as c_uchar as usize]
                                         as c_int
                                 } else {
-                                    unicode_byte_type(
-                                        *ptr.offset(0),
-                                        *ptr.offset(1),
-                                    )
+                                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                                 } {
                                     29 => {
                                         if namingBitmap[(((nmstrtPages
                                             [*ptr.offset(0) as c_uchar as usize]
                                             as c_int)
                                             << 3)
-                                            + (*ptr.offset(1) as c_uchar
-                                                as c_int
-                                                >> 5))
+                                            + (*ptr.offset(1) as c_uchar as c_int >> 5))
                                             as usize]
-                                            & (1)
-                                                << (*ptr.offset(1) as c_uchar
-                                                    as c_int
-                                                    & 0x1f)
+                                            & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                                             == 0
                                         {
                                             *nextTokPtr = ptr;
@@ -3997,9 +3612,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     5 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4011,9 +3624,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     6 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4025,9 +3636,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     7 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4119,21 +3728,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -4184,31 +3786,22 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_64: u64;
                     match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(1),
-                            *ptr.offset(0),
-                        )
+                        unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                     } {
                         29 => {
-                            if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(1) as c_uchar as usize]
+                            if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                                 as c_int)
                                 << 3)
-                                + (*ptr.offset(0) as c_uchar as c_int
-                                    >> 5))
+                                + (*ptr.offset(0) as c_uchar as c_int >> 5))
                                 as usize]
-                                & (1)
-                                    << (*ptr.offset(0) as c_uchar as c_int
-                                        & 0x1f)
+                                & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -4267,19 +3860,14 @@ pub mod xmltok_impl_c {
                     loop {
                         let mut t: c_int = 0;
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         };
                         if t == BT_EQUALS as c_int {
                             break;
@@ -4308,19 +3896,14 @@ pub mod xmltok_impl_c {
                     hadColon = 0;
                     loop {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         open = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         };
                         if open == BT_QUOT as c_int || open == BT_APOS as c_int {
                             break;
@@ -4336,41 +3919,33 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset(2);
                     loop {
                         let mut t_0: c_int = 0;
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t_0 = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         };
                         if t_0 == open {
                             break;
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 ptr = ptr.offset(4)
@@ -4380,12 +3955,8 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                             3 => {
-                                let mut tok: c_int = little2_scanRef(
-                                    enc,
-                                    ptr.offset(2),
-                                    end,
-                                    &mut ptr,
-                                );
+                                let mut tok: c_int =
+                                    little2_scanRef(enc, ptr.offset(2), end, &mut ptr);
                                 if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
@@ -4401,18 +3972,13 @@ pub mod xmltok_impl_c {
                         }
                     }
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(1),
-                            *ptr.offset(0),
-                        )
+                        unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                     } {
                         21 | 9 | 10 => {
                             loop {
@@ -4427,24 +3993,16 @@ pub mod xmltok_impl_c {
                                         [*ptr as c_uchar as usize]
                                         as c_int
                                 } else {
-                                    unicode_byte_type(
-                                        *ptr.offset(1),
-                                        *ptr.offset(0),
-                                    )
+                                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                                 } {
                                     29 => {
                                         if namingBitmap[(((nmstrtPages
                                             [*ptr.offset(1) as c_uchar as usize]
                                             as c_int)
                                             << 3)
-                                            + (*ptr.offset(0) as c_uchar
-                                                as c_int
-                                                >> 5))
+                                            + (*ptr.offset(0) as c_uchar as c_int >> 5))
                                             as usize]
-                                            & (1)
-                                                << (*ptr.offset(0) as c_uchar
-                                                    as c_int
-                                                    & 0x1f)
+                                            & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                                             == 0
                                         {
                                             *nextTokPtr = ptr;
@@ -4458,9 +4016,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     5 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4472,9 +4028,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     6 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4486,9 +4040,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     7 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if 0 == 0 {
@@ -4640,9 +4192,7 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_64: u64;
@@ -4721,9 +4271,7 @@ pub mod xmltok_impl_c {
                     loop {
                         let mut t: c_int = 0;
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t = (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
@@ -4755,9 +4303,7 @@ pub mod xmltok_impl_c {
                     hadColon = 0;
                     loop {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         open = (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
@@ -4776,9 +4322,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset(1);
                     loop {
                         let mut t_0: c_int = 0;
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         t_0 = (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
@@ -4788,8 +4332,7 @@ pub mod xmltok_impl_c {
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -4804,8 +4347,7 @@ pub mod xmltok_impl_c {
                                 ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -4820,8 +4362,7 @@ pub mod xmltok_impl_c {
                                 ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -4840,12 +4381,8 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                             3 => {
-                                let mut tok: c_int = normal_scanRef(
-                                    enc,
-                                    ptr.offset(1),
-                                    end,
-                                    &mut ptr,
-                                );
+                                let mut tok: c_int =
+                                    normal_scanRef(enc, ptr.offset(1), end, &mut ptr);
                                 if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
@@ -4861,9 +4398,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
@@ -4893,9 +4428,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     5 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if (*(enc as *const normal_encoding))
@@ -4912,9 +4445,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     6 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if (*(enc as *const normal_encoding))
@@ -4931,9 +4462,7 @@ pub mod xmltok_impl_c {
                                         break;
                                     }
                                     7 => {
-                                        if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4
-                                        {
+                                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
                                         if (*(enc as *const normal_encoding))
@@ -5088,27 +4617,12 @@ pub mod xmltok_impl_c {
             }
             16 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                    27 => {
-                        return normal_scanComment(
-                            enc,
-                            ptr.offset(1),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
-                    20 => {
-                        return normal_scanCdataSection(
-                            enc,
-                            ptr.offset(1),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
+                    27 => return normal_scanComment(enc, ptr.offset(1), end, nextTokPtr),
+                    20 => return normal_scanCdataSection(enc, ptr.offset(1), end, nextTokPtr),
                     _ => {}
                 }
                 *nextTokPtr = ptr;
@@ -5194,9 +4708,7 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_112: u64;
@@ -5274,9 +4786,7 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     ptr = ptr.offset(1);
                     loop {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             current_block_161 = 13000670339742628194;
                             break;
                         }
@@ -5294,8 +4804,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 5850705615406568950;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -5311,8 +4820,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -5328,8 +4836,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if (*(enc as *const normal_encoding))
@@ -5387,9 +4894,7 @@ pub mod xmltok_impl_c {
             match current_block_161 {
                 885266785391146906 => {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if !(*ptr as c_int == 0x3e) {
@@ -5422,22 +4927,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_45: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -5483,36 +4981,17 @@ pub mod xmltok_impl_c {
             }
             16 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
-                    27 => {
-                        return big2_scanComment(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
-                    20 => {
-                        return big2_scanCdataSection(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
+                    27 => return big2_scanComment(enc, ptr.offset(2), end, nextTokPtr),
+                    20 => return big2_scanCdataSection(enc, ptr.offset(2), end, nextTokPtr),
                     _ => {}
                 }
                 *nextTokPtr = ptr;
@@ -5533,24 +5012,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_161: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -5601,33 +5072,23 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_112: u64;
                     match if *ptr.offset(0) as c_int == 0 {
-                        (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1) as c_uchar as usize]
+                        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(0),
-                            *ptr.offset(1),
-                        )
+                        unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                     } {
                         29 => {
-                            if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(0) as c_uchar as usize]
+                            if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                                 as c_int)
                                 << 3)
-                                + (*ptr.offset(1) as c_uchar as c_int
-                                    >> 5))
+                                + (*ptr.offset(1) as c_uchar as c_int >> 5))
                                 as usize]
-                                & (1)
-                                    << (*ptr.offset(1) as c_uchar as c_int
-                                        & 0x1f)
+                                & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -5685,9 +5146,7 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     ptr = ptr.offset(2);
                     loop {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             current_block_161 = 13000670339742628194;
                             break;
                         }
@@ -5696,22 +5155,15 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         } {
                             29 => {
-                                if namingBitmap[(((nmstrtPages
-                                    [*ptr.offset(0) as c_uchar as usize]
+                                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                                     as c_int)
                                     << 3)
-                                    + (*ptr.offset(1) as c_uchar as c_int
-                                        >> 5))
+                                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                                     as usize]
-                                    & (1)
-                                        << (*ptr.offset(1) as c_uchar as c_int
-                                            & 0x1f)
+                                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                                     == 0
                                 {
                                     *nextTokPtr = ptr;
@@ -5723,8 +5175,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 16787315395666308353;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -5735,8 +5186,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -5747,8 +5197,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -5801,14 +5250,10 @@ pub mod xmltok_impl_c {
             match current_block_161 {
                 1225701803299345799 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e) {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -5840,19 +5285,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -5898,34 +5337,16 @@ pub mod xmltok_impl_c {
             }
             16 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
-                    27 => {
-                        return little2_scanComment(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
-                    20 => {
-                        return little2_scanCdataSection(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
+                    27 => return little2_scanComment(enc, ptr.offset(2), end, nextTokPtr),
+                    20 => return little2_scanCdataSection(enc, ptr.offset(2), end, nextTokPtr),
                     _ => {}
                 }
                 *nextTokPtr = ptr;
@@ -5948,21 +5369,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -6013,31 +5427,22 @@ pub mod xmltok_impl_c {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_112: u64;
                     match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(1),
-                            *ptr.offset(0),
-                        )
+                        unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                     } {
                         29 => {
-                            if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(1) as c_uchar as usize]
+                            if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                                 as c_int)
                                 << 3)
-                                + (*ptr.offset(0) as c_uchar as c_int
-                                    >> 5))
+                                + (*ptr.offset(0) as c_uchar as c_int >> 5))
                                 as usize]
-                                & (1)
-                                    << (*ptr.offset(0) as c_uchar as c_int
-                                        & 0x1f)
+                                & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -6095,9 +5500,7 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     ptr = ptr.offset(2);
                     loop {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             current_block_161 = 13000670339742628194;
                             break;
                         }
@@ -6105,22 +5508,15 @@ pub mod xmltok_impl_c {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         } {
                             29 => {
-                                if namingBitmap[(((nmstrtPages
-                                    [*ptr.offset(1) as c_uchar as usize]
+                                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                                     as c_int)
                                     << 3)
-                                    + (*ptr.offset(0) as c_uchar as c_int
-                                        >> 5))
+                                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                                     as usize]
-                                    & (1)
-                                        << (*ptr.offset(0) as c_uchar as c_int
-                                            & 0x1f)
+                                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                                     == 0
                                 {
                                     *nextTokPtr = ptr;
@@ -6132,8 +5528,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 8174279831488790583;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -6144,8 +5539,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -6156,8 +5550,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4
-                                {
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
                                 if 0 == 0 {
@@ -6210,14 +5603,10 @@ pub mod xmltok_impl_c {
             match current_block_161 {
                 13380707534857435492 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e) {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -6245,7 +5634,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -6257,26 +5646,19 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             2 => return little2_scanLt(enc, ptr.offset(2), end, nextTokPtr),
             3 => return little2_scanRef(enc, ptr.offset(2), end, nextTokPtr),
             9 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_TRAILING_CR;
                 }
                 if (if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 }) == BT_LF as c_int
                 {
                     ptr = ptr.offset(2)
@@ -6290,22 +5672,15 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_TRAILING_RSQB;
                 }
-                if *ptr.offset(1) as c_int == 0
-                    && *ptr.offset(0) as c_int == 0x5d
-                {
+                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x5d {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_TRAILING_RSQB;
                     }
-                    if !(*ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e) {
                         ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr;
@@ -6342,15 +5717,10 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6358,9 +5728,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6368,9 +5736,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6378,30 +5744,15 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2) as c_long
-                    {
-                        if !(*ptr.offset(2).offset(1) as c_int
-                            == 0
-                            && *ptr.offset(2).offset(0)
-                                as c_int
-                                == 0x5d)
+                    if end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long {
+                        if !(*ptr.offset(2).offset(1) as c_int == 0
+                            && *ptr.offset(2).offset(0) as c_int == 0x5d)
                         {
                             ptr = ptr.offset(2);
                             current_block_76 = 10213293998891106930;
-                        } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 2) as c_long
-                        {
-                            if !(*ptr
-                                .offset((2i32 * 2) as isize)
-                                .offset(1)
-                                as c_int
-                                == 0
-                                && *ptr
-                                    .offset((2i32 * 2) as isize)
-                                    .offset(0)
-                                    as c_int
-                                    == 0x3e)
+                        } else if end.wrapping_offset_from(ptr) as c_long >= (3i32 * 2) as c_long {
+                            if !(*ptr.offset((2i32 * 2) as isize).offset(1) as c_int == 0
+                                && *ptr.offset((2i32 * 2) as isize).offset(0) as c_int == 0x3e)
                             {
                                 ptr = ptr.offset(2)
                             } else {
@@ -6450,7 +5801,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 1 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (1i32 - 1) as c_ulong != 0 {
                 n &= !(1i32 - 1) as c_ulong;
                 if n == 0 {
@@ -6464,8 +5815,7 @@ pub mod xmltok_impl_c {
             3 => return normal_scanRef(enc, ptr.offset(1), end, nextTokPtr),
             9 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_TRAILING_CR;
                 }
                 if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
@@ -6482,15 +5832,12 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_TRAILING_RSQB;
                 }
                 if *ptr as c_int == 0x5d {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_TRAILING_RSQB;
                     }
                     if !(*ptr as c_int == 0x3e) {
@@ -6592,18 +5939,12 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 1) as c_long
-                    {
+                    if end.wrapping_offset_from(ptr) as c_long >= (2i32 * 1) as c_long {
                         if !(*ptr.offset(1) as c_int == 0x5d) {
                             ptr = ptr.offset(1);
                             current_block_76 = 10213293998891106930;
-                        } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 1) as c_long
-                        {
-                            if !(*ptr.offset((2i32 * 1) as isize) as c_int
-                                == 0x3e)
-                            {
+                        } else if end.wrapping_offset_from(ptr) as c_long >= (3i32 * 1) as c_long {
+                            if !(*ptr.offset((2i32 * 1) as isize) as c_int == 0x3e) {
                                 ptr = ptr.offset(1)
                             } else {
                                 *nextTokPtr = ptr.offset((2i32 * 1) as isize);
@@ -6647,7 +5988,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -6657,31 +5998,22 @@ pub mod xmltok_impl_c {
             }
         }
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             2 => return big2_scanLt(enc, ptr.offset(2), end, nextTokPtr),
             3 => return big2_scanRef(enc, ptr.offset(2), end, nextTokPtr),
             9 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_TRAILING_CR;
                 }
                 if (if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 }) == BT_LF as c_int
                 {
                     ptr = ptr.offset(2)
@@ -6695,22 +6027,15 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_TRAILING_RSQB;
                 }
-                if *ptr.offset(0) as c_int == 0
-                    && *ptr.offset(1) as c_int == 0x5d
-                {
+                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x5d {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_TRAILING_RSQB;
                     }
-                    if !(*ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x3e)
-                    {
+                    if !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e) {
                         ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr;
@@ -6745,18 +6070,12 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_76: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6764,9 +6083,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6774,9 +6091,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4
-                        || 0 != 0
-                    {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 || 0 != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
@@ -6784,30 +6099,15 @@ pub mod xmltok_impl_c {
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2) as c_long
-                    {
-                        if !(*ptr.offset(2).offset(0) as c_int
-                            == 0
-                            && *ptr.offset(2).offset(1)
-                                as c_int
-                                == 0x5d)
+                    if end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long {
+                        if !(*ptr.offset(2).offset(0) as c_int == 0
+                            && *ptr.offset(2).offset(1) as c_int == 0x5d)
                         {
                             ptr = ptr.offset(2);
                             current_block_76 = 10213293998891106930;
-                        } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 2) as c_long
-                        {
-                            if !(*ptr
-                                .offset((2i32 * 2) as isize)
-                                .offset(0)
-                                as c_int
-                                == 0
-                                && *ptr
-                                    .offset((2i32 * 2) as isize)
-                                    .offset(1)
-                                    as c_int
-                                    == 0x3e)
+                        } else if end.wrapping_offset_from(ptr) as c_long >= (3i32 * 2) as c_long {
+                            if !(*ptr.offset((2i32 * 2) as isize).offset(0) as c_int == 0
+                                && *ptr.offset((2i32 * 2) as isize).offset(1) as c_int == 0x3e)
                             {
                                 ptr = ptr.offset(2)
                             } else {
@@ -6858,19 +6158,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -6932,21 +6226,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7018,22 +6305,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_34: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7093,24 +6373,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_65: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7338,19 +6610,13 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7408,21 +6674,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7644,22 +6903,15 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_32: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7715,24 +6967,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_63: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7804,10 +7048,7 @@ pub mod xmltok_impl_c {
             let mut t: c_int = if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             };
             match t {
                 5 => {
@@ -7835,9 +7076,7 @@ pub mod xmltok_impl_c {
                 12 | 13 => {
                     ptr = ptr.offset(2);
                     if !(t != open) {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return -XML_TOK_LITERAL;
                         }
                         *nextTokPtr = ptr;
@@ -7845,10 +7084,7 @@ pub mod xmltok_impl_c {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         } {
                             21 | 9 | 10 | 11 | 30 | 20 => return XML_TOK_LITERAL,
                             _ => return XML_TOK_INVALID,
@@ -7870,13 +7106,9 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut t: c_int = if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             };
             match t {
                 5 => {
@@ -7904,9 +7136,7 @@ pub mod xmltok_impl_c {
                 12 | 13 => {
                     ptr = ptr.offset(2);
                     if !(t != open) {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return -XML_TOK_LITERAL;
                         }
                         *nextTokPtr = ptr;
@@ -7915,10 +7145,7 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         } {
                             21 | 9 | 10 | 11 | 30 | 20 => return XML_TOK_LITERAL,
                             _ => return XML_TOK_INVALID,
@@ -7991,9 +7218,7 @@ pub mod xmltok_impl_c {
                 12 | 13 => {
                     ptr = ptr.offset(1);
                     if !(t != open) {
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return -XML_TOK_LITERAL;
                         }
                         *nextTokPtr = ptr;
@@ -8022,7 +7247,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -8035,59 +7260,22 @@ pub mod xmltok_impl_c {
         match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(1),
-                *ptr.offset(0),
-            )
+            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
         } {
-            12 => {
-                return little2_scanLit(
-                    BT_QUOT as c_int,
-                    enc,
-                    ptr.offset(2),
-                    end,
-                    nextTokPtr,
-                )
-            }
-            13 => {
-                return little2_scanLit(
-                    BT_APOS as c_int,
-                    enc,
-                    ptr.offset(2),
-                    end,
-                    nextTokPtr,
-                )
-            }
+            12 => return little2_scanLit(BT_QUOT as c_int, enc, ptr.offset(2), end, nextTokPtr),
+            13 => return little2_scanLit(BT_APOS as c_int, enc, ptr.offset(2), end, nextTokPtr),
             2 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
-                    16 => {
-                        return little2_scanDecl(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
-                    15 => {
-                        return little2_scanPi(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
+                    16 => return little2_scanDecl(enc, ptr.offset(2), end, nextTokPtr),
+                    15 => return little2_scanPi(enc, ptr.offset(2), end, nextTokPtr),
                     22 | 24 | 29 | 5 | 6 | 7 => {
                         *nextTokPtr = ptr.offset(-(2));
                         return XML_TOK_INSTANCE_START;
@@ -8110,9 +7298,7 @@ pub mod xmltok_impl_c {
             21 | 10 => {
                 current_block_112 = 18365440899698678160;
             }
-            30 => {
-                return little2_scanPercent(enc, ptr.offset(2), end, nextTokPtr)
-            }
+            30 => return little2_scanPercent(enc, ptr.offset(2), end, nextTokPtr),
             35 => {
                 *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COMMA;
@@ -8123,22 +7309,15 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
-                if *ptr.offset(1) as c_int == 0
-                    && *ptr.offset(0) as c_int == 0x5d
-                {
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2) as c_long)
-                    {
+                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x5d {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(2).offset(1) as c_int
-                        == 0
-                        && *ptr.offset(2).offset(0) as c_int
-                            == 0x3e
+                    if *ptr.offset(2).offset(1) as c_int == 0
+                        && *ptr.offset(2).offset(0) as c_int == 0x3e
                     {
                         *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                         return XML_TOK_COND_SECT_CLOSE;
@@ -8153,17 +7332,13 @@ pub mod xmltok_impl_c {
             }
             32 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return -XML_TOK_CLOSE_PAREN;
                 }
                 match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(1),
-                        *ptr.offset(0),
-                    )
+                    unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                 } {
                     33 => {
                         *nextTokPtr = ptr.offset(2);
@@ -8194,9 +7369,7 @@ pub mod xmltok_impl_c {
                 *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DECL_CLOSE;
             }
-            19 => {
-                return little2_scanPoundName(enc, ptr.offset(2), end, nextTokPtr)
-            }
+            19 => return little2_scanPoundName(enc, ptr.offset(2), end, nextTokPtr),
             5 => {
                 if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
@@ -8229,26 +7402,20 @@ pub mod xmltok_impl_c {
                 current_block_112 = 2222055338596505704;
             }
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     != 0
                 {
                     ptr = ptr.offset(2);
                     tok = XML_TOK_NAME;
                     current_block_112 = 2222055338596505704;
-                } else if namingBitmap[(((namePages
-                    [*ptr.offset(1) as c_uchar as usize]
-                    as c_int)
+                } else if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                     << 3)
                     + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     != 0
                 {
                     ptr = ptr.offset(2);
@@ -8271,19 +7438,14 @@ pub mod xmltok_impl_c {
             {
                 loop {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         break;
                     }
                     let mut current_block_32: u64;
                     match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(1),
-                            *ptr.offset(0),
-                        )
+                        unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                     } {
                         21 | 10 => {
                             current_block_32 = 14072441030219150333;
@@ -8331,21 +7493,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(1) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(0) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -8397,9 +7552,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset(2);
                     match tok {
                         XML_TOK_NAME => {
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
                             tok = XML_TOK_PREFIXED_NAME;
@@ -8408,23 +7561,15 @@ pub mod xmltok_impl_c {
                                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                     as c_int
                             } else {
-                                unicode_byte_type(
-                                    *ptr.offset(1),
-                                    *ptr.offset(0),
-                                )
+                                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                             } {
                                 29 => {
-                                    if namingBitmap[(((namePages
-                                        [*ptr.offset(1) as c_uchar as usize]
+                                    if namingBitmap[(((namePages[*ptr.offset(1) as c_uchar as usize]
                                         as c_int)
                                         << 3)
-                                        + (*ptr.offset(0) as c_uchar as c_int
-                                            >> 5))
+                                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                                         as usize]
-                                        & (1)
-                                            << (*ptr.offset(0) as c_uchar
-                                                as c_int
-                                                & 0x1f)
+                                        & (1) << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                                         == 0
                                     {
                                         *nextTokPtr = ptr;
@@ -8436,9 +7581,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 995715539629334807;
                                 }
                                 5 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -8449,9 +7592,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -8462,9 +7603,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -8537,7 +7676,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 1 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (1i32 - 1) as c_ulong != 0 {
                 n &= !(1i32 - 1) as c_ulong;
                 if n == 0 {
@@ -8548,42 +7687,16 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_112: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-            12 => {
-                return normal_scanLit(
-                    BT_QUOT as c_int,
-                    enc,
-                    ptr.offset(1),
-                    end,
-                    nextTokPtr,
-                )
-            }
-            13 => {
-                return normal_scanLit(
-                    BT_APOS as c_int,
-                    enc,
-                    ptr.offset(1),
-                    end,
-                    nextTokPtr,
-                )
-            }
+            12 => return normal_scanLit(BT_QUOT as c_int, enc, ptr.offset(1), end, nextTokPtr),
+            13 => return normal_scanLit(BT_APOS as c_int, enc, ptr.offset(1), end, nextTokPtr),
             2 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                    16 => {
-                        return normal_scanDecl(
-                            enc,
-                            ptr.offset(1),
-                            end,
-                            nextTokPtr,
-                        )
-                    }
-                    15 => {
-                        return normal_scanPi(enc, ptr.offset(1), end, nextTokPtr)
-                    }
+                    16 => return normal_scanDecl(enc, ptr.offset(1), end, nextTokPtr),
+                    15 => return normal_scanPi(enc, ptr.offset(1), end, nextTokPtr),
                     22 | 24 | 29 | 5 | 6 | 7 => {
                         *nextTokPtr = ptr.offset(-(1));
                         return XML_TOK_INSTANCE_START;
@@ -8614,14 +7727,11 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
                 if *ptr as c_int == 0x5d {
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if *ptr.offset(1) as c_int == 0x3e {
@@ -8638,8 +7748,7 @@ pub mod xmltok_impl_c {
             }
             32 => {
                 ptr = ptr.offset(1);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                     return -XML_TOK_CLOSE_PAREN;
                 }
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
@@ -8672,9 +7781,7 @@ pub mod xmltok_impl_c {
                 *nextTokPtr = ptr.offset(1);
                 return XML_TOK_DECL_CLOSE;
             }
-            19 => {
-                return normal_scanPoundName(enc, ptr.offset(1), end, nextTokPtr)
-            }
+            19 => return normal_scanPoundName(enc, ptr.offset(1), end, nextTokPtr),
             5 => {
                 if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
@@ -8767,9 +7874,7 @@ pub mod xmltok_impl_c {
             _ => {
                 loop {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         break;
                     }
                     let mut current_block_32: u64;
@@ -8867,9 +7972,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset(1);
                     match tok {
                         XML_TOK_NAME => {
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 1) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
                             tok = XML_TOK_PREFIXED_NAME;
@@ -8888,9 +7991,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 8121321173029633297;
                                 }
                                 5 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if (*(enc as *const normal_encoding))
@@ -8906,9 +8007,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if (*(enc as *const normal_encoding))
@@ -8924,9 +8023,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if (*(enc as *const normal_encoding))
@@ -9004,7 +8101,7 @@ pub mod xmltok_impl_c {
             return XML_TOK_NONE;
         }
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 if n == 0 {
@@ -9015,54 +8112,25 @@ pub mod xmltok_impl_c {
         }
         let mut current_block_112: u64;
         match if *ptr.offset(0) as c_int == 0 {
-            (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1) as c_uchar as usize] as c_int
+            (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
-            unicode_byte_type(
-                *ptr.offset(0),
-                *ptr.offset(1),
-            )
+            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
         } {
-            12 => {
-                return big2_scanLit(
-                    BT_QUOT as c_int,
-                    enc,
-                    ptr.offset(2),
-                    end,
-                    nextTokPtr,
-                )
-            }
-            13 => {
-                return big2_scanLit(
-                    BT_APOS as c_int,
-                    enc,
-                    ptr.offset(2),
-                    end,
-                    nextTokPtr,
-                )
-            }
+            12 => return big2_scanLit(BT_QUOT as c_int, enc, ptr.offset(2), end, nextTokPtr),
+            13 => return big2_scanLit(BT_APOS as c_int, enc, ptr.offset(2), end, nextTokPtr),
             2 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return XML_TOK_PARTIAL;
                 }
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
-                    16 => {
-                        return big2_scanDecl(enc, ptr.offset(2), end, nextTokPtr)
-                    }
-                    15 => {
-                        return big2_scanPi(enc, ptr.offset(2), end, nextTokPtr)
-                    }
+                    16 => return big2_scanDecl(enc, ptr.offset(2), end, nextTokPtr),
+                    15 => return big2_scanPi(enc, ptr.offset(2), end, nextTokPtr),
                     22 | 24 | 29 | 5 | 6 | 7 => {
                         *nextTokPtr = ptr.offset(-(2));
                         return XML_TOK_INSTANCE_START;
@@ -9093,22 +8161,15 @@ pub mod xmltok_impl_c {
             }
             4 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
-                if *ptr.offset(0) as c_int == 0
-                    && *ptr.offset(1) as c_int == 0x5d
-                {
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2) as c_long)
-                    {
+                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x5d {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (2i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(2).offset(0) as c_int
-                        == 0
-                        && *ptr.offset(2).offset(1) as c_int
-                            == 0x3e
+                    if *ptr.offset(2).offset(0) as c_int == 0
+                        && *ptr.offset(2).offset(1) as c_int == 0x3e
                     {
                         *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                         return XML_TOK_COND_SECT_CLOSE;
@@ -9123,19 +8184,14 @@ pub mod xmltok_impl_c {
             }
             32 => {
                 ptr = ptr.offset(2);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
-                {
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                     return -XML_TOK_CLOSE_PAREN;
                 }
                 match if *ptr.offset(0) as c_int == 0 {
-                    (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1) as c_uchar as usize]
+                    (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
-                    unicode_byte_type(
-                        *ptr.offset(0),
-                        *ptr.offset(1),
-                    )
+                    unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                 } {
                     33 => {
                         *nextTokPtr = ptr.offset(2);
@@ -9199,26 +8255,20 @@ pub mod xmltok_impl_c {
                 current_block_112 = 2222055338596505704;
             }
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
-                    << 3)
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize] as c_int) << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     != 0
                 {
                     ptr = ptr.offset(2);
                     tok = XML_TOK_NAME;
                     current_block_112 = 2222055338596505704;
-                } else if namingBitmap[(((namePages
-                    [*ptr.offset(0) as c_uchar as usize]
-                    as c_int)
+                } else if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                     << 3)
                     + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1)
-                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
+                    & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     != 0
                 {
                     ptr = ptr.offset(2);
@@ -9237,21 +8287,15 @@ pub mod xmltok_impl_c {
             6797528435482537081 => {
                 loop {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         break;
                     }
                     let mut current_block_32: u64;
                     match if *ptr.offset(0) as c_int == 0 {
-                        (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1) as c_uchar as usize]
+                        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
-                        unicode_byte_type(
-                            *ptr.offset(0),
-                            *ptr.offset(1),
-                        )
+                        unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                     } {
                         21 | 10 => {
                             current_block_32 = 14072441030219150333;
@@ -9286,24 +8330,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_198: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 29 => {
-                    if namingBitmap[(((namePages
-                        [*ptr.offset(0) as c_uchar as usize]
-                        as c_int)
+                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize] as c_int)
                         << 3)
                         + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1)
-                            << (*ptr.offset(1) as c_uchar as c_int
-                                & 0x1f)
+                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -9355,9 +8391,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset(2);
                     match tok {
                         XML_TOK_NAME => {
-                            if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2) as c_long)
-                            {
+                            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                                 return XML_TOK_PARTIAL;
                             }
                             tok = XML_TOK_PREFIXED_NAME;
@@ -9367,23 +8401,15 @@ pub mod xmltok_impl_c {
                                     [*ptr.offset(1) as c_uchar as usize]
                                     as c_int
                             } else {
-                                unicode_byte_type(
-                                    *ptr.offset(0),
-                                    *ptr.offset(1),
-                                )
+                                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                             } {
                                 29 => {
-                                    if namingBitmap[(((namePages
-                                        [*ptr.offset(0) as c_uchar as usize]
+                                    if namingBitmap[(((namePages[*ptr.offset(0) as c_uchar as usize]
                                         as c_int)
                                         << 3)
-                                        + (*ptr.offset(1) as c_uchar as c_int
-                                            >> 5))
+                                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                                         as usize]
-                                        & (1)
-                                            << (*ptr.offset(1) as c_uchar
-                                                as c_int
-                                                & 0x1f)
+                                        & (1) << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                                         == 0
                                     {
                                         *nextTokPtr = ptr;
@@ -9395,9 +8421,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 17746292690483154078;
                                 }
                                 5 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -9408,9 +8432,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -9421,9 +8443,7 @@ pub mod xmltok_impl_c {
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
-                                    if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4
-                                    {
+                                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
                                     if 0 == 0 {
@@ -9525,12 +8545,7 @@ pub mod xmltok_impl_c {
                 7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
-                        return normal_scanRef(
-                            enc,
-                            ptr.offset(1isize),
-                            end,
-                            nextTokPtr,
-                        );
+                        return normal_scanRef(enc, ptr.offset(1isize), end, nextTokPtr);
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
@@ -9553,9 +8568,7 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
@@ -9602,13 +8615,9 @@ pub mod xmltok_impl_c {
         start = ptr;
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
@@ -9635,9 +8644,7 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (if *ptr.offset(0) as c_int == 0 {
@@ -9645,10 +8652,7 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         }) == BT_LF as c_int
                         {
                             ptr = ptr.offset(2)
@@ -9693,22 +8697,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
                 7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
-                        return little2_scanRef(
-                            enc,
-                            ptr.offset(2isize),
-                            end,
-                            nextTokPtr,
-                        );
+                        return little2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr);
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
@@ -9728,19 +8724,14 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         }) == BT_LF as c_int
                         {
                             ptr = ptr.offset(2)
@@ -9801,13 +8792,9 @@ pub mod xmltok_impl_c {
         start = ptr;
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
@@ -9821,8 +8808,7 @@ pub mod xmltok_impl_c {
                 }
                 30 => {
                     if ptr == start {
-                        let mut tok: c_int =
-                            big2_scanPercent(enc, ptr.offset(2), end, nextTokPtr);
+                        let mut tok: c_int = big2_scanPercent(enc, ptr.offset(2), end, nextTokPtr);
                         return if tok == XML_TOK_PERCENT {
                             XML_TOK_INVALID
                         } else {
@@ -9843,9 +8829,7 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (if *ptr.offset(0) as c_int == 0 {
@@ -9853,10 +8837,7 @@ pub mod xmltok_impl_c {
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         }) == BT_LF as c_int
                         {
                             ptr = ptr.offset(2)
@@ -9893,34 +8874,22 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
                 7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
-                        return little2_scanRef(
-                            enc,
-                            ptr.offset(2isize),
-                            end,
-                            nextTokPtr,
-                        );
+                        return little2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr);
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
                 30 => {
                     if ptr == start {
-                        let mut tok: c_int = little2_scanPercent(
-                            enc,
-                            ptr.offset(2),
-                            end,
-                            nextTokPtr,
-                        );
+                        let mut tok: c_int =
+                            little2_scanPercent(enc, ptr.offset(2), end, nextTokPtr);
                         return if tok == XML_TOK_PERCENT {
                             XML_TOK_INVALID
                         } else {
@@ -9941,19 +8910,14 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         }) == BT_LF as c_int
                         {
                             ptr = ptr.offset(2)
@@ -9993,24 +8957,15 @@ pub mod xmltok_impl_c {
                 7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
-                        return normal_scanRef(
-                            enc,
-                            ptr.offset(1isize),
-                            end,
-                            nextTokPtr,
-                        );
+                        return normal_scanRef(enc, ptr.offset(1isize), end, nextTokPtr);
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
                 30 => {
                     if ptr == start {
-                        let mut tok: c_int = normal_scanPercent(
-                            enc,
-                            ptr.offset(1),
-                            end,
-                            nextTokPtr,
-                        );
+                        let mut tok: c_int =
+                            normal_scanPercent(enc, ptr.offset(1), end, nextTokPtr);
                         return if tok == XML_TOK_PERCENT {
                             XML_TOK_INVALID
                         } else {
@@ -10031,9 +8986,7 @@ pub mod xmltok_impl_c {
                 9 => {
                     if ptr == start {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_TRAILING_CR;
                         }
                         if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
@@ -10063,7 +9016,7 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut level: c_int = 0;
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
@@ -10071,13 +9024,9 @@ pub mod xmltok_impl_c {
         }
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => {
                     if (end.wrapping_offset_from(ptr) as c_long) < 2 {
@@ -10103,23 +9052,15 @@ pub mod xmltok_impl_c {
                 }
                 2 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x21
-                    {
+                    if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x21 {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x5b
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x5b {
                             level += 1;
                             ptr = ptr.offset(2)
                         }
@@ -10127,23 +9068,15 @@ pub mod xmltok_impl_c {
                 }
                 4 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x5d
-                    {
+                    if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x5d {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x3e
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3e {
                             ptr = ptr.offset(2);
                             if level == 0 {
                                 *nextTokPtr = ptr;
@@ -10167,7 +9100,7 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut level: c_int = 0;
         if 2 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (2i32 - 1) as c_ulong != 0 {
                 n &= !(2i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
@@ -10177,10 +9110,7 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => {
                     if (end.wrapping_offset_from(ptr) as c_long) < 2 {
@@ -10206,23 +9136,15 @@ pub mod xmltok_impl_c {
                 }
                 2 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x21
-                    {
+                    if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x21 {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x5b
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x5b {
                             level += 1;
                             ptr = ptr.offset(2)
                         }
@@ -10230,23 +9152,15 @@ pub mod xmltok_impl_c {
                 }
                 4 => {
                     ptr = ptr.offset(2);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x5d
-                    {
+                    if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x5d {
                         ptr = ptr.offset(2);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x3e
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3e {
                             ptr = ptr.offset(2);
                             if level == 0 {
                                 *nextTokPtr = ptr;
@@ -10270,7 +9184,7 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut level: c_int = 0;
         if 1 > 1 {
-            let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
+            let mut n: size_t = end.wrapping_offset_from(ptr) as size_t;
             if n & (1i32 - 1) as c_ulong != 0 {
                 n &= !(1i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
@@ -10326,16 +9240,12 @@ pub mod xmltok_impl_c {
                 }
                 2 => {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if *ptr as c_int == 0x21 {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         if *ptr as c_int == 0x5b {
@@ -10346,16 +9256,12 @@ pub mod xmltok_impl_c {
                 }
                 4 => {
                     ptr = ptr.offset(1);
-                    if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long)
-                    {
+                    if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                         return XML_TOK_PARTIAL;
                     }
                     if *ptr as c_int == 0x5d {
                         ptr = ptr.offset(1);
-                        if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1) as c_long)
-                        {
+                        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                             return XML_TOK_PARTIAL;
                         }
                         if *ptr as c_int == 0x3e {
@@ -10388,22 +9294,16 @@ pub mod xmltok_impl_c {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_8: u64;
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 25 | 24 | 27 | 13 | 31 | 32 | 34 | 35 | 17 | 14 | 15 | 9 | 10 | 18 | 16 | 33
                 | 30 | 19 | 23 => {
                     current_block_8 = 13242334135786603907;
                 }
                 21 => {
-                    if *ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x9
-                    {
+                    if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x9 {
                         *badPtr = ptr;
                         return 0i32;
                     }
@@ -10465,19 +9365,14 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 25 | 24 | 27 | 13 | 31 | 32 | 34 | 35 | 17 | 14 | 15 | 9 | 10 | 18 | 16 | 33
                 | 30 | 19 | 23 => {
                     current_block_8 = 13242334135786603907;
                 }
                 21 => {
-                    if *ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x9
-                    {
+                    if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x9 {
                         *badPtr = ptr;
                         return 0i32;
                     }
@@ -10600,7 +9495,7 @@ pub mod xmltok_impl_c {
         loop {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 5 => {
-                    if  state ==  other {
+                    if state == other {
                         if nAtts < attsMax {
                             let ref mut fresh0 = (*atts.offset(nAtts as isize)).name;
                             *fresh0 = ptr;
@@ -10611,7 +9506,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((2i32 - 1) as isize)
                 }
                 6 => {
-                    if  state ==  other {
+                    if state == other {
                         if nAtts < attsMax {
                             let ref mut fresh1 = (*atts.offset(nAtts as isize)).name;
                             *fresh1 = ptr;
@@ -10622,7 +9517,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((3i32 - 1) as isize)
                 }
                 7 => {
-                    if  state ==  other {
+                    if state == other {
                         if nAtts < attsMax {
                             let ref mut fresh2 = (*atts.offset(nAtts as isize)).name;
                             *fresh2 = ptr;
@@ -10633,7 +9528,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((4i32 - 1) as isize)
                 }
                 29 | 22 | 24 => {
-                    if  state ==  other {
+                    if state == other {
                         if nAtts < attsMax {
                             let ref mut fresh3 = (*atts.offset(nAtts as isize)).name;
                             *fresh3 = ptr;
@@ -10643,7 +9538,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 12 => {
-                    if  state !=  inValue {
+                    if state != inValue {
                         if nAtts < attsMax {
                             let ref mut fresh4 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh4 = ptr.offset(1)
@@ -10660,7 +9555,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 13 => {
-                    if  state !=  inValue {
+                    if state != inValue {
                         if nAtts < attsMax {
                             let ref mut fresh6 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh6 = ptr.offset(1)
@@ -10682,9 +9577,9 @@ pub mod xmltok_impl_c {
                     }
                 }
                 21 => {
-                    if  state ==  inName {
+                    if state == inName {
                         state = other
-                    } else if  state ==  inValue
+                    } else if state == inValue
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
@@ -10705,14 +9600,14 @@ pub mod xmltok_impl_c {
                     Apart from that we could just change state on the quote. */
                     /* This case ensures that the first attribute name is counted
                     Apart from that we could just change state on the quote. */
-                    if  state ==  inName {
+                    if state == inName {
                         state = other
-                    } else if  state ==  inValue && nAtts < attsMax {
+                    } else if state == inValue && nAtts < attsMax {
                         (*atts.offset(nAtts as isize)).normalized = 0i8
                     }
                 }
                 11 | 17 => {
-                    if  state !=  inValue {
+                    if state != inValue {
                         return nAtts;
                     }
                 }
@@ -10739,13 +9634,10 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => {
-                    if  state ==  other_0 {
+                    if state == other_0 {
                         if nAtts < attsMax {
                             let ref mut fresh8 = (*atts.offset(nAtts as isize)).name;
                             *fresh8 = ptr;
@@ -10756,7 +9648,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((2i32 - 2) as isize)
                 }
                 6 => {
-                    if  state ==  other_0 {
+                    if state == other_0 {
                         if nAtts < attsMax {
                             let ref mut fresh9 = (*atts.offset(nAtts as isize)).name;
                             *fresh9 = ptr;
@@ -10767,7 +9659,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((3i32 - 2) as isize)
                 }
                 7 => {
-                    if  state ==  other_0 {
+                    if state == other_0 {
                         if nAtts < attsMax {
                             let ref mut fresh10 = (*atts.offset(nAtts as isize)).name;
                             *fresh10 = ptr;
@@ -10778,7 +9670,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((4i32 - 2) as isize)
                 }
                 29 | 22 | 24 => {
-                    if  state ==  other_0 {
+                    if state == other_0 {
                         if nAtts < attsMax {
                             let ref mut fresh11 = (*atts.offset(nAtts as isize)).name;
                             *fresh11 = ptr;
@@ -10788,7 +9680,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 12 => {
-                    if  state !=  inValue_0 {
+                    if state != inValue_0 {
                         if nAtts < attsMax {
                             let ref mut fresh12 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh12 = ptr.offset(2)
@@ -10805,7 +9697,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 13 => {
-                    if  state !=  inValue_0 {
+                    if state != inValue_0 {
                         if nAtts < attsMax {
                             let ref mut fresh14 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh14 = ptr.offset(2)
@@ -10827,9 +9719,9 @@ pub mod xmltok_impl_c {
                     }
                 }
                 21 => {
-                    if  state ==  inName_0 {
+                    if state == inName_0 {
                         state = other_0
-                    } else if  state ==  inValue_0
+                    } else if state == inValue_0
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
@@ -10838,18 +9730,12 @@ pub mod xmltok_impl_c {
                             } else {
                                 -1
                             }) != ASCII_SPACE
-                            || (if *ptr.offset(2).offset(1)
-                                as c_int
-                                == 0
-                            {
+                            || (if *ptr.offset(2).offset(1) as c_int == 0 {
                                 *ptr.offset(2).offset(0)
                             } else {
                                 -1
                             }) == ASCII_SPACE
-                            || (if *ptr.offset(2).offset(1)
-                                as c_int
-                                == 0
-                            {
+                            || (if *ptr.offset(2).offset(1) as c_int == 0 {
                                 (*(enc as *mut normal_encoding)).type_0
                                     [*ptr.offset(2) as c_uchar as usize]
                                     as c_int
@@ -10864,14 +9750,14 @@ pub mod xmltok_impl_c {
                     }
                 }
                 9 | 10 => {
-                    if  state ==  inName_0 {
+                    if state == inName_0 {
                         state = other_0
-                    } else if  state ==  inValue_0 && nAtts < attsMax {
+                    } else if state == inValue_0 && nAtts < attsMax {
                         (*atts.offset(nAtts as isize)).normalized = 0i8
                     }
                 }
                 11 | 17 => {
-                    if  state !=  inValue_0 {
+                    if state != inValue_0 {
                         return nAtts;
                     }
                 }
@@ -10893,16 +9779,12 @@ pub mod xmltok_impl_c {
         ptr = ptr.offset(2);
         loop {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => {
-                    if  state ==  other_1 {
+                    if state == other_1 {
                         if nAtts < attsMax {
                             let ref mut fresh16 = (*atts.offset(nAtts as isize)).name;
                             *fresh16 = ptr;
@@ -10913,7 +9795,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((2i32 - 2) as isize)
                 }
                 6 => {
-                    if  state ==  other_1 {
+                    if state == other_1 {
                         if nAtts < attsMax {
                             let ref mut fresh17 = (*atts.offset(nAtts as isize)).name;
                             *fresh17 = ptr;
@@ -10924,7 +9806,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((3i32 - 2) as isize)
                 }
                 7 => {
-                    if  state ==  other_1 {
+                    if state == other_1 {
                         if nAtts < attsMax {
                             let ref mut fresh18 = (*atts.offset(nAtts as isize)).name;
                             *fresh18 = ptr;
@@ -10935,7 +9817,7 @@ pub mod xmltok_impl_c {
                     ptr = ptr.offset((4i32 - 2) as isize)
                 }
                 29 | 22 | 24 => {
-                    if  state ==  other_1 {
+                    if state == other_1 {
                         if nAtts < attsMax {
                             let ref mut fresh19 = (*atts.offset(nAtts as isize)).name;
                             *fresh19 = ptr;
@@ -10945,7 +9827,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 12 => {
-                    if  state !=  inValue_1 {
+                    if state != inValue_1 {
                         if nAtts < attsMax {
                             let ref mut fresh20 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh20 = ptr.offset(2)
@@ -10962,7 +9844,7 @@ pub mod xmltok_impl_c {
                     }
                 }
                 13 => {
-                    if  state !=  inValue_1 {
+                    if state != inValue_1 {
                         if nAtts < attsMax {
                             let ref mut fresh22 = (*atts.offset(nAtts as isize)).valuePtr;
                             *fresh22 = ptr.offset(2)
@@ -10984,9 +9866,9 @@ pub mod xmltok_impl_c {
                     }
                 }
                 21 => {
-                    if  state ==  inName_1 {
+                    if state == inName_1 {
                         state = other_1
-                    } else if  state ==  inValue_1
+                    } else if state == inValue_1
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
@@ -10995,23 +9877,15 @@ pub mod xmltok_impl_c {
                             } else {
                                 -1
                             }) != ASCII_SPACE
-                            || (if *ptr.offset(2).offset(0)
-                                as c_int
-                                == 0
-                            {
+                            || (if *ptr.offset(2).offset(0) as c_int == 0 {
                                 *ptr.offset(2).offset(1)
                             } else {
                                 -1
                             }) == ASCII_SPACE
-                            || (if *ptr.offset(2).offset(0)
-                                as c_int
-                                == 0
-                            {
-                                (*(enc as *mut normal_encoding)).type_0[*ptr
-                                    .offset(2)
-                                    .offset(1)
-                                    as c_uchar
-                                    as usize] as c_int
+                            || (if *ptr.offset(2).offset(0) as c_int == 0 {
+                                (*(enc as *mut normal_encoding)).type_0
+                                    [*ptr.offset(2).offset(1) as c_uchar as usize]
+                                    as c_int
                             } else {
                                 unicode_byte_type(
                                     *ptr.offset(2).offset(0),
@@ -11023,14 +9897,14 @@ pub mod xmltok_impl_c {
                     }
                 }
                 9 | 10 => {
-                    if  state ==  inName_1 {
+                    if state == inName_1 {
                         state = other_1
-                    } else if  state ==  inValue_1 && nAtts < attsMax {
+                    } else if state == inValue_1 && nAtts < attsMax {
                         (*atts.offset(nAtts as isize)).normalized = 0i8
                     }
                 }
                 11 | 17 => {
-                    if  state !=  inValue_1 {
+                    if state != inValue_1 {
                         return nAtts;
                     }
                 }
@@ -11049,13 +9923,9 @@ pub mod xmltok_impl_c {
         /* skip &# */
         /* skip &# */
         ptr = ptr.offset((2i32 * 2) as isize);
-        if *ptr.offset(1) as c_int == 0
-            && *ptr.offset(0) as c_int == 0x78
-        {
+        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x78 {
             ptr = ptr.offset(2);
-            while !(*ptr.offset(1) as c_int == 0
-                && *ptr.offset(0) as c_int == 0x3b)
-            {
+            while !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3b) {
                 let mut c = if *ptr.offset(1) as c_int == 0 {
                     *ptr.offset(0)
                 } else {
@@ -11083,9 +9953,7 @@ pub mod xmltok_impl_c {
                 ptr = ptr.offset(2)
             }
         } else {
-            while !(*ptr.offset(1) as c_int == 0
-                && *ptr.offset(0) as c_int == 0x3b)
-            {
+            while !(*ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x3b) {
                 let mut c_0: c_int = if *ptr.offset(1) as c_int == 0 {
                     *ptr.offset(0) as c_int
                 } else {
@@ -11153,13 +10021,9 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut result: c_int = 0;
         ptr = ptr.offset((2i32 * 2) as isize);
-        if *ptr.offset(0) as c_int == 0
-            && *ptr.offset(1) as c_int == 0x78
-        {
+        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x78 {
             ptr = ptr.offset(2);
-            while !(*ptr.offset(0) as c_int == 0
-                && *ptr.offset(1) as c_int == 0x3b)
-            {
+            while !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3b) {
                 let mut c = if *ptr.offset(0) as c_int == 0 {
                     *ptr.offset(1)
                 } else {
@@ -11187,9 +10051,7 @@ pub mod xmltok_impl_c {
                 ptr = ptr.offset(2)
             }
         } else {
-            while !(*ptr.offset(0) as c_int == 0
-                && *ptr.offset(1) as c_int == 0x3b)
-            {
+            while !(*ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x3b) {
                 let mut c_0 = if *ptr.offset(0) as c_int == 0 {
                     *ptr.offset(1)
                 } else {
@@ -11213,10 +10075,8 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         match end.wrapping_offset_from(ptr) as c_long / 2 {
             2 => {
-                if *ptr.offset(2).offset(1) as c_int
-                    == 0
-                    && *ptr.offset(2).offset(0) as c_int
-                        == 0x74
+                if *ptr.offset(2).offset(1) as c_int == 0
+                    && *ptr.offset(2).offset(0) as c_int == 0x74
                 {
                     match if *ptr.offset(1) as c_int == 0 {
                         *ptr.offset(0)
@@ -11230,17 +10090,11 @@ pub mod xmltok_impl_c {
                 }
             }
             3 => {
-                if *ptr.offset(1) as c_int == 0
-                    && *ptr.offset(0) as c_int == 0x61
-                {
+                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x61 {
                     ptr = ptr.offset(2);
-                    if *ptr.offset(1) as c_int == 0
-                        && *ptr.offset(0) as c_int == 0x6d
-                    {
+                    if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x6d {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x70
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x70 {
                             return ASCII_AMP as c_int;
                         }
                     }
@@ -11254,17 +10108,11 @@ pub mod xmltok_impl_c {
                 } {
                     ASCII_q => {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x75
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x75 {
                             ptr = ptr.offset(2);
-                            if *ptr.offset(1) as c_int == 0
-                                && *ptr.offset(0) as c_int == 0x6f
-                            {
+                            if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x6f {
                                 ptr = ptr.offset(2);
-                                if *ptr.offset(1) as c_int == 0
-                                    && *ptr.offset(0) as c_int == 0x74
-                                {
+                                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x74 {
                                     return ASCII_QUOT as c_int;
                                 }
                             }
@@ -11272,17 +10120,11 @@ pub mod xmltok_impl_c {
                     }
                     ASCII_a => {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(1) as c_int == 0
-                            && *ptr.offset(0) as c_int == 0x70
-                        {
+                        if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x70 {
                             ptr = ptr.offset(2);
-                            if *ptr.offset(1) as c_int == 0
-                                && *ptr.offset(0) as c_int == 0x6f
-                            {
+                            if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x6f {
                                 ptr = ptr.offset(2);
-                                if *ptr.offset(1) as c_int == 0
-                                    && *ptr.offset(0) as c_int == 0x73
-                                {
+                                if *ptr.offset(1) as c_int == 0 && *ptr.offset(0) as c_int == 0x73 {
                                     return ASCII_APOS as c_int;
                                 }
                             }
@@ -11361,10 +10203,8 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         match end.wrapping_offset_from(ptr) as c_long / 2 {
             2 => {
-                if *ptr.offset(2).offset(0) as c_int
-                    == 0
-                    && *ptr.offset(2).offset(1) as c_int
-                        == 0x74
+                if *ptr.offset(2).offset(0) as c_int == 0
+                    && *ptr.offset(2).offset(1) as c_int == 0x74
                 {
                     match if *ptr.offset(0) as c_int == 0 {
                         *ptr.offset(1)
@@ -11378,17 +10218,11 @@ pub mod xmltok_impl_c {
                 }
             }
             3 => {
-                if *ptr.offset(0) as c_int == 0
-                    && *ptr.offset(1) as c_int == 0x61
-                {
+                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x61 {
                     ptr = ptr.offset(2);
-                    if *ptr.offset(0) as c_int == 0
-                        && *ptr.offset(1) as c_int == 0x6d
-                    {
+                    if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x6d {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x70
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x70 {
                             return ASCII_AMP as c_int;
                         }
                     }
@@ -11402,17 +10236,11 @@ pub mod xmltok_impl_c {
                 } {
                     ASCII_q => {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x75
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x75 {
                             ptr = ptr.offset(2);
-                            if *ptr.offset(0) as c_int == 0
-                                && *ptr.offset(1) as c_int == 0x6f
-                            {
+                            if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x6f {
                                 ptr = ptr.offset(2);
-                                if *ptr.offset(0) as c_int == 0
-                                    && *ptr.offset(1) as c_int == 0x74
-                                {
+                                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x74 {
                                     return ASCII_QUOT as c_int;
                                 }
                             }
@@ -11420,17 +10248,11 @@ pub mod xmltok_impl_c {
                     }
                     ASCII_a => {
                         ptr = ptr.offset(2);
-                        if *ptr.offset(0) as c_int == 0
-                            && *ptr.offset(1) as c_int == 0x70
-                        {
+                        if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x70 {
                             ptr = ptr.offset(2);
-                            if *ptr.offset(0) as c_int == 0
-                                && *ptr.offset(1) as c_int == 0x6f
-                            {
+                            if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x6f {
                                 ptr = ptr.offset(2);
-                                if *ptr.offset(0) as c_int == 0
-                                    && *ptr.offset(1) as c_int == 0x73
-                                {
+                                if *ptr.offset(0) as c_int == 0 && *ptr.offset(1) as c_int == 0x73 {
                                     return ASCII_APOS as c_int;
                                 }
                             }
@@ -11491,9 +10313,7 @@ pub mod xmltok_impl_c {
             if (end1.wrapping_offset_from(ptr1) as c_long) < 2 {
                 return 0i32;
             }
-            if !(*ptr1.offset(0) as c_int == 0
-                && *ptr1.offset(1) as c_int == *ptr2 as c_int)
-            {
+            if !(*ptr1.offset(0) as c_int == 0 && *ptr1.offset(1) as c_int == *ptr2 as c_int) {
                 return 0i32;
             }
             ptr1 = ptr1.offset(2);
@@ -11512,9 +10332,7 @@ pub mod xmltok_impl_c {
             if (end1.wrapping_offset_from(ptr1) as c_long) < 2 {
                 return 0i32;
             }
-            if !(*ptr1.offset(1) as c_int == 0
-                && *ptr1.offset(0) as c_int == *ptr2 as c_int)
-            {
+            if !(*ptr1.offset(1) as c_int == 0 && *ptr1.offset(0) as c_int == *ptr2 as c_int) {
                 return 0i32;
             }
             ptr1 = ptr1.offset(2);
@@ -11534,7 +10352,7 @@ pub mod xmltok_impl_c {
                 6 => ptr = ptr.offset(3),
                 7 => ptr = ptr.offset(4),
                 29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(1),
-                _ => return  ptr.wrapping_offset_from(start) as c_int,
+                _ => return ptr.wrapping_offset_from(start) as c_int,
             }
         }
     }
@@ -11546,19 +10364,15 @@ pub mod xmltok_impl_c {
         let mut start: *const c_char = ptr;
         loop {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
                 7 => ptr = ptr.offset(4),
                 29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2),
-                _ => return  ptr.wrapping_offset_from(start) as c_int,
+                _ => return ptr.wrapping_offset_from(start) as c_int,
             }
         }
     }
@@ -11572,16 +10386,13 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
                 7 => ptr = ptr.offset(4),
                 29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2),
-                _ => return  ptr.wrapping_offset_from(start) as c_int,
+                _ => return ptr.wrapping_offset_from(start) as c_int,
             }
         }
     }
@@ -11594,10 +10405,7 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 10 | 9 | 21 => ptr = ptr.offset(2),
                 _ => return ptr,
@@ -11611,13 +10419,9 @@ pub mod xmltok_impl_c {
     ) -> *const c_char {
         loop {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 10 | 9 | 21 => ptr = ptr.offset(2),
                 _ => return ptr,
@@ -11656,8 +10460,7 @@ pub mod xmltok_impl_c {
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
                     ptr = ptr.offset(1);
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1) as c_long
+                    if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long
                         && (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                             == BT_LF as c_int
@@ -11680,13 +10483,9 @@ pub mod xmltok_impl_c {
     ) {
         while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             match if *ptr.offset(0) as c_int == 0 {
-                (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1) as c_uchar as usize] as c_int
+                (*(enc as *mut normal_encoding)).type_0[*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(0),
-                    *ptr.offset(1),
-                )
+                unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
@@ -11699,17 +10498,13 @@ pub mod xmltok_impl_c {
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
                     ptr = ptr.offset(2);
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
+                    if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long
                         && (if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
                                 [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(0),
-                                *ptr.offset(1),
-                            )
+                            unicode_byte_type(*ptr.offset(0), *ptr.offset(1))
                         }) == BT_LF as c_int
                     {
                         ptr = ptr.offset(2)
@@ -11732,10 +10527,7 @@ pub mod xmltok_impl_c {
             match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
-                unicode_byte_type(
-                    *ptr.offset(1),
-                    *ptr.offset(0),
-                )
+                unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
             } {
                 5 => ptr = ptr.offset(2),
                 6 => ptr = ptr.offset(3),
@@ -11748,16 +10540,12 @@ pub mod xmltok_impl_c {
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
                     ptr = ptr.offset(2);
-                    if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2) as c_long
+                    if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long
                         && (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
-                            unicode_byte_type(
-                                *ptr.offset(1),
-                                *ptr.offset(0),
-                            )
+                            unicode_byte_type(*ptr.offset(1), *ptr.offset(0))
                         }) == BT_LF as c_int
                     {
                         ptr = ptr.offset(2)
@@ -11813,844 +10601,71 @@ pub mod nametab_h {
 
     use libc::{c_uchar, c_uint};
     pub static mut namingBitmap: [c_uint; 320] = [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0,
-        0x4000000,
-        0x87fffffe,
-        0x7fffffe,
-        0,
-        0,
-        0xff7fffff,
-        0xff7fffff,
-        0xffffffff,
-        0x7ff3ffff,
-        0xfffffdfe,
-        0x7fffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffe00f,
-        0xfc31ffff,
-        0xffffff,
-        0,
-        0xffff0000,
-        0xffffffff,
-        0xffffffff,
-        0xf80001ff,
-        0x3,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0xffffd740,
-        0xfffffffb,
-        0x547f7fff,
-        0xffffd,
-        0xffffdffe,
-        0xffffffff,
-        0xdffeffff,
-        0xffffffff,
-        0xffff0003,
-        0xffffffff,
-        0xffff199f,
-        0x33fcfff,
-        0,
-        0xfffe0000,
-        0x27fffff,
-        0xfffffffe,
-        0x7f,
-        0,
-        0xffff0000,
-        0x707ff,
-        0,
-        0x7fffffe,
-        0x7fe,
-        0xfffe0000,
-        0xffffffff,
-        0x7cffffff,
-        0x2f7fff,
-        0x60,
-        0xffffffe0,
-        0x23ffffff,
-        0xff000000,
-        0x3,
-        0xfff99fe0,
-        0x3c5fdff,
-        0xb0000000,
-        0x30003,
-        0xfff987e0,
-        0x36dfdff,
-        0x5e000000,
-        0x1c0000,
-        0xfffbafe0,
-        0x23edfdff,
-        0,
-        0x1,
-        0xfff99fe0,
-        0x23cdfdff,
-        0xb0000000,
-        0x3,
-        0xd63dc7e0,
-        0x3bfc718,
-        0,
-        0,
-        0xfffddfe0,
-        0x3effdff,
-        0,
-        0x3,
-        0xfffddfe0,
-        0x3effdff,
-        0x40000000,
-        0x3,
-        0xfffddfe0,
-        0x3fffdff,
-        0,
-        0x3,
-        0,
-        0,
-        0,
-        0,
-        0xfffffffe,
-        0xd7fff,
-        0x3f,
-        0,
-        0xfef02596,
-        0x200d6cae,
-        0x1f,
-        0,
-        0,
-        0,
-        0xfffffeff,
-        0x3ff,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0xffffffff,
-        0xffff003f,
-        0x7fffff,
-        0x7daed,
-        0x50000000,
-        0x82315001,
-        0x2c62ab,
-        0x40000000,
-        0xf580c900,
-        0x7,
-        0x2010800,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xfffffff,
-        0xffffffff,
-        0xffffffff,
-        0x3ffffff,
-        0x3f3fffff,
-        0xffffffff,
-        0xaaff3f3f,
-        0x3fffffff,
-        0xffffffff,
-        0x5fdfffff,
-        0xfcf1fdc,
-        0x1fdc1fff,
-        0,
-        0x4c40,
-        0,
-        0,
-        0x7,
-        0,
-        0,
-        0,
-        0x80,
-        0x3fe,
-        0xfffffffe,
-        0xffffffff,
-        0x1fffff,
-        0xfffffffe,
-        0xffffffff,
-        0x7ffffff,
-        0xffffffe0,
-        0x1fff,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0x3f,
-        0,
-        0,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xf,
-        0,
-        0,
-        0,
-        0x7ff6000,
-        0x87fffffe,
-        0x7fffffe,
-        0,
-        0x800000,
-        0xff7fffff,
-        0xff7fffff,
-        0xffffff,
-        0,
-        0xffff0000,
-        0xffffffff,
-        0xffffffff,
-        0xf80001ff,
-        0x30003,
-        0,
-        0xffffffff,
-        0xffffffff,
-        0x3f,
-        0x3,
-        0xffffd7c0,
-        0xfffffffb,
-        0x547f7fff,
-        0xffffd,
-        0xffffdffe,
-        0xffffffff,
-        0xdffeffff,
-        0xffffffff,
-        0xffff007b,
-        0xffffffff,
-        0xffff199f,
-        0x33fcfff,
-        0,
-        0xfffe0000,
-        0x27fffff,
-        0xfffffffe,
-        0xfffe007f,
-        0xbbfffffb,
-        0xffff0016,
-        0x707ff,
-        0,
-        0x7fffffe,
-        0x7ffff,
-        0xffff03ff,
-        0xffffffff,
-        0x7cffffff,
-        0xffef7fff,
-        0x3ff3dff,
-        0xffffffee,
-        0xf3ffffff,
-        0xff1e3fff,
-        0xffcf,
-        0xfff99fee,
-        0xd3c5fdff,
-        0xb080399f,
-        0x3ffcf,
-        0xfff987e4,
-        0xd36dfdff,
-        0x5e003987,
-        0x1fffc0,
-        0xfffbafee,
-        0xf3edfdff,
-        0x3bbf,
-        0xffc1,
-        0xfff99fee,
-        0xf3cdfdff,
-        0xb0c0398f,
-        0xffc3,
-        0xd63dc7ec,
-        0xc3bfc718,
-        0x803dc7,
-        0xff80,
-        0xfffddfee,
-        0xc3effdff,
-        0x603ddf,
-        0xffc3,
-        0xfffddfec,
-        0xc3effdff,
-        0x40603ddf,
-        0xffc3,
-        0xfffddfec,
-        0xc3fffdff,
-        0x803dcf,
-        0xffc3,
-        0,
-        0,
-        0,
-        0,
-        0xfffffffe,
-        0x7ff7fff,
-        0x3ff7fff,
-        0,
-        0xfef02596,
-        0x3bff6cae,
-        0x3ff3f5f,
-        0,
-        0x3000000,
-        0xc2a003ff,
-        0xfffffeff,
-        0xfffe03ff,
-        0xfebf0fdf,
-        0x2fe3fff,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x1fff0000,
-        0x2,
-        0xa0,
-        0x3efffe,
-        0xfffffffe,
-        0xffffffff,
-        0x661fffff,
-        0xfffffffe,
-        0xffffffff,
-        0x77ffffff,
+        0, 0, 0, 0, 0, 0, 0, 0, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+        0xffffffff, 0xffffffff, 0xffffffff, 0, 0x4000000, 0x87fffffe, 0x7fffffe, 0, 0, 0xff7fffff,
+        0xff7fffff, 0xffffffff, 0x7ff3ffff, 0xfffffdfe, 0x7fffffff, 0xffffffff, 0xffffffff,
+        0xffffe00f, 0xfc31ffff, 0xffffff, 0, 0xffff0000, 0xffffffff, 0xffffffff, 0xf80001ff, 0x3,
+        0, 0, 0, 0, 0, 0xffffd740, 0xfffffffb, 0x547f7fff, 0xffffd, 0xffffdffe, 0xffffffff,
+        0xdffeffff, 0xffffffff, 0xffff0003, 0xffffffff, 0xffff199f, 0x33fcfff, 0, 0xfffe0000,
+        0x27fffff, 0xfffffffe, 0x7f, 0, 0xffff0000, 0x707ff, 0, 0x7fffffe, 0x7fe, 0xfffe0000,
+        0xffffffff, 0x7cffffff, 0x2f7fff, 0x60, 0xffffffe0, 0x23ffffff, 0xff000000, 0x3,
+        0xfff99fe0, 0x3c5fdff, 0xb0000000, 0x30003, 0xfff987e0, 0x36dfdff, 0x5e000000, 0x1c0000,
+        0xfffbafe0, 0x23edfdff, 0, 0x1, 0xfff99fe0, 0x23cdfdff, 0xb0000000, 0x3, 0xd63dc7e0,
+        0x3bfc718, 0, 0, 0xfffddfe0, 0x3effdff, 0, 0x3, 0xfffddfe0, 0x3effdff, 0x40000000, 0x3,
+        0xfffddfe0, 0x3fffdff, 0, 0x3, 0, 0, 0, 0, 0xfffffffe, 0xd7fff, 0x3f, 0, 0xfef02596,
+        0x200d6cae, 0x1f, 0, 0, 0, 0xfffffeff, 0x3ff, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xffffffff,
+        0xffff003f, 0x7fffff, 0x7daed, 0x50000000, 0x82315001, 0x2c62ab, 0x40000000, 0xf580c900,
+        0x7, 0x2010800, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffff, 0xffffffff,
+        0xffffffff, 0x3ffffff, 0x3f3fffff, 0xffffffff, 0xaaff3f3f, 0x3fffffff, 0xffffffff,
+        0x5fdfffff, 0xfcf1fdc, 0x1fdc1fff, 0, 0x4c40, 0, 0, 0x7, 0, 0, 0, 0x80, 0x3fe, 0xfffffffe,
+        0xffffffff, 0x1fffff, 0xfffffffe, 0xffffffff, 0x7ffffff, 0xffffffe0, 0x1fff, 0, 0, 0, 0, 0,
+        0, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0x3f, 0, 0, 0xffffffff,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xf, 0, 0, 0, 0x7ff6000, 0x87fffffe,
+        0x7fffffe, 0, 0x800000, 0xff7fffff, 0xff7fffff, 0xffffff, 0, 0xffff0000, 0xffffffff,
+        0xffffffff, 0xf80001ff, 0x30003, 0, 0xffffffff, 0xffffffff, 0x3f, 0x3, 0xffffd7c0,
+        0xfffffffb, 0x547f7fff, 0xffffd, 0xffffdffe, 0xffffffff, 0xdffeffff, 0xffffffff,
+        0xffff007b, 0xffffffff, 0xffff199f, 0x33fcfff, 0, 0xfffe0000, 0x27fffff, 0xfffffffe,
+        0xfffe007f, 0xbbfffffb, 0xffff0016, 0x707ff, 0, 0x7fffffe, 0x7ffff, 0xffff03ff, 0xffffffff,
+        0x7cffffff, 0xffef7fff, 0x3ff3dff, 0xffffffee, 0xf3ffffff, 0xff1e3fff, 0xffcf, 0xfff99fee,
+        0xd3c5fdff, 0xb080399f, 0x3ffcf, 0xfff987e4, 0xd36dfdff, 0x5e003987, 0x1fffc0, 0xfffbafee,
+        0xf3edfdff, 0x3bbf, 0xffc1, 0xfff99fee, 0xf3cdfdff, 0xb0c0398f, 0xffc3, 0xd63dc7ec,
+        0xc3bfc718, 0x803dc7, 0xff80, 0xfffddfee, 0xc3effdff, 0x603ddf, 0xffc3, 0xfffddfec,
+        0xc3effdff, 0x40603ddf, 0xffc3, 0xfffddfec, 0xc3fffdff, 0x803dcf, 0xffc3, 0, 0, 0, 0,
+        0xfffffffe, 0x7ff7fff, 0x3ff7fff, 0, 0xfef02596, 0x3bff6cae, 0x3ff3f5f, 0, 0x3000000,
+        0xc2a003ff, 0xfffffeff, 0xfffe03ff, 0xfebf0fdf, 0x2fe3fff, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x1fff0000, 0x2, 0xa0, 0x3efffe, 0xfffffffe, 0xffffffff, 0x661fffff, 0xfffffffe,
+        0xffffffff, 0x77ffffff,
     ];
 
     pub static mut nmstrtPages: [c_uchar; 256] = [
-        0x2,
-        0x3,
-        0x4,
-        0x5,
-        0x6,
-        0x7,
-        0x8,
-        0,
-        0,
-        0x9,
-        0xa,
-        0xb,
-        0xc,
-        0xd,
-        0xe,
-        0xf,
-        0x10,
-        0x11,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x12,
-        0x13,
-        0,
-        0x14,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x15,
-        0x16,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x17,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x18,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
+        0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0, 0, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x12, 0x13, 0, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0x15, 0x16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
 
     pub static mut namePages: [c_uchar; 256] = [
-        0x19,
-        0x3,
-        0x1a,
-        0x1b,
-        0x1c,
-        0x1d,
-        0x1e,
-        0,
-        0,
-        0x1f,
-        0x20,
-        0x21,
-        0x22,
-        0x23,
-        0x24,
-        0x25,
-        0x10,
-        0x11,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x12,
-        0x13,
-        0x26,
-        0x14,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x27,
-        0x16,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x17,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x1,
-        0x18,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
+        0x19, 0x3, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0, 0, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
+        0x10, 0x11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x12, 0x13, 0x26, 0x14, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0x27, 0x16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x17, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
+        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x18, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
     ];
 }
 
@@ -12817,7 +10832,7 @@ pub mod xmltok_ns_c {
         mut name: *const c_char,
     ) -> c_int {
         let mut i: c_int = getEncodingIndex(name);
-        if i ==  UNKNOWN_ENC {
+        if i == UNKNOWN_ENC {
             return 0i32;
         }
         (*p).initEnc.isUtf16 = i as c_char;
@@ -12860,7 +10875,7 @@ pub mod xmltok_ns_c {
         mut name: *const c_char,
     ) -> c_int {
         let mut i: c_int = getEncodingIndex(name);
-        if i ==  UNKNOWN_ENC {
+        if i == UNKNOWN_ENC {
             return 0i32;
         }
         (*p).initEnc.isUtf16 = i as c_char;
@@ -12909,20 +10924,17 @@ pub mod xmltok_ns_c {
             &mut ptr,
             end,
             &mut p,
-            p.offset(128)
-                .offset(-(1)),
+            p.offset(128).offset(-(1)),
         );
         if ptr != end {
             return 0 as *const super::ENCODING;
         }
         *p = 0;
-        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0
-            && (*enc).minBytesPerChar == 2
-        {
+        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar == 2 {
             return enc;
         }
         i = getEncodingIndex(buf.as_mut_ptr());
-        if i ==  UNKNOWN_ENC {
+        if i == UNKNOWN_ENC {
             return 0 as *const super::ENCODING;
         }
         return encodings[i as usize];
@@ -12941,20 +10953,17 @@ pub mod xmltok_ns_c {
             &mut ptr,
             end,
             &mut p,
-            p.offset(128)
-                .offset(-(1)),
+            p.offset(128).offset(-(1)),
         );
         if ptr != end {
             return 0 as *const super::ENCODING;
         }
         *p = 0;
-        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0
-            && (*enc).minBytesPerChar == 2
-        {
+        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar == 2 {
             return enc;
         }
         i = getEncodingIndex(buf.as_mut_ptr());
-        if i ==  UNKNOWN_ENC {
+        if i == UNKNOWN_ENC {
             return 0 as *const super::ENCODING;
         }
         return encodingsNS[i as usize];
@@ -13215,69 +11224,45 @@ unsafe extern "C" fn isNever(mut _enc: *const ENCODING, mut _p: *const c_char) -
 }
 
 unsafe extern "C" fn utf8_isName2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int
-        >> 2
-        & 7) as usize] as c_int)
+    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+        as c_int)
         << 3)
-        + ((*(p as *const c_uchar).offset(0) as c_int & 3)
-            << 1)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
-        as usize]
-        & (1)
-            << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
-        as c_int;
+        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
+        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) as c_int;
 }
 
 unsafe extern "C" fn utf8_isName3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0)
-        as c_int
-        & 0xf)
-        << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2
-            & 0xf)) as usize] as c_int)
+    return (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+        as usize] as c_int)
         << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3)
-            << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
-        as usize]
-        & (1)
-            << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
-        as c_int;
+        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
+        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
+        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) as c_int;
 }
 
 pub const utf8_isName4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int =
     isNever;
 
 unsafe extern "C" fn utf8_isNmstrt2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages[(*(p as *const c_uchar).offset(0)
-        as c_int
-        >> 2
-        & 7) as usize] as c_int)
+    return (namingBitmap[(((nmstrtPages
+        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+        as c_int)
         << 3)
-        + ((*(p as *const c_uchar).offset(0) as c_int & 3)
-            << 1)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
-        as usize]
-        & (1)
-            << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
-        as c_int;
+        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
+        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) as c_int;
 }
 
 unsafe extern "C" fn utf8_isNmstrt3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0)
-        as c_int
-        & 0xf)
-        << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2
-            & 0xf)) as usize] as c_int)
+    return (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+        as usize] as c_int)
         << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3)
-            << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
-        as usize]
-        & (1)
-            << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
-        as c_int;
+        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
+        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
+        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) as c_int;
 }
 
 pub const utf8_isNmstrt4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int =
@@ -13285,62 +11270,46 @@ pub const utf8_isNmstrt4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_c
 
 unsafe extern "C" fn utf8_isInvalid2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
     return ((*(p as *const c_uchar) as c_int) < 0xc2
-        || *(p as *const c_uchar).offset(1) as c_int & 0x80
-            == 0
-        || *(p as *const c_uchar).offset(1) as c_int & 0xc0
-            == 0xc0) as c_int;
+        || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
+        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int;
 }
 
 unsafe extern "C" fn utf8_isInvalid3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(2) as c_int & 0x80
-        == 0
+    return (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
         || (if *(p as *const c_uchar) as c_int == 0xef
             && *(p as *const c_uchar).offset(1) as c_int == 0xbf
         {
             (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
         } else {
-            (*(p as *const c_uchar).offset(2) as c_int & 0xc0
-                == 0xc0) as c_int
+            (*(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0) as c_int
         }) != 0
         || (if *(p as *const c_uchar) as c_int == 0xe0 {
             ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0
-                    == 0xc0) as c_int
+                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
         } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80
-                == 0
+            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
                 || (if *(p as *const c_uchar) as c_int == 0xed {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f)
-                        as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f) as c_int
                 } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0
-                        == 0xc0) as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
                 }) != 0) as c_int
         }) != 0) as c_int;
 }
 
 unsafe extern "C" fn utf8_isInvalid4(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(3) as c_int & 0x80
-        == 0
-        || *(p as *const c_uchar).offset(3) as c_int & 0xc0
-            == 0xc0
-        || *(p as *const c_uchar).offset(2) as c_int & 0x80
-            == 0
-        || *(p as *const c_uchar).offset(2) as c_int & 0xc0
-            == 0xc0
+    return (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
+        || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
+        || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
+        || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
         || (if *(p as *const c_uchar) as c_int == 0xf0 {
             ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0
-                    == 0xc0) as c_int
+                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
         } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80
-                == 0
+            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
                 || (if *(p as *const c_uchar) as c_int == 0xf4 {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f)
-                        as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f) as c_int
                 } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0
-                        == 0xc0) as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
                 }) != 0) as c_int
         }) != 0) as c_int;
 }
@@ -13512,8 +11481,7 @@ unsafe extern "C" fn utf8_toUtf16(
                 } else {
                     let fresh24 = to;
                     to = to.offset(1);
-                    *fresh24 = ((*from.offset(0) as c_int & 0x1f)
-                        << 6
+                    *fresh24 = ((*from.offset(0) as c_int & 0x1f) << 6
                         | *from.offset(1) as c_int & 0x3f)
                         as c_ushort;
                     from = from.offset(2)
@@ -13527,10 +11495,8 @@ unsafe extern "C" fn utf8_toUtf16(
                 } else {
                     let fresh25 = to;
                     to = to.offset(1);
-                    *fresh25 = ((*from.offset(0) as c_int & 0xf)
-                        << 12
-                        | (*from.offset(1) as c_int & 0x3f)
-                            << 6
+                    *fresh25 = ((*from.offset(0) as c_int & 0xf) << 12
+                        | (*from.offset(1) as c_int & 0x3f) << 6
                         | *from.offset(2) as c_int & 0x3f)
                         as c_ushort;
                     from = from.offset(3)
@@ -13548,17 +11514,12 @@ unsafe extern "C" fn utf8_toUtf16(
                     break;
                 } else {
                     n = ((*from.offset(0) as c_int & 0x7) << 18
-                        | (*from.offset(1) as c_int & 0x3f)
-                            << 12
-                        | (*from.offset(2) as c_int & 0x3f)
-                            << 6
-                        | *from.offset(3) as c_int & 0x3f)
-                        as c_ulong;
+                        | (*from.offset(1) as c_int & 0x3f) << 12
+                        | (*from.offset(2) as c_int & 0x3f) << 6
+                        | *from.offset(3) as c_int & 0x3f) as c_ulong;
                     n = n.wrapping_sub(0x10000u64);
-                    *to.offset(0) =
-                        (n >> 10 | 0xd800) as c_ushort;
-                    *to.offset(1) =
-                        (n & 0x3ff | 0xdc00) as c_ushort;
+                    *to.offset(0) = (n >> 10 | 0xd800) as c_ushort;
+                    *to.offset(1) = (n & 0x3ff | 0xdc00) as c_ushort;
                     to = to.offset(2);
                     from = from.offset(4)
                 }
@@ -13733,517 +11694,261 @@ static mut utf8_encoding_ns: normal_encoding = {
             init
         },
         type_0: [
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_LF as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_CR as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_EXCL as c_uchar,
-            
             BT_QUOT as c_uchar,
-            
             BT_NUM as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_PERCNT as c_uchar,
-            
             BT_AMP as c_uchar,
-            
             BT_APOS as c_uchar,
-            
             BT_LPAR as c_uchar,
-            
             BT_RPAR as c_uchar,
-            
             BT_AST as c_uchar,
-            
             BT_PLUS as c_uchar,
-            
             BT_COMMA as c_uchar,
-            
             BT_MINUS as c_uchar,
-            
             BT_NAME as c_uchar,
-            
             BT_SOL as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_COLON_0 as c_uchar,
-            
             BT_SEMI as c_uchar,
-            
             BT_LT as c_uchar,
-            
             BT_EQUALS as c_uchar,
-            
             BT_GT as c_uchar,
-            
             BT_QUEST as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_LSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_RSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_VERBAR as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_MALFORM as c_uchar,
-            
             BT_MALFORM as c_uchar,
         ],
         isName2: Some(
@@ -14421,516 +12126,261 @@ static mut utf8_encoding: normal_encoding = {
             init
         },
         type_0: [
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_LF as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_CR as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_EXCL as c_uchar,
-            
             BT_QUOT as c_uchar,
-            
             BT_NUM as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_PERCNT as c_uchar,
-            
             BT_AMP as c_uchar,
-            
             BT_APOS as c_uchar,
-            
             BT_LPAR as c_uchar,
-            
             BT_RPAR as c_uchar,
-            
             BT_AST as c_uchar,
-            
             BT_PLUS as c_uchar,
-            
             BT_COMMA as c_uchar,
-            
             BT_MINUS as c_uchar,
-            
             BT_NAME as c_uchar,
-            
             BT_SOL as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
             BT_COLON as c_uchar,
-            
             BT_SEMI as c_uchar,
-            
             BT_LT as c_uchar,
-            
             BT_EQUALS as c_uchar,
-            
             BT_GT as c_uchar,
-            
             BT_QUEST as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_LSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_RSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_VERBAR as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_MALFORM as c_uchar,
-            
             BT_MALFORM as c_uchar,
         ],
         isName2: Some(
@@ -15110,517 +12560,261 @@ static mut internal_utf8_encoding_ns: normal_encoding = {
             init
         },
         type_0: [
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_LF as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_EXCL as c_uchar,
-            
             BT_QUOT as c_uchar,
-            
             BT_NUM as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_PERCNT as c_uchar,
-            
             BT_AMP as c_uchar,
-            
             BT_APOS as c_uchar,
-            
             BT_LPAR as c_uchar,
-            
             BT_RPAR as c_uchar,
-            
             BT_AST as c_uchar,
-            
             BT_PLUS as c_uchar,
-            
             BT_COMMA as c_uchar,
-            
             BT_MINUS as c_uchar,
-            
             BT_NAME as c_uchar,
-            
             BT_SOL as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_COLON_0 as c_uchar,
-            
             BT_SEMI as c_uchar,
-            
             BT_LT as c_uchar,
-            
             BT_EQUALS as c_uchar,
-            
             BT_GT as c_uchar,
-            
             BT_QUEST as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_LSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_RSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_VERBAR as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_MALFORM as c_uchar,
-            
             BT_MALFORM as c_uchar,
         ],
         isName2: Some(
@@ -15798,516 +12992,261 @@ static mut internal_utf8_encoding: normal_encoding = {
             init
         },
         type_0: [
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_LF as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_S as c_uchar,
-            
             BT_EXCL as c_uchar,
-            
             BT_QUOT as c_uchar,
-            
             BT_NUM as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_PERCNT as c_uchar,
-            
             BT_AMP as c_uchar,
-            
             BT_APOS as c_uchar,
-            
             BT_LPAR as c_uchar,
-            
             BT_RPAR as c_uchar,
-            
             BT_AST as c_uchar,
-            
             BT_PLUS as c_uchar,
-            
             BT_COMMA as c_uchar,
-            
             BT_MINUS as c_uchar,
-            
             BT_NAME as c_uchar,
-            
             BT_SOL as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
-            
             BT_DIGIT as c_uchar,
             BT_COLON_5 as c_uchar,
-            
             BT_SEMI as c_uchar,
-            
             BT_LT as c_uchar,
-            
             BT_EQUALS as c_uchar,
-            
             BT_GT as c_uchar,
-            
             BT_QUEST as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_LSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_RSQB as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_HEX as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_NMSTRT as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_VERBAR as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_OTHER as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_TRAIL as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD2 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD3 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_LEAD4 as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_NONXML as c_uchar,
-            
             BT_MALFORM as c_uchar,
-            
             BT_MALFORM as c_uchar,
         ],
         isName2: Some(
@@ -16548,517 +13487,261 @@ static mut latin1_encoding_ns: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_COLON_0 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -17253,516 +13936,261 @@ static mut latin1_encoding: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
                 BT_COLON_1 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -17980,261 +14408,133 @@ static mut ascii_encoding_ns: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_COLON_0 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
                 0,
                 0,
@@ -18557,260 +14857,133 @@ static mut ascii_encoding: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
                 BT_COLON_4 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
                 0,
                 0,
@@ -19022,9 +15195,7 @@ unsafe extern "C" fn little2_toUtf8(
     mut toLim: *const c_char,
 ) -> XML_Convert_Result {
     let mut from: *const c_char = *fromP;
-    fromLim = from.offset(
-        ((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize,
-    );
+    fromLim = from.offset(((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize);
     while from < fromLim {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
@@ -19058,24 +15229,19 @@ unsafe extern "C" fn little2_toUtf8(
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
-                plane = ((hi as c_int & 0x3) << 2
-                    | lo as c_int >> 6 & 0x3)
-                    + 1;
+                plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                 let fresh42 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh42 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
                 let fresh43 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh43 = (lo as c_int >> 2 & 0xf
-                    | (plane & 0x3) << 4
-                    | 0x80) as c_char;
+                *fresh43 = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
                 from = from.offset(2);
                 lo2 = *from.offset(0) as c_uchar;
                 let fresh44 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh44 = ((lo as c_int & 0x3) << 4
-                    | (*from.offset(1) as c_uchar as c_int & 0x3)
-                        << 2
+                    | (*from.offset(1) as c_uchar as c_int & 0x3) << 2
                     | lo2 as c_int >> 6
                     | 0x80) as c_char;
                 let fresh45 = *toP;
@@ -19093,9 +15259,7 @@ unsafe extern "C" fn little2_toUtf8(
                 *fresh39 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                 let fresh40 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh40 = ((hi as c_int & 0xf) << 2
-                    | lo as c_int >> 6
-                    | 0x80) as c_char;
+                *fresh40 = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
                 let fresh41 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh41 = (lo as c_int & 0x3f | 0x80) as c_char;
@@ -19110,9 +15274,7 @@ unsafe extern "C" fn little2_toUtf8(
                 }
                 let fresh37 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh37 = (lo as c_int >> 6
-                    | (hi as c_int) << 2
-                    | UTF8_cval2 as c_int) as c_char;
+                *fresh37 = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
                 let fresh38 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh38 = (lo as c_int & 0x3f | 0x80) as c_char
@@ -19137,16 +15299,11 @@ unsafe extern "C" fn little2_toUtf16(
     mut toLim: *const c_ushort,
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
-    fromLim = (*fromP).offset(
-        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize,
-    );
+    fromLim =
+        (*fromP).offset(((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize);
     if fromLim.wrapping_offset_from(*fromP) as c_long
         > (toLim.wrapping_offset_from(*toP) as c_long) << 1
-        && *fromLim
-            .offset(-(2))
-            .offset(1) as c_uchar as c_int
-            & 0xf8
-            == 0xd8
+        && *fromLim.offset(-(2)).offset(1) as c_uchar as c_int & 0xf8 == 0xd8
     {
         fromLim = fromLim.offset(-(2));
         res = XML_CONVERT_INPUT_INCOMPLETE
@@ -19155,8 +15312,7 @@ unsafe extern "C" fn little2_toUtf16(
         let fresh46 = *toP;
         *toP = (*toP).offset(1);
         *fresh46 = ((*(*fromP).offset(1) as c_uchar as c_int) << 8
-            | *(*fromP).offset(0) as c_uchar as c_int)
-            as c_ushort;
+            | *(*fromP).offset(0) as c_uchar as c_int) as c_ushort;
         *fromP = (*fromP).offset(2)
     }
     if *toP == toLim as *mut c_ushort && *fromP < fromLim {
@@ -19174,9 +15330,7 @@ unsafe extern "C" fn big2_toUtf8(
     mut toLim: *const c_char,
 ) -> XML_Convert_Result {
     let mut from: *const c_char = *fromP;
-    fromLim = from.offset(
-        ((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize,
-    );
+    fromLim = from.offset(((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize);
     while from < fromLim {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
@@ -19210,24 +15364,19 @@ unsafe extern "C" fn big2_toUtf8(
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
-                plane = ((hi as c_int & 0x3) << 2
-                    | lo as c_int >> 6 & 0x3)
-                    + 1;
+                plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                 let fresh53 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh53 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
                 let fresh54 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh54 = (lo as c_int >> 2 & 0xf
-                    | (plane & 0x3) << 4
-                    | 0x80) as c_char;
+                *fresh54 = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
                 from = from.offset(2);
                 lo2 = *from.offset(1) as c_uchar;
                 let fresh55 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh55 = ((lo as c_int & 0x3) << 4
-                    | (*from.offset(0) as c_uchar as c_int & 0x3)
-                        << 2
+                    | (*from.offset(0) as c_uchar as c_int & 0x3) << 2
                     | lo2 as c_int >> 6
                     | 0x80) as c_char;
                 let fresh56 = *toP;
@@ -19245,9 +15394,7 @@ unsafe extern "C" fn big2_toUtf8(
                 *fresh50 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                 let fresh51 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh51 = ((hi as c_int & 0xf) << 2
-                    | lo as c_int >> 6
-                    | 0x80) as c_char;
+                *fresh51 = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
                 let fresh52 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh52 = (lo as c_int & 0x3f | 0x80) as c_char;
@@ -19262,9 +15409,7 @@ unsafe extern "C" fn big2_toUtf8(
                 }
                 let fresh48 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh48 = (lo as c_int >> 6
-                    | (hi as c_int) << 2
-                    | UTF8_cval2 as c_int) as c_char;
+                *fresh48 = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
                 let fresh49 = *toP;
                 *toP = (*toP).offset(1);
                 *fresh49 = (lo as c_int & 0x3f | 0x80) as c_char
@@ -19289,16 +15434,11 @@ unsafe extern "C" fn big2_toUtf16(
     mut toLim: *const c_ushort,
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
-    fromLim = (*fromP).offset(
-        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize,
-    );
+    fromLim =
+        (*fromP).offset(((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize);
     if fromLim.wrapping_offset_from(*fromP) as c_long
         > (toLim.wrapping_offset_from(*toP) as c_long) << 1
-        && *fromLim
-            .offset(-(2))
-            .offset(0) as c_uchar as c_int
-            & 0xf8
-            == 0xd8
+        && *fromLim.offset(-(2)).offset(0) as c_uchar as c_int & 0xf8 == 0xd8
     {
         fromLim = fromLim.offset(-(2));
         res = XML_CONVERT_INPUT_INCOMPLETE
@@ -19307,8 +15447,7 @@ unsafe extern "C" fn big2_toUtf16(
         let fresh57 = *toP;
         *toP = (*toP).offset(1);
         *fresh57 = ((*(*fromP).offset(0) as c_uchar as c_int) << 8
-            | *(*fromP).offset(1) as c_uchar as c_int)
-            as c_ushort;
+            | *(*fromP).offset(1) as c_uchar as c_int) as c_ushort;
         *fromP = (*fromP).offset(2)
     }
     if *toP == toLim as *mut c_ushort && *fromP < fromLim {
@@ -19472,517 +15611,261 @@ static mut little2_encoding_ns: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_COLON_0 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -20177,516 +16060,261 @@ static mut little2_encoding: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
                 BT_COLON_2 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -20883,517 +16511,261 @@ static mut internal_little2_encoding_ns: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_COLON_0 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -21588,516 +16960,261 @@ static mut internal_little2_encoding: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
                 BT_COLON_6 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -22297,517 +17414,261 @@ static mut big2_encoding_ns: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_COLON_0 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -23002,516 +17863,261 @@ static mut big2_encoding: normal_encoding = unsafe {
                 init
             },
             type_0: [
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_LF as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_CR as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_NONXML as c_uchar,
-                
                 BT_S as c_uchar,
-                
                 BT_EXCL as c_uchar,
-                
                 BT_QUOT as c_uchar,
-                
                 BT_NUM as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_PERCNT as c_uchar,
-                
                 BT_AMP as c_uchar,
-                
                 BT_APOS as c_uchar,
-                
                 BT_LPAR as c_uchar,
-                
                 BT_RPAR as c_uchar,
-                
                 BT_AST as c_uchar,
-                
                 BT_PLUS as c_uchar,
-                
                 BT_COMMA as c_uchar,
-                
                 BT_MINUS as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_SOL as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
-                
                 BT_DIGIT as c_uchar,
                 BT_COLON_3 as c_uchar,
-                
                 BT_SEMI as c_uchar,
-                
                 BT_LT as c_uchar,
-                
                 BT_EQUALS as c_uchar,
-                
                 BT_GT as c_uchar,
-                
                 BT_QUEST as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_LSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_RSQB as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_HEX as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_VERBAR as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NAME as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_OTHER as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
-                
                 BT_NMSTRT as c_uchar,
             ],
             isName2: ::std::mem::transmute::<
@@ -23601,13 +18207,7 @@ unsafe extern "C" fn toAscii(
 ) -> c_int {
     let mut buf: [c_char; 1] = [0; 1];
     let mut p: *mut c_char = buf.as_mut_ptr();
-    (*enc).utf8Convert.expect("non-null function pointer")(
-        enc,
-        &mut ptr,
-        end,
-        &mut p,
-        p.offset(1),
-    );
+    (*enc).utf8Convert.expect("non-null function pointer")(enc, &mut ptr, end, &mut p, p.offset(1));
     if p == buf.as_mut_ptr() {
         return -1;
     } else {
@@ -23722,89 +18322,45 @@ unsafe extern "C" fn parsePseudoAttribute(
 }
 
 static mut KW_version: [c_char; 8] = [
-    
     ASCII_v,
-    
     ASCII_e,
-    
     ASCII_r,
-    
     ASCII_s,
-    
     ASCII_i,
-    
     ASCII_o,
-    
     ASCII_n,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_encoding: [c_char; 9] = [
-    
     ASCII_e,
-    
     ASCII_n,
-    
     ASCII_c,
-    
     ASCII_o,
-    
     ASCII_d,
-    
     ASCII_i,
-    
     ASCII_n,
-    
     ASCII_g,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_standalone: [c_char; 11] = [
-    
     ASCII_s,
-    
     ASCII_t,
-    
     ASCII_a,
-    
     ASCII_n,
-    
     ASCII_d,
-    
     ASCII_a,
-    
     ASCII_l,
-    
     ASCII_o,
-    
     ASCII_n,
-    
     ASCII_e,
-    
     '\u{0}' as c_char,
 ];
 
-static mut KW_yes: [c_char; 4] = [
-    
-    ASCII_y,
-    
-    ASCII_e,
-    
-    ASCII_s,
-    
-    '\u{0}' as c_char,
-];
+static mut KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, '\u{0}' as c_char];
 
-static mut KW_no: [c_char; 3] = [
-    
-    ASCII_n,
-    
-    ASCII_o,
-    
-    '\u{0}' as c_char,
-];
+static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
 
 unsafe extern "C" fn doParseXmlDecl(
     mut encodingFinder: Option<
@@ -23988,17 +18544,14 @@ pub unsafe extern "C" fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_
     }
     if c < min4 as c_int {
         *buf.offset(0) = (c >> 12 | UTF8_cval3 as c_int) as c_char;
-        *buf.offset(1) =
-            (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(1) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
         *buf.offset(2) = (c & 0x3fi32 | 0x80) as c_char;
         return 3i32;
     }
     if c < 0x110000 {
         *buf.offset(0) = (c >> 18 | UTF8_cval4 as c_int) as c_char;
-        *buf.offset(1) =
-            (c >> 12 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(2) =
-            (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(1) = (c >> 12 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(2) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
         *buf.offset(3) = (c & 0x3fi32 | 0x80) as c_char;
         return 4i32;
     }
@@ -24018,8 +18571,7 @@ pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_usho
     if charNum < 0x110000 {
         charNum -= 0x10000;
         *buf.offset(0) = ((charNum >> 10) + 0xd800i32) as c_ushort;
-        *buf.offset(1) =
-            ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
+        *buf.offset(1) = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
         return 2i32;
     }
     return 0;
@@ -24027,7 +18579,7 @@ pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_usho
 #[no_mangle]
 
 pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
-    return  ::std::mem::size_of::<unknown_encoding>() as c_int;
+    return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
 
 unsafe extern "C" fn unknown_isName(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
@@ -24036,8 +18588,8 @@ unsafe extern "C" fn unknown_isName(mut enc: *const ENCODING, mut p: *const c_ch
     if c & !(0xffff) != 0 {
         return 0i32;
     }
-    return (namingBitmap[(((namePages[(c >> 8) as usize] as c_int) << 3)
-        + ((c & 0xff) >> 5)) as usize]
+    return (namingBitmap
+        [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
         & (1) << (c & 0xff & 0x1f)) as c_int;
 }
 
@@ -24047,8 +18599,8 @@ unsafe extern "C" fn unknown_isNmstrt(mut enc: *const ENCODING, mut p: *const c_
     if c & !(0xffff) != 0 {
         return 0i32;
     }
-    return (namingBitmap[(((nmstrtPages[(c >> 8) as usize] as c_int) << 3)
-        + ((c & 0xff) >> 5)) as usize]
+    return (namingBitmap
+        [(((nmstrtPages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
         & (1) << (c & 0xff & 0x1f)) as c_int;
 }
 
@@ -24159,7 +18711,7 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
     while i < 256 {
         let mut c: c_int = *table.offset(i as isize);
         if c == -1 {
-            (*e).normal.type_0[i as usize] =  BT_MALFORM as c_uchar;
+            (*e).normal.type_0[i as usize] = BT_MALFORM as c_uchar;
             /* This shouldn't really get used. */
             (*e).utf16[i as usize] = 0xffff;
             (*e).utf8[i as usize][0] = 1;
@@ -24187,7 +18739,7 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
             (*e).utf8[i as usize][1] = c as c_char;
             (*e).utf16[i as usize] = if c == 0 { 0xffff } else { c } as c_ushort
         } else if checkCharRefNumber(c) < 0 {
-            (*e).normal.type_0[i as usize] =  BT_NONXML as c_uchar;
+            (*e).normal.type_0[i as usize] = BT_NONXML as c_uchar;
             /* This shouldn't really get used. */
             (*e).utf16[i as usize] = 0xffff;
             (*e).utf8[i as usize][0] = 1;
@@ -24196,28 +18748,23 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
             if c > 0xffff {
                 return 0 as *mut ENCODING;
             }
-            if namingBitmap[(((nmstrtPages[(c >> 8) as usize] as c_int) << 3)
-                + ((c & 0xff) >> 5)) as usize]
+            if namingBitmap
+                [(((nmstrtPages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
                 & (1) << (c & 0xff & 0x1f)
                 != 0
             {
-                (*e).normal.type_0[i as usize] =  BT_NMSTRT as c_uchar
-            } else if namingBitmap[(((namePages[(c >> 8) as usize] as c_int)
-                << 3)
-                + ((c & 0xff) >> 5)) as usize]
+                (*e).normal.type_0[i as usize] = BT_NMSTRT as c_uchar
+            } else if namingBitmap
+                [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
                 & (1) << (c & 0xff & 0x1f)
                 != 0
             {
-                (*e).normal.type_0[i as usize] =  BT_NAME as c_uchar
+                (*e).normal.type_0[i as usize] = BT_NAME as c_uchar
             } else {
-                (*e).normal.type_0[i as usize] =  BT_OTHER as c_uchar
+                (*e).normal.type_0[i as usize] = BT_OTHER as c_uchar
             }
-            (*e).utf8[i as usize][0] = XmlUtf8Encode(
-                c,
-                (*e).utf8[i as usize]
-                    .as_mut_ptr()
-                    .offset(1),
-            ) as c_char;
+            (*e).utf8[i as usize][0] =
+                XmlUtf8Encode(c, (*e).utf8[i as usize].as_mut_ptr().offset(1)) as c_char;
             (*e).utf16[i as usize] = c as c_ushort
         }
         i += 1
@@ -24280,122 +18827,71 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
 }
 
 static mut KW_ISO_8859_1: [c_char; 11] = [
-    
     ASCII_I,
-    
     ASCII_S,
-    
     ASCII_O,
-    
     ASCII_MINUS,
-    
     ASCII_8,
-    
     ASCII_8,
-    
     ASCII_5,
-    
     ASCII_9,
-    
     ASCII_MINUS,
-    
     ASCII_1,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_US_ASCII: [c_char; 9] = [
-    
     ASCII_U,
-    
     ASCII_S,
-    
     ASCII_MINUS,
-    
     ASCII_A,
-    
     ASCII_S,
-    
     ASCII_C,
-    
     ASCII_I,
-    
     ASCII_I,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_UTF_8: [c_char; 6] = [
-    
     ASCII_U,
-    
     ASCII_T,
-    
     ASCII_F,
-    
     ASCII_MINUS,
-    
     ASCII_8,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_UTF_16: [c_char; 7] = [
-    
     ASCII_U,
-    
     ASCII_T,
-    
     ASCII_F,
-    
     ASCII_MINUS,
-    
     ASCII_1,
-    
     ASCII_6,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_UTF_16BE: [c_char; 9] = [
-    
     ASCII_U,
-    
     ASCII_T,
-    
     ASCII_F,
-    
     ASCII_MINUS,
-    
     ASCII_1,
-    
     ASCII_6,
-    
     ASCII_B,
-    
     ASCII_E,
-    
     '\u{0}' as c_char,
 ];
 
 static mut KW_UTF_16LE: [c_char; 9] = [
-    
     ASCII_U,
-    
     ASCII_T,
-    
     ASCII_F,
-    
     ASCII_MINUS,
-    
     ASCII_1,
-    
     ASCII_6,
-    
     ASCII_L,
-    
     ASCII_E,
-    
     '\u{0}' as c_char,
 ];
 
@@ -24412,7 +18908,7 @@ unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
     };
     let mut i: c_int = 0;
     if name.is_null() {
-        return  NO_ENC;
+        return NO_ENC;
     }
     i = 0;
     while i
@@ -24424,7 +18920,7 @@ unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
         }
         i += 1
     }
-    return  UNKNOWN_ENC;
+    return UNKNOWN_ENC;
 }
 /* For binary compatibility, we store the index of the encoding
    specified at initialization in the isUtf16 member.
@@ -24462,9 +18958,7 @@ unsafe extern "C" fn initScan(
         match *ptr as c_uchar as c_int {
             254 | 255 | 239 => {
                 /* possibly first byte of UTF-8 BOM */
-                if (*enc).initEnc.isUtf16 as c_int ==  ISO_8859_1_ENC
-                    && state == XML_CONTENT_STATE
-                {
+                if (*enc).initEnc.isUtf16 as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
                     current_block_5 = 17965632435239708295;
                 } else {
                     current_block_5 = 16867440708908940295;
@@ -24487,11 +18981,9 @@ unsafe extern "C" fn initScan(
         }
     } else {
         let mut current_block_26: u64;
-        match (*ptr.offset(0) as c_uchar as c_int) << 8
-            | *ptr.offset(1) as c_uchar as c_int
-        {
+        match (*ptr.offset(0) as c_uchar as c_int) << 8 | *ptr.offset(1) as c_uchar as c_int {
             65279 => {
-                if !((*enc).initEnc.isUtf16 as c_int ==  ISO_8859_1_ENC
+                if !((*enc).initEnc.isUtf16 as c_int == ISO_8859_1_ENC
                     && state == XML_CONTENT_STATE)
                 {
                     *nextTokPtr = ptr.offset(2);
@@ -24501,8 +18993,8 @@ unsafe extern "C" fn initScan(
             }
             15360 => {
                 /* 00 3C is handled in the default case */
-                if !(((*enc).initEnc.isUtf16 as c_int ==  UTF_16BE_ENC
-                    || (*enc).initEnc.isUtf16 as c_int ==  UTF_16_ENC)
+                if !(((*enc).initEnc.isUtf16 as c_int == UTF_16BE_ENC
+                    || (*enc).initEnc.isUtf16 as c_int == UTF_16_ENC)
                     && state == XML_CONTENT_STATE)
                 {
                     *encPtr = *encodingTable.offset(UTF_16LE_ENC as isize);
@@ -24512,7 +19004,7 @@ unsafe extern "C" fn initScan(
                 }
             }
             65534 => {
-                if !((*enc).initEnc.isUtf16 as c_int ==  ISO_8859_1_ENC
+                if !((*enc).initEnc.isUtf16 as c_int == ISO_8859_1_ENC
                     && state == XML_CONTENT_STATE)
                 {
                     *nextTokPtr = ptr.offset(2);
@@ -24530,10 +19022,10 @@ unsafe extern "C" fn initScan(
                 */
                 if state == XML_CONTENT_STATE {
                     let mut e: c_int = (*enc).initEnc.isUtf16 as c_int;
-                    if e ==  ISO_8859_1_ENC
-                        || e ==  UTF_16BE_ENC
-                        || e ==  UTF_16LE_ENC
-                        || e ==  UTF_16_ENC
+                    if e == ISO_8859_1_ENC
+                        || e == UTF_16BE_ENC
+                        || e == UTF_16LE_ENC
+                        || e == UTF_16_ENC
                     {
                         current_block_26 = 10758786907990354186;
                     } else {
@@ -24565,7 +19057,7 @@ unsafe extern "C" fn initScan(
                        UTF-16LE.
                     */
                     if !(state == XML_CONTENT_STATE
-                        && (*enc).initEnc.isUtf16 as c_int ==  UTF_16LE_ENC)
+                        && (*enc).initEnc.isUtf16 as c_int == UTF_16LE_ENC)
                     {
                         *encPtr = *encodingTable.offset(UTF_16BE_ENC as isize);
                         return (**encPtr).scanners[state as usize]
@@ -24609,9 +19101,7 @@ pub unsafe extern "C" fn XmlInitUnknownEncodingNS(
 ) -> *mut ENCODING {
     let mut enc: *mut ENCODING = XmlInitUnknownEncoding(mem, table, convert, userData);
     if !enc.is_null() {
-        (*(enc as *mut normal_encoding)).type_0[ASCII_COLON as usize] =
-            
-            BT_COLON_0 as c_uchar
+        (*(enc as *mut normal_encoding)).type_0[ASCII_COLON as usize] = BT_COLON_0 as c_uchar
     }
     return enc;
 }

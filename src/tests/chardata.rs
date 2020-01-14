@@ -128,7 +128,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     if len + (*storage).count > maxchars {
         len = maxchars - (*storage).count
     }
-    if len + (*storage).count <  ::std::mem::size_of::<[XML_Char; 2048]>() as c_int {
+    if len + (*storage).count < ::std::mem::size_of::<[XML_Char; 2048]>() as c_int {
         memcpy(
             (*storage)
                 .data

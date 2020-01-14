@@ -100,7 +100,6 @@ unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XM
             stderr,
             b"%s: (unknown message %d)\n\x00" as *const u8 as *const c_char,
             filename,
-            
             code,
         );
     };
@@ -115,9 +114,7 @@ unsafe extern "C" fn processFile(
 ) {
     let mut parser: XML_Parser = (*(args as *mut PROCESS_ARGS)).parser;
     let mut retPtr: *mut c_int = (*(args as *mut PROCESS_ARGS)).retPtr;
-    if  XML_Parse(parser, data as *const c_char, size as c_int, 1)
-        == XML_STATUS_ERROR_0 as c_uint
-    {
+    if XML_Parse(parser, data as *const c_char, size as c_int, 1) == XML_STATUS_ERROR_0 as c_uint {
         reportError(parser, filename);
         *retPtr = 0
     } else {
@@ -246,9 +243,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             }
             return 0i32;
         }
-        if  XML_ParseBuffer(parser, nread, (nread == 0) as c_int)
-            == XML_STATUS_ERROR_0 as c_uint
-        {
+        if XML_ParseBuffer(parser, nread, (nread == 0) as c_int) == XML_STATUS_ERROR_0 as c_uint {
             reportError(
                 parser,
                 if !filename.is_null() {

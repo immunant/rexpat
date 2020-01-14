@@ -117,7 +117,7 @@ pub unsafe extern "C" fn filemap(
     nbytes = sb.st_size as size_t;
     /* malloc will return NULL with nbytes == 0, handle files with size 0 */
     if nbytes == 0 {
-        static mut c: c_char =  '\u{0}' as c_char;
+        static mut c: c_char = '\u{0}' as c_char;
         processor.expect("non-null function pointer")(
             &c as *const c_char as *const c_void,
             0u64,

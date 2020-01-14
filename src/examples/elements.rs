@@ -16,7 +16,7 @@ use ::c2rust_out::src::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
 };
 use ::c2rust_out::stddef_h::NULL;
-use ::c2rust_out::stdlib::{fprintf};
+use ::c2rust_out::stdlib::fprintf;
 use ::libc::{printf, putchar};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
@@ -169,11 +169,10 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             crate::stdlib::stdin,
         );
         done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
-        if  XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
+        if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
             == XML_STATUS_ERROR_0 as c_uint
         {
             fprintf(
-                
                 crate::stdlib::stderr,
                 b"%s at line %lu\n\x00" as *const u8 as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
@@ -200,11 +199,5 @@ pub fn main() {
         );
     }
     args.push(::std::ptr::null_mut());
-    unsafe {
-        ::std::process::exit(main_0(
-            (args.len() - 1) as libc::c_int,
-            
-            args.as_mut_ptr(),
-        ))
-    }
+    unsafe { ::std::process::exit(main_0((args.len() - 1) as libc::c_int, args.as_mut_ptr())) }
 }
