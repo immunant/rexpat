@@ -2538,83 +2538,116 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
 #[no_mangle]
 pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
     match code {
-        0 => return NULL as *const XML_LChar,
-        1 => return b"out of memory\x00".as_ptr() as *const c_char,
-        2 => return b"syntax error\x00".as_ptr() as *const c_char,
-        3 => return b"no element found\x00".as_ptr() as *const c_char,
-        4 => return b"not well-formed (invalid token)\x00".as_ptr() as *const c_char,
-        5 => return b"unclosed token\x00".as_ptr() as *const c_char,
-        6 => return b"partial character\x00".as_ptr() as *const c_char,
-        7 => return b"mismatched tag\x00".as_ptr() as *const c_char,
-        8 => return b"duplicate attribute\x00".as_ptr() as *const c_char,
-        9 => return b"junk after document element\x00".as_ptr() as *const c_char,
-        10 => return b"illegal parameter entity reference\x00".as_ptr() as *const c_char,
-        11 => return b"undefined entity\x00".as_ptr() as *const c_char,
-        12 => return b"recursive entity reference\x00".as_ptr() as *const c_char,
-        13 => return b"asynchronous entity\x00".as_ptr() as *const c_char,
-        14 => return b"reference to invalid character number\x00".as_ptr() as *const c_char,
-        15 => return b"reference to binary entity\x00".as_ptr() as *const c_char,
-        16 => return b"reference to external entity in attribute\x00".as_ptr() as *const c_char,
-        17 => {
-            return b"XML or text declaration not at start of entity\x00".as_ptr() as *const c_char
+        XML_ERROR_NONE => NULL as *const XML_LChar,
+        XML_ERROR_NO_MEMORY => b"out of memory\x00".as_ptr() as *const c_char,
+        XML_ERROR_SYNTAX => b"syntax error\x00".as_ptr() as *const c_char,
+        XML_ERROR_NO_ELEMENTS => b"no element found\x00".as_ptr() as *const c_char,
+        XML_ERROR_INVALID_TOKEN => {
+            b"not well-formed (invalid token)\x00".as_ptr() as *const c_char
         }
-        18 => return b"unknown encoding\x00".as_ptr() as *const c_char,
-        19 => {
-            return b"encoding specified in XML declaration is incorrect\x00".as_ptr()
+        XML_ERROR_UNCLOSED_TOKEN => b"unclosed token\x00".as_ptr() as *const c_char,
+        XML_ERROR_PARTIAL_CHAR => b"partial character\x00".as_ptr() as *const c_char,
+        XML_ERROR_TAG_MISMATCH => b"mismatched tag\x00".as_ptr() as *const c_char,
+        XML_ERROR_DUPLICATE_ATTRIBUTE => {
+            b"duplicate attribute\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => {
+            b"junk after document element\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_PARAM_ENTITY_REF => {
+            b"illegal parameter entity reference\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_UNDEFINED_ENTITY => b"undefined entity\x00".as_ptr() as *const c_char,
+        XML_ERROR_RECURSIVE_ENTITY_REF => {
+            b"recursive entity reference\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_ASYNC_ENTITY => b"asynchronous entity\x00".as_ptr() as *const c_char,
+        XML_ERROR_BAD_CHAR_REF => {
+            b"reference to invalid character number\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_BINARY_ENTITY_REF => {
+            b"reference to binary entity\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
+            b"reference to external entity in attribute\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_MISPLACED_XML_PI => {
+            b"XML or text declaration not at start of entity\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_UNKNOWN_ENCODING => b"unknown encoding\x00".as_ptr() as *const c_char,
+        XML_ERROR_INCORRECT_ENCODING => {
+            b"encoding specified in XML declaration is incorrect\x00".as_ptr()
                 as *const c_char
         }
-        20 => return b"unclosed CDATA section\x00".as_ptr() as *const c_char,
-        21 => {
-            return b"error in processing external entity reference\x00".as_ptr() as *const c_char
+        XML_ERROR_UNCLOSED_CDATA_SECTION => {
+            b"unclosed CDATA section\x00".as_ptr() as *const c_char
         }
-        22 => return b"document is not standalone\x00".as_ptr() as *const c_char,
-        23 => {
-            return b"unexpected parser state - please send a bug report\x00".as_ptr()
+        XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
+            b"error in processing external entity reference\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_NOT_STANDALONE => {
+            b"document is not standalone\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_UNEXPECTED_STATE => {
+            b"unexpected parser state - please send a bug report\x00".as_ptr()
                 as *const c_char
         }
-        24 => return b"entity declared in parameter entity\x00".as_ptr() as *const c_char,
-        25 => {
-            return b"requested feature requires XML_DTD support in Expat\x00".as_ptr()
+        XML_ERROR_ENTITY_DECLARED_IN_PE => {
+            b"entity declared in parameter entity\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
+            b"requested feature requires XML_DTD support in Expat\x00".as_ptr()
                 as *const c_char
         }
-        26 => return b"cannot change setting once parsing has begun\x00".as_ptr() as *const c_char,
-        27 => {
+        XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
+            b"cannot change setting once parsing has begun\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_UNBOUND_PREFIX => {
             /* Added in 1.95.7. */
-            return b"unbound prefix\x00".as_ptr() as *const c_char;
+            b"unbound prefix\x00".as_ptr() as *const c_char
         }
-        28 => {
+        XML_ERROR_UNDECLARING_PREFIX => {
             /* Added in 1.95.8. */
-            return b"must not undeclare prefix\x00".as_ptr() as *const c_char;
+            b"must not undeclare prefix\x00".as_ptr() as *const c_char
         }
-        29 => return b"incomplete markup in parameter entity\x00".as_ptr() as *const c_char,
-        30 => return b"XML declaration not well-formed\x00".as_ptr() as *const c_char,
-        31 => return b"text declaration not well-formed\x00".as_ptr() as *const c_char,
-        32 => return b"illegal character(s) in public id\x00".as_ptr() as *const c_char,
-        33 => return b"parser suspended\x00".as_ptr() as *const c_char,
-        34 => return b"parser not suspended\x00".as_ptr() as *const c_char,
-        35 => return b"parsing aborted\x00".as_ptr() as *const c_char,
-        36 => return b"parsing finished\x00".as_ptr() as *const c_char,
-        37 => return b"cannot suspend in external parameter entity\x00".as_ptr() as *const c_char,
-        38 => {
+        XML_ERROR_INCOMPLETE_PE => {
+            b"incomplete markup in parameter entity\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_XML_DECL => {
+            b"XML declaration not well-formed\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_TEXT_DECL => {
+            b"text declaration not well-formed\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_PUBLICID => {
+            b"illegal character(s) in public id\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_SUSPENDED => b"parser suspended\x00".as_ptr() as *const c_char,
+        XML_ERROR_NOT_SUSPENDED => b"parser not suspended\x00".as_ptr() as *const c_char,
+        XML_ERROR_ABORTED => b"parsing aborted\x00".as_ptr() as *const c_char,
+        XML_ERROR_FINISHED => b"parsing finished\x00".as_ptr() as *const c_char,
+        XML_ERROR_SUSPEND_PE => {
+            b"cannot suspend in external parameter entity\x00".as_ptr() as *const c_char
+        }
+        XML_ERROR_RESERVED_PREFIX_XML => {
             /* Added in 2.0.0. */
-            return  b"reserved prefix (xml) must not be undeclared or bound to another namespace name\x00".as_ptr() as *const c_char;
+             b"reserved prefix (xml) must not be undeclared or bound to another namespace name\x00".as_ptr() as *const c_char
         }
-        39 => {
-            return b"reserved prefix (xmlns) must not be declared or undeclared\x00".as_ptr()
+        XML_ERROR_RESERVED_PREFIX_XMLNS => {
+            b"reserved prefix (xmlns) must not be declared or undeclared\x00".as_ptr()
                 as *const c_char
         }
-        40 => {
-            return b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr()
+        XML_ERROR_RESERVED_NAMESPACE_URI => {
+            b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr()
                 as *const c_char
         }
-        41 => {
+        XML_ERROR_INVALID_ARGUMENT => {
             /* Added in 2.2.5. */
             /* Constant added in 2.2.1, already */
-            return b"invalid argument\x00".as_ptr() as *const c_char;
+            b"invalid argument\x00".as_ptr() as *const c_char
         }
-        _ => {}
+        _ => NULL as *const XML_LChar,
     }
-    return NULL as *const XML_LChar;
 }
 /* Return a string containing the version number of this expat */
 #[no_mangle]
