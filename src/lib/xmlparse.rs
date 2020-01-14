@@ -494,11 +494,28 @@ pub const INIT_BUFFER_SIZE: libc::c_int = 1024 as libc::c_int;
 pub const EXPAND_SPARE: libc::c_int = 24 as libc::c_int;
 
 pub const INIT_SCAFFOLD_ELEMENTS: libc::c_int = 32 as libc::c_int;
+
+
+macro_rules! MALLOC {
+    ($parser:path, $size:expr $(,)?) => {
+        (*$parser).m_mem.malloc_fcn.expect("non-null function pointer")($size)
+    };
+}
+macro_rules! REALLOC {
+    ($parser:path, $ptr:expr, $size:expr $(,)?) => {
+        (*$parser).m_mem.realloc_fcn.expect("non-null function pointer")($ptr, $size)
+    };
+}
+macro_rules! FREE {
+    ($parser:path, $ptr:expr $(,)?) => {
+        (*$parser).m_mem.free_fcn.expect("non-null function pointer")($ptr)
+    };
+}
+
 /* Constructs a new parser; encoding is the encoding specified by the
    external protocol or NULL if there is none specified.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParserCreate(
     mut encodingName: *const crate::expat_external_h::XML_Char,
 ) -> crate::expat_h::XML_Parser {
@@ -520,7 +537,6 @@ pub unsafe extern "C" fn XML_ParserCreate(
    triplets (see XML_SetReturnNSTriplet).
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParserCreateNS(
     mut encodingName: *const crate::expat_external_h::XML_Char,
     mut nsSep: crate::expat_external_h::XML_Char,
@@ -784,7 +800,6 @@ unsafe extern "C" fn startParsing(
    the given suite.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParserCreate_MM(
     mut encodingName: *const crate::expat_external_h::XML_Char,
     mut memsuite: *const crate::expat_h::XML_Memory_Handling_Suite,
@@ -848,31 +863,22 @@ unsafe extern "C" fn parserCreate(
     (*parser).m_buffer = crate::stddef_h::NULL as *mut libc::c_char;
     (*parser).m_bufferLim = crate::stddef_h::NULL as *const libc::c_char;
     (*parser).m_attsSize = INIT_ATTS_SIZE;
-    (*parser).m_atts = (*parser)
-        .m_mem
-        .malloc_fcn
-        .expect("non-null function pointer")(
-        ((*parser).m_attsSize as libc::c_ulong).wrapping_mul(::std::mem::size_of::<
-            crate::src::lib::xmltok::ATTRIBUTE,
-        >() as libc::c_ulong),
-    ) as *mut crate::src::lib::xmltok::ATTRIBUTE;
+    (*parser).m_atts = MALLOC!(parser,
+        ((*parser).m_attsSize as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<crate::src::lib::xmltok::ATTRIBUTE>()
+                                     as libc::c_ulong)) as *mut crate::src::lib::xmltok::ATTRIBUTE;
     if (*parser).m_atts.is_null() {
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(parser as *mut libc::c_void);
+        FREE!(parser, parser as *mut libc::c_void);
         return crate::stddef_h::NULL as crate::expat_h::XML_Parser;
     }
-    (*parser).m_dataBuf = (*parser)
-        .m_mem
-        .malloc_fcn
-        .expect("non-null function pointer")(
-        (1024 as libc::c_int as libc::c_ulong).wrapping_mul(::std::mem::size_of::<
-            crate::expat_external_h::XML_Char,
-        >() as libc::c_ulong),
-    ) as *mut crate::expat_external_h::XML_Char;
+    (*parser).m_dataBuf = MALLOC!(parser,
+        (1024 as libc::c_int as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<crate::expat_external_h::XML_Char>()
+                                     as libc::c_ulong)) as *mut crate::expat_external_h::XML_Char;
     if (*parser).m_dataBuf.is_null() {
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-            (*parser).m_atts as *mut libc::c_void,
-        );
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(parser as *mut libc::c_void);
+        FREE!(parser, 
+            (*parser).m_atts as *mut libc::c_void);
+        FREE!(parser, parser as *mut libc::c_void);
         return crate::stddef_h::NULL as crate::expat_h::XML_Parser;
     }
     (*parser).m_dataBufEnd = (*parser).m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
@@ -881,15 +887,12 @@ unsafe extern "C" fn parserCreate(
     } else {
         (*parser).m_dtd = dtdCreate(&(*parser).m_mem);
         if (*parser).m_dtd.is_null() {
-            (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-                (*parser).m_dataBuf as *mut libc::c_void,
-            );
-            (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-                (*parser).m_atts as *mut libc::c_void,
-            );
-            (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-                parser as *mut libc::c_void,
-            );
+            FREE!(parser, 
+                (*parser).m_dataBuf as *mut libc::c_void);
+            FREE!(parser, 
+                (*parser).m_atts as *mut libc::c_void);
+            FREE!(parser, 
+                parser as *mut libc::c_void);
             return crate::stddef_h::NULL as crate::expat_h::XML_Parser;
         }
     }
@@ -1107,7 +1110,6 @@ unsafe extern "C" fn moveToFreeBindingList(
    Added in Expat 1.95.3.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParserReset(
     mut parser: crate::expat_h::XML_Parser,
     mut encodingName: *const crate::expat_external_h::XML_Char,
@@ -1139,7 +1141,7 @@ pub unsafe extern "C" fn XML_ParserReset(
         (*parser).m_freeInternalEntities = openEntity
     }
     moveToFreeBindingList(parser, (*parser).m_inheritedBindings);
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")((*parser).m_unknownEncodingMem);
+    FREE!(parser, (*parser).m_unknownEncodingMem);
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
@@ -1147,9 +1149,8 @@ pub unsafe extern "C" fn XML_ParserReset(
     }
     poolClear(&mut (*parser).m_tempPool);
     poolClear(&mut (*parser).m_temp2Pool);
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_protocolEncodingName as *mut libc::c_void,
-    );
+    FREE!(parser, 
+        (*parser).m_protocolEncodingName as *mut libc::c_void);
     (*parser).m_protocolEncodingName =
         crate::stddef_h::NULL as *const crate::expat_external_h::XML_Char;
     parserInit(parser, encodingName);
@@ -1164,7 +1165,6 @@ pub unsafe extern "C" fn XML_ParserReset(
      has no effect and returns XML_STATUS_ERROR.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEncoding(
     mut parser: crate::expat_h::XML_Parser,
     mut encodingName: *const crate::expat_external_h::XML_Char,
@@ -1184,9 +1184,8 @@ pub unsafe extern "C" fn XML_SetEncoding(
         return crate::expat_h::XML_STATUS_ERROR_0 as crate::expat_h::XML_Status;
     }
     /* Get rid of any previous encoding name */
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_protocolEncodingName as *mut libc::c_void,
-    );
+    FREE!(parser, 
+        (*parser).m_protocolEncodingName as *mut libc::c_void);
     if encodingName.is_null() {
         /* No new encoding name */
         (*parser).m_protocolEncodingName =
@@ -1217,7 +1216,6 @@ pub unsafe extern "C" fn XML_SetEncoding(
    Otherwise returns a new XML_Parser object.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     mut oldParser: crate::expat_h::XML_Parser,
     mut context: *const crate::expat_external_h::XML_Char,
@@ -1399,13 +1397,12 @@ unsafe extern "C" fn destroyBindings(
             break;
         }
         bindings = (*b).nextTagBinding;
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")((*b).uri as *mut libc::c_void);
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(b as *mut libc::c_void);
+        FREE!(parser, (*b).uri as *mut libc::c_void);
+        FREE!(parser, b as *mut libc::c_void);
     }
 }
 /* Frees memory used by the parser. */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParserFree(mut parser: crate::expat_h::XML_Parser) {
     let mut tagList: *mut TAG = 0 as *mut TAG;
     let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
@@ -1425,9 +1422,9 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: crate::expat_h::XML_Parser) 
         }
         p = tagList;
         tagList = (*tagList).parent;
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")((*p).buf as *mut libc::c_void);
+        FREE!(parser, (*p).buf as *mut libc::c_void);
         destroyBindings((*p).bindings, parser);
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(p as *mut libc::c_void);
+        FREE!(parser, p as *mut libc::c_void);
     }
     /* free m_openInternalEntities and m_freeInternalEntities */
     entityList = (*parser).m_openInternalEntities;
@@ -1442,17 +1439,15 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: crate::expat_h::XML_Parser) 
         }
         openEntity = entityList;
         entityList = (*entityList).next;
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-            openEntity as *mut libc::c_void,
-        );
+        FREE!(parser, 
+            openEntity as *mut libc::c_void);
     }
     destroyBindings((*parser).m_freeBindingList, parser);
     destroyBindings((*parser).m_inheritedBindings, parser);
     poolDestroy(&mut (*parser).m_tempPool);
     poolDestroy(&mut (*parser).m_temp2Pool);
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_protocolEncodingName as *mut libc::c_void,
-    );
+    FREE!(parser, 
+        (*parser).m_protocolEncodingName as *mut libc::c_void);
     /* external parameter entity parsers share the DTD structure
        parser->m_dtd with the root parser, so we must not destroy it
     */
@@ -1464,35 +1459,29 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: crate::expat_h::XML_Parser) 
             &(*parser).m_mem,
         );
     }
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_atts as *mut libc::c_void,
-    );
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_groupConnector as *mut libc::c_void,
-    );
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_buffer as *mut libc::c_void,
-    );
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_dataBuf as *mut libc::c_void,
-    );
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-        (*parser).m_nsAtts as *mut libc::c_void,
-    );
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")((*parser).m_unknownEncodingMem);
+    FREE!(parser, 
+        (*parser).m_atts as *mut libc::c_void);
+    FREE!(parser, 
+        (*parser).m_groupConnector as *mut libc::c_void);
+    FREE!(parser, 
+        (*parser).m_buffer as *mut libc::c_void);
+    FREE!(parser, 
+        (*parser).m_dataBuf as *mut libc::c_void);
+    FREE!(parser, 
+        (*parser).m_nsAtts as *mut libc::c_void);
+    FREE!(parser, (*parser).m_unknownEncodingMem);
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
             .expect("non-null function pointer")((*parser).m_unknownEncodingData);
     }
-    (*parser).m_mem.free_fcn.expect("non-null function pointer")(parser as *mut libc::c_void);
+    FREE!(parser, parser as *mut libc::c_void);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
    still be accessible using XML_GetUserData.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: crate::expat_h::XML_Parser) {
     if !parser.is_null() {
         (*parser).m_handlerArg = parser as *mut libc::c_void
@@ -1518,7 +1507,6 @@ pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: crate::expat_h::X
    Note: If parser == NULL, returns XML_ERROR_INVALID_ARGUMENT.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_UseForeignDTD(
     mut parser: crate::expat_h::XML_Parser,
     mut useDTD: crate::expat_h::XML_Bool,
@@ -1551,7 +1539,6 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
      XML_ParseBuffer has no effect.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetReturnNSTriplet(
     mut parser: crate::expat_h::XML_Parser,
     mut do_nst: libc::c_int,
@@ -1575,7 +1562,6 @@ pub unsafe extern "C" fn XML_SetReturnNSTriplet(
 }
 /* This value is passed as the userData argument to callbacks. */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetUserData(
     mut parser: crate::expat_h::XML_Parser,
     mut p: *mut libc::c_void,
@@ -1599,7 +1585,6 @@ pub unsafe extern "C" fn XML_SetUserData(
    XML_STATUS_OK otherwise.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetBase(
     mut parser: crate::expat_h::XML_Parser,
     mut p: *const crate::expat_external_h::XML_Char,
@@ -1619,7 +1604,6 @@ pub unsafe extern "C" fn XML_SetBase(
     return crate::expat_h::XML_STATUS_OK_0 as crate::expat_h::XML_Status;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetBase(
     mut parser: crate::expat_h::XML_Parser,
 ) -> *const crate::expat_external_h::XML_Char {
@@ -1635,7 +1619,6 @@ pub unsafe extern "C" fn XML_GetBase(
    XML_StartElementHandler.  Returns -1 if parser == NULL.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(
     mut parser: crate::expat_h::XML_Parser,
 ) -> libc::c_int {
@@ -1651,7 +1634,6 @@ pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(
    XML_StartElementHandler.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetIdAttributeIndex(
     mut parser: crate::expat_h::XML_Parser,
 ) -> libc::c_int {
@@ -1661,7 +1643,6 @@ pub unsafe extern "C" fn XML_GetIdAttributeIndex(
     return (*parser).m_idAttIndex;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetElementHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartElementHandler,
@@ -1674,7 +1655,6 @@ pub unsafe extern "C" fn XML_SetElementHandler(
     (*parser).m_endElementHandler = end;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetStartElementHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartElementHandler,
@@ -1684,7 +1664,6 @@ pub unsafe extern "C" fn XML_SetStartElementHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEndElementHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut end: crate::expat_h::XML_EndElementHandler,
@@ -1694,7 +1673,6 @@ pub unsafe extern "C" fn XML_SetEndElementHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetCharacterDataHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_CharacterDataHandler,
@@ -1704,7 +1682,6 @@ pub unsafe extern "C" fn XML_SetCharacterDataHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_ProcessingInstructionHandler,
@@ -1714,7 +1691,6 @@ pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetCommentHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_CommentHandler,
@@ -1724,7 +1700,6 @@ pub unsafe extern "C" fn XML_SetCommentHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetCdataSectionHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartCdataSectionHandler,
@@ -1737,7 +1712,6 @@ pub unsafe extern "C" fn XML_SetCdataSectionHandler(
     (*parser).m_endCdataSectionHandler = end;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartCdataSectionHandler,
@@ -1747,7 +1721,6 @@ pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut end: crate::expat_h::XML_EndCdataSectionHandler,
@@ -1761,7 +1734,6 @@ pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
    default handler, or to the skipped entity handler, if one is set.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetDefaultHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_DefaultHandler,
@@ -1778,7 +1750,6 @@ pub unsafe extern "C" fn XML_SetDefaultHandler(
    default handler.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_DefaultHandler,
@@ -1791,7 +1762,6 @@ pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
         crate::expat_h::XML_TRUE as crate::expat_h::XML_Bool;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartDoctypeDeclHandler,
@@ -1804,7 +1774,6 @@ pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
     (*parser).m_endDoctypeDeclHandler = end;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartDoctypeDeclHandler,
@@ -1814,7 +1783,6 @@ pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut end: crate::expat_h::XML_EndDoctypeDeclHandler,
@@ -1824,7 +1792,6 @@ pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_UnparsedEntityDeclHandler,
@@ -1834,7 +1801,6 @@ pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetNotationDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_NotationDeclHandler,
@@ -1844,7 +1810,6 @@ pub unsafe extern "C" fn XML_SetNotationDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartNamespaceDeclHandler,
@@ -1857,7 +1822,6 @@ pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
     (*parser).m_endNamespaceDeclHandler = end;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut start: crate::expat_h::XML_StartNamespaceDeclHandler,
@@ -1867,7 +1831,6 @@ pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut end: crate::expat_h::XML_EndNamespaceDeclHandler,
@@ -1877,7 +1840,6 @@ pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_NotStandaloneHandler,
@@ -1887,7 +1849,6 @@ pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_ExternalEntityRefHandler,
@@ -1901,7 +1862,6 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
    instead of the parser object.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
     mut parser: crate::expat_h::XML_Parser,
     mut arg: *mut libc::c_void,
@@ -1916,7 +1876,6 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_SkippedEntityHandler,
@@ -1926,7 +1885,6 @@ pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_UnknownEncodingHandler,
@@ -1939,7 +1897,6 @@ pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
     (*parser).m_unknownEncodingHandlerData = data;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetElementDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut eldecl: crate::expat_h::XML_ElementDeclHandler,
@@ -1949,7 +1906,6 @@ pub unsafe extern "C" fn XML_SetElementDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut attdecl: crate::expat_h::XML_AttlistDeclHandler,
@@ -1959,7 +1915,6 @@ pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetEntityDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_EntityDeclHandler,
@@ -1969,7 +1924,6 @@ pub unsafe extern "C" fn XML_SetEntityDeclHandler(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetXmlDeclHandler(
     mut parser: crate::expat_h::XML_Parser,
     mut handler: crate::expat_h::XML_XmlDeclHandler,
@@ -2003,7 +1957,6 @@ pub unsafe extern "C" fn XML_SetXmlDeclHandler(
    Note: If parser == NULL, the function will do nothing and return 0.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetParamEntityParsing(
     mut parser: crate::expat_h::XML_Parser,
     mut peParsing: crate::expat_h::XML_ParamEntityParsing,
@@ -2029,7 +1982,6 @@ pub unsafe extern "C" fn XML_SetParamEntityParsing(
    Note: If parser == NULL, the function will do nothing and return 0.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_SetHashSalt(
     mut parser: crate::expat_h::XML_Parser,
     mut hash_salt: libc::c_ulong,
@@ -2061,7 +2013,6 @@ pub unsafe extern "C" fn XML_SetHashSalt(
    values.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_Parse(
     mut parser: crate::expat_h::XML_Parser,
     mut s: *const libc::c_char,
@@ -2162,7 +2113,6 @@ pub unsafe extern "C" fn XML_Parse(
     };
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ParseBuffer(
     mut parser: crate::expat_h::XML_Parser,
     mut len: libc::c_int,
@@ -2238,7 +2188,6 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     return result;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetBuffer(
     mut parser: crate::expat_h::XML_Parser,
     mut len: libc::c_int,
@@ -2370,12 +2319,7 @@ pub unsafe extern "C" fn XML_GetBuffer(
                 (*parser).m_errorCode = crate::expat_h::XML_ERROR_NO_MEMORY;
                 return crate::stddef_h::NULL as *mut libc::c_void;
             }
-            newBuf = (*parser)
-                .m_mem
-                .malloc_fcn
-                .expect("non-null function pointer")(
-                bufferSize as crate::stddef_h::size_t
-            ) as *mut libc::c_char;
+            newBuf = MALLOC!(parser, bufferSize as crate::stddef_h::size_t) as *mut libc::c_char;
             if newBuf.is_null() {
                 (*parser).m_errorCode = crate::expat_h::XML_ERROR_NO_MEMORY;
                 return crate::stddef_h::NULL as *mut libc::c_void;
@@ -2395,9 +2339,8 @@ pub unsafe extern "C" fn XML_GetBuffer(
                         0 as libc::c_int as libc::c_long
                     }) + keep as libc::c_long) as libc::c_ulong,
                 );
-                (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-                    (*parser).m_buffer as *mut libc::c_void,
-                );
+                FREE!(parser, 
+                    (*parser).m_buffer as *mut libc::c_void);
                 (*parser).m_buffer = newBuf;
                 (*parser).m_bufferEnd = (*parser)
                     .m_buffer
@@ -2458,7 +2401,6 @@ pub unsafe extern "C" fn XML_GetBuffer(
    When suspended, parsing can be resumed by calling XML_ResumeParser().
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_StopParser(
     mut parser: crate::expat_h::XML_Parser,
     mut resumable: crate::expat_h::XML_Bool,
@@ -2505,7 +2447,6 @@ pub unsafe extern "C" fn XML_StopParser(
    application to call XML_ResumeParser() on it at the appropriate moment.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ResumeParser(
     mut parser: crate::expat_h::XML_Parser,
 ) -> crate::expat_h::XML_Status {
@@ -2562,7 +2503,6 @@ pub unsafe extern "C" fn XML_ResumeParser(
    XXX with XML_FINISHED_OK or XML_FINISHED_ERROR replacing XML_FINISHED
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetParsingStatus(
     mut parser: crate::expat_h::XML_Parser,
     mut status: *mut crate::expat_h::XML_ParsingStatus,
@@ -2589,7 +2529,6 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
    XML_GetErrorCode returns information about the error.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetErrorCode(
     mut parser: crate::expat_h::XML_Parser,
 ) -> crate::expat_h::XML_Error {
@@ -2599,7 +2538,6 @@ pub unsafe extern "C" fn XML_GetErrorCode(
     return (*parser).m_errorCode;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetCurrentByteIndex(
     mut parser: crate::expat_h::XML_Parser,
 ) -> crate::expat_external_h::XML_Index {
@@ -2618,7 +2556,6 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(
    Returns 0 if the event is in an internal entity.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetCurrentByteCount(
     mut parser: crate::expat_h::XML_Parser,
 ) -> libc::c_int {
@@ -2644,7 +2581,6 @@ pub unsafe extern "C" fn XML_GetCurrentByteCount(
    the handler that makes the call.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetInputContext(
     mut parser: crate::expat_h::XML_Parser,
     mut offset: *mut libc::c_int,
@@ -2692,7 +2628,6 @@ pub unsafe extern "C" fn XML_GetInputContext(
    Note: XML_GetCurrentByteIndex returns -1 to indicate an error.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetCurrentLineNumber(
     mut parser: crate::expat_h::XML_Parser,
 ) -> crate::expat_external_h::XML_Size {
@@ -2716,7 +2651,6 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(
         .wrapping_add(1 as libc::c_int as libc::c_ulong);
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetCurrentColumnNumber(
     mut parser: crate::expat_h::XML_Parser,
 ) -> crate::expat_external_h::XML_Size {
@@ -2739,18 +2673,16 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(
 /* For backwards compatibility with previous versions. */
 /* Frees the content model passed to the element declaration handler */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_FreeContentModel(
     mut parser: crate::expat_h::XML_Parser,
     mut model: *mut crate::expat_h::XML_Content,
 ) {
     if !parser.is_null() {
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(model as *mut libc::c_void);
+        FREE!(parser, model as *mut libc::c_void);
     };
 }
 /* Exposing the memory handling functions used in Expat */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_MemMalloc(
     mut parser: crate::expat_h::XML_Parser,
     mut size: crate::stddef_h::size_t,
@@ -2758,13 +2690,9 @@ pub unsafe extern "C" fn XML_MemMalloc(
     if parser.is_null() {
         return crate::stddef_h::NULL as *mut libc::c_void;
     }
-    return (*parser)
-        .m_mem
-        .malloc_fcn
-        .expect("non-null function pointer")(size);
+    return MALLOC!(parser, size);
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_MemRealloc(
     mut parser: crate::expat_h::XML_Parser,
     mut ptr: *mut libc::c_void,
@@ -2773,19 +2701,15 @@ pub unsafe extern "C" fn XML_MemRealloc(
     if parser.is_null() {
         return crate::stddef_h::NULL as *mut libc::c_void;
     }
-    return (*parser)
-        .m_mem
-        .realloc_fcn
-        .expect("non-null function pointer")(ptr, size);
+    return REALLOC!(parser, ptr,  size);
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_MemFree(
     mut parser: crate::expat_h::XML_Parser,
     mut ptr: *mut libc::c_void,
 ) {
     if !parser.is_null() {
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(ptr);
+        FREE!(parser, ptr);
     };
 }
 /* This can be called within a handler for a start element, end
@@ -2793,7 +2717,6 @@ pub unsafe extern "C" fn XML_MemFree(
    corresponding markup to be passed to the default handler.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: crate::expat_h::XML_Parser) {
     if parser.is_null() {
         return;
@@ -2818,7 +2741,6 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: crate::expat_h::XML_Pars
 }
 /* Returns a string describing the error. */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ErrorString(
     mut code: crate::expat_h::XML_Error,
 ) -> *const crate::expat_external_h::XML_LChar {
@@ -2921,7 +2843,6 @@ pub unsafe extern "C" fn XML_ErrorString(
 }
 /* Return a string containing the version number of this expat */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ExpatVersion() -> *const crate::expat_external_h::XML_LChar {
     /* V1 is used to string-ize the version number. However, it would
     string-ize the actual version macro *names* unless we get them
@@ -2936,7 +2857,6 @@ pub unsafe extern "C" fn XML_ExpatVersion() -> *const crate::expat_external_h::X
    number information for this version of expat.
 */
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_ExpatVersionInfo() -> crate::expat_h::XML_Expat_Version {
     let mut version: crate::expat_h::XML_Expat_Version = crate::expat_h::XML_Expat_Version {
         major: 0,
@@ -2949,7 +2869,6 @@ pub unsafe extern "C" fn XML_ExpatVersionInfo() -> crate::expat_h::XML_Expat_Ver
     return version;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn XML_GetFeatureList() -> *const crate::expat_h::XML_Feature {
     static mut features: [crate::expat_h::XML_Feature; 6] = [
         {
@@ -3042,13 +2961,10 @@ unsafe extern "C" fn storeRawNames(
         ) as libc::c_int;
         if bufSize as libc::c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as libc::c_long
         {
-            let mut temp: *mut libc::c_char = (*parser)
-                .m_mem
-                .realloc_fcn
-                .expect("non-null function pointer")(
+            let mut temp: *mut libc::c_char = REALLOC!(parser, 
                 (*tag).buf as *mut libc::c_void,
-                bufSize as crate::stddef_h::size_t,
-            ) as *mut libc::c_char;
+        
+                bufSize as crate::stddef_h::size_t) as *mut libc::c_char;
             if temp.is_null() {
                 return crate::expat_h::XML_FALSE as crate::expat_h::XML_Bool;
             }
@@ -3487,25 +3403,14 @@ unsafe extern "C" fn doContent(
                     tag = (*parser).m_freeTagList;
                     (*parser).m_freeTagList = (*(*parser).m_freeTagList).parent
                 } else {
-                    tag = (*parser)
-                        .m_mem
-                        .malloc_fcn
-                        .expect("non-null function pointer")(
-                        ::std::mem::size_of::<TAG>() as libc::c_ulong,
-                    ) as *mut TAG;
+                    tag = MALLOC!(parser, ::std::mem::size_of::<TAG>() as libc::c_ulong) as *mut TAG;
                     if tag.is_null() {
                         return crate::expat_h::XML_ERROR_NO_MEMORY;
                     }
-                    (*tag).buf = (*parser)
-                        .m_mem
-                        .malloc_fcn
-                        .expect("non-null function pointer")(
-                        32 as libc::c_int as crate::stddef_h::size_t,
-                    ) as *mut libc::c_char;
+                    (*tag).buf = MALLOC!(parser, 32 as libc::c_int as crate::stddef_h::size_t) as *mut libc::c_char;
                     if (*tag).buf.is_null() {
-                        (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-                            tag as *mut libc::c_void,
-                        );
+                        FREE!(parser, 
+                            tag as *mut libc::c_void);
                         return crate::expat_h::XML_ERROR_NO_MEMORY;
                     }
                     (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
@@ -3551,13 +3456,10 @@ unsafe extern "C" fn doContent(
                         bufSize = ((*tag).bufEnd.wrapping_offset_from((*tag).buf) as libc::c_long
                             as libc::c_int)
                             << 1 as libc::c_int;
-                        let mut temp: *mut libc::c_char = (*parser)
-                            .m_mem
-                            .realloc_fcn
-                            .expect("non-null function pointer")(
+                        let mut temp: *mut libc::c_char = REALLOC!(parser, 
                             (*tag).buf as *mut libc::c_void,
-                            bufSize as crate::stddef_h::size_t,
-                        )
+        
+                            bufSize as crate::stddef_h::size_t)
                             as *mut libc::c_char;
                         if temp.is_null() {
                             return crate::expat_h::XML_ERROR_NO_MEMORY;
@@ -4077,15 +3979,12 @@ unsafe extern "C" fn storeAtts(
         let mut temp: *mut crate::src::lib::xmltok::ATTRIBUTE =
             0 as *mut crate::src::lib::xmltok::ATTRIBUTE;
         (*parser).m_attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
-        temp = (*parser)
-            .m_mem
-            .realloc_fcn
-            .expect("non-null function pointer")(
+        temp = REALLOC!(parser, 
             (*parser).m_atts as *mut libc::c_void,
+        
             ((*parser).m_attsSize as libc::c_ulong).wrapping_mul(::std::mem::size_of::<
                 crate::src::lib::xmltok::ATTRIBUTE,
-            >() as libc::c_ulong),
-        ) as *mut crate::src::lib::xmltok::ATTRIBUTE;
+            >() as libc::c_ulong)) as *mut crate::src::lib::xmltok::ATTRIBUTE;
         if temp.is_null() {
             (*parser).m_attsSize = oldAttsSize;
             return crate::expat_h::XML_ERROR_NO_MEMORY;
@@ -4301,14 +4200,11 @@ unsafe extern "C" fn storeAtts(
                 (*parser).m_nsAttsPower = 3 as libc::c_int as libc::c_uchar
             }
             nsAttsSize = (1 as libc::c_int) << (*parser).m_nsAttsPower as libc::c_int;
-            temp_0 = (*parser)
-                .m_mem
-                .realloc_fcn
-                .expect("non-null function pointer")(
+            temp_0 = REALLOC!(parser, 
                 (*parser).m_nsAtts as *mut libc::c_void,
+        
                 (nsAttsSize as libc::c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<NS_ATT>() as libc::c_ulong),
-            ) as *mut NS_ATT;
+                    .wrapping_mul(::std::mem::size_of::<NS_ATT>() as libc::c_ulong)) as *mut NS_ATT;
             if temp_0.is_null() {
                 /* Restore actual size of memory in m_nsAtts */
                 (*parser).m_nsAttsPower = oldNsAttsPower;
@@ -4598,15 +4494,10 @@ unsafe extern "C" fn storeAtts(
     n = i + (*binding).uriLen + prefixLen;
     if n > (*binding).uriAlloc {
         let mut p: *mut TAG = 0 as *mut TAG;
-        uri = (*parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")(
-            ((n + 24 as libc::c_int) as libc::c_ulong)
-                .wrapping_mul(
-                    ::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong
-                ),
-        ) as *mut crate::expat_external_h::XML_Char;
+        uri = MALLOC!(parser,
+        ((n + 24 as libc::c_int) as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<crate::expat_external_h::XML_Char>()
+                                     as libc::c_ulong)) as *mut crate::expat_external_h::XML_Char;
         if uri.is_null() {
             return crate::expat_h::XML_ERROR_NO_MEMORY;
         }
@@ -4625,9 +4516,8 @@ unsafe extern "C" fn storeAtts(
             }
             p = (*p).parent
         }
-        (*parser).m_mem.free_fcn.expect("non-null function pointer")(
-            (*binding).uri as *mut libc::c_void,
-        );
+        FREE!(parser, 
+            (*binding).uri as *mut libc::c_void);
         (*binding).uri = uri
     }
     /* if m_namespaceSeparator != '\0' then uri includes it already */
@@ -4806,14 +4696,11 @@ unsafe extern "C" fn addBinding(
     if !(*parser).m_freeBindingList.is_null() {
         b = (*parser).m_freeBindingList;
         if len > (*b).uriAlloc {
-            let mut temp: *mut crate::expat_external_h::XML_Char = (*parser)
-                .m_mem
-                .realloc_fcn
-                .expect("non-null function pointer")(
+            let mut temp: *mut crate::expat_external_h::XML_Char = REALLOC!(parser, 
                 (*b).uri as *mut libc::c_void,
+        
                 (::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong)
-                    .wrapping_mul((len + 24 as libc::c_int) as libc::c_ulong),
-            )
+                    .wrapping_mul((len + 24 as libc::c_int) as libc::c_ulong))
                 as *mut crate::expat_external_h::XML_Char;
             if temp.is_null() {
                 return crate::expat_h::XML_ERROR_NO_MEMORY;
@@ -4823,24 +4710,15 @@ unsafe extern "C" fn addBinding(
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
-        b = (*parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")(
-            ::std::mem::size_of::<BINDING>() as libc::c_ulong
-        ) as *mut BINDING;
+        b = MALLOC!(parser, ::std::mem::size_of::<BINDING>() as libc::c_ulong) as *mut BINDING;
         if b.is_null() {
             return crate::expat_h::XML_ERROR_NO_MEMORY;
         }
-        (*b).uri = (*parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")(
-            (::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong)
-                .wrapping_mul((len + 24 as libc::c_int) as libc::c_ulong),
-        ) as *mut crate::expat_external_h::XML_Char;
+        (*b).uri = MALLOC!(parser,
+        (::std::mem::size_of::<crate::expat_external_h::XML_Char>() as
+     libc::c_ulong).wrapping_mul((len + 24 as libc::c_int) as libc::c_ulong)) as *mut crate::expat_external_h::XML_Char;
         if (*b).uri.is_null() {
-            (*parser).m_mem.free_fcn.expect("non-null function pointer")(b as *mut libc::c_void);
+            FREE!(parser, b as *mut libc::c_void);
             return crate::expat_h::XML_ERROR_NO_MEMORY;
         }
         (*b).uriAlloc = len + EXPAND_SPARE
@@ -5446,12 +5324,8 @@ unsafe extern "C" fn handleUnknownEncoding(
         {
             let mut enc: *mut crate::src::lib::xmltok::ENCODING =
                 0 as *mut crate::src::lib::xmltok::ENCODING;
-            (*parser).m_unknownEncodingMem = (*parser)
-                .m_mem
-                .malloc_fcn
-                .expect("non-null function pointer")(
-                crate::src::lib::xmltok::XmlSizeOfUnknownEncoding() as crate::stddef_h::size_t,
-            );
+            (*parser).m_unknownEncodingMem = MALLOC!(parser,
+        crate::src::lib::xmltok::XmlSizeOfUnknownEncoding() as crate::stddef_h::size_t);
             if (*parser).m_unknownEncodingMem.is_null() {
                 if info.release.is_some() {
                     info.release.expect("non-null function pointer")(info.data);
@@ -6821,13 +6695,10 @@ unsafe extern "C" fn doProlog(
                         (*parser).m_groupSize = (*parser)
                             .m_groupSize
                             .wrapping_mul(2 as libc::c_int as libc::c_uint);
-                        let new_connector: *mut libc::c_char = (*parser)
-                            .m_mem
-                            .realloc_fcn
-                            .expect("non-null function pointer")(
+                        let new_connector: *mut libc::c_char = REALLOC!(parser, 
                             (*parser).m_groupConnector as *mut libc::c_void,
-                            (*parser).m_groupSize as crate::stddef_h::size_t,
-                        )
+        
+                            (*parser).m_groupSize as crate::stddef_h::size_t)
                             as *mut libc::c_char;
                         if new_connector.is_null() {
                             (*parser).m_groupSize = (*parser)
@@ -6837,15 +6708,12 @@ unsafe extern "C" fn doProlog(
                         }
                         (*parser).m_groupConnector = new_connector;
                         if !(*dtd).scaffIndex.is_null() {
-                            let new_scaff_index: *mut libc::c_int = (*parser)
-                                .m_mem
-                                .realloc_fcn
-                                .expect("non-null function pointer")(
+                            let new_scaff_index: *mut libc::c_int = REALLOC!(parser, 
                                 (*dtd).scaffIndex as *mut libc::c_void,
+        
                                 ((*parser).m_groupSize as libc::c_ulong).wrapping_mul(
                                     ::std::mem::size_of::<libc::c_int>() as libc::c_ulong,
-                                ),
-                            )
+                                ))
                                 as *mut libc::c_int;
                             if new_scaff_index.is_null() {
                                 return crate::expat_h::XML_ERROR_NO_MEMORY;
@@ -6854,12 +6722,7 @@ unsafe extern "C" fn doProlog(
                         }
                     } else {
                         (*parser).m_groupSize = 32 as libc::c_int as libc::c_uint;
-                        (*parser).m_groupConnector = (*parser)
-                            .m_mem
-                            .malloc_fcn
-                            .expect("non-null function pointer")(
-                            (*parser).m_groupSize as crate::stddef_h::size_t,
-                        ) as *mut libc::c_char;
+                        (*parser).m_groupConnector = MALLOC!(parser, (*parser).m_groupSize as crate::stddef_h::size_t) as *mut libc::c_char;
                         if (*parser).m_groupConnector.is_null() {
                             (*parser).m_groupSize = 0 as libc::c_int as libc::c_uint;
                             return crate::expat_h::XML_ERROR_NO_MEMORY;
@@ -7138,13 +7001,8 @@ unsafe extern "C" fn doProlog(
                 if (*dtd).in_eldecl != 0 {
                     if (*parser).m_elementDeclHandler.is_some() {
                         let mut content: *mut crate::expat_h::XML_Content =
-                            (*parser)
-                                .m_mem
-                                .malloc_fcn
-                                .expect("non-null function pointer")(
-                                ::std::mem::size_of::<crate::expat_h::XML_Content>()
-                                    as libc::c_ulong,
-                            ) as *mut crate::expat_h::XML_Content;
+                            MALLOC!(parser,
+        ::std::mem::size_of::<crate::expat_h::XML_Content>() as libc::c_ulong) as *mut crate::expat_h::XML_Content;
                         if content.is_null() {
                             return crate::expat_h::XML_ERROR_NO_MEMORY;
                         }
@@ -7554,12 +7412,8 @@ unsafe extern "C" fn processInternalEntity(
         openEntity = (*parser).m_freeInternalEntities;
         (*parser).m_freeInternalEntities = (*openEntity).next
     } else {
-        openEntity = (*parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")(::std::mem::size_of::<
-            OPEN_INTERNAL_ENTITY,
-        >() as libc::c_ulong) as *mut OPEN_INTERNAL_ENTITY;
+        openEntity = MALLOC!(parser,
+        ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as libc::c_ulong) as *mut OPEN_INTERNAL_ENTITY;
         if openEntity.is_null() {
             return crate::expat_h::XML_ERROR_NO_MEMORY;
         }
@@ -8510,13 +8364,10 @@ unsafe extern "C" fn defineAttribute(
     if (*type_0).nDefaultAtts == (*type_0).allocDefaultAtts {
         if (*type_0).allocDefaultAtts == 0 as libc::c_int {
             (*type_0).allocDefaultAtts = 8 as libc::c_int;
-            (*type_0).defaultAtts = (*parser)
-                .m_mem
-                .malloc_fcn
-                .expect("non-null function pointer")(
-                ((*type_0).allocDefaultAtts as libc::c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as libc::c_ulong),
-            ) as *mut DEFAULT_ATTRIBUTE;
+            (*type_0).defaultAtts = MALLOC!(parser,
+        ((*type_0).allocDefaultAtts as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as
+                                     libc::c_ulong)) as *mut DEFAULT_ATTRIBUTE;
             if (*type_0).defaultAtts.is_null() {
                 (*type_0).allocDefaultAtts = 0 as libc::c_int;
                 return 0 as libc::c_int;
@@ -8524,14 +8375,11 @@ unsafe extern "C" fn defineAttribute(
         } else {
             let mut temp: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
             let mut count: libc::c_int = (*type_0).allocDefaultAtts * 2 as libc::c_int;
-            temp = (*parser)
-                .m_mem
-                .realloc_fcn
-                .expect("non-null function pointer")(
+            temp = REALLOC!(parser, 
                 (*type_0).defaultAtts as *mut libc::c_void,
+        
                 (count as libc::c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as libc::c_ulong),
-            ) as *mut DEFAULT_ATTRIBUTE;
+                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as libc::c_ulong)) as *mut DEFAULT_ATTRIBUTE;
             if temp.is_null() {
                 return 0 as libc::c_int;
             }
@@ -10181,13 +10029,10 @@ unsafe extern "C" fn nextScaffoldPart(mut parser: crate::expat_h::XML_Parser) ->
     let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
     let mut next: libc::c_int = 0;
     if (*dtd).scaffIndex.is_null() {
-        (*dtd).scaffIndex = (*parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")(
-            ((*parser).m_groupSize as libc::c_ulong)
-                .wrapping_mul(::std::mem::size_of::<libc::c_int>() as libc::c_ulong),
-        ) as *mut libc::c_int;
+        (*dtd).scaffIndex = MALLOC!(parser,
+        ((*parser).m_groupSize as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<libc::c_int>() as
+                                     libc::c_ulong)) as *mut libc::c_int;
         if (*dtd).scaffIndex.is_null() {
             return -(1 as libc::c_int);
         }
@@ -10196,17 +10041,14 @@ unsafe extern "C" fn nextScaffoldPart(mut parser: crate::expat_h::XML_Parser) ->
     if (*dtd).scaffCount >= (*dtd).scaffSize {
         let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
         if !(*dtd).scaffold.is_null() {
-            temp = (*parser)
-                .m_mem
-                .realloc_fcn
-                .expect("non-null function pointer")(
+            temp = REALLOC!(parser, 
                 (*dtd).scaffold as *mut libc::c_void,
+        
                 ((*dtd)
                     .scaffSize
                     .wrapping_mul(2 as libc::c_int as libc::c_uint)
                     as libc::c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as libc::c_ulong),
-            ) as *mut CONTENT_SCAFFOLD;
+                    .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as libc::c_ulong)) as *mut CONTENT_SCAFFOLD;
             if temp.is_null() {
                 return -(1 as libc::c_int);
             }
@@ -10214,13 +10056,10 @@ unsafe extern "C" fn nextScaffoldPart(mut parser: crate::expat_h::XML_Parser) ->
                 .scaffSize
                 .wrapping_mul(2 as libc::c_int as libc::c_uint)
         } else {
-            temp = (*parser)
-                .m_mem
-                .malloc_fcn
-                .expect("non-null function pointer")(
-                (32 as libc::c_int as libc::c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as libc::c_ulong),
-            ) as *mut CONTENT_SCAFFOLD;
+            temp = MALLOC!(parser,
+        (32 as libc::c_int as
+     libc::c_ulong).wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as
+                                     libc::c_ulong)) as *mut CONTENT_SCAFFOLD;
             if temp.is_null() {
                 return -(1 as libc::c_int);
             }
@@ -10318,10 +10157,7 @@ unsafe extern "C" fn build_model(
         .wrapping_add(((*dtd).contentStringLen as libc::c_ulong).wrapping_mul(
             ::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong,
         )) as libc::c_int;
-    ret = (*parser)
-        .m_mem
-        .malloc_fcn
-        .expect("non-null function pointer")(allocsize as crate::stddef_h::size_t)
+    ret = MALLOC!(parser, allocsize as crate::stddef_h::size_t)
         as *mut crate::expat_h::XML_Content;
     if ret.is_null() {
         return crate::stddef_h::NULL as *mut crate::expat_h::XML_Content;
