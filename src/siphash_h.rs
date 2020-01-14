@@ -400,9 +400,7 @@ pub unsafe extern "C" fn sip24_valid() -> c_int {
     let mut i: size_t = 0;
     sip_tokey(
         &mut k,
-        
-        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr()
-            as *const c_void,
+        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr() as *const c_void,
     );
     i = 0;
     while i < ::std::mem::size_of::<[c_uchar; 64]>() as c_ulong {

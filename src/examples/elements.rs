@@ -174,7 +174,6 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         {
             fprintf(
                 crate::stdlib::stderr,
-                
                 b"%s at line %lu\n\x00".as_ptr() as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
                 XML_GetCurrentLineNumber(parser),

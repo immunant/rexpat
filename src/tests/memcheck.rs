@@ -151,7 +151,6 @@ pub unsafe extern "C" fn tracking_free(mut ptr: *mut c_void) {
         free(entry as *mut c_void);
     } else {
         printf(
-            
             b"Attempting to free unallocated memory at %p\n\x00".as_ptr() as *const c_char,
             ptr,
         );
@@ -176,7 +175,6 @@ pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t
     entry = find_allocation(ptr);
     if entry.is_null() {
         printf(
-            
             b"Attempting to realloc unallocated memory at %p\n\x00".as_ptr() as *const c_char,
             ptr,
         );
@@ -227,7 +225,6 @@ pub unsafe extern "C" fn tracking_report() -> c_int {
     entry = alloc_head;
     while !entry.is_null() {
         printf(
-            
             b"Allocated %lu bytes at %p\n\x00".as_ptr() as *const c_char,
             (*entry).num_bytes,
             (*entry).allocation,

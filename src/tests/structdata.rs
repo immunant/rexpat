@@ -66,10 +66,9 @@ unsafe extern "C" fn xmlstrdup(mut s: *const XML_Char) -> *mut XML_Char {
     if !dup.is_null() {
     } else {
         __assert_fail(
-            
             b"dup != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             63u32,
             (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
                 b"XML_Char *xmlstrdup(const XML_Char *)\x00",
@@ -86,10 +85,9 @@ pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
     if !storage.is_null() {
     } else {
         __assert_fail(
-            
             b"storage != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             70u32,
             (*::std::mem::transmute::<&[u8; 35], &[c_char; 35]>(
                 b"void StructData_Init(StructData *)\x00",
@@ -148,10 +146,9 @@ pub unsafe extern "C" fn StructData_AddItem(
     if !storage.is_null() {
     } else {
         __assert_fail(
-            
             b"storage != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             81u32,
             (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
@@ -162,10 +159,9 @@ pub unsafe extern "C" fn StructData_AddItem(
     if !s.is_null() {
     } else {
         __assert_fail(
-            
             b"s != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             82u32,
             (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
@@ -184,10 +180,9 @@ pub unsafe extern "C" fn StructData_AddItem(
         if !new.is_null() {
         } else {
             __assert_fail(
-                
                 b"new != NULL\x00".as_ptr() as *const c_char,
-                
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
+                    .as_ptr() as *const c_char,
                 89u32,
                 (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                     b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
@@ -219,10 +214,9 @@ pub unsafe extern "C" fn StructData_CheckItems(
     if !storage.is_null() {
     } else {
         __assert_fail(
-            
             b"storage != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             110u32,
             (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
@@ -233,10 +227,9 @@ pub unsafe extern "C" fn StructData_CheckItems(
     if !expected.is_null() {
     } else {
         __assert_fail(
-            
             b"expected != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             111u32,
             (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
@@ -247,7 +240,6 @@ pub unsafe extern "C" fn StructData_CheckItems(
     if count != (*storage).count {
         sprintf(
             buffer.as_mut_ptr(),
-            
             b"wrong number of entries: got %d, expected %d\x00".as_ptr() as *const c_char,
             (*storage).count,
             count,
@@ -255,8 +247,8 @@ pub unsafe extern "C" fn StructData_CheckItems(
         StructData_Dispose(storage);
         _fail_unless(
             0i32,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             116i32,
             buffer.as_mut_ptr(),
         );
@@ -291,10 +283,9 @@ pub unsafe extern "C" fn StructData_CheckItems(
                 StructData_Dispose(storage);
                 _fail_unless(
                     0i32,
-                    
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
+                        .as_ptr() as *const c_char,
                     127i32,
-                    
                     b"structure got bad string\x00".as_ptr() as *const c_char,
                 );
             } else if (*got).data0 != (*want).data0
@@ -303,7 +294,6 @@ pub unsafe extern "C" fn StructData_CheckItems(
             {
                 sprintf(
                     buffer.as_mut_ptr(),
-                    
                     b"struct \'%s\' expected (%d,%d,%d), got (%d,%d,%d)\x00".as_ptr()
                         as *const c_char,
                     (*got).str_0,
@@ -317,8 +307,8 @@ pub unsafe extern "C" fn StructData_CheckItems(
                 StructData_Dispose(storage);
                 _fail_unless(
                     0i32,
-                    
-                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+                    b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
+                        .as_ptr() as *const c_char,
                     137i32,
                     buffer.as_mut_ptr(),
                 );
@@ -334,10 +324,9 @@ pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
     if !storage.is_null() {
     } else {
         __assert_fail(
-            
             b"storage != NULL\x00".as_ptr() as *const c_char,
-            
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
+                as *const c_char,
             148u32,
             (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
                 b"void StructData_Dispose(StructData *)\x00",

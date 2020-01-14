@@ -103,7 +103,6 @@ unsafe extern "C" fn characterData(
             9 | 10 | 13 => {
                 ::c2rust_out::stdlib::fprintf(
                     fp,
-                    
                     b"&#%d;\x00".as_ptr() as *const c_char,
                     *s as c_int,
                 );
@@ -123,9 +122,7 @@ unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
     if !s.is_null() {
     } else {
         __assert_fail(
-            
             b"s\x00".as_ptr() as *const c_char,
-            
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/xmlwf/xmlwf.c\x00".as_ptr()
                 as *const c_char,
             110u32,
@@ -153,7 +150,6 @@ unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
             9 | 10 | 13 => {
                 ::c2rust_out::stdlib::fprintf(
                     fp,
-                    
                     b"&#%d;\x00".as_ptr() as *const c_char,
                     *s as c_int,
                 );
@@ -270,7 +266,7 @@ unsafe extern "C" fn startElementNS(
         sep = strrchr(name, '\u{1}' as i32);
         putc(' ' as i32, fp);
         if !sep.is_null() {
-            ::c2rust_out::stdlib::fprintf(fp,  b"n%d:\x00".as_ptr() as *const c_char, nsi);
+            ::c2rust_out::stdlib::fprintf(fp, b"n%d:\x00".as_ptr() as *const c_char, nsi);
             fputs(sep.offset(1isize), fp);
         } else {
             fputs(name, fp);
@@ -279,12 +275,7 @@ unsafe extern "C" fn startElementNS(
         if !sep.is_null() {
             let fresh2 = nsi;
             nsi = nsi + 1;
-            ::c2rust_out::stdlib::fprintf(
-                fp,
-                
-                b" xmlns:n%d\x00".as_ptr() as *const c_char,
-                fresh2,
-            );
+            ::c2rust_out::stdlib::fprintf(fp, b" xmlns:n%d\x00".as_ptr() as *const c_char, fresh2);
             attributeValue(fp, name);
         }
         atts = atts.offset(1)
@@ -424,7 +415,6 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     if notations.is_null() {
         ::c2rust_out::stdlib::fprintf(
             stderr,
-            
             b"Unable to sort notations\x00".as_ptr() as *const c_char,
         );
         freeNotations(data);
@@ -491,7 +481,6 @@ unsafe extern "C" fn notationDecl(
     let mut entry: *mut NotationList =
         malloc(::std::mem::size_of::<NotationList>() as c_ulong) as *mut NotationList;
     let mut errorMessage: *const c_char =
-        
         b"Unable to store NOTATION for output\n\x00".as_ptr() as *const c_char;
     if entry.is_null() {
         fputs(errorMessage, stderr);
@@ -596,11 +585,10 @@ unsafe extern "C" fn metaLocation(mut parser: XML_Parser) {
     let mut uri: *const XML_Char = XML_GetBase(parser);
     let mut fp: *mut FILE = (*(*(parser as *mut *mut c_void) as *mut XmlwfUserData)).fp;
     if !uri.is_null() {
-        ::c2rust_out::stdlib::fprintf(fp,  b" uri=\"%s\"\x00".as_ptr() as *const c_char, uri);
+        ::c2rust_out::stdlib::fprintf(fp, b" uri=\"%s\"\x00".as_ptr() as *const c_char, uri);
     }
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b" byte=\"%ld\" nbytes=\"%d\" line=\"%lu\" col=\"%lu\"\x00".as_ptr() as *const c_char,
         XML_GetCurrentByteIndex(parser),
         XML_GetCurrentByteCount(parser),
@@ -611,7 +599,6 @@ unsafe extern "C" fn metaLocation(mut parser: XML_Parser) {
 
 unsafe extern "C" fn metaStartDocument(mut userData: *mut c_void) {
     fputs(
-        
         b"<document>\n\x00".as_ptr() as *const c_char,
         (*(*(userData as *mut *mut c_void) as *mut XmlwfUserData)).fp,
     );
@@ -619,7 +606,6 @@ unsafe extern "C" fn metaStartDocument(mut userData: *mut c_void) {
 
 unsafe extern "C" fn metaEndDocument(mut userData: *mut c_void) {
     fputs(
-        
         b"</document>\n\x00".as_ptr() as *const c_char,
         (*(*(userData as *mut *mut c_void) as *mut XmlwfUserData)).fp,
     );
@@ -644,7 +630,6 @@ unsafe extern "C" fn metaStartElement(
     }
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b"<starttag name=\"%s\"\x00".as_ptr() as *const c_char,
         name,
     );
@@ -654,7 +639,6 @@ unsafe extern "C" fn metaStartElement(
         loop {
             ::c2rust_out::stdlib::fprintf(
                 fp,
-                
                 b"<attribute name=\"%s\" value=\"\x00".as_ptr() as *const c_char,
                 *atts.offset(0isize),
             );
@@ -665,7 +649,6 @@ unsafe extern "C" fn metaStartElement(
             );
             if atts >= specifiedAttsEnd {
                 fputs(
-                    
                     b"\" defaulted=\"yes\"/>\n\x00".as_ptr() as *const c_char,
                     fp,
                 );
@@ -691,7 +674,6 @@ unsafe extern "C" fn metaEndElement(mut userData: *mut c_void, mut name: *const 
     let mut fp: *mut FILE = (*data).fp;
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b"<endtag name=\"%s\"\x00".as_ptr() as *const c_char,
         name,
     );
@@ -709,7 +691,6 @@ unsafe extern "C" fn metaProcessingInstruction(
     let mut fp: *mut FILE = (*usrData).fp;
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b"<pi target=\"%s\" data=\"\x00".as_ptr() as *const c_char,
         target,
     );
@@ -775,7 +756,6 @@ unsafe extern "C" fn metaStartDoctypeDecl(
     let mut fp: *mut FILE = (*data).fp;
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b"<startdoctype name=\"%s\"\x00".as_ptr() as *const c_char,
         doctypeName,
     );
@@ -804,14 +784,12 @@ unsafe extern "C" fn metaNotationDecl(
     let mut fp: *mut FILE = (*data).fp;
     ::c2rust_out::stdlib::fprintf(
         fp,
-        
         b"<notation name=\"%s\"\x00".as_ptr() as *const c_char,
         notationName,
     );
     if !publicId.is_null() {
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b" public=\"%s\"\x00".as_ptr() as *const c_char,
             publicId,
         );
@@ -842,7 +820,6 @@ unsafe extern "C" fn metaEntityDecl(
     if !value.is_null() {
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
         );
@@ -853,14 +830,12 @@ unsafe extern "C" fn metaEntityDecl(
     } else if !notationName.is_null() {
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
         );
         if !publicId.is_null() {
             ::c2rust_out::stdlib::fprintf(
                 fp,
-                
                 b" public=\"%s\"\x00".as_ptr() as *const c_char,
                 publicId,
             );
@@ -870,7 +845,6 @@ unsafe extern "C" fn metaEntityDecl(
         putc('\"' as i32, fp);
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b" notation=\"%s\"\x00".as_ptr() as *const c_char,
             notationName,
         );
@@ -879,14 +853,12 @@ unsafe extern "C" fn metaEntityDecl(
     } else {
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
         );
         if !publicId.is_null() {
             ::c2rust_out::stdlib::fprintf(
                 fp,
-                
                 b" public=\"%s\"\x00".as_ptr() as *const c_char,
                 publicId,
             );
@@ -909,12 +881,7 @@ unsafe extern "C" fn metaStartNamespaceDecl(
     let mut fp: *mut FILE = (*data).fp;
     fputs(b"<startns\x00".as_ptr() as *const c_char, fp);
     if !prefix.is_null() {
-        ::c2rust_out::stdlib::fprintf(
-            fp,
-            
-            b" prefix=\"%s\"\x00".as_ptr() as *const c_char,
-            prefix,
-        );
+        ::c2rust_out::stdlib::fprintf(fp, b" prefix=\"%s\"\x00".as_ptr() as *const c_char, prefix);
     }
     if !uri.is_null() {
         fputs(b" ns=\"\x00".as_ptr() as *const c_char, fp);
@@ -934,7 +901,6 @@ unsafe extern "C" fn metaEndNamespaceDecl(mut userData: *mut c_void, mut prefix:
     } else {
         ::c2rust_out::stdlib::fprintf(
             fp,
-            
             b"<endns prefix=\"%s\"/>\n\x00".as_ptr() as *const c_char,
             prefix,
         );
@@ -1014,7 +980,6 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
     }
     ::c2rust_out::stdlib::fprintf(
         stdout,
-        
         b"%s using %s\n\x00".as_ptr() as *const c_char,
         prog,
         XML_ExpatVersion(),
@@ -1023,14 +988,12 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
         let mut i: c_int = 1;
         ::c2rust_out::stdlib::fprintf(
             stdout,
-            
             b"%s\x00".as_ptr() as *const c_char,
             (*features.offset(0isize)).name,
         );
         if (*features.offset(0)).value != 0 {
             ::c2rust_out::stdlib::fprintf(
                 stdout,
-                
                 b"=%ld\x00".as_ptr() as *const c_char,
                 (*features.offset(0isize)).value,
             );
@@ -1038,21 +1001,19 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
         while (*features.offset(i as isize)).feature != XML_FEATURE_END {
             ::c2rust_out::stdlib::fprintf(
                 stdout,
-                
                 b", %s\x00".as_ptr() as *const c_char,
                 (*features.offset(i as isize)).name,
             );
             if (*features.offset(i as isize)).value != 0 {
                 ::c2rust_out::stdlib::fprintf(
                     stdout,
-                    
                     b"=%ld\x00".as_ptr() as *const c_char,
                     (*features.offset(i as isize)).value,
                 );
             }
             i += 1
         }
-        ::c2rust_out::stdlib::fprintf(stdout,  b"\n\x00".as_ptr() as *const c_char);
+        ::c2rust_out::stdlib::fprintf(stdout, b"\n\x00".as_ptr() as *const c_char);
     };
 }
 
@@ -1229,10 +1190,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             parser = XML_ParserCreate(encoding)
         }
         if parser.is_null() {
-            crate::xmlfile::perror(
-                
-                b"Could not instantiate parser\x00".as_ptr() as *const c_char,
-            );
+            crate::xmlfile::perror(b"Could not instantiate parser\x00".as_ptr() as *const c_char);
             exit(1i32);
         }
         if requireStandalone != 0 {
@@ -1279,9 +1237,8 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 ),
             );
         } else if !outputDir.is_null() {
-            let mut delim: *const XML_Char =  b"/\x00".as_ptr() as *const c_char;
+            let mut delim: *const XML_Char = b"/\x00".as_ptr() as *const c_char;
             let mut file: *const XML_Char = if useStdin != 0 {
-                
                 b"STDIN\x00".as_ptr() as *const c_char
             } else {
                 *argv.offset(i as isize) as *const c_char
@@ -1302,7 +1259,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             strcpy(outName, outputDir);
             strcat(outName, delim);
             strcat(outName, file);
-            userData.fp = fopen(outName,  b"wb\x00".as_ptr() as *const c_char);
+            userData.fp = fopen(outName, b"wb\x00".as_ptr() as *const c_char);
             if userData.fp.is_null() {
                 crate::xmlfile::perror(outName);
                 exit(1i32);

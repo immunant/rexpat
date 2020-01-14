@@ -103,7 +103,6 @@ pub unsafe extern "C" fn filemap(
     if !(sb.st_mode & __S_IFMT as c_uint == 0o100000) {
         fprintf(
             stderr,
-            
             b"%s: not a regular file\n\x00".as_ptr() as *const c_char,
             name,
         );
@@ -132,7 +131,6 @@ pub unsafe extern "C" fn filemap(
     if p.is_null() {
         fprintf(
             stderr,
-            
             b"%s: out of memory\n\x00".as_ptr() as *const c_char,
             name,
         );
@@ -149,7 +147,6 @@ pub unsafe extern "C" fn filemap(
     if n != nbytes as ssize_t {
         fprintf(
             stderr,
-            
             b"%s: read unexpected number of bytes\n\x00".as_ptr() as *const c_char,
             name,
         );

@@ -672,9 +672,7 @@ unsafe extern "C" fn gather_time_entropy() -> c_ulong {
     if gettimeofday_res == 0 {
     } else {
         __assert_fail(
-            
             b"gettimeofday_res == 0\x00".as_ptr() as *const c_char,
-            
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
                 as *const c_char,
             782u32,
@@ -694,11 +692,10 @@ unsafe extern "C" fn ENTROPY_DEBUG(mut label: *const c_char, mut entropy: c_ulon
     let EXPAT_ENTROPY_DEBUG: *const c_char =
         getenv(b"EXPAT_ENTROPY_DEBUG\x00".as_ptr() as *const c_char);
     if !EXPAT_ENTROPY_DEBUG.is_null()
-        && strcmp(EXPAT_ENTROPY_DEBUG,  b"1\x00".as_ptr() as *const c_char) == 0
+        && strcmp(EXPAT_ENTROPY_DEBUG, b"1\x00".as_ptr() as *const c_char) == 0
     {
         fprintf(
             stderr,
-            
             b"Entropy: %s --> 0x%0*lx (%lu bytes)\n\x00".as_ptr() as *const c_char,
             label,
             ::std::mem::size_of::<c_ulong>() as c_int * 2i32,
@@ -734,13 +731,11 @@ unsafe extern "C" fn generate_hash_secret_salt(mut _parser: XML_Parser) -> c_ulo
     /* Factors are 2^31-1 and 2^61-1 (Mersenne primes M31 and M61) */
     if ::std::mem::size_of::<c_ulong>() as c_ulong == 4 {
         return ENTROPY_DEBUG(
-            
             b"fallback(4)\x00".as_ptr() as *const c_char,
             entropy.wrapping_mul(2147483647u64),
         );
     } else {
         return ENTROPY_DEBUG(
-            
             b"fallback(8)\x00".as_ptr() as *const c_char,
             entropy.wrapping_mul(2305843009213693951u64),
         );
@@ -824,19 +819,22 @@ unsafe extern "C" fn parserCreate(
     (*parser).m_buffer = NULL as *mut c_char;
     (*parser).m_bufferLim = NULL as *const c_char;
     (*parser).m_attsSize = INIT_ATTS_SIZE;
-    (*parser).m_atts = MALLOC!(parser,
-        ((*parser).m_attsSize as
-     c_ulong).wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>()
-                               as c_ulong)) as *mut super::xmltok::ATTRIBUTE;
+    (*parser).m_atts = MALLOC!(
+        parser,
+        ((*parser).m_attsSize as c_ulong)
+            .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
+    ) as *mut super::xmltok::ATTRIBUTE;
     if (*parser).m_atts.is_null() {
-         FREE!(parser, parser as *mut c_void);
+        FREE!(parser, parser as *mut c_void);
         return NULL as XML_Parser;
     }
-    (*parser).m_dataBuf = MALLOC!(parser,
-        1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)) as *mut XML_Char;
+    (*parser).m_dataBuf = MALLOC!(
+        parser,
+        1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
+    ) as *mut XML_Char;
     if (*parser).m_dataBuf.is_null() {
-         FREE!(parser, (*parser).m_atts as *mut c_void);
-         FREE!(parser, parser as *mut c_void);
+        FREE!(parser, (*parser).m_atts as *mut c_void);
+        FREE!(parser, parser as *mut c_void);
         return NULL as XML_Parser;
     }
     (*parser).m_dataBufEnd = (*parser).m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
@@ -845,9 +843,9 @@ unsafe extern "C" fn parserCreate(
     } else {
         (*parser).m_dtd = dtdCreate(&(*parser).m_mem);
         if (*parser).m_dtd.is_null() {
-             FREE!(parser, (*parser).m_dataBuf as *mut c_void);
-             FREE!(parser, (*parser).m_atts as *mut c_void);
-             FREE!(parser, parser as *mut c_void);
+            FREE!(parser, (*parser).m_dataBuf as *mut c_void);
+            FREE!(parser, (*parser).m_atts as *mut c_void);
+            FREE!(parser, parser as *mut c_void);
             return NULL as XML_Parser;
         }
     }
@@ -1034,7 +1032,7 @@ pub unsafe extern "C" fn XML_ParserReset(
         (*parser).m_freeInternalEntities = openEntity
     }
     moveToFreeBindingList(parser, (*parser).m_inheritedBindings);
-     FREE!(parser, (*parser).m_unknownEncodingMem);
+    FREE!(parser, (*parser).m_unknownEncodingMem);
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
@@ -1042,7 +1040,7 @@ pub unsafe extern "C" fn XML_ParserReset(
     }
     poolClear(&mut (*parser).m_tempPool);
     poolClear(&mut (*parser).m_temp2Pool);
-     FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
+    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
     (*parser).m_protocolEncodingName = NULL as *const XML_Char;
     parserInit(parser, encodingName);
     dtdReset((*parser).m_dtd, &(*parser).m_mem);
@@ -1073,9 +1071,8 @@ pub unsafe extern "C" fn XML_SetEncoding(
         return XML_STATUS_ERROR_0 as XML_Status;
     }
 
-     
-/* Get rid of any previous encoding name */
-FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
+    /* Get rid of any previous encoding name */
+    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
     if encodingName.is_null() {
         /* No new encoding name */
         (*parser).m_protocolEncodingName = NULL as *const XML_Char
@@ -1279,8 +1276,8 @@ unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML
             break;
         }
         bindings = (*b).nextTagBinding;
-         FREE!(parser, (*b).uri as *mut c_void);
-         FREE!(parser, b as *mut c_void);
+        FREE!(parser, (*b).uri as *mut c_void);
+        FREE!(parser, b as *mut c_void);
     }
 }
 /* Frees memory used by the parser. */
@@ -1304,9 +1301,9 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
         }
         p = tagList;
         tagList = (*tagList).parent;
-         FREE!(parser, (*p).buf as *mut c_void);
+        FREE!(parser, (*p).buf as *mut c_void);
         destroyBindings((*p).bindings, parser);
-         FREE!(parser, p as *mut c_void);
+        FREE!(parser, p as *mut c_void);
     }
     /* free m_openInternalEntities and m_freeInternalEntities */
     entityList = (*parser).m_openInternalEntities;
@@ -1321,13 +1318,13 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
         }
         openEntity = entityList;
         entityList = (*entityList).next;
-         FREE!(parser, openEntity as *mut c_void);
+        FREE!(parser, openEntity as *mut c_void);
     }
     destroyBindings((*parser).m_freeBindingList, parser);
     destroyBindings((*parser).m_inheritedBindings, parser);
     poolDestroy(&mut (*parser).m_tempPool);
     poolDestroy(&mut (*parser).m_temp2Pool);
-     FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
+    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
     /* external parameter entity parsers share the DTD structure
        parser->m_dtd with the root parser, so we must not destroy it
     */
@@ -1339,18 +1336,18 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
             &(*parser).m_mem,
         );
     }
-     FREE!(parser, (*parser).m_atts as *mut c_void);
-     FREE!(parser, (*parser).m_groupConnector as *mut c_void);
-     FREE!(parser, (*parser).m_buffer as *mut c_void);
-     FREE!(parser, (*parser).m_dataBuf as *mut c_void);
-     FREE!(parser, (*parser).m_nsAtts as *mut c_void);
-     FREE!(parser, (*parser).m_unknownEncodingMem);
+    FREE!(parser, (*parser).m_atts as *mut c_void);
+    FREE!(parser, (*parser).m_groupConnector as *mut c_void);
+    FREE!(parser, (*parser).m_buffer as *mut c_void);
+    FREE!(parser, (*parser).m_dataBuf as *mut c_void);
+    FREE!(parser, (*parser).m_nsAtts as *mut c_void);
+    FREE!(parser, (*parser).m_unknownEncodingMem);
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
             .expect("non-null function pointer")((*parser).m_unknownEncodingData);
     }
-     FREE!(parser, parser as *mut c_void);
+    FREE!(parser, parser as *mut c_void);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
@@ -2170,7 +2167,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
                         0
                     }) + keep as c_long) as c_ulong,
                 );
-                 FREE!(parser, (*parser).m_buffer as *mut c_void);
+                FREE!(parser, (*parser).m_buffer as *mut c_void);
                 (*parser).m_buffer = newBuf;
                 (*parser).m_bufferEnd = (*parser)
                     .m_buffer
@@ -2336,9 +2333,7 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
     if !status.is_null() {
     } else {
         __assert_fail(
-            
             b"status != NULL\x00".as_ptr() as *const c_char,
-            
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
                 as *const c_char,
             2113u32,
@@ -2484,7 +2479,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
 #[no_mangle]
 pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
     if !parser.is_null() {
-         FREE!(parser, model as *mut c_void);
+        FREE!(parser, model as *mut c_void);
     };
 }
 /* Exposing the memory handling functions used in Expat */
@@ -2509,7 +2504,7 @@ pub unsafe extern "C" fn XML_MemRealloc(
 #[no_mangle]
 pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
     if !parser.is_null() {
-         FREE!(parser, ptr);
+        FREE!(parser, ptr);
     };
 }
 /* This can be called within a handler for a start element, end
@@ -2544,86 +2539,78 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
 pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
     match code {
         0 => return NULL as *const XML_LChar,
-        1 => return  b"out of memory\x00".as_ptr() as *const c_char,
-        2 => return  b"syntax error\x00".as_ptr() as *const c_char,
-        3 => return  b"no element found\x00".as_ptr() as *const c_char,
-        4 => return  b"not well-formed (invalid token)\x00".as_ptr() as *const c_char,
-        5 => return  b"unclosed token\x00".as_ptr() as *const c_char,
-        6 => return  b"partial character\x00".as_ptr() as *const c_char,
-        7 => return  b"mismatched tag\x00".as_ptr() as *const c_char,
-        8 => return  b"duplicate attribute\x00".as_ptr() as *const c_char,
-        9 => return  b"junk after document element\x00".as_ptr() as *const c_char,
-        10 => return  b"illegal parameter entity reference\x00".as_ptr() as *const c_char,
-        11 => return  b"undefined entity\x00".as_ptr() as *const c_char,
-        12 => return  b"recursive entity reference\x00".as_ptr() as *const c_char,
-        13 => return  b"asynchronous entity\x00".as_ptr() as *const c_char,
-        14 => return  b"reference to invalid character number\x00".as_ptr() as *const c_char,
-        15 => return  b"reference to binary entity\x00".as_ptr() as *const c_char,
-        16 => {
-            return  b"reference to external entity in attribute\x00".as_ptr() as *const c_char
-        }
+        1 => return b"out of memory\x00".as_ptr() as *const c_char,
+        2 => return b"syntax error\x00".as_ptr() as *const c_char,
+        3 => return b"no element found\x00".as_ptr() as *const c_char,
+        4 => return b"not well-formed (invalid token)\x00".as_ptr() as *const c_char,
+        5 => return b"unclosed token\x00".as_ptr() as *const c_char,
+        6 => return b"partial character\x00".as_ptr() as *const c_char,
+        7 => return b"mismatched tag\x00".as_ptr() as *const c_char,
+        8 => return b"duplicate attribute\x00".as_ptr() as *const c_char,
+        9 => return b"junk after document element\x00".as_ptr() as *const c_char,
+        10 => return b"illegal parameter entity reference\x00".as_ptr() as *const c_char,
+        11 => return b"undefined entity\x00".as_ptr() as *const c_char,
+        12 => return b"recursive entity reference\x00".as_ptr() as *const c_char,
+        13 => return b"asynchronous entity\x00".as_ptr() as *const c_char,
+        14 => return b"reference to invalid character number\x00".as_ptr() as *const c_char,
+        15 => return b"reference to binary entity\x00".as_ptr() as *const c_char,
+        16 => return b"reference to external entity in attribute\x00".as_ptr() as *const c_char,
         17 => {
-            return  b"XML or text declaration not at start of entity\x00".as_ptr()
-                as *const c_char
+            return b"XML or text declaration not at start of entity\x00".as_ptr() as *const c_char
         }
-        18 => return  b"unknown encoding\x00".as_ptr() as *const c_char,
+        18 => return b"unknown encoding\x00".as_ptr() as *const c_char,
         19 => {
-            return  b"encoding specified in XML declaration is incorrect\x00".as_ptr()
+            return b"encoding specified in XML declaration is incorrect\x00".as_ptr()
                 as *const c_char
         }
-        20 => return  b"unclosed CDATA section\x00".as_ptr() as *const c_char,
+        20 => return b"unclosed CDATA section\x00".as_ptr() as *const c_char,
         21 => {
-            return  b"error in processing external entity reference\x00".as_ptr()
-                as *const c_char
+            return b"error in processing external entity reference\x00".as_ptr() as *const c_char
         }
-        22 => return  b"document is not standalone\x00".as_ptr() as *const c_char,
+        22 => return b"document is not standalone\x00".as_ptr() as *const c_char,
         23 => {
-            return  b"unexpected parser state - please send a bug report\x00".as_ptr()
+            return b"unexpected parser state - please send a bug report\x00".as_ptr()
                 as *const c_char
         }
-        24 => return  b"entity declared in parameter entity\x00".as_ptr() as *const c_char,
+        24 => return b"entity declared in parameter entity\x00".as_ptr() as *const c_char,
         25 => {
-            return  b"requested feature requires XML_DTD support in Expat\x00".as_ptr()
+            return b"requested feature requires XML_DTD support in Expat\x00".as_ptr()
                 as *const c_char
         }
-        26 => {
-            return  b"cannot change setting once parsing has begun\x00".as_ptr()
-                as *const c_char
-        }
+        26 => return b"cannot change setting once parsing has begun\x00".as_ptr() as *const c_char,
         27 => {
             /* Added in 1.95.7. */
-            return  b"unbound prefix\x00".as_ptr() as *const c_char;
+            return b"unbound prefix\x00".as_ptr() as *const c_char;
         }
         28 => {
             /* Added in 1.95.8. */
-            return  b"must not undeclare prefix\x00".as_ptr() as *const c_char;
+            return b"must not undeclare prefix\x00".as_ptr() as *const c_char;
         }
-        29 => return  b"incomplete markup in parameter entity\x00".as_ptr() as *const c_char,
-        30 => return  b"XML declaration not well-formed\x00".as_ptr() as *const c_char,
-        31 => return  b"text declaration not well-formed\x00".as_ptr() as *const c_char,
-        32 => return  b"illegal character(s) in public id\x00".as_ptr() as *const c_char,
-        33 => return  b"parser suspended\x00".as_ptr() as *const c_char,
-        34 => return  b"parser not suspended\x00".as_ptr() as *const c_char,
-        35 => return  b"parsing aborted\x00".as_ptr() as *const c_char,
-        36 => return  b"parsing finished\x00".as_ptr() as *const c_char,
-        37 => {
-            return  b"cannot suspend in external parameter entity\x00".as_ptr() as *const c_char
-        }
+        29 => return b"incomplete markup in parameter entity\x00".as_ptr() as *const c_char,
+        30 => return b"XML declaration not well-formed\x00".as_ptr() as *const c_char,
+        31 => return b"text declaration not well-formed\x00".as_ptr() as *const c_char,
+        32 => return b"illegal character(s) in public id\x00".as_ptr() as *const c_char,
+        33 => return b"parser suspended\x00".as_ptr() as *const c_char,
+        34 => return b"parser not suspended\x00".as_ptr() as *const c_char,
+        35 => return b"parsing aborted\x00".as_ptr() as *const c_char,
+        36 => return b"parsing finished\x00".as_ptr() as *const c_char,
+        37 => return b"cannot suspend in external parameter entity\x00".as_ptr() as *const c_char,
         38 => {
             /* Added in 2.0.0. */
             return  b"reserved prefix (xml) must not be undeclared or bound to another namespace name\x00".as_ptr() as *const c_char;
         }
         39 => {
-            return  b"reserved prefix (xmlns) must not be declared or undeclared\x00".as_ptr()
+            return b"reserved prefix (xmlns) must not be declared or undeclared\x00".as_ptr()
                 as *const c_char
         }
         40 => {
-            return  b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr() as *const c_char
+            return b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr()
+                as *const c_char
         }
         41 => {
             /* Added in 2.2.5. */
             /* Constant added in 2.2.1, already */
-            return  b"invalid argument\x00".as_ptr() as *const c_char;
+            return b"invalid argument\x00".as_ptr() as *const c_char;
         }
         _ => {}
     }
@@ -2639,7 +2626,7 @@ pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
     the version macros, then CPP will expand the resulting V1() macro
     with the correct numerals. */
     /* ### I'm assuming cpp is portable in this respect... */
-    return  b"expat_2.2.9\x00".as_ptr() as *const c_char;
+    return b"expat_2.2.9\x00".as_ptr() as *const c_char;
 }
 /* Return an XML_Expat_Version structure containing numeric version
    number information for this version of expat.
@@ -2662,7 +2649,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_SIZEOF_XML_CHAR,
-                name:  b"sizeof(XML_Char)\x00".as_ptr() as *const c_char,
+                name: b"sizeof(XML_Char)\x00".as_ptr() as *const c_char,
                 value: ::std::mem::size_of::<XML_Char>() as c_long,
             };
             init
@@ -2670,7 +2657,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_SIZEOF_XML_LCHAR,
-                name:  b"sizeof(XML_LChar)\x00".as_ptr() as *const c_char,
+                name: b"sizeof(XML_LChar)\x00".as_ptr() as *const c_char,
                 value: ::std::mem::size_of::<XML_LChar>() as c_long,
             };
             init
@@ -2678,7 +2665,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_DTD,
-                name:  b"XML_DTD\x00".as_ptr() as *const c_char,
+                name: b"XML_DTD\x00".as_ptr() as *const c_char,
                 value: 0i64,
             };
             init
@@ -2686,7 +2673,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_CONTEXT_BYTES,
-                name:  b"XML_CONTEXT_BYTES\x00".as_ptr() as *const c_char,
+                name: b"XML_CONTEXT_BYTES\x00".as_ptr() as *const c_char,
                 value: XML_CONTEXT_BYTES as c_long,
             };
             init
@@ -2694,7 +2681,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_NS,
-                name:  b"XML_NS\x00".as_ptr() as *const c_char,
+                name: b"XML_NS\x00".as_ptr() as *const c_char,
                 value: 0i64,
             };
             init
@@ -3160,7 +3147,7 @@ unsafe extern "C" fn doContent(
                     }
                     (*tag).buf = MALLOC!(parser, 32u64) as *mut c_char;
                     if (*tag).buf.is_null() {
-                         FREE!(parser, tag as *mut c_void);
+                        FREE!(parser, tag as *mut c_void);
                         return XML_ERROR_NO_MEMORY;
                     }
                     (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
@@ -3676,10 +3663,12 @@ unsafe extern "C" fn storeAtts(
         let mut oldAttsSize: c_int = (*parser).m_attsSize;
         let mut temp: *mut super::xmltok::ATTRIBUTE = 0 as *mut super::xmltok::ATTRIBUTE;
         (*parser).m_attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
-        temp = REALLOC!(parser, (*parser).m_atts as *mut c_void,
-         ((*parser).m_attsSize as
-     c_ulong).wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>()
-                               as c_ulong)) as *mut super::xmltok::ATTRIBUTE;
+        temp = REALLOC!(
+            parser,
+            (*parser).m_atts as *mut c_void,
+            ((*parser).m_attsSize as c_ulong)
+                .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
+        ) as *mut super::xmltok::ATTRIBUTE;
         if temp.is_null() {
             (*parser).m_attsSize = oldAttsSize;
             return XML_ERROR_NO_MEMORY;
@@ -3882,9 +3871,11 @@ unsafe extern "C" fn storeAtts(
                 (*parser).m_nsAttsPower = 3u8
             }
             nsAttsSize = (1) << (*parser).m_nsAttsPower as c_int;
-            temp_0 = REALLOC!(parser, (*parser).m_nsAtts as *mut c_void,
-         (nsAttsSize as
-     c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)) as *mut NS_ATT;
+            temp_0 = REALLOC!(
+                parser,
+                (*parser).m_nsAtts as *mut c_void,
+                (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
+            ) as *mut NS_ATT;
             if temp_0.is_null() {
                 /* Restore actual size of memory in m_nsAtts */
                 (*parser).m_nsAttsPower = oldNsAttsPower;
@@ -4146,9 +4137,10 @@ unsafe extern "C" fn storeAtts(
     n = i + (*binding).uriLen + prefixLen;
     if n > (*binding).uriAlloc {
         let mut p: *mut TAG = 0 as *mut TAG;
-        uri = MALLOC!(parser,
-        ((n + 24) as
-     c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)) as *mut XML_Char;
+        uri = MALLOC!(
+            parser,
+            ((n + 24) as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
+        ) as *mut XML_Char;
         if uri.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
@@ -4166,7 +4158,7 @@ unsafe extern "C" fn storeAtts(
             }
             p = (*p).parent
         }
-         FREE!(parser, (*binding).uri as *mut c_void);
+        FREE!(parser, (*binding).uri as *mut c_void);
         (*binding).uri = uri
     }
     /* if m_namespaceSeparator != '\0' then uri includes it already */
@@ -4335,9 +4327,11 @@ unsafe extern "C" fn addBinding(
     if !(*parser).m_freeBindingList.is_null() {
         b = (*parser).m_freeBindingList;
         if len > (*b).uriAlloc {
-            let mut temp: *mut XML_Char = REALLOC!(parser, (*b).uri as *mut c_void,
-         (::std::mem::size_of::<XML_Char>() as
-     c_ulong).wrapping_mul((len + 24) as c_ulong)) as *mut XML_Char;
+            let mut temp: *mut XML_Char = REALLOC!(
+                parser,
+                (*b).uri as *mut c_void,
+                (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
+            ) as *mut XML_Char;
             if temp.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
@@ -4350,11 +4344,12 @@ unsafe extern "C" fn addBinding(
         if b.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        (*b).uri = MALLOC!(parser,
-        (::std::mem::size_of::<XML_Char>() as
-     c_ulong).wrapping_mul((len + 24) as c_ulong)) as *mut XML_Char;
+        (*b).uri = MALLOC!(
+            parser,
+            (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
+        ) as *mut XML_Char;
         if (*b).uri.is_null() {
-             FREE!(parser, b as *mut c_void);
+            FREE!(parser, b as *mut c_void);
             return XML_ERROR_NO_MEMORY;
         }
         (*b).uriAlloc = len + EXPAND_SPARE
@@ -6193,17 +6188,23 @@ unsafe extern "C" fn doProlog(
                 if (*parser).m_prologState.level >= (*parser).m_groupSize {
                     if (*parser).m_groupSize != 0 {
                         (*parser).m_groupSize = (*parser).m_groupSize.wrapping_mul(2u32);
-                        let new_connector: *mut c_char = REALLOC!(parser, (*parser).m_groupConnector as *mut c_void,
-         (*parser).m_groupSize as size_t) as *mut c_char;
+                        let new_connector: *mut c_char = REALLOC!(
+                            parser,
+                            (*parser).m_groupConnector as *mut c_void,
+                            (*parser).m_groupSize as size_t
+                        ) as *mut c_char;
                         if new_connector.is_null() {
                             (*parser).m_groupSize = (*parser).m_groupSize.wrapping_div(2u32);
                             return XML_ERROR_NO_MEMORY;
                         }
                         (*parser).m_groupConnector = new_connector;
                         if !(*dtd).scaffIndex.is_null() {
-                            let new_scaff_index: *mut c_int = REALLOC!(parser, (*dtd).scaffIndex as *mut c_void,
-         ((*parser).m_groupSize as
-     c_ulong).wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong))
+                            let new_scaff_index: *mut c_int = REALLOC!(
+                                parser,
+                                (*dtd).scaffIndex as *mut c_void,
+                                ((*parser).m_groupSize as c_ulong)
+                                    .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
+                            )
                                 as *mut c_int;
                             if new_scaff_index.is_null() {
                                 return XML_ERROR_NO_MEMORY;
@@ -6843,7 +6844,10 @@ unsafe extern "C" fn processInternalEntity(
         openEntity = (*parser).m_freeInternalEntities;
         (*parser).m_freeInternalEntities = (*openEntity).next
     } else {
-        openEntity = MALLOC!(parser, ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong) as *mut OPEN_INTERNAL_ENTITY;
+        openEntity = MALLOC!(
+            parser,
+            ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong
+        ) as *mut OPEN_INTERNAL_ENTITY;
         if openEntity.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
@@ -7737,10 +7741,11 @@ unsafe extern "C" fn defineAttribute(
     if (*type_0).nDefaultAtts == (*type_0).allocDefaultAtts {
         if (*type_0).allocDefaultAtts == 0 {
             (*type_0).allocDefaultAtts = 8;
-            (*type_0).defaultAtts = MALLOC!(parser,
-        ((*type_0).allocDefaultAtts as
-     c_ulong).wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as
-                               c_ulong)) as *mut DEFAULT_ATTRIBUTE;
+            (*type_0).defaultAtts = MALLOC!(
+                parser,
+                ((*type_0).allocDefaultAtts as c_ulong)
+                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
+            ) as *mut DEFAULT_ATTRIBUTE;
             if (*type_0).defaultAtts.is_null() {
                 (*type_0).allocDefaultAtts = 0;
                 return 0i32;
@@ -7748,10 +7753,12 @@ unsafe extern "C" fn defineAttribute(
         } else {
             let mut temp: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
             let mut count: c_int = (*type_0).allocDefaultAtts * 2;
-            temp = REALLOC!(parser, (*type_0).defaultAtts as *mut c_void,
-         (count as
-     c_ulong).wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as
-                               c_ulong)) as *mut DEFAULT_ATTRIBUTE;
+            temp = REALLOC!(
+                parser,
+                (*type_0).defaultAtts as *mut c_void,
+                (count as c_ulong)
+                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
+            ) as *mut DEFAULT_ATTRIBUTE;
             if temp.is_null() {
                 return 0i32;
             }
@@ -9282,9 +9289,11 @@ unsafe extern "C" fn nextScaffoldPart(mut parser: XML_Parser) -> c_int {
     let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
     let mut next: c_int = 0;
     if (*dtd).scaffIndex.is_null() {
-        (*dtd).scaffIndex = MALLOC!(parser,
-        ((*parser).m_groupSize as
-     c_ulong).wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)) as *mut c_int;
+        (*dtd).scaffIndex = MALLOC!(
+            parser,
+            ((*parser).m_groupSize as c_ulong)
+                .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
+        ) as *mut c_int;
         if (*dtd).scaffIndex.is_null() {
             return -(1i32);
         }
@@ -9293,17 +9302,21 @@ unsafe extern "C" fn nextScaffoldPart(mut parser: XML_Parser) -> c_int {
     if (*dtd).scaffCount >= (*dtd).scaffSize {
         let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
         if !(*dtd).scaffold.is_null() {
-            temp = REALLOC!(parser, (*dtd).scaffold as *mut c_void,
-         ((*dtd).scaffSize.wrapping_mul(2u32) as
-     c_ulong).wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as
-                               c_ulong)) as *mut CONTENT_SCAFFOLD;
+            temp = REALLOC!(
+                parser,
+                (*dtd).scaffold as *mut c_void,
+                ((*dtd).scaffSize.wrapping_mul(2u32) as c_ulong)
+                    .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
+            ) as *mut CONTENT_SCAFFOLD;
             if temp.is_null() {
                 return -(1i32);
             }
             (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
         } else {
-            temp = MALLOC!(parser,
-        32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)) as *mut CONTENT_SCAFFOLD;
+            temp = MALLOC!(
+                parser,
+                32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
+            ) as *mut CONTENT_SCAFFOLD;
             if temp.is_null() {
                 return -(1i32);
             }
