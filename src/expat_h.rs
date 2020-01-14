@@ -1,4 +1,16 @@
+use crate::expat_external_h::XML_Char;
+use crate::expat_external_h::XML_LChar;
+use crate::expat_external_h::XML_Size;
+use crate::src::lib::xmlparse::XML_GetCurrentColumnNumber;
+use crate::src::lib::xmlparse::XML_GetCurrentLineNumber;
 pub use crate::src::lib::xmlparse::XML_ParserStruct;
+use crate::stddef_h::size_t;
+use libc::c_char;
+use libc::c_int;
+use libc::c_long;
+use libc::c_uchar;
+use libc::c_uint;
+use libc::c_void;
 /*
                         __  __            _
                      ___\ \/ /_ __   __ _| |_
@@ -31,9 +43,9 @@ pub use crate::src::lib::xmlparse::XML_ParserStruct;
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 pub type XML_Parser = *mut XML_ParserStruct;
-pub type XML_Bool = libc::c_uchar;
-pub const XML_TRUE: libc::c_int = 1 as libc::c_int;
-pub const XML_FALSE: libc::c_int = 0 as libc::c_int;
+pub type XML_Bool = c_uchar;
+pub const XML_TRUE: c_int = 1 as c_int;
+pub const XML_FALSE: c_int = 0 as c_int;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
    stanza can be added to code that still needs to support older
@@ -47,72 +59,72 @@ pub const XML_FALSE: libc::c_int = 0 as libc::c_int;
    Otherwise, the #define hackery is quite ugly and would have been
    dropped.
 */
-pub type XML_Status = libc::c_uint;
-pub const XML_STATUS_ERROR: crate::expat_h::XML_Status = 0;
-pub const XML_STATUS_ERROR_0: libc::c_int = crate::expat_h::XML_STATUS_ERROR as libc::c_int;
-pub const XML_STATUS_OK: crate::expat_h::XML_Status = 1;
-pub const XML_STATUS_OK_0: libc::c_int = crate::expat_h::XML_STATUS_OK as libc::c_int;
-pub const XML_STATUS_SUSPENDED: crate::expat_h::XML_Status = 2;
-pub const XML_STATUS_SUSPENDED_0: libc::c_int = crate::expat_h::XML_STATUS_SUSPENDED as libc::c_int;
-pub type XML_Error = libc::c_uint;
-pub const XML_ERROR_NONE: crate::expat_h::XML_Error = 0;
-pub const XML_ERROR_NO_MEMORY: crate::expat_h::XML_Error = 1;
-pub const XML_ERROR_SYNTAX: crate::expat_h::XML_Error = 2;
-pub const XML_ERROR_NO_ELEMENTS: crate::expat_h::XML_Error = 3;
-pub const XML_ERROR_INVALID_TOKEN: crate::expat_h::XML_Error = 4;
-pub const XML_ERROR_UNCLOSED_TOKEN: crate::expat_h::XML_Error = 5;
-pub const XML_ERROR_PARTIAL_CHAR: crate::expat_h::XML_Error = 6;
-pub const XML_ERROR_TAG_MISMATCH: crate::expat_h::XML_Error = 7;
-pub const XML_ERROR_DUPLICATE_ATTRIBUTE: crate::expat_h::XML_Error = 8;
-pub const XML_ERROR_JUNK_AFTER_DOC_ELEMENT: crate::expat_h::XML_Error = 9;
-pub const XML_ERROR_PARAM_ENTITY_REF: crate::expat_h::XML_Error = 10;
-pub const XML_ERROR_UNDEFINED_ENTITY: crate::expat_h::XML_Error = 11;
-pub const XML_ERROR_RECURSIVE_ENTITY_REF: crate::expat_h::XML_Error = 12;
-pub const XML_ERROR_ASYNC_ENTITY: crate::expat_h::XML_Error = 13;
-pub const XML_ERROR_BAD_CHAR_REF: crate::expat_h::XML_Error = 14;
-pub const XML_ERROR_BINARY_ENTITY_REF: crate::expat_h::XML_Error = 15;
-pub const XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF: crate::expat_h::XML_Error = 16;
-pub const XML_ERROR_MISPLACED_XML_PI: crate::expat_h::XML_Error = 17;
-pub const XML_ERROR_UNKNOWN_ENCODING: crate::expat_h::XML_Error = 18;
-pub const XML_ERROR_INCORRECT_ENCODING: crate::expat_h::XML_Error = 19;
-pub const XML_ERROR_UNCLOSED_CDATA_SECTION: crate::expat_h::XML_Error = 20;
-pub const XML_ERROR_EXTERNAL_ENTITY_HANDLING: crate::expat_h::XML_Error = 21;
-pub const XML_ERROR_NOT_STANDALONE: crate::expat_h::XML_Error = 22;
-pub const XML_ERROR_UNEXPECTED_STATE: crate::expat_h::XML_Error = 23;
-pub const XML_ERROR_ENTITY_DECLARED_IN_PE: crate::expat_h::XML_Error = 24;
-pub const XML_ERROR_FEATURE_REQUIRES_XML_DTD: crate::expat_h::XML_Error = 25;
-pub const XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING: crate::expat_h::XML_Error = 26;
+pub type XML_Status = c_uint;
+pub const XML_STATUS_ERROR: XML_Status = 0;
+pub const XML_STATUS_ERROR_0: c_int = XML_STATUS_ERROR as c_int;
+pub const XML_STATUS_OK: XML_Status = 1;
+pub const XML_STATUS_OK_0: c_int = XML_STATUS_OK as c_int;
+pub const XML_STATUS_SUSPENDED: XML_Status = 2;
+pub const XML_STATUS_SUSPENDED_0: c_int = XML_STATUS_SUSPENDED as c_int;
+pub type XML_Error = c_uint;
+pub const XML_ERROR_NONE: XML_Error = 0;
+pub const XML_ERROR_NO_MEMORY: XML_Error = 1;
+pub const XML_ERROR_SYNTAX: XML_Error = 2;
+pub const XML_ERROR_NO_ELEMENTS: XML_Error = 3;
+pub const XML_ERROR_INVALID_TOKEN: XML_Error = 4;
+pub const XML_ERROR_UNCLOSED_TOKEN: XML_Error = 5;
+pub const XML_ERROR_PARTIAL_CHAR: XML_Error = 6;
+pub const XML_ERROR_TAG_MISMATCH: XML_Error = 7;
+pub const XML_ERROR_DUPLICATE_ATTRIBUTE: XML_Error = 8;
+pub const XML_ERROR_JUNK_AFTER_DOC_ELEMENT: XML_Error = 9;
+pub const XML_ERROR_PARAM_ENTITY_REF: XML_Error = 10;
+pub const XML_ERROR_UNDEFINED_ENTITY: XML_Error = 11;
+pub const XML_ERROR_RECURSIVE_ENTITY_REF: XML_Error = 12;
+pub const XML_ERROR_ASYNC_ENTITY: XML_Error = 13;
+pub const XML_ERROR_BAD_CHAR_REF: XML_Error = 14;
+pub const XML_ERROR_BINARY_ENTITY_REF: XML_Error = 15;
+pub const XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF: XML_Error = 16;
+pub const XML_ERROR_MISPLACED_XML_PI: XML_Error = 17;
+pub const XML_ERROR_UNKNOWN_ENCODING: XML_Error = 18;
+pub const XML_ERROR_INCORRECT_ENCODING: XML_Error = 19;
+pub const XML_ERROR_UNCLOSED_CDATA_SECTION: XML_Error = 20;
+pub const XML_ERROR_EXTERNAL_ENTITY_HANDLING: XML_Error = 21;
+pub const XML_ERROR_NOT_STANDALONE: XML_Error = 22;
+pub const XML_ERROR_UNEXPECTED_STATE: XML_Error = 23;
+pub const XML_ERROR_ENTITY_DECLARED_IN_PE: XML_Error = 24;
+pub const XML_ERROR_FEATURE_REQUIRES_XML_DTD: XML_Error = 25;
+pub const XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING: XML_Error = 26;
 /* Added in 1.95.7. */
-pub const XML_ERROR_UNBOUND_PREFIX: crate::expat_h::XML_Error = 27;
+pub const XML_ERROR_UNBOUND_PREFIX: XML_Error = 27;
 /* Added in 1.95.8. */
-pub const XML_ERROR_UNDECLARING_PREFIX: crate::expat_h::XML_Error = 28;
-pub const XML_ERROR_INCOMPLETE_PE: crate::expat_h::XML_Error = 29;
-pub const XML_ERROR_XML_DECL: crate::expat_h::XML_Error = 30;
-pub const XML_ERROR_TEXT_DECL: crate::expat_h::XML_Error = 31;
-pub const XML_ERROR_PUBLICID: crate::expat_h::XML_Error = 32;
-pub const XML_ERROR_SUSPENDED: crate::expat_h::XML_Error = 33;
-pub const XML_ERROR_NOT_SUSPENDED: crate::expat_h::XML_Error = 34;
-pub const XML_ERROR_ABORTED: crate::expat_h::XML_Error = 35;
-pub const XML_ERROR_FINISHED: crate::expat_h::XML_Error = 36;
-pub const XML_ERROR_SUSPEND_PE: crate::expat_h::XML_Error = 37;
+pub const XML_ERROR_UNDECLARING_PREFIX: XML_Error = 28;
+pub const XML_ERROR_INCOMPLETE_PE: XML_Error = 29;
+pub const XML_ERROR_XML_DECL: XML_Error = 30;
+pub const XML_ERROR_TEXT_DECL: XML_Error = 31;
+pub const XML_ERROR_PUBLICID: XML_Error = 32;
+pub const XML_ERROR_SUSPENDED: XML_Error = 33;
+pub const XML_ERROR_NOT_SUSPENDED: XML_Error = 34;
+pub const XML_ERROR_ABORTED: XML_Error = 35;
+pub const XML_ERROR_FINISHED: XML_Error = 36;
+pub const XML_ERROR_SUSPEND_PE: XML_Error = 37;
 /* Added in 2.0. */
-pub const XML_ERROR_RESERVED_PREFIX_XML: crate::expat_h::XML_Error = 38;
-pub const XML_ERROR_RESERVED_PREFIX_XMLNS: crate::expat_h::XML_Error = 39;
-pub const XML_ERROR_RESERVED_NAMESPACE_URI: crate::expat_h::XML_Error = 40;
+pub const XML_ERROR_RESERVED_PREFIX_XML: XML_Error = 38;
+pub const XML_ERROR_RESERVED_PREFIX_XMLNS: XML_Error = 39;
+pub const XML_ERROR_RESERVED_NAMESPACE_URI: XML_Error = 40;
 /* Added in 2.2.1. */
-pub const XML_ERROR_INVALID_ARGUMENT: crate::expat_h::XML_Error = 41;
-pub type XML_Content_Type = libc::c_uint;
-pub const XML_CTYPE_EMPTY: crate::expat_h::XML_Content_Type = 1;
-pub const XML_CTYPE_ANY: crate::expat_h::XML_Content_Type = 2;
-pub const XML_CTYPE_MIXED: crate::expat_h::XML_Content_Type = 3;
-pub const XML_CTYPE_NAME: crate::expat_h::XML_Content_Type = 4;
-pub const XML_CTYPE_CHOICE: crate::expat_h::XML_Content_Type = 5;
-pub const XML_CTYPE_SEQ: crate::expat_h::XML_Content_Type = 6;
-pub type XML_Content_Quant = libc::c_uint;
-pub const XML_CQUANT_NONE: crate::expat_h::XML_Content_Quant = 0;
-pub const XML_CQUANT_OPT: crate::expat_h::XML_Content_Quant = 1;
-pub const XML_CQUANT_REP: crate::expat_h::XML_Content_Quant = 2;
-pub const XML_CQUANT_PLUS: crate::expat_h::XML_Content_Quant = 3;
+pub const XML_ERROR_INVALID_ARGUMENT: XML_Error = 41;
+pub type XML_Content_Type = c_uint;
+pub const XML_CTYPE_EMPTY: XML_Content_Type = 1;
+pub const XML_CTYPE_ANY: XML_Content_Type = 2;
+pub const XML_CTYPE_MIXED: XML_Content_Type = 3;
+pub const XML_CTYPE_NAME: XML_Content_Type = 4;
+pub const XML_CTYPE_CHOICE: XML_Content_Type = 5;
+pub const XML_CTYPE_SEQ: XML_Content_Type = 6;
+pub type XML_Content_Quant = c_uint;
+pub const XML_CQUANT_NONE: XML_Content_Quant = 0;
+pub const XML_CQUANT_OPT: XML_Content_Quant = 1;
+pub const XML_CQUANT_REP: XML_Content_Quant = 2;
+pub const XML_CQUANT_PLUS: XML_Content_Quant = 3;
 /* If type == XML_CTYPE_EMPTY or XML_CTYPE_ANY, then quant will be
    XML_CQUANT_NONE, and the other fields will be zero or NULL.
    If type == XML_CTYPE_MIXED, then quant will be NONE or REP and
@@ -130,27 +142,22 @@ pub const XML_CQUANT_PLUS: crate::expat_h::XML_Content_Quant = 3;
 
    The EMPTY, ANY, and MIXED types will only occur at top level.
 */
-pub type XML_Content = crate::expat_h::XML_cp;
+pub type XML_Content = XML_cp;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_cp {
-    pub type_0: crate::expat_h::XML_Content_Type,
-    pub quant: crate::expat_h::XML_Content_Quant,
-    pub name: *mut crate::expat_external_h::XML_Char,
-    pub numchildren: libc::c_uint,
-    pub children: *mut crate::expat_h::XML_Content,
+    pub type_0: XML_Content_Type,
+    pub quant: XML_Content_Quant,
+    pub name: *mut XML_Char,
+    pub numchildren: c_uint,
+    pub children: *mut XML_Content,
 }
 /* This is called for an element declaration. See above for
    description of the model argument. It's the caller's responsibility
    to free model when finished with it.
 */
-pub type XML_ElementDeclHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *mut crate::expat_h::XML_Content,
-    ) -> (),
->;
+pub type XML_ElementDeclHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut XML_Content) -> ()>;
 /* The Attlist declaration handler is called for *each* attribute. So
    a single Attlist declaration with multiple attributes declared will
    generate multiple calls to this handler. The "default" parameter
@@ -161,12 +168,12 @@ pub type XML_ElementDeclHandler = Option<
 */
 pub type XML_AttlistDeclHandler = Option<
     unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
+        _: *mut c_void,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: c_int,
     ) -> (),
 >;
 /* The XML declaration handler is called for *both* XML declarations
@@ -178,57 +185,33 @@ pub type XML_AttlistDeclHandler = Option<
    as no, or that it was given as yes.
 */
 pub type XML_XmlDeclHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-    ) -> (),
+    unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *const XML_Char, _: c_int) -> (),
 >;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Memory_Handling_Suite {
-    pub malloc_fcn: Option<unsafe extern "C" fn(_: crate::stddef_h::size_t) -> *mut libc::c_void>,
-    pub realloc_fcn: Option<
-        unsafe extern "C" fn(_: *mut libc::c_void, _: crate::stddef_h::size_t) -> *mut libc::c_void,
-    >,
-    pub free_fcn: Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>,
+    pub malloc_fcn: Option<unsafe extern "C" fn(_: size_t) -> *mut c_void>,
+    pub realloc_fcn: Option<unsafe extern "C" fn(_: *mut c_void, _: size_t) -> *mut c_void>,
+    pub free_fcn: Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
 }
 /* atts is array of name/value pairs, terminated by 0;
    names and values are 0 terminated.
 */
-pub type XML_StartElementHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *mut *const crate::expat_external_h::XML_Char,
-    ) -> (),
->;
-pub type XML_EndElementHandler = Option<
-    unsafe extern "C" fn(_: *mut libc::c_void, _: *const crate::expat_external_h::XML_Char) -> (),
->;
+pub type XML_StartElementHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut *const XML_Char) -> ()>;
+pub type XML_EndElementHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
 /* s is not 0 terminated. */
-pub type XML_CharacterDataHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-    ) -> (),
->;
+pub type XML_CharacterDataHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> ()>;
 /* target and data are 0 terminated */
-pub type XML_ProcessingInstructionHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-    ) -> (),
->;
+pub type XML_ProcessingInstructionHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *const XML_Char) -> ()>;
 /* data is 0 terminated */
-pub type XML_CommentHandler = Option<
-    unsafe extern "C" fn(_: *mut libc::c_void, _: *const crate::expat_external_h::XML_Char) -> (),
->;
-pub type XML_StartCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
-pub type XML_EndCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
+pub type XML_CommentHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
+pub type XML_StartCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut c_void) -> ()>;
+pub type XML_EndCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut c_void) -> ()>;
 /* This is called for any characters in the XML document for which
    there is no applicable handler.  This includes both characters that
    are part of markup which is of a kind that is not reported
@@ -242,30 +225,25 @@ pub type XML_EndCdataSectionHandler = Option<unsafe extern "C" fn(_: *mut libc::
    default handler: for example, a comment might be split between
    multiple calls.
 */
-pub type XML_DefaultHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-    ) -> (),
->;
+pub type XML_DefaultHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> ()>;
 /* This is called for the start of the DOCTYPE declaration, before
    any DTD or internal subset is parsed.
 */
 pub type XML_StartDoctypeDeclHandler = Option<
     unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
+        _: *mut c_void,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: c_int,
     ) -> (),
 >;
 /* This is called for the start of the DOCTYPE declaration when the
    closing > is encountered, but after processing any external
    subset.
 */
-pub type XML_EndDoctypeDeclHandler = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>;
+pub type XML_EndDoctypeDeclHandler = Option<unsafe extern "C" fn(_: *mut c_void) -> ()>;
 /* This is called for entity declarations. The is_parameter_entity
    argument will be non-zero if the entity is a parameter entity, zero
    otherwise.
@@ -286,15 +264,15 @@ pub type XML_EndDoctypeDeclHandler = Option<unsafe extern "C" fn(_: *mut libc::c
 */
 pub type XML_EntityDeclHandler = Option<
     unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
+        _: *mut c_void,
+        _: *const XML_Char,
+        _: c_int,
+        _: *const XML_Char,
+        _: c_int,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
     ) -> (),
 >;
 /* OBSOLETE -- OBSOLETE -- OBSOLETE
@@ -308,12 +286,12 @@ pub type XML_EntityDeclHandler = Option<
 */
 pub type XML_UnparsedEntityDeclHandler = Option<
     unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
+        _: *mut c_void,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
     ) -> (),
 >;
 /* This is called for a declaration of notation.  The base argument is
@@ -322,11 +300,11 @@ pub type XML_UnparsedEntityDeclHandler = Option<
 */
 pub type XML_NotationDeclHandler = Option<
     unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
+        _: *mut c_void,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
     ) -> (),
 >;
 /* When namespace processing is enabled, these are called once for
@@ -335,16 +313,10 @@ pub type XML_NotationDeclHandler = Option<
    declaration handlers. For an xmlns attribute, prefix will be
    NULL.  For an xmlns="" attribute, uri will be NULL.
 */
-pub type XML_StartNamespaceDeclHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-    ) -> (),
->;
-pub type XML_EndNamespaceDeclHandler = Option<
-    unsafe extern "C" fn(_: *mut libc::c_void, _: *const crate::expat_external_h::XML_Char) -> (),
->;
+pub type XML_StartNamespaceDeclHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *const XML_Char) -> ()>;
+pub type XML_EndNamespaceDeclHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
 /* This is called if the document is not standalone, that is, it has an
    external subset or a reference to a parameter entity, but does not
    have standalone="yes". If this handler returns XML_STATUS_ERROR,
@@ -354,8 +326,7 @@ pub type XML_EndNamespaceDeclHandler = Option<
    conditions above this handler will only be called if the referenced
    entity was actually read.
 */
-pub type XML_NotStandaloneHandler =
-    Option<unsafe extern "C" fn(_: *mut libc::c_void) -> libc::c_int>;
+pub type XML_NotStandaloneHandler = Option<unsafe extern "C" fn(_: *mut c_void) -> c_int>;
 /* This is called for a reference to an external parsed general
    entity.  The referenced entity is not automatically parsed.  The
    application can parse it immediately or later using
@@ -392,12 +363,12 @@ pub type XML_NotStandaloneHandler =
 */
 pub type XML_ExternalEntityRefHandler = Option<
     unsafe extern "C" fn(
-        _: crate::expat_h::XML_Parser,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *const crate::expat_external_h::XML_Char,
-    ) -> libc::c_int,
+        _: XML_Parser,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+        _: *const XML_Char,
+    ) -> c_int,
 >;
 /* This is called in two situations:
    1) An entity reference is encountered for which no declaration
@@ -409,21 +380,15 @@ pub type XML_ExternalEntityRefHandler = Option<
      the event would be out of sync with the reporting of the
      declarations or attribute values
 */
-pub type XML_SkippedEntityHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: libc::c_int,
-    ) -> (),
->;
+pub type XML_SkippedEntityHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> ()>;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Encoding {
-    pub map: [libc::c_int; 256],
-    pub data: *mut libc::c_void,
-    pub convert:
-        Option<unsafe extern "C" fn(_: *mut libc::c_void, _: *const libc::c_char) -> libc::c_int>,
-    pub release: Option<unsafe extern "C" fn(_: *mut libc::c_void) -> ()>,
+    pub map: [c_int; 256],
+    pub data: *mut c_void,
+    pub convert: Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
+    pub release: Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
 }
 /* This is called for an encoding that is unknown to the parser.
 
@@ -440,66 +405,59 @@ pub struct XML_Encoding {
    If info does not describe a suitable encoding, then the parser will
    return an XML_UNKNOWN_ENCODING error.
 */
-pub type XML_UnknownEncodingHandler = Option<
-    unsafe extern "C" fn(
-        _: *mut libc::c_void,
-        _: *const crate::expat_external_h::XML_Char,
-        _: *mut crate::expat_h::XML_Encoding,
-    ) -> libc::c_int,
->;
-pub type XML_Parsing = libc::c_uint;
-pub const XML_INITIALIZED: crate::expat_h::XML_Parsing = 0;
-pub const XML_PARSING: crate::expat_h::XML_Parsing = 1;
-pub const XML_FINISHED: crate::expat_h::XML_Parsing = 2;
-pub const XML_SUSPENDED: crate::expat_h::XML_Parsing = 3;
+pub type XML_UnknownEncodingHandler =
+    Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut XML_Encoding) -> c_int>;
+pub type XML_Parsing = c_uint;
+pub const XML_INITIALIZED: XML_Parsing = 0;
+pub const XML_PARSING: XML_Parsing = 1;
+pub const XML_FINISHED: XML_Parsing = 2;
+pub const XML_SUSPENDED: XML_Parsing = 3;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_ParsingStatus {
-    pub parsing: crate::expat_h::XML_Parsing,
-    pub finalBuffer: crate::expat_h::XML_Bool,
+    pub parsing: XML_Parsing,
+    pub finalBuffer: XML_Bool,
 }
-pub type XML_ParamEntityParsing = libc::c_uint;
-pub const XML_PARAM_ENTITY_PARSING_NEVER: crate::expat_h::XML_ParamEntityParsing = 0;
-pub const XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: crate::expat_h::XML_ParamEntityParsing = 1;
-pub const XML_PARAM_ENTITY_PARSING_ALWAYS: crate::expat_h::XML_ParamEntityParsing = 2;
-pub const XML_GetErrorLineNumber: unsafe extern "C" fn(
-    _: crate::expat_h::XML_Parser,
-) -> crate::expat_external_h::XML_Size = crate::src::lib::xmlparse::XML_GetCurrentLineNumber;
-pub const XML_GetErrorColumnNumber: unsafe extern "C" fn(
-    _: crate::expat_h::XML_Parser,
-) -> crate::expat_external_h::XML_Size = crate::src::lib::xmlparse::XML_GetCurrentColumnNumber;
+pub type XML_ParamEntityParsing = c_uint;
+pub const XML_PARAM_ENTITY_PARSING_NEVER: XML_ParamEntityParsing = 0;
+pub const XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: XML_ParamEntityParsing = 1;
+pub const XML_PARAM_ENTITY_PARSING_ALWAYS: XML_ParamEntityParsing = 2;
+pub const XML_GetErrorLineNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
+    XML_GetCurrentLineNumber;
+pub const XML_GetErrorColumnNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
+    XML_GetCurrentColumnNumber;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Expat_Version {
-    pub major: libc::c_int,
-    pub minor: libc::c_int,
-    pub micro: libc::c_int,
+    pub major: c_int,
+    pub minor: c_int,
+    pub micro: c_int,
 }
 /* Added in Expat 1.95.5. */
-pub type XML_FeatureEnum = libc::c_uint;
-pub const XML_FEATURE_END: crate::expat_h::XML_FeatureEnum = 0;
-pub const XML_FEATURE_UNICODE: crate::expat_h::XML_FeatureEnum = 1;
-pub const XML_FEATURE_UNICODE_WCHAR_T: crate::expat_h::XML_FeatureEnum = 2;
-pub const XML_FEATURE_DTD: crate::expat_h::XML_FeatureEnum = 3;
-pub const XML_FEATURE_CONTEXT_BYTES: crate::expat_h::XML_FeatureEnum = 4;
-pub const XML_FEATURE_MIN_SIZE: crate::expat_h::XML_FeatureEnum = 5;
-pub const XML_FEATURE_SIZEOF_XML_CHAR: crate::expat_h::XML_FeatureEnum = 6;
-pub const XML_FEATURE_SIZEOF_XML_LCHAR: crate::expat_h::XML_FeatureEnum = 7;
-pub const XML_FEATURE_NS: crate::expat_h::XML_FeatureEnum = 8;
-pub const XML_FEATURE_LARGE_SIZE: crate::expat_h::XML_FeatureEnum = 9;
-pub const XML_FEATURE_ATTR_INFO: crate::expat_h::XML_FeatureEnum = 10;
+pub type XML_FeatureEnum = c_uint;
+pub const XML_FEATURE_END: XML_FeatureEnum = 0;
+pub const XML_FEATURE_UNICODE: XML_FeatureEnum = 1;
+pub const XML_FEATURE_UNICODE_WCHAR_T: XML_FeatureEnum = 2;
+pub const XML_FEATURE_DTD: XML_FeatureEnum = 3;
+pub const XML_FEATURE_CONTEXT_BYTES: XML_FeatureEnum = 4;
+pub const XML_FEATURE_MIN_SIZE: XML_FeatureEnum = 5;
+pub const XML_FEATURE_SIZEOF_XML_CHAR: XML_FeatureEnum = 6;
+pub const XML_FEATURE_SIZEOF_XML_LCHAR: XML_FeatureEnum = 7;
+pub const XML_FEATURE_NS: XML_FeatureEnum = 8;
+pub const XML_FEATURE_LARGE_SIZE: XML_FeatureEnum = 9;
+pub const XML_FEATURE_ATTR_INFO: XML_FeatureEnum = 10;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Feature {
-    pub feature: crate::expat_h::XML_FeatureEnum,
-    pub name: *const crate::expat_external_h::XML_LChar,
-    pub value: libc::c_long,
+    pub feature: XML_FeatureEnum,
+    pub name: *const XML_LChar,
+    pub value: c_long,
 }
 /* Additional features must be added to the end of this enum. */
 
 /* Expat follows the semantic versioning convention.
    See http://semver.org.
 */
-pub const XML_MAJOR_VERSION: libc::c_int = 2 as libc::c_int;
-pub const XML_MINOR_VERSION: libc::c_int = 2 as libc::c_int;
-pub const XML_MICRO_VERSION: libc::c_int = 9 as libc::c_int;
+pub const XML_MAJOR_VERSION: c_int = 2 as c_int;
+pub const XML_MINOR_VERSION: c_int = 2 as c_int;
+pub const XML_MICRO_VERSION: c_int = 9 as c_int;

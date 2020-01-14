@@ -1,19 +1,33 @@
 // =============== BEGIN structdata_h ================
+use crate::minicheck::_fail_unless;
+use crate::stdlib::__assert_fail;
+use crate::stdlib::malloc;
+use crate::stdlib::memcpy;
+use crate::stdlib::realloc;
+use crate::stdlib::strlen;
+use ::libc::free;
+use ::libc::sprintf;
+use ::libc::strcmp;
+use libc::c_char;
+use libc::c_int;
+use libc::c_uint;
+use libc::c_ulong;
+use libc::c_void;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct StructDataEntry {
-    pub str_0: *const crate::expat_external_h::XML_Char,
-    pub data0: libc::c_int,
-    pub data1: libc::c_int,
-    pub data2: libc::c_int,
+    pub str_0: *const XML_Char,
+    pub data0: c_int,
+    pub data1: c_int,
+    pub data2: c_int,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct StructData {
-    pub count: libc::c_int,
-    pub max_count: libc::c_int,
-    pub entries: *mut crate::structdata::StructDataEntry,
+    pub count: c_int,
+    pub max_count: c_int,
+    pub entries: *mut StructDataEntry,
 }
 
 pub use crate::expat_external_h::XML_Char;
@@ -53,55 +67,48 @@ use ::libc::{self};
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pub const STRUCT_EXTENSION_COUNT: libc::c_int = 8 as libc::c_int;
+pub const STRUCT_EXTENSION_COUNT: c_int = 8 as c_int;
 
-unsafe extern "C" fn xmlstrdup(
-    mut s: *const crate::expat_external_h::XML_Char,
-) -> *mut crate::expat_external_h::XML_Char {
-    let mut byte_count: crate::stddef_h::size_t = crate::stdlib::strlen(s)
-        .wrapping_add(1 as libc::c_int as libc::c_ulong)
-        .wrapping_mul(::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong);
-    let mut dup: *mut crate::expat_external_h::XML_Char =
-        crate::stdlib::malloc(byte_count) as *mut crate::expat_external_h::XML_Char;
+unsafe extern "C" fn xmlstrdup(mut s: *const XML_Char) -> *mut XML_Char {
+    let mut byte_count: size_t = strlen(s)
+        .wrapping_add(1 as c_int as c_ulong)
+        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong);
+    let mut dup: *mut XML_Char = malloc(byte_count) as *mut XML_Char;
     if !dup.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"dup != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"dup != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            63 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 38], &[libc::c_char; 38]>(
+                as *const u8 as *const c_char,
+            63 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
                 b"XML_Char *xmlstrdup(const XML_Char *)\x00",
             ))
             .as_ptr(),
         );
     }
-    crate::stdlib::memcpy(
-        dup as *mut libc::c_void,
-        s as *const libc::c_void,
-        byte_count,
-    );
+    memcpy(dup as *mut c_void, s as *const c_void, byte_count);
     return dup;
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn StructData_Init(mut storage: *mut crate::structdata::StructData) {
+pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
     if !storage.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            70 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 35], &[libc::c_char; 35]>(
+                as *const u8 as *const c_char,
+            70 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 35], &[c_char; 35]>(
                 b"void StructData_Init(StructData *)\x00",
             ))
             .as_ptr(),
         );
     }
-    (*storage).count = 0 as libc::c_int;
-    (*storage).max_count = 0 as libc::c_int;
-    (*storage).entries = crate::stddef_h::NULL as *mut crate::structdata::StructDataEntry;
+    (*storage).count = 0 as c_int;
+    (*storage).max_count = 0 as c_int;
+    (*storage).entries = NULL as *mut StructDataEntry;
 }
 /* Interface to some helper routines used to accumulate and check
    structured content.
@@ -140,22 +147,21 @@ pub unsafe extern "C" fn StructData_Init(mut storage: *mut crate::structdata::St
 #[no_mangle]
 
 pub unsafe extern "C" fn StructData_AddItem(
-    mut storage: *mut crate::structdata::StructData,
-    mut s: *const crate::expat_external_h::XML_Char,
-    mut data0: libc::c_int,
-    mut data1: libc::c_int,
-    mut data2: libc::c_int,
+    mut storage: *mut StructData,
+    mut s: *const XML_Char,
+    mut data0: c_int,
+    mut data1: c_int,
+    mut data2: c_int,
 ) {
-    let mut entry: *mut crate::structdata::StructDataEntry =
-        0 as *mut crate::structdata::StructDataEntry;
+    let mut entry: *mut StructDataEntry = 0 as *mut StructDataEntry;
     if !storage.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            81 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 71], &[libc::c_char; 71]>(
+                as *const u8 as *const c_char,
+            81 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
             ))
             .as_ptr(),
@@ -163,35 +169,33 @@ pub unsafe extern "C" fn StructData_AddItem(
     }
     if !s.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"s != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"s != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            82 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 71], &[libc::c_char; 71]>(
+                as *const u8 as *const c_char,
+            82 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
             ))
             .as_ptr(),
         );
     }
     if (*storage).count == (*storage).max_count {
-        let mut new: *mut crate::structdata::StructDataEntry =
-            0 as *mut crate::structdata::StructDataEntry;
+        let mut new: *mut StructDataEntry = 0 as *mut StructDataEntry;
         (*storage).max_count += STRUCT_EXTENSION_COUNT;
-        new = crate::stdlib::realloc(
-            (*storage).entries as *mut libc::c_void,
-            ((*storage).max_count as libc::c_ulong).wrapping_mul(::std::mem::size_of::<
-                crate::structdata::StructDataEntry,
-            >() as libc::c_ulong),
-        ) as *mut crate::structdata::StructDataEntry;
+        new = realloc(
+            (*storage).entries as *mut c_void,
+            ((*storage).max_count as c_ulong)
+                .wrapping_mul(::std::mem::size_of::<StructDataEntry>() as c_ulong),
+        ) as *mut StructDataEntry;
         if !new.is_null() {
         } else {
-            crate::stdlib::__assert_fail(
-                b"new != NULL\x00" as *const u8 as *const libc::c_char,
+            __assert_fail(
+                b"new != NULL\x00" as *const u8 as *const c_char,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                    as *const u8 as *const libc::c_char,
-                89 as libc::c_int as libc::c_uint,
-                (*::std::mem::transmute::<&[u8; 71], &[libc::c_char; 71]>(
+                    as *const u8 as *const c_char,
+                89 as c_int as c_uint,
+                (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                     b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
                 ))
                 .as_ptr(),
@@ -199,8 +203,7 @@ pub unsafe extern "C" fn StructData_AddItem(
         }
         (*storage).entries = new
     }
-    entry = &mut *(*storage).entries.offset((*storage).count as isize)
-        as *mut crate::structdata::StructDataEntry;
+    entry = &mut *(*storage).entries.offset((*storage).count as isize) as *mut StructDataEntry;
     (*entry).str_0 = xmlstrdup(s);
     (*entry).data0 = data0;
     (*entry).data1 = data1;
@@ -213,20 +216,20 @@ pub unsafe extern "C" fn StructData_AddItem(
 #[no_mangle]
 
 pub unsafe extern "C" fn StructData_CheckItems(
-    mut storage: *mut crate::structdata::StructData,
-    mut expected: *const crate::structdata::StructDataEntry,
-    mut count: libc::c_int,
+    mut storage: *mut StructData,
+    mut expected: *const StructDataEntry,
+    mut count: c_int,
 ) {
-    let mut buffer: [libc::c_char; 1024] = [0; 1024];
-    let mut i: libc::c_int = 0;
+    let mut buffer: [c_char; 1024] = [0; 1024];
+    let mut i: c_int = 0;
     if !storage.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            110 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 71], &[libc::c_char; 71]>(
+                as *const u8 as *const c_char,
+            110 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
             ))
             .as_ptr(),
@@ -234,77 +237,76 @@ pub unsafe extern "C" fn StructData_CheckItems(
     }
     if !expected.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"expected != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"expected != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            111 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 71], &[libc::c_char; 71]>(
+                as *const u8 as *const c_char,
+            111 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
                 b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
             ))
             .as_ptr(),
         );
     }
     if count != (*storage).count {
-        ::libc::sprintf(
+        sprintf(
             buffer.as_mut_ptr(),
-            b"wrong number of entries: got %d, expected %d\x00" as *const u8 as *const libc::c_char,
+            b"wrong number of entries: got %d, expected %d\x00" as *const u8 as *const c_char,
             (*storage).count,
             count,
         );
         StructData_Dispose(storage);
-        crate::minicheck::_fail_unless(
-            0 as libc::c_int,
+        _fail_unless(
+            0 as c_int,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            116 as libc::c_int,
+                as *const u8 as *const c_char,
+            116 as c_int,
             buffer.as_mut_ptr(),
         );
     } else {
-        i = 0 as libc::c_int;
+        i = 0 as c_int;
         while i < count {
-            let mut got: *const crate::structdata::StructDataEntry =
-                &mut *(*storage).entries.offset(i as isize)
-                    as *mut crate::structdata::StructDataEntry;
-            let mut want: *const crate::structdata::StructDataEntry =
-                &*expected.offset(i as isize) as *const crate::structdata::StructDataEntry;
+            let mut got: *const StructDataEntry =
+                &mut *(*storage).entries.offset(i as isize) as *mut StructDataEntry;
+            let mut want: *const StructDataEntry =
+                &*expected.offset(i as isize) as *const StructDataEntry;
             if !got.is_null() {
             } else {
-                crate::stdlib::__assert_fail(b"got != NULL\x00" as *const u8 as
-                                  *const libc::c_char,
+                __assert_fail(b"got != NULL\x00" as *const u8 as
+                                  *const c_char,
                               b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                                  as *const u8 as *const libc::c_char,
-                              122 as libc::c_int as libc::c_uint,
+                                  as *const u8 as *const c_char,
+                              122 as c_int as c_uint,
                               (*::std::mem::transmute::<&[u8; 71],
-                                                        &[libc::c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
+                                                        &[c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
             }
             if !want.is_null() {
             } else {
-                crate::stdlib::__assert_fail(b"want != NULL\x00" as *const u8 as
-                                  *const libc::c_char,
+                __assert_fail(b"want != NULL\x00" as *const u8 as
+                                  *const c_char,
                               b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                                  as *const u8 as *const libc::c_char,
-                              123 as libc::c_int as libc::c_uint,
+                                  as *const u8 as *const c_char,
+                              123 as c_int as c_uint,
                               (*::std::mem::transmute::<&[u8; 71],
-                                                        &[libc::c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
+                                                        &[c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
             }
-            if ::libc::strcmp((*got).str_0, (*want).str_0) != 0 as libc::c_int {
+            if strcmp((*got).str_0, (*want).str_0) != 0 as c_int {
                 StructData_Dispose(storage);
-                crate::minicheck::_fail_unless(
-                    0 as libc::c_int,
+                _fail_unless(
+                    0 as c_int,
                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                        as *const u8 as *const libc::c_char,
-                    127 as libc::c_int,
-                    b"structure got bad string\x00" as *const u8 as *const libc::c_char,
+                        as *const u8 as *const c_char,
+                    127 as c_int,
+                    b"structure got bad string\x00" as *const u8 as *const c_char,
                 );
             } else if (*got).data0 != (*want).data0
                 || (*got).data1 != (*want).data1
                 || (*got).data2 != (*want).data2
             {
-                ::libc::sprintf(
+                sprintf(
                     buffer.as_mut_ptr(),
                     b"struct \'%s\' expected (%d,%d,%d), got (%d,%d,%d)\x00" as *const u8
-                        as *const libc::c_char,
+                        as *const c_char,
                     (*got).str_0,
                     (*want).data0,
                     (*want).data1,
@@ -314,11 +316,11 @@ pub unsafe extern "C" fn StructData_CheckItems(
                     (*got).data2,
                 );
                 StructData_Dispose(storage);
-                crate::minicheck::_fail_unless(
-                    0 as libc::c_int,
+                _fail_unless(
+                    0 as c_int,
                     b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                        as *const u8 as *const libc::c_char,
-                    137 as libc::c_int,
+                        as *const u8 as *const c_char,
+                    137 as c_int,
                     buffer.as_mut_ptr(),
                 );
             }
@@ -328,27 +330,27 @@ pub unsafe extern "C" fn StructData_CheckItems(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut crate::structdata::StructData) {
-    let mut i: libc::c_int = 0;
+pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
+    let mut i: c_int = 0;
     if !storage.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"storage != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"storage != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                as *const u8 as *const libc::c_char,
-            148 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 38], &[libc::c_char; 38]>(
+                as *const u8 as *const c_char,
+            148 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
                 b"void StructData_Dispose(StructData *)\x00",
             ))
             .as_ptr(),
         );
     }
-    i = 0 as libc::c_int;
+    i = 0 as c_int;
     while i < (*storage).count {
-        ::libc::free((*(*storage).entries.offset(i as isize)).str_0 as *mut libc::c_void);
+        free((*(*storage).entries.offset(i as isize)).str_0 as *mut c_void);
         i += 1
     }
-    ::libc::free((*storage).entries as *mut libc::c_void);
-    (*storage).count = 0 as libc::c_int;
-    (*storage).entries = crate::stddef_h::NULL as *mut crate::structdata::StructDataEntry;
+    free((*storage).entries as *mut c_void);
+    (*storage).count = 0 as c_int;
+    (*storage).entries = NULL as *mut StructDataEntry;
 }

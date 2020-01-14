@@ -1,7 +1,22 @@
 // =============== BEGIN xmlfile_h ================
-pub const XML_MAP_FILE: libc::c_int = 0o1 as libc::c_int;
+use crate::readfilemap::filemap;
+use crate::stdlib::malloc;
+use crate::stdlib::read;
+use crate::stdlib::strlen;
+use ::libc::close;
+use ::libc::exit;
+use ::libc::free;
+use ::libc::open;
+use ::libc::strcpy;
+use ::libc::strrchr;
+use libc::c_char;
+use libc::c_int;
+use libc::c_uint;
+use libc::c_ulong;
+use libc::c_void;
+pub const XML_MAP_FILE: c_int = 0o1 as c_int;
 
-pub const XML_EXTERNAL_ENTITIES: libc::c_int = 0o2 as libc::c_int;
+pub const XML_EXTERNAL_ENTITIES: c_int = 0o2 as c_int;
 
 pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::expat_h::{
@@ -42,8 +57,8 @@ pub use ::libc::{perror, O_RDONLY};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PROCESS_ARGS {
-    pub parser: crate::expat_h::XML_Parser,
-    pub retPtr: *mut libc::c_int,
+    pub parser: XML_Parser,
+    pub retPtr: *mut c_int,
 }
 /*
                             __  __            _
@@ -78,323 +93,290 @@ pub struct PROCESS_ARGS {
 */
 /* ndef _WIN32 */
 
-pub const O_BINARY: libc::c_int = 0 as libc::c_int;
+pub const O_BINARY: c_int = 0 as c_int;
 
-pub const READ_SIZE: libc::c_int = 1024 as libc::c_int * 8 as libc::c_int;
+pub const READ_SIZE: c_int = 1024 as c_int * 8 as c_int;
 
-unsafe extern "C" fn reportError(
-    mut parser: crate::expat_h::XML_Parser,
-    mut filename: *const crate::expat_external_h::XML_Char,
-) {
-    let mut code: crate::expat_h::XML_Error = crate::src::lib::xmlparse::XML_GetErrorCode(parser);
-    let mut message: *const crate::expat_external_h::XML_Char =
-        crate::src::lib::xmlparse::XML_ErrorString(code);
+unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XML_Char) {
+    let mut code: XML_Error = XML_GetErrorCode(parser);
+    let mut message: *const XML_Char = XML_ErrorString(code);
     if !message.is_null() {
-        crate::stdlib::fprintf(
-            crate::stdlib::stdout,
-            b"%s:%lu:%lu: %s\n\x00" as *const u8 as *const libc::c_char,
+        fprintf(
+            stdout,
+            b"%s:%lu:%lu: %s\n\x00" as *const u8 as *const c_char,
             filename,
-            crate::src::lib::xmlparse::XML_GetCurrentLineNumber(parser),
-            crate::src::lib::xmlparse::XML_GetCurrentColumnNumber(parser),
+            XML_GetCurrentLineNumber(parser),
+            XML_GetCurrentColumnNumber(parser),
             message,
         );
     } else {
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"%s: (unknown message %d)\n\x00" as *const u8 as *const libc::c_char,
+        fprintf(
+            stderr,
+            b"%s: (unknown message %d)\n\x00" as *const u8 as *const c_char,
             filename,
-            code as libc::c_uint,
+            code as c_uint,
         );
     };
 }
 /* This implementation will give problems on files larger than INT_MAX. */
 
 unsafe extern "C" fn processFile(
-    mut data: *const libc::c_void,
-    mut size: crate::stddef_h::size_t,
-    mut filename: *const crate::expat_external_h::XML_Char,
-    mut args: *mut libc::c_void,
+    mut data: *const c_void,
+    mut size: size_t,
+    mut filename: *const XML_Char,
+    mut args: *mut c_void,
 ) {
-    let mut parser: crate::expat_h::XML_Parser = (*(args as *mut PROCESS_ARGS)).parser;
-    let mut retPtr: *mut libc::c_int = (*(args as *mut PROCESS_ARGS)).retPtr;
-    if crate::src::lib::xmlparse::XML_Parse(
-        parser,
-        data as *const libc::c_char,
-        size as libc::c_int,
-        1 as libc::c_int,
-    ) as libc::c_uint
-        == crate::expat_h::XML_STATUS_ERROR_0 as libc::c_uint
+    let mut parser: XML_Parser = (*(args as *mut PROCESS_ARGS)).parser;
+    let mut retPtr: *mut c_int = (*(args as *mut PROCESS_ARGS)).retPtr;
+    if XML_Parse(parser, data as *const c_char, size as c_int, 1 as c_int) as c_uint
+        == XML_STATUS_ERROR_0 as c_uint
     {
         reportError(parser, filename);
-        *retPtr = 0 as libc::c_int
+        *retPtr = 0 as c_int
     } else {
-        *retPtr = 1 as libc::c_int
+        *retPtr = 1 as c_int
     };
 }
 /* _WIN32 */
 
 unsafe extern "C" fn resolveSystemId(
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut toFree: *mut *mut crate::expat_external_h::XML_Char,
-) -> *const crate::expat_external_h::XML_Char {
-    let mut s: *mut crate::expat_external_h::XML_Char = 0 as *mut crate::expat_external_h::XML_Char;
-    *toFree = 0 as *mut crate::expat_external_h::XML_Char;
-    if base.is_null() || *systemId as libc::c_int == '/' as i32 {
+    mut base: *const XML_Char,
+    mut systemId: *const XML_Char,
+    mut toFree: *mut *mut XML_Char,
+) -> *const XML_Char {
+    let mut s: *mut XML_Char = 0 as *mut XML_Char;
+    *toFree = 0 as *mut XML_Char;
+    if base.is_null() || *systemId as c_int == '/' as i32 {
         return systemId;
     }
-    *toFree = crate::stdlib::malloc(
-        crate::stdlib::strlen(base)
-            .wrapping_add(crate::stdlib::strlen(systemId))
-            .wrapping_add(2 as libc::c_int as libc::c_ulong)
-            .wrapping_mul(
-                ::std::mem::size_of::<crate::expat_external_h::XML_Char>() as libc::c_ulong
-            ),
-    ) as *mut crate::expat_external_h::XML_Char;
+    *toFree = malloc(
+        strlen(base)
+            .wrapping_add(strlen(systemId))
+            .wrapping_add(2 as c_int as c_ulong)
+            .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+    ) as *mut XML_Char;
     if (*toFree).is_null() {
         return systemId;
     }
-    ::libc::strcpy(*toFree, base);
+    strcpy(*toFree, base);
     s = *toFree;
-    if !::libc::strrchr(s, '/' as i32).is_null() {
-        s = ::libc::strrchr(s, '/' as i32).offset(1 as libc::c_int as isize)
+    if !strrchr(s, '/' as i32).is_null() {
+        s = strrchr(s, '/' as i32).offset(1 as c_int as isize)
     }
-    ::libc::strcpy(s, systemId);
+    strcpy(s, systemId);
     return *toFree;
 }
 
 unsafe extern "C" fn externalEntityRefFilemap(
-    mut parser: crate::expat_h::XML_Parser,
-    mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut _publicId: *const crate::expat_external_h::XML_Char,
-) -> libc::c_int {
-    let mut result: libc::c_int = 0;
-    let mut s: *mut crate::expat_external_h::XML_Char = 0 as *mut crate::expat_external_h::XML_Char;
-    let mut filename: *const crate::expat_external_h::XML_Char =
-        0 as *const crate::expat_external_h::XML_Char;
-    let mut entParser: crate::expat_h::XML_Parser =
-        crate::src::lib::xmlparse::XML_ExternalEntityParserCreate(
-            parser,
-            context,
-            0 as *const crate::expat_external_h::XML_Char,
-        );
-    let mut filemapRes: libc::c_int = 0;
+    mut parser: XML_Parser,
+    mut context: *const XML_Char,
+    mut base: *const XML_Char,
+    mut systemId: *const XML_Char,
+    mut _publicId: *const XML_Char,
+) -> c_int {
+    let mut result: c_int = 0;
+    let mut s: *mut XML_Char = 0 as *mut XML_Char;
+    let mut filename: *const XML_Char = 0 as *const XML_Char;
+    let mut entParser: XML_Parser =
+        XML_ExternalEntityParserCreate(parser, context, 0 as *const XML_Char);
+    let mut filemapRes: c_int = 0;
     let mut args: PROCESS_ARGS = PROCESS_ARGS {
-        parser: 0 as *mut crate::expat_h::XML_ParserStruct,
-        retPtr: 0 as *mut libc::c_int,
+        parser: 0 as *mut XML_ParserStruct,
+        retPtr: 0 as *mut c_int,
     };
     args.retPtr = &mut result;
     args.parser = entParser;
     filename = resolveSystemId(base, systemId, &mut s);
-    crate::src::lib::xmlparse::XML_SetBase(entParser, filename);
-    filemapRes = crate::readfilemap::filemap(
+    XML_SetBase(entParser, filename);
+    filemapRes = filemap(
         filename,
         Some(
             processFile
                 as unsafe extern "C" fn(
-                    _: *const libc::c_void,
-                    _: crate::stddef_h::size_t,
-                    _: *const crate::expat_external_h::XML_Char,
-                    _: *mut libc::c_void,
+                    _: *const c_void,
+                    _: size_t,
+                    _: *const XML_Char,
+                    _: *mut c_void,
                 ) -> (),
         ),
-        &mut args as *mut PROCESS_ARGS as *mut libc::c_void,
+        &mut args as *mut PROCESS_ARGS as *mut c_void,
     );
     match filemapRes {
-        0 => result = 0 as libc::c_int,
+        0 => result = 0 as c_int,
         2 => {
-            crate::stdlib::fprintf(
-                crate::stdlib::stderr,
+            fprintf(
+                stderr,
                 b"%s: file too large for memory-mapping, switching to streaming\n\x00" as *const u8
-                    as *const libc::c_char,
+                    as *const c_char,
                 filename,
             );
             result = processStream(filename, entParser)
         }
         _ => {}
     }
-    ::libc::free(s as *mut libc::c_void);
-    crate::src::lib::xmlparse::XML_ParserFree(entParser);
+    free(s as *mut c_void);
+    XML_ParserFree(entParser);
     return result;
 }
 
-unsafe extern "C" fn processStream(
-    mut filename: *const crate::expat_external_h::XML_Char,
-    mut parser: crate::expat_h::XML_Parser,
-) -> libc::c_int {
+unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XML_Parser) -> c_int {
     /* passing NULL for filename means read intput from stdin */
-    let mut fd: libc::c_int = 0 as libc::c_int; /* 0 is the fileno for stdin */
+    let mut fd: c_int = 0 as c_int; /* 0 is the fileno for stdin */
     if !filename.is_null() {
-        fd = ::libc::open(filename, O_BINARY | ::libc::O_RDONLY);
-        if fd < 0 as libc::c_int {
-            ::libc::perror(filename);
-            return 0 as libc::c_int;
+        fd = open(filename, O_BINARY | O_RDONLY);
+        if fd < 0 as c_int {
+            perror(filename);
+            return 0 as c_int;
         }
     }
     loop {
-        let mut nread: libc::c_int = 0;
-        let mut buf: *mut libc::c_char =
-            crate::src::lib::xmlparse::XML_GetBuffer(parser, READ_SIZE) as *mut libc::c_char;
+        let mut nread: c_int = 0;
+        let mut buf: *mut c_char = XML_GetBuffer(parser, READ_SIZE) as *mut c_char;
         if buf.is_null() {
             if !filename.is_null() {
-                ::libc::close(fd);
+                close(fd);
             }
-            crate::stdlib::fprintf(
-                crate::stdlib::stderr,
-                b"%s: out of memory\n\x00" as *const u8 as *const libc::c_char,
+            fprintf(
+                stderr,
+                b"%s: out of memory\n\x00" as *const u8 as *const c_char,
                 if !filename.is_null() {
                     filename
                 } else {
-                    b"xmlwf\x00" as *const u8 as *const libc::c_char
+                    b"xmlwf\x00" as *const u8 as *const c_char
                 },
             );
-            return 0 as libc::c_int;
+            return 0 as c_int;
         }
-        nread = crate::stdlib::read(
-            fd,
-            buf as *mut libc::c_void,
-            READ_SIZE as crate::stddef_h::size_t,
-        ) as libc::c_int;
-        if nread < 0 as libc::c_int {
-            ::libc::perror(if !filename.is_null() {
+        nread = read(fd, buf as *mut c_void, READ_SIZE as size_t) as c_int;
+        if nread < 0 as c_int {
+            perror(if !filename.is_null() {
                 filename
             } else {
-                b"STDIN\x00" as *const u8 as *const libc::c_char
+                b"STDIN\x00" as *const u8 as *const c_char
             });
             if !filename.is_null() {
-                ::libc::close(fd);
+                close(fd);
             }
-            return 0 as libc::c_int;
+            return 0 as c_int;
         }
-        if crate::src::lib::xmlparse::XML_ParseBuffer(
-            parser,
-            nread,
-            (nread == 0 as libc::c_int) as libc::c_int,
-        ) as libc::c_uint
-            == crate::expat_h::XML_STATUS_ERROR_0 as libc::c_uint
+        if XML_ParseBuffer(parser, nread, (nread == 0 as c_int) as c_int) as c_uint
+            == XML_STATUS_ERROR_0 as c_uint
         {
             reportError(
                 parser,
                 if !filename.is_null() {
                     filename
                 } else {
-                    b"STDIN\x00" as *const u8 as *const libc::c_char
+                    b"STDIN\x00" as *const u8 as *const c_char
                 },
             );
             if !filename.is_null() {
-                ::libc::close(fd);
+                close(fd);
             }
-            return 0 as libc::c_int;
+            return 0 as c_int;
         }
-        if !(nread == 0 as libc::c_int) {
+        if !(nread == 0 as c_int) {
             continue;
         }
         if !filename.is_null() {
-            ::libc::close(fd);
+            close(fd);
         }
         break;
     }
-    return 1 as libc::c_int;
+    return 1 as c_int;
 }
 
 unsafe extern "C" fn externalEntityRefStream(
-    mut parser: crate::expat_h::XML_Parser,
-    mut context: *const crate::expat_external_h::XML_Char,
-    mut base: *const crate::expat_external_h::XML_Char,
-    mut systemId: *const crate::expat_external_h::XML_Char,
-    mut _publicId: *const crate::expat_external_h::XML_Char,
-) -> libc::c_int {
-    let mut s: *mut crate::expat_external_h::XML_Char = 0 as *mut crate::expat_external_h::XML_Char;
-    let mut filename: *const crate::expat_external_h::XML_Char =
-        0 as *const crate::expat_external_h::XML_Char;
-    let mut ret: libc::c_int = 0;
-    let mut entParser: crate::expat_h::XML_Parser =
-        crate::src::lib::xmlparse::XML_ExternalEntityParserCreate(
-            parser,
-            context,
-            0 as *const crate::expat_external_h::XML_Char,
-        );
+    mut parser: XML_Parser,
+    mut context: *const XML_Char,
+    mut base: *const XML_Char,
+    mut systemId: *const XML_Char,
+    mut _publicId: *const XML_Char,
+) -> c_int {
+    let mut s: *mut XML_Char = 0 as *mut XML_Char;
+    let mut filename: *const XML_Char = 0 as *const XML_Char;
+    let mut ret: c_int = 0;
+    let mut entParser: XML_Parser =
+        XML_ExternalEntityParserCreate(parser, context, 0 as *const XML_Char);
     filename = resolveSystemId(base, systemId, &mut s);
-    crate::src::lib::xmlparse::XML_SetBase(entParser, filename);
+    XML_SetBase(entParser, filename);
     ret = processStream(filename, entParser);
-    ::libc::free(s as *mut libc::c_void);
-    crate::src::lib::xmlparse::XML_ParserFree(entParser);
+    free(s as *mut c_void);
+    XML_ParserFree(entParser);
     return ret;
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn XML_ProcessFile(
-    mut parser: crate::expat_h::XML_Parser,
-    mut filename: *const crate::expat_external_h::XML_Char,
-    mut flags: libc::c_uint,
-) -> libc::c_int {
-    let mut result: libc::c_int = 0;
-    if crate::src::lib::xmlparse::XML_SetBase(parser, filename) as u64 == 0 {
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"%s: out of memory\x00" as *const u8 as *const libc::c_char,
+    mut parser: XML_Parser,
+    mut filename: *const XML_Char,
+    mut flags: c_uint,
+) -> c_int {
+    let mut result: c_int = 0;
+    if XML_SetBase(parser, filename) as u64 == 0 {
+        fprintf(
+            stderr,
+            b"%s: out of memory\x00" as *const u8 as *const c_char,
             filename,
         );
-        ::libc::exit(1 as libc::c_int);
+        exit(1 as c_int);
     }
-    if flags & crate::xmlfile::XML_EXTERNAL_ENTITIES as libc::c_uint != 0 {
-        crate::src::lib::xmlparse::XML_SetExternalEntityRefHandler(
+    if flags & XML_EXTERNAL_ENTITIES as c_uint != 0 {
+        XML_SetExternalEntityRefHandler(
             parser,
-            if flags & crate::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
+            if flags & XML_MAP_FILE as c_uint != 0 {
                 Some(
                     externalEntityRefFilemap
                         as unsafe extern "C" fn(
-                            _: crate::expat_h::XML_Parser,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                        ) -> libc::c_int,
+                            _: XML_Parser,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                        ) -> c_int,
                 )
             } else {
                 Some(
                     externalEntityRefStream
                         as unsafe extern "C" fn(
-                            _: crate::expat_h::XML_Parser,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                            _: *const crate::expat_external_h::XML_Char,
-                        ) -> libc::c_int,
+                            _: XML_Parser,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                            _: *const XML_Char,
+                        ) -> c_int,
                 )
             },
         );
     }
-    if flags & crate::xmlfile::XML_MAP_FILE as libc::c_uint != 0 {
-        let mut filemapRes: libc::c_int = 0;
+    if flags & XML_MAP_FILE as c_uint != 0 {
+        let mut filemapRes: c_int = 0;
         let mut args: PROCESS_ARGS = PROCESS_ARGS {
-            parser: 0 as *mut crate::expat_h::XML_ParserStruct,
-            retPtr: 0 as *mut libc::c_int,
+            parser: 0 as *mut XML_ParserStruct,
+            retPtr: 0 as *mut c_int,
         };
         args.retPtr = &mut result;
         args.parser = parser;
-        filemapRes = crate::readfilemap::filemap(
+        filemapRes = filemap(
             filename,
             Some(
                 processFile
                     as unsafe extern "C" fn(
-                        _: *const libc::c_void,
-                        _: crate::stddef_h::size_t,
-                        _: *const crate::expat_external_h::XML_Char,
-                        _: *mut libc::c_void,
+                        _: *const c_void,
+                        _: size_t,
+                        _: *const XML_Char,
+                        _: *mut c_void,
                     ) -> (),
             ),
-            &mut args as *mut PROCESS_ARGS as *mut libc::c_void,
+            &mut args as *mut PROCESS_ARGS as *mut c_void,
         );
         match filemapRes {
-            0 => result = 0 as libc::c_int,
+            0 => result = 0 as c_int,
             2 => {
-                crate::stdlib::fprintf(
-                    crate::stdlib::stderr,
+                fprintf(
+                    stderr,
                     b"%s: file too large for memory-mapping, switching to streaming\n\x00"
-                        as *const u8 as *const libc::c_char,
+                        as *const u8 as *const c_char,
                     filename,
                 );
                 result = processStream(filename, parser)

@@ -1,5 +1,20 @@
 // =============== BEGIN minicheck_h ================
-pub const CK_VERBOSE: libc::c_int = 2 as libc::c_int;
+use crate::stdlib::__assert_fail;
+use crate::stdlib::calloc;
+use crate::stdlib::fprintf;
+use crate::stdlib::realloc;
+use crate::stdlib::stderr;
+use crate::stdlib::strlen;
+use ::libc::free;
+use ::libc::printf;
+use ::std::ptr::write_volatile;
+use libc::c_char;
+use libc::c_double;
+use libc::c_int;
+use libc::c_uint;
+use libc::c_ulong;
+use libc::c_void;
+pub const CK_VERBOSE: c_int = 2 as c_int;
 
 pub type tcase_setup_function = Option<unsafe extern "C" fn() -> ()>;
 
@@ -10,28 +25,28 @@ pub type tcase_test_function = Option<unsafe extern "C" fn() -> ()>;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct SRunner {
-    pub suite: *mut crate::minicheck::Suite,
-    pub nchecks: libc::c_int,
-    pub nfailures: libc::c_int,
+    pub suite: *mut Suite,
+    pub nchecks: c_int,
+    pub nfailures: c_int,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Suite {
-    pub name: *const libc::c_char,
-    pub tests: *mut crate::minicheck::TCase,
+    pub name: *const c_char,
+    pub tests: *mut TCase,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct TCase {
-    pub name: *const libc::c_char,
-    pub setup: crate::minicheck::tcase_setup_function,
-    pub teardown: crate::minicheck::tcase_teardown_function,
-    pub tests: *mut crate::minicheck::tcase_test_function,
-    pub ntests: libc::c_int,
-    pub allocated: libc::c_int,
-    pub next_tcase: *mut crate::minicheck::TCase,
+    pub name: *const c_char,
+    pub setup: tcase_setup_function,
+    pub teardown: tcase_teardown_function,
+    pub tests: *mut tcase_test_function,
+    pub ntests: c_int,
+    pub allocated: c_int,
+    pub next_tcase: *mut TCase,
 }
 
 pub use crate::stddef_h::{size_t, NULL};
@@ -78,13 +93,11 @@ use ::libc::{self};
 */
 #[no_mangle]
 
-pub unsafe extern "C" fn suite_create(
-    mut name: *const libc::c_char,
-) -> *mut crate::minicheck::Suite {
-    let mut suite: *mut crate::minicheck::Suite = crate::stdlib::calloc(
-        1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::minicheck::Suite>() as libc::c_ulong,
-    ) as *mut crate::minicheck::Suite;
+pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
+    let mut suite: *mut Suite = calloc(
+        1 as c_int as c_ulong,
+        ::std::mem::size_of::<Suite>() as c_ulong,
+    ) as *mut Suite;
     if !suite.is_null() {
         (*suite).name = name
     }
@@ -92,13 +105,11 @@ pub unsafe extern "C" fn suite_create(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn tcase_create(
-    mut name: *const libc::c_char,
-) -> *mut crate::minicheck::TCase {
-    let mut tc: *mut crate::minicheck::TCase = crate::stdlib::calloc(
-        1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::minicheck::TCase>() as libc::c_ulong,
-    ) as *mut crate::minicheck::TCase;
+pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
+    let mut tc: *mut TCase = calloc(
+        1 as c_int as c_ulong,
+        ::std::mem::size_of::<TCase>() as c_ulong,
+    ) as *mut TCase;
     if !tc.is_null() {
         (*tc).name = name
     }
@@ -106,18 +117,15 @@ pub unsafe extern "C" fn tcase_create(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn suite_add_tcase(
-    mut suite: *mut crate::minicheck::Suite,
-    mut tc: *mut crate::minicheck::TCase,
-) {
+pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCase) {
     if !suite.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"suite != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"suite != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            66 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 39], &[libc::c_char; 39]>(
+                as *const u8 as *const c_char,
+            66 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
             ))
             .as_ptr(),
@@ -125,12 +133,12 @@ pub unsafe extern "C" fn suite_add_tcase(
     }
     if !tc.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"tc != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"tc != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            67 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 39], &[libc::c_char; 39]>(
+                as *const u8 as *const c_char,
+            67 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
             ))
             .as_ptr(),
@@ -138,12 +146,12 @@ pub unsafe extern "C" fn suite_add_tcase(
     }
     if (*tc).next_tcase.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"tc->next_tcase == NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"tc->next_tcase == NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            68 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 39], &[libc::c_char; 39]>(
+                as *const u8 as *const c_char,
+            68 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
                 b"void suite_add_tcase(Suite *, TCase *)\x00",
             ))
             .as_ptr(),
@@ -155,57 +163,52 @@ pub unsafe extern "C" fn suite_add_tcase(
 #[no_mangle]
 
 pub unsafe extern "C" fn tcase_add_checked_fixture(
-    mut tc: *mut crate::minicheck::TCase,
-    mut setup: crate::minicheck::tcase_setup_function,
-    mut teardown: crate::minicheck::tcase_teardown_function,
+    mut tc: *mut TCase,
+    mut setup: tcase_setup_function,
+    mut teardown: tcase_teardown_function,
 ) {
     if !tc.is_null() {
     } else {
-        crate::stdlib::__assert_fail(b"tc != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(b"tc != NULL\x00" as *const u8 as *const c_char,
                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                          as *const u8 as *const libc::c_char,
-                      77 as libc::c_int as libc::c_uint,
+                          as *const u8 as *const c_char,
+                      77 as c_int as c_uint,
                       (*::std::mem::transmute::<&[u8; 87],
-                                                &[libc::c_char; 87]>(b"void tcase_add_checked_fixture(TCase *, tcase_setup_function, tcase_teardown_function)\x00")).as_ptr());
+                                                &[c_char; 87]>(b"void tcase_add_checked_fixture(TCase *, tcase_setup_function, tcase_teardown_function)\x00")).as_ptr());
     }
     (*tc).setup = setup;
     (*tc).teardown = teardown;
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn tcase_add_test(
-    mut tc: *mut crate::minicheck::TCase,
-    mut test: crate::minicheck::tcase_test_function,
-) {
+pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test_function) {
     if !tc.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"tc != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"tc != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            84 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 50], &[libc::c_char; 50]>(
+                as *const u8 as *const c_char,
+            84 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
                 b"void tcase_add_test(TCase *, tcase_test_function)\x00",
             ))
             .as_ptr(),
         );
     }
     if (*tc).allocated == (*tc).ntests {
-        let mut nalloc: libc::c_int = (*tc).allocated + 100 as libc::c_int;
-        let mut new_size: crate::stddef_h::size_t =
-            (::std::mem::size_of::<crate::minicheck::tcase_test_function>() as libc::c_ulong)
-                .wrapping_mul(nalloc as libc::c_ulong);
-        let mut new_tests: *mut crate::minicheck::tcase_test_function =
-            crate::stdlib::realloc((*tc).tests as *mut libc::c_void, new_size)
-                as *mut crate::minicheck::tcase_test_function;
+        let mut nalloc: c_int = (*tc).allocated + 100 as c_int;
+        let mut new_size: size_t = (::std::mem::size_of::<tcase_test_function>() as c_ulong)
+            .wrapping_mul(nalloc as c_ulong);
+        let mut new_tests: *mut tcase_test_function =
+            realloc((*tc).tests as *mut c_void, new_size) as *mut tcase_test_function;
         if !new_tests.is_null() {
         } else {
-            crate::stdlib::__assert_fail(
-                b"new_tests != NULL\x00" as *const u8 as *const libc::c_char,
+            __assert_fail(
+                b"new_tests != NULL\x00" as *const u8 as *const c_char,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                    as *const u8 as *const libc::c_char,
-                89 as libc::c_int as libc::c_uint,
-                (*::std::mem::transmute::<&[u8; 50], &[libc::c_char; 50]>(
+                    as *const u8 as *const c_char,
+                89 as c_int as c_uint,
+                (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
                     b"void tcase_add_test(TCase *, tcase_test_function)\x00",
                 ))
                 .as_ptr(),
@@ -219,74 +222,67 @@ pub unsafe extern "C" fn tcase_add_test(
     (*tc).ntests += 1;
 }
 
-unsafe extern "C" fn tcase_free(mut tc: *mut crate::minicheck::TCase) {
+unsafe extern "C" fn tcase_free(mut tc: *mut TCase) {
     if tc.is_null() {
         return;
     }
-    ::libc::free((*tc).tests as *mut libc::c_void);
-    ::libc::free(tc as *mut libc::c_void);
+    free((*tc).tests as *mut c_void);
+    free(tc as *mut c_void);
 }
 
-unsafe extern "C" fn suite_free(mut suite: *mut crate::minicheck::Suite) {
+unsafe extern "C" fn suite_free(mut suite: *mut Suite) {
     if suite.is_null() {
         return;
     }
     while !(*suite).tests.is_null() {
-        let mut next: *mut crate::minicheck::TCase = (*(*suite).tests).next_tcase;
+        let mut next: *mut TCase = (*(*suite).tests).next_tcase;
         tcase_free((*suite).tests);
         (*suite).tests = next
     }
-    ::libc::free(suite as *mut libc::c_void);
+    free(suite as *mut c_void);
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn srunner_create(
-    mut suite: *mut crate::minicheck::Suite,
-) -> *mut crate::minicheck::SRunner {
-    let mut runner: *mut crate::minicheck::SRunner = crate::stdlib::calloc(
-        1 as libc::c_int as libc::c_ulong,
-        ::std::mem::size_of::<crate::minicheck::SRunner>() as libc::c_ulong,
-    ) as *mut crate::minicheck::SRunner;
+pub unsafe extern "C" fn srunner_create(mut suite: *mut Suite) -> *mut SRunner {
+    let mut runner: *mut SRunner = calloc(
+        1 as c_int as c_ulong,
+        ::std::mem::size_of::<SRunner>() as c_ulong,
+    ) as *mut SRunner;
     if !runner.is_null() {
         (*runner).suite = suite
     }
     return runner;
 }
 
-static mut env: crate::stdlib::jmp_buf = [crate::stdlib::__jmp_buf_tag {
+static mut env: jmp_buf = [__jmp_buf_tag {
     __jmpbuf: [0; 8],
     __mask_was_saved: 0,
-    __saved_mask: crate::stdlib::__sigset_t { __val: [0; 16] },
+    __saved_mask: __sigset_t { __val: [0; 16] },
 }; 1];
 
-static mut _check_current_function: *const libc::c_char =
-    crate::stddef_h::NULL as *const libc::c_char;
+static mut _check_current_function: *const c_char = NULL as *const c_char;
 
-static mut _check_current_lineno: libc::c_int = -(1 as libc::c_int);
+static mut _check_current_lineno: c_int = -(1 as c_int);
 
-static mut _check_current_filename: *const libc::c_char =
-    crate::stddef_h::NULL as *const libc::c_char;
+static mut _check_current_filename: *const c_char = NULL as *const c_char;
 /* Internal helper. */
 #[no_mangle]
 
 pub unsafe extern "C" fn _check_set_test_info(
-    mut function: *const libc::c_char,
-    mut filename: *const libc::c_char,
-    mut lineno: libc::c_int,
+    mut function: *const c_char,
+    mut filename: *const c_char,
+    mut lineno: c_int,
 ) {
     _check_current_function = function;
     _check_current_lineno = lineno;
     _check_current_filename = filename;
 }
 
-unsafe extern "C" fn add_failure(
-    mut runner: *mut crate::minicheck::SRunner,
-    mut verbosity: libc::c_int,
-) {
+unsafe extern "C" fn add_failure(mut runner: *mut SRunner, mut verbosity: c_int) {
     (*runner).nfailures += 1;
-    if verbosity >= crate::minicheck::CK_VERBOSE {
-        ::libc::printf(
-            b"%s:%d: %s\n\x00" as *const u8 as *const libc::c_char,
+    if verbosity >= CK_VERBOSE {
+        printf(
+            b"%s:%d: %s\n\x00" as *const u8 as *const c_char,
             _check_current_filename,
             _check_current_lineno,
             _check_current_function,
@@ -295,36 +291,33 @@ unsafe extern "C" fn add_failure(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn srunner_run_all(
-    mut runner: *mut crate::minicheck::SRunner,
-    mut verbosity: libc::c_int,
-) {
-    let mut suite: *mut crate::minicheck::Suite = 0 as *mut crate::minicheck::Suite;
-    let mut tc: *mut crate::minicheck::TCase = 0 as *mut crate::minicheck::TCase;
+pub unsafe extern "C" fn srunner_run_all(mut runner: *mut SRunner, mut verbosity: c_int) {
+    let mut suite: *mut Suite = 0 as *mut Suite;
+    let mut tc: *mut TCase = 0 as *mut TCase;
     if !runner.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"runner != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"runner != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            156 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 37], &[libc::c_char; 37]>(
+                as *const u8 as *const c_char,
+            156 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                 b"void srunner_run_all(SRunner *, int)\x00",
             ))
             .as_ptr(),
         );
     }
     suite = (*runner).suite;
-    ::std::ptr::write_volatile(&mut tc as *mut *mut crate::minicheck::TCase, (*suite).tests);
+    write_volatile(&mut tc as *mut *mut TCase, (*suite).tests);
     while !tc.is_null() {
-        let mut i: libc::c_int = 0;
+        let mut i: c_int = 0;
         let mut current_block_10: u64;
-        ::std::ptr::write_volatile(&mut i as *mut libc::c_int, 0 as libc::c_int);
+        write_volatile(&mut i as *mut c_int, 0 as c_int);
         while i < (*tc).ntests {
             (*runner).nchecks += 1;
             if (*tc).setup.is_some() {
                 /* setup */
-                if crate::stdlib::_setjmp(env.as_mut_ptr()) != 0 {
+                if _setjmp(env.as_mut_ptr()) != 0 {
                     add_failure(runner, verbosity);
                     current_block_10 = 11875828834189669668;
                 } else {
@@ -338,13 +331,13 @@ pub unsafe extern "C" fn srunner_run_all(
                 2979737022853876585 =>
                 /* test */
                 {
-                    if crate::stdlib::_setjmp(env.as_mut_ptr()) != 0 {
+                    if _setjmp(env.as_mut_ptr()) != 0 {
                         add_failure(runner, verbosity);
                     } else {
                         (*(*tc).tests.offset(i as isize)).expect("non-null function pointer")();
                         /* teardown */
                         if (*tc).teardown.is_some() {
-                            if crate::stdlib::_setjmp(env.as_mut_ptr()) != 0 {
+                            if _setjmp(env.as_mut_ptr()) != 0 {
                                 add_failure(runner, verbosity);
                             } else {
                                 (*tc).teardown.expect("non-null function pointer")();
@@ -354,24 +347,19 @@ pub unsafe extern "C" fn srunner_run_all(
                 }
                 _ => {}
             }
-            ::std::ptr::write_volatile(
-                &mut i as *mut libc::c_int,
-                ::std::ptr::read_volatile::<libc::c_int>(&i as *const libc::c_int) + 1,
+            write_volatile(
+                &mut i as *mut c_int,
+                ::std::ptr::read_volatile::<c_int>(&i as *const c_int) + 1,
             )
         }
-        ::std::ptr::write_volatile(
-            &mut tc as *mut *mut crate::minicheck::TCase,
-            (*tc).next_tcase,
-        )
+        write_volatile(&mut tc as *mut *mut TCase, (*tc).next_tcase)
     }
     if verbosity != 0 {
-        let mut passed: libc::c_int = (*runner).nchecks - (*runner).nfailures;
-        let mut percentage: libc::c_double =
-            passed as libc::c_double / (*runner).nchecks as libc::c_double;
-        let mut display: libc::c_int =
-            (percentage * 100 as libc::c_int as libc::c_double) as libc::c_int;
-        ::libc::printf(
-            b"%d%%: Checks: %d, Failed: %d\n\x00" as *const u8 as *const libc::c_char,
+        let mut passed: c_int = (*runner).nchecks - (*runner).nfailures;
+        let mut percentage: c_double = passed as c_double / (*runner).nchecks as c_double;
+        let mut display: c_int = (percentage * 100 as c_int as c_double) as c_int;
+        printf(
+            b"%d%%: Checks: %d, Failed: %d\n\x00" as *const u8 as *const c_char,
             display,
             (*runner).nchecks,
             (*runner).nfailures,
@@ -384,46 +372,43 @@ pub unsafe extern "C" fn srunner_run_all(
 #[no_mangle]
 
 pub unsafe extern "C" fn _fail_unless(
-    mut _condition: libc::c_int,
-    mut _file: *const libc::c_char,
-    mut _line: libc::c_int,
-    mut msg: *const libc::c_char,
+    mut _condition: c_int,
+    mut _file: *const c_char,
+    mut _line: c_int,
+    mut msg: *const c_char,
 ) {
     /* Always print the error message so it isn't lost.  In this case,
        we have a failure, so there's no reason to be quiet about what
        it is.
     */
     if !msg.is_null() {
-        let has_newline: libc::c_int = (*msg.offset(
-            crate::stdlib::strlen(msg).wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize,
-        ) as libc::c_int
-            == '\n' as i32) as libc::c_int;
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"ERROR: %s%s\x00" as *const u8 as *const libc::c_char,
+        let has_newline: c_int =
+            (*msg.offset(strlen(msg).wrapping_sub(1 as c_int as c_ulong) as isize) as c_int
+                == '\n' as i32) as c_int;
+        fprintf(
+            stderr,
+            b"ERROR: %s%s\x00" as *const u8 as *const c_char,
             msg,
             if has_newline != 0 {
-                b"\x00" as *const u8 as *const libc::c_char
+                b"\x00" as *const u8 as *const c_char
             } else {
-                b"\n\x00" as *const u8 as *const libc::c_char
+                b"\n\x00" as *const u8 as *const c_char
             },
         );
     }
-    crate::stdlib::longjmp(env.as_mut_ptr(), 1 as libc::c_int);
+    longjmp(env.as_mut_ptr(), 1 as c_int);
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn srunner_ntests_failed(
-    mut runner: *mut crate::minicheck::SRunner,
-) -> libc::c_int {
+pub unsafe extern "C" fn srunner_ntests_failed(mut runner: *mut SRunner) -> c_int {
     if !runner.is_null() {
     } else {
-        crate::stdlib::__assert_fail(
-            b"runner != NULL\x00" as *const u8 as *const libc::c_char,
+        __assert_fail(
+            b"runner != NULL\x00" as *const u8 as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                as *const u8 as *const libc::c_char,
-            217 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 37], &[libc::c_char; 37]>(
+                as *const u8 as *const c_char,
+            217 as c_int as c_uint,
+            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
                 b"int srunner_ntests_failed(SRunner *)\x00",
             ))
             .as_ptr(),
@@ -433,10 +418,10 @@ pub unsafe extern "C" fn srunner_ntests_failed(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn srunner_free(mut runner: *mut crate::minicheck::SRunner) {
+pub unsafe extern "C" fn srunner_free(mut runner: *mut SRunner) {
     if runner.is_null() {
         return;
     }
     suite_free((*runner).suite);
-    ::libc::free(runner as *mut libc::c_void);
+    free(runner as *mut c_void);
 }

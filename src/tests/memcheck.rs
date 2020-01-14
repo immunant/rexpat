@@ -1,4 +1,12 @@
 pub use crate::stddef_h::{size_t, NULL};
+use crate::stdlib::malloc;
+use crate::stdlib::realloc;
+use ::libc::free;
+use ::libc::printf;
+use libc::c_char;
+use libc::c_int;
+use libc::c_ulong;
+use libc::c_void;
 
 use ::libc::{self};
 /* Debug allocators for the Expat test suite
@@ -44,13 +52,13 @@ pub type AllocationEntry = allocation_entry;
 pub struct allocation_entry {
     pub next: *mut allocation_entry,
     pub prev: *mut allocation_entry,
-    pub allocation: *mut libc::c_void,
-    pub num_bytes: crate::stddef_h::size_t,
+    pub allocation: *mut c_void,
+    pub num_bytes: size_t,
 }
 
-static mut alloc_head: *mut AllocationEntry = crate::stddef_h::NULL as *mut AllocationEntry;
+static mut alloc_head: *mut AllocationEntry = NULL as *mut AllocationEntry;
 
-static mut alloc_tail: *mut AllocationEntry = crate::stddef_h::NULL as *mut AllocationEntry;
+static mut alloc_tail: *mut AllocationEntry = NULL as *mut AllocationEntry;
 /* Interface to allocation functions that will track what has or has
    not been freed.
                             __  __            _
@@ -87,24 +95,23 @@ static mut alloc_tail: *mut AllocationEntry = crate::stddef_h::NULL as *mut Allo
 /* Allocate some memory and keep track of it. */
 #[no_mangle]
 
-pub unsafe extern "C" fn tracking_malloc(mut size: crate::stddef_h::size_t) -> *mut libc::c_void {
+pub unsafe extern "C" fn tracking_malloc(mut size: size_t) -> *mut c_void {
     let mut entry: *mut AllocationEntry =
-        crate::stdlib::malloc(::std::mem::size_of::<AllocationEntry>() as libc::c_ulong)
-            as *mut AllocationEntry;
+        malloc(::std::mem::size_of::<AllocationEntry>() as c_ulong) as *mut AllocationEntry;
     if entry.is_null() {
-        ::libc::printf(b"Allocator failure\n\x00" as *const u8 as *const libc::c_char);
-        return crate::stddef_h::NULL as *mut libc::c_void;
+        printf(b"Allocator failure\n\x00" as *const u8 as *const c_char);
+        return NULL as *mut c_void;
     }
     (*entry).num_bytes = size;
-    (*entry).allocation = crate::stdlib::malloc(size);
+    (*entry).allocation = malloc(size);
     if (*entry).allocation.is_null() {
-        ::libc::free(entry as *mut libc::c_void);
-        return crate::stddef_h::NULL as *mut libc::c_void;
+        free(entry as *mut c_void);
+        return NULL as *mut c_void;
     }
-    (*entry).next = crate::stddef_h::NULL as *mut allocation_entry;
+    (*entry).next = NULL as *mut allocation_entry;
     /* Add to the list of allocations */
     if alloc_head.is_null() {
-        (*entry).prev = crate::stddef_h::NULL as *mut allocation_entry;
+        (*entry).prev = NULL as *mut allocation_entry;
         alloc_tail = entry;
         alloc_head = alloc_tail
     } else {
@@ -115,7 +122,7 @@ pub unsafe extern "C" fn tracking_malloc(mut size: crate::stddef_h::size_t) -> *
     return (*entry).allocation;
 }
 
-unsafe extern "C" fn find_allocation(mut ptr: *mut libc::c_void) -> *mut AllocationEntry {
+unsafe extern "C" fn find_allocation(mut ptr: *mut c_void) -> *mut AllocationEntry {
     let mut entry: *mut AllocationEntry = 0 as *mut AllocationEntry;
     entry = alloc_head;
     while !entry.is_null() {
@@ -124,12 +131,12 @@ unsafe extern "C" fn find_allocation(mut ptr: *mut libc::c_void) -> *mut Allocat
         }
         entry = (*entry).next
     }
-    return crate::stddef_h::NULL as *mut AllocationEntry;
+    return NULL as *mut AllocationEntry;
 }
 /* Free some memory and remove the tracking for it */
 #[no_mangle]
 
-pub unsafe extern "C" fn tracking_free(mut ptr: *mut libc::c_void) {
+pub unsafe extern "C" fn tracking_free(mut ptr: *mut c_void) {
     let mut entry: *mut AllocationEntry = 0 as *mut AllocationEntry;
     if ptr.is_null() {
         /* There won't be an entry for this */
@@ -148,56 +155,50 @@ pub unsafe extern "C" fn tracking_free(mut ptr: *mut libc::c_void) {
         } else {
             alloc_tail = (*entry).next
         }
-        ::libc::free(entry as *mut libc::c_void);
+        free(entry as *mut c_void);
     } else {
-        ::libc::printf(
-            b"Attempting to free unallocated memory at %p\n\x00" as *const u8
-                as *const libc::c_char,
+        printf(
+            b"Attempting to free unallocated memory at %p\n\x00" as *const u8 as *const c_char,
             ptr,
         );
     }
-    ::libc::free(ptr);
+    free(ptr);
 }
 /* Reallocate some memory and keep track of it */
 #[no_mangle]
 
-pub unsafe extern "C" fn tracking_realloc(
-    mut ptr: *mut libc::c_void,
-    mut size: crate::stddef_h::size_t,
-) -> *mut libc::c_void {
+pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t) -> *mut c_void {
     let mut entry: *mut AllocationEntry = 0 as *mut AllocationEntry;
     if ptr.is_null() {
         /* By definition, this is equivalent to malloc(size) */
         return tracking_malloc(size);
     }
-    if size == 0 as libc::c_int as libc::c_ulong {
+    if size == 0 as c_int as c_ulong {
         /* By definition, this is equivalent to free(ptr) */
         tracking_free(ptr);
-        return crate::stddef_h::NULL as *mut libc::c_void;
+        return NULL as *mut c_void;
     }
     /* Find the allocation entry for this memory */
     entry = find_allocation(ptr);
     if entry.is_null() {
-        ::libc::printf(
-            b"Attempting to realloc unallocated memory at %p\n\x00" as *const u8
-                as *const libc::c_char,
+        printf(
+            b"Attempting to realloc unallocated memory at %p\n\x00" as *const u8 as *const c_char,
             ptr,
         );
-        entry = crate::stdlib::malloc(::std::mem::size_of::<AllocationEntry>() as libc::c_ulong)
-            as *mut AllocationEntry;
+        entry = malloc(::std::mem::size_of::<AllocationEntry>() as c_ulong) as *mut AllocationEntry;
         if entry.is_null() {
-            ::libc::printf(b"Reallocator failure\n\x00" as *const u8 as *const libc::c_char);
-            return crate::stddef_h::NULL as *mut libc::c_void;
+            printf(b"Reallocator failure\n\x00" as *const u8 as *const c_char);
+            return NULL as *mut c_void;
         }
-        (*entry).allocation = crate::stdlib::realloc(ptr, size);
+        (*entry).allocation = realloc(ptr, size);
         if (*entry).allocation.is_null() {
-            ::libc::free(entry as *mut libc::c_void);
-            return crate::stddef_h::NULL as *mut libc::c_void;
+            free(entry as *mut c_void);
+            return NULL as *mut c_void;
         }
         /* Add to the list of allocations */
-        (*entry).next = crate::stddef_h::NULL as *mut allocation_entry;
+        (*entry).next = NULL as *mut allocation_entry;
         if alloc_head.is_null() {
-            (*entry).prev = crate::stddef_h::NULL as *mut allocation_entry;
+            (*entry).prev = NULL as *mut allocation_entry;
             alloc_tail = entry;
             alloc_head = alloc_tail
         } else {
@@ -206,11 +207,11 @@ pub unsafe extern "C" fn tracking_realloc(
             alloc_tail = entry
         }
     } else {
-        (*entry).allocation = crate::stdlib::realloc(ptr, size);
+        (*entry).allocation = realloc(ptr, size);
         if (*entry).allocation.is_null() {
             /* Realloc semantics say the original is still allocated */
             (*entry).allocation = ptr;
-            return crate::stddef_h::NULL as *mut libc::c_void;
+            return NULL as *mut c_void;
         }
     }
     (*entry).num_bytes = size;
@@ -222,20 +223,20 @@ pub unsafe extern "C" fn tracking_realloc(
  */
 #[no_mangle]
 
-pub unsafe extern "C" fn tracking_report() -> libc::c_int {
+pub unsafe extern "C" fn tracking_report() -> c_int {
     let mut entry: *mut AllocationEntry = 0 as *mut AllocationEntry;
     if alloc_head.is_null() {
-        return 1 as libc::c_int;
+        return 1 as c_int;
     }
     /* Otherwise we have allocations that haven't been freed */
     entry = alloc_head;
     while !entry.is_null() {
-        ::libc::printf(
-            b"Allocated %lu bytes at %p\n\x00" as *const u8 as *const libc::c_char,
+        printf(
+            b"Allocated %lu bytes at %p\n\x00" as *const u8 as *const c_char,
             (*entry).num_bytes,
             (*entry).allocation,
         );
         entry = (*entry).next
     }
-    return 0 as libc::c_int;
+    return 0 as c_int;
 }

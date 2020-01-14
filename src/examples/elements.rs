@@ -9,64 +9,85 @@
 )]
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
+use ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
+use ::c2rust_out::src::lib::xmlparse::XML_ErrorString;
+use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentLineNumber;
+use ::c2rust_out::src::lib::xmlparse::XML_GetErrorCode;
+use ::c2rust_out::src::lib::xmlparse::XML_Parse;
+use ::c2rust_out::src::lib::xmlparse::XML_ParserCreate;
+use ::c2rust_out::src::lib::xmlparse::XML_ParserFree;
+use ::c2rust_out::src::lib::xmlparse::XML_SetElementHandler;
+use ::c2rust_out::src::lib::xmlparse::XML_SetUserData;
+use ::c2rust_out::stddef_h::NULL;
+use ::c2rust_out::stdlib::fprintf;
+use ::c2rust_out::stdlib::_IO_FILE;
+use ::libc::printf;
+use ::libc::putchar;
+use ::std::env::args;
+use ::std::ffi::CString;
+use ::std::process::exit;
+use ::std::ptr::null_mut;
+use libc::c_char;
+use libc::c_int;
+use libc::c_uint;
+use libc::c_ulong;
+use libc::c_void;
 pub mod expat_h {
-    pub type XML_Parser = *mut ::c2rust_out::expat_h::XML_ParserStruct;
+    use crate::expat_external_h::XML_Char;
+    use ::c2rust_out::expat_h::XML_ParserStruct;
+    use libc::c_uint;
+    use libc::c_void;
+    pub type XML_Parser = *mut XML_ParserStruct;
 
-    pub type XML_Status = libc::c_uint;
+    pub type XML_Status = c_uint;
 
-    pub type XML_Error = libc::c_uint;
+    pub type XML_Error = c_uint;
 
     pub type XML_StartElementHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-            _: *mut *const crate::expat_external_h::XML_Char,
-        ) -> (),
+        unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut *const XML_Char) -> (),
     >;
 
-    pub type XML_EndElementHandler = Option<
-        unsafe extern "C" fn(
-            _: *mut libc::c_void,
-            _: *const crate::expat_external_h::XML_Char,
-        ) -> (),
-    >;
+    pub type XML_EndElementHandler =
+        Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
 }
 pub mod expat_external_h {
-    pub type XML_Char = libc::c_char;
+    use libc::c_char;
+    use libc::c_ulong;
+    pub type XML_Char = c_char;
 
-    pub type XML_LChar = libc::c_char;
+    pub type XML_LChar = c_char;
 
-    pub type XML_Size = libc::c_ulong;
+    pub type XML_Size = c_ulong;
 }
 pub mod stddef_h {
-    pub type size_t = libc::c_ulong;
+    use libc::c_ulong;
+    pub type size_t = c_ulong;
 }
 pub mod stdlib {
+    use ::c2rust_out::stdlib::_IO_FILE;
+    use libc::c_long;
+    use libc::c_ulong;
+    use libc::c_void;
     extern "C" {
         #[no_mangle]
-        pub static mut stdin: *mut crate::stdlib::FILE;
+        pub static mut stdin: *mut FILE;
 
         #[no_mangle]
-        pub static mut stderr: *mut crate::stdlib::FILE;
+        pub static mut stderr: *mut FILE;
 
         #[no_mangle]
-        pub fn fread(
-            _: *mut libc::c_void,
-            _: libc::c_ulong,
-            _: libc::c_ulong,
-            _: *mut crate::stdlib::FILE,
-        ) -> libc::c_ulong;
+        pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
         pub type _IO_marker;
 
         pub type _IO_codecvt;
 
         pub type _IO_wide_data;
     }
-    pub type FILE = ::c2rust_out::stdlib::_IO_FILE;
+    pub type FILE = _IO_FILE;
     pub type _IO_lock_t = ();
-    pub type __off_t = libc::c_long;
+    pub type __off_t = c_long;
 
-    pub type __off64_t = libc::c_long;
+    pub type __off64_t = c_long;
 }
 
 pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
@@ -115,92 +136,70 @@ pub use crate::stdlib::{
 */
 
 unsafe extern "C" fn startElement(
-    mut userData: *mut libc::c_void,
-    mut name: *const crate::expat_external_h::XML_Char,
-    mut _atts: *mut *const crate::expat_external_h::XML_Char,
+    mut userData: *mut c_void,
+    mut name: *const XML_Char,
+    mut _atts: *mut *const XML_Char,
 ) {
-    let mut i: libc::c_int = 0;
-    let mut depthPtr: *mut libc::c_int = userData as *mut libc::c_int;
-    i = 0 as libc::c_int;
+    let mut i: c_int = 0;
+    let mut depthPtr: *mut c_int = userData as *mut c_int;
+    i = 0 as c_int;
     while i < *depthPtr {
-        ::libc::putchar('\t' as i32);
+        putchar('\t' as i32);
         i += 1
     }
-    ::libc::printf(b"%s\n\x00" as *const u8 as *const libc::c_char, name);
-    *depthPtr += 1 as libc::c_int;
+    printf(b"%s\n\x00" as *const u8 as *const c_char, name);
+    *depthPtr += 1 as c_int;
 }
 
-unsafe extern "C" fn endElement(
-    mut userData: *mut libc::c_void,
-    mut _name: *const crate::expat_external_h::XML_Char,
-) {
-    let mut depthPtr: *mut libc::c_int = userData as *mut libc::c_int;
-    *depthPtr -= 1 as libc::c_int;
+unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML_Char) {
+    let mut depthPtr: *mut c_int = userData as *mut c_int;
+    *depthPtr -= 1 as c_int;
 }
 
-unsafe fn main_0(mut _argc: libc::c_int, mut _argv: *mut *mut libc::c_char) -> libc::c_int {
-    let mut buf: [libc::c_char; 8192] = [0; 8192];
-    let mut parser: crate::expat_h::XML_Parser = ::c2rust_out::src::lib::xmlparse::XML_ParserCreate(
-        ::c2rust_out::stddef_h::NULL as *const crate::expat_external_h::XML_Char,
-    );
-    let mut done: libc::c_int = 0;
-    let mut depth: libc::c_int = 0 as libc::c_int;
-    ::c2rust_out::src::lib::xmlparse::XML_SetUserData(
-        parser,
-        &mut depth as *mut libc::c_int as *mut libc::c_void,
-    );
-    ::c2rust_out::src::lib::xmlparse::XML_SetElementHandler(
+unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
+    let mut buf: [c_char; 8192] = [0; 8192];
+    let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
+    let mut done: c_int = 0;
+    let mut depth: c_int = 0 as c_int;
+    XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
+    XML_SetElementHandler(
         parser,
         Some(
             startElement
                 as unsafe extern "C" fn(
-                    _: *mut libc::c_void,
-                    _: *const crate::expat_external_h::XML_Char,
-                    _: *mut *const crate::expat_external_h::XML_Char,
+                    _: *mut c_void,
+                    _: *const XML_Char,
+                    _: *mut *const XML_Char,
                 ) -> (),
         ),
-        Some(
-            endElement
-                as unsafe extern "C" fn(
-                    _: *mut libc::c_void,
-                    _: *const crate::expat_external_h::XML_Char,
-                ) -> (),
-        ),
+        Some(endElement as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut len: crate::stddef_h::size_t = crate::stdlib::fread(
-            buf.as_mut_ptr() as *mut libc::c_void,
-            1 as libc::c_int as libc::c_ulong,
-            ::std::mem::size_of::<[libc::c_char; 8192]>() as libc::c_ulong,
+        let mut len: size_t = crate::stdlib::fread(
+            buf.as_mut_ptr() as *mut c_void,
+            1 as c_int as c_ulong,
+            ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
             crate::stdlib::stdin,
         );
-        done =
-            (len < ::std::mem::size_of::<[libc::c_char; 8192]>() as libc::c_ulong) as libc::c_int;
-        if ::c2rust_out::src::lib::xmlparse::XML_Parse(
-            parser,
-            buf.as_mut_ptr(),
-            len as libc::c_int,
-            done,
-        ) as libc::c_uint
-            == ::c2rust_out::expat_h::XML_STATUS_ERROR_0 as libc::c_uint
+        done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as c_int;
+        if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done) as c_uint
+            == XML_STATUS_ERROR_0 as c_uint
         {
-            ::c2rust_out::stdlib::fprintf(
-                crate::stdlib::stderr as *mut ::c2rust_out::stdlib::_IO_FILE,
-                b"%s at line %lu\n\x00" as *const u8 as *const libc::c_char,
-                ::c2rust_out::src::lib::xmlparse::XML_ErrorString(
-                    ::c2rust_out::src::lib::xmlparse::XML_GetErrorCode(parser),
-                ),
-                ::c2rust_out::src::lib::xmlparse::XML_GetCurrentLineNumber(parser),
+            fprintf(
+                crate::stdlib::stderr as *mut _IO_FILE,
+                b"%s at line %lu\n\x00" as *const u8 as *const c_char,
+                XML_ErrorString(XML_GetErrorCode(parser)),
+                XML_GetCurrentLineNumber(parser),
             );
-            ::c2rust_out::src::lib::xmlparse::XML_ParserFree(parser);
-            return 1 as libc::c_int;
+            XML_ParserFree(parser);
+            return 1 as c_int;
         }
         if !(done == 0) {
             break;
         }
     }
-    ::c2rust_out::src::lib::xmlparse::XML_ParserFree(parser);
-    return 0 as libc::c_int;
+    XML_ParserFree(parser);
+    return 0 as c_int;
 }
 #[main]
 pub fn main() {

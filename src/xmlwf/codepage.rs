@@ -1,4 +1,6 @@
 use ::libc;
+use libc::c_char;
+use libc::c_int;
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
@@ -64,18 +66,12 @@ use ::libc;
 /* not _WIN32 */
 #[no_mangle]
 
-pub unsafe extern "C" fn codepageMap(
-    mut _cp: libc::c_int,
-    mut _map: *mut libc::c_int,
-) -> libc::c_int {
-    return 0 as libc::c_int;
+pub unsafe extern "C" fn codepageMap(mut _cp: c_int, mut _map: *mut c_int) -> c_int {
+    return 0 as c_int;
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn codepageConvert(
-    mut _cp: libc::c_int,
-    mut _p: *const libc::c_char,
-) -> libc::c_int {
-    return -(1 as libc::c_int);
+pub unsafe extern "C" fn codepageConvert(mut _cp: c_int, mut _p: *const c_char) -> c_int {
+    return -(1 as c_int);
 }
 /* not _WIN32 */

@@ -1,11 +1,26 @@
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
 pub use crate::internal::__INT_MAX__;
 pub use crate::stddef_h::size_t;
+use crate::stdlib::fprintf;
+use crate::stdlib::fstat;
+use crate::stdlib::malloc;
+use crate::stdlib::read;
+use crate::stdlib::stderr;
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
     __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
     __uid_t, ssize_t, stat, FILE, _IO_FILE, __S_IFMT,
 };
+use ::libc::close;
+use ::libc::free;
+use ::libc::open;
+use ::libc::perror;
+use libc::c_char;
+use libc::c_int;
+use libc::c_long;
+use libc::c_uint;
+use libc::c_ulong;
+use libc::c_void;
 
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
 use ::libc::{self};
@@ -46,32 +61,23 @@ pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 /* POSIX */
 /* http://pubs.opengroup.org/onlinepubs/009695399/functions/read.html */
 
-pub const _EXPAT_read: unsafe extern "C" fn(
-    _: libc::c_int,
-    _: *mut libc::c_void,
-    _: crate::stddef_h::size_t,
-) -> crate::stdlib::ssize_t = crate::stdlib::read;
+pub const _EXPAT_read: unsafe extern "C" fn(_: c_int, _: *mut c_void, _: size_t) -> ssize_t = read;
 /* not S_ISREG */
 
-pub const O_BINARY: libc::c_int = 0 as libc::c_int;
+pub const O_BINARY: c_int = 0 as c_int;
 #[no_mangle]
 
 pub unsafe extern "C" fn filemap(
-    mut name: *const libc::c_char,
+    mut name: *const c_char,
     mut processor: Option<
-        unsafe extern "C" fn(
-            _: *const libc::c_void,
-            _: crate::stddef_h::size_t,
-            _: *const libc::c_char,
-            _: *mut libc::c_void,
-        ) -> (),
+        unsafe extern "C" fn(_: *const c_void, _: size_t, _: *const c_char, _: *mut c_void) -> (),
     >,
-    mut arg: *mut libc::c_void,
-) -> libc::c_int {
-    let mut nbytes: crate::stddef_h::size_t = 0;
-    let mut fd: libc::c_int = 0;
-    let mut n: crate::stdlib::ssize_t = 0;
-    let mut sb: crate::stdlib::stat = crate::stdlib::stat {
+    mut arg: *mut c_void,
+) -> c_int {
+    let mut nbytes: size_t = 0;
+    let mut fd: c_int = 0;
+    let mut n: ssize_t = 0;
+    let mut sb: stat = stat {
         st_dev: 0,
         st_ino: 0,
         st_nlink: 0,
@@ -83,89 +89,87 @@ pub unsafe extern "C" fn filemap(
         st_size: 0,
         st_blksize: 0,
         st_blocks: 0,
-        st_atim: ::libc::timespec {
+        st_atim: timespec {
             tv_sec: 0,
             tv_nsec: 0,
         },
-        st_mtim: ::libc::timespec {
+        st_mtim: timespec {
             tv_sec: 0,
             tv_nsec: 0,
         },
-        st_ctim: ::libc::timespec {
+        st_ctim: timespec {
             tv_sec: 0,
             tv_nsec: 0,
         },
         __glibc_reserved: [0; 3],
     };
-    let mut p: *mut libc::c_void = 0 as *mut libc::c_void;
-    fd = ::libc::open(name, ::libc::O_RDONLY | O_BINARY);
-    if fd < 0 as libc::c_int {
-        ::libc::perror(name);
-        return 0 as libc::c_int;
+    let mut p: *mut c_void = 0 as *mut c_void;
+    fd = open(name, O_RDONLY | O_BINARY);
+    if fd < 0 as c_int {
+        perror(name);
+        return 0 as c_int;
     }
-    if crate::stdlib::fstat(fd, &mut sb) < 0 as libc::c_int {
-        ::libc::perror(name);
-        ::libc::close(fd);
-        return 0 as libc::c_int;
+    if fstat(fd, &mut sb) < 0 as c_int {
+        perror(name);
+        close(fd);
+        return 0 as c_int;
     }
-    if !(sb.st_mode & crate::stdlib::__S_IFMT as libc::c_uint
-        == 0o100000 as libc::c_int as libc::c_uint)
-    {
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"%s: not a regular file\n\x00" as *const u8 as *const libc::c_char,
+    if !(sb.st_mode & __S_IFMT as c_uint == 0o100000 as c_int as c_uint) {
+        fprintf(
+            stderr,
+            b"%s: not a regular file\n\x00" as *const u8 as *const c_char,
             name,
         );
-        ::libc::close(fd);
-        return 0 as libc::c_int;
+        close(fd);
+        return 0 as c_int;
     }
-    if sb.st_size > crate::filemap_h::XML_MAX_CHUNK_LEN as libc::c_long {
-        ::libc::close(fd);
-        return 2 as libc::c_int;
+    if sb.st_size > XML_MAX_CHUNK_LEN as c_long {
+        close(fd);
+        return 2 as c_int;
         /* Cannot be passed to XML_Parse in one go */
     }
-    nbytes = sb.st_size as crate::stddef_h::size_t;
+    nbytes = sb.st_size as size_t;
     /* malloc will return NULL with nbytes == 0, handle files with size 0 */
-    if nbytes == 0 as libc::c_int as libc::c_ulong {
-        static mut c: libc::c_char = '\u{0}' as i32 as libc::c_char;
+    if nbytes == 0 as c_int as c_ulong {
+        static mut c: c_char = '\u{0}' as i32 as c_char;
         processor.expect("non-null function pointer")(
-            &c as *const libc::c_char as *const libc::c_void,
-            0 as libc::c_int as crate::stddef_h::size_t,
+            &c as *const c_char as *const c_void,
+            0 as c_int as size_t,
             name,
             arg,
         );
-        ::libc::close(fd);
-        return 1 as libc::c_int;
+        close(fd);
+        return 1 as c_int;
     }
-    p = crate::stdlib::malloc(nbytes);
+    p = malloc(nbytes);
     if p.is_null() {
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"%s: out of memory\n\x00" as *const u8 as *const libc::c_char,
+        fprintf(
+            stderr,
+            b"%s: out of memory\n\x00" as *const u8 as *const c_char,
             name,
         );
-        ::libc::close(fd);
-        return 0 as libc::c_int;
+        close(fd);
+        return 0 as c_int;
     }
-    n = crate::stdlib::read(fd, p, nbytes);
-    if n < 0 as libc::c_int as libc::c_long {
-        ::libc::perror(name);
-        ::libc::free(p);
-        ::libc::close(fd);
-        return 0 as libc::c_int;
+    n = read(fd, p, nbytes);
+    if n < 0 as c_int as c_long {
+        perror(name);
+        free(p);
+        close(fd);
+        return 0 as c_int;
     }
-    if n != nbytes as crate::stdlib::ssize_t {
-        crate::stdlib::fprintf(
-            crate::stdlib::stderr,
-            b"%s: read unexpected number of bytes\n\x00" as *const u8 as *const libc::c_char,
+    if n != nbytes as ssize_t {
+        fprintf(
+            stderr,
+            b"%s: read unexpected number of bytes\n\x00" as *const u8 as *const c_char,
             name,
         );
-        ::libc::free(p);
-        ::libc::close(fd);
-        return 0 as libc::c_int;
+        free(p);
+        close(fd);
+        return 0 as c_int;
     }
     processor.expect("non-null function pointer")(p, nbytes, name, arg);
-    ::libc::free(p);
-    ::libc::close(fd);
-    return 1 as libc::c_int;
+    free(p);
+    close(fd);
+    return 1 as c_int;
 }
