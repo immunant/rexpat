@@ -10,7 +10,7 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
 
-use ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
+use ::c2rust_out::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
 use ::c2rust_out::src::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler,
@@ -185,7 +185,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(end as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut done: c_int = 0;
+        let mut done: XML_Bool = 0;
         let mut len: c_int = 0;
         len = crate::stdlib::fread(
             Buff.as_mut_ptr() as *mut c_void,
@@ -200,8 +200,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             );
             exit(-(1 as c_int));
         }
-        done = crate::stdlib::feof(crate::stdlib::stdin);
-        if XML_Parse(p, Buff.as_mut_ptr(), len, done) as c_uint == XML_STATUS_ERROR_0 as c_uint {
+        done = crate::stdlib::feof(crate::stdlib::stdin) as XML_Bool;
+        if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) as c_uint == XML_STATUS_ERROR_0 as c_uint {
             fprintf(
                 crate::stdlib::stderr as *mut _IO_FILE,
                 b"Parse error at line %lu:\n%s\n\x00" as *const u8 as *const c_char,

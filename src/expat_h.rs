@@ -36,8 +36,8 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
 */
 pub type XML_Parser = *mut XML_ParserStruct;
 pub type XML_Bool = c_uchar;
-pub const XML_TRUE: c_int = 1 as c_int;
-pub const XML_FALSE: c_int = 0 as c_int;
+pub const XML_TRUE: XML_Bool = 1;
+pub const XML_FALSE: XML_Bool = 0;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
    stanza can be added to code that still needs to support older

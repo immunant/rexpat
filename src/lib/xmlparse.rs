@@ -753,7 +753,8 @@ unsafe extern "C" fn get_hash_secret_salt(mut parser: XML_Parser) -> c_ulong {
     return (*parser).m_hash_secret_salt;
 }
 
-unsafe extern "C" fn startParsing(mut parser: XML_Parser) -> XML_Bool {
+unsafe extern "C" fn startParsing(mut parser: XML_Parser)
+                                  -> XML_Bool /* only valid for root parser */ {
     /* hash functions must be initialized before setContext() is called */
     if (*parser).m_hash_secret_salt == 0 as c_int as c_ulong {
         (*parser).m_hash_secret_salt = generate_hash_secret_salt(parser)
@@ -766,6 +767,7 @@ unsafe extern "C" fn startParsing(mut parser: XML_Parser) -> XML_Bool {
     }
     return XML_TRUE as XML_Bool;
 }
+
 /* Constructs a new parser using the memory management suite referred to
    by memsuite. If memsuite is NULL, then use the standard library memory
    suite. If namespaceSeparator is non-NULL it creates a parser with
@@ -1417,7 +1419,7 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
      XML_ParseBuffer has no effect.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: c_int) {
+pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: XML_Bool) {
     if parser.is_null() {
         return;
     }
@@ -5542,7 +5544,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 926243229934402080;
             }
             8 => {
-                if allowClosingDoctype as c_int != XML_TRUE {
+                if allowClosingDoctype != XML_TRUE {
                     /* Must not close doctype from within expanded parameter entities */
                     return XML_ERROR_INVALID_TOKEN;
                 }

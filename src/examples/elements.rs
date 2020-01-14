@@ -10,7 +10,7 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
 
-use ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
+use ::c2rust_out::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
 use ::c2rust_out::src::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
@@ -146,7 +146,7 @@ unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut buf: [c_char; 8192] = [0; 8192];
     let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
-    let mut done: c_int = 0;
+    let mut done: XML_Bool = 0;
     let mut depth: c_int = 0 as c_int;
     XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
     XML_SetElementHandler(
@@ -168,8 +168,8 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
             crate::stdlib::stdin,
         );
-        done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as c_int;
-        if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done) as c_uint
+        done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
+        if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int) as c_uint
             == XML_STATUS_ERROR_0 as c_uint
         {
             fprintf(
