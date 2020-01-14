@@ -554,7 +554,7 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
     );
 }
 
-static mut implicitContext: [XML_Char; 41] = [
+const implicitContext: [XML_Char; 41] = [
     ASCII_x as XML_Char,
     ASCII_m as XML_Char,
     ASCII_l as XML_Char,
@@ -597,9 +597,10 @@ static mut implicitContext: [XML_Char; 41] = [
     ASCII_e as XML_Char,
     '\u{0}' as i32 as XML_Char,
 ];
-/* To avoid warnings about unused functions: */
-/* Obtain entropy on Linux 3.17+ */
 
+/* To avoid warnings about unused functions: */
+
+/* Obtain entropy on Linux 3.17+ */
 unsafe extern "C" fn writeRandomBytes_getrandom_nonblock(
     mut target: *mut c_void,
     mut count: size_t,
@@ -628,8 +629,8 @@ unsafe extern "C" fn writeRandomBytes_getrandom_nonblock(
     return success;
 }
 /* defined(HAVE_GETRANDOM) || defined(HAVE_SYSCALL_GETRANDOM) */
-/* Extract entropy from /dev/urandom */
 
+/* Extract entropy from /dev/urandom */
 unsafe extern "C" fn writeRandomBytes_dev_urandom(
     mut target: *mut c_void,
     mut count: size_t,
