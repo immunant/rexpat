@@ -34,10 +34,10 @@ use ::c2rust_out::src::lib::xmlparse::{
 };
 use ::c2rust_out::stdlib::{__assert_fail, malloc, memcpy, strlen};
 use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
-use ::std::env::args;
-use ::std::ffi::CString;
+
+
 use ::std::mem::transmute;
-use ::std::ptr::null_mut;
+
 pub use c2rust_out::*;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
 

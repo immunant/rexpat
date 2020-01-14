@@ -65,11 +65,11 @@ use ::c2rust_out::stdbool_h::{false_0, true_0};
 use ::c2rust_out::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::c2rust_out::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
-use ::std::env::args;
-use ::std::ffi::CString;
+
+
 use ::std::mem::transmute;
-use ::std::process::exit;
-use ::std::ptr::null_mut;
+
+
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
 pub mod chardata;
