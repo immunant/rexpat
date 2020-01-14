@@ -31,10 +31,8 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-use libc::c_char;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
+
+use libc::{c_char, c_int, c_uint, c_ulong};
 pub type C2RustUnnamed_0 = c_int;
 
 pub const XML_ROLE_ERROR: C2RustUnnamed_0 = -1;

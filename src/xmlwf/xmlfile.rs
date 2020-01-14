@@ -1,19 +1,7 @@
-// =============== BEGIN xmlfile_h ================
 use crate::readfilemap::filemap;
-use crate::stdlib::malloc;
-use crate::stdlib::read;
-use crate::stdlib::strlen;
-use ::libc::close;
-use ::libc::exit;
-use ::libc::free;
-use ::libc::open;
-use ::libc::strcpy;
-use ::libc::strrchr;
-use libc::c_char;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use crate::stdlib::{malloc, read, strlen};
+use ::libc::{close, exit, free, open, strcpy, strrchr};
+use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 pub const XML_MAP_FILE: c_int = 0o1 as c_int;
 
 pub const XML_EXTERNAL_ENTITIES: c_int = 0o2 as c_int;
@@ -43,15 +31,13 @@ pub use crate::src::lib::xmlparse::{
     XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
-
 pub use crate::stddef_h::{size_t, NULL};
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __ssize_t, fprintf,
     ssize_t, stderr, stdout, FILE, _IO_FILE,
 };
-
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
-use ::libc::{self};
+use ::libc;
 pub use ::libc::{perror, O_RDONLY};
 
 #[repr(C)]

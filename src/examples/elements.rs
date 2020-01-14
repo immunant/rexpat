@@ -9,34 +9,25 @@
 )]
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
+
 use ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
-use ::c2rust_out::src::lib::xmlparse::XML_ErrorString;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentLineNumber;
-use ::c2rust_out::src::lib::xmlparse::XML_GetErrorCode;
-use ::c2rust_out::src::lib::xmlparse::XML_Parse;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreate;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserFree;
-use ::c2rust_out::src::lib::xmlparse::XML_SetElementHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUserData;
+use ::c2rust_out::src::lib::xmlparse::{
+    XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
+    XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
+};
 use ::c2rust_out::stddef_h::NULL;
-use ::c2rust_out::stdlib::fprintf;
-use ::c2rust_out::stdlib::_IO_FILE;
-use ::libc::printf;
-use ::libc::putchar;
+use ::c2rust_out::stdlib::{fprintf, _IO_FILE};
+use ::libc::{printf, putchar};
 use ::std::env::args;
 use ::std::ffi::CString;
 use ::std::process::exit;
 use ::std::ptr::null_mut;
-use libc::c_char;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 pub mod expat_h {
+
     use crate::expat_external_h::XML_Char;
     use ::c2rust_out::expat_h::XML_ParserStruct;
-    use libc::c_uint;
-    use libc::c_void;
+    use libc::{c_uint, c_void};
     pub type XML_Parser = *mut XML_ParserStruct;
 
     pub type XML_Status = c_uint;
@@ -51,8 +42,8 @@ pub mod expat_h {
         Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
 }
 pub mod expat_external_h {
-    use libc::c_char;
-    use libc::c_ulong;
+
+    use libc::{c_char, c_ulong};
     pub type XML_Char = c_char;
 
     pub type XML_LChar = c_char;
@@ -64,10 +55,9 @@ pub mod stddef_h {
     pub type size_t = c_ulong;
 }
 pub mod stdlib {
+
     use ::c2rust_out::stdlib::_IO_FILE;
-    use libc::c_long;
-    use libc::c_ulong;
-    use libc::c_void;
+    use libc::{c_long, c_ulong, c_void};
     extern "C" {
         #[no_mangle]
         pub static mut stdin: *mut FILE;

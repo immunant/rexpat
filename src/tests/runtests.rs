@@ -17,163 +17,60 @@
     ptr_wrapping_offset_from,
     register_tool
 )]
-use crate::stdlib::stderr;
-use crate::stdlib::strncmp;
+
+use crate::stdlib::{stderr, strncmp};
 use ::c2rust_out::ascii_h::ASCII_PERIOD;
-use ::c2rust_out::ascii_h_0::ASCII_0;
-use ::c2rust_out::ascii_h_0::ASCII_9;
-use ::c2rust_out::expat_h::XML_Encoding;
-use ::c2rust_out::expat_h::XML_Expat_Version;
-use ::c2rust_out::expat_h::XML_Feature;
-use ::c2rust_out::expat_h::XML_Memory_Handling_Suite;
-use ::c2rust_out::expat_h::XML_ParserStruct;
-use ::c2rust_out::expat_h::XML_ParsingStatus;
-use ::c2rust_out::expat_h::XML_cp;
-use ::c2rust_out::expat_h::XML_ERROR_ABORTED;
-use ::c2rust_out::expat_h::XML_ERROR_ASYNC_ENTITY;
-use ::c2rust_out::expat_h::XML_ERROR_BAD_CHAR_REF;
-use ::c2rust_out::expat_h::XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
-use ::c2rust_out::expat_h::XML_ERROR_DUPLICATE_ATTRIBUTE;
-use ::c2rust_out::expat_h::XML_ERROR_EXTERNAL_ENTITY_HANDLING;
-use ::c2rust_out::expat_h::XML_ERROR_FINISHED;
-use ::c2rust_out::expat_h::XML_ERROR_INCORRECT_ENCODING;
-use ::c2rust_out::expat_h::XML_ERROR_INVALID_TOKEN;
-use ::c2rust_out::expat_h::XML_ERROR_MISPLACED_XML_PI;
-use ::c2rust_out::expat_h::XML_ERROR_NONE;
-use ::c2rust_out::expat_h::XML_ERROR_NOT_STANDALONE;
-use ::c2rust_out::expat_h::XML_ERROR_NOT_SUSPENDED;
-use ::c2rust_out::expat_h::XML_ERROR_NO_ELEMENTS;
-use ::c2rust_out::expat_h::XML_ERROR_NO_MEMORY;
-use ::c2rust_out::expat_h::XML_ERROR_PARTIAL_CHAR;
-use ::c2rust_out::expat_h::XML_ERROR_PUBLICID;
-use ::c2rust_out::expat_h::XML_ERROR_RECURSIVE_ENTITY_REF;
-use ::c2rust_out::expat_h::XML_ERROR_RESERVED_NAMESPACE_URI;
-use ::c2rust_out::expat_h::XML_ERROR_RESERVED_PREFIX_XML;
-use ::c2rust_out::expat_h::XML_ERROR_RESERVED_PREFIX_XMLNS;
-use ::c2rust_out::expat_h::XML_ERROR_SUSPENDED;
-use ::c2rust_out::expat_h::XML_ERROR_SUSPEND_PE;
-use ::c2rust_out::expat_h::XML_ERROR_SYNTAX;
-use ::c2rust_out::expat_h::XML_ERROR_TAG_MISMATCH;
-use ::c2rust_out::expat_h::XML_ERROR_TEXT_DECL;
-use ::c2rust_out::expat_h::XML_ERROR_UNBOUND_PREFIX;
-use ::c2rust_out::expat_h::XML_ERROR_UNCLOSED_CDATA_SECTION;
-use ::c2rust_out::expat_h::XML_ERROR_UNCLOSED_TOKEN;
-use ::c2rust_out::expat_h::XML_ERROR_UNDECLARING_PREFIX;
-use ::c2rust_out::expat_h::XML_ERROR_UNDEFINED_ENTITY;
-use ::c2rust_out::expat_h::XML_ERROR_UNKNOWN_ENCODING;
-use ::c2rust_out::expat_h::XML_ERROR_XML_DECL;
-use ::c2rust_out::expat_h::XML_FALSE;
-use ::c2rust_out::expat_h::XML_FEATURE_CONTEXT_BYTES;
-use ::c2rust_out::expat_h::XML_FEATURE_END;
-use ::c2rust_out::expat_h::XML_FINISHED;
-use ::c2rust_out::expat_h::XML_INITIALIZED;
-use ::c2rust_out::expat_h::XML_PARAM_ENTITY_PARSING_ALWAYS;
-use ::c2rust_out::expat_h::XML_PARAM_ENTITY_PARSING_NEVER;
-use ::c2rust_out::expat_h::XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE;
-use ::c2rust_out::expat_h::XML_STATUS_ERROR;
-use ::c2rust_out::expat_h::XML_STATUS_ERROR_0;
-use ::c2rust_out::expat_h::XML_STATUS_OK_0;
-use ::c2rust_out::expat_h::XML_STATUS_SUSPENDED_0;
-use ::c2rust_out::expat_h::XML_SUSPENDED;
-use ::c2rust_out::expat_h::XML_TRUE;
-use ::c2rust_out::siphash_h::siphash;
-use ::c2rust_out::siphash_h::sipkey;
-use ::c2rust_out::src::lib::xmlparse::XML_DefaultCurrent;
-use ::c2rust_out::src::lib::xmlparse::XML_ErrorString;
-use ::c2rust_out::src::lib::xmlparse::XML_ExpatVersion;
-use ::c2rust_out::src::lib::xmlparse::XML_ExpatVersionInfo;
-use ::c2rust_out::src::lib::xmlparse::XML_ExternalEntityParserCreate;
-use ::c2rust_out::src::lib::xmlparse::XML_FreeContentModel;
-use ::c2rust_out::src::lib::xmlparse::XML_GetBase;
-use ::c2rust_out::src::lib::xmlparse::XML_GetBuffer;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentByteCount;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentByteIndex;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentColumnNumber;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentLineNumber;
-use ::c2rust_out::src::lib::xmlparse::XML_GetErrorCode;
-use ::c2rust_out::src::lib::xmlparse::XML_GetFeatureList;
-use ::c2rust_out::src::lib::xmlparse::XML_GetIdAttributeIndex;
-use ::c2rust_out::src::lib::xmlparse::XML_GetInputContext;
-use ::c2rust_out::src::lib::xmlparse::XML_GetParsingStatus;
-use ::c2rust_out::src::lib::xmlparse::XML_GetSpecifiedAttributeCount;
-use ::c2rust_out::src::lib::xmlparse::XML_MemFree;
-use ::c2rust_out::src::lib::xmlparse::XML_MemMalloc;
-use ::c2rust_out::src::lib::xmlparse::XML_MemRealloc;
-use ::c2rust_out::src::lib::xmlparse::XML_Parse;
-use ::c2rust_out::src::lib::xmlparse::XML_ParseBuffer;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreate;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreateNS;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreate_MM;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserFree;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserReset;
-use ::c2rust_out::src::lib::xmlparse::XML_ResumeParser;
-use ::c2rust_out::src::lib::xmlparse::XML_SetAttlistDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetBase;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCdataSectionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCharacterDataHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCommentHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetDefaultHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetDefaultHandlerExpand;
-use ::c2rust_out::src::lib::xmlparse::XML_SetDoctypeDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetElementDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetElementHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEncoding;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEndCdataSectionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEndDoctypeDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEndElementHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEndNamespaceDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEntityDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetExternalEntityRefHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetExternalEntityRefHandlerArg;
-use ::c2rust_out::src::lib::xmlparse::XML_SetHashSalt;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNamespaceDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNotStandaloneHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNotationDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetParamEntityParsing;
-use ::c2rust_out::src::lib::xmlparse::XML_SetProcessingInstructionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetReturnNSTriplet;
-use ::c2rust_out::src::lib::xmlparse::XML_SetSkippedEntityHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetStartCdataSectionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetStartDoctypeDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetStartElementHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetStartNamespaceDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUnknownEncodingHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUnparsedEntityDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUserData;
-use ::c2rust_out::src::lib::xmlparse::XML_SetXmlDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_StopParser;
-use ::c2rust_out::src::lib::xmlparse::XML_UseForeignDTD;
-use ::c2rust_out::src::lib::xmlparse::XML_UseParserAsHandlerArg;
-use ::c2rust_out::src::lib::xmlparse::INT_MAX;
+use ::c2rust_out::ascii_h_0::{ASCII_0, ASCII_9};
+use ::c2rust_out::expat_h::{
+    XML_Encoding, XML_Expat_Version, XML_Feature, XML_Memory_Handling_Suite, XML_ParserStruct,
+    XML_ParsingStatus, XML_cp, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY, XML_ERROR_BAD_CHAR_REF,
+    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
+    XML_ERROR_EXTERNAL_ENTITY_HANDLING, XML_ERROR_FINISHED, XML_ERROR_INCORRECT_ENCODING,
+    XML_ERROR_INVALID_TOKEN, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE, XML_ERROR_NOT_STANDALONE,
+    XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY, XML_ERROR_PARTIAL_CHAR,
+    XML_ERROR_PUBLICID, XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
+    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
+    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
+    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
+    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNKNOWN_ENCODING,
+    XML_ERROR_XML_DECL, XML_FALSE, XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
+    XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
+    XML_STATUS_OK_0, XML_STATUS_SUSPENDED_0, XML_SUSPENDED, XML_TRUE,
+};
+use ::c2rust_out::siphash_h::{siphash, sipkey};
+use ::c2rust_out::src::lib::xmlparse::{
+    XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
+    XML_ExternalEntityParserCreate, XML_FreeContentModel, XML_GetBase, XML_GetBuffer,
+    XML_GetCurrentByteCount, XML_GetCurrentByteIndex, XML_GetCurrentColumnNumber,
+    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetFeatureList, XML_GetIdAttributeIndex,
+    XML_GetInputContext, XML_GetParsingStatus, XML_GetSpecifiedAttributeCount, XML_MemFree,
+    XML_MemMalloc, XML_MemRealloc, XML_Parse, XML_ParseBuffer, XML_ParserCreate,
+    XML_ParserCreateNS, XML_ParserCreate_MM, XML_ParserFree, XML_ParserReset, XML_ResumeParser,
+    XML_SetAttlistDeclHandler, XML_SetBase, XML_SetCdataSectionHandler,
+    XML_SetCharacterDataHandler, XML_SetCommentHandler, XML_SetDefaultHandler,
+    XML_SetDefaultHandlerExpand, XML_SetDoctypeDeclHandler, XML_SetElementDeclHandler,
+    XML_SetElementHandler, XML_SetEncoding, XML_SetEndCdataSectionHandler,
+    XML_SetEndDoctypeDeclHandler, XML_SetEndElementHandler, XML_SetEndNamespaceDeclHandler,
+    XML_SetEntityDeclHandler, XML_SetExternalEntityRefHandler, XML_SetExternalEntityRefHandlerArg,
+    XML_SetHashSalt, XML_SetNamespaceDeclHandler, XML_SetNotStandaloneHandler,
+    XML_SetNotationDeclHandler, XML_SetParamEntityParsing, XML_SetProcessingInstructionHandler,
+    XML_SetReturnNSTriplet, XML_SetSkippedEntityHandler, XML_SetStartCdataSectionHandler,
+    XML_SetStartDoctypeDeclHandler, XML_SetStartElementHandler, XML_SetStartNamespaceDeclHandler,
+    XML_SetUnknownEncodingHandler, XML_SetUnparsedEntityDeclHandler, XML_SetUserData,
+    XML_SetXmlDeclHandler, XML_StopParser, XML_UseForeignDTD, XML_UseParserAsHandlerArg, INT_MAX,
+};
 use ::c2rust_out::src::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
-use ::c2rust_out::stdbool_h::false_0;
-use ::c2rust_out::stdbool_h::true_0;
-use ::c2rust_out::stdlib::__assert_fail;
-use ::c2rust_out::stdlib::fprintf;
-use ::c2rust_out::stdlib::malloc;
-use ::c2rust_out::stdlib::memcmp;
-use ::c2rust_out::stdlib::memcpy;
-use ::c2rust_out::stdlib::realloc;
-use ::c2rust_out::stdlib::strlen;
+use ::c2rust_out::stdbool_h::{false_0, true_0};
+use ::c2rust_out::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::c2rust_out::*;
-use ::libc::free;
-use ::libc::printf;
-use ::libc::sprintf;
-use ::libc::strcmp;
-use ::libc::EXIT_FAILURE;
-use ::libc::EXIT_SUCCESS;
+use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
 use ::std::env::args;
 use ::std::ffi::CString;
 use ::std::mem::transmute;
 use ::std::process::exit;
 use ::std::ptr::null_mut;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_uchar;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
 pub mod chardata;
 pub mod memcheck;
@@ -203,15 +100,8 @@ pub mod siphash_h {
 
     use crate::stddef_h::size_t;
     use crate::stdlib::uint64_t;
-    use ::c2rust_out::siphash_h::siphash;
-    use ::c2rust_out::siphash_h::sipkey;
-    use libc::c_char;
-    use libc::c_int;
-    use libc::c_long;
-    use libc::c_uchar;
-    use libc::c_uint;
-    use libc::c_ulong;
-    use libc::c_void;
+    use ::c2rust_out::siphash_h::{siphash, sipkey};
+    use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
     pub unsafe extern "C" fn sip_tokey(
         mut key: *mut sipkey,
         mut src: *const c_void,

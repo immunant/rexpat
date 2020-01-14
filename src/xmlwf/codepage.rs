@@ -1,6 +1,5 @@
 use ::libc;
-use libc::c_char;
-use libc::c_int;
+use libc::{c_char, c_int};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

@@ -1,14 +1,6 @@
 use crate::stddef_h::size_t;
-use ::libc::timespec;
-use ::libc::timeval;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_schar;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_ushort;
-use libc::c_void;
+use ::libc::{timespec, timeval};
+use libc::{c_char, c_int, c_long, c_schar, c_uint, c_ulong, c_ushort, c_void};
 extern "C" {
     #[no_mangle]
     pub fn __assert_fail(

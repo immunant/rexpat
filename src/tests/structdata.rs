@@ -1,18 +1,9 @@
 // =============== BEGIN structdata_h ================
+
 use crate::minicheck::_fail_unless;
-use crate::stdlib::__assert_fail;
-use crate::stdlib::malloc;
-use crate::stdlib::memcpy;
-use crate::stdlib::realloc;
-use crate::stdlib::strlen;
-use ::libc::free;
-use ::libc::sprintf;
-use ::libc::strcmp;
-use libc::c_char;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
+use ::libc::{free, sprintf, strcmp};
+use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct StructDataEntry {
@@ -31,10 +22,8 @@ pub struct StructData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-
 pub use crate::stddef_h::{size_t, NULL};
-
-use ::libc::{self};
+use ::libc;
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

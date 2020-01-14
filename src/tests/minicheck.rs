@@ -1,19 +1,9 @@
 // =============== BEGIN minicheck_h ================
-use crate::stdlib::__assert_fail;
-use crate::stdlib::calloc;
-use crate::stdlib::fprintf;
-use crate::stdlib::realloc;
-use crate::stdlib::stderr;
-use crate::stdlib::strlen;
-use ::libc::free;
-use ::libc::printf;
+
+use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
+use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
-use libc::c_char;
-use libc::c_double;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_double, c_int, c_uint, c_ulong, c_void};
 pub const CK_VERBOSE: c_int = 2 as c_int;
 
 pub type tcase_setup_function = Option<unsafe extern "C" fn() -> ()>;
@@ -54,8 +44,7 @@ pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __jmp_buf, __jmp_buf_tag, __off64_t,
     __off_t, __sigset_t, _setjmp, jmp_buf, longjmp, FILE, _IO_FILE,
 };
-
-use ::libc::{self};
+use ::libc;
 /* Miniature re-implementation of the "check" library.
 
    This is intended to support just enough of check to run the Expat

@@ -18,60 +18,28 @@
     register_tool
 )]
 
-use ::c2rust_out::expat_h::XML_Encoding;
-use ::c2rust_out::expat_h::XML_Feature;
-use ::c2rust_out::expat_h::XML_FEATURE_END;
-use ::c2rust_out::expat_h::XML_PARAM_ENTITY_PARSING_ALWAYS;
-use ::c2rust_out::expat_h::XML_PARAM_ENTITY_PARSING_NEVER;
-use ::c2rust_out::src::lib::xmlparse::XML_DefaultCurrent;
-use ::c2rust_out::src::lib::xmlparse::XML_ExpatVersion;
-use ::c2rust_out::src::lib::xmlparse::XML_GetBase;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentByteCount;
-use ::c2rust_out::src::lib::xmlparse::XML_GetCurrentByteIndex;
-use ::c2rust_out::src::lib::xmlparse::XML_GetFeatureList;
-use ::c2rust_out::src::lib::xmlparse::XML_GetIdAttributeIndex;
-use ::c2rust_out::src::lib::xmlparse::XML_GetSpecifiedAttributeCount;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreate;
-use ::c2rust_out::src::lib::xmlparse::XML_ParserCreateNS;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCdataSectionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCharacterDataHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetCommentHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetDefaultHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetDoctypeDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetElementHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetEntityDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNamespaceDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNotStandaloneHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetNotationDeclHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetParamEntityParsing;
-use ::c2rust_out::src::lib::xmlparse::XML_SetProcessingInstructionHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUnknownEncodingHandler;
-use ::c2rust_out::src::lib::xmlparse::XML_SetUserData;
-use ::c2rust_out::src::lib::xmlparse::XML_UseParserAsHandlerArg;
-use ::c2rust_out::stdlib::__assert_fail;
-use ::c2rust_out::stdlib::malloc;
-use ::c2rust_out::stdlib::memcpy;
-use ::c2rust_out::stdlib::strlen;
-use ::libc::exit;
-use ::libc::free;
-use ::libc::remove;
-use ::libc::strcat;
-use ::libc::strchr;
-use ::libc::strcmp;
-use ::libc::strcpy;
-use ::libc::strrchr;
-use ::libc::_IOFBF;
+use ::c2rust_out::expat_h::{
+    XML_Encoding, XML_Feature, XML_FEATURE_END, XML_PARAM_ENTITY_PARSING_ALWAYS,
+    XML_PARAM_ENTITY_PARSING_NEVER,
+};
+use ::c2rust_out::src::lib::xmlparse::{
+    XML_DefaultCurrent, XML_ExpatVersion, XML_GetBase, XML_GetCurrentByteCount,
+    XML_GetCurrentByteIndex, XML_GetFeatureList, XML_GetIdAttributeIndex,
+    XML_GetSpecifiedAttributeCount, XML_ParserCreate, XML_ParserCreateNS,
+    XML_SetCdataSectionHandler, XML_SetCharacterDataHandler, XML_SetCommentHandler,
+    XML_SetDefaultHandler, XML_SetDoctypeDeclHandler, XML_SetElementHandler,
+    XML_SetEntityDeclHandler, XML_SetNamespaceDeclHandler, XML_SetNotStandaloneHandler,
+    XML_SetNotationDeclHandler, XML_SetParamEntityParsing, XML_SetProcessingInstructionHandler,
+    XML_SetUnknownEncodingHandler, XML_SetUserData, XML_UseParserAsHandlerArg,
+};
+use ::c2rust_out::stdlib::{__assert_fail, malloc, memcpy, strlen};
+use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
 use ::std::env::args;
 use ::std::ffi::CString;
 use ::std::mem::transmute;
 use ::std::ptr::null_mut;
 pub use c2rust_out::*;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
 
 pub mod codepage;
 pub mod readfilemap;

@@ -32,16 +32,9 @@
 */
 
 /* The following token may be returned by XmlContentTok */
+
 use crate::stdlib::memcpy;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_uchar;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_ushort;
-use libc::c_void;
-use libc::intptr_t;
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 pub const XML_TOK_TRAILING_RSQB: c_int = -5; /* ] or ]] at the end of the scan; might be
                                              start of illegal ]]> sequence */
 
@@ -343,116 +336,37 @@ pub mod xmltok_impl_c {
     /* ptr points to character following "<!-" */
     /* ptr points to character following "<!-" */
 
-    use super::ATTRIBUTE;
-    use super::ENCODING;
-    use super::POSITION;
-    use super::XML_TOK_INSTANCE_START;
-    use super::XML_TOK_PROLOG_S;
-    use crate::ascii_h::ASCII_b;
-    use crate::ascii_h::ASCII_d;
-    use crate::ascii_h::ASCII_f;
-    use crate::ascii_h::ASCII_q;
-    use crate::ascii_h::ASCII_4;
-    use crate::ascii_h::ASCII_5;
-    use crate::ascii_h::ASCII_6;
-    use crate::ascii_h::ASCII_7;
-    use crate::ascii_h::ASCII_A;
-    use crate::ascii_h::ASCII_AMP;
-    use crate::ascii_h::ASCII_APOS;
-    use crate::ascii_h::ASCII_C;
-    use crate::ascii_h::ASCII_D;
-    use crate::ascii_h::ASCII_GT;
-    use crate::ascii_h::ASCII_LSQB;
-    use crate::ascii_h::ASCII_LT;
-    use crate::ascii_h::ASCII_QUOT;
-    use crate::ascii_h::ASCII_SPACE;
-    use crate::ascii_h::ASCII_T;
-    use crate::ascii_h_0::ASCII_a;
-    use crate::ascii_h_0::ASCII_c;
-    use crate::ascii_h_0::ASCII_e;
-    use crate::ascii_h_0::ASCII_g;
-    use crate::ascii_h_0::ASCII_l;
-    use crate::ascii_h_0::ASCII_m;
-    use crate::ascii_h_0::ASCII_x;
-    use crate::ascii_h_0::ASCII_0;
-    use crate::ascii_h_0::ASCII_1;
-    use crate::ascii_h_0::ASCII_2;
-    use crate::ascii_h_0::ASCII_3;
-    use crate::ascii_h_0::ASCII_8;
-    use crate::ascii_h_0::ASCII_9;
-    use crate::ascii_h_0::ASCII_B;
-    use crate::ascii_h_0::ASCII_E;
-    use crate::ascii_h_0::ASCII_F;
-    use crate::ascii_h_0::ASCII_L;
-    use crate::ascii_h_0::ASCII_M;
-    use crate::ascii_h_0::ASCII_X;
+    use super::{ATTRIBUTE, ENCODING, POSITION, XML_TOK_INSTANCE_START, XML_TOK_PROLOG_S};
+    use crate::ascii_h::{
+        ASCII_b, ASCII_d, ASCII_f, ASCII_q, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_A, ASCII_AMP,
+        ASCII_APOS, ASCII_C, ASCII_D, ASCII_GT, ASCII_LSQB, ASCII_LT, ASCII_QUOT, ASCII_SPACE,
+        ASCII_T,
+    };
+    use crate::ascii_h_0::{
+        ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_l, ASCII_m, ASCII_x, ASCII_0, ASCII_1, ASCII_2,
+        ASCII_3, ASCII_8, ASCII_9, ASCII_B, ASCII_E, ASCII_F, ASCII_L, ASCII_M, ASCII_X,
+    };
     use crate::expat_external_h::XML_Size;
     use crate::stddef_h::size_t;
-    use crate::xmltok_h::XML_TOK_ATTRIBUTE_VALUE_S;
-    use crate::xmltok_h::XML_TOK_CDATA_SECT_CLOSE;
-    use crate::xmltok_h::XML_TOK_CDATA_SECT_OPEN;
-    use crate::xmltok_h::XML_TOK_CHAR_REF;
-    use crate::xmltok_h::XML_TOK_CLOSE_BRACKET;
-    use crate::xmltok_h::XML_TOK_CLOSE_PAREN;
-    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_ASTERISK;
-    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_PLUS;
-    use crate::xmltok_h::XML_TOK_CLOSE_PAREN_QUESTION;
-    use crate::xmltok_h::XML_TOK_COMMA;
-    use crate::xmltok_h::XML_TOK_COMMENT;
-    use crate::xmltok_h::XML_TOK_COND_SECT_CLOSE;
-    use crate::xmltok_h::XML_TOK_COND_SECT_OPEN;
-    use crate::xmltok_h::XML_TOK_DATA_CHARS;
-    use crate::xmltok_h::XML_TOK_DATA_NEWLINE;
-    use crate::xmltok_h::XML_TOK_DECL_CLOSE;
-    use crate::xmltok_h::XML_TOK_DECL_OPEN;
-    use crate::xmltok_h::XML_TOK_EMPTY_ELEMENT_NO_ATTS;
-    use crate::xmltok_h::XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
-    use crate::xmltok_h::XML_TOK_END_TAG;
-    use crate::xmltok_h::XML_TOK_ENTITY_REF;
-    use crate::xmltok_h::XML_TOK_IGNORE_SECT;
-    use crate::xmltok_h::XML_TOK_INVALID;
-    use crate::xmltok_h::XML_TOK_LITERAL;
-    use crate::xmltok_h::XML_TOK_NAME;
-    use crate::xmltok_h::XML_TOK_NAME_ASTERISK;
-    use crate::xmltok_h::XML_TOK_NAME_PLUS;
-    use crate::xmltok_h::XML_TOK_NAME_QUESTION;
-    use crate::xmltok_h::XML_TOK_NMTOKEN;
-    use crate::xmltok_h::XML_TOK_NONE;
-    use crate::xmltok_h::XML_TOK_OPEN_BRACKET;
-    use crate::xmltok_h::XML_TOK_OPEN_PAREN;
-    use crate::xmltok_h::XML_TOK_OR;
-    use crate::xmltok_h::XML_TOK_PARAM_ENTITY_REF;
-    use crate::xmltok_h::XML_TOK_PARTIAL;
-    use crate::xmltok_h::XML_TOK_PARTIAL_CHAR;
-    use crate::xmltok_h::XML_TOK_PERCENT;
-    use crate::xmltok_h::XML_TOK_PI;
-    use crate::xmltok_h::XML_TOK_POUND_NAME;
-    use crate::xmltok_h::XML_TOK_PREFIXED_NAME;
-    use crate::xmltok_h::XML_TOK_START_TAG_NO_ATTS;
-    use crate::xmltok_h::XML_TOK_START_TAG_WITH_ATTS;
-    use crate::xmltok_h::XML_TOK_TRAILING_CR;
-    use crate::xmltok_h::XML_TOK_TRAILING_RSQB;
-    use crate::xmltok_h::XML_TOK_XML_DECL;
-    use crate::xmltok_impl_c::inName;
-    use crate::xmltok_impl_c::inName_0;
-    use crate::xmltok_impl_c::inName_1;
-    use crate::xmltok_impl_c::inValue;
-    use crate::xmltok_impl_c::inValue_0;
-    use crate::xmltok_impl_c::inValue_1;
-    use crate::xmltok_impl_c::other;
-    use crate::xmltok_impl_c::other_0;
-    use crate::xmltok_impl_c::other_1;
-    use crate::xmltok_impl_h::C2RustUnnamed_2;
-    use crate::xmltok_impl_h::BT_APOS;
-    use crate::xmltok_impl_h::BT_EQUALS;
-    use crate::xmltok_impl_h::BT_LF;
-    use crate::xmltok_impl_h::BT_QUOT;
-    use libc::c_char;
-    use libc::c_int;
-    use libc::c_long;
-    use libc::c_uchar;
-    use libc::c_uint;
-    use libc::c_ulong;
+    use crate::xmltok_h::{
+        XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_CDATA_SECT_CLOSE, XML_TOK_CDATA_SECT_OPEN,
+        XML_TOK_CHAR_REF, XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,
+        XML_TOK_CLOSE_PAREN_PLUS, XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT,
+        XML_TOK_COND_SECT_CLOSE, XML_TOK_COND_SECT_OPEN, XML_TOK_DATA_CHARS, XML_TOK_DATA_NEWLINE,
+        XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN, XML_TOK_EMPTY_ELEMENT_NO_ATTS,
+        XML_TOK_EMPTY_ELEMENT_WITH_ATTS, XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT,
+        XML_TOK_INVALID, XML_TOK_LITERAL, XML_TOK_NAME, XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS,
+        XML_TOK_NAME_QUESTION, XML_TOK_NMTOKEN, XML_TOK_NONE, XML_TOK_OPEN_BRACKET,
+        XML_TOK_OPEN_PAREN, XML_TOK_OR, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL,
+        XML_TOK_PARTIAL_CHAR, XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME,
+        XML_TOK_PREFIXED_NAME, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
+        XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL,
+    };
+    use crate::xmltok_impl_c::{
+        inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
+    };
+    use crate::xmltok_impl_h::{C2RustUnnamed_2, BT_APOS, BT_EQUALS, BT_LF, BT_QUOT};
+    use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong};
     pub unsafe extern "C" fn big2_scanComment(
         mut enc: *const ENCODING,
         mut ptr: *const c_char,
@@ -11881,9 +11795,7 @@ pub mod nametab_h {
        USE OR OTHER DEALINGS IN THE SOFTWARE.
     */
 
-    use libc::c_int;
-    use libc::c_uchar;
-    use libc::c_uint;
+    use libc::{c_int, c_uchar, c_uint};
     pub static mut namingBitmap: [c_uint; 320] = [
         0 as c_int as c_uint,
         0 as c_int as c_uint,
@@ -12789,8 +12701,8 @@ pub mod xmltok_ns_c {
        OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
        USE OR OTHER DEALINGS IN THE SOFTWARE.
     */
-    use libc::c_char;
-    use libc::c_int;
+
+    use libc::{c_char, c_int};
     #[no_mangle]
 
     pub unsafe extern "C" fn XmlGetUtf8InternalEncodingNS() -> *const super::ENCODING {
@@ -13154,7 +13066,6 @@ pub use crate::src::lib::xmltok::xmltok_ns_c::{
 };
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-
 pub use crate::xmltok_impl_c::{
     inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
 };

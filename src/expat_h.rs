@@ -1,16 +1,8 @@
-use crate::expat_external_h::XML_Char;
-use crate::expat_external_h::XML_LChar;
-use crate::expat_external_h::XML_Size;
-use crate::src::lib::xmlparse::XML_GetCurrentColumnNumber;
-use crate::src::lib::xmlparse::XML_GetCurrentLineNumber;
+use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::src::lib::xmlparse::XML_ParserStruct;
+use crate::src::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
 use crate::stddef_h::size_t;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_uchar;
-use libc::c_uint;
-use libc::c_void;
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
 /*
                         __  __            _
                      ___\ \/ /_ __   __ _| |_

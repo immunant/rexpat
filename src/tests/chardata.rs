@@ -1,14 +1,9 @@
 // =============== BEGIN chardata_h ================
+
 use crate::minicheck::_fail_unless;
-use crate::stdlib::__assert_fail;
-use crate::stdlib::memcmp;
-use crate::stdlib::memcpy;
+use crate::stdlib::{__assert_fail, memcmp, memcpy};
 use ::libc::sprintf;
-use libc::c_char;
-use libc::c_int;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct CharData {
@@ -17,8 +12,7 @@ pub struct CharData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-
-use ::libc::{self};
+use ::libc;
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_

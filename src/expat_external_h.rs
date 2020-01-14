@@ -1,6 +1,4 @@
-use libc::c_char;
-use libc::c_long;
-use libc::c_ulong;
+use libc::{c_char, c_long, c_ulong};
 pub type XML_Char = c_char;
 pub type XML_LChar = c_char;
 /* XML_UNICODE */

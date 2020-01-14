@@ -1,12 +1,6 @@
 use crate::stddef_h::size_t;
 use crate::stdlib::uint64_t;
-use libc::c_char;
-use libc::c_int;
-use libc::c_long;
-use libc::c_uchar;
-use libc::c_uint;
-use libc::c_ulong;
-use libc::c_void;
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct siphash {
