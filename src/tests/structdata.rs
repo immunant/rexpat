@@ -56,7 +56,7 @@ use ::libc;
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pub const STRUCT_EXTENSION_COUNT: c_int = 8i32;
+pub const STRUCT_EXTENSION_COUNT: c_int = 8;
 
 unsafe extern "C" fn xmlstrdup(mut s: *const XML_Char) -> *mut XML_Char {
     let mut byte_count: size_t = strlen(s)
@@ -95,8 +95,8 @@ pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
             .as_ptr(),
         );
     }
-    (*storage).count = 0i32;
-    (*storage).max_count = 0i32;
+    (*storage).count = 0;
+    (*storage).max_count = 0;
     (*storage).entries = NULL as *mut StructDataEntry;
 }
 /* Interface to some helper routines used to accumulate and check
@@ -253,7 +253,7 @@ pub unsafe extern "C" fn StructData_CheckItems(
             buffer.as_mut_ptr(),
         );
     } else {
-        i = 0i32;
+        i = 0;
         while i < count {
             let mut got: *const StructDataEntry =
                 &mut *(*storage).entries.offset(i as isize) as *mut StructDataEntry;
@@ -279,7 +279,7 @@ pub unsafe extern "C" fn StructData_CheckItems(
                               (*::std::mem::transmute::<&[u8; 71],
                                                         &[c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
             }
-            if strcmp((*got).str_0, (*want).str_0) != 0i32 {
+            if strcmp((*got).str_0, (*want).str_0) != 0 {
                 StructData_Dispose(storage);
                 _fail_unless(
                     0i32,
@@ -334,12 +334,12 @@ pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
             .as_ptr(),
         );
     }
-    i = 0i32;
+    i = 0;
     while i < (*storage).count {
         free((*(*storage).entries.offset(i as isize)).str_0 as *mut c_void);
         i += 1
     }
     free((*storage).entries as *mut c_void);
-    (*storage).count = 0i32;
+    (*storage).count = 0;
     (*storage).entries = NULL as *mut StructDataEntry;
 }

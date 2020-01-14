@@ -50,7 +50,7 @@ use libc::{c_char, c_int, c_long, c_uint, c_void};
 pub const _EXPAT_read: unsafe extern "C" fn(_: c_int, _: *mut c_void, _: size_t) -> ssize_t = read;
 /* not S_ISREG */
 
-pub const O_BINARY: c_int = 0i32;
+pub const O_BINARY: c_int = 0;
 #[no_mangle]
 
 pub unsafe extern "C" fn filemap(
@@ -91,16 +91,16 @@ pub unsafe extern "C" fn filemap(
     };
     let mut p: *mut c_void = 0 as *mut c_void;
     fd = open(name, O_RDONLY | O_BINARY);
-    if fd < 0i32 {
+    if fd < 0 {
         perror(name);
         return 0i32;
     }
-    if fstat(fd, &mut sb) < 0i32 {
+    if fstat(fd, &mut sb) < 0 {
         perror(name);
         close(fd);
         return 0i32;
     }
-    if !(sb.st_mode & __S_IFMT as c_uint == 0o100000u32) {
+    if !(sb.st_mode & __S_IFMT as c_uint == 0o100000) {
         fprintf(
             stderr,
             b"%s: not a regular file\n\x00" as *const u8 as *const c_char,
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn filemap(
     }
     nbytes = sb.st_size as size_t;
     /* malloc will return NULL with nbytes == 0, handle files with size 0 */
-    if nbytes == 0u64 {
+    if nbytes == 0 {
         static mut c: c_char =  '\u{0}' as c_char;
         processor.expect("non-null function pointer")(
             &c as *const c_char as *const c_void,
@@ -138,7 +138,7 @@ pub unsafe extern "C" fn filemap(
         return 0i32;
     }
     n = read(fd, p, nbytes);
-    if n < 0i64 {
+    if n < 0 {
         perror(name);
         free(p);
         close(fd);
@@ -157,5 +157,5 @@ pub unsafe extern "C" fn filemap(
     processor.expect("non-null function pointer")(p, nbytes, name, arg);
     free(p);
     close(fd);
-    return 1i32;
+    return 1;
 }

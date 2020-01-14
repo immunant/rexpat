@@ -4,7 +4,7 @@ use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
 use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
 use libc::{c_char, c_double, c_int, c_ulong, c_void};
-pub const CK_VERBOSE: c_int = 2i32;
+pub const CK_VERBOSE: c_int = 2;
 
 pub type tcase_setup_function = Option<unsafe extern "C" fn() -> ()>;
 
@@ -84,7 +84,7 @@ use ::libc;
 
 pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
     let mut suite: *mut Suite = calloc(
-        1u64,
+        1,
         ::std::mem::size_of::<Suite>() as c_ulong,
     ) as *mut Suite;
     if !suite.is_null() {
@@ -96,7 +96,7 @@ pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
 
 pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
     let mut tc: *mut TCase = calloc(
-        1u64,
+        1,
         ::std::mem::size_of::<TCase>() as c_ulong,
     ) as *mut TCase;
     if !tc.is_null() {
@@ -185,7 +185,7 @@ pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test
         );
     }
     if (*tc).allocated == (*tc).ntests {
-        let mut nalloc: c_int = (*tc).allocated + 100i32;
+        let mut nalloc: c_int = (*tc).allocated + 100;
         let mut new_size: size_t = (::std::mem::size_of::<tcase_test_function>() as c_ulong)
             .wrapping_mul(nalloc as c_ulong);
         let mut new_tests: *mut tcase_test_function =
@@ -234,7 +234,7 @@ unsafe extern "C" fn suite_free(mut suite: *mut Suite) {
 
 pub unsafe extern "C" fn srunner_create(mut suite: *mut Suite) -> *mut SRunner {
     let mut runner: *mut SRunner = calloc(
-        1u64,
+        1,
         ::std::mem::size_of::<SRunner>() as c_ulong,
     ) as *mut SRunner;
     if !runner.is_null() {
@@ -251,7 +251,7 @@ static mut env: jmp_buf = [__jmp_buf_tag {
 
 static mut _check_current_function: *const c_char = NULL as *const c_char;
 
-static mut _check_current_lineno: c_int = -(1i32);
+static mut _check_current_lineno: c_int = -(1);
 
 static mut _check_current_filename: *const c_char = NULL as *const c_char;
 /* Internal helper. */
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn srunner_run_all(mut runner: *mut SRunner, mut verbosity
     while !tc.is_null() {
         let mut i: c_int = 0;
         let mut current_block_10: u64;
-        write_volatile(&mut i as *mut c_int, 0i32);
+        write_volatile(&mut i as *mut c_int, 0);
         while i < (*tc).ntests {
             (*runner).nchecks += 1;
             if (*tc).setup.is_some() {
@@ -385,7 +385,7 @@ pub unsafe extern "C" fn _fail_unless(
             },
         );
     }
-    longjmp(env.as_mut_ptr(), 1i32);
+    longjmp(env.as_mut_ptr(), 1);
 }
 #[no_mangle]
 

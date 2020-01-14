@@ -72,7 +72,7 @@ pub const XML_TOK_COMMENT: c_int = 13;
 pub const XML_TOK_BOM: c_int = 14; /* Byte order mark */
 
 /* The following tokens are returned only by XmlPrologTok */
-pub const XML_TOK_PROLOG_S: c_int = 15i32;
+pub const XML_TOK_PROLOG_S: c_int = 15;
 pub const XML_TOK_DECL_OPEN: c_int = 16; /* <!foo */
 pub const XML_TOK_DECL_CLOSE: c_int = 17; /* > */
 pub const XML_TOK_NAME: c_int = 18;
@@ -373,74 +373,74 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            if !(*ptr.offset(0isize) as c_int == 0i32
-                && *ptr.offset(1isize) as c_int == 0x2di32)
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            if !(*ptr.offset(0) as c_int == 0
+                && *ptr.offset(1) as c_int == 0x2d)
             {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     5 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     6 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(3isize)
+                        ptr = ptr.offset(3)
                     }
                     7 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(4isize)
+                        ptr = ptr.offset(4)
                     }
                     0 | 1 | 8 => {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
                     27 => {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x2di32
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x2d
                         {
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2i32) as c_long)
+                                >= (1i32 * 2) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
-                            if !(*ptr.offset(0isize) as c_int == 0i32
-                                && *ptr.offset(1isize) as c_int == 0x3ei32)
+                            if !(*ptr.offset(0) as c_int == 0
+                                && *ptr.offset(1) as c_int == 0x3e)
                             {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            *nextTokPtr = ptr.offset(2isize);
+                            *nextTokPtr = ptr.offset(2);
                             return XML_TOK_COMMENT;
                         }
                     }
-                    _ => ptr = ptr.offset(2isize),
+                    _ => ptr = ptr.offset(2),
                 }
             }
         }
@@ -453,72 +453,72 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            if !(*ptr.offset(1isize) as c_int == 0i32
-                && *ptr.offset(0isize) as c_int == 0x2di32)
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            if !(*ptr.offset(1) as c_int == 0
+                && *ptr.offset(0) as c_int == 0x2d)
             {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     5 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     6 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(3isize)
+                        ptr = ptr.offset(3)
                     }
                     7 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
-                        ptr = ptr.offset(4isize)
+                        ptr = ptr.offset(4)
                     }
                     0 | 1 | 8 => {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
                     27 => {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x2di32
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x2d
                         {
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2i32) as c_long)
+                                >= (1i32 * 2) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
-                            if !(*ptr.offset(1isize) as c_int == 0i32
-                                && *ptr.offset(0isize) as c_int == 0x3ei32)
+                            if !(*ptr.offset(1) as c_int == 0
+                                && *ptr.offset(0) as c_int == 0x3e)
                             {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            *nextTokPtr = ptr.offset(2isize);
+                            *nextTokPtr = ptr.offset(2);
                             return XML_TOK_COMMENT;
                         }
                     }
-                    _ => ptr = ptr.offset(2isize),
+                    _ => ptr = ptr.offset(2),
                 }
             }
         }
@@ -531,16 +531,16 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
-            if !(*ptr as c_int == 0x2di32) {
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
+            if !(*ptr as c_int == 0x2d) {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            ptr = ptr.offset(1isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+            ptr = ptr.offset(1);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     5 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
                         if (*(enc as *const normal_encoding))
@@ -551,10 +551,10 @@ pub mod xmltok_impl_c {
                             *nextTokPtr = ptr;
                             return XML_TOK_INVALID;
                         }
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     6 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
                         if (*(enc as *const normal_encoding))
@@ -565,10 +565,10 @@ pub mod xmltok_impl_c {
                             *nextTokPtr = ptr;
                             return XML_TOK_INVALID;
                         }
-                        ptr = ptr.offset(3isize)
+                        ptr = ptr.offset(3)
                     }
                     7 => {
-                        if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                        if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                             return XML_TOK_PARTIAL_CHAR;
                         }
                         if (*(enc as *const normal_encoding))
@@ -579,35 +579,35 @@ pub mod xmltok_impl_c {
                             *nextTokPtr = ptr;
                             return XML_TOK_INVALID;
                         }
-                        ptr = ptr.offset(4isize)
+                        ptr = ptr.offset(4)
                     }
                     0 | 1 | 8 => {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
                     27 => {
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr as c_int == 0x2di32 {
-                            ptr = ptr.offset(1isize);
+                        if *ptr as c_int == 0x2d {
+                            ptr = ptr.offset(1);
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 1i32) as c_long)
+                                >= (1i32 * 1) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
-                            if !(*ptr as c_int == 0x3ei32) {
+                            if !(*ptr as c_int == 0x3e) {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            *nextTokPtr = ptr.offset(1isize);
+                            *nextTokPtr = ptr.offset(1);
                             return XML_TOK_COMMENT;
                         }
                     }
-                    _ => ptr = ptr.offset(1isize),
+                    _ => ptr = ptr.offset(1),
                 }
             }
         }
@@ -623,27 +623,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-            27 => return normal_scanComment(enc, ptr.offset(1isize), end, nextTokPtr),
+            27 => return normal_scanComment(enc, ptr.offset(1), end, nextTokPtr),
             20 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_COND_SECT_OPEN;
             }
-            22 | 24 => ptr = ptr.offset(1isize),
+            22 | 24 => ptr = ptr.offset(1),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             's_151: {
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     30 => {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 1i32) as c_long)
+                            >= (2i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
@@ -651,7 +651,7 @@ pub mod xmltok_impl_c {
                         /* don't allow <!ENTITY% foo "whatever"> */
                         /* don't allow <!ENTITY% foo "whatever"> */
                         match (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1isize) as c_uchar as usize]
+                            [*ptr.offset(1) as c_uchar as usize]
                             as c_int
                         {
                             21 | 9 | 10 | 30 => {
@@ -663,7 +663,7 @@ pub mod xmltok_impl_c {
                     }
                     21 | 9 | 10 => {}
                     22 | 24 => {
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         break 's_151;
                     }
                     _ => {
@@ -687,57 +687,57 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             27 => {
-                return little2_scanComment(enc, ptr.offset(2isize), end, nextTokPtr)
+                return little2_scanComment(enc, ptr.offset(2), end, nextTokPtr)
             }
             20 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COND_SECT_OPEN;
             }
-            22 | 24 => ptr = ptr.offset(2isize),
+            22 | 24 => ptr = ptr.offset(2),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             's_151: {
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     30 => {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 2i32) as c_long)
+                            >= (2i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        match if *ptr.offset(2isize).offset(1isize)
+                        match if *ptr.offset(2).offset(1)
                             as c_int
-                            == 0i32
+                            == 0
                         {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(2isize) as c_uchar as usize]
+                                [*ptr.offset(2) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(2isize).offset(1isize),
-                                *ptr.offset(2isize).offset(0isize),
+                                *ptr.offset(2).offset(1),
+                                *ptr.offset(2).offset(0),
                             )
                         } {
                             21 | 9 | 10 | 30 => {
@@ -749,7 +749,7 @@ pub mod xmltok_impl_c {
                     }
                     21 | 9 | 10 => {}
                     22 | 24 => {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         break 's_151;
                     }
                     _ => {
@@ -770,60 +770,60 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
-            27 => return big2_scanComment(enc, ptr.offset(2isize), end, nextTokPtr),
+            27 => return big2_scanComment(enc, ptr.offset(2), end, nextTokPtr),
             20 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COND_SECT_OPEN;
             }
-            22 | 24 => ptr = ptr.offset(2isize),
+            22 | 24 => ptr = ptr.offset(2),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             's_151: {
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     30 => {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (2i32 * 2i32) as c_long)
+                            >= (2i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        match if *ptr.offset(2isize).offset(0isize)
+                        match if *ptr.offset(2).offset(0)
                             as c_int
-                            == 0i32
+                            == 0
                         {
                             (*(enc as *mut normal_encoding)).type_0[*ptr
-                                .offset(2isize)
-                                .offset(1isize)
+                                .offset(2)
+                                .offset(1)
                                 as c_uchar
                                 as usize] as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(2isize).offset(0isize),
-                                *ptr.offset(2isize).offset(1isize),
+                                *ptr.offset(2).offset(0),
+                                *ptr.offset(2).offset(1),
                             )
                         } {
                             21 | 9 | 10 | 30 => {
@@ -835,7 +835,7 @@ pub mod xmltok_impl_c {
                     }
                     21 | 9 | 10 => {}
                     22 | 24 => {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         break 's_151;
                     }
                     _ => {
@@ -856,45 +856,45 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut tokPtr: *mut c_int,
     ) -> c_int {
-        let mut upper: c_int = 0i32;
+        let mut upper: c_int = 0;
         *tokPtr = XML_TOK_PI;
-        if end.wrapping_offset_from(ptr) as c_long != (2i32 * 3i32) as c_long {
+        if end.wrapping_offset_from(ptr) as c_long != (2i32 * 3) as c_long {
             return 1i32;
         }
-        match if *ptr.offset(1isize) as c_int == 0i32 {
-            *ptr.offset(0isize)
+        match if *ptr.offset(1) as c_int == 0 {
+            *ptr.offset(0)
         } else {
             -1
         } {
             ASCII_x => {}
-            ASCII_X => upper = 1i32,
-            _ => return 1i32,
+            ASCII_X => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(2isize);
-        match if *ptr.offset(1isize) as c_int == 0i32 {
-            *ptr.offset(0isize)
+        ptr = ptr.offset(2);
+        match if *ptr.offset(1) as c_int == 0 {
+            *ptr.offset(0)
         } else {
             -1
         } {
             ASCII_m => {}
-            ASCII_M => upper = 1i32,
-            _ => return 1i32,
+            ASCII_M => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(2isize);
-        match if *ptr.offset(1isize) as c_int == 0i32 {
-            *ptr.offset(0isize)
+        ptr = ptr.offset(2);
+        match if *ptr.offset(1) as c_int == 0 {
+            *ptr.offset(0)
         } else {
             -1
         } {
             ASCII_l => {}
-            ASCII_L => upper = 1i32,
-            _ => return 1i32,
+            ASCII_L => upper = 1,
+            _ => return 1,
         }
         if upper != 0 {
             return 0i32;
         }
         *tokPtr = XML_TOK_XML_DECL;
-        return 1i32;
+        return 1;
     }
 
     pub unsafe extern "C" fn big2_checkPiTarget(
@@ -903,45 +903,45 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut tokPtr: *mut c_int,
     ) -> c_int {
-        let mut upper: c_int = 0i32;
+        let mut upper: c_int = 0;
         *tokPtr = XML_TOK_PI;
-        if end.wrapping_offset_from(ptr) as c_long != (2i32 * 3i32) as c_long {
+        if end.wrapping_offset_from(ptr) as c_long != (2i32 * 3) as c_long {
             return 1i32;
         }
-        match if *ptr.offset(0isize) as c_int == 0i32 {
-            *ptr.offset(1isize)
+        match if *ptr.offset(0) as c_int == 0 {
+            *ptr.offset(1)
         } else {
             -1
         } {
             ASCII_x => {}
-            ASCII_X => upper = 1i32,
-            _ => return 1i32,
+            ASCII_X => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(2isize);
-        match if *ptr.offset(0isize) as c_int == 0i32 {
-            *ptr.offset(1isize)
+        ptr = ptr.offset(2);
+        match if *ptr.offset(0) as c_int == 0 {
+            *ptr.offset(1)
         } else {
             -1
         } {
             ASCII_m => {}
-            ASCII_M => upper = 1i32,
-            _ => return 1i32,
+            ASCII_M => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(2isize);
-        match if *ptr.offset(0isize) as c_int == 0i32 {
-            *ptr.offset(1isize)
+        ptr = ptr.offset(2);
+        match if *ptr.offset(0) as c_int == 0 {
+            *ptr.offset(1)
         } else {
             -1
         } {
             ASCII_l => {}
-            ASCII_L => upper = 1i32,
-            _ => return 1i32,
+            ASCII_L => upper = 1,
+            _ => return 1,
         }
         if upper != 0 {
             return 0i32;
         }
         *tokPtr = XML_TOK_XML_DECL;
-        return 1i32;
+        return 1;
     }
 
     pub unsafe extern "C" fn normal_checkPiTarget(
@@ -950,33 +950,33 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut tokPtr: *mut c_int,
     ) -> c_int {
-        let mut upper: c_int = 0i32;
+        let mut upper: c_int = 0;
         *tokPtr = XML_TOK_PI;
-        if end.wrapping_offset_from(ptr) as c_long != (1i32 * 3i32) as c_long {
+        if end.wrapping_offset_from(ptr) as c_long != (1i32 * 3) as c_long {
             return 1i32;
         }
         match *ptr {
             ASCII_x => {}
-            ASCII_X => upper = 1i32,
-            _ => return 1i32,
+            ASCII_X => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(1isize);
+        ptr = ptr.offset(1);
         match *ptr {
             ASCII_m => {}
-            ASCII_M => upper = 1i32,
-            _ => return 1i32,
+            ASCII_M => upper = 1,
+            _ => return 1,
         }
-        ptr = ptr.offset(1isize);
+        ptr = ptr.offset(1);
         match *ptr {
             ASCII_l => {}
-            ASCII_L => upper = 1i32,
-            _ => return 1i32,
+            ASCII_L => upper = 1,
+            _ => return 1,
         }
         if upper != 0 {
             return 0i32;
         }
         *tokPtr = XML_TOK_XML_DECL;
-        return 1i32;
+        return 1;
     }
     /* ptr points to character following "<?" */
     /* ptr points to character following "<?" */
@@ -990,26 +990,26 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut tok: c_int = 0;
         let mut target: *const c_char = ptr;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -1021,36 +1021,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 6398034955962673631;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 11913429853522160501;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 11913429853522160501;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 11913429853522160501;
             }
             _ => {
@@ -1059,29 +1059,29 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            6398034955962673631 => ptr = ptr.offset(2isize),
+            6398034955962673631 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_118: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -1093,36 +1093,36 @@ pub mod xmltok_impl_c {
                     current_block_118 = 12311525036306139934;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_118 = 18218798608644444571;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_118 = 18218798608644444571;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_118 = 18218798608644444571;
                 }
                 21 | 9 | 10 => {
@@ -1130,59 +1130,59 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
+                        >= (1i32 * 2) as c_long
                     {
-                        match if *ptr.offset(1isize) as c_int == 0i32 {
+                        match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         } {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
                             15 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if *ptr.offset(1isize) as c_int == 0i32
-                                    && *ptr.offset(0isize) as c_int == 0x3ei32
+                                if *ptr.offset(1) as c_int == 0
+                                    && *ptr.offset(0) as c_int == 0x3e
                                 {
-                                    *nextTokPtr = ptr.offset(2isize);
+                                    *nextTokPtr = ptr.offset(2);
                                     return tok;
                                 }
                             }
-                            _ => ptr = ptr.offset(2isize),
+                            _ => ptr = ptr.offset(2),
                         }
                     }
                     return XML_TOK_PARTIAL;
@@ -1192,16 +1192,16 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x3ei32
+                    if *ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x3e
                     {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return tok;
                     }
                     current_block_118 = 1368869732813945810;
@@ -1219,7 +1219,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                12311525036306139934 => ptr = ptr.offset(2isize),
+                12311525036306139934 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -1234,27 +1234,27 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut tok: c_int = 0;
         let mut target: *const c_char = ptr;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -1266,36 +1266,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 13803923597135322110;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 11913429853522160501;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 11913429853522160501;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 11913429853522160501;
             }
             _ => {
@@ -1304,30 +1304,30 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            13803923597135322110 => ptr = ptr.offset(2isize),
+            13803923597135322110 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_118: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -1339,36 +1339,36 @@ pub mod xmltok_impl_c {
                     current_block_118 = 8820551849686684873;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_118 = 18218798608644444571;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_118 = 18218798608644444571;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_118 = 18218798608644444571;
                 }
                 21 | 9 | 10 => {
@@ -1376,60 +1376,60 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
+                        >= (1i32 * 2) as c_long
                     {
-                        match if *ptr.offset(0isize) as c_int == 0i32 {
+                        match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         } {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
                             15 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if *ptr.offset(0isize) as c_int == 0i32
-                                    && *ptr.offset(1isize) as c_int == 0x3ei32
+                                if *ptr.offset(0) as c_int == 0
+                                    && *ptr.offset(1) as c_int == 0x3e
                                 {
-                                    *nextTokPtr = ptr.offset(2isize);
+                                    *nextTokPtr = ptr.offset(2);
                                     return tok;
                                 }
                             }
-                            _ => ptr = ptr.offset(2isize),
+                            _ => ptr = ptr.offset(2),
                         }
                     }
                     return XML_TOK_PARTIAL;
@@ -1439,16 +1439,16 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x3ei32
+                    if *ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x3e
                     {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return tok;
                     }
                     current_block_118 = 5922746384104648762;
@@ -1462,7 +1462,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                8820551849686684873 => ptr = ptr.offset(2isize),
+                8820551849686684873 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -1477,13 +1477,13 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut tok: c_int = 0;
         let mut target: *const c_char = ptr;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -1493,7 +1493,7 @@ pub mod xmltok_impl_c {
                 current_block_32 = 909593556805851584;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -1504,11 +1504,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 11913429853522160501;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -1519,11 +1519,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 11913429853522160501;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -1534,7 +1534,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 11913429853522160501;
             }
             _ => {
@@ -1543,14 +1543,14 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            909593556805851584 => ptr = ptr.offset(1isize),
+            909593556805851584 => ptr = ptr.offset(1),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_118: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -1560,7 +1560,7 @@ pub mod xmltok_impl_c {
                     current_block_118 = 5152980791761092907;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -1571,11 +1571,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_118 = 18218798608644444571;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -1586,11 +1586,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_118 = 18218798608644444571;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -1601,7 +1601,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_118 = 18218798608644444571;
                 }
                 21 | 9 | 10 => {
@@ -1609,15 +1609,15 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long
+                        >= (1i32 * 1) as c_long
                     {
                         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                         {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -1630,10 +1630,10 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -1646,10 +1646,10 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -1662,25 +1662,25 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
                             15 => {
-                                ptr = ptr.offset(1isize);
+                                ptr = ptr.offset(1);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 1i32) as c_long)
+                                    >= (1i32 * 1) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if *ptr as c_int == 0x3ei32 {
-                                    *nextTokPtr = ptr.offset(1isize);
+                                if *ptr as c_int == 0x3e {
+                                    *nextTokPtr = ptr.offset(1);
                                     return tok;
                                 }
                             }
-                            _ => ptr = ptr.offset(1isize),
+                            _ => ptr = ptr.offset(1),
                         }
                     }
                     return XML_TOK_PARTIAL;
@@ -1690,14 +1690,14 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr as c_int == 0x3ei32 {
-                        *nextTokPtr = ptr.offset(1isize);
+                    if *ptr as c_int == 0x3e {
+                        *nextTokPtr = ptr.offset(1);
                         return tok;
                     }
                     current_block_118 = 12516980621136662590;
@@ -1711,7 +1711,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                5152980791761092907 => ptr = ptr.offset(1isize),
+                5152980791761092907 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -1742,19 +1742,19 @@ pub mod xmltok_impl_c {
         /* CDATA[ */
         /* CDATA[ */
         /* CDATA[ */
-        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
-        i = 0i32;
-        while i < 6i32 {
-            if !(*ptr.offset(0isize) as c_int == 0i32
-                && *ptr.offset(1isize) as c_int == CDATA_LSQB[i as usize] as c_int)
+        i = 0;
+        while i < 6 {
+            if !(*ptr.offset(0) as c_int == 0
+                && *ptr.offset(1) as c_int == CDATA_LSQB[i as usize] as c_int)
             {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             i += 1;
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
         *nextTokPtr = ptr;
         return XML_TOK_CDATA_SECT_OPEN;
@@ -1781,17 +1781,17 @@ pub mod xmltok_impl_c {
             ASCII_LSQB,
         ];
         let mut i: c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
-        i = 0i32;
-        while i < 6i32 {
+        i = 0;
+        while i < 6 {
             if !(*ptr as c_int == CDATA_LSQB[i as usize] as c_int) {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             i += 1;
-            ptr = ptr.offset(1isize)
+            ptr = ptr.offset(1)
         }
         *nextTokPtr = ptr;
         return XML_TOK_CDATA_SECT_OPEN;
@@ -1818,19 +1818,19 @@ pub mod xmltok_impl_c {
             ASCII_LSQB,
         ];
         let mut i: c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (6i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
-        i = 0i32;
-        while i < 6i32 {
-            if !(*ptr.offset(1isize) as c_int == 0i32
-                && *ptr.offset(0isize) as c_int == CDATA_LSQB[i as usize] as c_int)
+        i = 0;
+        while i < 6 {
+            if !(*ptr.offset(1) as c_int == 0
+                && *ptr.offset(0) as c_int == CDATA_LSQB[i as usize] as c_int)
             {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             i += 1;
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
         *nextTokPtr = ptr;
         return XML_TOK_CDATA_SECT_OPEN;
@@ -1845,142 +1845,142 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                if *ptr.offset(0isize) as c_int == 0i32
-                    && *ptr.offset(1isize) as c_int == 0x5di32
+                if *ptr.offset(0) as c_int == 0
+                    && *ptr.offset(1) as c_int == 0x5d
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x3e)
                     {
-                        ptr = ptr.offset(-(2isize))
+                        ptr = ptr.offset(-(2))
                     } else {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CDATA_SECT_CLOSE;
                     }
                 }
             }
             9 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                if (if *ptr.offset(0isize) as c_int == 0i32 {
+                if (if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 }) == BT_LF as c_int
                 {
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DATA_NEWLINE;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(2isize),
+            _ => ptr = ptr.offset(2),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 | 9 | 10 | 4 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -1996,138 +1996,138 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                if *ptr.offset(1isize) as c_int == 0i32
-                    && *ptr.offset(0isize) as c_int == 0x5di32
+                if *ptr.offset(1) as c_int == 0
+                    && *ptr.offset(0) as c_int == 0x5d
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x3e)
                     {
-                        ptr = ptr.offset(-(2isize))
+                        ptr = ptr.offset(-(2))
                     } else {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CDATA_SECT_CLOSE;
                     }
                 }
             }
             9 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                if (if *ptr.offset(1isize) as c_int == 0i32 {
+                if (if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 }) == BT_LF as c_int
                 {
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DATA_NEWLINE;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(2isize),
+            _ => ptr = ptr.offset(2),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 | 9 | 10 | 4 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -2143,11 +2143,11 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 1i32 > 1i32 {
+        if 1 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (1i32 - 1i32) as c_ulong != 0 {
-                n &= !(1i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (1i32 - 1) as c_ulong != 0 {
+                n &= !(1i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
@@ -2155,46 +2155,46 @@ pub mod xmltok_impl_c {
         }
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             4 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                if *ptr as c_int == 0x5di32 {
-                    ptr = ptr.offset(1isize);
+                if *ptr as c_int == 0x5d {
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr as c_int == 0x3ei32) {
-                        ptr = ptr.offset(-(1isize))
+                    if !(*ptr as c_int == 0x3e) {
+                        ptr = ptr.offset(-(1))
                     } else {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CDATA_SECT_CLOSE;
                     }
                 }
             }
             9 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
                 if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     == BT_LF as c_int
                 {
-                    ptr = ptr.offset(1isize)
+                    ptr = ptr.offset(1)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_DATA_NEWLINE;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2205,10 +2205,10 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2219,10 +2219,10 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2233,18 +2233,18 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(1isize),
+            _ => ptr = ptr.offset(1),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
                         || (*(enc as *const normal_encoding))
                             .isInvalid2
                             .expect("non-null function pointer")(enc, ptr)
@@ -2253,10 +2253,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
                         || (*(enc as *const normal_encoding))
                             .isInvalid3
                             .expect("non-null function pointer")(enc, ptr)
@@ -2265,10 +2265,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
                         || (*(enc as *const normal_encoding))
                             .isInvalid4
                             .expect("non-null function pointer")(enc, ptr)
@@ -2277,13 +2277,13 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 | 9 | 10 | 4 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
         }
         *nextTokPtr = ptr;
@@ -2299,13 +2299,13 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -2315,7 +2315,7 @@ pub mod xmltok_impl_c {
                 current_block_32 = 18181195574538971450;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2326,11 +2326,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2341,11 +2341,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -2356,7 +2356,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -2365,14 +2365,14 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            18181195574538971450 => ptr = ptr.offset(1isize),
+            18181195574538971450 => ptr = ptr.offset(1),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_73: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -2382,7 +2382,7 @@ pub mod xmltok_impl_c {
                     current_block_73 = 17691760011438675887;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -2393,11 +2393,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_73 = 10809827304263610514;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -2408,11 +2408,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_73 = 10809827304263610514;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -2423,20 +2423,20 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_73 = 10809827304263610514;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long
+                        >= (1i32 * 1) as c_long
                     {
                         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                         {
                             21 | 9 | 10 => {}
                             11 => {
-                                *nextTokPtr = ptr.offset(1isize);
+                                *nextTokPtr = ptr.offset(1);
                                 return XML_TOK_END_TAG;
                             }
                             _ => {
@@ -2444,7 +2444,7 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                         }
-                        ptr = ptr.offset(1isize)
+                        ptr = ptr.offset(1)
                     }
                     return XML_TOK_PARTIAL;
                 }
@@ -2455,11 +2455,11 @@ pub mod xmltok_impl_c {
                     since end-tag must match exactly */
                     /* no need to check qname syntax here,
                     since end-tag must match exactly */
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     current_block_73 = 10809827304263610514;
                 }
                 11 => {
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_END_TAG;
                 }
                 _ => {
@@ -2468,7 +2468,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_73 {
-                17691760011438675887 => ptr = ptr.offset(1isize),
+                17691760011438675887 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -2481,27 +2481,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -2513,36 +2513,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 10497796554217858559;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -2551,30 +2551,30 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            10497796554217858559 => ptr = ptr.offset(2isize),
+            10497796554217858559 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_73: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -2586,56 +2586,56 @@ pub mod xmltok_impl_c {
                     current_block_73 = 15122140455506841825;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_73 = 10809827304263610514;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_73 = 10809827304263610514;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_73 = 10809827304263610514;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
+                        >= (1i32 * 2) as c_long
                     {
-                        match if *ptr.offset(0isize) as c_int == 0i32 {
+                        match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         } {
                             21 | 9 | 10 => {}
                             11 => {
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_END_TAG;
                             }
                             _ => {
@@ -2643,16 +2643,16 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                         }
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     return XML_TOK_PARTIAL;
                 }
                 23 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_73 = 10809827304263610514;
                 }
                 11 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_END_TAG;
                 }
                 _ => {
@@ -2661,7 +2661,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_73 {
-                15122140455506841825 => ptr = ptr.offset(2isize),
+                15122140455506841825 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -2674,26 +2674,26 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -2705,36 +2705,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 188456398757501463;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -2743,29 +2743,29 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            188456398757501463 => ptr = ptr.offset(2isize),
+            188456398757501463 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_73: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -2777,55 +2777,55 @@ pub mod xmltok_impl_c {
                     current_block_73 = 8542218964871577364;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_73 = 10809827304263610514;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_73 = 10809827304263610514;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_73 = 10809827304263610514;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     while end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
+                        >= (1i32 * 2) as c_long
                     {
-                        match if *ptr.offset(1isize) as c_int == 0i32 {
+                        match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         } {
                             21 | 9 | 10 => {}
                             11 => {
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_END_TAG;
                             }
                             _ => {
@@ -2833,16 +2833,16 @@ pub mod xmltok_impl_c {
                                 return XML_TOK_INVALID;
                             }
                         }
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     return XML_TOK_PARTIAL;
                 }
                 23 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_73 = 10809827304263610514;
                 }
                 11 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_END_TAG;
                 }
                 _ => {
@@ -2851,7 +2851,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_73 {
-                8542218964871577364 => ptr = ptr.offset(2isize),
+                8542218964871577364 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -2867,13 +2867,13 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 25 | 24 => {}
@@ -2882,19 +2882,19 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     25 | 24 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -2902,7 +2902,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return XML_TOK_PARTIAL;
@@ -2914,14 +2914,14 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 25 | 24 => {}
@@ -2930,21 +2930,21 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     25 | 24 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -2952,7 +2952,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return XML_TOK_PARTIAL;
@@ -2964,7 +2964,7 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 25 | 24 => {}
                 _ => {
@@ -2972,12 +2972,12 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(1isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+            ptr = ptr.offset(1);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     25 | 24 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -2985,7 +2985,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(1isize)
+                ptr = ptr.offset(1)
             }
         }
         return XML_TOK_PARTIAL;
@@ -3000,9 +3000,9 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            if *ptr.offset(1isize) as c_int == 0i32
-                && *ptr.offset(0isize) as c_int == 0x78i32
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            if *ptr.offset(1) as c_int == 0
+                && *ptr.offset(0) as c_int == 0x78
             {
                 return little2_scanHexCharRef(
                     enc,
@@ -3011,12 +3011,12 @@ pub mod xmltok_impl_c {
                     nextTokPtr,
                 );
             }
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 25 => {}
@@ -3025,19 +3025,19 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     25 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -3045,7 +3045,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return XML_TOK_PARTIAL;
@@ -3057,19 +3057,19 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            if *ptr.offset(0isize) as c_int == 0i32
-                && *ptr.offset(1isize) as c_int == 0x78i32
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            if *ptr.offset(0) as c_int == 0
+                && *ptr.offset(1) as c_int == 0x78
             {
                 return big2_scanHexCharRef(enc, ptr.offset(2isize), end, nextTokPtr);
             }
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 25 => {}
@@ -3078,21 +3078,21 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(2isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+            ptr = ptr.offset(2);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     25 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -3100,7 +3100,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return XML_TOK_PARTIAL;
@@ -3112,8 +3112,8 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
-            if *ptr as c_int == 0x78i32 {
+        if end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
+            if *ptr as c_int == 0x78 {
                 return normal_scanHexCharRef(
                     enc,
                     ptr.offset(1isize),
@@ -3128,12 +3128,12 @@ pub mod xmltok_impl_c {
                     return XML_TOK_INVALID;
                 }
             }
-            ptr = ptr.offset(1isize);
-            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+            ptr = ptr.offset(1);
+            while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     25 => {}
                     18 => {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CHAR_REF;
                     }
                     _ => {
@@ -3141,7 +3141,7 @@ pub mod xmltok_impl_c {
                         return XML_TOK_INVALID;
                     }
                 }
-                ptr = ptr.offset(1isize)
+                ptr = ptr.offset(1)
             }
         }
         return XML_TOK_PARTIAL;
@@ -3156,13 +3156,13 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_33: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -3172,7 +3172,7 @@ pub mod xmltok_impl_c {
                 current_block_33 = 15143551936184752825;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -3183,11 +3183,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_33 = 18377268871191777778;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -3198,11 +3198,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_33 = 18377268871191777778;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -3213,24 +3213,24 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_33 = 18377268871191777778;
             }
-            19 => return normal_scanCharRef(enc, ptr.offset(1isize), end, nextTokPtr),
+            19 => return normal_scanCharRef(enc, ptr.offset(1), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
         match current_block_33 {
-            15143551936184752825 => ptr = ptr.offset(1isize),
+            15143551936184752825 => ptr = ptr.offset(1),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_64: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -3240,7 +3240,7 @@ pub mod xmltok_impl_c {
                     current_block_64 = 12579958577185958249;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -3251,11 +3251,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_64 = 1134115459065347084;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -3266,11 +3266,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_64 = 1134115459065347084;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -3281,11 +3281,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_64 = 1134115459065347084;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_ENTITY_REF;
                 }
                 _ => {
@@ -3294,7 +3294,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_64 {
-                12579958577185958249 => ptr = ptr.offset(1isize),
+                12579958577185958249 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -3307,26 +3307,26 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_33: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -3338,40 +3338,40 @@ pub mod xmltok_impl_c {
                 current_block_33 = 8695478541019159461;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_33 = 18377268871191777778;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_33 = 18377268871191777778;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_33 = 18377268871191777778;
             }
             19 => {
-                return little2_scanCharRef(enc, ptr.offset(2isize), end, nextTokPtr)
+                return little2_scanCharRef(enc, ptr.offset(2), end, nextTokPtr)
             }
             _ => {
                 *nextTokPtr = ptr;
@@ -3379,29 +3379,29 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_33 {
-            8695478541019159461 => ptr = ptr.offset(2isize),
+            8695478541019159461 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_64: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3413,40 +3413,40 @@ pub mod xmltok_impl_c {
                     current_block_64 = 16314533736538551187;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_64 = 1134115459065347084;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_64 = 1134115459065347084;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_64 = 1134115459065347084;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_ENTITY_REF;
                 }
                 _ => {
@@ -3455,7 +3455,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_64 {
-                16314533736538551187 => ptr = ptr.offset(2isize),
+                16314533736538551187 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -3468,27 +3468,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_33: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -3500,69 +3500,69 @@ pub mod xmltok_impl_c {
                 current_block_33 = 11934390993149424930;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_33 = 18377268871191777778;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_33 = 18377268871191777778;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_33 = 18377268871191777778;
             }
-            19 => return big2_scanCharRef(enc, ptr.offset(2isize), end, nextTokPtr),
+            19 => return big2_scanCharRef(enc, ptr.offset(2), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
         match current_block_33 {
-            11934390993149424930 => ptr = ptr.offset(2isize),
+            11934390993149424930 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_64: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3574,40 +3574,40 @@ pub mod xmltok_impl_c {
                     current_block_64 = 10291975244637513717;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_64 = 1134115459065347084;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_64 = 1134115459065347084;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_64 = 1134115459065347084;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_ENTITY_REF;
                 }
                 _ => {
@@ -3616,7 +3616,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_64 {
-                10291975244637513717 => ptr = ptr.offset(2isize),
+                10291975244637513717 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -3632,28 +3632,28 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut hadColon: c_int = 0i32;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        let mut hadColon: c_int = 0;
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_186: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -3665,36 +3665,36 @@ pub mod xmltok_impl_c {
                     current_block_186 = 17518983136156868271;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_186 = 11099343707781121639;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_186 = 11099343707781121639;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_186 = 11099343707781121639;
                 }
                 23 => {
@@ -3702,35 +3702,35 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(2isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_64: u64;
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
+                    match if *ptr.offset(0) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1isize) as c_uchar as usize]
+                            [*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(0isize),
-                            *ptr.offset(1isize),
+                            *ptr.offset(0),
+                            *ptr.offset(1),
                         )
                     } {
                         29 => {
                             if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(0isize) as c_uchar as usize]
+                                [*ptr.offset(0) as c_uchar as usize]
                                 as c_int)
-                                << 3i32)
-                                + (*ptr.offset(1isize) as c_uchar as c_int
-                                    >> 5i32))
+                                << 3)
+                                + (*ptr.offset(1) as c_uchar as c_int
+                                    >> 5))
                                 as usize]
-                                & (1u32)
-                                    << (*ptr.offset(1isize) as c_uchar as c_int
-                                        & 0x1fi32)
+                                & (1)
+                                    << (*ptr.offset(1) as c_uchar as c_int
+                                        & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -3742,36 +3742,36 @@ pub mod xmltok_impl_c {
                             current_block_64 = 1844840963447537551;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_64 = 317151059986244064;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_64 = 317151059986244064;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_64 = 317151059986244064;
                         }
                         _ => {
@@ -3780,7 +3780,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_64 {
-                        1844840963447537551 => ptr = ptr.offset(2isize),
+                        1844840963447537551 => ptr = ptr.offset(2),
                         _ => {}
                     }
                     current_block_186 = 11099343707781121639;
@@ -3788,20 +3788,20 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     loop {
                         let mut t: c_int = 0;
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        t = if *ptr.offset(0isize) as c_int == 0i32 {
+                        t = if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         };
                         if t == BT_EQUALS as c_int {
@@ -3832,22 +3832,22 @@ pub mod xmltok_impl_c {
                 /* fall through */
                 {
                     let mut open: c_int = 0;
-                    hadColon = 0i32;
+                    hadColon = 0;
                     loop {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        open = if *ptr.offset(0isize) as c_int == 0i32 {
+                        open = if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         };
                         if open == BT_QUOT as c_int || open == BT_APOS as c_int {
@@ -3861,7 +3861,7 @@ pub mod xmltok_impl_c {
                             }
                         }
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     loop
                     /* in attribute value */
                     /* in attribute value */
@@ -3869,18 +3869,18 @@ pub mod xmltok_impl_c {
                     {
                         let mut t_0: c_int = 0;
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        t_0 = if *ptr.offset(0isize) as c_int == 0i32 {
+                        t_0 = if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         };
                         if t_0 == open {
@@ -3888,25 +3888,25 @@ pub mod xmltok_impl_c {
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
@@ -3915,11 +3915,11 @@ pub mod xmltok_impl_c {
                             3 => {
                                 let mut tok: c_int = big2_scanRef(
                                     enc,
-                                    ptr.offset(2isize),
+                                    ptr.offset(2),
                                     end,
                                     &mut ptr,
                                 );
-                                if tok <= 0i32 {
+                                if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
                                     }
@@ -3930,23 +3930,23 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            _ => ptr = ptr.offset(2isize),
+                            _ => ptr = ptr.offset(2),
                         }
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
+                    match if *ptr.offset(0) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1isize) as c_uchar as usize]
+                            [*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(0isize),
-                            *ptr.offset(1isize),
+                            *ptr.offset(0),
+                            *ptr.offset(1),
                         )
                     } {
                         21 | 9 | 10 => {
@@ -3955,35 +3955,35 @@ pub mod xmltok_impl_c {
                             /* ptr points to closing quote */
                             /* ptr points to closing quote */
                             {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                match if *ptr.offset(0isize) as c_int == 0i32 {
+                                match if *ptr.offset(0) as c_int == 0 {
                                     (*(enc as *mut normal_encoding)).type_0
-                                        [*ptr.offset(1isize) as c_uchar as usize]
+                                        [*ptr.offset(1) as c_uchar as usize]
                                         as c_int
                                 } else {
                                     unicode_byte_type(
-                                        *ptr.offset(0isize),
-                                        *ptr.offset(1isize),
+                                        *ptr.offset(0),
+                                        *ptr.offset(1),
                                     )
                                 } {
                                     29 => {
                                         if namingBitmap[(((nmstrtPages
-                                            [*ptr.offset(0isize) as c_uchar as usize]
+                                            [*ptr.offset(0) as c_uchar as usize]
                                             as c_int)
-                                            << 3i32)
-                                            + (*ptr.offset(1isize) as c_uchar
+                                            << 3)
+                                            + (*ptr.offset(1) as c_uchar
                                                 as c_int
-                                                >> 5i32))
+                                                >> 5))
                                             as usize]
-                                            & (1u32)
-                                                << (*ptr.offset(1isize) as c_uchar
+                                            & (1)
+                                                << (*ptr.offset(1) as c_uchar
                                                     as c_int
-                                                    & 0x1fi32)
+                                                    & 0x1f)
                                             == 0
                                         {
                                             *nextTokPtr = ptr;
@@ -3998,43 +3998,43 @@ pub mod xmltok_impl_c {
                                     }
                                     5 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2i64
+                                            < 2
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(2isize);
+                                        ptr = ptr.offset(2);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     6 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3i64
+                                            < 3
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(3isize);
+                                        ptr = ptr.offset(3);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     7 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4i64
+                                            < 4
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(4isize);
+                                        ptr = ptr.offset(4);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
@@ -4058,7 +4058,7 @@ pub mod xmltok_impl_c {
                                 1275279814574597502 => {}
                                 11099343707781121639 => {}
                                 _ => {
-                                    ptr = ptr.offset(2isize);
+                                    ptr = ptr.offset(2);
                                     current_block_186 = 11099343707781121639;
                                 }
                             }
@@ -4078,29 +4078,29 @@ pub mod xmltok_impl_c {
                         11099343707781121639 => {}
                         _ => match current_block_186 {
                             1275279814574597502 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if !(*ptr.offset(0isize) as c_int == 0i32
-                                    && *ptr.offset(1isize) as c_int == 0x3ei32)
+                                if !(*ptr.offset(0) as c_int == 0
+                                    && *ptr.offset(1) as c_int == 0x3e)
                                 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
                             }
                             _ => {
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_START_TAG_WITH_ATTS;
                             }
                         },
                     }
                 }
-                17518983136156868271 => ptr = ptr.offset(2isize),
+                17518983136156868271 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -4113,27 +4113,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut hadColon: c_int = 0i32;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        let mut hadColon: c_int = 0;
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_186: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -4145,36 +4145,36 @@ pub mod xmltok_impl_c {
                     current_block_186 = 13609164463425058869;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_186 = 11099343707781121639;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_186 = 11099343707781121639;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_186 = 11099343707781121639;
                 }
                 23 => {
@@ -4182,33 +4182,33 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(2isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_64: u64;
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
+                    match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(1isize),
-                            *ptr.offset(0isize),
+                            *ptr.offset(1),
+                            *ptr.offset(0),
                         )
                     } {
                         29 => {
                             if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int)
-                                << 3i32)
-                                + (*ptr.offset(0isize) as c_uchar as c_int
-                                    >> 5i32))
+                                << 3)
+                                + (*ptr.offset(0) as c_uchar as c_int
+                                    >> 5))
                                 as usize]
-                                & (1u32)
-                                    << (*ptr.offset(0isize) as c_uchar as c_int
-                                        & 0x1fi32)
+                                & (1)
+                                    << (*ptr.offset(0) as c_uchar as c_int
+                                        & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -4220,36 +4220,36 @@ pub mod xmltok_impl_c {
                             current_block_64 = 16848571710846909653;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_64 = 317151059986244064;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_64 = 317151059986244064;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_64 = 317151059986244064;
                         }
                         _ => {
@@ -4258,7 +4258,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_64 {
-                        16848571710846909653 => ptr = ptr.offset(2isize),
+                        16848571710846909653 => ptr = ptr.offset(2),
                         _ => {}
                     }
                     current_block_186 = 11099343707781121639;
@@ -4266,19 +4266,19 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     loop {
                         let mut t: c_int = 0;
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        t = if *ptr.offset(1isize) as c_int == 0i32 {
+                        t = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         };
                         if t == BT_EQUALS as c_int {
@@ -4305,21 +4305,21 @@ pub mod xmltok_impl_c {
             match current_block_186 {
                 17167606947040001567 => {
                     let mut open: c_int = 0;
-                    hadColon = 0i32;
+                    hadColon = 0;
                     loop {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        open = if *ptr.offset(1isize) as c_int == 0i32 {
+                        open = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         };
                         if open == BT_QUOT as c_int || open == BT_APOS as c_int {
@@ -4333,21 +4333,21 @@ pub mod xmltok_impl_c {
                             }
                         }
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     loop {
                         let mut t_0: c_int = 0;
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        t_0 = if *ptr.offset(1isize) as c_int == 0i32 {
+                        t_0 = if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         };
                         if t_0 == open {
@@ -4355,25 +4355,25 @@ pub mod xmltok_impl_c {
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
@@ -4382,11 +4382,11 @@ pub mod xmltok_impl_c {
                             3 => {
                                 let mut tok: c_int = little2_scanRef(
                                     enc,
-                                    ptr.offset(2isize),
+                                    ptr.offset(2),
                                     end,
                                     &mut ptr,
                                 );
-                                if tok <= 0i32 {
+                                if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
                                     }
@@ -4397,54 +4397,54 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            _ => ptr = ptr.offset(2isize),
+                            _ => ptr = ptr.offset(2),
                         }
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
+                    match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(1isize),
-                            *ptr.offset(0isize),
+                            *ptr.offset(1),
+                            *ptr.offset(0),
                         )
                     } {
                         21 | 9 | 10 => {
                             loop {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                match if *ptr.offset(1isize) as c_int == 0i32 {
+                                match if *ptr.offset(1) as c_int == 0 {
                                     (*(enc as *mut normal_encoding)).type_0
                                         [*ptr as c_uchar as usize]
                                         as c_int
                                 } else {
                                     unicode_byte_type(
-                                        *ptr.offset(1isize),
-                                        *ptr.offset(0isize),
+                                        *ptr.offset(1),
+                                        *ptr.offset(0),
                                     )
                                 } {
                                     29 => {
                                         if namingBitmap[(((nmstrtPages
-                                            [*ptr.offset(1isize) as c_uchar as usize]
+                                            [*ptr.offset(1) as c_uchar as usize]
                                             as c_int)
-                                            << 3i32)
-                                            + (*ptr.offset(0isize) as c_uchar
+                                            << 3)
+                                            + (*ptr.offset(0) as c_uchar
                                                 as c_int
-                                                >> 5i32))
+                                                >> 5))
                                             as usize]
-                                            & (1u32)
-                                                << (*ptr.offset(0isize) as c_uchar
+                                            & (1)
+                                                << (*ptr.offset(0) as c_uchar
                                                     as c_int
-                                                    & 0x1fi32)
+                                                    & 0x1f)
                                             == 0
                                         {
                                             *nextTokPtr = ptr;
@@ -4459,43 +4459,43 @@ pub mod xmltok_impl_c {
                                     }
                                     5 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2i64
+                                            < 2
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(2isize);
+                                        ptr = ptr.offset(2);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     6 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3i64
+                                            < 3
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(3isize);
+                                        ptr = ptr.offset(3);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     7 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4i64
+                                            < 4
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(4isize);
+                                        ptr = ptr.offset(4);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
@@ -4519,7 +4519,7 @@ pub mod xmltok_impl_c {
                                 6487149160532398276 => {}
                                 11099343707781121639 => {}
                                 _ => {
-                                    ptr = ptr.offset(2isize);
+                                    ptr = ptr.offset(2);
                                     current_block_186 = 11099343707781121639;
                                 }
                             }
@@ -4539,29 +4539,29 @@ pub mod xmltok_impl_c {
                         11099343707781121639 => {}
                         _ => match current_block_186 {
                             6487149160532398276 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 2i32) as c_long)
+                                    >= (1i32 * 2) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if !(*ptr.offset(1isize) as c_int == 0i32
-                                    && *ptr.offset(0isize) as c_int == 0x3ei32)
+                                if !(*ptr.offset(1) as c_int == 0
+                                    && *ptr.offset(0) as c_int == 0x3e)
                                 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
                             }
                             _ => {
-                                *nextTokPtr = ptr.offset(2isize);
+                                *nextTokPtr = ptr.offset(2);
                                 return XML_TOK_START_TAG_WITH_ATTS;
                             }
                         },
                     }
                 }
-                13609164463425058869 => ptr = ptr.offset(2isize),
+                13609164463425058869 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -4574,12 +4574,12 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut hadColon: c_int = 0i32;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        let mut hadColon: c_int = 0;
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_186: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -4589,7 +4589,7 @@ pub mod xmltok_impl_c {
                     current_block_186 = 1328744425620679301;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -4600,11 +4600,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_186 = 11099343707781121639;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -4615,11 +4615,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_186 = 11099343707781121639;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -4630,7 +4630,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_186 = 11099343707781121639;
                 }
                 23 => {
@@ -4638,10 +4638,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(1isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
@@ -4649,7 +4649,7 @@ pub mod xmltok_impl_c {
                     match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     {
                         29 => {
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
@@ -4659,7 +4659,7 @@ pub mod xmltok_impl_c {
                             current_block_64 = 13714184482889841412;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -4671,11 +4671,11 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_64 = 317151059986244064;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -4687,11 +4687,11 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_64 = 317151059986244064;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -4703,7 +4703,7 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_64 = 317151059986244064;
                         }
                         _ => {
@@ -4712,7 +4712,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_64 {
-                        13714184482889841412 => ptr = ptr.offset(1isize),
+                        13714184482889841412 => ptr = ptr.offset(1),
                         _ => {}
                     }
                     current_block_186 = 11099343707781121639;
@@ -4720,9 +4720,9 @@ pub mod xmltok_impl_c {
                 21 | 9 | 10 => {
                     loop {
                         let mut t: c_int = 0;
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
@@ -4752,11 +4752,11 @@ pub mod xmltok_impl_c {
             match current_block_186 {
                 17167606947040001567 => {
                     let mut open: c_int = 0;
-                    hadColon = 0i32;
+                    hadColon = 0;
                     loop {
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
@@ -4773,11 +4773,11 @@ pub mod xmltok_impl_c {
                             }
                         }
                     }
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     loop {
                         let mut t_0: c_int = 0;
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
@@ -4788,7 +4788,7 @@ pub mod xmltok_impl_c {
                         }
                         match t_0 {
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -4801,10 +4801,10 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -4817,10 +4817,10 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(3isize)
+                                ptr = ptr.offset(3)
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -4833,7 +4833,7 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(4isize)
+                                ptr = ptr.offset(4)
                             }
                             0 | 1 | 8 => {
                                 *nextTokPtr = ptr;
@@ -4842,11 +4842,11 @@ pub mod xmltok_impl_c {
                             3 => {
                                 let mut tok: c_int = normal_scanRef(
                                     enc,
-                                    ptr.offset(1isize),
+                                    ptr.offset(1),
                                     end,
                                     &mut ptr,
                                 );
-                                if tok <= 0i32 {
+                                if tok <= 0 {
                                     if tok == XML_TOK_INVALID {
                                         *nextTokPtr = ptr
                                     }
@@ -4857,12 +4857,12 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            _ => ptr = ptr.offset(1isize),
+                            _ => ptr = ptr.offset(1),
                         }
                     }
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
@@ -4870,9 +4870,9 @@ pub mod xmltok_impl_c {
                     {
                         21 | 9 | 10 => {
                             loop {
-                                ptr = ptr.offset(1isize);
+                                ptr = ptr.offset(1);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 1i32) as c_long)
+                                    >= (1i32 * 1) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
@@ -4881,7 +4881,7 @@ pub mod xmltok_impl_c {
                                     as c_int
                                 {
                                     29 => {
-                                        if 0i32 == 0 {
+                                        if 0 == 0 {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
@@ -4894,7 +4894,7 @@ pub mod xmltok_impl_c {
                                     }
                                     5 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 2i64
+                                            < 2
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
@@ -4907,13 +4907,13 @@ pub mod xmltok_impl_c {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(2isize);
+                                        ptr = ptr.offset(2);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     6 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 3i64
+                                            < 3
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
@@ -4926,13 +4926,13 @@ pub mod xmltok_impl_c {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(3isize);
+                                        ptr = ptr.offset(3);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
                                     7 => {
                                         if (end.wrapping_offset_from(ptr) as c_long)
-                                            < 4i64
+                                            < 4
                                         {
                                             return XML_TOK_PARTIAL_CHAR;
                                         }
@@ -4945,7 +4945,7 @@ pub mod xmltok_impl_c {
                                             *nextTokPtr = ptr;
                                             return XML_TOK_INVALID;
                                         }
-                                        ptr = ptr.offset(4isize);
+                                        ptr = ptr.offset(4);
                                         current_block_186 = 11099343707781121639;
                                         break;
                                     }
@@ -4969,7 +4969,7 @@ pub mod xmltok_impl_c {
                                 13746452913673866366 => {}
                                 11099343707781121639 => {}
                                 _ => {
-                                    ptr = ptr.offset(1isize);
+                                    ptr = ptr.offset(1);
                                     current_block_186 = 11099343707781121639;
                                 }
                             }
@@ -4989,27 +4989,27 @@ pub mod xmltok_impl_c {
                         11099343707781121639 => {}
                         _ => match current_block_186 {
                             13746452913673866366 => {
-                                ptr = ptr.offset(1isize);
+                                ptr = ptr.offset(1);
                                 if !(end.wrapping_offset_from(ptr) as c_long
-                                    >= (1i32 * 1i32) as c_long)
+                                    >= (1i32 * 1) as c_long)
                                 {
                                     return XML_TOK_PARTIAL;
                                 }
-                                if !(*ptr as c_int == 0x3ei32) {
+                                if !(*ptr as c_int == 0x3e) {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                *nextTokPtr = ptr.offset(1isize);
+                                *nextTokPtr = ptr.offset(1);
                                 return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
                             }
                             _ => {
-                                *nextTokPtr = ptr.offset(1isize);
+                                *nextTokPtr = ptr.offset(1);
                                 return XML_TOK_START_TAG_WITH_ATTS;
                             }
                         },
                     }
                 }
-                1328744425620679301 => ptr = ptr.offset(1isize),
+                1328744425620679301 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -5026,13 +5026,13 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         let mut hadColon: c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_45: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -5042,7 +5042,7 @@ pub mod xmltok_impl_c {
                 current_block_45 = 2093567751087104139;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -5053,11 +5053,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_45 = 1847472278776910194;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -5068,11 +5068,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_45 = 1847472278776910194;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -5083,12 +5083,12 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_45 = 1847472278776910194;
             }
             16 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
@@ -5096,7 +5096,7 @@ pub mod xmltok_impl_c {
                     27 => {
                         return normal_scanComment(
                             enc,
-                            ptr.offset(1isize),
+                            ptr.offset(1),
                             end,
                             nextTokPtr,
                         )
@@ -5104,7 +5104,7 @@ pub mod xmltok_impl_c {
                     20 => {
                         return normal_scanCdataSection(
                             enc,
-                            ptr.offset(1isize),
+                            ptr.offset(1),
                             end,
                             nextTokPtr,
                         )
@@ -5114,26 +5114,26 @@ pub mod xmltok_impl_c {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            15 => return normal_scanPi(enc, ptr.offset(1isize), end, nextTokPtr),
-            17 => return normal_scanEndTag(enc, ptr.offset(1isize), end, nextTokPtr),
+            15 => return normal_scanPi(enc, ptr.offset(1), end, nextTokPtr),
+            17 => return normal_scanEndTag(enc, ptr.offset(1), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
         match current_block_45 {
-            2093567751087104139 => ptr = ptr.offset(1isize),
+            2093567751087104139 => ptr = ptr.offset(1),
             _ => {}
         }
-        hadColon = 0i32;
+        hadColon = 0;
         /* we have a start-tag */
         /* we have a start-tag */
         /* we have a start-tag */
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_161: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -5143,7 +5143,7 @@ pub mod xmltok_impl_c {
                     current_block_161 = 9017017852254768106;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -5154,11 +5154,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_161 = 12655303178690906525;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -5169,11 +5169,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_161 = 12655303178690906525;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -5184,7 +5184,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_161 = 12655303178690906525;
                 }
                 23 => {
@@ -5192,10 +5192,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(1isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
@@ -5203,7 +5203,7 @@ pub mod xmltok_impl_c {
                     match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     {
                         29 => {
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
@@ -5213,7 +5213,7 @@ pub mod xmltok_impl_c {
                             current_block_112 = 15659092796775618263;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -5225,11 +5225,11 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_112 = 2463987395154258233;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -5241,11 +5241,11 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_112 = 2463987395154258233;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
                             if (*(enc as *const normal_encoding))
@@ -5257,7 +5257,7 @@ pub mod xmltok_impl_c {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_112 = 2463987395154258233;
                         }
                         _ => {
@@ -5266,16 +5266,16 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_112 {
-                        15659092796775618263 => ptr = ptr.offset(1isize),
+                        15659092796775618263 => ptr = ptr.offset(1),
                         _ => {}
                     }
                     current_block_161 = 12655303178690906525;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     loop {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             current_block_161 = 13000670339742628194;
                             break;
@@ -5284,7 +5284,7 @@ pub mod xmltok_impl_c {
                             as c_int
                         {
                             29 => {
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
@@ -5294,7 +5294,7 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 5850705615406568950;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -5307,11 +5307,11 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -5324,11 +5324,11 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(3isize);
+                                ptr = ptr.offset(3);
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
@@ -5341,7 +5341,7 @@ pub mod xmltok_impl_c {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(4isize);
+                                ptr = ptr.offset(4);
                                 current_block_161 = 7999014830792590863;
                             }
                             11 => {
@@ -5353,7 +5353,7 @@ pub mod xmltok_impl_c {
                                 break;
                             }
                             21 | 9 | 10 => {
-                                ptr = ptr.offset(1isize);
+                                ptr = ptr.offset(1);
                                 continue;
                             }
                             _ => {
@@ -5362,7 +5362,7 @@ pub mod xmltok_impl_c {
                             }
                         }
                         match current_block_161 {
-                            5850705615406568950 => ptr = ptr.offset(1isize),
+                            5850705615406568950 => ptr = ptr.offset(1),
                             _ => {}
                         }
                         return normal_scanAtts(enc, ptr, end, nextTokPtr);
@@ -5386,24 +5386,24 @@ pub mod xmltok_impl_c {
             }
             match current_block_161 {
                 885266785391146906 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr as c_int == 0x3ei32) {
+                    if !(*ptr as c_int == 0x3e) {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_EMPTY_ELEMENT_NO_ATTS;
                 }
                 11968577662814546452 => {
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_START_TAG_NO_ATTS;
                 }
-                9017017852254768106 => ptr = ptr.offset(1isize),
+                9017017852254768106 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -5417,27 +5417,27 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         let mut hadColon: c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_45: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -5449,58 +5449,58 @@ pub mod xmltok_impl_c {
                 current_block_45 = 3982799367787197894;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_45 = 1847472278776910194;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_45 = 1847472278776910194;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_45 = 1847472278776910194;
             }
             16 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     27 => {
                         return big2_scanComment(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
@@ -5508,7 +5508,7 @@ pub mod xmltok_impl_c {
                     20 => {
                         return big2_scanCdataSection(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
@@ -5518,39 +5518,39 @@ pub mod xmltok_impl_c {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            15 => return big2_scanPi(enc, ptr.offset(2isize), end, nextTokPtr),
-            17 => return big2_scanEndTag(enc, ptr.offset(2isize), end, nextTokPtr),
+            15 => return big2_scanPi(enc, ptr.offset(2), end, nextTokPtr),
+            17 => return big2_scanEndTag(enc, ptr.offset(2), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
         match current_block_45 {
-            3982799367787197894 => ptr = ptr.offset(2isize),
+            3982799367787197894 => ptr = ptr.offset(2),
             _ => {}
         }
-        hadColon = 0i32;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        hadColon = 0;
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_161: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -5562,36 +5562,36 @@ pub mod xmltok_impl_c {
                     current_block_161 = 14827193857955628413;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_161 = 12655303178690906525;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_161 = 12655303178690906525;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_161 = 12655303178690906525;
                 }
                 23 => {
@@ -5599,35 +5599,35 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(2isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_112: u64;
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
+                    match if *ptr.offset(0) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1isize) as c_uchar as usize]
+                            [*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(0isize),
-                            *ptr.offset(1isize),
+                            *ptr.offset(0),
+                            *ptr.offset(1),
                         )
                     } {
                         29 => {
                             if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(0isize) as c_uchar as usize]
+                                [*ptr.offset(0) as c_uchar as usize]
                                 as c_int)
-                                << 3i32)
-                                + (*ptr.offset(1isize) as c_uchar as c_int
-                                    >> 5i32))
+                                << 3)
+                                + (*ptr.offset(1) as c_uchar as c_int
+                                    >> 5))
                                 as usize]
-                                & (1u32)
-                                    << (*ptr.offset(1isize) as c_uchar as c_int
-                                        & 0x1fi32)
+                                & (1)
+                                    << (*ptr.offset(1) as c_uchar as c_int
+                                        & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -5639,36 +5639,36 @@ pub mod xmltok_impl_c {
                             current_block_112 = 7694897095983579606;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_112 = 2463987395154258233;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_112 = 2463987395154258233;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_112 = 2463987395154258233;
                         }
                         _ => {
@@ -5677,41 +5677,41 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_112 {
-                        7694897095983579606 => ptr = ptr.offset(2isize),
+                        7694897095983579606 => ptr = ptr.offset(2),
                         _ => {}
                     }
                     current_block_161 = 12655303178690906525;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     loop {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             current_block_161 = 13000670339742628194;
                             break;
                         }
-                        match if *ptr.offset(0isize) as c_int == 0i32 {
+                        match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         } {
                             29 => {
                                 if namingBitmap[(((nmstrtPages
-                                    [*ptr.offset(0isize) as c_uchar as usize]
+                                    [*ptr.offset(0) as c_uchar as usize]
                                     as c_int)
-                                    << 3i32)
-                                    + (*ptr.offset(1isize) as c_uchar as c_int
-                                        >> 5i32))
+                                    << 3)
+                                    + (*ptr.offset(1) as c_uchar as c_int
+                                        >> 5))
                                     as usize]
-                                    & (1u32)
-                                        << (*ptr.offset(1isize) as c_uchar as c_int
-                                            & 0x1fi32)
+                                    & (1)
+                                        << (*ptr.offset(1) as c_uchar as c_int
+                                            & 0x1f)
                                     == 0
                                 {
                                     *nextTokPtr = ptr;
@@ -5723,39 +5723,39 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 16787315395666308353;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(3isize);
+                                ptr = ptr.offset(3);
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(4isize);
+                                ptr = ptr.offset(4);
                                 current_block_161 = 7999014830792590863;
                             }
                             11 => {
@@ -5767,7 +5767,7 @@ pub mod xmltok_impl_c {
                                 break;
                             }
                             21 | 9 | 10 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 continue;
                             }
                             _ => {
@@ -5776,7 +5776,7 @@ pub mod xmltok_impl_c {
                             }
                         }
                         match current_block_161 {
-                            16787315395666308353 => ptr = ptr.offset(2isize),
+                            16787315395666308353 => ptr = ptr.offset(2),
                             _ => {}
                         }
                         return big2_scanAtts(enc, ptr, end, nextTokPtr);
@@ -5800,26 +5800,26 @@ pub mod xmltok_impl_c {
             }
             match current_block_161 {
                 1225701803299345799 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x3e)
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_EMPTY_ELEMENT_NO_ATTS;
                 }
                 8186870683368195072 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_START_TAG_NO_ATTS;
                 }
-                14827193857955628413 => ptr = ptr.offset(2isize),
+                14827193857955628413 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -5833,26 +5833,26 @@ pub mod xmltok_impl_c {
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
         let mut hadColon: c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_45: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -5864,56 +5864,56 @@ pub mod xmltok_impl_c {
                 current_block_45 = 3604408518828465902;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_45 = 1847472278776910194;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_45 = 1847472278776910194;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_45 = 1847472278776910194;
             }
             16 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     27 => {
                         return little2_scanComment(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
@@ -5921,7 +5921,7 @@ pub mod xmltok_impl_c {
                     20 => {
                         return little2_scanCdataSection(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
@@ -5931,38 +5931,38 @@ pub mod xmltok_impl_c {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            15 => return little2_scanPi(enc, ptr.offset(2isize), end, nextTokPtr),
-            17 => return little2_scanEndTag(enc, ptr.offset(2isize), end, nextTokPtr),
+            15 => return little2_scanPi(enc, ptr.offset(2), end, nextTokPtr),
+            17 => return little2_scanEndTag(enc, ptr.offset(2), end, nextTokPtr),
             _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
         }
         match current_block_45 {
-            3604408518828465902 => ptr = ptr.offset(2isize),
+            3604408518828465902 => ptr = ptr.offset(2),
             _ => {}
         }
-        hadColon = 0i32;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        hadColon = 0;
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_161: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -5974,36 +5974,36 @@ pub mod xmltok_impl_c {
                     current_block_161 = 11090466150472633662;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_161 = 12655303178690906525;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_161 = 12655303178690906525;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_161 = 12655303178690906525;
                 }
                 23 => {
@@ -6011,33 +6011,33 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    hadColon = 1i32;
-                    ptr = ptr.offset(2isize);
+                    hadColon = 1;
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
                     let mut current_block_112: u64;
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
+                    match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(1isize),
-                            *ptr.offset(0isize),
+                            *ptr.offset(1),
+                            *ptr.offset(0),
                         )
                     } {
                         29 => {
                             if namingBitmap[(((nmstrtPages
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int)
-                                << 3i32)
-                                + (*ptr.offset(0isize) as c_uchar as c_int
-                                    >> 5i32))
+                                << 3)
+                                + (*ptr.offset(0) as c_uchar as c_int
+                                    >> 5))
                                 as usize]
-                                & (1u32)
-                                    << (*ptr.offset(0isize) as c_uchar as c_int
-                                        & 0x1fi32)
+                                & (1)
+                                    << (*ptr.offset(0) as c_uchar as c_int
+                                        & 0x1f)
                                 == 0
                             {
                                 *nextTokPtr = ptr;
@@ -6049,36 +6049,36 @@ pub mod xmltok_impl_c {
                             current_block_112 = 5114428014282072970;
                         }
                         5 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_112 = 2463987395154258233;
                         }
                         6 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(3isize);
+                            ptr = ptr.offset(3);
                             current_block_112 = 2463987395154258233;
                         }
                         7 => {
-                            if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                            if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                                 return XML_TOK_PARTIAL_CHAR;
                             }
-                            if 0i32 == 0 {
+                            if 0 == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID;
                             }
-                            ptr = ptr.offset(4isize);
+                            ptr = ptr.offset(4);
                             current_block_112 = 2463987395154258233;
                         }
                         _ => {
@@ -6087,40 +6087,40 @@ pub mod xmltok_impl_c {
                         }
                     }
                     match current_block_112 {
-                        5114428014282072970 => ptr = ptr.offset(2isize),
+                        5114428014282072970 => ptr = ptr.offset(2),
                         _ => {}
                     }
                     current_block_161 = 12655303178690906525;
                 }
                 21 | 9 | 10 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     loop {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             current_block_161 = 13000670339742628194;
                             break;
                         }
-                        match if *ptr.offset(1isize) as c_int == 0i32 {
+                        match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         } {
                             29 => {
                                 if namingBitmap[(((nmstrtPages
-                                    [*ptr.offset(1isize) as c_uchar as usize]
+                                    [*ptr.offset(1) as c_uchar as usize]
                                     as c_int)
-                                    << 3i32)
-                                    + (*ptr.offset(0isize) as c_uchar as c_int
-                                        >> 5i32))
+                                    << 3)
+                                    + (*ptr.offset(0) as c_uchar as c_int
+                                        >> 5))
                                     as usize]
-                                    & (1u32)
-                                        << (*ptr.offset(0isize) as c_uchar as c_int
-                                            & 0x1fi32)
+                                    & (1)
+                                        << (*ptr.offset(0) as c_uchar as c_int
+                                            & 0x1f)
                                     == 0
                                 {
                                     *nextTokPtr = ptr;
@@ -6132,39 +6132,39 @@ pub mod xmltok_impl_c {
                                 current_block_161 = 8174279831488790583;
                             }
                             5 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 2
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 current_block_161 = 7999014830792590863;
                             }
                             6 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 3
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(3isize);
+                                ptr = ptr.offset(3);
                                 current_block_161 = 7999014830792590863;
                             }
                             7 => {
-                                if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                                if (end.wrapping_offset_from(ptr) as c_long) < 4
                                 {
                                     return XML_TOK_PARTIAL_CHAR;
                                 }
-                                if 0i32 == 0 {
+                                if 0 == 0 {
                                     *nextTokPtr = ptr;
                                     return XML_TOK_INVALID;
                                 }
-                                ptr = ptr.offset(4isize);
+                                ptr = ptr.offset(4);
                                 current_block_161 = 7999014830792590863;
                             }
                             11 => {
@@ -6176,7 +6176,7 @@ pub mod xmltok_impl_c {
                                 break;
                             }
                             21 | 9 | 10 => {
-                                ptr = ptr.offset(2isize);
+                                ptr = ptr.offset(2);
                                 continue;
                             }
                             _ => {
@@ -6185,7 +6185,7 @@ pub mod xmltok_impl_c {
                             }
                         }
                         match current_block_161 {
-                            8174279831488790583 => ptr = ptr.offset(2isize),
+                            8174279831488790583 => ptr = ptr.offset(2),
                             _ => {}
                         }
                         return little2_scanAtts(enc, ptr, end, nextTokPtr);
@@ -6209,26 +6209,26 @@ pub mod xmltok_impl_c {
             }
             match current_block_161 {
                 13380707534857435492 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if !(*ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x3e)
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_EMPTY_ELEMENT_NO_ATTS;
                 }
                 16654161972338254730 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_START_TAG_NO_ATTS;
                 }
-                11090466150472633662 => ptr = ptr.offset(2isize),
+                11090466150472633662 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -6244,69 +6244,69 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
-            2 => return little2_scanLt(enc, ptr.offset(2isize), end, nextTokPtr),
-            3 => return little2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr),
+            2 => return little2_scanLt(enc, ptr.offset(2), end, nextTokPtr),
+            3 => return little2_scanRef(enc, ptr.offset(2), end, nextTokPtr),
             9 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_TRAILING_CR;
                 }
-                if (if *ptr.offset(1isize) as c_int == 0i32 {
+                if (if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 }) == BT_LF as c_int
                 {
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DATA_NEWLINE;
             }
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_TRAILING_RSQB;
                 }
-                if *ptr.offset(1isize) as c_int == 0i32
-                    && *ptr.offset(0isize) as c_int == 0x5di32
+                if *ptr.offset(1) as c_int == 0
+                    && *ptr.offset(0) as c_int == 0x5d
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_TRAILING_RSQB;
                     }
-                    if !(*ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x3e)
                     {
-                        ptr = ptr.offset(-(2isize))
+                        ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
@@ -6314,98 +6314,98 @@ pub mod xmltok_impl_c {
                 }
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(2isize),
+            _ => ptr = ptr.offset(2),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_76: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_76 = 10213293998891106930;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_76 = 10213293998891106930;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2i32) as c_long
+                        >= (2i32 * 2) as c_long
                     {
-                        if !(*ptr.offset(2isize).offset(1isize) as c_int
-                            == 0i32
-                            && *ptr.offset(2isize).offset(0isize)
+                        if !(*ptr.offset(2).offset(1) as c_int
+                            == 0
+                            && *ptr.offset(2).offset(0)
                                 as c_int
-                                == 0x5di32)
+                                == 0x5d)
                         {
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_76 = 10213293998891106930;
                         } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 2i32) as c_long
+                            >= (3i32 * 2) as c_long
                         {
                             if !(*ptr
-                                .offset((2i32 * 2i32) as isize)
-                                .offset(1isize)
+                                .offset((2i32 * 2) as isize)
+                                .offset(1)
                                 as c_int
-                                == 0i32
+                                == 0
                                 && *ptr
-                                    .offset((2i32 * 2i32) as isize)
-                                    .offset(0isize)
+                                    .offset((2i32 * 2) as isize)
+                                    .offset(0)
                                     as c_int
-                                    == 0x3ei32)
+                                    == 0x3e)
                             {
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             } else {
-                                *nextTokPtr = ptr.offset((2i32 * 2i32) as isize);
+                                *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                                 return XML_TOK_INVALID;
                             }
                             current_block_76 = 10213293998891106930;
@@ -6420,7 +6420,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 8987447449223982590;
                 }
                 _ => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_76 = 10213293998891106930;
                 }
             }
@@ -6449,52 +6449,52 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 1i32 > 1i32 {
+        if 1 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (1i32 - 1i32) as c_ulong != 0 {
-                n &= !(1i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (1i32 - 1) as c_ulong != 0 {
+                n &= !(1i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-            2 => return normal_scanLt(enc, ptr.offset(1isize), end, nextTokPtr),
-            3 => return normal_scanRef(enc, ptr.offset(1isize), end, nextTokPtr),
+            2 => return normal_scanLt(enc, ptr.offset(1), end, nextTokPtr),
+            3 => return normal_scanRef(enc, ptr.offset(1), end, nextTokPtr),
             9 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_TRAILING_CR;
                 }
                 if (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     == BT_LF as c_int
                 {
-                    ptr = ptr.offset(1isize)
+                    ptr = ptr.offset(1)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_DATA_NEWLINE;
             }
             4 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_TRAILING_RSQB;
                 }
-                if *ptr as c_int == 0x5di32 {
-                    ptr = ptr.offset(1isize);
+                if *ptr as c_int == 0x5d {
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_TRAILING_RSQB;
                     }
-                    if !(*ptr as c_int == 0x3ei32) {
-                        ptr = ptr.offset(-(1isize))
+                    if !(*ptr as c_int == 0x3e) {
+                        ptr = ptr.offset(-(1))
                     } else {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
@@ -6502,7 +6502,7 @@ pub mod xmltok_impl_c {
                 }
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -6513,10 +6513,10 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -6527,10 +6527,10 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -6541,19 +6541,19 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(1isize),
+            _ => ptr = ptr.offset(1),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_76: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
                         || (*(enc as *const normal_encoding))
                             .isInvalid2
                             .expect("non-null function pointer")(enc, ptr)
@@ -6562,11 +6562,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_76 = 10213293998891106930;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
                         || (*(enc as *const normal_encoding))
                             .isInvalid3
                             .expect("non-null function pointer")(enc, ptr)
@@ -6575,11 +6575,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_76 = 10213293998891106930;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
                         || (*(enc as *const normal_encoding))
                             .isInvalid4
                             .expect("non-null function pointer")(enc, ptr)
@@ -6588,25 +6588,25 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 1i32) as c_long
+                        >= (2i32 * 1) as c_long
                     {
-                        if !(*ptr.offset(1isize) as c_int == 0x5di32) {
-                            ptr = ptr.offset(1isize);
+                        if !(*ptr.offset(1) as c_int == 0x5d) {
+                            ptr = ptr.offset(1);
                             current_block_76 = 10213293998891106930;
                         } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 1i32) as c_long
+                            >= (3i32 * 1) as c_long
                         {
-                            if !(*ptr.offset((2i32 * 1i32) as isize) as c_int
-                                == 0x3ei32)
+                            if !(*ptr.offset((2i32 * 1) as isize) as c_int
+                                == 0x3e)
                             {
-                                ptr = ptr.offset(1isize)
+                                ptr = ptr.offset(1)
                             } else {
-                                *nextTokPtr = ptr.offset((2i32 * 1i32) as isize);
+                                *nextTokPtr = ptr.offset((2i32 * 1) as isize);
                                 return XML_TOK_INVALID;
                             }
                             current_block_76 = 10213293998891106930;
@@ -6621,7 +6621,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 15298127564675707271;
                 }
                 _ => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     current_block_76 = 10213293998891106930;
                 }
             }
@@ -6646,72 +6646,72 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
-            2 => return big2_scanLt(enc, ptr.offset(2isize), end, nextTokPtr),
-            3 => return big2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr),
+            2 => return big2_scanLt(enc, ptr.offset(2), end, nextTokPtr),
+            3 => return big2_scanRef(enc, ptr.offset(2), end, nextTokPtr),
             9 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_TRAILING_CR;
                 }
-                if (if *ptr.offset(0isize) as c_int == 0i32 {
+                if (if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 }) == BT_LF as c_int
                 {
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_DATA_NEWLINE;
             }
             10 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DATA_NEWLINE;
             }
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_TRAILING_RSQB;
                 }
-                if *ptr.offset(0isize) as c_int == 0i32
-                    && *ptr.offset(1isize) as c_int == 0x5di32
+                if *ptr.offset(0) as c_int == 0
+                    && *ptr.offset(1) as c_int == 0x5d
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_TRAILING_RSQB;
                     }
-                    if !(*ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x3ei32)
+                    if !(*ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x3e)
                     {
-                        ptr = ptr.offset(-(2isize))
+                        ptr = ptr.offset(-(2))
                     } else {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
@@ -6719,99 +6719,99 @@ pub mod xmltok_impl_c {
                 }
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(3isize)
+                ptr = ptr.offset(3)
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                ptr = ptr.offset(4isize)
+                ptr = ptr.offset(4)
             }
             0 | 1 | 8 => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
-            _ => ptr = ptr.offset(2isize),
+            _ => ptr = ptr.offset(2),
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_76: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_76 = 10213293998891106930;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_76 = 10213293998891106930;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64
-                        || 0i32 != 0
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4
+                        || 0 != 0
                     {
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_CHARS;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_76 = 10213293998891106930;
                 }
                 4 => {
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2i32) as c_long
+                        >= (2i32 * 2) as c_long
                     {
-                        if !(*ptr.offset(2isize).offset(0isize) as c_int
-                            == 0i32
-                            && *ptr.offset(2isize).offset(1isize)
+                        if !(*ptr.offset(2).offset(0) as c_int
+                            == 0
+                            && *ptr.offset(2).offset(1)
                                 as c_int
-                                == 0x5di32)
+                                == 0x5d)
                         {
-                            ptr = ptr.offset(2isize);
+                            ptr = ptr.offset(2);
                             current_block_76 = 10213293998891106930;
                         } else if end.wrapping_offset_from(ptr) as c_long
-                            >= (3i32 * 2i32) as c_long
+                            >= (3i32 * 2) as c_long
                         {
                             if !(*ptr
-                                .offset((2i32 * 2i32) as isize)
-                                .offset(0isize)
+                                .offset((2i32 * 2) as isize)
+                                .offset(0)
                                 as c_int
-                                == 0i32
+                                == 0
                                 && *ptr
-                                    .offset((2i32 * 2i32) as isize)
-                                    .offset(1isize)
+                                    .offset((2i32 * 2) as isize)
+                                    .offset(1)
                                     as c_int
-                                    == 0x3ei32)
+                                    == 0x3e)
                             {
-                                ptr = ptr.offset(2isize)
+                                ptr = ptr.offset(2)
                             } else {
-                                *nextTokPtr = ptr.offset((2i32 * 2i32) as isize);
+                                *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                                 return XML_TOK_INVALID;
                             }
                             current_block_76 = 10213293998891106930;
@@ -6826,7 +6826,7 @@ pub mod xmltok_impl_c {
                     current_block_76 = 14775589748497275135;
                 }
                 _ => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_76 = 10213293998891106930;
                 }
             }
@@ -6851,26 +6851,26 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_34: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -6882,36 +6882,36 @@ pub mod xmltok_impl_c {
                 current_block_34 = 5609339353924833948;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_34 = 9520865839495247062;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_34 = 9520865839495247062;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_34 = 9520865839495247062;
             }
             21 | 10 | 9 | 30 => {
@@ -6924,29 +6924,29 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_34 {
-            5609339353924833948 => ptr = ptr.offset(2isize),
+            5609339353924833948 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_65: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -6958,40 +6958,40 @@ pub mod xmltok_impl_c {
                     current_block_65 = 14924637866976491194;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_65 = 12758904613967585247;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_65 = 12758904613967585247;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_65 = 12758904613967585247;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_PARAM_ENTITY_REF;
                 }
                 _ => {
@@ -7000,7 +7000,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_65 {
-                14924637866976491194 => ptr = ptr.offset(2isize),
+                14924637866976491194 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -7013,27 +7013,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_34: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7045,36 +7045,36 @@ pub mod xmltok_impl_c {
                 current_block_34 = 2535787018921809524;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_34 = 9520865839495247062;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_34 = 9520865839495247062;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_34 = 9520865839495247062;
             }
             21 | 10 | 9 | 30 => {
@@ -7087,30 +7087,30 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_34 {
-            2535787018921809524 => ptr = ptr.offset(2isize),
+            2535787018921809524 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_65: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7122,40 +7122,40 @@ pub mod xmltok_impl_c {
                     current_block_65 = 16518566462615084259;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_65 = 12758904613967585247;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_65 = 12758904613967585247;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_65 = 12758904613967585247;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_PARAM_ENTITY_REF;
                 }
                 _ => {
@@ -7164,7 +7164,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_65 {
-                16518566462615084259 => ptr = ptr.offset(2isize),
+                16518566462615084259 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -7177,13 +7177,13 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_34: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -7193,7 +7193,7 @@ pub mod xmltok_impl_c {
                 current_block_34 = 16508288390984586136;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7204,11 +7204,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_34 = 9520865839495247062;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7219,11 +7219,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_34 = 9520865839495247062;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7234,7 +7234,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_34 = 9520865839495247062;
             }
             21 | 10 | 9 | 30 => {
@@ -7247,14 +7247,14 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_34 {
-            16508288390984586136 => ptr = ptr.offset(1isize),
+            16508288390984586136 => ptr = ptr.offset(1),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_65: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -7264,7 +7264,7 @@ pub mod xmltok_impl_c {
                     current_block_65 = 3744295902770449260;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7275,11 +7275,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_65 = 12758904613967585247;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7290,11 +7290,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_65 = 12758904613967585247;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7305,11 +7305,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_65 = 12758904613967585247;
                 }
                 18 => {
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_PARAM_ENTITY_REF;
                 }
                 _ => {
@@ -7318,7 +7318,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_65 {
-                3744295902770449260 => ptr = ptr.offset(1isize),
+                3744295902770449260 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -7331,26 +7331,26 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7362,36 +7362,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 2269812350301213550;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -7400,29 +7400,29 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            2269812350301213550 => ptr = ptr.offset(2isize),
+            2269812350301213550 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_63: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7434,36 +7434,36 @@ pub mod xmltok_impl_c {
                     current_block_63 = 15716831554174598335;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_63 = 8869332144787829186;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_63 = 8869332144787829186;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_63 = 8869332144787829186;
                 }
                 9 | 10 | 21 | 32 | 11 | 30 | 36 => {
@@ -7476,7 +7476,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_63 {
-                15716831554174598335 => ptr = ptr.offset(2isize),
+                15716831554174598335 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -7489,13 +7489,13 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
         match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
             29 => {
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
@@ -7505,7 +7505,7 @@ pub mod xmltok_impl_c {
                 current_block_32 = 14531478163722833811;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7516,11 +7516,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7531,11 +7531,11 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -7546,7 +7546,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -7555,14 +7555,14 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            14531478163722833811 => ptr = ptr.offset(1isize),
+            14531478163722833811 => ptr = ptr.offset(1),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_63: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -7572,7 +7572,7 @@ pub mod xmltok_impl_c {
                     current_block_63 = 1251073717335040501;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7583,11 +7583,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_63 = 8869332144787829186;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7598,11 +7598,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_63 = 8869332144787829186;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7613,7 +7613,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_63 = 8869332144787829186;
                 }
                 9 | 10 | 21 | 32 | 11 | 30 | 36 => {
@@ -7626,7 +7626,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_63 {
-                1251073717335040501 => ptr = ptr.offset(1isize),
+                1251073717335040501 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -7639,27 +7639,27 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+        if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
             return XML_TOK_PARTIAL;
         }
         let mut current_block_32: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     == 0
                 {
                     *nextTokPtr = ptr;
@@ -7671,36 +7671,36 @@ pub mod xmltok_impl_c {
                 current_block_32 = 633956857006047984;
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_32 = 5494826135382683477;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(3isize);
+                ptr = ptr.offset(3);
                 current_block_32 = 5494826135382683477;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if 0i32 == 0 {
+                if 0 == 0 {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
-                ptr = ptr.offset(4isize);
+                ptr = ptr.offset(4);
                 current_block_32 = 5494826135382683477;
             }
             _ => {
@@ -7709,30 +7709,30 @@ pub mod xmltok_impl_c {
             }
         }
         match current_block_32 {
-            633956857006047984 => ptr = ptr.offset(2isize),
+            633956857006047984 => ptr = ptr.offset(2),
             _ => {}
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_63: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -7744,36 +7744,36 @@ pub mod xmltok_impl_c {
                     current_block_63 = 3145220949513738010;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_63 = 8869332144787829186;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_63 = 8869332144787829186;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_63 = 8869332144787829186;
                 }
                 9 | 10 | 21 | 32 | 11 | 30 | 36 => {
@@ -7786,7 +7786,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_63 {
-                3145220949513738010 => ptr = ptr.offset(2isize),
+                3145220949513738010 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -7800,54 +7800,54 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            let mut t: c_int = if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            let mut t: c_int = if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             };
             match t {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 12 | 13 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(t != open) {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return -XML_TOK_LITERAL;
                         }
                         *nextTokPtr = ptr;
-                        match if *ptr.offset(1isize) as c_int == 0i32 {
+                        match if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         } {
                             21 | 9 | 10 | 11 | 30 | 20 => return XML_TOK_LITERAL,
@@ -7855,7 +7855,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         return XML_TOK_PARTIAL;
@@ -7868,56 +7868,56 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            let mut t: c_int = if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            let mut t: c_int = if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             };
             match t {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 12 | 13 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(t != open) {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return -XML_TOK_LITERAL;
                         }
                         *nextTokPtr = ptr;
-                        match if *ptr.offset(0isize) as c_int == 0i32 {
+                        match if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         } {
                             21 | 9 | 10 | 11 | 30 | 20 => return XML_TOK_LITERAL,
@@ -7925,7 +7925,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         return XML_TOK_PARTIAL;
@@ -7938,12 +7938,12 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut t: c_int =
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int;
             match t {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7954,10 +7954,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7968,10 +7968,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -7982,17 +7982,17 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 12 | 13 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(t != open) {
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return -XML_TOK_LITERAL;
                         }
@@ -8005,7 +8005,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
         }
         return XML_TOK_PARTIAL;
@@ -8021,30 +8021,30 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
         let mut current_block_112: u64;
-        match if *ptr.offset(1isize) as c_int == 0i32 {
+        match if *ptr.offset(1) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(1isize),
-                *ptr.offset(0isize),
+                *ptr.offset(1),
+                *ptr.offset(0),
             )
         } {
             12 => {
                 return little2_scanLit(
                     BT_QUOT as c_int,
                     enc,
-                    ptr.offset(2isize),
+                    ptr.offset(2),
                     end,
                     nextTokPtr,
                 )
@@ -8053,29 +8053,29 @@ pub mod xmltok_impl_c {
                 return little2_scanLit(
                     BT_APOS as c_int,
                     enc,
-                    ptr.offset(2isize),
+                    ptr.offset(2),
                     end,
                     nextTokPtr,
                 )
             }
             2 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     16 => {
                         return little2_scanDecl(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
@@ -8083,13 +8083,13 @@ pub mod xmltok_impl_c {
                     15 => {
                         return little2_scanPi(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         )
                     }
                     22 | 24 | 29 | 5 | 6 | 7 => {
-                        *nextTokPtr = ptr.offset(-(2isize));
+                        *nextTokPtr = ptr.offset(-(2));
                         return XML_TOK_INSTANCE_START;
                     }
                     _ => {}
@@ -8098,7 +8098,7 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             9 => {
-                if ptr.offset(2isize) == end {
+                if ptr.offset(2) == end {
                     *nextTokPtr = end;
                     /* indicate that this might be part of a CR/LF pair */
                     /* indicate that this might be part of a CR/LF pair */
@@ -8111,36 +8111,36 @@ pub mod xmltok_impl_c {
                 current_block_112 = 18365440899698678160;
             }
             30 => {
-                return little2_scanPercent(enc, ptr.offset(2isize), end, nextTokPtr)
+                return little2_scanPercent(enc, ptr.offset(2), end, nextTokPtr)
             }
             35 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COMMA;
             }
             20 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OPEN_BRACKET;
             }
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
-                if *ptr.offset(1isize) as c_int == 0i32
-                    && *ptr.offset(0isize) as c_int == 0x5di32
+                if *ptr.offset(1) as c_int == 0
+                    && *ptr.offset(0) as c_int == 0x5d
                 {
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2i32) as c_long)
+                        >= (2i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(2isize).offset(1isize) as c_int
-                        == 0i32
-                        && *ptr.offset(2isize).offset(0isize) as c_int
-                            == 0x3ei32
+                    if *ptr.offset(2).offset(1) as c_int
+                        == 0
+                        && *ptr.offset(2).offset(0) as c_int
+                            == 0x3e
                     {
-                        *nextTokPtr = ptr.offset((2i32 * 2i32) as isize);
+                        *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                         return XML_TOK_COND_SECT_CLOSE;
                     }
                 }
@@ -8148,33 +8148,33 @@ pub mod xmltok_impl_c {
                 return XML_TOK_CLOSE_BRACKET;
             }
             31 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OPEN_PAREN;
             }
             32 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return -XML_TOK_CLOSE_PAREN;
                 }
-                match if *ptr.offset(1isize) as c_int == 0i32 {
+                match if *ptr.offset(1) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(1isize),
-                        *ptr.offset(0isize),
+                        *ptr.offset(1),
+                        *ptr.offset(0),
                     )
                 } {
                     33 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_ASTERISK;
                     }
                     15 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_QUESTION;
                     }
                     34 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_PLUS;
                     }
                     9 | 10 | 21 | 11 | 35 | 36 | 32 => {
@@ -8187,32 +8187,32 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             36 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OR;
             }
             11 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DECL_CLOSE;
             }
             19 => {
-                return little2_scanPoundName(enc, ptr.offset(2isize), end, nextTokPtr)
+                return little2_scanPoundName(enc, ptr.offset(2), end, nextTokPtr)
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
@@ -8220,38 +8220,38 @@ pub mod xmltok_impl_c {
             }
             22 | 24 => {
                 tok = XML_TOK_NAME;
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_112 = 2222055338596505704;
             }
             25 | 26 | 27 | 23 => {
                 tok = XML_TOK_NMTOKEN;
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_112 = 2222055338596505704;
             }
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(1isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NAME;
                     current_block_112 = 2222055338596505704;
                 } else if namingBitmap[(((namePages
-                    [*ptr.offset(1isize) as c_uchar as usize]
+                    [*ptr.offset(1) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(0) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(0isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(0) as c_uchar as c_int & 0x1f)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NMTOKEN;
                     current_block_112 = 2222055338596505704;
                 } else {
@@ -8270,19 +8270,19 @@ pub mod xmltok_impl_c {
             /* fall through */
             {
                 loop {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         break;
                     }
                     let mut current_block_32: u64;
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
+                    match if *ptr.offset(1) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(1isize),
-                            *ptr.offset(0isize),
+                            *ptr.offset(1),
+                            *ptr.offset(0),
                         )
                     } {
                         21 | 10 => {
@@ -8292,7 +8292,7 @@ pub mod xmltok_impl_c {
                             /* don't split CR/LF pair */
                             /* don't split CR/LF pair */
                             /* don't split CR/LF pair */
-                            if ptr.offset(2isize) != end {
+                            if ptr.offset(2) != end {
                                 current_block_32 = 14072441030219150333;
                             } else {
                                 current_block_32 = 9063685204218595982;
@@ -8326,26 +8326,26 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_198: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(0isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(0) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(0isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(0) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -8357,36 +8357,36 @@ pub mod xmltok_impl_c {
                     current_block_198 = 16114569038092921525;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_198 = 11165907417739823532;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_198 = 11165907417739823532;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_198 = 11165907417739823532;
                 }
                 11 | 32 | 35 | 36 | 20 | 30 | 21 | 9 | 10 => {
@@ -8394,37 +8394,37 @@ pub mod xmltok_impl_c {
                     return tok;
                 }
                 23 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     match tok {
                         XML_TOK_NAME => {
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2i32) as c_long)
+                                >= (1i32 * 2) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
                             tok = XML_TOK_PREFIXED_NAME;
                             let mut current_block_175: u64;
-                            match if *ptr.offset(1isize) as c_int == 0i32 {
+                            match if *ptr.offset(1) as c_int == 0 {
                                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                     as c_int
                             } else {
                                 unicode_byte_type(
-                                    *ptr.offset(1isize),
-                                    *ptr.offset(0isize),
+                                    *ptr.offset(1),
+                                    *ptr.offset(0),
                                 )
                             } {
                                 29 => {
                                     if namingBitmap[(((namePages
-                                        [*ptr.offset(1isize) as c_uchar as usize]
+                                        [*ptr.offset(1) as c_uchar as usize]
                                         as c_int)
-                                        << 3i32)
-                                        + (*ptr.offset(0isize) as c_uchar as c_int
-                                            >> 5i32))
+                                        << 3)
+                                        + (*ptr.offset(0) as c_uchar as c_int
+                                            >> 5))
                                         as usize]
-                                        & (1u32)
-                                            << (*ptr.offset(0isize) as c_uchar
+                                        & (1)
+                                            << (*ptr.offset(0) as c_uchar
                                                 as c_int
-                                                & 0x1fi32)
+                                                & 0x1f)
                                         == 0
                                     {
                                         *nextTokPtr = ptr;
@@ -8437,41 +8437,41 @@ pub mod xmltok_impl_c {
                                 }
                                 5 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2i64
+                                        < 2
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(2isize);
+                                    ptr = ptr.offset(2);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3i64
+                                        < 3
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(3isize);
+                                    ptr = ptr.offset(3);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4i64
+                                        < 4
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(4isize);
+                                    ptr = ptr.offset(4);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 _ => {
@@ -8480,7 +8480,7 @@ pub mod xmltok_impl_c {
                                 }
                             }
                             match current_block_175 {
-                                995715539629334807 => ptr = ptr.offset(2isize),
+                                995715539629334807 => ptr = ptr.offset(2),
                                 _ => {}
                             }
                         }
@@ -8494,7 +8494,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_PLUS;
                 }
                 33 => {
@@ -8502,7 +8502,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_ASTERISK;
                 }
                 15 => {
@@ -8510,7 +8510,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_QUESTION;
                 }
                 _ => {
@@ -8519,7 +8519,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_198 {
-                16114569038092921525 => ptr = ptr.offset(2isize),
+                16114569038092921525 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -8536,11 +8536,11 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 1i32 > 1i32 {
+        if 1 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (1i32 - 1i32) as c_ulong != 0 {
-                n &= !(1i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (1i32 - 1) as c_ulong != 0 {
+                n &= !(1i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
@@ -8552,7 +8552,7 @@ pub mod xmltok_impl_c {
                 return normal_scanLit(
                     BT_QUOT as c_int,
                     enc,
-                    ptr.offset(1isize),
+                    ptr.offset(1),
                     end,
                     nextTokPtr,
                 )
@@ -8561,14 +8561,14 @@ pub mod xmltok_impl_c {
                 return normal_scanLit(
                     BT_APOS as c_int,
                     enc,
-                    ptr.offset(1isize),
+                    ptr.offset(1),
                     end,
                     nextTokPtr,
                 )
             }
             2 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
@@ -8576,16 +8576,16 @@ pub mod xmltok_impl_c {
                     16 => {
                         return normal_scanDecl(
                             enc,
-                            ptr.offset(1isize),
+                            ptr.offset(1),
                             end,
                             nextTokPtr,
                         )
                     }
                     15 => {
-                        return normal_scanPi(enc, ptr.offset(1isize), end, nextTokPtr)
+                        return normal_scanPi(enc, ptr.offset(1), end, nextTokPtr)
                     }
                     22 | 24 | 29 | 5 | 6 | 7 => {
-                        *nextTokPtr = ptr.offset(-(1isize));
+                        *nextTokPtr = ptr.offset(-(1));
                         return XML_TOK_INSTANCE_START;
                     }
                     _ => {}
@@ -8594,7 +8594,7 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             9 => {
-                if ptr.offset(1isize) == end {
+                if ptr.offset(1) == end {
                     *nextTokPtr = end;
                     return -XML_TOK_PROLOG_S;
                 }
@@ -8603,29 +8603,29 @@ pub mod xmltok_impl_c {
             21 | 10 => {
                 current_block_112 = 12267575154421147267;
             }
-            30 => return normal_scanPercent(enc, ptr.offset(1isize), end, nextTokPtr),
+            30 => return normal_scanPercent(enc, ptr.offset(1), end, nextTokPtr),
             35 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_COMMA;
             }
             20 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_OPEN_BRACKET;
             }
             4 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
-                if *ptr as c_int == 0x5di32 {
+                if *ptr as c_int == 0x5d {
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 1i32) as c_long)
+                        >= (2i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1isize) as c_int == 0x3ei32 {
-                        *nextTokPtr = ptr.offset((2i32 * 1i32) as isize);
+                    if *ptr.offset(1) as c_int == 0x3e {
+                        *nextTokPtr = ptr.offset((2i32 * 1) as isize);
                         return XML_TOK_COND_SECT_CLOSE;
                     }
                 }
@@ -8633,26 +8633,26 @@ pub mod xmltok_impl_c {
                 return XML_TOK_CLOSE_BRACKET;
             }
             31 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_OPEN_PAREN;
             }
             32 => {
-                ptr = ptr.offset(1isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long)
+                ptr = ptr.offset(1);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long)
                 {
                     return -XML_TOK_CLOSE_PAREN;
                 }
                 match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                     33 => {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CLOSE_PAREN_ASTERISK;
                     }
                     15 => {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CLOSE_PAREN_QUESTION;
                     }
                     34 => {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_CLOSE_PAREN_PLUS;
                     }
                     9 | 10 | 21 | 11 | 35 | 36 | 32 => {
@@ -8665,18 +8665,18 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             36 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_OR;
             }
             11 => {
-                *nextTokPtr = ptr.offset(1isize);
+                *nextTokPtr = ptr.offset(1);
                 return XML_TOK_DECL_CLOSE;
             }
             19 => {
-                return normal_scanPoundName(enc, ptr.offset(1isize), end, nextTokPtr)
+                return normal_scanPoundName(enc, ptr.offset(1), end, nextTokPtr)
             }
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -8684,14 +8684,14 @@ pub mod xmltok_impl_c {
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NAME
                 } else if (*(enc as *const normal_encoding))
                     .isName2
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NMTOKEN
                 } else {
                     *nextTokPtr = ptr;
@@ -8700,7 +8700,7 @@ pub mod xmltok_impl_c {
                 current_block_112 = 2222055338596505704;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -8708,14 +8708,14 @@ pub mod xmltok_impl_c {
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     tok = XML_TOK_NAME
                 } else if (*(enc as *const normal_encoding))
                     .isName3
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     tok = XML_TOK_NMTOKEN
                 } else {
                     *nextTokPtr = ptr;
@@ -8724,7 +8724,7 @@ pub mod xmltok_impl_c {
                 current_block_112 = 2222055338596505704;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 if (*(enc as *const normal_encoding))
@@ -8732,14 +8732,14 @@ pub mod xmltok_impl_c {
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     tok = XML_TOK_NAME
                 } else if (*(enc as *const normal_encoding))
                     .isName4
                     .expect("non-null function pointer")(enc, ptr)
                     != 0
                 {
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     tok = XML_TOK_NMTOKEN
                 } else {
                     *nextTokPtr = ptr;
@@ -8749,12 +8749,12 @@ pub mod xmltok_impl_c {
             }
             22 | 24 => {
                 tok = XML_TOK_NAME;
-                ptr = ptr.offset(1isize);
+                ptr = ptr.offset(1);
                 current_block_112 = 2222055338596505704;
             }
             25 | 26 | 27 | 23 => {
                 tok = XML_TOK_NMTOKEN;
-                ptr = ptr.offset(1isize);
+                ptr = ptr.offset(1);
                 current_block_112 = 2222055338596505704;
             }
             29 | _ => {
@@ -8766,9 +8766,9 @@ pub mod xmltok_impl_c {
             2222055338596505704 => {}
             _ => {
                 loop {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         break;
                     }
@@ -8779,7 +8779,7 @@ pub mod xmltok_impl_c {
                             current_block_32 = 14072441030219150333;
                         }
                         9 => {
-                            if ptr.offset(1isize) != end {
+                            if ptr.offset(1) != end {
                                 current_block_32 = 14072441030219150333;
                             } else {
                                 current_block_32 = 1184991590081026370;
@@ -8801,11 +8801,11 @@ pub mod xmltok_impl_c {
                 return XML_TOK_PROLOG_S;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_198: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 29 => {
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
@@ -8815,7 +8815,7 @@ pub mod xmltok_impl_c {
                     current_block_198 = 17381770869190098083;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -8826,11 +8826,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_198 = 11165907417739823532;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -8841,11 +8841,11 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_198 = 11165907417739823532;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -8856,7 +8856,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_198 = 11165907417739823532;
                 }
                 11 | 32 | 35 | 36 | 20 | 30 | 21 | 9 | 10 => {
@@ -8864,11 +8864,11 @@ pub mod xmltok_impl_c {
                     return tok;
                 }
                 23 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     match tok {
                         XML_TOK_NAME => {
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 1i32) as c_long)
+                                >= (1i32 * 1) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
@@ -8878,7 +8878,7 @@ pub mod xmltok_impl_c {
                                 as c_int
                             {
                                 29 => {
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
@@ -8889,7 +8889,7 @@ pub mod xmltok_impl_c {
                                 }
                                 5 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2i64
+                                        < 2
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
@@ -8902,12 +8902,12 @@ pub mod xmltok_impl_c {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(2isize);
+                                    ptr = ptr.offset(2);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3i64
+                                        < 3
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
@@ -8920,12 +8920,12 @@ pub mod xmltok_impl_c {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(3isize);
+                                    ptr = ptr.offset(3);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4i64
+                                        < 4
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
@@ -8938,7 +8938,7 @@ pub mod xmltok_impl_c {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(4isize);
+                                    ptr = ptr.offset(4);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 _ => {
@@ -8947,7 +8947,7 @@ pub mod xmltok_impl_c {
                                 }
                             }
                             match current_block_175 {
-                                8121321173029633297 => ptr = ptr.offset(1isize),
+                                8121321173029633297 => ptr = ptr.offset(1),
                                 _ => {}
                             }
                         }
@@ -8961,7 +8961,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_NAME_PLUS;
                 }
                 33 => {
@@ -8969,7 +8969,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_NAME_ASTERISK;
                 }
                 15 => {
@@ -8977,7 +8977,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(1isize);
+                    *nextTokPtr = ptr.offset(1);
                     return XML_TOK_NAME_QUESTION;
                 }
                 _ => {
@@ -8986,7 +8986,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_198 {
-                17381770869190098083 => ptr = ptr.offset(1isize),
+                17381770869190098083 => ptr = ptr.offset(1),
                 _ => {}
             }
         }
@@ -9003,31 +9003,31 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         }
-        if 2i32 > 1i32 {
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
-                if n == 0u64 {
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
+                if n == 0 {
                     return XML_TOK_PARTIAL;
                 }
                 end = ptr.offset(n as isize)
             }
         }
         let mut current_block_112: u64;
-        match if *ptr.offset(0isize) as c_int == 0i32 {
+        match if *ptr.offset(0) as c_int == 0 {
             (*(enc as *mut normal_encoding)).type_0
-                [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                [*ptr.offset(1) as c_uchar as usize] as c_int
         } else {
             unicode_byte_type(
-                *ptr.offset(0isize),
-                *ptr.offset(1isize),
+                *ptr.offset(0),
+                *ptr.offset(1),
             )
         } {
             12 => {
                 return big2_scanLit(
                     BT_QUOT as c_int,
                     enc,
-                    ptr.offset(2isize),
+                    ptr.offset(2),
                     end,
                     nextTokPtr,
                 )
@@ -9036,35 +9036,35 @@ pub mod xmltok_impl_c {
                 return big2_scanLit(
                     BT_APOS as c_int,
                     enc,
-                    ptr.offset(2isize),
+                    ptr.offset(2),
                     end,
                     nextTokPtr,
                 )
             }
             2 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return XML_TOK_PARTIAL;
                 }
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     16 => {
-                        return big2_scanDecl(enc, ptr.offset(2isize), end, nextTokPtr)
+                        return big2_scanDecl(enc, ptr.offset(2), end, nextTokPtr)
                     }
                     15 => {
-                        return big2_scanPi(enc, ptr.offset(2isize), end, nextTokPtr)
+                        return big2_scanPi(enc, ptr.offset(2), end, nextTokPtr)
                     }
                     22 | 24 | 29 | 5 | 6 | 7 => {
-                        *nextTokPtr = ptr.offset(-(2isize));
+                        *nextTokPtr = ptr.offset(-(2));
                         return XML_TOK_INSTANCE_START;
                     }
                     _ => {}
@@ -9073,7 +9073,7 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             9 => {
-                if ptr.offset(2isize) == end {
+                if ptr.offset(2) == end {
                     *nextTokPtr = end;
                     return -XML_TOK_PROLOG_S;
                 }
@@ -9082,35 +9082,35 @@ pub mod xmltok_impl_c {
             21 | 10 => {
                 current_block_112 = 6797528435482537081;
             }
-            30 => return big2_scanPercent(enc, ptr.offset(2isize), end, nextTokPtr),
+            30 => return big2_scanPercent(enc, ptr.offset(2), end, nextTokPtr),
             35 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_COMMA;
             }
             20 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OPEN_BRACKET;
             }
             4 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return -XML_TOK_CLOSE_BRACKET;
                 }
-                if *ptr.offset(0isize) as c_int == 0i32
-                    && *ptr.offset(1isize) as c_int == 0x5di32
+                if *ptr.offset(0) as c_int == 0
+                    && *ptr.offset(1) as c_int == 0x5d
                 {
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (2i32 * 2i32) as c_long)
+                        >= (2i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(2isize).offset(0isize) as c_int
-                        == 0i32
-                        && *ptr.offset(2isize).offset(1isize) as c_int
-                            == 0x3ei32
+                    if *ptr.offset(2).offset(0) as c_int
+                        == 0
+                        && *ptr.offset(2).offset(1) as c_int
+                            == 0x3e
                     {
-                        *nextTokPtr = ptr.offset((2i32 * 2i32) as isize);
+                        *nextTokPtr = ptr.offset((2i32 * 2) as isize);
                         return XML_TOK_COND_SECT_CLOSE;
                     }
                 }
@@ -9118,35 +9118,35 @@ pub mod xmltok_impl_c {
                 return XML_TOK_CLOSE_BRACKET;
             }
             31 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OPEN_PAREN;
             }
             32 => {
-                ptr = ptr.offset(2isize);
-                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long)
+                ptr = ptr.offset(2);
+                if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long)
                 {
                     return -XML_TOK_CLOSE_PAREN;
                 }
-                match if *ptr.offset(0isize) as c_int == 0i32 {
+                match if *ptr.offset(0) as c_int == 0 {
                     (*(enc as *mut normal_encoding)).type_0
-                        [*ptr.offset(1isize) as c_uchar as usize]
+                        [*ptr.offset(1) as c_uchar as usize]
                         as c_int
                 } else {
                     unicode_byte_type(
-                        *ptr.offset(0isize),
-                        *ptr.offset(1isize),
+                        *ptr.offset(0),
+                        *ptr.offset(1),
                     )
                 } {
                     33 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_ASTERISK;
                     }
                     15 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_QUESTION;
                     }
                     34 => {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_CLOSE_PAREN_PLUS;
                     }
                     9 | 10 | 21 | 11 | 35 | 36 | 32 => {
@@ -9159,30 +9159,30 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
             36 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_OR;
             }
             11 => {
-                *nextTokPtr = ptr.offset(2isize);
+                *nextTokPtr = ptr.offset(2);
                 return XML_TOK_DECL_CLOSE;
             }
-            19 => return big2_scanPoundName(enc, ptr.offset(2isize), end, nextTokPtr),
+            19 => return big2_scanPoundName(enc, ptr.offset(2), end, nextTokPtr),
             5 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             6 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             7 => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                     return XML_TOK_PARTIAL_CHAR;
                 }
                 *nextTokPtr = ptr;
@@ -9190,38 +9190,38 @@ pub mod xmltok_impl_c {
             }
             22 | 24 => {
                 tok = XML_TOK_NAME;
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_112 = 2222055338596505704;
             }
             25 | 26 | 27 | 23 => {
                 tok = XML_TOK_NMTOKEN;
-                ptr = ptr.offset(2isize);
+                ptr = ptr.offset(2);
                 current_block_112 = 2222055338596505704;
             }
             29 => {
-                if namingBitmap[(((nmstrtPages[*ptr.offset(0isize) as c_uchar as usize]
+                if namingBitmap[(((nmstrtPages[*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NAME;
                     current_block_112 = 2222055338596505704;
                 } else if namingBitmap[(((namePages
-                    [*ptr.offset(0isize) as c_uchar as usize]
+                    [*ptr.offset(0) as c_uchar as usize]
                     as c_int)
-                    << 3i32)
-                    + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                    << 3)
+                    + (*ptr.offset(1) as c_uchar as c_int >> 5))
                     as usize]
-                    & (1u32)
-                        << (*ptr.offset(1isize) as c_uchar as c_int & 0x1fi32)
+                    & (1)
+                        << (*ptr.offset(1) as c_uchar as c_int & 0x1f)
                     != 0
                 {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     tok = XML_TOK_NMTOKEN;
                     current_block_112 = 2222055338596505704;
                 } else {
@@ -9236,28 +9236,28 @@ pub mod xmltok_impl_c {
             2222055338596505704 => {}
             6797528435482537081 => {
                 loop {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         break;
                     }
                     let mut current_block_32: u64;
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
+                    match if *ptr.offset(0) as c_int == 0 {
                         (*(enc as *mut normal_encoding)).type_0
-                            [*ptr.offset(1isize) as c_uchar as usize]
+                            [*ptr.offset(1) as c_uchar as usize]
                             as c_int
                     } else {
                         unicode_byte_type(
-                            *ptr.offset(0isize),
-                            *ptr.offset(1isize),
+                            *ptr.offset(0),
+                            *ptr.offset(1),
                         )
                     } {
                         21 | 10 => {
                             current_block_32 = 14072441030219150333;
                         }
                         9 => {
-                            if ptr.offset(2isize) != end {
+                            if ptr.offset(2) != end {
                                 current_block_32 = 14072441030219150333;
                             } else {
                                 current_block_32 = 13880765133914978832;
@@ -9283,27 +9283,27 @@ pub mod xmltok_impl_c {
                 return XML_TOK_INVALID;
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_198: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 29 => {
                     if namingBitmap[(((namePages
-                        [*ptr.offset(0isize) as c_uchar as usize]
+                        [*ptr.offset(0) as c_uchar as usize]
                         as c_int)
-                        << 3i32)
-                        + (*ptr.offset(1isize) as c_uchar as c_int >> 5i32))
+                        << 3)
+                        + (*ptr.offset(1) as c_uchar as c_int >> 5))
                         as usize]
-                        & (1u32)
-                            << (*ptr.offset(1isize) as c_uchar as c_int
-                                & 0x1fi32)
+                        & (1)
+                            << (*ptr.offset(1) as c_uchar as c_int
+                                & 0x1f)
                         == 0
                     {
                         *nextTokPtr = ptr;
@@ -9315,36 +9315,36 @@ pub mod xmltok_impl_c {
                     current_block_198 = 14255987127689470057;
                 }
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     current_block_198 = 11165907417739823532;
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize);
+                    ptr = ptr.offset(3);
                     current_block_198 = 11165907417739823532;
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    if 0i32 == 0 {
+                    if 0 == 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize);
+                    ptr = ptr.offset(4);
                     current_block_198 = 11165907417739823532;
                 }
                 11 | 32 | 35 | 36 | 20 | 30 | 21 | 9 | 10 => {
@@ -9352,38 +9352,38 @@ pub mod xmltok_impl_c {
                     return tok;
                 }
                 23 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     match tok {
                         XML_TOK_NAME => {
                             if !(end.wrapping_offset_from(ptr) as c_long
-                                >= (1i32 * 2i32) as c_long)
+                                >= (1i32 * 2) as c_long)
                             {
                                 return XML_TOK_PARTIAL;
                             }
                             tok = XML_TOK_PREFIXED_NAME;
                             let mut current_block_175: u64;
-                            match if *ptr.offset(0isize) as c_int == 0i32 {
+                            match if *ptr.offset(0) as c_int == 0 {
                                 (*(enc as *mut normal_encoding)).type_0
-                                    [*ptr.offset(1isize) as c_uchar as usize]
+                                    [*ptr.offset(1) as c_uchar as usize]
                                     as c_int
                             } else {
                                 unicode_byte_type(
-                                    *ptr.offset(0isize),
-                                    *ptr.offset(1isize),
+                                    *ptr.offset(0),
+                                    *ptr.offset(1),
                                 )
                             } {
                                 29 => {
                                     if namingBitmap[(((namePages
-                                        [*ptr.offset(0isize) as c_uchar as usize]
+                                        [*ptr.offset(0) as c_uchar as usize]
                                         as c_int)
-                                        << 3i32)
-                                        + (*ptr.offset(1isize) as c_uchar as c_int
-                                            >> 5i32))
+                                        << 3)
+                                        + (*ptr.offset(1) as c_uchar as c_int
+                                            >> 5))
                                         as usize]
-                                        & (1u32)
-                                            << (*ptr.offset(1isize) as c_uchar
+                                        & (1)
+                                            << (*ptr.offset(1) as c_uchar
                                                 as c_int
-                                                & 0x1fi32)
+                                                & 0x1f)
                                         == 0
                                     {
                                         *nextTokPtr = ptr;
@@ -9396,41 +9396,41 @@ pub mod xmltok_impl_c {
                                 }
                                 5 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 2i64
+                                        < 2
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(2isize);
+                                    ptr = ptr.offset(2);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 6 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 3i64
+                                        < 3
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(3isize);
+                                    ptr = ptr.offset(3);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 7 => {
                                     if (end.wrapping_offset_from(ptr) as c_long)
-                                        < 4i64
+                                        < 4
                                     {
                                         return XML_TOK_PARTIAL_CHAR;
                                     }
-                                    if 0i32 == 0 {
+                                    if 0 == 0 {
                                         *nextTokPtr = ptr;
                                         return XML_TOK_INVALID;
                                     }
-                                    ptr = ptr.offset(4isize);
+                                    ptr = ptr.offset(4);
                                     current_block_175 = 4755552050407867010;
                                 }
                                 _ => {
@@ -9439,7 +9439,7 @@ pub mod xmltok_impl_c {
                                 }
                             }
                             match current_block_175 {
-                                17746292690483154078 => ptr = ptr.offset(2isize),
+                                17746292690483154078 => ptr = ptr.offset(2),
                                 _ => {}
                             }
                         }
@@ -9453,7 +9453,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_PLUS;
                 }
                 33 => {
@@ -9461,7 +9461,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_ASTERISK;
                 }
                 15 => {
@@ -9469,7 +9469,7 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     return XML_TOK_NAME_QUESTION;
                 }
                 _ => {
@@ -9478,7 +9478,7 @@ pub mod xmltok_impl_c {
                 }
             }
             match current_block_198 {
-                14255987127689470057 => ptr = ptr.offset(2isize),
+                14255987127689470057 => ptr = ptr.offset(2),
                 _ => {}
             }
         }
@@ -9495,7 +9495,7 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                 /* This line cannot be executed.  The incoming data has already
                  * been tokenized once, so incomplete characters like this have
                  * already been eliminated from the input.  Retaining the paranoia
@@ -9518,11 +9518,11 @@ pub mod xmltok_impl_c {
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return normal_scanRef(
@@ -9544,7 +9544,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -9552,9 +9552,9 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
@@ -9562,7 +9562,7 @@ pub mod xmltok_impl_c {
                             as c_int
                             == BT_LF as c_int
                         {
-                            ptr = ptr.offset(1isize)
+                            ptr = ptr.offset(1)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -9572,13 +9572,13 @@ pub mod xmltok_impl_c {
                 }
                 21 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_ATTRIBUTE_VALUE_S;
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
         }
         *nextTokPtr = ptr;
@@ -9595,24 +9595,24 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return big2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr);
@@ -9626,7 +9626,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -9634,24 +9634,24 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
-                        if (if *ptr.offset(0isize) as c_int == 0i32 {
+                        if (if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         }) == BT_LF as c_int
                         {
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -9661,13 +9661,13 @@ pub mod xmltok_impl_c {
                 }
                 21 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_ATTRIBUTE_VALUE_S;
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -9684,23 +9684,23 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return little2_scanRef(
@@ -9719,7 +9719,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -9727,23 +9727,23 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
-                        if (if *ptr.offset(1isize) as c_int == 0i32 {
+                        if (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         }) == BT_LF as c_int
                         {
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -9753,13 +9753,13 @@ pub mod xmltok_impl_c {
                 }
                 21 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_ATTRIBUTE_VALUE_S;
                     }
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -9776,7 +9776,7 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                 /* This line cannot be executed.  The incoming data has already
                  * been tokenized once, so incomplete characters like this have
                  * already been eliminated from the input.  Retaining the paranoia
@@ -9799,19 +9799,19 @@ pub mod xmltok_impl_c {
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return big2_scanRef(enc, ptr.offset(2isize), end, nextTokPtr);
@@ -9822,7 +9822,7 @@ pub mod xmltok_impl_c {
                 30 => {
                     if ptr == start {
                         let mut tok: c_int =
-                            big2_scanPercent(enc, ptr.offset(2isize), end, nextTokPtr);
+                            big2_scanPercent(enc, ptr.offset(2), end, nextTokPtr);
                         return if tok == XML_TOK_PERCENT {
                             XML_TOK_INVALID
                         } else {
@@ -9834,7 +9834,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -9842,24 +9842,24 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
-                        if (if *ptr.offset(0isize) as c_int == 0i32 {
+                        if (if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         }) == BT_LF as c_int
                         {
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -9867,7 +9867,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -9884,23 +9884,23 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long) {
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return little2_scanRef(
@@ -9917,7 +9917,7 @@ pub mod xmltok_impl_c {
                     if ptr == start {
                         let mut tok: c_int = little2_scanPercent(
                             enc,
-                            ptr.offset(2isize),
+                            ptr.offset(2),
                             end,
                             nextTokPtr,
                         );
@@ -9932,7 +9932,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(2isize);
+                        *nextTokPtr = ptr.offset(2);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -9940,23 +9940,23 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
-                        if (if *ptr.offset(1isize) as c_int == 0i32 {
+                        if (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         }) == BT_LF as c_int
                         {
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -9964,7 +9964,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         *nextTokPtr = ptr;
@@ -9981,16 +9981,16 @@ pub mod xmltok_impl_c {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long) {
+            if !(end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long) {
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 3 => {
                     if ptr == start {
                         return normal_scanRef(
@@ -10007,7 +10007,7 @@ pub mod xmltok_impl_c {
                     if ptr == start {
                         let mut tok: c_int = normal_scanPercent(
                             enc,
-                            ptr.offset(1isize),
+                            ptr.offset(1),
                             end,
                             nextTokPtr,
                         );
@@ -10022,7 +10022,7 @@ pub mod xmltok_impl_c {
                 }
                 10 => {
                     if ptr == start {
-                        *nextTokPtr = ptr.offset(1isize);
+                        *nextTokPtr = ptr.offset(1);
                         return XML_TOK_DATA_NEWLINE;
                     }
                     *nextTokPtr = ptr;
@@ -10030,9 +10030,9 @@ pub mod xmltok_impl_c {
                 }
                 9 => {
                     if ptr == start {
-                        ptr = ptr.offset(1isize);
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_TRAILING_CR;
                         }
@@ -10040,7 +10040,7 @@ pub mod xmltok_impl_c {
                             as c_int
                             == BT_LF as c_int
                         {
-                            ptr = ptr.offset(1isize)
+                            ptr = ptr.offset(1)
                         }
                         *nextTokPtr = ptr;
                         return XML_TOK_DATA_NEWLINE;
@@ -10048,7 +10048,7 @@ pub mod xmltok_impl_c {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS;
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
         }
         *nextTokPtr = ptr;
@@ -10061,91 +10061,91 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut level: c_int = 0i32;
-        if 2i32 > 1i32 {
+        let mut level: c_int = 0;
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 2 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x21i32
+                    if *ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x21
                     {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x5bi32
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x5b
                         {
                             level += 1;
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                     }
                 }
                 4 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x5di32
+                    if *ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x5d
                     {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x3ei32
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x3e
                         {
-                            ptr = ptr.offset(2isize);
-                            if level == 0i32 {
+                            ptr = ptr.offset(2);
+                            if level == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_IGNORE_SECT;
                             }
@@ -10153,7 +10153,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         return XML_TOK_PARTIAL;
@@ -10165,90 +10165,90 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut level: c_int = 0i32;
-        if 2i32 > 1i32 {
+        let mut level: c_int = 0;
+        if 2 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (2i32 - 1i32) as c_ulong != 0 {
-                n &= !(2i32 - 1i32) as c_ulong;
+            if n & (2i32 - 1) as c_ulong != 0 {
+                n &= !(2i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 2 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x21i32
+                    if *ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x21
                     {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x5bi32
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x5b
                         {
                             level += 1;
-                            ptr = ptr.offset(2isize)
+                            ptr = ptr.offset(2)
                         }
                     }
                 }
                 4 => {
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long)
+                        >= (1i32 * 2) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x5di32
+                    if *ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x5d
                     {
-                        ptr = ptr.offset(2isize);
+                        ptr = ptr.offset(2);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 2i32) as c_long)
+                            >= (1i32 * 2) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x3ei32
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x3e
                         {
-                            ptr = ptr.offset(2isize);
-                            if level == 0i32 {
+                            ptr = ptr.offset(2);
+                            if level == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_IGNORE_SECT;
                             }
@@ -10256,7 +10256,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
         }
         return XML_TOK_PARTIAL;
@@ -10268,18 +10268,18 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        let mut level: c_int = 0i32;
-        if 1i32 > 1i32 {
+        let mut level: c_int = 0;
+        if 1 > 1 {
             let mut n: size_t =  end.wrapping_offset_from(ptr) as size_t;
-            if n & (1i32 - 1i32) as c_ulong != 0 {
-                n &= !(1i32 - 1i32) as c_ulong;
+            if n & (1i32 - 1) as c_ulong != 0 {
+                n &= !(1i32 - 1) as c_ulong;
                 end = ptr.offset(n as isize)
             }
         }
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 5 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 2i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 2 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -10290,10 +10290,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 6 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 3i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 3 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -10304,10 +10304,10 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(3isize)
+                    ptr = ptr.offset(3)
                 }
                 7 => {
-                    if (end.wrapping_offset_from(ptr) as c_long) < 4i64 {
+                    if (end.wrapping_offset_from(ptr) as c_long) < 4 {
                         return XML_TOK_PARTIAL_CHAR;
                     }
                     if (*(enc as *const normal_encoding))
@@ -10318,49 +10318,49 @@ pub mod xmltok_impl_c {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
                     }
-                    ptr = ptr.offset(4isize)
+                    ptr = ptr.offset(4)
                 }
                 0 | 1 | 8 => {
                     *nextTokPtr = ptr;
                     return XML_TOK_INVALID;
                 }
                 2 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr as c_int == 0x21i32 {
-                        ptr = ptr.offset(1isize);
+                    if *ptr as c_int == 0x21 {
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr as c_int == 0x5bi32 {
+                        if *ptr as c_int == 0x5b {
                             level += 1;
-                            ptr = ptr.offset(1isize)
+                            ptr = ptr.offset(1)
                         }
                     }
                 }
                 4 => {
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if !(end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long)
+                        >= (1i32 * 1) as c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    if *ptr as c_int == 0x5di32 {
-                        ptr = ptr.offset(1isize);
+                    if *ptr as c_int == 0x5d {
+                        ptr = ptr.offset(1);
                         if !(end.wrapping_offset_from(ptr) as c_long
-                            >= (1i32 * 1i32) as c_long)
+                            >= (1i32 * 1) as c_long)
                         {
                             return XML_TOK_PARTIAL;
                         }
-                        if *ptr as c_int == 0x3ei32 {
-                            ptr = ptr.offset(1isize);
-                            if level == 0i32 {
+                        if *ptr as c_int == 0x3e {
+                            ptr = ptr.offset(1);
+                            if level == 0 {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_IGNORE_SECT;
                             }
@@ -10368,7 +10368,7 @@ pub mod xmltok_impl_c {
                         }
                     }
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
         }
         return XML_TOK_PARTIAL;
@@ -10383,17 +10383,17 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut badPtr: *mut *const c_char,
     ) -> c_int {
-        ptr = ptr.offset(2isize);
-        end = end.offset(-(2isize));
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        ptr = ptr.offset(2);
+        end = end.offset(-(2));
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_8: u64;
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 25 | 24 | 27 | 13 | 31 | 32 | 34 | 35 | 17 | 14 | 15 | 9 | 10 | 18 | 16 | 33
@@ -10401,8 +10401,8 @@ pub mod xmltok_impl_c {
                     current_block_8 = 13242334135786603907;
                 }
                 21 => {
-                    if *ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x9i32
+                    if *ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x9
                     {
                         *badPtr = ptr;
                         return 0i32;
@@ -10410,11 +10410,11 @@ pub mod xmltok_impl_c {
                     current_block_8 = 13242334135786603907;
                 }
                 26 | 22 => {
-                    if (if *ptr.offset(0isize) as c_int == 0i32 {
-                        *ptr.offset(1isize) as c_int
+                    if (if *ptr.offset(0) as c_int == 0 {
+                        *ptr.offset(1) as c_int
                     } else {
                         -1
-                    }) & !(0x7fi32)
+                    }) & !(0x7f)
                         == 0
                     {
                         current_block_8 = 13242334135786603907;
@@ -10432,8 +10432,8 @@ pub mod xmltok_impl_c {
                 /* fall through */
                 /* fall through */
                 {
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
-                        *ptr.offset(1isize) as c_int
+                    match if *ptr.offset(0) as c_int == 0 {
+                        *ptr.offset(1) as c_int
                     } else {
                         -1
                     } {
@@ -10447,9 +10447,9 @@ pub mod xmltok_impl_c {
                 }
                 _ => {}
             }
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
-        return 1i32;
+        return 1;
     }
 
     pub unsafe extern "C" fn little2_isPublicId(
@@ -10458,16 +10458,16 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut badPtr: *mut *const c_char,
     ) -> c_int {
-        ptr = ptr.offset(2isize);
-        end = end.offset(-(2isize));
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
+        ptr = ptr.offset(2);
+        end = end.offset(-(2));
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
             let mut current_block_8: u64;
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 25 | 24 | 27 | 13 | 31 | 32 | 34 | 35 | 17 | 14 | 15 | 9 | 10 | 18 | 16 | 33
@@ -10475,8 +10475,8 @@ pub mod xmltok_impl_c {
                     current_block_8 = 13242334135786603907;
                 }
                 21 => {
-                    if *ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x9i32
+                    if *ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x9
                     {
                         *badPtr = ptr;
                         return 0i32;
@@ -10484,11 +10484,11 @@ pub mod xmltok_impl_c {
                     current_block_8 = 13242334135786603907;
                 }
                 26 | 22 => {
-                    if (if *ptr.offset(1isize) as c_int == 0i32 {
-                        *ptr.offset(0isize) as c_int
+                    if (if *ptr.offset(1) as c_int == 0 {
+                        *ptr.offset(0) as c_int
                     } else {
                         -1
-                    }) & !(0x7fi32)
+                    }) & !(0x7f)
                         == 0
                     {
                         current_block_8 = 13242334135786603907;
@@ -10502,8 +10502,8 @@ pub mod xmltok_impl_c {
             }
             match current_block_8 {
                 8842977063429728986 => {
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
-                        *ptr.offset(0isize) as c_int
+                    match if *ptr.offset(1) as c_int == 0 {
+                        *ptr.offset(0) as c_int
                     } else {
                         -1
                     } {
@@ -10516,9 +10516,9 @@ pub mod xmltok_impl_c {
                 }
                 _ => {}
             }
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
-        return 1i32;
+        return 1;
     }
 
     pub unsafe extern "C" fn normal_isPublicId(
@@ -10527,9 +10527,9 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut badPtr: *mut *const c_char,
     ) -> c_int {
-        ptr = ptr.offset(1isize);
-        end = end.offset(-(1isize));
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        ptr = ptr.offset(1);
+        end = end.offset(-(1));
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             let mut current_block_8: u64;
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 25 | 24 | 27 | 13 | 31 | 32 | 34 | 35 | 17 | 14 | 15 | 9 | 10 | 18 | 16 | 33
@@ -10537,14 +10537,14 @@ pub mod xmltok_impl_c {
                     current_block_8 = 13242334135786603907;
                 }
                 21 => {
-                    if *ptr as c_int == 0x9i32 {
+                    if *ptr as c_int == 0x9 {
                         *badPtr = ptr;
                         return 0i32;
                     }
                     current_block_8 = 13242334135786603907;
                 }
                 26 | 22 => {
-                    if *ptr as c_int & !(0x7fi32) == 0 {
+                    if *ptr as c_int & !(0x7f) == 0 {
                         current_block_8 = 13242334135786603907;
                     } else {
                         current_block_8 = 4503056668119438195;
@@ -10564,9 +10564,9 @@ pub mod xmltok_impl_c {
                 },
                 _ => {}
             }
-            ptr = ptr.offset(1isize)
+            ptr = ptr.offset(1)
         }
-        return 1i32;
+        return 1;
     }
     /* This must only be called for a well-formed start-tag or empty
        element tag.  Returns the number of attributes.  Pointers to the
@@ -10588,15 +10588,15 @@ pub mod xmltok_impl_c {
         mut atts: *mut ATTRIBUTE,
     ) -> c_int {
         let mut state: C2RustUnnamed_2 = inName;
-        let mut nAtts: c_int = 0i32;
-        let mut open: c_int = 0i32;
+        let mut nAtts: c_int = 0;
+        let mut open: c_int = 0;
         /* defined when state == inValue;
         initialization just to shut up compilers */
         /* defined when state == inValue;
         initialization just to shut up compilers */
         /* defined when state == inValue;
         initialization just to shut up compilers */
-        ptr = ptr.offset(1isize);
+        ptr = ptr.offset(1);
         loop {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
                 5 => {
@@ -10608,7 +10608,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName
                     }
-                    ptr = ptr.offset((2i32 - 1i32) as isize)
+                    ptr = ptr.offset((2i32 - 1) as isize)
                 }
                 6 => {
                     if  state ==  other {
@@ -10619,7 +10619,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName
                     }
-                    ptr = ptr.offset((3i32 - 1i32) as isize)
+                    ptr = ptr.offset((3i32 - 1) as isize)
                 }
                 7 => {
                     if  state ==  other {
@@ -10630,7 +10630,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName
                     }
-                    ptr = ptr.offset((4i32 - 1i32) as isize)
+                    ptr = ptr.offset((4i32 - 1) as isize)
                 }
                 29 | 22 | 24 => {
                     if  state ==  other {
@@ -10646,7 +10646,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue {
                         if nAtts < attsMax {
                             let ref mut fresh4 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh4 = ptr.offset(1isize)
+                            *fresh4 = ptr.offset(1)
                         }
                         state = inValue;
                         open = BT_QUOT as c_int
@@ -10663,7 +10663,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue {
                         if nAtts < attsMax {
                             let ref mut fresh6 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh6 = ptr.offset(1isize)
+                            *fresh6 = ptr.offset(1)
                         }
                         state = inValue;
                         open = BT_APOS as c_int
@@ -10689,9 +10689,9 @@ pub mod xmltok_impl_c {
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
                             || *ptr != ASCII_SPACE
-                            || *ptr.offset(1isize) == ASCII_SPACE
+                            || *ptr.offset(1) == ASCII_SPACE
                             || (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                                 == open)
                     {
@@ -10718,7 +10718,7 @@ pub mod xmltok_impl_c {
                 }
                 _ => {}
             }
-            ptr = ptr.offset(1isize)
+            ptr = ptr.offset(1)
         }
         /* not reached */
         /* not reached */
@@ -10732,16 +10732,16 @@ pub mod xmltok_impl_c {
         mut atts: *mut ATTRIBUTE,
     ) -> c_int {
         let mut state: C2RustUnnamed_2 = inName_0;
-        let mut nAtts: c_int = 0i32;
-        let mut open: c_int = 0i32;
-        ptr = ptr.offset(2isize);
+        let mut nAtts: c_int = 0;
+        let mut open: c_int = 0;
+        ptr = ptr.offset(2);
         loop {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
                 5 => {
@@ -10753,7 +10753,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_0
                     }
-                    ptr = ptr.offset((2i32 - 2i32) as isize)
+                    ptr = ptr.offset((2i32 - 2) as isize)
                 }
                 6 => {
                     if  state ==  other_0 {
@@ -10764,7 +10764,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_0
                     }
-                    ptr = ptr.offset((3i32 - 2i32) as isize)
+                    ptr = ptr.offset((3i32 - 2) as isize)
                 }
                 7 => {
                     if  state ==  other_0 {
@@ -10775,7 +10775,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_0
                     }
-                    ptr = ptr.offset((4i32 - 2i32) as isize)
+                    ptr = ptr.offset((4i32 - 2) as isize)
                 }
                 29 | 22 | 24 => {
                     if  state ==  other_0 {
@@ -10791,7 +10791,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue_0 {
                         if nAtts < attsMax {
                             let ref mut fresh12 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh12 = ptr.offset(2isize)
+                            *fresh12 = ptr.offset(2)
                         }
                         state = inValue_0;
                         open = BT_QUOT as c_int
@@ -10808,7 +10808,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue_0 {
                         if nAtts < attsMax {
                             let ref mut fresh14 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh14 = ptr.offset(2isize)
+                            *fresh14 = ptr.offset(2)
                         }
                         state = inValue_0;
                         open = BT_APOS as c_int
@@ -10833,30 +10833,30 @@ pub mod xmltok_impl_c {
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
-                            || (if *ptr.offset(1isize) as c_int == 0i32 {
-                                *ptr.offset(0isize)
+                            || (if *ptr.offset(1) as c_int == 0 {
+                                *ptr.offset(0)
                             } else {
                                 -1
                             }) != ASCII_SPACE
-                            || (if *ptr.offset(2isize).offset(1isize)
+                            || (if *ptr.offset(2).offset(1)
                                 as c_int
-                                == 0i32
+                                == 0
                             {
-                                *ptr.offset(2isize).offset(0isize)
+                                *ptr.offset(2).offset(0)
                             } else {
                                 -1
                             }) == ASCII_SPACE
-                            || (if *ptr.offset(2isize).offset(1isize)
+                            || (if *ptr.offset(2).offset(1)
                                 as c_int
-                                == 0i32
+                                == 0
                             {
                                 (*(enc as *mut normal_encoding)).type_0
-                                    [*ptr.offset(2isize) as c_uchar as usize]
+                                    [*ptr.offset(2) as c_uchar as usize]
                                     as c_int
                             } else {
                                 unicode_byte_type(
-                                    *ptr.offset(2isize).offset(1isize),
-                                    *ptr.offset(2isize).offset(0isize),
+                                    *ptr.offset(2).offset(1),
+                                    *ptr.offset(2).offset(0),
                                 )
                             }) == open)
                     {
@@ -10877,7 +10877,7 @@ pub mod xmltok_impl_c {
                 }
                 _ => {}
             }
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
     }
 
@@ -10888,17 +10888,17 @@ pub mod xmltok_impl_c {
         mut atts: *mut ATTRIBUTE,
     ) -> c_int {
         let mut state: C2RustUnnamed_2 = inName_1;
-        let mut nAtts: c_int = 0i32;
-        let mut open: c_int = 0i32;
-        ptr = ptr.offset(2isize);
+        let mut nAtts: c_int = 0;
+        let mut open: c_int = 0;
+        ptr = ptr.offset(2);
         loop {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
                 5 => {
@@ -10910,7 +10910,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_1
                     }
-                    ptr = ptr.offset((2i32 - 2i32) as isize)
+                    ptr = ptr.offset((2i32 - 2) as isize)
                 }
                 6 => {
                     if  state ==  other_1 {
@@ -10921,7 +10921,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_1
                     }
-                    ptr = ptr.offset((3i32 - 2i32) as isize)
+                    ptr = ptr.offset((3i32 - 2) as isize)
                 }
                 7 => {
                     if  state ==  other_1 {
@@ -10932,7 +10932,7 @@ pub mod xmltok_impl_c {
                         }
                         state = inName_1
                     }
-                    ptr = ptr.offset((4i32 - 2i32) as isize)
+                    ptr = ptr.offset((4i32 - 2) as isize)
                 }
                 29 | 22 | 24 => {
                     if  state ==  other_1 {
@@ -10948,7 +10948,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue_1 {
                         if nAtts < attsMax {
                             let ref mut fresh20 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh20 = ptr.offset(2isize)
+                            *fresh20 = ptr.offset(2)
                         }
                         state = inValue_1;
                         open = BT_QUOT as c_int
@@ -10965,7 +10965,7 @@ pub mod xmltok_impl_c {
                     if  state !=  inValue_1 {
                         if nAtts < attsMax {
                             let ref mut fresh22 = (*atts.offset(nAtts as isize)).valuePtr;
-                            *fresh22 = ptr.offset(2isize)
+                            *fresh22 = ptr.offset(2)
                         }
                         state = inValue_1;
                         open = BT_APOS as c_int
@@ -10990,32 +10990,32 @@ pub mod xmltok_impl_c {
                         && nAtts < attsMax
                         && (*atts.offset(nAtts as isize)).normalized as c_int != 0
                         && (ptr == (*atts.offset(nAtts as isize)).valuePtr
-                            || (if *ptr.offset(0isize) as c_int == 0i32 {
-                                *ptr.offset(1isize)
+                            || (if *ptr.offset(0) as c_int == 0 {
+                                *ptr.offset(1)
                             } else {
                                 -1
                             }) != ASCII_SPACE
-                            || (if *ptr.offset(2isize).offset(0isize)
+                            || (if *ptr.offset(2).offset(0)
                                 as c_int
-                                == 0i32
+                                == 0
                             {
-                                *ptr.offset(2isize).offset(1isize)
+                                *ptr.offset(2).offset(1)
                             } else {
                                 -1
                             }) == ASCII_SPACE
-                            || (if *ptr.offset(2isize).offset(0isize)
+                            || (if *ptr.offset(2).offset(0)
                                 as c_int
-                                == 0i32
+                                == 0
                             {
                                 (*(enc as *mut normal_encoding)).type_0[*ptr
-                                    .offset(2isize)
-                                    .offset(1isize)
+                                    .offset(2)
+                                    .offset(1)
                                     as c_uchar
                                     as usize] as c_int
                             } else {
                                 unicode_byte_type(
-                                    *ptr.offset(2isize).offset(0isize),
-                                    *ptr.offset(2isize).offset(1isize),
+                                    *ptr.offset(2).offset(0),
+                                    *ptr.offset(2).offset(1),
                                 )
                             }) == open)
                     {
@@ -11036,7 +11036,7 @@ pub mod xmltok_impl_c {
                 }
                 _ => {}
             }
-            ptr = ptr.offset(2isize)
+            ptr = ptr.offset(2)
         }
     }
 
@@ -11044,59 +11044,59 @@ pub mod xmltok_impl_c {
         mut _enc: *const ENCODING,
         mut ptr: *const c_char,
     ) -> c_int {
-        let mut result: c_int = 0i32;
+        let mut result: c_int = 0;
         /* skip &# */
         /* skip &# */
         /* skip &# */
-        ptr = ptr.offset((2i32 * 2i32) as isize);
-        if *ptr.offset(1isize) as c_int == 0i32
-            && *ptr.offset(0isize) as c_int == 0x78i32
+        ptr = ptr.offset((2i32 * 2) as isize);
+        if *ptr.offset(1) as c_int == 0
+            && *ptr.offset(0) as c_int == 0x78
         {
-            ptr = ptr.offset(2isize);
-            while !(*ptr.offset(1isize) as c_int == 0i32
-                && *ptr.offset(0isize) as c_int == 0x3bi32)
+            ptr = ptr.offset(2);
+            while !(*ptr.offset(1) as c_int == 0
+                && *ptr.offset(0) as c_int == 0x3b)
             {
-                let mut c = if *ptr.offset(1isize) as c_int == 0i32 {
-                    *ptr.offset(0isize)
+                let mut c = if *ptr.offset(1) as c_int == 0 {
+                    *ptr.offset(0)
                 } else {
                     -1
                 };
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
-                        result <<= 4i32;
+                        result <<= 4;
                         result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_A) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_a) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         } else {
-            while !(*ptr.offset(1isize) as c_int == 0i32
-                && *ptr.offset(0isize) as c_int == 0x3bi32)
+            while !(*ptr.offset(1) as c_int == 0
+                && *ptr.offset(0) as c_int == 0x3b)
             {
-                let mut c_0: c_int = if *ptr.offset(1isize) as c_int == 0i32 {
-                    *ptr.offset(0isize) as c_int
+                let mut c_0: c_int = if *ptr.offset(1) as c_int == 0 {
+                    *ptr.offset(0) as c_int
                 } else {
                     -1
                 };
-                result *= 10i32;
+                result *= 10;
                 result += c_0 - ASCII_0 as c_int;
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return checkCharRefNumber(result);
@@ -11106,42 +11106,42 @@ pub mod xmltok_impl_c {
         mut _enc: *const ENCODING,
         mut ptr: *const c_char,
     ) -> c_int {
-        let mut result: c_int = 0i32;
-        ptr = ptr.offset((2i32 * 1i32) as isize);
-        if *ptr as c_int == 0x78i32 {
-            ptr = ptr.offset(1isize);
-            while !(*ptr as c_int == 0x3bi32) {
+        let mut result: c_int = 0;
+        ptr = ptr.offset((2i32 * 1) as isize);
+        if *ptr as c_int == 0x78 {
+            ptr = ptr.offset(1);
+            while !(*ptr as c_int == 0x3b) {
                 let mut c = *ptr;
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
-                        result <<= 4i32;
+                        result <<= 4;
                         result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_A) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_a) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(1isize)
+                ptr = ptr.offset(1)
             }
         } else {
-            while !(*ptr as c_int == 0x3bi32) {
+            while !(*ptr as c_int == 0x3b) {
                 let mut c_0: c_int = *ptr as c_int;
-                result *= 10i32;
+                result *= 10;
                 result += c_0 - ASCII_0 as c_int;
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(1isize)
+                ptr = ptr.offset(1)
             }
         }
         return checkCharRefNumber(result);
@@ -11151,56 +11151,56 @@ pub mod xmltok_impl_c {
         mut _enc: *const ENCODING,
         mut ptr: *const c_char,
     ) -> c_int {
-        let mut result: c_int = 0i32;
-        ptr = ptr.offset((2i32 * 2i32) as isize);
-        if *ptr.offset(0isize) as c_int == 0i32
-            && *ptr.offset(1isize) as c_int == 0x78i32
+        let mut result: c_int = 0;
+        ptr = ptr.offset((2i32 * 2) as isize);
+        if *ptr.offset(0) as c_int == 0
+            && *ptr.offset(1) as c_int == 0x78
         {
-            ptr = ptr.offset(2isize);
-            while !(*ptr.offset(0isize) as c_int == 0i32
-                && *ptr.offset(1isize) as c_int == 0x3bi32)
+            ptr = ptr.offset(2);
+            while !(*ptr.offset(0) as c_int == 0
+                && *ptr.offset(1) as c_int == 0x3b)
             {
-                let mut c = if *ptr.offset(0isize) as c_int == 0i32 {
-                    *ptr.offset(1isize)
+                let mut c = if *ptr.offset(0) as c_int == 0 {
+                    *ptr.offset(1)
                 } else {
                     -1
                 };
                 match c {
                     ASCII_0 | ASCII_1 | ASCII_2 | ASCII_3 | ASCII_4 | ASCII_5 | ASCII_6
                     | ASCII_7 | ASCII_8 | ASCII_9 => {
-                        result <<= 4i32;
+                        result <<= 4;
                         result |= (c - ASCII_0) as c_int
                     }
                     ASCII_A | ASCII_B | ASCII_C | ASCII_D | ASCII_E | ASCII_F => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_A) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_A) as c_int
                     }
                     ASCII_a | ASCII_b | ASCII_c | ASCII_d | ASCII_e | ASCII_f => {
-                        result <<= 4i32;
-                        result += 10i32 + (c - ASCII_a) as c_int
+                        result <<= 4;
+                        result += 10 + (c - ASCII_a) as c_int
                     }
                     _ => {}
                 }
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         } else {
-            while !(*ptr.offset(0isize) as c_int == 0i32
-                && *ptr.offset(1isize) as c_int == 0x3bi32)
+            while !(*ptr.offset(0) as c_int == 0
+                && *ptr.offset(1) as c_int == 0x3b)
             {
-                let mut c_0 = if *ptr.offset(0isize) as c_int == 0i32 {
-                    *ptr.offset(1isize)
+                let mut c_0 = if *ptr.offset(0) as c_int == 0 {
+                    *ptr.offset(1)
                 } else {
                     -1
                 };
-                result *= 10i32;
+                result *= 10;
                 result += (c_0 - ASCII_0) as c_int;
-                if result >= 0x110000i32 {
+                if result >= 0x110000 {
                     return -1;
                 }
-                ptr = ptr.offset(2isize)
+                ptr = ptr.offset(2)
             }
         }
         return checkCharRefNumber(result);
@@ -11211,15 +11211,15 @@ pub mod xmltok_impl_c {
         mut ptr: *const c_char,
         mut end: *const c_char,
     ) -> c_int {
-        match end.wrapping_offset_from(ptr) as c_long / 2i64 {
+        match end.wrapping_offset_from(ptr) as c_long / 2 {
             2 => {
-                if *ptr.offset(2isize).offset(1isize) as c_int
-                    == 0i32
-                    && *ptr.offset(2isize).offset(0isize) as c_int
-                        == 0x74i32
+                if *ptr.offset(2).offset(1) as c_int
+                    == 0
+                    && *ptr.offset(2).offset(0) as c_int
+                        == 0x74
                 {
-                    match if *ptr.offset(1isize) as c_int == 0i32 {
-                        *ptr.offset(0isize)
+                    match if *ptr.offset(1) as c_int == 0 {
+                        *ptr.offset(0)
                     } else {
                         -1
                     } {
@@ -11230,16 +11230,16 @@ pub mod xmltok_impl_c {
                 }
             }
             3 => {
-                if *ptr.offset(1isize) as c_int == 0i32
-                    && *ptr.offset(0isize) as c_int == 0x61i32
+                if *ptr.offset(1) as c_int == 0
+                    && *ptr.offset(0) as c_int == 0x61
                 {
-                    ptr = ptr.offset(2isize);
-                    if *ptr.offset(1isize) as c_int == 0i32
-                        && *ptr.offset(0isize) as c_int == 0x6di32
+                    ptr = ptr.offset(2);
+                    if *ptr.offset(1) as c_int == 0
+                        && *ptr.offset(0) as c_int == 0x6d
                     {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x70i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x70
                         {
                             return ASCII_AMP as c_int;
                         }
@@ -11247,23 +11247,23 @@ pub mod xmltok_impl_c {
                 }
             }
             4 => {
-                match if *ptr.offset(1isize) as c_int == 0i32 {
-                    *ptr.offset(0isize)
+                match if *ptr.offset(1) as c_int == 0 {
+                    *ptr.offset(0)
                 } else {
                     -1
                 } {
                     ASCII_q => {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x75i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x75
                         {
-                            ptr = ptr.offset(2isize);
-                            if *ptr.offset(1isize) as c_int == 0i32
-                                && *ptr.offset(0isize) as c_int == 0x6fi32
+                            ptr = ptr.offset(2);
+                            if *ptr.offset(1) as c_int == 0
+                                && *ptr.offset(0) as c_int == 0x6f
                             {
-                                ptr = ptr.offset(2isize);
-                                if *ptr.offset(1isize) as c_int == 0i32
-                                    && *ptr.offset(0isize) as c_int == 0x74i32
+                                ptr = ptr.offset(2);
+                                if *ptr.offset(1) as c_int == 0
+                                    && *ptr.offset(0) as c_int == 0x74
                                 {
                                     return ASCII_QUOT as c_int;
                                 }
@@ -11271,17 +11271,17 @@ pub mod xmltok_impl_c {
                         }
                     }
                     ASCII_a => {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(1isize) as c_int == 0i32
-                            && *ptr.offset(0isize) as c_int == 0x70i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(1) as c_int == 0
+                            && *ptr.offset(0) as c_int == 0x70
                         {
-                            ptr = ptr.offset(2isize);
-                            if *ptr.offset(1isize) as c_int == 0i32
-                                && *ptr.offset(0isize) as c_int == 0x6fi32
+                            ptr = ptr.offset(2);
+                            if *ptr.offset(1) as c_int == 0
+                                && *ptr.offset(0) as c_int == 0x6f
                             {
-                                ptr = ptr.offset(2isize);
-                                if *ptr.offset(1isize) as c_int == 0i32
-                                    && *ptr.offset(0isize) as c_int == 0x73i32
+                                ptr = ptr.offset(2);
+                                if *ptr.offset(1) as c_int == 0
+                                    && *ptr.offset(0) as c_int == 0x73
                                 {
                                     return ASCII_APOS as c_int;
                                 }
@@ -11293,7 +11293,7 @@ pub mod xmltok_impl_c {
             }
             _ => {}
         }
-        return 0i32;
+        return 0;
     }
 
     pub unsafe extern "C" fn normal_predefinedEntityName(
@@ -11301,9 +11301,9 @@ pub mod xmltok_impl_c {
         mut ptr: *const c_char,
         mut end: *const c_char,
     ) -> c_int {
-        match end.wrapping_offset_from(ptr) as c_long / 1i64 {
+        match end.wrapping_offset_from(ptr) as c_long / 1 {
             2 => {
-                if *ptr.offset(1isize) as c_int == 0x74i32 {
+                if *ptr.offset(1) as c_int == 0x74 {
                     match *ptr {
                         ASCII_l => return ASCII_LT as c_int,
                         ASCII_g => return ASCII_GT as c_int,
@@ -11312,11 +11312,11 @@ pub mod xmltok_impl_c {
                 }
             }
             3 => {
-                if *ptr as c_int == 0x61i32 {
-                    ptr = ptr.offset(1isize);
-                    if *ptr as c_int == 0x6di32 {
-                        ptr = ptr.offset(1isize);
-                        if *ptr as c_int == 0x70i32 {
+                if *ptr as c_int == 0x61 {
+                    ptr = ptr.offset(1);
+                    if *ptr as c_int == 0x6d {
+                        ptr = ptr.offset(1);
+                        if *ptr as c_int == 0x70 {
                             return ASCII_AMP as c_int;
                         }
                     }
@@ -11324,24 +11324,24 @@ pub mod xmltok_impl_c {
             }
             4 => match *ptr {
                 ASCII_q => {
-                    ptr = ptr.offset(1isize);
-                    if *ptr as c_int == 0x75i32 {
-                        ptr = ptr.offset(1isize);
-                        if *ptr as c_int == 0x6fi32 {
-                            ptr = ptr.offset(1isize);
-                            if *ptr as c_int == 0x74i32 {
+                    ptr = ptr.offset(1);
+                    if *ptr as c_int == 0x75 {
+                        ptr = ptr.offset(1);
+                        if *ptr as c_int == 0x6f {
+                            ptr = ptr.offset(1);
+                            if *ptr as c_int == 0x74 {
                                 return ASCII_QUOT as c_int;
                             }
                         }
                     }
                 }
                 ASCII_a => {
-                    ptr = ptr.offset(1isize);
-                    if *ptr as c_int == 0x70i32 {
-                        ptr = ptr.offset(1isize);
-                        if *ptr as c_int == 0x6fi32 {
-                            ptr = ptr.offset(1isize);
-                            if *ptr as c_int == 0x73i32 {
+                    ptr = ptr.offset(1);
+                    if *ptr as c_int == 0x70 {
+                        ptr = ptr.offset(1);
+                        if *ptr as c_int == 0x6f {
+                            ptr = ptr.offset(1);
+                            if *ptr as c_int == 0x73 {
                                 return ASCII_APOS as c_int;
                             }
                         }
@@ -11351,7 +11351,7 @@ pub mod xmltok_impl_c {
             },
             _ => {}
         }
-        return 0i32;
+        return 0;
     }
 
     pub unsafe extern "C" fn big2_predefinedEntityName(
@@ -11359,15 +11359,15 @@ pub mod xmltok_impl_c {
         mut ptr: *const c_char,
         mut end: *const c_char,
     ) -> c_int {
-        match end.wrapping_offset_from(ptr) as c_long / 2i64 {
+        match end.wrapping_offset_from(ptr) as c_long / 2 {
             2 => {
-                if *ptr.offset(2isize).offset(0isize) as c_int
-                    == 0i32
-                    && *ptr.offset(2isize).offset(1isize) as c_int
-                        == 0x74i32
+                if *ptr.offset(2).offset(0) as c_int
+                    == 0
+                    && *ptr.offset(2).offset(1) as c_int
+                        == 0x74
                 {
-                    match if *ptr.offset(0isize) as c_int == 0i32 {
-                        *ptr.offset(1isize)
+                    match if *ptr.offset(0) as c_int == 0 {
+                        *ptr.offset(1)
                     } else {
                         -1
                     } {
@@ -11378,16 +11378,16 @@ pub mod xmltok_impl_c {
                 }
             }
             3 => {
-                if *ptr.offset(0isize) as c_int == 0i32
-                    && *ptr.offset(1isize) as c_int == 0x61i32
+                if *ptr.offset(0) as c_int == 0
+                    && *ptr.offset(1) as c_int == 0x61
                 {
-                    ptr = ptr.offset(2isize);
-                    if *ptr.offset(0isize) as c_int == 0i32
-                        && *ptr.offset(1isize) as c_int == 0x6di32
+                    ptr = ptr.offset(2);
+                    if *ptr.offset(0) as c_int == 0
+                        && *ptr.offset(1) as c_int == 0x6d
                     {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x70i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x70
                         {
                             return ASCII_AMP as c_int;
                         }
@@ -11395,23 +11395,23 @@ pub mod xmltok_impl_c {
                 }
             }
             4 => {
-                match if *ptr.offset(0isize) as c_int == 0i32 {
-                    *ptr.offset(1isize)
+                match if *ptr.offset(0) as c_int == 0 {
+                    *ptr.offset(1)
                 } else {
                     -1
                 } {
                     ASCII_q => {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x75i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x75
                         {
-                            ptr = ptr.offset(2isize);
-                            if *ptr.offset(0isize) as c_int == 0i32
-                                && *ptr.offset(1isize) as c_int == 0x6fi32
+                            ptr = ptr.offset(2);
+                            if *ptr.offset(0) as c_int == 0
+                                && *ptr.offset(1) as c_int == 0x6f
                             {
-                                ptr = ptr.offset(2isize);
-                                if *ptr.offset(0isize) as c_int == 0i32
-                                    && *ptr.offset(1isize) as c_int == 0x74i32
+                                ptr = ptr.offset(2);
+                                if *ptr.offset(0) as c_int == 0
+                                    && *ptr.offset(1) as c_int == 0x74
                                 {
                                     return ASCII_QUOT as c_int;
                                 }
@@ -11419,17 +11419,17 @@ pub mod xmltok_impl_c {
                         }
                     }
                     ASCII_a => {
-                        ptr = ptr.offset(2isize);
-                        if *ptr.offset(0isize) as c_int == 0i32
-                            && *ptr.offset(1isize) as c_int == 0x70i32
+                        ptr = ptr.offset(2);
+                        if *ptr.offset(0) as c_int == 0
+                            && *ptr.offset(1) as c_int == 0x70
                         {
-                            ptr = ptr.offset(2isize);
-                            if *ptr.offset(0isize) as c_int == 0i32
-                                && *ptr.offset(1isize) as c_int == 0x6fi32
+                            ptr = ptr.offset(2);
+                            if *ptr.offset(0) as c_int == 0
+                                && *ptr.offset(1) as c_int == 0x6f
                             {
-                                ptr = ptr.offset(2isize);
-                                if *ptr.offset(0isize) as c_int == 0i32
-                                    && *ptr.offset(1isize) as c_int == 0x73i32
+                                ptr = ptr.offset(2);
+                                if *ptr.offset(0) as c_int == 0
+                                    && *ptr.offset(1) as c_int == 0x73
                                 {
                                     return ASCII_APOS as c_int;
                                 }
@@ -11441,7 +11441,7 @@ pub mod xmltok_impl_c {
             }
             _ => {}
         }
-        return 0i32;
+        return 0;
     }
 
     pub unsafe extern "C" fn normal_nameMatchesAscii(
@@ -11451,7 +11451,7 @@ pub mod xmltok_impl_c {
         mut ptr2: *const c_char,
     ) -> c_int {
         while *ptr2 != 0 {
-            if (end1.wrapping_offset_from(ptr1) as c_long) < 1i64 {
+            if (end1.wrapping_offset_from(ptr1) as c_long) < 1 {
                 /* This line cannot be executed.  The incoming data has already
                  * been tokenized once, so incomplete characters like this have
                  * already been eliminated from the input.  Retaining the
@@ -11475,7 +11475,7 @@ pub mod xmltok_impl_c {
             if !(*ptr1 as c_int == *ptr2 as c_int) {
                 return 0i32;
             }
-            ptr1 = ptr1.offset(1isize);
+            ptr1 = ptr1.offset(1);
             ptr2 = ptr2.offset(1)
         }
         return (ptr1 == end1) as c_int;
@@ -11488,15 +11488,15 @@ pub mod xmltok_impl_c {
         mut ptr2: *const c_char,
     ) -> c_int {
         while *ptr2 != 0 {
-            if (end1.wrapping_offset_from(ptr1) as c_long) < 2i64 {
+            if (end1.wrapping_offset_from(ptr1) as c_long) < 2 {
                 return 0i32;
             }
-            if !(*ptr1.offset(0isize) as c_int == 0i32
-                && *ptr1.offset(1isize) as c_int == *ptr2 as c_int)
+            if !(*ptr1.offset(0) as c_int == 0
+                && *ptr1.offset(1) as c_int == *ptr2 as c_int)
             {
                 return 0i32;
             }
-            ptr1 = ptr1.offset(2isize);
+            ptr1 = ptr1.offset(2);
             ptr2 = ptr2.offset(1)
         }
         return (ptr1 == end1) as c_int;
@@ -11509,15 +11509,15 @@ pub mod xmltok_impl_c {
         mut ptr2: *const c_char,
     ) -> c_int {
         while *ptr2 != 0 {
-            if (end1.wrapping_offset_from(ptr1) as c_long) < 2i64 {
+            if (end1.wrapping_offset_from(ptr1) as c_long) < 2 {
                 return 0i32;
             }
-            if !(*ptr1.offset(1isize) as c_int == 0i32
-                && *ptr1.offset(0isize) as c_int == *ptr2 as c_int)
+            if !(*ptr1.offset(1) as c_int == 0
+                && *ptr1.offset(0) as c_int == *ptr2 as c_int)
             {
                 return 0i32;
             }
-            ptr1 = ptr1.offset(2isize);
+            ptr1 = ptr1.offset(2);
             ptr2 = ptr2.offset(1)
         }
         return (ptr1 == end1) as c_int;
@@ -11530,10 +11530,10 @@ pub mod xmltok_impl_c {
         let mut start: *const c_char = ptr;
         loop {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
-                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(1isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
+                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(1),
                 _ => return  ptr.wrapping_offset_from(start) as c_int,
             }
         }
@@ -11545,19 +11545,19 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut start: *const c_char = ptr;
         loop {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
-                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
+                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2),
                 _ => return  ptr.wrapping_offset_from(start) as c_int,
             }
         }
@@ -11569,18 +11569,18 @@ pub mod xmltok_impl_c {
     ) -> c_int {
         let mut start: *const c_char = ptr;
         loop {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
-                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
+                29 | 22 | 23 | 24 | 25 | 26 | 27 => ptr = ptr.offset(2),
                 _ => return  ptr.wrapping_offset_from(start) as c_int,
             }
         }
@@ -11591,15 +11591,15 @@ pub mod xmltok_impl_c {
         mut ptr: *const c_char,
     ) -> *const c_char {
         loop {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
-                10 | 9 | 21 => ptr = ptr.offset(2isize),
+                10 | 9 | 21 => ptr = ptr.offset(2),
                 _ => return ptr,
             }
         }
@@ -11610,16 +11610,16 @@ pub mod xmltok_impl_c {
         mut ptr: *const c_char,
     ) -> *const c_char {
         loop {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
-                10 | 9 | 21 => ptr = ptr.offset(2isize),
+                10 | 9 | 21 => ptr = ptr.offset(2),
                 _ => return ptr,
             }
         }
@@ -11631,7 +11631,7 @@ pub mod xmltok_impl_c {
     ) -> *const c_char {
         loop {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                10 | 9 | 21 => ptr = ptr.offset(1isize),
+                10 | 9 | 21 => ptr = ptr.offset(1),
                 _ => return ptr,
             }
         }
@@ -11643,30 +11643,30 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut pos: *mut POSITION,
     ) {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1i32) as c_long {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 1) as c_long {
             match (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 10 => {
                     (*pos).columnNumber = -(1i32) as XML_Size;
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(1isize)
+                    ptr = ptr.offset(1)
                 }
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(1isize);
+                    ptr = ptr.offset(1);
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 1i32) as c_long
+                        >= (1i32 * 1) as c_long
                         && (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                             as c_int
                             == BT_LF as c_int
                     {
-                        ptr = ptr.offset(1isize)
+                        ptr = ptr.offset(1)
                     }
                     (*pos).columnNumber = -(1i32) as XML_Size
                 }
-                _ => ptr = ptr.offset(1isize),
+                _ => ptr = ptr.offset(1),
             }
             (*pos).columnNumber = (*pos).columnNumber.wrapping_add(1)
         }
@@ -11678,45 +11678,45 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut pos: *mut POSITION,
     ) {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(0isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(0) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0
-                    [*ptr.offset(1isize) as c_uchar as usize] as c_int
+                    [*ptr.offset(1) as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(0isize),
-                    *ptr.offset(1isize),
+                    *ptr.offset(0),
+                    *ptr.offset(1),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 10 => {
                     (*pos).columnNumber = -(1i32) as XML_Size;
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
-                        && (if *ptr.offset(0isize) as c_int == 0i32 {
+                        >= (1i32 * 2) as c_long
+                        && (if *ptr.offset(0) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0
-                                [*ptr.offset(1isize) as c_uchar as usize]
+                                [*ptr.offset(1) as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(0isize),
-                                *ptr.offset(1isize),
+                                *ptr.offset(0),
+                                *ptr.offset(1),
                             )
                         }) == BT_LF as c_int
                     {
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     (*pos).columnNumber = -(1i32) as XML_Size
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
             (*pos).columnNumber = (*pos).columnNumber.wrapping_add(1)
         }
@@ -11728,43 +11728,43 @@ pub mod xmltok_impl_c {
         mut end: *const c_char,
         mut pos: *mut POSITION,
     ) {
-        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2i32) as c_long {
-            match if *ptr.offset(1isize) as c_int == 0i32 {
+        while end.wrapping_offset_from(ptr) as c_long >= (1i32 * 2) as c_long {
+            match if *ptr.offset(1) as c_int == 0 {
                 (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize] as c_int
             } else {
                 unicode_byte_type(
-                    *ptr.offset(1isize),
-                    *ptr.offset(0isize),
+                    *ptr.offset(1),
+                    *ptr.offset(0),
                 )
             } {
-                5 => ptr = ptr.offset(2isize),
-                6 => ptr = ptr.offset(3isize),
-                7 => ptr = ptr.offset(4isize),
+                5 => ptr = ptr.offset(2),
+                6 => ptr = ptr.offset(3),
+                7 => ptr = ptr.offset(4),
                 10 => {
                     (*pos).columnNumber = -(1i32) as XML_Size;
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(2isize)
+                    ptr = ptr.offset(2)
                 }
                 9 => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
-                    ptr = ptr.offset(2isize);
+                    ptr = ptr.offset(2);
                     if end.wrapping_offset_from(ptr) as c_long
-                        >= (1i32 * 2i32) as c_long
-                        && (if *ptr.offset(1isize) as c_int == 0i32 {
+                        >= (1i32 * 2) as c_long
+                        && (if *ptr.offset(1) as c_int == 0 {
                             (*(enc as *mut normal_encoding)).type_0[*ptr as c_uchar as usize]
                                 as c_int
                         } else {
                             unicode_byte_type(
-                                *ptr.offset(1isize),
-                                *ptr.offset(0isize),
+                                *ptr.offset(1),
+                                *ptr.offset(0),
                             )
                         }) == BT_LF as c_int
                     {
-                        ptr = ptr.offset(2isize)
+                        ptr = ptr.offset(2)
                     }
                     (*pos).columnNumber = -(1i32) as XML_Size
                 }
-                _ => ptr = ptr.offset(2isize),
+                _ => ptr = ptr.offset(2),
             }
             (*pos).columnNumber = (*pos).columnNumber.wrapping_add(1)
         }
@@ -11813,844 +11813,844 @@ pub mod nametab_h {
 
     use libc::{c_uchar, c_uint};
     pub static mut namingBitmap: [c_uint; 320] = [
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0u32,
-        0x4000000u32,
-        0x87fffffeu32,
-        0x7fffffeu32,
-        0u32,
-        0u32,
-        0xff7fffffu32,
-        0xff7fffffu32,
-        0xffffffffu32,
-        0x7ff3ffffu32,
-        0xfffffdfeu32,
-        0x7fffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffe00fu32,
-        0xfc31ffffu32,
-        0xffffffu32,
-        0u32,
-        0xffff0000u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xf80001ffu32,
-        0x3u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xffffd740u32,
-        0xfffffffbu32,
-        0x547f7fffu32,
-        0xffffdu32,
-        0xffffdffeu32,
-        0xffffffffu32,
-        0xdffeffffu32,
-        0xffffffffu32,
-        0xffff0003u32,
-        0xffffffffu32,
-        0xffff199fu32,
-        0x33fcfffu32,
-        0u32,
-        0xfffe0000u32,
-        0x27fffffu32,
-        0xfffffffeu32,
-        0x7fu32,
-        0u32,
-        0xffff0000u32,
-        0x707ffu32,
-        0u32,
-        0x7fffffeu32,
-        0x7feu32,
-        0xfffe0000u32,
-        0xffffffffu32,
-        0x7cffffffu32,
-        0x2f7fffu32,
-        0x60u32,
-        0xffffffe0u32,
-        0x23ffffffu32,
-        0xff000000u32,
-        0x3u32,
-        0xfff99fe0u32,
-        0x3c5fdffu32,
-        0xb0000000u32,
-        0x30003u32,
-        0xfff987e0u32,
-        0x36dfdffu32,
-        0x5e000000u32,
-        0x1c0000u32,
-        0xfffbafe0u32,
-        0x23edfdffu32,
-        0u32,
-        0x1u32,
-        0xfff99fe0u32,
-        0x23cdfdffu32,
-        0xb0000000u32,
-        0x3u32,
-        0xd63dc7e0u32,
-        0x3bfc718u32,
-        0u32,
-        0u32,
-        0xfffddfe0u32,
-        0x3effdffu32,
-        0u32,
-        0x3u32,
-        0xfffddfe0u32,
-        0x3effdffu32,
-        0x40000000u32,
-        0x3u32,
-        0xfffddfe0u32,
-        0x3fffdffu32,
-        0u32,
-        0x3u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xfffffffeu32,
-        0xd7fffu32,
-        0x3fu32,
-        0u32,
-        0xfef02596u32,
-        0x200d6caeu32,
-        0x1fu32,
-        0u32,
-        0u32,
-        0u32,
-        0xfffffeffu32,
-        0x3ffu32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xffffffffu32,
-        0xffff003fu32,
-        0x7fffffu32,
-        0x7daedu32,
-        0x50000000u32,
-        0x82315001u32,
-        0x2c62abu32,
-        0x40000000u32,
-        0xf580c900u32,
-        0x7u32,
-        0x2010800u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xfffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0x3ffffffu32,
-        0x3f3fffffu32,
-        0xffffffffu32,
-        0xaaff3f3fu32,
-        0x3fffffffu32,
-        0xffffffffu32,
-        0x5fdfffffu32,
-        0xfcf1fdcu32,
-        0x1fdc1fffu32,
-        0u32,
-        0x4c40u32,
-        0u32,
-        0u32,
-        0x7u32,
-        0u32,
-        0u32,
-        0u32,
-        0x80u32,
-        0x3feu32,
-        0xfffffffeu32,
-        0xffffffffu32,
-        0x1fffffu32,
-        0xfffffffeu32,
-        0xffffffffu32,
-        0x7ffffffu32,
-        0xffffffe0u32,
-        0x1fffu32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0x3fu32,
-        0u32,
-        0u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xfu32,
-        0u32,
-        0u32,
-        0u32,
-        0x7ff6000u32,
-        0x87fffffeu32,
-        0x7fffffeu32,
-        0u32,
-        0x800000u32,
-        0xff7fffffu32,
-        0xff7fffffu32,
-        0xffffffu32,
-        0u32,
-        0xffff0000u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0xf80001ffu32,
-        0x30003u32,
-        0u32,
-        0xffffffffu32,
-        0xffffffffu32,
-        0x3fu32,
-        0x3u32,
-        0xffffd7c0u32,
-        0xfffffffbu32,
-        0x547f7fffu32,
-        0xffffdu32,
-        0xffffdffeu32,
-        0xffffffffu32,
-        0xdffeffffu32,
-        0xffffffffu32,
-        0xffff007bu32,
-        0xffffffffu32,
-        0xffff199fu32,
-        0x33fcfffu32,
-        0u32,
-        0xfffe0000u32,
-        0x27fffffu32,
-        0xfffffffeu32,
-        0xfffe007fu32,
-        0xbbfffffbu32,
-        0xffff0016u32,
-        0x707ffu32,
-        0u32,
-        0x7fffffeu32,
-        0x7ffffu32,
-        0xffff03ffu32,
-        0xffffffffu32,
-        0x7cffffffu32,
-        0xffef7fffu32,
-        0x3ff3dffu32,
-        0xffffffeeu32,
-        0xf3ffffffu32,
-        0xff1e3fffu32,
-        0xffcfu32,
-        0xfff99feeu32,
-        0xd3c5fdffu32,
-        0xb080399fu32,
-        0x3ffcfu32,
-        0xfff987e4u32,
-        0xd36dfdffu32,
-        0x5e003987u32,
-        0x1fffc0u32,
-        0xfffbafeeu32,
-        0xf3edfdffu32,
-        0x3bbfu32,
-        0xffc1u32,
-        0xfff99feeu32,
-        0xf3cdfdffu32,
-        0xb0c0398fu32,
-        0xffc3u32,
-        0xd63dc7ecu32,
-        0xc3bfc718u32,
-        0x803dc7u32,
-        0xff80u32,
-        0xfffddfeeu32,
-        0xc3effdffu32,
-        0x603ddfu32,
-        0xffc3u32,
-        0xfffddfecu32,
-        0xc3effdffu32,
-        0x40603ddfu32,
-        0xffc3u32,
-        0xfffddfecu32,
-        0xc3fffdffu32,
-        0x803dcfu32,
-        0xffc3u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0xfffffffeu32,
-        0x7ff7fffu32,
-        0x3ff7fffu32,
-        0u32,
-        0xfef02596u32,
-        0x3bff6caeu32,
-        0x3ff3f5fu32,
-        0u32,
-        0x3000000u32,
-        0xc2a003ffu32,
-        0xfffffeffu32,
-        0xfffe03ffu32,
-        0xfebf0fdfu32,
-        0x2fe3fffu32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0u32,
-        0x1fff0000u32,
-        0x2u32,
-        0xa0u32,
-        0x3efffeu32,
-        0xfffffffeu32,
-        0xffffffffu32,
-        0x661fffffu32,
-        0xfffffffeu32,
-        0xffffffffu32,
-        0x77ffffffu32,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0,
+        0x4000000,
+        0x87fffffe,
+        0x7fffffe,
+        0,
+        0,
+        0xff7fffff,
+        0xff7fffff,
+        0xffffffff,
+        0x7ff3ffff,
+        0xfffffdfe,
+        0x7fffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffe00f,
+        0xfc31ffff,
+        0xffffff,
+        0,
+        0xffff0000,
+        0xffffffff,
+        0xffffffff,
+        0xf80001ff,
+        0x3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xffffd740,
+        0xfffffffb,
+        0x547f7fff,
+        0xffffd,
+        0xffffdffe,
+        0xffffffff,
+        0xdffeffff,
+        0xffffffff,
+        0xffff0003,
+        0xffffffff,
+        0xffff199f,
+        0x33fcfff,
+        0,
+        0xfffe0000,
+        0x27fffff,
+        0xfffffffe,
+        0x7f,
+        0,
+        0xffff0000,
+        0x707ff,
+        0,
+        0x7fffffe,
+        0x7fe,
+        0xfffe0000,
+        0xffffffff,
+        0x7cffffff,
+        0x2f7fff,
+        0x60,
+        0xffffffe0,
+        0x23ffffff,
+        0xff000000,
+        0x3,
+        0xfff99fe0,
+        0x3c5fdff,
+        0xb0000000,
+        0x30003,
+        0xfff987e0,
+        0x36dfdff,
+        0x5e000000,
+        0x1c0000,
+        0xfffbafe0,
+        0x23edfdff,
+        0,
+        0x1,
+        0xfff99fe0,
+        0x23cdfdff,
+        0xb0000000,
+        0x3,
+        0xd63dc7e0,
+        0x3bfc718,
+        0,
+        0,
+        0xfffddfe0,
+        0x3effdff,
+        0,
+        0x3,
+        0xfffddfe0,
+        0x3effdff,
+        0x40000000,
+        0x3,
+        0xfffddfe0,
+        0x3fffdff,
+        0,
+        0x3,
+        0,
+        0,
+        0,
+        0,
+        0xfffffffe,
+        0xd7fff,
+        0x3f,
+        0,
+        0xfef02596,
+        0x200d6cae,
+        0x1f,
+        0,
+        0,
+        0,
+        0xfffffeff,
+        0x3ff,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xffffffff,
+        0xffff003f,
+        0x7fffff,
+        0x7daed,
+        0x50000000,
+        0x82315001,
+        0x2c62ab,
+        0x40000000,
+        0xf580c900,
+        0x7,
+        0x2010800,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xfffffff,
+        0xffffffff,
+        0xffffffff,
+        0x3ffffff,
+        0x3f3fffff,
+        0xffffffff,
+        0xaaff3f3f,
+        0x3fffffff,
+        0xffffffff,
+        0x5fdfffff,
+        0xfcf1fdc,
+        0x1fdc1fff,
+        0,
+        0x4c40,
+        0,
+        0,
+        0x7,
+        0,
+        0,
+        0,
+        0x80,
+        0x3fe,
+        0xfffffffe,
+        0xffffffff,
+        0x1fffff,
+        0xfffffffe,
+        0xffffffff,
+        0x7ffffff,
+        0xffffffe0,
+        0x1fff,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0x3f,
+        0,
+        0,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xffffffff,
+        0xf,
+        0,
+        0,
+        0,
+        0x7ff6000,
+        0x87fffffe,
+        0x7fffffe,
+        0,
+        0x800000,
+        0xff7fffff,
+        0xff7fffff,
+        0xffffff,
+        0,
+        0xffff0000,
+        0xffffffff,
+        0xffffffff,
+        0xf80001ff,
+        0x30003,
+        0,
+        0xffffffff,
+        0xffffffff,
+        0x3f,
+        0x3,
+        0xffffd7c0,
+        0xfffffffb,
+        0x547f7fff,
+        0xffffd,
+        0xffffdffe,
+        0xffffffff,
+        0xdffeffff,
+        0xffffffff,
+        0xffff007b,
+        0xffffffff,
+        0xffff199f,
+        0x33fcfff,
+        0,
+        0xfffe0000,
+        0x27fffff,
+        0xfffffffe,
+        0xfffe007f,
+        0xbbfffffb,
+        0xffff0016,
+        0x707ff,
+        0,
+        0x7fffffe,
+        0x7ffff,
+        0xffff03ff,
+        0xffffffff,
+        0x7cffffff,
+        0xffef7fff,
+        0x3ff3dff,
+        0xffffffee,
+        0xf3ffffff,
+        0xff1e3fff,
+        0xffcf,
+        0xfff99fee,
+        0xd3c5fdff,
+        0xb080399f,
+        0x3ffcf,
+        0xfff987e4,
+        0xd36dfdff,
+        0x5e003987,
+        0x1fffc0,
+        0xfffbafee,
+        0xf3edfdff,
+        0x3bbf,
+        0xffc1,
+        0xfff99fee,
+        0xf3cdfdff,
+        0xb0c0398f,
+        0xffc3,
+        0xd63dc7ec,
+        0xc3bfc718,
+        0x803dc7,
+        0xff80,
+        0xfffddfee,
+        0xc3effdff,
+        0x603ddf,
+        0xffc3,
+        0xfffddfec,
+        0xc3effdff,
+        0x40603ddf,
+        0xffc3,
+        0xfffddfec,
+        0xc3fffdff,
+        0x803dcf,
+        0xffc3,
+        0,
+        0,
+        0,
+        0,
+        0xfffffffe,
+        0x7ff7fff,
+        0x3ff7fff,
+        0,
+        0xfef02596,
+        0x3bff6cae,
+        0x3ff3f5f,
+        0,
+        0x3000000,
+        0xc2a003ff,
+        0xfffffeff,
+        0xfffe03ff,
+        0xfebf0fdf,
+        0x2fe3fff,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x1fff0000,
+        0x2,
+        0xa0,
+        0x3efffe,
+        0xfffffffe,
+        0xffffffff,
+        0x661fffff,
+        0xfffffffe,
+        0xffffffff,
+        0x77ffffff,
     ];
 
     pub static mut nmstrtPages: [c_uchar; 256] = [
-        0x2u8,
-        0x3u8,
-        0x4u8,
-        0x5u8,
-        0x6u8,
-        0x7u8,
-        0x8u8,
-        0u8,
-        0u8,
-        0x9u8,
-        0xau8,
-        0xbu8,
-        0xcu8,
-        0xdu8,
-        0xeu8,
-        0xfu8,
-        0x10u8,
-        0x11u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x12u8,
-        0x13u8,
-        0u8,
-        0x14u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x15u8,
-        0x16u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x17u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x18u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
+        0x2,
+        0x3,
+        0x4,
+        0x5,
+        0x6,
+        0x7,
+        0x8,
+        0,
+        0,
+        0x9,
+        0xa,
+        0xb,
+        0xc,
+        0xd,
+        0xe,
+        0xf,
+        0x10,
+        0x11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x12,
+        0x13,
+        0,
+        0x14,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x15,
+        0x16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x17,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x18,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     ];
 
     pub static mut namePages: [c_uchar; 256] = [
-        0x19u8,
-        0x3u8,
-        0x1au8,
-        0x1bu8,
-        0x1cu8,
-        0x1du8,
-        0x1eu8,
-        0u8,
-        0u8,
-        0x1fu8,
-        0x20u8,
-        0x21u8,
-        0x22u8,
-        0x23u8,
-        0x24u8,
-        0x25u8,
-        0x10u8,
-        0x11u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x12u8,
-        0x13u8,
-        0x26u8,
-        0x14u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x27u8,
-        0x16u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x17u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x1u8,
-        0x18u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
-        0u8,
+        0x19,
+        0x3,
+        0x1a,
+        0x1b,
+        0x1c,
+        0x1d,
+        0x1e,
+        0,
+        0,
+        0x1f,
+        0x20,
+        0x21,
+        0x22,
+        0x23,
+        0x24,
+        0x25,
+        0x10,
+        0x11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x12,
+        0x13,
+        0x26,
+        0x14,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x27,
+        0x16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x17,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x1,
+        0x18,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     ];
 }
 
@@ -12850,7 +12850,7 @@ pub mod xmltok_ns_c {
         );
         (*p).encPtr = encPtr;
         *encPtr = &mut (*p).initEnc;
-        return 1i32;
+        return 1;
     }
     #[no_mangle]
 
@@ -12893,7 +12893,7 @@ pub mod xmltok_ns_c {
         );
         (*p).encPtr = encPtr;
         *encPtr = &mut (*p).initEnc;
-        return 1i32;
+        return 1;
     }
 
     pub unsafe extern "C" fn findEncoding(
@@ -12909,15 +12909,15 @@ pub mod xmltok_ns_c {
             &mut ptr,
             end,
             &mut p,
-            p.offset(128isize)
-                .offset(-(1isize)),
+            p.offset(128)
+                .offset(-(1)),
         );
         if ptr != end {
             return 0 as *const super::ENCODING;
         }
-        *p = 0i8;
+        *p = 0;
         if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0
-            && (*enc).minBytesPerChar == 2i32
+            && (*enc).minBytesPerChar == 2
         {
             return enc;
         }
@@ -12941,15 +12941,15 @@ pub mod xmltok_ns_c {
             &mut ptr,
             end,
             &mut p,
-            p.offset(128isize)
-                .offset(-(1isize)),
+            p.offset(128)
+                .offset(-(1)),
         );
         if ptr != end {
             return 0 as *const super::ENCODING;
         }
-        *p = 0i8;
+        *p = 0;
         if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0
-            && (*enc).minBytesPerChar == 2i32
+            && (*enc).minBytesPerChar == 2
         {
             return enc;
         }
@@ -13211,37 +13211,37 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 */
 
 unsafe extern "C" fn isNever(mut _enc: *const ENCODING, mut _p: *const c_char) -> c_int {
-    return 0i32;
+    return 0;
 }
 
 unsafe extern "C" fn utf8_isName2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0isize) as c_int
-        >> 2i32
-        & 7i32) as usize] as c_int)
-        << 3i32)
-        + ((*(p as *const c_uchar).offset(0isize) as c_int & 3i32)
-            << 1i32)
-        + (*(p as *const c_uchar).offset(1isize) as c_int >> 5i32 & 1i32))
+    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int
+        >> 2
+        & 7) as usize] as c_int)
+        << 3)
+        + ((*(p as *const c_uchar).offset(0) as c_int & 3)
+            << 1)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
         as usize]
-        & (1u32)
-            << (*(p as *const c_uchar).offset(1isize) as c_int & 0x1fi32))
+        & (1)
+            << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
         as c_int;
 }
 
 unsafe extern "C" fn utf8_isName3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0isize)
+    return (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0)
         as c_int
-        & 0xfi32)
-        << 4i32)
-        + (*(p as *const c_uchar).offset(1isize) as c_int >> 2i32
-            & 0xfi32)) as usize] as c_int)
-        << 3i32)
-        + ((*(p as *const c_uchar).offset(1isize) as c_int & 3i32)
-            << 1i32)
-        + (*(p as *const c_uchar).offset(2isize) as c_int >> 5i32 & 1i32))
+        & 0xf)
+        << 4)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 2
+            & 0xf)) as usize] as c_int)
+        << 3)
+        + ((*(p as *const c_uchar).offset(1) as c_int & 3)
+            << 1)
+        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
         as usize]
-        & (1u32)
-            << (*(p as *const c_uchar).offset(2isize) as c_int & 0x1fi32))
+        & (1)
+            << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
         as c_int;
 }
 
@@ -13249,34 +13249,34 @@ pub const utf8_isName4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_cha
     isNever;
 
 unsafe extern "C" fn utf8_isNmstrt2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages[(*(p as *const c_uchar).offset(0isize)
+    return (namingBitmap[(((nmstrtPages[(*(p as *const c_uchar).offset(0)
         as c_int
-        >> 2i32
-        & 7i32) as usize] as c_int)
-        << 3i32)
-        + ((*(p as *const c_uchar).offset(0isize) as c_int & 3i32)
-            << 1i32)
-        + (*(p as *const c_uchar).offset(1isize) as c_int >> 5i32 & 1i32))
+        >> 2
+        & 7) as usize] as c_int)
+        << 3)
+        + ((*(p as *const c_uchar).offset(0) as c_int & 3)
+            << 1)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
         as usize]
-        & (1u32)
-            << (*(p as *const c_uchar).offset(1isize) as c_int & 0x1fi32))
+        & (1)
+            << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
         as c_int;
 }
 
 unsafe extern "C" fn utf8_isNmstrt3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0isize)
+    return (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0)
         as c_int
-        & 0xfi32)
-        << 4i32)
-        + (*(p as *const c_uchar).offset(1isize) as c_int >> 2i32
-            & 0xfi32)) as usize] as c_int)
-        << 3i32)
-        + ((*(p as *const c_uchar).offset(1isize) as c_int & 3i32)
-            << 1i32)
-        + (*(p as *const c_uchar).offset(2isize) as c_int >> 5i32 & 1i32))
+        & 0xf)
+        << 4)
+        + (*(p as *const c_uchar).offset(1) as c_int >> 2
+            & 0xf)) as usize] as c_int)
+        << 3)
+        + ((*(p as *const c_uchar).offset(1) as c_int & 3)
+            << 1)
+        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
         as usize]
-        & (1u32)
-            << (*(p as *const c_uchar).offset(2isize) as c_int & 0x1fi32))
+        & (1)
+            << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
         as c_int;
 }
 
@@ -13284,63 +13284,63 @@ pub const utf8_isNmstrt4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_c
     isNever;
 
 unsafe extern "C" fn utf8_isInvalid2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return ((*(p as *const c_uchar) as c_int) < 0xc2i32
-        || *(p as *const c_uchar).offset(1isize) as c_int & 0x80i32
-            == 0i32
-        || *(p as *const c_uchar).offset(1isize) as c_int & 0xc0i32
-            == 0xc0i32) as c_int;
+    return ((*(p as *const c_uchar) as c_int) < 0xc2
+        || *(p as *const c_uchar).offset(1) as c_int & 0x80
+            == 0
+        || *(p as *const c_uchar).offset(1) as c_int & 0xc0
+            == 0xc0) as c_int;
 }
 
 unsafe extern "C" fn utf8_isInvalid3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(2isize) as c_int & 0x80i32
-        == 0i32
-        || (if *(p as *const c_uchar) as c_int == 0xefi32
-            && *(p as *const c_uchar).offset(1isize) as c_int == 0xbfi32
+    return (*(p as *const c_uchar).offset(2) as c_int & 0x80
+        == 0
+        || (if *(p as *const c_uchar) as c_int == 0xef
+            && *(p as *const c_uchar).offset(1) as c_int == 0xbf
         {
-            (*(p as *const c_uchar).offset(2isize) as c_int > 0xbdi32) as c_int
+            (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
         } else {
-            (*(p as *const c_uchar).offset(2isize) as c_int & 0xc0i32
-                == 0xc0i32) as c_int
+            (*(p as *const c_uchar).offset(2) as c_int & 0xc0
+                == 0xc0) as c_int
         }) != 0
-        || (if *(p as *const c_uchar) as c_int == 0xe0i32 {
-            ((*(p as *const c_uchar).offset(1isize) as c_int) < 0xa0i32
-                || *(p as *const c_uchar).offset(1isize) as c_int & 0xc0i32
-                    == 0xc0i32) as c_int
+        || (if *(p as *const c_uchar) as c_int == 0xe0 {
+            ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
+                || *(p as *const c_uchar).offset(1) as c_int & 0xc0
+                    == 0xc0) as c_int
         } else {
-            (*(p as *const c_uchar).offset(1isize) as c_int & 0x80i32
-                == 0i32
-                || (if *(p as *const c_uchar) as c_int == 0xedi32 {
-                    (*(p as *const c_uchar).offset(1isize) as c_int > 0x9fi32)
+            (*(p as *const c_uchar).offset(1) as c_int & 0x80
+                == 0
+                || (if *(p as *const c_uchar) as c_int == 0xed {
+                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f)
                         as c_int
                 } else {
-                    (*(p as *const c_uchar).offset(1isize) as c_int & 0xc0i32
-                        == 0xc0i32) as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0
+                        == 0xc0) as c_int
                 }) != 0) as c_int
         }) != 0) as c_int;
 }
 
 unsafe extern "C" fn utf8_isInvalid4(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(3isize) as c_int & 0x80i32
-        == 0i32
-        || *(p as *const c_uchar).offset(3isize) as c_int & 0xc0i32
-            == 0xc0i32
-        || *(p as *const c_uchar).offset(2isize) as c_int & 0x80i32
-            == 0i32
-        || *(p as *const c_uchar).offset(2isize) as c_int & 0xc0i32
-            == 0xc0i32
-        || (if *(p as *const c_uchar) as c_int == 0xf0i32 {
-            ((*(p as *const c_uchar).offset(1isize) as c_int) < 0x90i32
-                || *(p as *const c_uchar).offset(1isize) as c_int & 0xc0i32
-                    == 0xc0i32) as c_int
+    return (*(p as *const c_uchar).offset(3) as c_int & 0x80
+        == 0
+        || *(p as *const c_uchar).offset(3) as c_int & 0xc0
+            == 0xc0
+        || *(p as *const c_uchar).offset(2) as c_int & 0x80
+            == 0
+        || *(p as *const c_uchar).offset(2) as c_int & 0xc0
+            == 0xc0
+        || (if *(p as *const c_uchar) as c_int == 0xf0 {
+            ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
+                || *(p as *const c_uchar).offset(1) as c_int & 0xc0
+                    == 0xc0) as c_int
         } else {
-            (*(p as *const c_uchar).offset(1isize) as c_int & 0x80i32
-                == 0i32
-                || (if *(p as *const c_uchar) as c_int == 0xf4i32 {
-                    (*(p as *const c_uchar).offset(1isize) as c_int > 0x8fi32)
+            (*(p as *const c_uchar).offset(1) as c_int & 0x80
+                == 0
+                || (if *(p as *const c_uchar) as c_int == 0xf4 {
+                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f)
                         as c_int
                 } else {
-                    (*(p as *const c_uchar).offset(1isize) as c_int & 0xc0i32
-                        == 0xc0i32) as c_int
+                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0
+                        == 0xc0) as c_int
                 }) != 0) as c_int
         }) != 0) as c_int;
 }
@@ -13411,34 +13411,34 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
     mut fromLimRef: *mut *const c_char,
 ) {
     let mut fromLim: *const c_char = *fromLimRef;
-    let mut walked: size_t = 0u64;
+    let mut walked: size_t = 0;
     while fromLim > from {
-        let prev: c_uchar = *fromLim.offset(-1isize) as c_uchar;
-        if prev as c_uint & 0xf8u32 == 0xf0u32 {
+        let prev: c_uchar = *fromLim.offset(-1) as c_uchar;
+        if prev as c_uint & 0xf8 == 0xf0 {
             /* 4-byte character, lead by 0b11110xxx byte */
             if walked.wrapping_add(1u64) >= 4u64 {
-                fromLim = fromLim.offset((4i32 - 1i32) as isize);
+                fromLim = fromLim.offset((4i32 - 1) as isize);
                 break;
             } else {
-                walked = 0u64
+                walked = 0
             }
-        } else if prev as c_uint & 0xf0u32 == 0xe0u32 {
+        } else if prev as c_uint & 0xf0 == 0xe0 {
             /* 3-byte character, lead by 0b1110xxxx byte */
             if walked.wrapping_add(1u64) >= 3u64 {
-                fromLim = fromLim.offset((3i32 - 1i32) as isize);
+                fromLim = fromLim.offset((3i32 - 1) as isize);
                 break;
             } else {
-                walked = 0u64
+                walked = 0
             }
-        } else if prev as c_uint & 0xe0u32 == 0xc0u32 {
+        } else if prev as c_uint & 0xe0 == 0xc0 {
             /* 2-byte character, lead by 0b110xxxxx byte */
             if walked.wrapping_add(1u64) >= 2u64 {
-                fromLim = fromLim.offset((2i32 - 1i32) as isize);
+                fromLim = fromLim.offset((2i32 - 1) as isize);
                 break;
             } else {
-                walked = 0u64
+                walked = 0
             }
-        } else if prev as c_uint & 0x80u32 == 0u32 {
+        } else if prev as c_uint & 0x80 == 0 {
             break;
         }
         fromLim = fromLim.offset(-1);
@@ -13505,62 +13505,62 @@ unsafe extern "C" fn utf8_toUtf16(
         }
         match (*(enc as *mut normal_encoding)).type_0[*from as c_uchar as usize] as c_int {
             5 => {
-                if (fromLim.wrapping_offset_from(from) as c_long) < 2i64 {
+                if (fromLim.wrapping_offset_from(from) as c_long) < 2 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
                     let fresh24 = to;
                     to = to.offset(1);
-                    *fresh24 = ((*from.offset(0isize) as c_int & 0x1fi32)
-                        << 6i32
-                        | *from.offset(1isize) as c_int & 0x3fi32)
+                    *fresh24 = ((*from.offset(0) as c_int & 0x1f)
+                        << 6
+                        | *from.offset(1) as c_int & 0x3f)
                         as c_ushort;
-                    from = from.offset(2isize)
+                    from = from.offset(2)
                 }
             }
             6 => {
-                if (fromLim.wrapping_offset_from(from) as c_long) < 3i64 {
+                if (fromLim.wrapping_offset_from(from) as c_long) < 3 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
                     let fresh25 = to;
                     to = to.offset(1);
-                    *fresh25 = ((*from.offset(0isize) as c_int & 0xfi32)
-                        << 12i32
-                        | (*from.offset(1isize) as c_int & 0x3fi32)
-                            << 6i32
-                        | *from.offset(2isize) as c_int & 0x3fi32)
+                    *fresh25 = ((*from.offset(0) as c_int & 0xf)
+                        << 12
+                        | (*from.offset(1) as c_int & 0x3f)
+                            << 6
+                        | *from.offset(2) as c_int & 0x3f)
                         as c_ushort;
-                    from = from.offset(3isize)
+                    from = from.offset(3)
                 }
             }
             7 => {
                 let mut n: c_ulong = 0;
-                if (toLim.wrapping_offset_from(to) as c_long) < 2i64 {
+                if (toLim.wrapping_offset_from(to) as c_long) < 2 {
                     res = XML_CONVERT_OUTPUT_EXHAUSTED;
                     current_block = 10086016483950629671;
                     break;
-                } else if (fromLim.wrapping_offset_from(from) as c_long) < 4i64 {
+                } else if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
-                    n = ((*from.offset(0isize) as c_int & 0x7i32) << 18i32
-                        | (*from.offset(1isize) as c_int & 0x3fi32)
-                            << 12i32
-                        | (*from.offset(2isize) as c_int & 0x3fi32)
-                            << 6i32
-                        | *from.offset(3isize) as c_int & 0x3fi32)
+                    n = ((*from.offset(0) as c_int & 0x7) << 18
+                        | (*from.offset(1) as c_int & 0x3f)
+                            << 12
+                        | (*from.offset(2) as c_int & 0x3f)
+                            << 6
+                        | *from.offset(3) as c_int & 0x3f)
                         as c_ulong;
                     n = n.wrapping_sub(0x10000u64);
-                    *to.offset(0isize) =
-                        (n >> 10i32 | 0xd800u64) as c_ushort;
-                    *to.offset(1isize) =
-                        (n & 0x3ffu64 | 0xdc00u64) as c_ushort;
-                    to = to.offset(2isize);
-                    from = from.offset(4isize)
+                    *to.offset(0) =
+                        (n >> 10 | 0xd800) as c_ushort;
+                    *to.offset(1) =
+                        (n & 0x3ff | 0xdc00) as c_ushort;
+                    to = to.offset(2);
+                    from = from.offset(4)
                 }
             }
             _ => {
@@ -13726,7 +13726,7 @@ static mut utf8_encoding_ns: normal_encoding = {
                             _: *const c_ushort,
                         ) -> XML_Convert_Result,
                 ),
-                minBytesPerChar: 1i32,
+                minBytesPerChar: 1,
                 isUtf8: 1i8,
                 isUtf16: 0i8,
             };
@@ -14414,7 +14414,7 @@ static mut utf8_encoding: normal_encoding = {
                             _: *const c_ushort,
                         ) -> XML_Convert_Result,
                 ),
-                minBytesPerChar: 1i32,
+                minBytesPerChar: 1,
                 isUtf8: 1i8,
                 isUtf16: 0i8,
             };
@@ -15103,7 +15103,7 @@ static mut internal_utf8_encoding_ns: normal_encoding = {
                             _: *const c_ushort,
                         ) -> XML_Convert_Result,
                 ),
-                minBytesPerChar: 1i32,
+                minBytesPerChar: 1,
                 isUtf8: 1i8,
                 isUtf16: 0i8,
             };
@@ -15791,7 +15791,7 @@ static mut internal_utf8_encoding: normal_encoding = {
                             _: *const c_ushort,
                         ) -> XML_Convert_Result,
                 ),
-                minBytesPerChar: 1i32,
+                minBytesPerChar: 1,
                 isUtf8: 1i8,
                 isUtf16: 0i8,
             };
@@ -16352,16 +16352,16 @@ unsafe extern "C" fn latin1_toUtf8(
             return XML_CONVERT_COMPLETED;
         }
         c = **fromP as c_uchar;
-        if c as c_int & 0x80i32 != 0 {
-            if (toLim.wrapping_offset_from(*toP) as c_long) < 2i64 {
+        if c as c_int & 0x80 != 0 {
+            if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
                 return XML_CONVERT_OUTPUT_EXHAUSTED;
             }
             let fresh28 = *toP;
             *toP = (*toP).offset(1);
-            *fresh28 = (c as c_int >> 6i32 | UTF8_cval2 as c_int) as c_char;
+            *fresh28 = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
             let fresh29 = *toP;
             *toP = (*toP).offset(1);
-            *fresh29 = (c as c_int & 0x3fi32 | 0x80i32) as c_char;
+            *fresh29 = (c as c_int & 0x3f | 0x80) as c_char;
             *fromP = (*fromP).offset(1)
         } else {
             if *toP == toLim as *mut c_char {
@@ -16541,7 +16541,7 @@ static mut latin1_encoding_ns: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 1i32,
+                    minBytesPerChar: 1,
                     isUtf8: 0i8,
                     isUtf16: 0i8,
                 };
@@ -17246,7 +17246,7 @@ static mut latin1_encoding: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 1i32,
+                    minBytesPerChar: 1,
                     isUtf8: 0i8,
                     isUtf16: 0i8,
                 };
@@ -17973,7 +17973,7 @@ static mut ascii_encoding_ns: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 1i32,
+                    minBytesPerChar: 1,
                     isUtf8: 1i8,
                     isUtf16: 0i8,
                 };
@@ -18550,7 +18550,7 @@ static mut ascii_encoding: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 1i32,
+                    minBytesPerChar: 1,
                     isUtf8: 1i8,
                     isUtf16: 0i8,
                 };
@@ -19023,17 +19023,17 @@ unsafe extern "C" fn little2_toUtf8(
 ) -> XML_Convert_Result {
     let mut from: *const c_char = *fromP;
     fromLim = from.offset(
-        ((fromLim.wrapping_offset_from(from) as c_long >> 1i32) << 1i32) as isize,
+        ((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize,
     );
     while from < fromLim {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
-        let mut lo: c_uchar = *from.offset(0isize) as c_uchar;
-        let mut hi: c_uchar = *from.offset(1isize) as c_uchar;
+        let mut lo: c_uchar = *from.offset(0) as c_uchar;
+        let mut hi: c_uchar = *from.offset(1) as c_uchar;
         let mut current_block_34: u64;
         match hi as c_int {
             0 => {
-                if (lo as c_int) < 0x80i32 {
+                if (lo as c_int) < 0x80 {
                     if *toP == toLim as *mut c_char {
                         *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -19050,76 +19050,76 @@ unsafe extern "C" fn little2_toUtf8(
                 current_block_34 = 11412679543673842523;
             }
             216 | 217 | 218 | 219 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 4i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                if (fromLim.wrapping_offset_from(from) as c_long) < 4i64 {
+                if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
-                plane = ((hi as c_int & 0x3i32) << 2i32
-                    | lo as c_int >> 6i32 & 0x3i32)
-                    + 1i32;
+                plane = ((hi as c_int & 0x3) << 2
+                    | lo as c_int >> 6 & 0x3)
+                    + 1;
                 let fresh42 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh42 = (plane >> 2i32 | UTF8_cval4 as c_int) as c_char;
+                *fresh42 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
                 let fresh43 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh43 = (lo as c_int >> 2i32 & 0xfi32
-                    | (plane & 0x3i32) << 4i32
-                    | 0x80i32) as c_char;
-                from = from.offset(2isize);
-                lo2 = *from.offset(0isize) as c_uchar;
+                *fresh43 = (lo as c_int >> 2 & 0xf
+                    | (plane & 0x3) << 4
+                    | 0x80) as c_char;
+                from = from.offset(2);
+                lo2 = *from.offset(0) as c_uchar;
                 let fresh44 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh44 = ((lo as c_int & 0x3i32) << 4i32
-                    | (*from.offset(1isize) as c_uchar as c_int & 0x3i32)
-                        << 2i32
-                    | lo2 as c_int >> 6i32
-                    | 0x80i32) as c_char;
+                *fresh44 = ((lo as c_int & 0x3) << 4
+                    | (*from.offset(1) as c_uchar as c_int & 0x3)
+                        << 2
+                    | lo2 as c_int >> 6
+                    | 0x80) as c_char;
                 let fresh45 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh45 = (lo2 as c_int & 0x3fi32 | 0x80i32) as c_char;
+                *fresh45 = (lo2 as c_int & 0x3f | 0x80) as c_char;
                 current_block_34 = 18435049525520518667;
             }
             _ => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 3i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 3 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
                 let fresh39 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh39 = (hi as c_int >> 4i32 | UTF8_cval3 as c_int) as c_char;
+                *fresh39 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                 let fresh40 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh40 = ((hi as c_int & 0xfi32) << 2i32
-                    | lo as c_int >> 6i32
-                    | 0x80i32) as c_char;
+                *fresh40 = ((hi as c_int & 0xf) << 2
+                    | lo as c_int >> 6
+                    | 0x80) as c_char;
                 let fresh41 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh41 = (lo as c_int & 0x3fi32 | 0x80i32) as c_char;
+                *fresh41 = (lo as c_int & 0x3f | 0x80) as c_char;
                 current_block_34 = 18435049525520518667;
             }
         }
         match current_block_34 {
             11412679543673842523 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 2i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
                 let fresh37 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh37 = (lo as c_int >> 6i32
-                    | (hi as c_int) << 2i32
+                *fresh37 = (lo as c_int >> 6
+                    | (hi as c_int) << 2
                     | UTF8_cval2 as c_int) as c_char;
                 let fresh38 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh38 = (lo as c_int & 0x3fi32 | 0x80i32) as c_char
+                *fresh38 = (lo as c_int & 0x3f | 0x80) as c_char
             }
             _ => {}
         }
-        from = from.offset(2isize)
+        from = from.offset(2)
     }
     *fromP = from;
     if from < fromLim {
@@ -19138,26 +19138,26 @@ unsafe extern "C" fn little2_toUtf16(
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
     fromLim = (*fromP).offset(
-        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1i32) << 1i32) as isize,
+        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize,
     );
     if fromLim.wrapping_offset_from(*fromP) as c_long
-        > (toLim.wrapping_offset_from(*toP) as c_long) << 1i32
+        > (toLim.wrapping_offset_from(*toP) as c_long) << 1
         && *fromLim
-            .offset(-(2isize))
-            .offset(1isize) as c_uchar as c_int
-            & 0xf8i32
-            == 0xd8i32
+            .offset(-(2))
+            .offset(1) as c_uchar as c_int
+            & 0xf8
+            == 0xd8
     {
-        fromLim = fromLim.offset(-(2isize));
+        fromLim = fromLim.offset(-(2));
         res = XML_CONVERT_INPUT_INCOMPLETE
     }
     while *fromP < fromLim && *toP < toLim as *mut c_ushort {
         let fresh46 = *toP;
         *toP = (*toP).offset(1);
-        *fresh46 = ((*(*fromP).offset(1isize) as c_uchar as c_int) << 8i32
-            | *(*fromP).offset(0isize) as c_uchar as c_int)
+        *fresh46 = ((*(*fromP).offset(1) as c_uchar as c_int) << 8
+            | *(*fromP).offset(0) as c_uchar as c_int)
             as c_ushort;
-        *fromP = (*fromP).offset(2isize)
+        *fromP = (*fromP).offset(2)
     }
     if *toP == toLim as *mut c_ushort && *fromP < fromLim {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -19175,17 +19175,17 @@ unsafe extern "C" fn big2_toUtf8(
 ) -> XML_Convert_Result {
     let mut from: *const c_char = *fromP;
     fromLim = from.offset(
-        ((fromLim.wrapping_offset_from(from) as c_long >> 1i32) << 1i32) as isize,
+        ((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize,
     );
     while from < fromLim {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
-        let mut lo: c_uchar = *from.offset(1isize) as c_uchar;
-        let mut hi: c_uchar = *from.offset(0isize) as c_uchar;
+        let mut lo: c_uchar = *from.offset(1) as c_uchar;
+        let mut hi: c_uchar = *from.offset(0) as c_uchar;
         let mut current_block_34: u64;
         match hi as c_int {
             0 => {
-                if (lo as c_int) < 0x80i32 {
+                if (lo as c_int) < 0x80 {
                     if *toP == toLim as *mut c_char {
                         *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -19202,76 +19202,76 @@ unsafe extern "C" fn big2_toUtf8(
                 current_block_34 = 6790550795307076813;
             }
             216 | 217 | 218 | 219 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 4i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                if (fromLim.wrapping_offset_from(from) as c_long) < 4i64 {
+                if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
-                plane = ((hi as c_int & 0x3i32) << 2i32
-                    | lo as c_int >> 6i32 & 0x3i32)
-                    + 1i32;
+                plane = ((hi as c_int & 0x3) << 2
+                    | lo as c_int >> 6 & 0x3)
+                    + 1;
                 let fresh53 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh53 = (plane >> 2i32 | UTF8_cval4 as c_int) as c_char;
+                *fresh53 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
                 let fresh54 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh54 = (lo as c_int >> 2i32 & 0xfi32
-                    | (plane & 0x3i32) << 4i32
-                    | 0x80i32) as c_char;
-                from = from.offset(2isize);
-                lo2 = *from.offset(1isize) as c_uchar;
+                *fresh54 = (lo as c_int >> 2 & 0xf
+                    | (plane & 0x3) << 4
+                    | 0x80) as c_char;
+                from = from.offset(2);
+                lo2 = *from.offset(1) as c_uchar;
                 let fresh55 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh55 = ((lo as c_int & 0x3i32) << 4i32
-                    | (*from.offset(0isize) as c_uchar as c_int & 0x3i32)
-                        << 2i32
-                    | lo2 as c_int >> 6i32
-                    | 0x80i32) as c_char;
+                *fresh55 = ((lo as c_int & 0x3) << 4
+                    | (*from.offset(0) as c_uchar as c_int & 0x3)
+                        << 2
+                    | lo2 as c_int >> 6
+                    | 0x80) as c_char;
                 let fresh56 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh56 = (lo2 as c_int & 0x3fi32 | 0x80i32) as c_char;
+                *fresh56 = (lo2 as c_int & 0x3f | 0x80) as c_char;
                 current_block_34 = 18435049525520518667;
             }
             _ => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 3i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 3 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
                 let fresh50 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh50 = (hi as c_int >> 4i32 | UTF8_cval3 as c_int) as c_char;
+                *fresh50 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                 let fresh51 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh51 = ((hi as c_int & 0xfi32) << 2i32
-                    | lo as c_int >> 6i32
-                    | 0x80i32) as c_char;
+                *fresh51 = ((hi as c_int & 0xf) << 2
+                    | lo as c_int >> 6
+                    | 0x80) as c_char;
                 let fresh52 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh52 = (lo as c_int & 0x3fi32 | 0x80i32) as c_char;
+                *fresh52 = (lo as c_int & 0x3f | 0x80) as c_char;
                 current_block_34 = 18435049525520518667;
             }
         }
         match current_block_34 {
             6790550795307076813 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 2i64 {
+                if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
                 let fresh48 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh48 = (lo as c_int >> 6i32
-                    | (hi as c_int) << 2i32
+                *fresh48 = (lo as c_int >> 6
+                    | (hi as c_int) << 2
                     | UTF8_cval2 as c_int) as c_char;
                 let fresh49 = *toP;
                 *toP = (*toP).offset(1);
-                *fresh49 = (lo as c_int & 0x3fi32 | 0x80i32) as c_char
+                *fresh49 = (lo as c_int & 0x3f | 0x80) as c_char
             }
             _ => {}
         }
-        from = from.offset(2isize)
+        from = from.offset(2)
     }
     *fromP = from;
     if from < fromLim {
@@ -19290,26 +19290,26 @@ unsafe extern "C" fn big2_toUtf16(
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
     fromLim = (*fromP).offset(
-        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1i32) << 1i32) as isize,
+        ((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize,
     );
     if fromLim.wrapping_offset_from(*fromP) as c_long
-        > (toLim.wrapping_offset_from(*toP) as c_long) << 1i32
+        > (toLim.wrapping_offset_from(*toP) as c_long) << 1
         && *fromLim
-            .offset(-(2isize))
-            .offset(0isize) as c_uchar as c_int
-            & 0xf8i32
-            == 0xd8i32
+            .offset(-(2))
+            .offset(0) as c_uchar as c_int
+            & 0xf8
+            == 0xd8
     {
-        fromLim = fromLim.offset(-(2isize));
+        fromLim = fromLim.offset(-(2));
         res = XML_CONVERT_INPUT_INCOMPLETE
     }
     while *fromP < fromLim && *toP < toLim as *mut c_ushort {
         let fresh57 = *toP;
         *toP = (*toP).offset(1);
-        *fresh57 = ((*(*fromP).offset(0isize) as c_uchar as c_int) << 8i32
-            | *(*fromP).offset(1isize) as c_uchar as c_int)
+        *fresh57 = ((*(*fromP).offset(0) as c_uchar as c_int) << 8
+            | *(*fromP).offset(1) as c_uchar as c_int)
             as c_ushort;
-        *fromP = (*fromP).offset(2isize)
+        *fromP = (*fromP).offset(2)
     }
     if *toP == toLim as *mut c_ushort && *fromP < fromLim {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -19465,7 +19465,7 @@ static mut little2_encoding_ns: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 1i8,
                 };
@@ -20170,7 +20170,7 @@ static mut little2_encoding: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 1i8,
                 };
@@ -20876,7 +20876,7 @@ static mut internal_little2_encoding_ns: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 1i8,
                 };
@@ -21581,7 +21581,7 @@ static mut internal_little2_encoding: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 1i8,
                 };
@@ -22290,7 +22290,7 @@ static mut big2_encoding_ns: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 0i8,
                 }; /* LCOV_EXCL_LINE */
@@ -22995,7 +22995,7 @@ static mut big2_encoding: normal_encoding = unsafe {
                             )
                                 -> XML_Convert_Result,
                     ),
-                    minBytesPerChar: 2i32,
+                    minBytesPerChar: 2,
                     isUtf8: 0i8,
                     isUtf16: 0i8,
                 };
@@ -23582,7 +23582,7 @@ unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_
             break;
         }
     }
-    return 1i32;
+    return 1;
 }
 
 unsafe extern "C" fn initUpdatePosition(
@@ -23606,7 +23606,7 @@ unsafe extern "C" fn toAscii(
         &mut ptr,
         end,
         &mut p,
-        p.offset(1isize),
+        p.offset(1),
     );
     if p == buf.as_mut_ptr() {
         return -1;
@@ -23617,10 +23617,10 @@ unsafe extern "C" fn toAscii(
 
 unsafe extern "C" fn isSpace(mut c: c_int) -> c_int {
     match c {
-        32 | 13 | 10 | 9 => return 1i32,
+        32 | 13 | 10 | 9 => return 1,
         _ => {}
     }
-    return 0i32;
+    return 0;
 }
 /* Return 1 if there's just optional white space or there's an S
    followed by name=val.
@@ -23718,7 +23718,7 @@ unsafe extern "C" fn parsePseudoAttribute(
         ptr = ptr.offset((*enc).minBytesPerChar as isize)
     }
     *nextTokPtr = ptr.offset((*enc).minBytesPerChar as isize);
-    return 1i32;
+    return 1;
 }
 
 static mut KW_version: [c_char; 8] = [
@@ -23918,7 +23918,7 @@ unsafe extern "C" fn doParseXmlDecl(
     ) != 0
     {
         if !standalone.is_null() {
-            *standalone = 1i32
+            *standalone = 1
         }
     } else if (*enc).nameMatchesAscii.expect("non-null function pointer")(
         enc,
@@ -23928,7 +23928,7 @@ unsafe extern "C" fn doParseXmlDecl(
     ) != 0
     {
         if !standalone.is_null() {
-            *standalone = 0i32
+            *standalone = 0
         }
     } else {
         *badPtr = val;
@@ -23941,7 +23941,7 @@ unsafe extern "C" fn doParseXmlDecl(
         *badPtr = ptr;
         return 0i32;
     }
-    return 1i32;
+    return 1;
 }
 /* as nothing */
 /* isName2 */
@@ -23955,7 +23955,7 @@ unsafe extern "C" fn doParseXmlDecl(
 /* isInvalid4 */
 
 unsafe extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
-    match result >> 8i32 {
+    match result >> 8 {
         216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
         0 => {
             if latin1_encoding.type_0[result as usize] as c_int == BT_NONXML as c_int {
@@ -23963,7 +23963,7 @@ unsafe extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
             }
         }
         255 => {
-            if result == 0xfffei32 || result == 0xffffi32 {
+            if result == 0xfffe || result == 0xffff {
                 return -1;
             }
         }
@@ -23974,55 +23974,55 @@ unsafe extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
 #[no_mangle]
 
 pub unsafe extern "C" fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
-    if c < 0i32 {
+    if c < 0 {
         return 0i32;
     }
     if c < min2 as c_int {
-        *buf.offset(0isize) = (c | UTF8_cval1 as c_int) as c_char;
+        *buf.offset(0) = (c | UTF8_cval1 as c_int) as c_char;
         return 1i32;
     }
     if c < min3 as c_int {
-        *buf.offset(0isize) = (c >> 6i32 | UTF8_cval2 as c_int) as c_char;
-        *buf.offset(1isize) = (c & 0x3fi32 | 0x80i32) as c_char;
+        *buf.offset(0) = (c >> 6 | UTF8_cval2 as c_int) as c_char;
+        *buf.offset(1) = (c & 0x3fi32 | 0x80) as c_char;
         return 2i32;
     }
     if c < min4 as c_int {
-        *buf.offset(0isize) = (c >> 12i32 | UTF8_cval3 as c_int) as c_char;
-        *buf.offset(1isize) =
-            (c >> 6i32 & 0x3fi32 | 0x80i32) as c_char;
-        *buf.offset(2isize) = (c & 0x3fi32 | 0x80i32) as c_char;
+        *buf.offset(0) = (c >> 12 | UTF8_cval3 as c_int) as c_char;
+        *buf.offset(1) =
+            (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(2) = (c & 0x3fi32 | 0x80) as c_char;
         return 3i32;
     }
-    if c < 0x110000i32 {
-        *buf.offset(0isize) = (c >> 18i32 | UTF8_cval4 as c_int) as c_char;
-        *buf.offset(1isize) =
-            (c >> 12i32 & 0x3fi32 | 0x80i32) as c_char;
-        *buf.offset(2isize) =
-            (c >> 6i32 & 0x3fi32 | 0x80i32) as c_char;
-        *buf.offset(3isize) = (c & 0x3fi32 | 0x80i32) as c_char;
+    if c < 0x110000 {
+        *buf.offset(0) = (c >> 18 | UTF8_cval4 as c_int) as c_char;
+        *buf.offset(1) =
+            (c >> 12 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(2) =
+            (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        *buf.offset(3) = (c & 0x3fi32 | 0x80) as c_char;
         return 4i32;
     }
-    return 0i32;
+    return 0;
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
-    if charNum < 0i32 {
+    if charNum < 0 {
         return 0i32;
     }
-    if charNum < 0x10000i32 {
-        *buf.offset(0isize) = charNum as c_ushort;
+    if charNum < 0x10000 {
+        *buf.offset(0) = charNum as c_ushort;
         return 1i32;
     }
-    if charNum < 0x110000i32 {
-        charNum -= 0x10000i32;
-        *buf.offset(0isize) = ((charNum >> 10i32) + 0xd800i32) as c_ushort;
-        *buf.offset(1isize) =
-            ((charNum & 0x3ffi32) + 0xdc00i32) as c_ushort;
+    if charNum < 0x110000 {
+        charNum -= 0x10000;
+        *buf.offset(0) = ((charNum >> 10) + 0xd800i32) as c_ushort;
+        *buf.offset(1) =
+            ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
         return 2i32;
     }
-    return 0i32;
+    return 0;
 }
 #[no_mangle]
 
@@ -24033,29 +24033,29 @@ pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
 unsafe extern "C" fn unknown_isName(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
     let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
     let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    if c & !(0xffffi32) != 0 {
+    if c & !(0xffff) != 0 {
         return 0i32;
     }
-    return (namingBitmap[(((namePages[(c >> 8i32) as usize] as c_int) << 3i32)
-        + ((c & 0xffi32) >> 5i32)) as usize]
-        & (1u32) << (c & 0xffi32 & 0x1fi32)) as c_int;
+    return (namingBitmap[(((namePages[(c >> 8) as usize] as c_int) << 3)
+        + ((c & 0xff) >> 5)) as usize]
+        & (1) << (c & 0xff & 0x1f)) as c_int;
 }
 
 unsafe extern "C" fn unknown_isNmstrt(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
     let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
     let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    if c & !(0xffffi32) != 0 {
+    if c & !(0xffff) != 0 {
         return 0i32;
     }
-    return (namingBitmap[(((nmstrtPages[(c >> 8i32) as usize] as c_int) << 3i32)
-        + ((c & 0xffi32) >> 5i32)) as usize]
-        & (1u32) << (c & 0xffi32 & 0x1fi32)) as c_int;
+    return (namingBitmap[(((nmstrtPages[(c >> 8) as usize] as c_int) << 3)
+        + ((c & 0xff) >> 5)) as usize]
+        & (1) << (c & 0xff & 0x1f)) as c_int;
 }
 
 unsafe extern "C" fn unknown_isInvalid(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
     let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
     let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    return (c & !(0xffffi32) != 0 || checkCharRefNumber(c) < 0i32) as c_int;
+    return (c & !(0xffff) != 0 || checkCharRefNumber(c) < 0) as c_int;
 }
 
 unsafe extern "C" fn unknown_toUtf8(
@@ -24077,7 +24077,7 @@ unsafe extern "C" fn unknown_toUtf8(
         let fresh60 = utf8;
         utf8 = utf8.offset(1);
         n = *fresh60 as c_int;
-        if n == 0i32 {
+        if n == 0 {
             let mut c: c_int =
                 (*uenc).convert.expect("non-null function pointer")((*uenc).userData, *fromP);
             n = XmlUtf8Encode(c, buf.as_mut_ptr());
@@ -24087,7 +24087,7 @@ unsafe extern "C" fn unknown_toUtf8(
             utf8 = buf.as_mut_ptr();
             *fromP = (*fromP).offset(
                 ((*(enc as *const normal_encoding)).type_0[**fromP as c_uchar as usize] as c_int
-                    - (BT_LEAD2 as c_int - 2i32)) as isize,
+                    - (BT_LEAD2 as c_int - 2)) as isize,
             )
         } else {
             if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
@@ -24110,12 +24110,12 @@ unsafe extern "C" fn unknown_toUtf16(
     let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
     while *fromP < fromLim && *toP < toLim as *mut c_ushort {
         let mut c: c_ushort = (*uenc).utf16[**fromP as c_uchar as usize];
-        if c as c_int == 0i32 {
+        if c as c_int == 0 {
             c = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, *fromP)
                 as c_ushort;
             *fromP = (*fromP).offset(
                 ((*(enc as *const normal_encoding)).type_0[**fromP as c_uchar as usize] as c_int
-                    - (BT_LEAD2 as c_int - 2i32)) as isize,
+                    - (BT_LEAD2 as c_int - 2)) as isize,
             )
         } else {
             *fromP = (*fromP).offset(1)
@@ -24145,8 +24145,8 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
         &latin1_encoding as *const normal_encoding as *const c_void,
         ::std::mem::size_of::<normal_encoding>() as c_ulong,
     );
-    i = 0i32;
-    while i < 128i32 {
+    i = 0;
+    while i < 128 {
         if latin1_encoding.type_0[i as usize] as c_int != BT_OTHER as c_int
             && latin1_encoding.type_0[i as usize] as c_int != BT_NONXML as c_int
             && *table.offset(i as isize) != i
@@ -24155,27 +24155,27 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
         }
         i += 1
     }
-    i = 0i32;
-    while i < 256i32 {
+    i = 0;
+    while i < 256 {
         let mut c: c_int = *table.offset(i as isize);
         if c == -1 {
             (*e).normal.type_0[i as usize] =  BT_MALFORM as c_uchar;
             /* This shouldn't really get used. */
-            (*e).utf16[i as usize] = 0xffffu16;
-            (*e).utf8[i as usize][0usize] = 1i8;
-            (*e).utf8[i as usize][1usize] = 0i8
-        } else if c < 0i32 {
-            if c < -(4i32) {
+            (*e).utf16[i as usize] = 0xffff;
+            (*e).utf8[i as usize][0] = 1;
+            (*e).utf8[i as usize][1] = 0
+        } else if c < 0 {
+            if c < -(4) {
                 return 0 as *mut ENCODING;
             }
             /* Multi-byte sequences need a converter function */
             if convert.is_none() {
                 return 0 as *mut ENCODING;
             }
-            (*e).normal.type_0[i as usize] = (BT_LEAD2 as c_int - (c + 2i32)) as c_uchar;
-            (*e).utf8[i as usize][0usize] = 0i8;
-            (*e).utf16[i as usize] = 0u16
-        } else if c < 0x80i32 {
+            (*e).normal.type_0[i as usize] = (BT_LEAD2 as c_int - (c + 2)) as c_uchar;
+            (*e).utf8[i as usize][0] = 0;
+            (*e).utf16[i as usize] = 0
+        } else if c < 0x80 {
             if latin1_encoding.type_0[c as usize] as c_int != BT_OTHER as c_int
                 && latin1_encoding.type_0[c as usize] as c_int != BT_NONXML as c_int
                 && c != i
@@ -24183,40 +24183,40 @@ pub unsafe extern "C" fn XmlInitUnknownEncoding(
                 return 0 as *mut ENCODING;
             }
             (*e).normal.type_0[i as usize] = latin1_encoding.type_0[c as usize];
-            (*e).utf8[i as usize][0usize] = 1i8;
-            (*e).utf8[i as usize][1usize] = c as c_char;
-            (*e).utf16[i as usize] = if c == 0i32 { 0xffffi32 } else { c } as c_ushort
-        } else if checkCharRefNumber(c) < 0i32 {
+            (*e).utf8[i as usize][0] = 1;
+            (*e).utf8[i as usize][1] = c as c_char;
+            (*e).utf16[i as usize] = if c == 0 { 0xffff } else { c } as c_ushort
+        } else if checkCharRefNumber(c) < 0 {
             (*e).normal.type_0[i as usize] =  BT_NONXML as c_uchar;
             /* This shouldn't really get used. */
-            (*e).utf16[i as usize] = 0xffffu16;
-            (*e).utf8[i as usize][0usize] = 1i8;
-            (*e).utf8[i as usize][1usize] = 0i8
+            (*e).utf16[i as usize] = 0xffff;
+            (*e).utf8[i as usize][0] = 1;
+            (*e).utf8[i as usize][1] = 0
         } else {
-            if c > 0xffffi32 {
+            if c > 0xffff {
                 return 0 as *mut ENCODING;
             }
-            if namingBitmap[(((nmstrtPages[(c >> 8i32) as usize] as c_int) << 3i32)
-                + ((c & 0xffi32) >> 5i32)) as usize]
-                & (1u32) << (c & 0xffi32 & 0x1fi32)
+            if namingBitmap[(((nmstrtPages[(c >> 8) as usize] as c_int) << 3)
+                + ((c & 0xff) >> 5)) as usize]
+                & (1) << (c & 0xff & 0x1f)
                 != 0
             {
                 (*e).normal.type_0[i as usize] =  BT_NMSTRT as c_uchar
-            } else if namingBitmap[(((namePages[(c >> 8i32) as usize] as c_int)
-                << 3i32)
-                + ((c & 0xffi32) >> 5i32)) as usize]
-                & (1u32) << (c & 0xffi32 & 0x1fi32)
+            } else if namingBitmap[(((namePages[(c >> 8) as usize] as c_int)
+                << 3)
+                + ((c & 0xff) >> 5)) as usize]
+                & (1) << (c & 0xff & 0x1f)
                 != 0
             {
                 (*e).normal.type_0[i as usize] =  BT_NAME as c_uchar
             } else {
                 (*e).normal.type_0[i as usize] =  BT_OTHER as c_uchar
             }
-            (*e).utf8[i as usize][0usize] = XmlUtf8Encode(
+            (*e).utf8[i as usize][0] = XmlUtf8Encode(
                 c,
                 (*e).utf8[i as usize]
                     .as_mut_ptr()
-                    .offset(1isize),
+                    .offset(1),
             ) as c_char;
             (*e).utf16[i as usize] = c as c_ushort
         }
@@ -24414,7 +24414,7 @@ unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
     if name.is_null() {
         return  NO_ENC;
     }
-    i = 0i32;
+    i = 0;
     while i
         < (::std::mem::size_of::<[*const c_char; 6]>() as c_ulong)
             .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong) as c_int
@@ -24449,7 +24449,7 @@ unsafe extern "C" fn initScan(
         return crate::xmltok_h::XML_TOK_NONE;
     }
     encPtr = (*enc).encPtr;
-    if ptr.offset(1isize) == end {
+    if ptr.offset(1) == end {
         /* only a single byte available for auto-detection */
         /* FIXME */
         /* so we're parsing an external text entity... */
@@ -24487,14 +24487,14 @@ unsafe extern "C" fn initScan(
         }
     } else {
         let mut current_block_26: u64;
-        match (*ptr.offset(0isize) as c_uchar as c_int) << 8i32
-            | *ptr.offset(1isize) as c_uchar as c_int
+        match (*ptr.offset(0) as c_uchar as c_int) << 8
+            | *ptr.offset(1) as c_uchar as c_int
         {
             65279 => {
                 if !((*enc).initEnc.isUtf16 as c_int ==  ISO_8859_1_ENC
                     && state == XML_CONTENT_STATE)
                 {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     *encPtr = *encodingTable.offset(UTF_16BE_ENC as isize);
                     return crate::xmltok_h::XML_TOK_BOM;
                 }
@@ -24515,7 +24515,7 @@ unsafe extern "C" fn initScan(
                 if !((*enc).initEnc.isUtf16 as c_int ==  ISO_8859_1_ENC
                     && state == XML_CONTENT_STATE)
                 {
-                    *nextTokPtr = ptr.offset(2isize);
+                    *nextTokPtr = ptr.offset(2);
                     *encPtr = *encodingTable.offset(UTF_16LE_ENC as isize);
                     return crate::xmltok_h::XML_TOK_BOM;
                 }
@@ -24545,11 +24545,11 @@ unsafe extern "C" fn initScan(
                 match current_block_26 {
                     10758786907990354186 => {}
                     _ => {
-                        if ptr.offset(2isize) == end {
+                        if ptr.offset(2) == end {
                             return crate::xmltok_h::XML_TOK_PARTIAL;
                         }
-                        if *ptr.offset(2isize) as c_uchar as c_int == 0xbfi32 {
-                            *nextTokPtr = ptr.offset(3isize);
+                        if *ptr.offset(2) as c_uchar as c_int == 0xbf {
+                            *nextTokPtr = ptr.offset(3);
                             *encPtr = *encodingTable.offset(UTF_8_ENC as isize);
                             return crate::xmltok_h::XML_TOK_BOM;
                         }
@@ -24557,7 +24557,7 @@ unsafe extern "C" fn initScan(
                 }
             }
             _ => {
-                if *ptr.offset(0isize) as c_int == '\u{0}' as i32 {
+                if *ptr.offset(0) as c_int == '\u{0}' as i32 {
                     /* 0 isn't a legal data character. Furthermore a document
                        entity can only start with ASCII characters.  So the only
                        way this can fail to be big-endian UTF-16 if it it's an
@@ -24573,7 +24573,7 @@ unsafe extern "C" fn initScan(
                             *encPtr, ptr, end, nextTokPtr
                         );
                     }
-                } else if *ptr.offset(1isize) as c_int == '\u{0}' as i32 {
+                } else if *ptr.offset(1) as c_int == '\u{0}' as i32 {
                     /* We could recover here in the case:
                         - parsing an external entity
                         - second byte is 0

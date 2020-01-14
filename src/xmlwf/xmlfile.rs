@@ -2,9 +2,9 @@ use crate::readfilemap::filemap;
 use crate::stdlib::{malloc, read, strlen};
 use ::libc::{close, exit, free, open, strcpy, strrchr};
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
-pub const XML_MAP_FILE: c_int = 0o1i32;
+pub const XML_MAP_FILE: c_int = 0o1;
 
-pub const XML_EXTERNAL_ENTITIES: c_int = 0o2i32;
+pub const XML_EXTERNAL_ENTITIES: c_int = 0o2;
 
 pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::expat_h::{
@@ -79,9 +79,9 @@ pub struct PROCESS_ARGS {
 */
 /* ndef _WIN32 */
 
-pub const O_BINARY: c_int = 0i32;
+pub const O_BINARY: c_int = 0;
 
-pub const READ_SIZE: c_int = 1024i32 * 8i32;
+pub const READ_SIZE: c_int = 1024 * 8;
 
 unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XML_Char) {
     let mut code: XML_Error = XML_GetErrorCode(parser);
@@ -115,13 +115,13 @@ unsafe extern "C" fn processFile(
 ) {
     let mut parser: XML_Parser = (*(args as *mut PROCESS_ARGS)).parser;
     let mut retPtr: *mut c_int = (*(args as *mut PROCESS_ARGS)).retPtr;
-    if  XML_Parse(parser, data as *const c_char, size as c_int, 1i32)
+    if  XML_Parse(parser, data as *const c_char, size as c_int, 1)
         == XML_STATUS_ERROR_0 as c_uint
     {
         reportError(parser, filename);
-        *retPtr = 0i32
+        *retPtr = 0
     } else {
-        *retPtr = 1i32
+        *retPtr = 1
     };
 }
 /* _WIN32 */
@@ -148,7 +148,7 @@ unsafe extern "C" fn resolveSystemId(
     strcpy(*toFree, base);
     s = *toFree;
     if !strrchr(s, '/' as i32).is_null() {
-        s = strrchr(s, '/' as i32).offset(1isize)
+        s = strrchr(s, '/' as i32).offset(1)
     }
     strcpy(s, systemId);
     return *toFree;
@@ -189,7 +189,7 @@ unsafe extern "C" fn externalEntityRefFilemap(
         &mut args as *mut PROCESS_ARGS as *mut c_void,
     );
     match filemapRes {
-        0 => result = 0i32,
+        0 => result = 0,
         2 => {
             fprintf(
                 stderr,
@@ -208,10 +208,10 @@ unsafe extern "C" fn externalEntityRefFilemap(
 
 unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XML_Parser) -> c_int {
     /* passing NULL for filename means read intput from stdin */
-    let mut fd: c_int = 0i32; /* 0 is the fileno for stdin */
+    let mut fd: c_int = 0; /* 0 is the fileno for stdin */
     if !filename.is_null() {
         fd = open(filename, O_BINARY | O_RDONLY);
-        if fd < 0i32 {
+        if fd < 0 {
             perror(filename);
             return 0i32;
         }
@@ -235,7 +235,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             return 0i32;
         }
         nread = read(fd, buf as *mut c_void, READ_SIZE as size_t) as c_int;
-        if nread < 0i32 {
+        if nread < 0 {
             perror(if !filename.is_null() {
                 filename
             } else {
@@ -246,7 +246,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             }
             return 0i32;
         }
-        if  XML_ParseBuffer(parser, nread, (nread == 0i32) as c_int)
+        if  XML_ParseBuffer(parser, nread, (nread == 0) as c_int)
             == XML_STATUS_ERROR_0 as c_uint
         {
             reportError(
@@ -262,7 +262,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             }
             return 0i32;
         }
-        if !(nread == 0i32) {
+        if !(nread == 0) {
             continue;
         }
         if !filename.is_null() {
@@ -270,7 +270,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
         }
         break;
     }
-    return 1i32;
+    return 1;
 }
 
 unsafe extern "C" fn externalEntityRefStream(
@@ -358,7 +358,7 @@ pub unsafe extern "C" fn XML_ProcessFile(
             &mut args as *mut PROCESS_ARGS as *mut c_void,
         );
         match filemapRes {
-            0 => result = 0i32,
+            0 => result = 0,
             2 => {
                 fprintf(
                     stderr,

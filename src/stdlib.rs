@@ -106,7 +106,7 @@ pub struct __jmp_buf_tag {
 pub type jmp_buf = [__jmp_buf_tag; 1];
 // ================ END include_setjmp_h ================
 // =============== BEGIN random_h ================
-pub const GRND_NONBLOCK: c_int = 0x1i32;
+pub const GRND_NONBLOCK: c_int = 0x1;
 // ================ END random_h ================
 // =============== BEGIN setjmp_h ================
 pub type __jmp_buf = [c_long; 8];
@@ -131,7 +131,7 @@ pub struct stat {
     pub st_ctim: timespec,
     pub __glibc_reserved: [__syscall_slong_t; 3],
 }
-pub const __S_IFMT: c_int = 0o170000i32;
+pub const __S_IFMT: c_int = 0o170000;
 // ================ END stat_h ================
 // =============== BEGIN stdint_uintn_h ================
 pub type uint64_t = __uint64_t;

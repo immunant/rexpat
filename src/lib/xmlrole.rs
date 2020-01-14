@@ -1454,7 +1454,7 @@ unsafe extern "C" fn attlist2(
                 ]
             };
             let mut i: c_int = 0;
-            i = 0i32;
+            i = 0;
             while i
                 < (::std::mem::size_of::<[*const c_char; 8]>() as c_ulong)
                     .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong)
@@ -2064,16 +2064,16 @@ unsafe extern "C" fn common(mut state: *mut PROLOG_STATE, mut tok: c_int) -> c_i
 
 pub unsafe extern "C" fn XmlPrologStateInit(mut state: *mut PROLOG_STATE) {
     (*state).handler = Some(prolog0 as PROLOG_HANDLER);
-    (*state).documentEntity = 1i32;
+    (*state).documentEntity = 1;
     (*state).includeLevel = 0u32;
-    (*state).inEntityValue = 0i32;
+    (*state).inEntityValue = 0;
     /* XML_DTD */
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn XmlPrologStateInitExternalEntity(mut state: *mut PROLOG_STATE) {
     (*state).handler = Some(externalSubset0 as PROLOG_HANDLER);
-    (*state).documentEntity = 0i32;
+    (*state).documentEntity = 0;
     (*state).includeLevel = 0u32;
 }
 /* XML_DTD */

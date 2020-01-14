@@ -129,25 +129,25 @@ unsafe extern "C" fn startElement(
 ) {
     let mut i: c_int = 0;
     let mut depthPtr: *mut c_int = userData as *mut c_int;
-    i = 0i32;
+    i = 0;
     while i < *depthPtr {
         putchar('\t' as i32);
         i += 1
     }
     printf(b"%s\n\x00" as *const u8 as *const c_char, name);
-    *depthPtr += 1i32;
+    *depthPtr += 1;
 }
 
 unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML_Char) {
     let mut depthPtr: *mut c_int = userData as *mut c_int;
-    *depthPtr -= 1i32;
+    *depthPtr -= 1;
 }
 
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut buf: [c_char; 8192] = [0; 8192];
     let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
     let mut done: XML_Bool = 0;
-    let mut depth: c_int = 0i32;
+    let mut depth: c_int = 0;
     XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
     XML_SetElementHandler(
         parser,
@@ -164,7 +164,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     loop {
         let mut len: size_t = crate::stdlib::fread(
             buf.as_mut_ptr() as *mut c_void,
-            1u64,
+            1,
             ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
             crate::stdlib::stdin,
         );
@@ -187,7 +187,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         }
     }
     XML_ParserFree(parser);
-    return 0i32;
+    return 0;
 }
 #[main]
 pub fn main() {

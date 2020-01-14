@@ -86,7 +86,7 @@ unsafe extern "C" fn characterData(
     mut len: c_int,
 ) {
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
-    while len > 0i32 {
+    while len > 0 {
         match *s as c_int {
             38 => {
                 fputs(b"&amp;\x00" as *const u8 as *const c_char, fp);
@@ -187,8 +187,8 @@ unsafe extern "C" fn startElement(
     while !(*p).is_null() {
         p = p.offset(1)
     }
-    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1i32) as c_int;
-    if nAtts > 1i32 {
+    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1) as c_int;
+    if nAtts > 1 {
         qsort(
             atts as *mut c_void,
             nAtts as size_t,
@@ -240,20 +240,20 @@ unsafe extern "C" fn startElementNS(
     sep = strrchr(name, '\u{1}' as i32);
     if !sep.is_null() {
         fputs(b"n1:\x00" as *const u8 as *const c_char, fp);
-        fputs(sep.offset(1isize), fp);
+        fputs(sep.offset(1), fp);
         fputs(b" xmlns:n1\x00" as *const u8 as *const c_char, fp);
         attributeValue(fp, name);
-        nsi = 2i32
+        nsi = 2
     } else {
         fputs(name, fp);
-        nsi = 1i32
+        nsi = 1
     }
     p = atts;
     while !(*p).is_null() {
         p = p.offset(1)
     }
-    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1i32) as c_int;
-    if nAtts > 1i32 {
+    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1) as c_int;
+    if nAtts > 1 {
         qsort(
             atts as *mut c_void,
             nAtts as size_t,
@@ -327,14 +327,14 @@ unsafe extern "C" fn processingInstruction(
 
 unsafe extern "C" fn xcsdup(mut s: *const XML_Char) -> *mut XML_Char {
     let mut result: *mut XML_Char = 0 as *mut XML_Char;
-    let mut count: c_int = 0i32;
+    let mut count: c_int = 0;
     let mut numBytes: c_int = 0;
     loop
     /* Get the length of the string, including terminator */
     {
         let fresh3 = count;
         count = count + 1;
-        if !(*s.offset(fresh3 as isize) as c_int != 0i32) {
+        if !(*s.offset(fresh3 as isize) as c_int != 0) {
             break;
         }
     }
@@ -377,7 +377,7 @@ unsafe extern "C" fn freeNotations(mut data: *mut XmlwfUserData) {
 }
 
 unsafe extern "C" fn xcscmp(mut xs: *const XML_Char, mut xt: *const XML_Char) -> c_int {
-    while *xs as c_int != 0i32 && *xt as c_int != 0i32 {
+    while *xs as c_int != 0 && *xt as c_int != 0 {
         if (*xs as c_int) < *xt as c_int {
             return -(1i32);
         }
@@ -393,7 +393,7 @@ unsafe extern "C" fn xcscmp(mut xs: *const XML_Char, mut xt: *const XML_Char) ->
     if *xs as c_int > *xt as c_int {
         return 1i32;
     }
-    return 0i32;
+    return 0;
 }
 
 unsafe extern "C" fn notationCmp(mut a: *const c_void, mut b: *const c_void) -> c_int {
@@ -405,7 +405,7 @@ unsafe extern "C" fn notationCmp(mut a: *const c_void, mut b: *const c_void) -> 
 unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     let mut data: *mut XmlwfUserData = userData as *mut XmlwfUserData;
     let mut notations: *mut *mut NotationList = 0 as *mut *mut NotationList;
-    let mut notationCount: c_int = 0i32;
+    let mut notationCount: c_int = 0;
     let mut p: *mut NotationList = 0 as *mut NotationList;
     let mut i: c_int = 0;
     /* How many notations do we have? */
@@ -414,7 +414,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
         notationCount += 1;
         p = (*p).next
     }
-    if notationCount == 0i32 {
+    if notationCount == 0 {
         /* Nothing to report */
         free((*data).currentDoctypeName as *mut c_void);
         (*data).currentDoctypeName = ::c2rust_out::stddef_h::NULL as *const XML_Char;
@@ -434,7 +434,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
         return;
     }
     p = (*data).notationListHead;
-    i = 0i32;
+    i = 0;
     while i < notationCount {
         let ref mut fresh4 = *notations.offset(i as isize);
         *fresh4 = p;
@@ -452,7 +452,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     fputs((*data).currentDoctypeName, (*data).fp);
     fputs(b" [\n\x00" as *const u8 as *const c_char, (*data).fp);
     /* Now the NOTATIONs */
-    i = 0i32;
+    i = 0;
     while i < notationCount {
         fputs(b"<!NOTATION \x00" as *const u8 as *const c_char, (*data).fp);
         fputs((**notations.offset(i as isize)).notationName, (*data).fp);
@@ -588,7 +588,7 @@ unsafe extern "C" fn nopProcessingInstruction(
 unsafe extern "C" fn markup(mut userData: *mut c_void, mut s: *const XML_Char, mut len: c_int) {
     let mut fp: *mut FILE =
         (*(*(userData as *mut *mut c_void) as *mut XmlwfUserData)).fp;
-    while len > 0i32 {
+    while len > 0 {
         putc(*s as c_int, fp);
         len -= 1;
         s = s.offset(1)
@@ -643,7 +643,7 @@ unsafe extern "C" fn metaStartElement(
         atts.offset(XML_GetSpecifiedAttributeCount(parser) as isize);
     let mut idAttPtr: *mut *const XML_Char = 0 as *mut *const XML_Char;
     let mut idAttIndex: c_int = XML_GetIdAttributeIndex(parser);
-    if idAttIndex < 0i32 {
+    if idAttIndex < 0 {
         idAttPtr = 0 as *mut *const XML_Char
     } else {
         idAttPtr = atts.offset(idAttIndex as isize)
@@ -666,8 +666,8 @@ unsafe extern "C" fn metaStartElement(
             );
             characterData(
                 data as *mut c_void,
-                *atts.offset(1isize),
-                strlen(*atts.offset(1isize)) as c_int,
+                *atts.offset(1),
+                strlen(*atts.offset(1)) as c_int,
             );
             if atts >= specifiedAttsEnd {
                 fputs(
@@ -679,7 +679,7 @@ unsafe extern "C" fn metaStartElement(
             } else {
                 fputs(b"\"/>\n\x00" as *const u8 as *const c_char, fp);
             }
-            atts = atts.offset(2isize);
+            atts = atts.offset(2);
             if (*atts).is_null() {
                 break;
             }
@@ -959,7 +959,7 @@ unsafe extern "C" fn unknownEncoding(
     static mut prefixL: [XML_Char; 9] = [119, 105, 110, 100, 111, 119, 115, 45, 0];
     static mut prefixU: [XML_Char; 9] = [87, 73, 78, 68, 79, 87, 83, 45, 0];
     let mut i: c_int = 0;
-    i = 0i32;
+    i = 0;
     while prefixU[i as usize] != 0 {
         if *name.offset(i as isize) as c_int != prefixU[i as usize] as c_int
             && *name.offset(i as isize) as c_int != prefixL[i as usize] as c_int
@@ -968,16 +968,16 @@ unsafe extern "C" fn unknownEncoding(
         }
         i += 1
     }
-    cp = 0i32;
+    cp = 0;
     while *name.offset(i as isize) != 0 {
         static mut digits: [XML_Char; 11] = [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 0];
         let mut s: *const XML_Char = strchr(digits.as_ptr(), *name.offset(i as isize) as c_int);
         if s.is_null() {
             return 0i32;
         }
-        cp *= 10i32;
+        cp *= 10;
         cp +=  s.wrapping_offset_from(digits.as_ptr()) as c_int;
-        if cp >= 0x10000i32 {
+        if cp >= 0x10000 {
             return 0i32;
         }
         i += 1
@@ -996,11 +996,11 @@ unsafe extern "C" fn unknownEncoding(
         return 0i32;
     }
     *((*info).data as *mut c_int) = cp;
-    return 1i32;
+    return 1;
 }
 
 unsafe extern "C" fn notStandalone(mut _userData: *mut c_void) -> c_int {
-    return 0i32;
+    return 0;
 }
 
 unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
@@ -1009,11 +1009,11 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
     let mut features: *const XML_Feature =  XML_GetFeatureList();
     loop {
         ch = *s;
-        if !(ch as c_int != 0i32) {
+        if !(ch as c_int != 0) {
             break;
         }
         if ch as c_int == '/' as i32 {
-            prog = s.offset(1isize)
+            prog = s.offset(1)
         }
         s = s.offset(1)
     }
@@ -1025,17 +1025,17 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
         XML_ExpatVersion(),
     );
     if !features.is_null()
-        &&  (*features.offset(0isize)).feature
+        &&  (*features.offset(0)).feature
             !=  XML_FEATURE_END
     {
-        let mut i: c_int = 1i32;
+        let mut i: c_int = 1;
         ::c2rust_out::stdlib::fprintf(
             
             stdout,
             b"%s\x00" as *const u8 as *const c_char,
             (*features.offset(0isize)).name,
         );
-        if (*features.offset(0isize)).value != 0 {
+        if (*features.offset(0)).value != 0 {
             ::c2rust_out::stdlib::fprintf(
                 
                 stdout,
@@ -1082,13 +1082,13 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
     let mut outputDir: *const XML_Char = ::c2rust_out::stddef_h::NULL as *const XML_Char;
     let mut encoding: *const XML_Char = ::c2rust_out::stddef_h::NULL as *const XML_Char;
     let mut processFlags: c_uint = crate::xmlfile::XML_MAP_FILE as c_uint;
-    let mut windowsCodePages: c_int = 0i32;
-    let mut outputType: c_int = 0i32;
-    let mut useNamespaces: c_int = 0i32;
-    let mut requireStandalone: c_int = 0i32;
-    let mut requiresNotations: c_int = 0i32;
+    let mut windowsCodePages: c_int = 0;
+    let mut outputType: c_int = 0;
+    let mut useNamespaces: c_int = 0;
+    let mut requireStandalone: c_int = 0;
+    let mut requiresNotations: c_int = 0;
     let mut paramEntityParsing: XML_ParamEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
-    let mut useStdin: c_int = 0i32;
+    let mut useStdin: c_int = 0;
     let mut userData: XmlwfUserData = {
         let mut init = xmlwfUserData {
             fp: ::c2rust_out::stddef_h::NULL as *mut FILE,
@@ -1097,15 +1097,15 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
         };
         init
     };
-    i = 1i32;
-    j = 0i32;
+    i = 1;
+    j = 0;
     while i < argc {
-        if j == 0i32 {
-            if *(*argv.offset(i as isize)).offset(0isize) as c_int != '-' as i32 {
+        if j == 0 {
+            if *(*argv.offset(i as isize)).offset(0) as c_int != '-' as i32 {
                 break;
             }
-            if *(*argv.offset(i as isize)).offset(1isize) as c_int == '-' as i32
-                && *(*argv.offset(i as isize)).offset(2isize) as c_int
+            if *(*argv.offset(i as isize)).offset(1) as c_int == '-' as i32
+                && *(*argv.offset(i as isize)).offset(2) as c_int
                     == '\u{0}' as i32
             {
                 i += 1;
@@ -1122,12 +1122,12 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 current_block_46 = 13707613154239713890;
             }
             115 => {
-                requireStandalone = 1i32;
+                requireStandalone = 1;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
             110 => {
-                useNamespaces = 1i32;
+                useNamespaces = 1;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
@@ -1139,7 +1139,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 current_block_46 = 4092296097885336037;
             }
             119 => {
-                windowsCodePages = 1i32;
+                windowsCodePages = 1;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
@@ -1150,7 +1150,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             }
             99 => {
                 outputType = 'c' as i32;
-                useNamespaces = 0i32;
+                useNamespaces = 0;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
@@ -1160,12 +1160,12 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 current_block_46 = 13707613154239713890;
             }
             78 => {
-                requiresNotations = 1i32;
+                requiresNotations = 1;
                 j += 1;
                 current_block_46 = 13707613154239713890;
             }
             100 => {
-                if *(*argv.offset(i as isize)).offset((j + 1i32) as isize) as c_int
+                if *(*argv.offset(i as isize)).offset((j + 1) as isize) as c_int
                     == '\u{0}' as i32
                 {
                     i += 1;
@@ -1176,14 +1176,14 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 } else {
                     outputDir = (*argv.offset(i as isize))
                         .offset(j as isize)
-                        .offset(1isize)
+                        .offset(1)
                 }
                 i += 1;
-                j = 0i32;
+                j = 0;
                 current_block_46 = 13707613154239713890;
             }
             101 => {
-                if *(*argv.offset(i as isize)).offset((j + 1i32) as isize) as c_int
+                if *(*argv.offset(i as isize)).offset((j + 1) as isize) as c_int
                     == '\u{0}' as i32
                 {
                     i += 1;
@@ -1194,24 +1194,24 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 } else {
                     encoding = (*argv.offset(i as isize))
                         .offset(j as isize)
-                        .offset(1isize)
+                        .offset(1)
                 }
                 i += 1;
-                j = 0i32;
+                j = 0;
                 current_block_46 = 13707613154239713890;
             }
             104 => {
-                usage(*argv.offset(0isize), 0i32);
+                usage(*argv.offset(0), 0);
                 return 0i32;
             }
             118 => {
-                showVersion(*argv.offset(0isize));
+                showVersion(*argv.offset(0));
                 return 0i32;
             }
             0 => {
-                if j > 1i32 {
+                if j > 1 {
                     i += 1;
-                    j = 0i32;
+                    j = 0;
                     current_block_46 = 13707613154239713890;
                 } else {
                     current_block_46 = 16871217396860862036;
@@ -1237,7 +1237,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
         }
     }
     if i == argc {
-        useStdin = 1i32;
+        useStdin = 1;
         processFlags &= !crate::xmlfile::XML_MAP_FILE as c_uint;
         i -= 1
     }
@@ -1309,9 +1309,9 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             if useStdin == 0 {
                 /* Jump after last (back)slash */
                 let mut lastDelim: *const XML_Char =
-                    strrchr(file, *delim.offset(0isize) as c_int);
+                    strrchr(file, *delim.offset(0) as c_int);
                 if !lastDelim.is_null() {
-                    file = lastDelim.offset(1isize)
+                    file = lastDelim.offset(1)
                 }
             }
             outName = malloc(
@@ -1332,7 +1332,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 userData.fp,
                 ::c2rust_out::stddef_h::NULL as *mut c_char,
                 _IOFBF,
-                16384u64,
+                16384,
             );
             XML_SetUserData(parser, &mut userData as *mut XmlwfUserData as *mut c_void);
             match outputType {
@@ -1638,7 +1638,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
         }
         i += 1
     }
-    return 0i32;
+    return 0;
 }
 #[main]
 pub fn main() {

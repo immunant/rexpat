@@ -450,6 +450,6 @@ pub struct XML_Feature {
 /* Expat follows the semantic versioning convention.
    See http://semver.org.
 */
-pub const XML_MAJOR_VERSION: c_int = 2i32;
-pub const XML_MINOR_VERSION: c_int = 2i32;
-pub const XML_MICRO_VERSION: c_int = 9i32;
+pub const XML_MAJOR_VERSION: c_int = 2;
+pub const XML_MINOR_VERSION: c_int = 2;
+pub const XML_MICRO_VERSION: c_int = 9;

@@ -158,16 +158,16 @@ pub unsafe extern "C" fn sip24_update(
         {
             break;
         }
-        m = ((*H).buf[0usize] as uint64_t) << 0i32
-            | ((*H).buf[1usize] as uint64_t) << 8i32
-            | ((*H).buf[2usize] as uint64_t) << 16i32
-            | ((*H).buf[3usize] as uint64_t) << 24i32
-            | ((*H).buf[4usize] as uint64_t) << 32i32
-            | ((*H).buf[5usize] as uint64_t) << 40i32
-            | ((*H).buf[6usize] as uint64_t) << 48i32
-            | ((*H).buf[7usize] as uint64_t) << 56i32;
+        m = ((*H).buf[0] as uint64_t) << 0
+            | ((*H).buf[1] as uint64_t) << 8
+            | ((*H).buf[2] as uint64_t) << 16
+            | ((*H).buf[3] as uint64_t) << 24
+            | ((*H).buf[4] as uint64_t) << 32
+            | ((*H).buf[5] as uint64_t) << 40
+            | ((*H).buf[6] as uint64_t) << 48
+            | ((*H).buf[7] as uint64_t) << 56;
         (*H).v3 ^= m;
-        sip_round(H, 2i32);
+        sip_round(H, 2);
         (*H).v0 ^= m;
         (*H).p = (*H).buf.as_mut_ptr();
         (*H).c =  ((*H).c).wrapping_add(8u64);
@@ -180,22 +180,22 @@ pub unsafe extern "C" fn sip24_update(
 
 pub unsafe extern "C" fn sip_round(mut H: *mut siphash, rounds: c_int) {
     let mut i: c_int = 0;
-    i = 0i32;
+    i = 0;
     while i < rounds {
         (*H).v0 =  ((*H).v0).wrapping_add((*H).v1);
-        (*H).v1 = (*H).v1 << 13i32 | (*H).v1 >> 64i32 - 13i32;
+        (*H).v1 = (*H).v1 << 13 | (*H).v1 >> 64 - 13;
         (*H).v1 ^= (*H).v0;
-        (*H).v0 = (*H).v0 << 32i32 | (*H).v0 >> 64i32 - 32i32;
+        (*H).v0 = (*H).v0 << 32 | (*H).v0 >> 64 - 32;
         (*H).v2 =  ((*H).v2).wrapping_add((*H).v3);
-        (*H).v3 = (*H).v3 << 16i32 | (*H).v3 >> 64i32 - 16i32;
+        (*H).v3 = (*H).v3 << 16 | (*H).v3 >> 64 - 16;
         (*H).v3 ^= (*H).v2;
         (*H).v0 =  ((*H).v0).wrapping_add((*H).v3);
-        (*H).v3 = (*H).v3 << 21i32 | (*H).v3 >> 64i32 - 21i32;
+        (*H).v3 = (*H).v3 << 21 | (*H).v3 >> 64 - 21;
         (*H).v3 ^= (*H).v0;
         (*H).v2 =  ((*H).v2).wrapping_add((*H).v1);
-        (*H).v1 = (*H).v1 << 17i32 | (*H).v1 >> 64i32 - 17i32;
+        (*H).v1 = (*H).v1 << 17 | (*H).v1 >> 64 - 17;
         (*H).v1 ^= (*H).v2;
-        (*H).v2 = (*H).v2 << 32i32 | (*H).v2 >> 64i32 - 32i32;
+        (*H).v2 = (*H).v2 << 32 | (*H).v2 >> 64 - 32;
         i += 1
     }
 }
@@ -203,11 +203,11 @@ pub unsafe extern "C" fn sip_round(mut H: *mut siphash, rounds: c_int) {
 
 pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
     let left: c_char =  (*H).p.wrapping_offset_from((*H).buf.as_mut_ptr()) as c_char;
-    let mut b: uint64_t = (*H).c.wrapping_add(left as c_ulong) << 56i32;
+    let mut b: uint64_t = (*H).c.wrapping_add(left as c_ulong) << 56;
     let mut current_block_6: u64;
     match left as c_int {
         7 => {
-            b |= ((*H).buf[6usize] as uint64_t) << 48i32;
+            b |= ((*H).buf[6] as uint64_t) << 48;
             current_block_6 = 15779782992241478193;
         }
         6 => {
@@ -236,7 +236,7 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         15779782992241478193 =>
         /* fall through */
         {
-            b |= ((*H).buf[5usize] as uint64_t) << 40i32;
+            b |= ((*H).buf[5] as uint64_t) << 40;
             current_block_6 = 17438419808098997991;
         }
         _ => {}
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         17438419808098997991 =>
         /* fall through */
         {
-            b |= ((*H).buf[4usize] as uint64_t) << 32i32;
+            b |= ((*H).buf[4] as uint64_t) << 32;
             current_block_6 = 3917958908645891603;
         }
         _ => {}
@@ -254,7 +254,7 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         3917958908645891603 =>
         /* fall through */
         {
-            b |= ((*H).buf[3usize] as uint64_t) << 24i32;
+            b |= ((*H).buf[3] as uint64_t) << 24;
             current_block_6 = 14025370785517308083;
         }
         _ => {}
@@ -263,7 +263,7 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         14025370785517308083 =>
         /* fall through */
         {
-            b |= ((*H).buf[2usize] as uint64_t) << 16i32;
+            b |= ((*H).buf[2] as uint64_t) << 16;
             current_block_6 = 6645080409601096633;
         }
         _ => {}
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         6645080409601096633 =>
         /* fall through */
         {
-            b |= ((*H).buf[1usize] as uint64_t) << 8i32;
+            b |= ((*H).buf[1] as uint64_t) << 8;
             current_block_6 = 15385381413911169552;
         }
         _ => {}
@@ -281,60 +281,60 @@ pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
         15385381413911169552 =>
         /* fall through */
         {
-            b |= ((*H).buf[0usize] as uint64_t) << 0i32
+            b |= ((*H).buf[0] as uint64_t) << 0
         }
         _ => {}
     }
     (*H).v3 ^= b;
-    sip_round(H, 2i32);
+    sip_round(H, 2);
     (*H).v0 ^= b;
     (*H).v2 ^= 0xffu64;
-    sip_round(H, 4i32);
+    sip_round(H, 4);
     return (*H).v0 ^ (*H).v1 ^ (*H).v2 ^ (*H).v3;
 }
 
 pub unsafe extern "C" fn sip_tokey(mut key: *mut sipkey, mut src: *const c_void) -> *mut sipkey {
-    (*key).k[0usize] =
-        (*(src as *const c_uchar).offset(0isize) as uint64_t) << 0i32
-            | (*(src as *const c_uchar).offset(1isize) as uint64_t) << 8i32
-            | (*(src as *const c_uchar).offset(2isize) as uint64_t) << 16i32
-            | (*(src as *const c_uchar).offset(3isize) as uint64_t) << 24i32
-            | (*(src as *const c_uchar).offset(4isize) as uint64_t) << 32i32
-            | (*(src as *const c_uchar).offset(5isize) as uint64_t) << 40i32
-            | (*(src as *const c_uchar).offset(6isize) as uint64_t) << 48i32
-            | (*(src as *const c_uchar).offset(7isize) as uint64_t) << 56i32;
-    (*key).k[1usize] = (*(src as *const c_uchar)
-        .offset(8isize)
-        .offset(0isize) as uint64_t)
-        << 0i32
+    (*key).k[0] =
+        (*(src as *const c_uchar).offset(0) as uint64_t) << 0
+            | (*(src as *const c_uchar).offset(1) as uint64_t) << 8
+            | (*(src as *const c_uchar).offset(2) as uint64_t) << 16
+            | (*(src as *const c_uchar).offset(3) as uint64_t) << 24
+            | (*(src as *const c_uchar).offset(4) as uint64_t) << 32
+            | (*(src as *const c_uchar).offset(5) as uint64_t) << 40
+            | (*(src as *const c_uchar).offset(6) as uint64_t) << 48
+            | (*(src as *const c_uchar).offset(7) as uint64_t) << 56;
+    (*key).k[1] = (*(src as *const c_uchar)
+        .offset(8)
+        .offset(0) as uint64_t)
+        << 0
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(1isize) as uint64_t)
-            << 8i32
+            .offset(8)
+            .offset(1) as uint64_t)
+            << 8
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(2isize) as uint64_t)
-            << 16i32
+            .offset(8)
+            .offset(2) as uint64_t)
+            << 16
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(3isize) as uint64_t)
-            << 24i32
+            .offset(8)
+            .offset(3) as uint64_t)
+            << 24
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(4isize) as uint64_t)
-            << 32i32
+            .offset(8)
+            .offset(4) as uint64_t)
+            << 32
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(5isize) as uint64_t)
-            << 40i32
+            .offset(8)
+            .offset(5) as uint64_t)
+            << 40
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(6isize) as uint64_t)
-            << 48i32
+            .offset(8)
+            .offset(6) as uint64_t)
+            << 48
         | (*(src as *const c_uchar)
-            .offset(8isize)
-            .offset(7isize) as uint64_t)
-            << 56i32;
+            .offset(8)
+            .offset(7) as uint64_t)
+            << 56;
     return key;
 }
 /* sip24_final() */
@@ -355,644 +355,644 @@ pub unsafe extern "C" fn sip24_valid() -> c_int {
     /* clang-format off */
     pub static mut vectors: [[c_uchar; 8]; 64] = [
         [
-            0x31u8,
-            0xeu8,
-            0xeu8,
-            0xddu8,
-            0x47u8,
-            0xdbu8,
-            0x6fu8,
-            0x72u8,
+            0x31,
+            0xe,
+            0xe,
+            0xdd,
+            0x47,
+            0xdb,
+            0x6f,
+            0x72,
         ],
         [
-            0xfdu8,
-            0x67u8,
-            0xdcu8,
-            0x93u8,
-            0xc5u8,
-            0x39u8,
-            0xf8u8,
-            0x74u8,
+            0xfd,
+            0x67,
+            0xdc,
+            0x93,
+            0xc5,
+            0x39,
+            0xf8,
+            0x74,
         ],
         [
-            0x5au8,
-            0x4fu8,
-            0xa9u8,
-            0xd9u8,
-            0x9u8,
-            0x80u8,
-            0x6cu8,
-            0xdu8,
+            0x5a,
+            0x4f,
+            0xa9,
+            0xd9,
+            0x9,
+            0x80,
+            0x6c,
+            0xd,
         ],
         [
-            0x2du8,
-            0x7eu8,
-            0xfbu8,
-            0xd7u8,
-            0x96u8,
-            0x66u8,
-            0x67u8,
-            0x85u8,
+            0x2d,
+            0x7e,
+            0xfb,
+            0xd7,
+            0x96,
+            0x66,
+            0x67,
+            0x85,
         ],
         [
-            0xb7u8,
-            0x87u8,
-            0x71u8,
-            0x27u8,
-            0xe0u8,
-            0x94u8,
-            0x27u8,
-            0xcfu8,
+            0xb7,
+            0x87,
+            0x71,
+            0x27,
+            0xe0,
+            0x94,
+            0x27,
+            0xcf,
         ],
         [
-            0x8du8,
-            0xa6u8,
-            0x99u8,
-            0xcdu8,
-            0x64u8,
-            0x55u8,
-            0x76u8,
-            0x18u8,
+            0x8d,
+            0xa6,
+            0x99,
+            0xcd,
+            0x64,
+            0x55,
+            0x76,
+            0x18,
         ],
         [
-            0xceu8,
-            0xe3u8,
-            0xfeu8,
-            0x58u8,
-            0x6eu8,
-            0x46u8,
-            0xc9u8,
-            0xcbu8,
+            0xce,
+            0xe3,
+            0xfe,
+            0x58,
+            0x6e,
+            0x46,
+            0xc9,
+            0xcb,
         ],
         [
-            0x37u8,
-            0xd1u8,
-            0x1u8,
-            0x8bu8,
-            0xf5u8,
-            0u8,
-            0x2u8,
-            0xabu8,
+            0x37,
+            0xd1,
+            0x1,
+            0x8b,
+            0xf5,
+            0,
+            0x2,
+            0xab,
         ],
         [
-            0x62u8,
-            0x24u8,
-            0x93u8,
-            0x9au8,
-            0x79u8,
-            0xf5u8,
-            0xf5u8,
-            0x93u8,
+            0x62,
+            0x24,
+            0x93,
+            0x9a,
+            0x79,
+            0xf5,
+            0xf5,
+            0x93,
         ],
         [
-            0xb0u8,
-            0xe4u8,
-            0xa9u8,
-            0xbu8,
-            0xdfu8,
-            0x82u8,
-            0u8,
-            0x9eu8,
+            0xb0,
+            0xe4,
+            0xa9,
+            0xb,
+            0xdf,
+            0x82,
+            0,
+            0x9e,
         ],
         [
-            0xf3u8,
-            0xb9u8,
-            0xddu8,
-            0x94u8,
-            0xc5u8,
-            0xbbu8,
-            0x5du8,
-            0x7au8,
+            0xf3,
+            0xb9,
+            0xdd,
+            0x94,
+            0xc5,
+            0xbb,
+            0x5d,
+            0x7a,
         ],
         [
-            0xa7u8,
-            0xadu8,
-            0x6bu8,
-            0x22u8,
-            0x46u8,
-            0x2fu8,
-            0xb3u8,
-            0xf4u8,
+            0xa7,
+            0xad,
+            0x6b,
+            0x22,
+            0x46,
+            0x2f,
+            0xb3,
+            0xf4,
         ],
         [
-            0xfbu8,
-            0xe5u8,
-            0xeu8,
-            0x86u8,
-            0xbcu8,
-            0x8fu8,
-            0x1eu8,
-            0x75u8,
+            0xfb,
+            0xe5,
+            0xe,
+            0x86,
+            0xbc,
+            0x8f,
+            0x1e,
+            0x75,
         ],
         [
-            0x90u8,
-            0x3du8,
-            0x84u8,
-            0xc0u8,
-            0x27u8,
-            0x56u8,
-            0xeau8,
-            0x14u8,
+            0x90,
+            0x3d,
+            0x84,
+            0xc0,
+            0x27,
+            0x56,
+            0xea,
+            0x14,
         ],
         [
-            0xeeu8,
-            0xf2u8,
-            0x7au8,
-            0x8eu8,
-            0x90u8,
-            0xcau8,
-            0x23u8,
-            0xf7u8,
+            0xee,
+            0xf2,
+            0x7a,
+            0x8e,
+            0x90,
+            0xca,
+            0x23,
+            0xf7,
         ],
         [
-            0xe5u8,
-            0x45u8,
-            0xbeu8,
-            0x49u8,
-            0x61u8,
-            0xcau8,
-            0x29u8,
-            0xa1u8,
+            0xe5,
+            0x45,
+            0xbe,
+            0x49,
+            0x61,
+            0xca,
+            0x29,
+            0xa1,
         ],
         [
-            0xdbu8,
-            0x9bu8,
-            0xc2u8,
-            0x57u8,
-            0x7fu8,
-            0xccu8,
-            0x2au8,
-            0x3fu8,
+            0xdb,
+            0x9b,
+            0xc2,
+            0x57,
+            0x7f,
+            0xcc,
+            0x2a,
+            0x3f,
         ],
         [
-            0x94u8,
-            0x47u8,
-            0xbeu8,
-            0x2cu8,
-            0xf5u8,
-            0xe9u8,
-            0x9au8,
-            0x69u8,
+            0x94,
+            0x47,
+            0xbe,
+            0x2c,
+            0xf5,
+            0xe9,
+            0x9a,
+            0x69,
         ],
         [
-            0x9cu8,
-            0xd3u8,
-            0x8du8,
-            0x96u8,
-            0xf0u8,
-            0xb3u8,
-            0xc1u8,
-            0x4bu8,
+            0x9c,
+            0xd3,
+            0x8d,
+            0x96,
+            0xf0,
+            0xb3,
+            0xc1,
+            0x4b,
         ],
         [
-            0xbdu8,
-            0x61u8,
-            0x79u8,
-            0xa7u8,
-            0x1du8,
-            0xc9u8,
-            0x6du8,
-            0xbbu8,
+            0xbd,
+            0x61,
+            0x79,
+            0xa7,
+            0x1d,
+            0xc9,
+            0x6d,
+            0xbb,
         ],
         [
-            0x98u8,
-            0xeeu8,
-            0xa2u8,
-            0x1au8,
-            0xf2u8,
-            0x5cu8,
-            0xd6u8,
-            0xbeu8,
+            0x98,
+            0xee,
+            0xa2,
+            0x1a,
+            0xf2,
+            0x5c,
+            0xd6,
+            0xbe,
         ],
         [
-            0xc7u8,
-            0x67u8,
-            0x3bu8,
-            0x2eu8,
-            0xb0u8,
-            0xcbu8,
-            0xf2u8,
-            0xd0u8,
+            0xc7,
+            0x67,
+            0x3b,
+            0x2e,
+            0xb0,
+            0xcb,
+            0xf2,
+            0xd0,
         ],
         [
-            0x88u8,
-            0x3eu8,
-            0xa3u8,
-            0xe3u8,
-            0x95u8,
-            0x67u8,
-            0x53u8,
-            0x93u8,
+            0x88,
+            0x3e,
+            0xa3,
+            0xe3,
+            0x95,
+            0x67,
+            0x53,
+            0x93,
         ],
         [
-            0xc8u8,
-            0xceu8,
-            0x5cu8,
-            0xcdu8,
-            0x8cu8,
-            0x3u8,
-            0xcu8,
-            0xa8u8,
+            0xc8,
+            0xce,
+            0x5c,
+            0xcd,
+            0x8c,
+            0x3,
+            0xc,
+            0xa8,
         ],
         [
-            0x94u8,
-            0xafu8,
-            0x49u8,
-            0xf6u8,
-            0xc6u8,
-            0x50u8,
-            0xadu8,
-            0xb8u8,
+            0x94,
+            0xaf,
+            0x49,
+            0xf6,
+            0xc6,
+            0x50,
+            0xad,
+            0xb8,
         ],
         [
-            0xeau8,
-            0xb8u8,
-            0x85u8,
-            0x8au8,
-            0xdeu8,
-            0x92u8,
-            0xe1u8,
-            0xbcu8,
+            0xea,
+            0xb8,
+            0x85,
+            0x8a,
+            0xde,
+            0x92,
+            0xe1,
+            0xbc,
         ],
         [
-            0xf3u8,
-            0x15u8,
-            0xbbu8,
-            0x5bu8,
-            0xb8u8,
-            0x35u8,
-            0xd8u8,
-            0x17u8,
+            0xf3,
+            0x15,
+            0xbb,
+            0x5b,
+            0xb8,
+            0x35,
+            0xd8,
+            0x17,
         ],
         [
-            0xadu8,
-            0xcfu8,
-            0x6bu8,
-            0x7u8,
-            0x63u8,
-            0x61u8,
-            0x2eu8,
-            0x2fu8,
+            0xad,
+            0xcf,
+            0x6b,
+            0x7,
+            0x63,
+            0x61,
+            0x2e,
+            0x2f,
         ],
         [
-            0xa5u8,
-            0xc9u8,
-            0x1du8,
-            0xa7u8,
-            0xacu8,
-            0xaau8,
-            0x4du8,
-            0xdeu8,
+            0xa5,
+            0xc9,
+            0x1d,
+            0xa7,
+            0xac,
+            0xaa,
+            0x4d,
+            0xde,
         ],
         [
-            0x71u8,
-            0x65u8,
-            0x95u8,
-            0x87u8,
-            0x66u8,
-            0x50u8,
-            0xa2u8,
-            0xa6u8,
+            0x71,
+            0x65,
+            0x95,
+            0x87,
+            0x66,
+            0x50,
+            0xa2,
+            0xa6,
         ],
         [
-            0x28u8,
-            0xefu8,
-            0x49u8,
-            0x5cu8,
-            0x53u8,
-            0xa3u8,
-            0x87u8,
-            0xadu8,
+            0x28,
+            0xef,
+            0x49,
+            0x5c,
+            0x53,
+            0xa3,
+            0x87,
+            0xad,
         ],
         [
-            0x42u8,
-            0xc3u8,
-            0x41u8,
-            0xd8u8,
-            0xfau8,
-            0x92u8,
-            0xd8u8,
-            0x32u8,
+            0x42,
+            0xc3,
+            0x41,
+            0xd8,
+            0xfa,
+            0x92,
+            0xd8,
+            0x32,
         ],
         [
-            0xceu8,
-            0x7cu8,
-            0xf2u8,
-            0x72u8,
-            0x2fu8,
-            0x51u8,
-            0x27u8,
-            0x71u8,
+            0xce,
+            0x7c,
+            0xf2,
+            0x72,
+            0x2f,
+            0x51,
+            0x27,
+            0x71,
         ],
         [
-            0xe3u8,
-            0x78u8,
-            0x59u8,
-            0xf9u8,
-            0x46u8,
-            0x23u8,
-            0xf3u8,
-            0xa7u8,
+            0xe3,
+            0x78,
+            0x59,
+            0xf9,
+            0x46,
+            0x23,
+            0xf3,
+            0xa7,
         ],
         [
-            0x38u8,
-            0x12u8,
-            0x5u8,
-            0xbbu8,
-            0x1au8,
-            0xb0u8,
-            0xe0u8,
-            0x12u8,
+            0x38,
+            0x12,
+            0x5,
+            0xbb,
+            0x1a,
+            0xb0,
+            0xe0,
+            0x12,
         ],
         [
-            0xaeu8,
-            0x97u8,
-            0xa1u8,
-            0xfu8,
-            0xd4u8,
-            0x34u8,
-            0xe0u8,
-            0x15u8,
+            0xae,
+            0x97,
+            0xa1,
+            0xf,
+            0xd4,
+            0x34,
+            0xe0,
+            0x15,
         ],
         [
-            0xb4u8,
-            0xa3u8,
-            0x15u8,
-            0x8u8,
-            0xbeu8,
-            0xffu8,
-            0x4du8,
-            0x31u8,
+            0xb4,
+            0xa3,
+            0x15,
+            0x8,
+            0xbe,
+            0xff,
+            0x4d,
+            0x31,
         ],
         [
-            0x81u8,
-            0x39u8,
-            0x62u8,
-            0x29u8,
-            0xf0u8,
-            0x90u8,
-            0x79u8,
-            0x2u8,
+            0x81,
+            0x39,
+            0x62,
+            0x29,
+            0xf0,
+            0x90,
+            0x79,
+            0x2,
         ],
         [
-            0x4du8,
-            0xcu8,
-            0xf4u8,
-            0x9eu8,
-            0xe5u8,
-            0xd4u8,
-            0xdcu8,
-            0xcau8,
+            0x4d,
+            0xc,
+            0xf4,
+            0x9e,
+            0xe5,
+            0xd4,
+            0xdc,
+            0xca,
         ],
         [
-            0x5cu8,
-            0x73u8,
-            0x33u8,
-            0x6au8,
-            0x76u8,
-            0xd8u8,
-            0xbfu8,
-            0x9au8,
+            0x5c,
+            0x73,
+            0x33,
+            0x6a,
+            0x76,
+            0xd8,
+            0xbf,
+            0x9a,
         ],
         [
-            0xd0u8,
-            0xa7u8,
-            0x4u8,
-            0x53u8,
-            0x6bu8,
-            0xa9u8,
-            0x3eu8,
-            0xeu8,
+            0xd0,
+            0xa7,
+            0x4,
+            0x53,
+            0x6b,
+            0xa9,
+            0x3e,
+            0xe,
         ],
         [
-            0x92u8,
-            0x59u8,
-            0x58u8,
-            0xfcu8,
-            0xd6u8,
-            0x42u8,
-            0xcu8,
-            0xadu8,
+            0x92,
+            0x59,
+            0x58,
+            0xfc,
+            0xd6,
+            0x42,
+            0xc,
+            0xad,
         ],
         [
-            0xa9u8,
-            0x15u8,
-            0xc2u8,
-            0x9bu8,
-            0xc8u8,
-            0x6u8,
-            0x73u8,
-            0x18u8,
+            0xa9,
+            0x15,
+            0xc2,
+            0x9b,
+            0xc8,
+            0x6,
+            0x73,
+            0x18,
         ],
         [
-            0x95u8,
-            0x2bu8,
-            0x79u8,
-            0xf3u8,
-            0xbcu8,
-            0xau8,
-            0xa6u8,
-            0xd4u8,
+            0x95,
+            0x2b,
+            0x79,
+            0xf3,
+            0xbc,
+            0xa,
+            0xa6,
+            0xd4,
         ],
         [
-            0xf2u8,
-            0x1du8,
-            0xf2u8,
-            0xe4u8,
-            0x1du8,
-            0x45u8,
-            0x35u8,
-            0xf9u8,
+            0xf2,
+            0x1d,
+            0xf2,
+            0xe4,
+            0x1d,
+            0x45,
+            0x35,
+            0xf9,
         ],
         [
-            0x87u8,
-            0x57u8,
-            0x75u8,
-            0x19u8,
-            0x4u8,
-            0x8fu8,
-            0x53u8,
-            0xa9u8,
+            0x87,
+            0x57,
+            0x75,
+            0x19,
+            0x4,
+            0x8f,
+            0x53,
+            0xa9,
         ],
         [
-            0x10u8,
-            0xa5u8,
-            0x6cu8,
-            0xf5u8,
-            0xdfu8,
-            0xcdu8,
-            0x9au8,
-            0xdbu8,
+            0x10,
+            0xa5,
+            0x6c,
+            0xf5,
+            0xdf,
+            0xcd,
+            0x9a,
+            0xdb,
         ],
         [
-            0xebu8,
-            0x75u8,
-            0x9u8,
-            0x5cu8,
-            0xcdu8,
-            0x98u8,
-            0x6cu8,
-            0xd0u8,
+            0xeb,
+            0x75,
+            0x9,
+            0x5c,
+            0xcd,
+            0x98,
+            0x6c,
+            0xd0,
         ],
         [
-            0x51u8,
-            0xa9u8,
-            0xcbu8,
-            0x9eu8,
-            0xcbu8,
-            0xa3u8,
-            0x12u8,
-            0xe6u8,
+            0x51,
+            0xa9,
+            0xcb,
+            0x9e,
+            0xcb,
+            0xa3,
+            0x12,
+            0xe6,
         ],
         [
-            0x96u8,
-            0xafu8,
-            0xadu8,
-            0xfcu8,
-            0x2cu8,
-            0xe6u8,
-            0x66u8,
-            0xc7u8,
+            0x96,
+            0xaf,
+            0xad,
+            0xfc,
+            0x2c,
+            0xe6,
+            0x66,
+            0xc7,
         ],
         [
-            0x72u8,
-            0xfeu8,
-            0x52u8,
-            0x97u8,
-            0x5au8,
-            0x43u8,
-            0x64u8,
-            0xeeu8,
+            0x72,
+            0xfe,
+            0x52,
+            0x97,
+            0x5a,
+            0x43,
+            0x64,
+            0xee,
         ],
         [
-            0x5au8,
-            0x16u8,
-            0x45u8,
-            0xb2u8,
-            0x76u8,
-            0xd5u8,
-            0x92u8,
-            0xa1u8,
+            0x5a,
+            0x16,
+            0x45,
+            0xb2,
+            0x76,
+            0xd5,
+            0x92,
+            0xa1,
         ],
         [
-            0xb2u8,
-            0x74u8,
-            0xcbu8,
-            0x8eu8,
-            0xbfu8,
-            0x87u8,
-            0x87u8,
-            0xau8,
+            0xb2,
+            0x74,
+            0xcb,
+            0x8e,
+            0xbf,
+            0x87,
+            0x87,
+            0xa,
         ],
         [
-            0x6fu8,
-            0x9bu8,
-            0xb4u8,
-            0x20u8,
-            0x3du8,
-            0xe7u8,
-            0xb3u8,
-            0x81u8,
+            0x6f,
+            0x9b,
+            0xb4,
+            0x20,
+            0x3d,
+            0xe7,
+            0xb3,
+            0x81,
         ],
         [
-            0xeau8,
-            0xecu8,
-            0xb2u8,
-            0xa3u8,
-            0xbu8,
-            0x22u8,
-            0xa8u8,
-            0x7fu8,
+            0xea,
+            0xec,
+            0xb2,
+            0xa3,
+            0xb,
+            0x22,
+            0xa8,
+            0x7f,
         ],
         [
-            0x99u8,
-            0x24u8,
-            0xa4u8,
-            0x3cu8,
-            0xc1u8,
-            0x31u8,
-            0x57u8,
-            0x24u8,
+            0x99,
+            0x24,
+            0xa4,
+            0x3c,
+            0xc1,
+            0x31,
+            0x57,
+            0x24,
         ],
         [
-            0xbdu8,
-            0x83u8,
-            0x8du8,
-            0x3au8,
-            0xafu8,
-            0xbfu8,
-            0x8du8,
-            0xb7u8,
+            0xbd,
+            0x83,
+            0x8d,
+            0x3a,
+            0xaf,
+            0xbf,
+            0x8d,
+            0xb7,
         ],
         [
-            0xbu8,
-            0x1au8,
-            0x2au8,
-            0x32u8,
-            0x65u8,
-            0xd5u8,
-            0x1au8,
-            0xeau8,
+            0xb,
+            0x1a,
+            0x2a,
+            0x32,
+            0x65,
+            0xd5,
+            0x1a,
+            0xea,
         ],
         [
-            0x13u8,
-            0x50u8,
-            0x79u8,
-            0xa3u8,
-            0x23u8,
-            0x1cu8,
-            0xe6u8,
-            0x60u8,
+            0x13,
+            0x50,
+            0x79,
+            0xa3,
+            0x23,
+            0x1c,
+            0xe6,
+            0x60,
         ],
         [
-            0x93u8,
-            0x2bu8,
-            0x28u8,
-            0x46u8,
-            0xe4u8,
-            0xd7u8,
-            0x6u8,
-            0x66u8,
+            0x93,
+            0x2b,
+            0x28,
+            0x46,
+            0xe4,
+            0xd7,
+            0x6,
+            0x66,
         ],
         [
-            0xe1u8,
-            0x91u8,
-            0x5fu8,
-            0x5cu8,
-            0xb1u8,
-            0xecu8,
-            0xa4u8,
-            0x6cu8,
+            0xe1,
+            0x91,
+            0x5f,
+            0x5c,
+            0xb1,
+            0xec,
+            0xa4,
+            0x6c,
         ],
         [
-            0xf3u8,
-            0x25u8,
-            0x96u8,
-            0x5cu8,
-            0xa1u8,
-            0x6du8,
-            0x62u8,
-            0x9fu8,
+            0xf3,
+            0x25,
+            0x96,
+            0x5c,
+            0xa1,
+            0x6d,
+            0x62,
+            0x9f,
         ],
         [
-            0x57u8,
-            0x5fu8,
-            0xf2u8,
-            0x8eu8,
-            0x60u8,
-            0x38u8,
-            0x1bu8,
-            0xe5u8,
+            0x57,
+            0x5f,
+            0xf2,
+            0x8e,
+            0x60,
+            0x38,
+            0x1b,
+            0xe5,
         ],
         [
-            0x72u8,
-            0x45u8,
-            0x6u8,
-            0xebu8,
-            0x4cu8,
-            0x32u8,
-            0x8au8,
-            0x95u8,
+            0x72,
+            0x45,
+            0x6,
+            0xeb,
+            0x4c,
+            0x32,
+            0x8a,
+            0x95,
         ],
     ];
     /* clang-format on */
@@ -1005,24 +1005,24 @@ pub unsafe extern "C" fn sip24_valid() -> c_int {
         b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00"
             as *const  u8 as *const c_void,
     );
-    i = 0u64;
+    i = 0;
     while i < ::std::mem::size_of::<[c_uchar; 64]>() as c_ulong {
         in_0[i as usize] = i as c_uchar;
         if siphash24(in_0.as_mut_ptr() as *const c_void, i, &mut k)
-            != (vectors[i as usize][0usize] as uint64_t) << 0i32
-                | (vectors[i as usize][1usize] as uint64_t) << 8i32
-                | (vectors[i as usize][2usize] as uint64_t) << 16i32
-                | (vectors[i as usize][3usize] as uint64_t) << 24i32
-                | (vectors[i as usize][4usize] as uint64_t) << 32i32
-                | (vectors[i as usize][5usize] as uint64_t) << 40i32
-                | (vectors[i as usize][6usize] as uint64_t) << 48i32
-                | (vectors[i as usize][7usize] as uint64_t) << 56i32
+            != (vectors[i as usize][0] as uint64_t) << 0
+                | (vectors[i as usize][1] as uint64_t) << 8
+                | (vectors[i as usize][2] as uint64_t) << 16
+                | (vectors[i as usize][3] as uint64_t) << 24
+                | (vectors[i as usize][4] as uint64_t) << 32
+                | (vectors[i as usize][5] as uint64_t) << 40
+                | (vectors[i as usize][6] as uint64_t) << 48
+                | (vectors[i as usize][7] as uint64_t) << 56
         {
             return 0i32;
         }
         i = i.wrapping_add(1)
     }
-    return 1i32;
+    return 1;
 }
 
 pub unsafe extern "C" fn siphash24(
@@ -1046,14 +1046,14 @@ pub unsafe extern "C" fn siphash24(
 }
 
 pub unsafe extern "C" fn sip24_init(mut H: *mut siphash, mut key: *const sipkey) -> *mut siphash {
-    (*H).v0 = ((0x736f6d65u64) << 32i32 | 0x70736575u64)
-        ^ (*key).k[0usize];
-    (*H).v1 = ((0x646f7261u64) << 32i32 | 0x6e646f6du64)
-        ^ (*key).k[1usize];
-    (*H).v2 = ((0x6c796765u64) << 32i32 | 0x6e657261u64)
-        ^ (*key).k[0usize];
-    (*H).v3 = ((0x74656462u64) << 32i32 | 0x79746573u64)
-        ^ (*key).k[1usize];
+    (*H).v0 = ((0x736f6d65u64) << 32 | 0x70736575)
+        ^ (*key).k[0];
+    (*H).v1 = ((0x646f7261u64) << 32 | 0x6e646f6d)
+        ^ (*key).k[1];
+    (*H).v2 = ((0x6c796765u64) << 32 | 0x6e657261)
+        ^ (*key).k[0];
+    (*H).v3 = ((0x74656462u64) << 32 | 0x79746573)
+        ^ (*key).k[1];
     (*H).p = (*H).buf.as_mut_ptr();
     (*H).c = 0u64;
     return H;

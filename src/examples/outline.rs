@@ -126,7 +126,7 @@ pub use crate::stdlib::{
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pub const BUFFSIZE: c_int = 8192i32;
+pub const BUFFSIZE: c_int = 8192;
 #[no_mangle]
 
 pub static mut Buff: [c_char; 8192] = [0; 8192];
@@ -140,20 +140,20 @@ unsafe extern "C" fn start(
     mut attr: *mut *const XML_Char,
 ) {
     let mut i: c_int = 0;
-    i = 0i32;
+    i = 0;
     while i < Depth {
         printf(b"  \x00" as *const u8 as *const c_char);
         i += 1
     }
     printf(b"%s\x00" as *const u8 as *const c_char, el);
-    i = 0i32;
+    i = 0;
     while !(*attr.offset(i as isize)).is_null() {
         printf(
             b" %s=\'%s\'\x00" as *const u8 as *const c_char,
             *attr.offset(i as isize),
             *attr.offset((i + 1i32) as isize),
         );
-        i += 2i32
+        i += 2
     }
     printf(b"\n\x00" as *const u8 as *const c_char);
     Depth += 1;
@@ -190,7 +190,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         let mut len: c_int = 0;
         len = crate::stdlib::fread(
             Buff.as_mut_ptr() as *mut c_void,
-            1u64,
+            1,
             BUFFSIZE as c_ulong,
             crate::stdlib::stdin,
         ) as c_int;
@@ -218,7 +218,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         }
     }
     XML_ParserFree(p);
-    return 0i32;
+    return 0;
 }
 #[main]
 pub fn main() {
