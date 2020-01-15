@@ -23,6 +23,9 @@ extern "C" {
     pub static mut stderr: *mut FILE;
 
     #[no_mangle]
+    pub static mut stdin: *mut FILE;
+
+    #[no_mangle]
     pub fn strncmp(_: *const c_char, _: *const c_char, _: c_ulong) -> c_int;
 
     #[no_mangle]
@@ -30,6 +33,9 @@ extern "C" {
 
     #[no_mangle]
     pub fn fopen(_: *const c_char, _: *const c_char) -> *mut FILE;
+
+    #[no_mangle]
+    pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
 
     #[no_mangle]
     pub fn setvbuf(__stream: *mut FILE, __buf: *mut c_char, __modes: c_int, __n: size_t) -> c_int;

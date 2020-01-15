@@ -20,69 +20,13 @@ use ::c2rust_out::stdlib::fprintf;
 use ::libc::{printf, putchar};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
-pub mod expat_h {
 
-    use crate::expat_external_h::XML_Char;
-    use ::c2rust_out::expat_h::XML_ParserStruct;
-    use libc::{c_uint, c_void};
-    pub type XML_Parser = *mut XML_ParserStruct;
-
-    pub type XML_Status = c_uint;
-
-    pub type XML_Error = c_uint;
-
-    pub type XML_StartElementHandler = Option<
-        unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut *const XML_Char) -> (),
-    >;
-
-    pub type XML_EndElementHandler =
-        Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
-}
-pub mod expat_external_h {
-
-    use libc::{c_char, c_ulong};
-    pub type XML_Char = c_char;
-
-    pub type XML_LChar = c_char;
-
-    pub type XML_Size = c_ulong;
-}
-pub mod stddef_h {
-    use libc::c_ulong;
-    pub type size_t = c_ulong;
-}
-pub mod stdlib {
-
-    use ::c2rust_out::stdlib::_IO_FILE;
-    use libc::{c_long, c_ulong, c_void};
-    extern "C" {
-        #[no_mangle]
-        pub static mut stdin: *mut FILE;
-
-        #[no_mangle]
-        pub static mut stderr: *mut FILE;
-
-        #[no_mangle]
-        pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
-        pub type _IO_marker;
-
-        pub type _IO_codecvt;
-
-        pub type _IO_wide_data;
-    }
-    pub type FILE = _IO_FILE;
-    pub type _IO_lock_t = ();
-    pub type __off_t = c_long;
-
-    pub type __off64_t = c_long;
-}
-
-pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use crate::expat_h::{
+pub use ::c2rust_out::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use ::c2rust_out::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler, XML_Status,
 };
-pub use crate::stddef_h::size_t;
-pub use crate::stdlib::{
+pub use ::c2rust_out::stddef_h::size_t;
+pub use ::c2rust_out::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
 
@@ -162,18 +106,18 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(endElement as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut len: size_t = crate::stdlib::fread(
+        let mut len: size_t = ::c2rust_out::stdlib::fread(
             buf.as_mut_ptr() as *mut c_void,
             1,
             ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
-            crate::stdlib::stdin,
+            ::c2rust_out::stdlib::stdin,
         );
         done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
         if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
             == XML_STATUS_ERROR_0 as c_uint
         {
             fprintf(
-                crate::stdlib::stderr,
+                ::c2rust_out::stdlib::stderr,
                 b"%s at line %lu\n\x00".as_ptr() as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
                 XML_GetCurrentLineNumber(parser),
