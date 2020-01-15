@@ -1,6 +1,10 @@
 [workspace]
 members = [
 ]
+exclude = [
+    "deps/wchar",
+    "deps/wchar",
+]
 
 [package]
 name = "c2rust_out"
@@ -16,24 +20,27 @@ path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
 
 
-[[bin]]
-path = "src/examples/outline.rs"
-name = "outline"
+# [[bin]]
+# path = "src/examples/outline.rs"
+# name = "outline"
 
-[[bin]]
-path = "src/examples/elements.rs"
-name = "elements"
+# [[bin]]
+# path = "src/examples/elements.rs"
+# name = "elements"
 
-[[bin]]
-path = "src/xmlwf/xmlwf.rs"
-name = "xmlwf"
+# [[bin]]
+# path = "src/xmlwf/xmlwf.rs"
+# name = "xmlwf"
 
-[[bin]]
-path = "src/tests/runtests.rs"
-name = "runtests"
+# [[bin]]
+# path = "src/tests/runtests.rs"
+# name = "runtests"
 
 [dependencies]
 libc = "0.2"
+wchar = { path = "deps/wchar" }
 
-
-
+[features]
+unicode = []
+unicode_wchar_t = []
+default = ["unicode"]

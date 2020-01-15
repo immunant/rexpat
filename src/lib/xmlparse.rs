@@ -1,9 +1,42 @@
+/* f519f27c7c3b79fee55aeb8b1e53b7384b079d9118bf3a62eb3a60986a6742f2 (2.2.9+)
+                            __  __            _
+                         ___\ \/ /_ __   __ _| |_
+                        / _ \\  /| '_ \ / _` | __|
+                       |  __//  \| |_) | (_| | |_
+                        \___/_/\_\ .__/ \__,_|\__|
+                                 |_| XML parser
+
+   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+   Copyright (c) 2000-2017 Expat development team
+   Licensed under the MIT license:
+
+   Permission is  hereby granted,  free of charge,  to any  person obtaining
+   a  copy  of  this  software   and  associated  documentation  files  (the
+   "Software"),  to  deal in  the  Software  without restriction,  including
+   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+   distribute, sublicense, and/or sell copies of the Software, and to permit
+   persons  to whom  the Software  is  furnished to  do so,  subject to  the
+   following conditions:
+
+   The above copyright  notice and this permission notice  shall be included
+   in all copies or substantial portions of the Software.
+
+   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 pub use crate::ascii_h::{
     ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_h, ASCII_l, ASCII_m, ASCII_n, ASCII_o, ASCII_p,
     ASCII_r, ASCII_s, ASCII_t, ASCII_w, ASCII_x, ASCII_0, ASCII_1, ASCII_2, ASCII_3, ASCII_8,
     ASCII_9, ASCII_A, ASCII_C, ASCII_COLON, ASCII_COMMA, ASCII_D, ASCII_E, ASCII_EQUALS,
-    ASCII_EXCL, ASCII_F, ASCII_HASH, ASCII_I, ASCII_K, ASCII_L, ASCII_LPAREN, ASCII_M, ASCII_N,
+    ASCII_EXCL, ASCII_F, ASCII_HASH, ASCII_I, ASCII_K, ASCII_L, ASCII_LPAREN, ASCII_RPAREN, ASCII_M, ASCII_N,
     ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_S, ASCII_SLASH, ASCII_T, ASCII_X, ASCII_Y,
+    ASCII_FF,
 };
 pub use crate::expat_config_h::XML_CONTEXT_BYTES;
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
@@ -73,12 +106,12 @@ pub use crate::src::lib::xmlrole::{
     XML_ROLE_XML_DECL,
 };
 pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    XmlGetUtf8InternalEncoding, XmlGetUtf8InternalEncodingNS, XmlInitEncoding, XmlInitEncodingNS,
+    XmlInitEncoding, XmlInitEncodingNS,
     XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
 pub use crate::src::lib::xmltok::{
     encoding, position, XML_Convert_Result, XmlInitUnknownEncoding, XmlInitUnknownEncodingNS,
-    XmlSizeOfUnknownEncoding, XmlUtf8Encode, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING,
+    XmlSizeOfUnknownEncoding, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING,
     POSITION, SCANNER, XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE,
     XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_BOM, XML_TOK_CDATA_SECT_CLOSE,
     XML_TOK_CDATA_SECT_OPEN, XML_TOK_CHAR_REF, XML_TOK_COMMENT, XML_TOK_DATA_CHARS,
@@ -86,7 +119,7 @@ pub use crate::src::lib::xmltok::{
     XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT, XML_TOK_INSTANCE_START,
     XML_TOK_INVALID, XML_TOK_NONE, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL, XML_TOK_PARTIAL_CHAR,
     XML_TOK_PI, XML_TOK_PROLOG_S, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
-    XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL,
+    XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL, XML_UTF8_ENCODE_MAX, XML_UTF16_ENCODE_MAX,
 };
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
@@ -116,8 +149,10 @@ pub struct XML_ParserStruct {
     pub m_bufferLim: *const c_char,
     pub m_parseEndByteIndex: XML_Index,
     pub m_parseEndPtr: *const c_char,
-    pub m_dataBuf: *mut XML_Char,
+    pub m_dataBuf: *mut XML_Char, // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
     pub m_dataBufEnd: *mut XML_Char,
+
+    // Handlers should be trait, with native C callback instance
     pub m_startElementHandler: XML_StartElementHandler,
     pub m_endElementHandler: XML_EndElementHandler,
     pub m_characterDataHandler: XML_CharacterDataHandler,
@@ -425,64 +460,61 @@ pub struct HASH_TABLE_ITER {
     pub end: *mut *mut NAMED,
 }
 
-pub type ICHAR = c_char;
+#[cfg(feature = "unicode")]
+#[macro_use]
+mod unicode_defines {
+    pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF16_ENCODE_MAX as usize;
+    pub use crate::XmlUtf16Convert as XmlConvert;
+    pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncoding as XmlGetInternalEncoding;
+    pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncodingNS as XmlGetInternalEncodingNS;
+    pub use crate::src::lib::xmltok::XmlUtf16Encode as XmlEncode;
+
+    macro_rules! MUST_CONVERT {
+        ($enc:path, $s:expr $(,)?) => {
+            (*$enc).isUtf16 == 0 || !$s.is_null()
+        };
+    }
+
+    pub type ICHAR = libc::c_ushort;
+
+    #[cfg(feature = "unicode_wchar_t")]
+    macro_rules! wch {
+        ($s:literal) => { wchar::wch!(i32, $s).as_ptr() };
+    }
+
+    #[cfg(not(feature = "unicode_wchar_t"))]
+    macro_rules! wch {
+        ($s:literal) => { $s.as_ptr() as *const crate::expat_external_h::XML_LChar };
+    }
+}
+
+#[cfg(not(feature = "unicode"))]
+#[macro_use]
+mod unicode_defines {
+    pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF8_ENCODE_MAX as usize;
+    pub use crate::XmlUtf8Convert as XmlConvert;
+    pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncoding as XmlGetInternalEncoding;
+    pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncodingNS as XmlGetInternalEncodingNS;
+    pub use crate::src::lib::xmltok::XmlUtf8Encode as XmlEncode;
+
+    macro_rules! MUST_CONVERT {
+        ($enc:path, $s:expr $(,)?) => {
+            (*$enc).isUtf8 == 0
+        };
+    }
+
+    pub type ICHAR = libc::c_char;
+
+    macro_rules! wch {
+        ($s:literal) => { $s.as_ptr() as *const crate::expat_external_h::XML_LChar };
+    }
+}
+
+use unicode_defines::*;
+
 /* WFC: PE Between Declarations */
-/* f519f27c7c3b79fee55aeb8b1e53b7384b079d9118bf3a62eb3a60986a6742f2 (2.2.9+)
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
 
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-/* syscall prototype */
-/* memset(), memcpy() */
-/* UINT_MAX */
-/* fprintf */
-/* getenv, rand_s */
-/* gettimeofday() */
-/* getpid() */
-/* getpid() */
-/* O_RDONLY */
-/* ndef _WIN32 */
-/* getrandom */
-/* defined(GRND_NONBLOCK) */
-/* defined(HAVE_GETRANDOM) || defined(HAVE_SYSCALL_GETRANDOM) */
-
-pub const XmlGetInternalEncoding: unsafe extern "C" fn() -> *const super::xmltok::ENCODING =
-    super::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncoding;
-
-pub const XmlGetInternalEncodingNS: unsafe extern "C" fn() -> *const super::xmltok::ENCODING =
-    super::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncodingNS;
-
-pub const XmlEncode: unsafe extern "C" fn(_: c_int, _: *mut c_char) -> c_int =
-    super::xmltok::XmlUtf8Encode;
-
-pub const INIT_TAG_BUF_SIZE: c_int = 32;
-/* must be a multiple of sizeof(XML_Char) */
+pub const INIT_TAG_BUF_SIZE: c_int = 32; /* must be a multiple of sizeof(XML_Char) */
 
 pub const INIT_DATA_BUF_SIZE: c_int = 1024;
 
@@ -560,46 +592,46 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
 }
 
 const implicitContext: [XML_Char; 41] = [
-    ASCII_x,
-    ASCII_m,
-    ASCII_l,
-    ASCII_EQUALS,
-    ASCII_h,
-    ASCII_t,
-    ASCII_t,
-    ASCII_p,
-    ASCII_COLON,
-    ASCII_SLASH,
-    ASCII_SLASH,
-    ASCII_w,
-    ASCII_w,
-    ASCII_w,
-    ASCII_PERIOD,
-    ASCII_w,
-    ASCII_3,
-    ASCII_PERIOD,
-    ASCII_o,
-    ASCII_r,
-    ASCII_g,
-    ASCII_SLASH,
-    ASCII_X,
-    ASCII_M,
-    ASCII_L,
-    ASCII_SLASH,
-    ASCII_1,
-    ASCII_9,
-    ASCII_9,
-    ASCII_8,
-    ASCII_SLASH,
-    ASCII_n,
-    ASCII_a,
-    ASCII_m,
-    ASCII_e,
-    ASCII_s,
-    ASCII_p,
-    ASCII_a,
-    ASCII_c,
-    ASCII_e,
+    ASCII_x as XML_Char,
+    ASCII_m as XML_Char,
+    ASCII_l as XML_Char,
+    ASCII_EQUALS as XML_Char,
+    ASCII_h as XML_Char,
+    ASCII_t as XML_Char,
+    ASCII_t as XML_Char,
+    ASCII_p as XML_Char,
+    ASCII_COLON as XML_Char,
+    ASCII_SLASH as XML_Char,
+    ASCII_SLASH as XML_Char,
+    ASCII_w as XML_Char,
+    ASCII_w as XML_Char,
+    ASCII_w as XML_Char,
+    ASCII_PERIOD as XML_Char,
+    ASCII_w as XML_Char,
+    ASCII_3 as XML_Char,
+    ASCII_PERIOD as XML_Char,
+    ASCII_o as XML_Char,
+    ASCII_r as XML_Char,
+    ASCII_g as XML_Char,
+    ASCII_SLASH as XML_Char,
+    ASCII_X as XML_Char,
+    ASCII_M as XML_Char,
+    ASCII_L as XML_Char,
+    ASCII_SLASH as XML_Char,
+    ASCII_1 as XML_Char,
+    ASCII_9 as XML_Char,
+    ASCII_9 as XML_Char,
+    ASCII_8 as XML_Char,
+    ASCII_SLASH as XML_Char,
+    ASCII_n as XML_Char,
+    ASCII_a as XML_Char,
+    ASCII_m as XML_Char,
+    ASCII_e as XML_Char,
+    ASCII_s as XML_Char,
+    ASCII_p as XML_Char,
+    ASCII_a as XML_Char,
+    ASCII_c as XML_Char,
+    ASCII_e as XML_Char,
     '\u{0}' as XML_Char,
 ];
 
@@ -862,7 +894,7 @@ unsafe extern "C" fn parserCreate(
     (*parser).m_unknownEncodingHandler =
         ::std::mem::transmute::<intptr_t, XML_UnknownEncodingHandler>(NULL as intptr_t);
     (*parser).m_unknownEncodingHandlerData = NULL as *mut c_void;
-    (*parser).m_namespaceSeparator = ASCII_EXCL;
+    (*parser).m_namespaceSeparator = ASCII_EXCL as XML_Char;
     (*parser).m_ns = XML_FALSE;
     (*parser).m_ns_triplets = XML_FALSE;
     (*parser).m_nsAtts = NULL as *mut NS_ATT;
@@ -878,10 +910,10 @@ unsafe extern "C" fn parserCreate(
     }
     if !nameSep.is_null() {
         (*parser).m_ns = XML_TRUE;
-        (*parser).m_internalEncoding = super::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncodingNS();
+        (*parser).m_internalEncoding = XmlGetInternalEncodingNS();
         (*parser).m_namespaceSeparator = *nameSep
     } else {
-        (*parser).m_internalEncoding = super::xmltok::xmltok_ns_c::XmlGetUtf8InternalEncoding()
+        (*parser).m_internalEncoding = XmlGetInternalEncoding()
     }
     return parser;
 }
@@ -2544,111 +2576,106 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
 pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
     match code {
         XML_ERROR_NONE => NULL as *const XML_LChar,
-        XML_ERROR_NO_MEMORY => b"out of memory\x00".as_ptr() as *const c_char,
-        XML_ERROR_SYNTAX => b"syntax error\x00".as_ptr() as *const c_char,
-        XML_ERROR_NO_ELEMENTS => b"no element found\x00".as_ptr() as *const c_char,
+        XML_ERROR_NO_MEMORY => wch!("out of memory\x00"),
+        XML_ERROR_SYNTAX => wch!("syntax error\x00"),
+        XML_ERROR_NO_ELEMENTS => wch!("no element found\x00"),
         XML_ERROR_INVALID_TOKEN => {
-            b"not well-formed (invalid token)\x00".as_ptr() as *const c_char
+            wch!("not well-formed (invalid token)\x00")
         }
-        XML_ERROR_UNCLOSED_TOKEN => b"unclosed token\x00".as_ptr() as *const c_char,
-        XML_ERROR_PARTIAL_CHAR => b"partial character\x00".as_ptr() as *const c_char,
-        XML_ERROR_TAG_MISMATCH => b"mismatched tag\x00".as_ptr() as *const c_char,
+        XML_ERROR_UNCLOSED_TOKEN => wch!("unclosed token\x00"),
+        XML_ERROR_PARTIAL_CHAR => wch!("partial character\x00"),
+        XML_ERROR_TAG_MISMATCH => wch!("mismatched tag\x00"),
         XML_ERROR_DUPLICATE_ATTRIBUTE => {
-            b"duplicate attribute\x00".as_ptr() as *const c_char
+            wch!("duplicate attribute\x00")
         }
         XML_ERROR_JUNK_AFTER_DOC_ELEMENT => {
-            b"junk after document element\x00".as_ptr() as *const c_char
+            wch!("junk after document element\x00")
         }
         XML_ERROR_PARAM_ENTITY_REF => {
-            b"illegal parameter entity reference\x00".as_ptr() as *const c_char
+            wch!("illegal parameter entity reference\x00")
         }
-        XML_ERROR_UNDEFINED_ENTITY => b"undefined entity\x00".as_ptr() as *const c_char,
+        XML_ERROR_UNDEFINED_ENTITY => wch!("undefined entity\x00"),
         XML_ERROR_RECURSIVE_ENTITY_REF => {
-            b"recursive entity reference\x00".as_ptr() as *const c_char
+            wch!("recursive entity reference\x00")
         }
-        XML_ERROR_ASYNC_ENTITY => b"asynchronous entity\x00".as_ptr() as *const c_char,
+        XML_ERROR_ASYNC_ENTITY => wch!("asynchronous entity\x00"),
         XML_ERROR_BAD_CHAR_REF => {
-            b"reference to invalid character number\x00".as_ptr() as *const c_char
+            wch!("reference to invalid character number\x00")
         }
         XML_ERROR_BINARY_ENTITY_REF => {
-            b"reference to binary entity\x00".as_ptr() as *const c_char
+            wch!("reference to binary entity\x00")
         }
         XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
-            b"reference to external entity in attribute\x00".as_ptr() as *const c_char
+            wch!("reference to external entity in attribute\x00")
         }
         XML_ERROR_MISPLACED_XML_PI => {
-            b"XML or text declaration not at start of entity\x00".as_ptr() as *const c_char
+            wch!("XML or text declaration not at start of entity\x00")
         }
-        XML_ERROR_UNKNOWN_ENCODING => b"unknown encoding\x00".as_ptr() as *const c_char,
+        XML_ERROR_UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
         XML_ERROR_INCORRECT_ENCODING => {
-            b"encoding specified in XML declaration is incorrect\x00".as_ptr()
-                as *const c_char
+            wch!("encoding specified in XML declaration is incorrect\x00")
         }
         XML_ERROR_UNCLOSED_CDATA_SECTION => {
-            b"unclosed CDATA section\x00".as_ptr() as *const c_char
+            wch!("unclosed CDATA section\x00")
         }
         XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
-            b"error in processing external entity reference\x00".as_ptr() as *const c_char
+            wch!("error in processing external entity reference\x00")
         }
         XML_ERROR_NOT_STANDALONE => {
-            b"document is not standalone\x00".as_ptr() as *const c_char
+            wch!("document is not standalone\x00")
         }
         XML_ERROR_UNEXPECTED_STATE => {
-            b"unexpected parser state - please send a bug report\x00".as_ptr()
-                as *const c_char
+            wch!("unexpected parser state - please send a bug report\x00")
         }
         XML_ERROR_ENTITY_DECLARED_IN_PE => {
-            b"entity declared in parameter entity\x00".as_ptr() as *const c_char
+            wch!("entity declared in parameter entity\x00")
         }
         XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
-            b"requested feature requires XML_DTD support in Expat\x00".as_ptr()
-                as *const c_char
+            wch!("requested feature requires XML_DTD support in Expat\x00")
         }
         XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
-            b"cannot change setting once parsing has begun\x00".as_ptr() as *const c_char
+            wch!("cannot change setting once parsing has begun\x00")
         }
         /* Added in 1.95.7. */
         XML_ERROR_UNBOUND_PREFIX => {
-            b"unbound prefix\x00".as_ptr() as *const c_char
+            wch!("unbound prefix\x00")
         }
         /* Added in 1.95.8. */
         XML_ERROR_UNDECLARING_PREFIX => {
-            b"must not undeclare prefix\x00".as_ptr() as *const c_char
+            wch!("must not undeclare prefix\x00")
         }
         XML_ERROR_INCOMPLETE_PE => {
-            b"incomplete markup in parameter entity\x00".as_ptr() as *const c_char
+            wch!("incomplete markup in parameter entity\x00")
         }
         XML_ERROR_XML_DECL => {
-            b"XML declaration not well-formed\x00".as_ptr() as *const c_char
+            wch!("XML declaration not well-formed\x00")
         }
         XML_ERROR_TEXT_DECL => {
-            b"text declaration not well-formed\x00".as_ptr() as *const c_char
+            wch!("text declaration not well-formed\x00")
         }
         XML_ERROR_PUBLICID => {
-            b"illegal character(s) in public id\x00".as_ptr() as *const c_char
+            wch!("illegal character(s) in public id\x00")
         }
-        XML_ERROR_SUSPENDED => b"parser suspended\x00".as_ptr() as *const c_char,
-        XML_ERROR_NOT_SUSPENDED => b"parser not suspended\x00".as_ptr() as *const c_char,
-        XML_ERROR_ABORTED => b"parsing aborted\x00".as_ptr() as *const c_char,
-        XML_ERROR_FINISHED => b"parsing finished\x00".as_ptr() as *const c_char,
+        XML_ERROR_SUSPENDED => wch!("parser suspended\x00"),
+        XML_ERROR_NOT_SUSPENDED => wch!("parser not suspended\x00"),
+        XML_ERROR_ABORTED => wch!("parsing aborted\x00"),
+        XML_ERROR_FINISHED => wch!("parsing finished\x00"),
         XML_ERROR_SUSPEND_PE => {
-            b"cannot suspend in external parameter entity\x00".as_ptr() as *const c_char
+            wch!("cannot suspend in external parameter entity\x00")
         }
         XML_ERROR_RESERVED_PREFIX_XML => {
             /* Added in 2.0.0. */
-             b"reserved prefix (xml) must not be undeclared or bound to another namespace name\x00".as_ptr() as *const c_char
+             wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
         }
         XML_ERROR_RESERVED_PREFIX_XMLNS => {
-            b"reserved prefix (xmlns) must not be declared or undeclared\x00".as_ptr()
-                as *const c_char
+            wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
         }
         XML_ERROR_RESERVED_NAMESPACE_URI => {
-            b"prefix must not be bound to one of the reserved namespace names\x00".as_ptr()
-                as *const c_char
+            wch!("prefix must not be bound to one of the reserved namespace names\x00")
         }
         /* Added in 2.2.5. */
         XML_ERROR_INVALID_ARGUMENT => { /* Constant added in 2.2.1, already */
-            b"invalid argument\x00".as_ptr() as *const c_char
+            wch!("invalid argument\x00")
         }
         _ => NULL as *const XML_LChar,
     }
@@ -2663,7 +2690,7 @@ pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
     the version macros, then CPP will expand the resulting V1() macro
     with the correct numerals. */
     /* ### I'm assuming cpp is portable in this respect... */
-    return b"expat_2.2.9\x00".as_ptr() as *const c_char;
+    wch!("expat_2.2.9\x00")
 }
 /* Return an XML_Expat_Version structure containing numeric version
    number information for this version of expat.
@@ -2682,11 +2709,11 @@ pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
-    static mut features: [XML_Feature; 6] = [
+    const features: &[XML_Feature] = &[
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_SIZEOF_XML_CHAR,
-                name: b"sizeof(XML_Char)\x00".as_ptr() as *const c_char,
+                name: wch!("sizeof(XML_Char)\x00"),
                 value: ::std::mem::size_of::<XML_Char>() as c_long,
             };
             init
@@ -2694,15 +2721,24 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_SIZEOF_XML_LCHAR,
-                name: b"sizeof(XML_LChar)\x00".as_ptr() as *const c_char,
+                name: wch!("sizeof(XML_LChar)\x00"),
                 value: ::std::mem::size_of::<XML_LChar>() as c_long,
+            };
+            init
+        },
+        #[cfg(feature = "unicode")]
+        {
+            let mut init = XML_Feature {
+                feature: XML_FEATURE_UNICODE,
+                name: wch!("XML_UNICODE\x00"),
+                value: 0i64,
             };
             init
         },
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_DTD,
-                name: b"XML_DTD\x00".as_ptr() as *const c_char,
+                name: wch!("XML_DTD\x00"),
                 value: 0i64,
             };
             init
@@ -2710,7 +2746,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_CONTEXT_BYTES,
-                name: b"XML_CONTEXT_BYTES\x00".as_ptr() as *const c_char,
+                name: wch!("XML_CONTEXT_BYTES\x00"),
                 value: XML_CONTEXT_BYTES as c_long,
             };
             init
@@ -2718,7 +2754,7 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_NS,
-                name: b"XML_NS\x00".as_ptr() as *const c_char,
+                name: wch!("XML_NS\x00"),
                 value: 0i64,
             };
             init
@@ -2774,14 +2810,14 @@ unsafe extern "C" fn storeRawNames(mut parser: XML_Parser) -> XML_Bool {
                processing is off) then we have to update it
             */
             if (*tag).name.str_0 == (*tag).buf as *const XML_Char {
-                (*tag).name.str_0 = temp
+                (*tag).name.str_0 = temp as *const XML_Char
             }
             /* if tag->name.localPart is set (when namespace processing is on)
                then update it as well, since it will always point into tag->buf
             */
             if !(*tag).name.localPart.is_null() {
                 (*tag).name.localPart =
-                    (temp).offset((*tag).name.localPart.wrapping_offset_from((*tag).buf))
+                    (temp).offset((*tag).name.localPart.wrapping_offset_from((*tag).buf as *const XML_Char)) as *const XML_Char
             } /* XmlContentTok doesn't always set the last arg */
             (*tag).buf = temp;
             (*tag).bufEnd = temp.offset(bufSize as isize);
@@ -3201,19 +3237,19 @@ unsafe extern "C" fn doContent(
                 let mut rawNameEnd: *const c_char =
                     (*tag).rawName.offset((*tag).rawNameLength as isize);
                 let mut fromPtr: *const c_char = (*tag).rawName;
-                toPtr = (*tag).buf;
+                toPtr = (*tag).buf as *mut XML_Char;
                 loop {
                     let mut bufSize: c_int = 0;
                     let mut convLen: c_int = 0;
                     let convert_res: super::xmltok::XML_Convert_Result =
-                        (*enc).utf8Convert.expect("non-null function pointer")(
+                        XmlConvert!(
                             enc,
                             &mut fromPtr,
                             rawNameEnd,
                             &mut toPtr as *mut *mut XML_Char,
-                            ((*tag).bufEnd).offset(-(1)),
+                            ((*tag).bufEnd).offset(-(1)) as *const XML_Char,
                         );
-                    convLen = toPtr.wrapping_offset_from((*tag).buf) as c_int;
+                    convLen = toPtr.wrapping_offset_from((*tag).buf as *const XML_Char) as c_int;
                     if fromPtr >= rawNameEnd
                         || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
                     {
@@ -3229,10 +3265,10 @@ unsafe extern "C" fn doContent(
                         }
                         (*tag).buf = temp;
                         (*tag).bufEnd = temp.offset(bufSize as isize);
-                        toPtr = (temp).offset(convLen as isize)
+                        toPtr = (temp).offset(convLen as isize) as *mut XML_Char
                     }
                 }
-                (*tag).name.str_0 = (*tag).buf;
+                (*tag).name.str_0 = (*tag).buf as *const XML_Char;
                 *toPtr = '\u{0}' as XML_Char;
                 result_0 = storeAtts(parser, enc, s, &mut (*tag).name, &mut (*tag).bindings);
                 if result_0 as u64 != 0 {
@@ -3417,13 +3453,13 @@ unsafe extern "C" fn doContent(
                     return XML_ERROR_BAD_CHAR_REF;
                 }
                 if (*parser).m_characterDataHandler.is_some() {
-                    let mut buf: [XML_Char; 4] = [0; 4];
+                    let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
                         (*parser).m_handlerArg,
                         buf.as_mut_ptr(),
-                        super::xmltok::XmlUtf8Encode(n, buf.as_mut_ptr()),
+                        XmlEncode(n, buf.as_mut_ptr()),
                     );
                 } else if (*parser).m_defaultHandler.is_some() {
                     reportDefault(parser, enc, s, next);
@@ -3479,9 +3515,9 @@ unsafe extern "C" fn doContent(
                     return XML_ERROR_NONE;
                 }
                 if (*parser).m_characterDataHandler.is_some() {
-                    if (*enc).isUtf8 == 0 {
+                    if MUST_CONVERT!(enc, s) {
                         let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-                        (*enc).utf8Convert.expect("non-null function pointer")(
+                        XmlConvert!(
                             enc,
                             &mut s,
                             end,
@@ -3540,11 +3576,11 @@ unsafe extern "C" fn doContent(
                 let mut charDataHandler: XML_CharacterDataHandler =
                     (*parser).m_characterDataHandler;
                 if charDataHandler.is_some() {
-                    if (*enc).isUtf8 == 0 {
+                    if MUST_CONVERT!(enc, s) {
                         loop {
                             let mut dataPtr_0: *mut ICHAR = (*parser).m_dataBuf;
                             let convert_res_0: super::xmltok::XML_Convert_Result =
-                                (*enc).utf8Convert.expect("non-null function pointer")(
+                                XmlConvert!(
                                     enc,
                                     &mut s,
                                     next,
@@ -3745,7 +3781,7 @@ unsafe extern "C" fn storeAtts(
             }
             return XML_ERROR_DUPLICATE_ATTRIBUTE;
         }
-        *(*attId).name.offset(-1) = 1i8;
+        *(*attId).name.offset(-1) = 1;
         let fresh7 = attIndex;
         attIndex = attIndex + 1;
         let ref mut fresh8 = *appAtts.offset(fresh7 as isize);
@@ -3816,7 +3852,7 @@ unsafe extern "C" fn storeAtts(
                 /* deal with other prefixed names later */
                 attIndex += 1;
                 nPrefixes += 1;
-                *(*attId).name.offset(-1) = 2i8
+                *(*attId).name.offset(-1) = 2
             }
         } else {
             attIndex += 1
@@ -3856,7 +3892,7 @@ unsafe extern "C" fn storeAtts(
                         return result_1;
                     }
                 } else {
-                    *(*(*da).id).name.offset(-1) = 2i8;
+                    *(*(*da).id).name.offset(-1) = 2;
                     nPrefixes += 1;
                     let fresh11 = attIndex;
                     attIndex = attIndex + 1;
@@ -3868,7 +3904,7 @@ unsafe extern "C" fn storeAtts(
                     *fresh14 = (*da).value
                 }
             } else {
-                *(*(*da).id).name.offset(-1) = 1i8;
+                *(*(*da).id).name.offset(-1) = 1;
                 let fresh15 = attIndex;
                 attIndex = attIndex + 1;
                 let ref mut fresh16 = *appAtts.offset(fresh15 as isize);
@@ -3955,7 +3991,7 @@ unsafe extern "C" fn storeAtts(
                 /* clear flag */
                 /* not prefixed */
                 /* prefixed */
-                *(s as *mut XML_Char).offset(-1) = 0i8; /* clear flag */
+                *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
                 id = lookup(parser, &mut (*dtd).attributeIds, s, 0) as *mut ATTRIBUTE_ID;
                 if id.is_null() || (*id).prefix.is_null() {
                     /* This code is walking through the appAtts array, dealing
@@ -4006,7 +4042,7 @@ unsafe extern "C" fn storeAtts(
                 loop {
                     let fresh22 = s;
                     s = s.offset(1);
-                    if !(*fresh22 as c_int != 0x3a) {
+                    if !(*fresh22 != ASCII_COLON as XML_Char) {
                         break;
                     }
                 }
@@ -4110,19 +4146,19 @@ unsafe extern "C" fn storeAtts(
                     break;
                 }
             } else {
-                *(s as *mut XML_Char).offset(-1) = 0i8
+                *(s as *mut XML_Char).offset(-1) = 0
             }
             i += 2
         }
     }
     /* clear flags for the remaining attributes */
     while i < attIndex {
-        *(*appAtts.offset(i as isize) as *mut XML_Char).offset(-1) = 0i8;
+        *(*appAtts.offset(i as isize) as *mut XML_Char).offset(-1) = 0;
         i += 2
     }
     binding = *bindingsPtr;
     while !binding.is_null() {
-        *(*(*binding).attId).name.offset(-1) = 0i8;
+        *(*(*binding).attId).name.offset(-1) = 0;
         binding = (*binding).nextTagBinding
     }
     if (*parser).m_ns == 0 {
@@ -4138,7 +4174,7 @@ unsafe extern "C" fn storeAtts(
         loop {
             let fresh29 = localPart;
             localPart = localPart.offset(1);
-            if !(*fresh29 as c_int != 0x3a) {
+            if !(*fresh29 != ASCII_COLON as XML_Char) {
                 break;
             }
         }
@@ -4234,74 +4270,74 @@ unsafe extern "C" fn addBinding(
     mut bindingsPtr: *mut *mut BINDING,
 ) -> XML_Error {
     static mut xmlNamespace: [XML_Char; 37] = [
-        ASCII_h,
-        ASCII_t,
-        ASCII_t,
-        ASCII_p,
-        ASCII_COLON,
-        ASCII_SLASH,
-        ASCII_SLASH,
-        ASCII_w,
-        ASCII_w,
-        ASCII_w,
-        ASCII_PERIOD,
-        ASCII_w,
-        ASCII_3,
-        ASCII_PERIOD,
-        ASCII_o,
-        ASCII_r,
-        ASCII_g,
-        ASCII_SLASH,
-        ASCII_X,
-        ASCII_M,
-        ASCII_L,
-        ASCII_SLASH,
-        ASCII_1,
-        ASCII_9,
-        ASCII_9,
-        ASCII_8,
-        ASCII_SLASH,
-        ASCII_n,
-        ASCII_a,
-        ASCII_m,
-        ASCII_e,
-        ASCII_s,
-        ASCII_p,
-        ASCII_a,
-        ASCII_c,
-        ASCII_e,
+        ASCII_h as XML_Char,
+        ASCII_t as XML_Char,
+        ASCII_t as XML_Char,
+        ASCII_p as XML_Char,
+        ASCII_COLON as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_PERIOD as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_3 as XML_Char,
+        ASCII_PERIOD as XML_Char,
+        ASCII_o as XML_Char,
+        ASCII_r as XML_Char,
+        ASCII_g as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_X as XML_Char,
+        ASCII_M as XML_Char,
+        ASCII_L as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_1 as XML_Char,
+        ASCII_9 as XML_Char,
+        ASCII_9 as XML_Char,
+        ASCII_8 as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_n as XML_Char,
+        ASCII_a as XML_Char,
+        ASCII_m as XML_Char,
+        ASCII_e as XML_Char,
+        ASCII_s as XML_Char,
+        ASCII_p as XML_Char,
+        ASCII_a as XML_Char,
+        ASCII_c as XML_Char,
+        ASCII_e as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut xmlnsNamespace: [XML_Char; 30] = [
-        ASCII_h,
-        ASCII_t,
-        ASCII_t,
-        ASCII_p,
-        ASCII_COLON,
-        ASCII_SLASH,
-        ASCII_SLASH,
-        ASCII_w,
-        ASCII_w,
-        ASCII_w,
-        ASCII_PERIOD,
-        ASCII_w,
-        ASCII_3,
-        ASCII_PERIOD,
-        ASCII_o,
-        ASCII_r,
-        ASCII_g,
-        ASCII_SLASH,
-        ASCII_2,
-        ASCII_0,
-        ASCII_0,
-        ASCII_0,
-        ASCII_SLASH,
-        ASCII_x,
-        ASCII_m,
-        ASCII_l,
-        ASCII_n,
-        ASCII_s,
-        ASCII_SLASH,
+        ASCII_h as XML_Char,
+        ASCII_t as XML_Char,
+        ASCII_t as XML_Char,
+        ASCII_p as XML_Char,
+        ASCII_COLON as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_PERIOD as XML_Char,
+        ASCII_w as XML_Char,
+        ASCII_3 as XML_Char,
+        ASCII_PERIOD as XML_Char,
+        ASCII_o as XML_Char,
+        ASCII_r as XML_Char,
+        ASCII_g as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_2 as XML_Char,
+        ASCII_0 as XML_Char,
+        ASCII_0 as XML_Char,
+        ASCII_0 as XML_Char,
+        ASCII_SLASH as XML_Char,
+        ASCII_x as XML_Char,
+        ASCII_m as XML_Char,
+        ASCII_l as XML_Char,
+        ASCII_n as XML_Char,
+        ASCII_s as XML_Char,
+        ASCII_SLASH as XML_Char,
         '\u{0}' as XML_Char,
     ];
     let mut mustBeXML: XML_Bool = XML_FALSE;
@@ -4314,18 +4350,18 @@ unsafe extern "C" fn addBinding(
         return XML_ERROR_UNDECLARING_PREFIX;
     }
     if !(*prefix).name.is_null()
-        && *(*prefix).name.offset(0) as c_int == 0x78
-        && *(*prefix).name.offset(1) as c_int == 0x6d
-        && *(*prefix).name.offset(2) as c_int == 0x6c
+        && *(*prefix).name.offset(0) == ASCII_x as XML_Char
+        && *(*prefix).name.offset(1) == ASCII_m as XML_Char
+        && *(*prefix).name.offset(2) == ASCII_l as XML_Char
     {
         /* Not allowed to bind xmlns */
-        if *(*prefix).name.offset(3) as c_int == 0x6e
-            && *(*prefix).name.offset(4) as c_int == 0x73
-            && *(*prefix).name.offset(5) as c_int == '\u{0}' as i32
+        if *(*prefix).name.offset(3) == ASCII_n as XML_Char
+            && *(*prefix).name.offset(4) == ASCII_s as XML_Char
+            && *(*prefix).name.offset(5) == '\u{0}' as XML_Char
         {
             return XML_ERROR_RESERVED_PREFIX_XMLNS;
         }
-        if *(*prefix).name.offset(3) as c_int == '\u{0}' as i32 {
+        if *(*prefix).name.offset(3) == '\u{0}' as XML_Char {
             mustBeXML = XML_TRUE
         }
     }
@@ -4404,7 +4440,7 @@ unsafe extern "C" fn addBinding(
     (*b).attId = attId;
     (*b).prevPrefixBinding = (*prefix).binding;
     /* NULL binding when default namespace undeclared */
-    if *uri as c_int == '\u{0}' as i32
+    if *uri == '\u{0}' as XML_Char
         && prefix == &mut (*(*parser).m_dtd).defaultPrefix as *mut PREFIX
     {
         (*prefix).binding = NULL as *mut BINDING
@@ -4539,11 +4575,11 @@ unsafe extern "C" fn doCdataSection(
                 let mut charDataHandler: XML_CharacterDataHandler =
                     (*parser).m_characterDataHandler;
                 if charDataHandler.is_some() {
-                    if (*enc).isUtf8 == 0 {
+                    if MUST_CONVERT!(enc, s) {
                         loop {
                             let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
                             let convert_res: super::xmltok::XML_Convert_Result =
-                                (*enc).utf8Convert.expect("non-null function pointer")(
+                                XmlConvert!(
                                     enc,
                                     &mut s,
                                     next,
@@ -4736,7 +4772,36 @@ unsafe extern "C" fn doIgnoreSection(
 
 unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
     let mut s: *const c_char = 0 as *const c_char;
-    s = (*parser).m_protocolEncodingName;
+    if cfg!(feature = "unicode") {
+        let mut encodingBuf: [libc::c_char; 128] = [0; 128];
+        /* See comments abount `protoclEncodingName` in parserInit() */
+        if (*parser).m_protocolEncodingName.is_null() {
+            s = crate::stddef_h::NULL as *const libc::c_char;
+        } else {
+            let mut i: libc::c_int = 0;
+            i = 0 as libc::c_int;
+            while *(*parser).m_protocolEncodingName.offset(i as isize) != 0 {
+                if i as libc::c_ulong
+                    == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
+                    .wrapping_sub(1 as libc::c_int as libc::c_ulong)
+                    || *(*parser).m_protocolEncodingName.offset(i as isize) as libc::c_int
+                    & !(0x7f as libc::c_int)
+                    != 0 as libc::c_int
+                {
+                    encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
+                    break;
+                } else {
+                    encodingBuf[i as usize] =
+                        *(*parser).m_protocolEncodingName.offset(i as isize) as libc::c_char;
+                    i += 1
+                }
+            }
+            encodingBuf[i as usize] = '\u{0}' as i32 as libc::c_char;
+            s = encodingBuf.as_mut_ptr();
+        }
+    } else {
+        s = (*parser).m_protocolEncodingName as *const c_char;
+    }
     if if (*parser).m_ns as c_int != 0 {
         Some(
             super::xmltok::xmltok_ns_c::XmlInitEncodingNS
@@ -5247,89 +5312,89 @@ unsafe extern "C" fn doProlog(
     mut allowClosingDoctype: XML_Bool,
 ) -> XML_Error {
     let mut current_block: u64;
-    static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH, '\u{0}' as XML_Char];
+    static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH as XML_Char, '\u{0}' as XML_Char];
     /* XML_DTD */
     static mut atypeCDATA: [XML_Char; 6] = [
-        ASCII_C,
-        ASCII_D,
-        ASCII_A,
-        ASCII_T,
-        ASCII_A,
+        ASCII_C as XML_Char,
+        ASCII_D as XML_Char,
+        ASCII_A as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_A as XML_Char,
         '\u{0}' as XML_Char,
     ];
-    static mut atypeID: [XML_Char; 3] = [ASCII_I, ASCII_D, '\u{0}' as XML_Char];
+    static mut atypeID: [XML_Char; 3] = [ASCII_I as XML_Char, ASCII_D as XML_Char, '\u{0}' as XML_Char];
     static mut atypeIDREF: [XML_Char; 6] = [
-        ASCII_I,
-        ASCII_D,
-        ASCII_R,
-        ASCII_E,
-        ASCII_F,
+        ASCII_I as XML_Char,
+        ASCII_D as XML_Char,
+        ASCII_R as XML_Char,
+        ASCII_E as XML_Char,
+        ASCII_F as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut atypeIDREFS: [XML_Char; 7] = [
-        ASCII_I,
-        ASCII_D,
-        ASCII_R,
-        ASCII_E,
-        ASCII_F,
-        ASCII_S,
+        ASCII_I as XML_Char,
+        ASCII_D as XML_Char,
+        ASCII_R as XML_Char,
+        ASCII_E as XML_Char,
+        ASCII_F as XML_Char,
+        ASCII_S as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut atypeENTITY: [XML_Char; 7] = [
-        ASCII_E,
-        ASCII_N,
-        ASCII_T,
-        ASCII_I,
-        ASCII_T,
-        ASCII_Y,
+        ASCII_E as XML_Char,
+        ASCII_N as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_I as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_Y as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut atypeENTITIES: [XML_Char; 9] = [
-        ASCII_E,
-        ASCII_N,
-        ASCII_T,
-        ASCII_I,
-        ASCII_T,
-        ASCII_I,
-        ASCII_E,
-        ASCII_S,
+        ASCII_E as XML_Char,
+        ASCII_N as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_I as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_I as XML_Char,
+        ASCII_E as XML_Char,
+        ASCII_S as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut atypeNMTOKEN: [XML_Char; 8] = [
-        ASCII_N,
-        ASCII_M,
-        ASCII_T,
-        ASCII_O,
-        ASCII_K,
-        ASCII_E,
-        ASCII_N,
+        ASCII_N as XML_Char,
+        ASCII_M as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_O as XML_Char,
+        ASCII_K as XML_Char,
+        ASCII_E as XML_Char,
+        ASCII_N as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut atypeNMTOKENS: [XML_Char; 9] = [
-        ASCII_N,
-        ASCII_M,
-        ASCII_T,
-        ASCII_O,
-        ASCII_K,
-        ASCII_E,
-        ASCII_N,
-        ASCII_S,
+        ASCII_N as XML_Char,
+        ASCII_M as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_O as XML_Char,
+        ASCII_K as XML_Char,
+        ASCII_E as XML_Char,
+        ASCII_N as XML_Char,
+        ASCII_S as XML_Char,
         '\u{0}' as XML_Char,
     ];
     static mut notationPrefix: [XML_Char; 10] = [
-        ASCII_N,
-        ASCII_O,
-        ASCII_T,
-        ASCII_A,
-        ASCII_T,
-        ASCII_I,
-        ASCII_O,
-        ASCII_N,
-        ASCII_LPAREN,
+        ASCII_N as XML_Char,
+        ASCII_O as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_A as XML_Char,
+        ASCII_T as XML_Char,
+        ASCII_I as XML_Char,
+        ASCII_O as XML_Char,
+        ASCII_N as XML_Char,
+        ASCII_LPAREN as XML_Char,
         '\u{0}' as XML_Char,
     ];
-    static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE, '\u{0}' as XML_Char];
-    static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN, '\u{0}' as XML_Char];
+    static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE as XML_Char, '\u{0}' as XML_Char];
+    static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN as XML_Char, '\u{0}' as XML_Char];
     /* save one level of indirection */
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
@@ -5735,9 +5800,9 @@ unsafe extern "C" fn doProlog(
                     if (*parser).m_attlistDeclHandler.is_some()
                         && !(*parser).m_declAttributeType.is_null()
                     {
-                        if *(*parser).m_declAttributeType as c_int == 0x28
-                            || *(*parser).m_declAttributeType as c_int == 0x4e
-                                && *(*parser).m_declAttributeType.offset(1) as c_int == 0x4f
+                        if *(*parser).m_declAttributeType == ASCII_LPAREN as XML_Char
+                            || *(*parser).m_declAttributeType == ASCII_N as XML_Char
+                                && *(*parser).m_declAttributeType.offset(1) == ASCII_O as XML_Char
                         {
                             /* Enumerated or Notation type */
                             if (if (*parser).m_tempPool.ptr
@@ -5748,7 +5813,7 @@ unsafe extern "C" fn doProlog(
                             } else {
                                 let fresh32 = (*parser).m_tempPool.ptr;
                                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                *fresh32 = 0x29i8;
+                                *fresh32 = ASCII_RPAREN as XML_Char;
                                 1
                             }) == 0
                                 || (if (*parser).m_tempPool.ptr
@@ -5816,9 +5881,9 @@ unsafe extern "C" fn doProlog(
                     if (*parser).m_attlistDeclHandler.is_some()
                         && !(*parser).m_declAttributeType.is_null()
                     {
-                        if *(*parser).m_declAttributeType as c_int == 0x28
-                            || *(*parser).m_declAttributeType as c_int == 0x4e
-                                && *(*parser).m_declAttributeType.offset(1) as c_int == 0x4f
+                        if *(*parser).m_declAttributeType == ASCII_LPAREN as XML_Char
+                            || *(*parser).m_declAttributeType == ASCII_N as XML_Char
+                                && *(*parser).m_declAttributeType.offset(1) == ASCII_O as XML_Char
                         {
                             /* Enumerated or Notation type */
                             if (if (*parser).m_tempPool.ptr
@@ -5829,7 +5894,7 @@ unsafe extern "C" fn doProlog(
                             } else {
                                 let fresh34 = (*parser).m_tempPool.ptr;
                                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                *fresh34 = 0x29i8;
+                                *fresh34 = ASCII_RPAREN as XML_Char;
                                 1
                             }) == 0
                                 || (if (*parser).m_tempPool.ptr
@@ -7127,7 +7192,7 @@ unsafe extern "C" fn appendAttributeValue(
                 return XML_ERROR_INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_CHAR_REF => {
-                let mut buf: [XML_Char; 4] = [0; 4];
+                let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int =
                     (*enc).charRefNumber.expect("non-null function pointer")(enc, ptr);
@@ -7144,7 +7209,7 @@ unsafe extern "C" fn appendAttributeValue(
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
-                    n = super::xmltok::XmlUtf8Encode(n, buf.as_mut_ptr());
+                    n = XmlEncode(n, buf.as_mut_ptr());
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7343,7 +7408,7 @@ unsafe extern "C" fn appendAttributeValue(
                     } else {
                         let fresh40 = (*pool).ptr;
                         (*pool).ptr = (*pool).ptr.offset(1);
-                        *fresh40 = 0x20i8;
+                        *fresh40 = 0x20;
                         1
                     } == 0
                     {
@@ -7490,7 +7555,7 @@ unsafe extern "C" fn storeEntityValue(
                 current_block = 13862322071133341448;
             }
             super::xmltok::XML_TOK_CHAR_REF => {
-                let mut buf: [XML_Char; 4] = [0; 4];
+                let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int =
                     (*enc).charRefNumber.expect("non-null function pointer")(enc, entityTextPtr);
@@ -7501,7 +7566,7 @@ unsafe extern "C" fn storeEntityValue(
                     result = XML_ERROR_BAD_CHAR_REF;
                     break;
                 } else {
-                    n = super::xmltok::XmlUtf8Encode(n, buf.as_mut_ptr());
+                    n = XmlEncode(n, buf.as_mut_ptr());
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7565,7 +7630,7 @@ unsafe extern "C" fn storeEntityValue(
                 } else {
                     let fresh42 = (*pool).ptr;
                     (*pool).ptr = (*pool).ptr.offset(1);
-                    *fresh42 = 0xai8
+                    *fresh42 = 0xa
                 }
             }
             _ => {}
@@ -7580,7 +7645,7 @@ unsafe extern "C" fn storeEntityValue(
 unsafe extern "C" fn normalizeLines(mut s: *mut XML_Char) {
     let mut p: *mut XML_Char = 0 as *mut XML_Char;
     loop {
-        if *s as c_int == '\u{0}' as i32 {
+        if *s == '\u{0}' as XML_Char {
             return;
         }
         if *s as c_int == 0xd {
@@ -7593,7 +7658,7 @@ unsafe extern "C" fn normalizeLines(mut s: *mut XML_Char) {
         if *s as c_int == 0xd {
             let fresh44 = p;
             p = p.offset(1);
-            *fresh44 = 0xai8;
+            *fresh44 = 0xa;
             s = s.offset(1);
             if *s as c_int == 0xa {
                 s = s.offset(1)
@@ -7687,7 +7752,7 @@ unsafe extern "C" fn reportDefault(
     mut s: *const c_char,
     mut end: *const c_char,
 ) {
-    if (*enc).isUtf8 == 0 {
+    if MUST_CONVERT!(enc, s) {
         let mut convert_res: super::xmltok::XML_Convert_Result =
             super::xmltok::XML_CONVERT_COMPLETED;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
@@ -7718,7 +7783,7 @@ unsafe extern "C" fn reportDefault(
         }
         loop {
             let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-            convert_res = (*enc).utf8Convert.expect("non-null function pointer")(
+            convert_res = XmlConvert!(
                 enc,
                 &mut s,
                 end,
@@ -7824,7 +7889,7 @@ unsafe extern "C" fn setElementTypePrefix(
     let mut name: *const XML_Char = 0 as *const XML_Char;
     name = (*elementType).name;
     while *name != 0 {
-        if *name as c_int == 0x3a {
+        if *name == ASCII_COLON as XML_Char {
             let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
             let mut s: *const XML_Char = 0 as *const XML_Char;
             s = (*elementType).name;
@@ -7920,14 +7985,15 @@ unsafe extern "C" fn getAttributeId(
     } else {
         (*dtd).pool.start = (*dtd).pool.ptr;
         if !((*parser).m_ns == 0) {
-            if *name.offset(0) as c_int == 0x78
-                && *name.offset(1) as c_int == 0x6d
-                && *name.offset(2) as c_int == 0x6c
-                && *name.offset(3) as c_int == 0x6e
-                && *name.offset(4) as c_int == 0x73
-                && (*name.offset(5) as c_int == '\u{0}' as i32 || *name.offset(5) as c_int == 0x3a)
+            if *name.offset(0) == ASCII_x as XML_Char
+                && *name.offset(1) == ASCII_m as XML_Char
+                && *name.offset(2) == ASCII_l as XML_Char
+                && *name.offset(3) == ASCII_n as XML_Char
+                && *name.offset(4) == ASCII_s as XML_Char
+                && (*name.offset(5) == '\u{0}' as XML_Char
+                    || *name.offset(5) == ASCII_COLON as XML_Char)
             {
-                if *name.offset(5) as c_int == '\u{0}' as i32 {
+                if *name.offset(5) == '\u{0}' as XML_Char {
                     (*id).prefix = &mut (*dtd).defaultPrefix
                 } else {
                     (*id).prefix = lookup(
@@ -7943,7 +8009,7 @@ unsafe extern "C" fn getAttributeId(
                 i = 0;
                 while *name.offset(i as isize) != 0 {
                     /* attributes without prefix are *not* in the default namespace */
-                    if *name.offset(i as isize) as c_int == 0x3a {
+                    if *name.offset(i as isize) == ASCII_COLON as XML_Char {
                         let mut j: c_int = 0; /* save one level of indirection */
                         j = 0;
                         while j < i {
@@ -8000,6 +8066,8 @@ unsafe extern "C" fn getAttributeId(
     return id;
 }
 
+const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
+    
 unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
@@ -8017,7 +8085,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         } else {
             let fresh52 = (*parser).m_tempPool.ptr;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-            *fresh52 = 0x3di8;
+            *fresh52 = ASCII_EQUALS as XML_Char;
             1
         } == 0
         {
@@ -8091,7 +8159,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
                 } else {
                     let fresh54 = (*parser).m_tempPool.ptr;
                     (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh54 = 0xci8;
+                    *fresh54 = CONTEXT_SEP;
                     1
                 }) == 0
             {
@@ -8121,7 +8189,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
             } else {
                 let fresh56 = (*parser).m_tempPool.ptr;
                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh56 = 0x3di8;
+                *fresh56 = ASCII_EQUALS as XML_Char;
                 1
             } == 0
             {
@@ -8169,7 +8237,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
             } else {
                 let fresh58 = (*parser).m_tempPool.ptr;
                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh58 = 0xci8;
+                *fresh58 = CONTEXT_SEP;
                 1
             }) == 0
         {
@@ -8213,8 +8281,8 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
 unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_Char) -> XML_Bool {
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut s: *const XML_Char = context;
-    while *context as c_int != '\u{0}' as i32 {
-        if *s as c_int == 0xc || *s as c_int == '\u{0}' as i32 {
+    while *context != '\u{0}' as XML_Char {
+        if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
             let mut e: *mut ENTITY = 0 as *mut ENTITY;
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
                 && poolGrow(&mut (*parser).m_tempPool) == 0
@@ -8238,12 +8306,12 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             if !e.is_null() {
                 (*e).open = XML_TRUE
             }
-            if *s as c_int != '\u{0}' as i32 {
+            if *s != '\u{0}' as XML_Char {
                 s = s.offset(1)
             }
             context = s;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
-        } else if *s as c_int == 0x3d {
+        } else if *s == ASCII_EQUALS as XML_Char {
             let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
             if (*parser)
                 .m_tempPool
@@ -8284,7 +8352,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
             }
             context = s.offset(1);
-            while *context as c_int != 0xc && *context as c_int != '\u{0}' as i32 {
+            while *context != CONTEXT_SEP && *context != '\u{0}' as XML_Char {
                 if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
                     && poolGrow(&mut (*parser).m_tempPool) == 0
                 {
@@ -8324,7 +8392,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 return XML_FALSE;
             }
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
-            if *context as c_int != '\u{0}' as i32 {
+            if *context != '\u{0}' as XML_Char {
                 context = context.offset(1)
             }
             s = context
@@ -8358,7 +8426,7 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
                 if p != publicId && *p.offset(-1) as c_int != 0x20 {
                     let fresh66 = p;
                     p = p.offset(1);
-                    *fresh66 = 0x20i8
+                    *fresh66 = 0x20
                 }
             }
             _ => {
@@ -9042,7 +9110,7 @@ unsafe extern "C" fn poolAppend(
     }
     loop {
         let convert_res: super::xmltok::XML_Convert_Result =
-            (*enc).utf8Convert.expect("non-null function pointer")(
+            XmlConvert!(
                 enc,
                 &mut ptr,
                 end,
@@ -9163,7 +9231,7 @@ unsafe extern "C" fn poolStoreString(
     }
     let fresh81 = (*pool).ptr;
     (*pool).ptr = (*pool).ptr.offset(1);
-    *fresh81 = 0i8;
+    *fresh81 = 0;
     return (*pool).start;
 }
 
