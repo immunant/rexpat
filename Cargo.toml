@@ -7,7 +7,7 @@ exclude = [
 ]
 
 [package]
-name = "c2rust_out"
+name = "libexpat-rs"
 authors = ["C2Rust"]
 version = "0.0.0"
 publish = false
@@ -15,7 +15,7 @@ edition = "2018"
 autobins = false
 
 [lib]
-name = "c2rust_out"
+name = "libexpat_rs"
 path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
 
