@@ -36,125 +36,65 @@ use libc::{c_char, c_int, c_uint, c_ulong};
 pub type C2RustUnnamed_0 = c_int;
 
 pub const XML_ROLE_ERROR: C2RustUnnamed_0 = -1;
-
 pub const XML_ROLE_NONE: C2RustUnnamed_0 = 0;
-
 pub const XML_ROLE_XML_DECL: C2RustUnnamed_0 = 1;
-
 pub const XML_ROLE_INSTANCE_START: C2RustUnnamed_0 = 2;
-
 pub const XML_ROLE_DOCTYPE_NONE: C2RustUnnamed_0 = 3;
-
 pub const XML_ROLE_DOCTYPE_NAME: C2RustUnnamed_0 = 4;
-
 pub const XML_ROLE_DOCTYPE_SYSTEM_ID: C2RustUnnamed_0 = 5;
-
 pub const XML_ROLE_DOCTYPE_PUBLIC_ID: C2RustUnnamed_0 = 6;
-
 pub const XML_ROLE_DOCTYPE_INTERNAL_SUBSET: C2RustUnnamed_0 = 7;
-
 pub const XML_ROLE_DOCTYPE_CLOSE: C2RustUnnamed_0 = 8;
-
 pub const XML_ROLE_GENERAL_ENTITY_NAME: C2RustUnnamed_0 = 9;
-
 pub const XML_ROLE_PARAM_ENTITY_NAME: C2RustUnnamed_0 = 10;
-
 pub const XML_ROLE_ENTITY_NONE: C2RustUnnamed_0 = 11;
-
 pub const XML_ROLE_ENTITY_VALUE: C2RustUnnamed_0 = 12;
-
 pub const XML_ROLE_ENTITY_SYSTEM_ID: C2RustUnnamed_0 = 13;
-
 pub const XML_ROLE_ENTITY_PUBLIC_ID: C2RustUnnamed_0 = 14;
-
 pub const XML_ROLE_ENTITY_COMPLETE: C2RustUnnamed_0 = 15;
-
 pub const XML_ROLE_ENTITY_NOTATION_NAME: C2RustUnnamed_0 = 16;
-
 pub const XML_ROLE_NOTATION_NONE: C2RustUnnamed_0 = 17;
-
 pub const XML_ROLE_NOTATION_NAME: C2RustUnnamed_0 = 18;
-
 pub const XML_ROLE_NOTATION_SYSTEM_ID: C2RustUnnamed_0 = 19;
-
 pub const XML_ROLE_NOTATION_NO_SYSTEM_ID: C2RustUnnamed_0 = 20;
-
 pub const XML_ROLE_NOTATION_PUBLIC_ID: C2RustUnnamed_0 = 21;
-
 pub const XML_ROLE_ATTRIBUTE_NAME: C2RustUnnamed_0 = 22;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_CDATA: C2RustUnnamed_0 = 23;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_ID: C2RustUnnamed_0 = 24;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_IDREF: C2RustUnnamed_0 = 25;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_IDREFS: C2RustUnnamed_0 = 26;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_ENTITY: C2RustUnnamed_0 = 27;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_ENTITIES: C2RustUnnamed_0 = 28;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN: C2RustUnnamed_0 = 29;
-
 pub const XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS: C2RustUnnamed_0 = 30;
-
 pub const XML_ROLE_ATTRIBUTE_ENUM_VALUE: C2RustUnnamed_0 = 31;
-
 pub const XML_ROLE_ATTRIBUTE_NOTATION_VALUE: C2RustUnnamed_0 = 32;
-
 pub const XML_ROLE_ATTLIST_NONE: C2RustUnnamed_0 = 33;
-
 pub const XML_ROLE_ATTLIST_ELEMENT_NAME: C2RustUnnamed_0 = 34;
-
 pub const XML_ROLE_IMPLIED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 35;
-
 pub const XML_ROLE_REQUIRED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 36;
-
 pub const XML_ROLE_DEFAULT_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 37;
-
 pub const XML_ROLE_FIXED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 38;
-
 pub const XML_ROLE_ELEMENT_NONE: C2RustUnnamed_0 = 39;
-
 pub const XML_ROLE_ELEMENT_NAME: C2RustUnnamed_0 = 40;
-
 pub const XML_ROLE_CONTENT_ANY: C2RustUnnamed_0 = 41;
-
 pub const XML_ROLE_CONTENT_EMPTY: C2RustUnnamed_0 = 42;
-
 pub const XML_ROLE_CONTENT_PCDATA: C2RustUnnamed_0 = 43;
-
 pub const XML_ROLE_GROUP_OPEN: C2RustUnnamed_0 = 44;
-
 pub const XML_ROLE_GROUP_CLOSE: C2RustUnnamed_0 = 45;
-
 pub const XML_ROLE_GROUP_CLOSE_REP: C2RustUnnamed_0 = 46;
-
 pub const XML_ROLE_GROUP_CLOSE_OPT: C2RustUnnamed_0 = 47;
-
 pub const XML_ROLE_GROUP_CLOSE_PLUS: C2RustUnnamed_0 = 48;
-
 pub const XML_ROLE_GROUP_CHOICE: C2RustUnnamed_0 = 49;
-
 pub const XML_ROLE_GROUP_SEQUENCE: C2RustUnnamed_0 = 50;
-
 pub const XML_ROLE_CONTENT_ELEMENT: C2RustUnnamed_0 = 51;
-
 pub const XML_ROLE_CONTENT_ELEMENT_REP: C2RustUnnamed_0 = 52;
-
 pub const XML_ROLE_CONTENT_ELEMENT_OPT: C2RustUnnamed_0 = 53;
-
 pub const XML_ROLE_CONTENT_ELEMENT_PLUS: C2RustUnnamed_0 = 54;
-
 pub const XML_ROLE_PI: C2RustUnnamed_0 = 55;
-
 pub const XML_ROLE_COMMENT: C2RustUnnamed_0 = 56;
-
 pub const XML_ROLE_TEXT_DECL: C2RustUnnamed_0 = 57;
-
 pub const XML_ROLE_IGNORE_SECT: C2RustUnnamed_0 = 58;
-
 pub const XML_ROLE_INNER_PARAM_ENTITY_REF: C2RustUnnamed_0 = 59;
 /* XML_DTD */
 /* XML_DTD */
