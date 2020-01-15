@@ -130,6 +130,8 @@ use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read
 use ::libc::{self, __errno_location, close, free, getenv, getpid, open, strcmp};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
+#[cfg(feature = "getrandom_syscall")]
+use libc::{SYS_getrandom, syscall};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -654,8 +656,14 @@ unsafe extern "C" fn writeRandomBytes_getrandom_nonblock(
         let currentTarget: *mut c_void =
             (target as *mut c_char).offset(bytesWrittenTotal as isize) as *mut c_void;
         let bytesToWrite: size_t = count.wrapping_sub(bytesWrittenTotal);
+
+        #[cfg(not(feature = "getrandom_syscall"))]
         let bytesWrittenMore: c_int =
             getrandom(currentTarget, bytesToWrite, getrandomFlags) as c_int;
+        #[cfg(feature = "getrandom_syscall")]
+        let bytesWrittenMore: c_int =
+            syscall(SYS_getrandom, currentTarget, bytesToWrite, getrandomFlags) as c_int;
+
         if bytesWrittenMore > 0 {
             bytesWrittenTotal = (bytesWrittenTotal).wrapping_add(bytesWrittenMore as c_ulong);
             if bytesWrittenTotal >= count {
@@ -6311,7 +6319,7 @@ unsafe extern "C" fn doProlog(
                     if !(*dtd).scaffIndex.is_null() {
                     } else {
                         __assert_fail(b"dtd->scaffIndex != NULL\x00".as_ptr() as *const c_char,
-                                      
+
                                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr() as *const c_char,
                                       4790u32,
                                       (*::std::mem::transmute::<&[u8; 136],

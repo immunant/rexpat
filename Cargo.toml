@@ -44,3 +44,4 @@ wchar = { path = "deps/wchar", optional = true }
 default = []
 unicode = []
 unicode_wchar_t = ["wchar"]
+getrandom_syscall = []
