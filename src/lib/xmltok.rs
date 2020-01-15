@@ -222,14 +222,18 @@ pub struct encoding {
 #[macro_export]
 macro_rules! XmlUtf8Convert {
     ($enc:path, $fromP:expr, $fromLim:expr, $toP:expr, $toLim:expr $(,)?) => {
-        (*$enc).utf8Convert.expect("non-null function pointer")($enc, $fromP, $fromLim, $toP, $toLim)
+        (*$enc).utf8Convert.expect("non-null function pointer")(
+            $enc, $fromP, $fromLim, $toP, $toLim,
+        )
     };
 }
 
 #[macro_export]
 macro_rules! XmlUtf16Convert {
     ($enc:path, $fromP:expr, $fromLim:expr, $toP:expr, $toLim:expr $(,)?) => {
-        (*$enc).utf16Convert.expect("non-null function pointer")($enc, $fromP, $fromLim, $toP, $toLim)
+        (*$enc).utf16Convert.expect("non-null function pointer")(
+            $enc, $fromP, $fromLim, $toP, $toLim,
+        )
     };
 }
 

@@ -1,42 +1,42 @@
 /* f519f27c7c3b79fee55aeb8b1e53b7384b079d9118bf3a62eb3a60986a6742f2 (2.2.9+)
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
+                           __  __            _
+                        ___\ \/ /_ __   __ _| |_
+                       / _ \\  /| '_ \ / _` | __|
+                      |  __//  \| |_) | (_| | |_
+                       \___/_/\_\ .__/ \__,_|\__|
+                                |_| XML parser
 
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
+  Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+  Copyright (c) 2000-2017 Expat development team
+  Licensed under the MIT license:
 
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
+  Permission is  hereby granted,  free of charge,  to any  person obtaining
+  a  copy  of  this  software   and  associated  documentation  files  (the
+  "Software"),  to  deal in  the  Software  without restriction,  including
+  without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+  distribute, sublicense, and/or sell copies of the Software, and to permit
+  persons  to whom  the Software  is  furnished to  do so,  subject to  the
+  following conditions:
 
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
+  The above copyright  notice and this permission notice  shall be included
+  in all copies or substantial portions of the Software.
 
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+  THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+  EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+  DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+  USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 
 pub use crate::ascii_h::{
     ASCII_a, ASCII_c, ASCII_e, ASCII_g, ASCII_h, ASCII_l, ASCII_m, ASCII_n, ASCII_o, ASCII_p,
     ASCII_r, ASCII_s, ASCII_t, ASCII_w, ASCII_x, ASCII_0, ASCII_1, ASCII_2, ASCII_3, ASCII_8,
     ASCII_9, ASCII_A, ASCII_C, ASCII_COLON, ASCII_COMMA, ASCII_D, ASCII_E, ASCII_EQUALS,
-    ASCII_EXCL, ASCII_F, ASCII_HASH, ASCII_I, ASCII_K, ASCII_L, ASCII_LPAREN, ASCII_RPAREN, ASCII_M, ASCII_N,
-    ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_S, ASCII_SLASH, ASCII_T, ASCII_X, ASCII_Y,
-    ASCII_FF,
+    ASCII_EXCL, ASCII_F, ASCII_FF, ASCII_HASH, ASCII_I, ASCII_K, ASCII_L, ASCII_LPAREN, ASCII_M,
+    ASCII_N, ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_RPAREN, ASCII_S, ASCII_SLASH,
+    ASCII_T, ASCII_X, ASCII_Y,
 };
 pub use crate::expat_config_h::XML_CONTEXT_BYTES;
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
@@ -106,20 +106,19 @@ pub use crate::src::lib::xmlrole::{
     XML_ROLE_XML_DECL,
 };
 pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    XmlInitEncoding, XmlInitEncodingNS,
-    XmlParseXmlDecl, XmlParseXmlDeclNS,
+    XmlInitEncoding, XmlInitEncodingNS, XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
 pub use crate::src::lib::xmltok::{
     encoding, position, XML_Convert_Result, XmlInitUnknownEncoding, XmlInitUnknownEncodingNS,
-    XmlSizeOfUnknownEncoding, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING,
-    POSITION, SCANNER, XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE,
-    XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_BOM, XML_TOK_CDATA_SECT_CLOSE,
-    XML_TOK_CDATA_SECT_OPEN, XML_TOK_CHAR_REF, XML_TOK_COMMENT, XML_TOK_DATA_CHARS,
-    XML_TOK_DATA_NEWLINE, XML_TOK_EMPTY_ELEMENT_NO_ATTS, XML_TOK_EMPTY_ELEMENT_WITH_ATTS,
-    XML_TOK_END_TAG, XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT, XML_TOK_INSTANCE_START,
-    XML_TOK_INVALID, XML_TOK_NONE, XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL, XML_TOK_PARTIAL_CHAR,
-    XML_TOK_PI, XML_TOK_PROLOG_S, XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS,
-    XML_TOK_TRAILING_CR, XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL, XML_UTF8_ENCODE_MAX, XML_UTF16_ENCODE_MAX,
+    XmlSizeOfUnknownEncoding, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING, POSITION, SCANNER,
+    XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED,
+    XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_BOM, XML_TOK_CDATA_SECT_CLOSE, XML_TOK_CDATA_SECT_OPEN,
+    XML_TOK_CHAR_REF, XML_TOK_COMMENT, XML_TOK_DATA_CHARS, XML_TOK_DATA_NEWLINE,
+    XML_TOK_EMPTY_ELEMENT_NO_ATTS, XML_TOK_EMPTY_ELEMENT_WITH_ATTS, XML_TOK_END_TAG,
+    XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT, XML_TOK_INSTANCE_START, XML_TOK_INVALID, XML_TOK_NONE,
+    XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL, XML_TOK_PARTIAL_CHAR, XML_TOK_PI, XML_TOK_PROLOG_S,
+    XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS, XML_TOK_TRAILING_CR,
+    XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL, XML_UTF16_ENCODE_MAX, XML_UTF8_ENCODE_MAX,
 };
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
@@ -136,7 +135,7 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[derive(Copy, Clone)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
-       macro works. */
+    macro works. */
     pub m_userData: *mut c_void,
     pub m_handlerArg: *mut c_void,
     pub m_buffer: *mut c_char,
@@ -464,10 +463,10 @@ pub struct HASH_TABLE_ITER {
 #[macro_use]
 mod unicode_defines {
     pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF16_ENCODE_MAX as usize;
-    pub use crate::XmlUtf16Convert as XmlConvert;
     pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncoding as XmlGetInternalEncoding;
     pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncodingNS as XmlGetInternalEncodingNS;
     pub use crate::src::lib::xmltok::XmlUtf16Encode as XmlEncode;
+    pub use crate::XmlUtf16Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {
         ($enc:path, $s:expr $(,)?) => {
@@ -479,12 +478,16 @@ mod unicode_defines {
 
     #[cfg(feature = "unicode_wchar_t")]
     macro_rules! wch {
-        ($s:literal) => { wchar::wch!(i32, $s).as_ptr() };
+        ($s:literal) => {
+            wchar::wch!(i32, $s).as_ptr()
+        };
     }
 
     #[cfg(not(feature = "unicode_wchar_t"))]
     macro_rules! wch {
-        ($s:literal) => { $s.as_ptr() as *const crate::expat_external_h::XML_LChar };
+        ($s:literal) => {
+            $s.as_ptr() as *const crate::expat_external_h::XML_LChar
+        };
     }
 }
 
@@ -492,10 +495,10 @@ mod unicode_defines {
 #[macro_use]
 mod unicode_defines {
     pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF8_ENCODE_MAX as usize;
-    pub use crate::XmlUtf8Convert as XmlConvert;
     pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncoding as XmlGetInternalEncoding;
     pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncodingNS as XmlGetInternalEncodingNS;
     pub use crate::src::lib::xmltok::XmlUtf8Encode as XmlEncode;
+    pub use crate::XmlUtf8Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {
         ($enc:path, $s:expr $(,)?) => {
@@ -506,7 +509,9 @@ mod unicode_defines {
     pub type ICHAR = libc::c_char;
 
     macro_rules! wch {
-        ($s:literal) => { $s.as_ptr() as *const crate::expat_external_h::XML_LChar };
+        ($s:literal) => {
+            $s.as_ptr() as *const crate::expat_external_h::XML_LChar
+        };
     }
 }
 
@@ -2579,57 +2584,35 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LCha
         XML_ERROR_NO_MEMORY => wch!("out of memory\x00"),
         XML_ERROR_SYNTAX => wch!("syntax error\x00"),
         XML_ERROR_NO_ELEMENTS => wch!("no element found\x00"),
-        XML_ERROR_INVALID_TOKEN => {
-            wch!("not well-formed (invalid token)\x00")
-        }
+        XML_ERROR_INVALID_TOKEN => wch!("not well-formed (invalid token)\x00"),
         XML_ERROR_UNCLOSED_TOKEN => wch!("unclosed token\x00"),
         XML_ERROR_PARTIAL_CHAR => wch!("partial character\x00"),
         XML_ERROR_TAG_MISMATCH => wch!("mismatched tag\x00"),
-        XML_ERROR_DUPLICATE_ATTRIBUTE => {
-            wch!("duplicate attribute\x00")
-        }
-        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => {
-            wch!("junk after document element\x00")
-        }
-        XML_ERROR_PARAM_ENTITY_REF => {
-            wch!("illegal parameter entity reference\x00")
-        }
+        XML_ERROR_DUPLICATE_ATTRIBUTE => wch!("duplicate attribute\x00"),
+        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => wch!("junk after document element\x00"),
+        XML_ERROR_PARAM_ENTITY_REF => wch!("illegal parameter entity reference\x00"),
         XML_ERROR_UNDEFINED_ENTITY => wch!("undefined entity\x00"),
-        XML_ERROR_RECURSIVE_ENTITY_REF => {
-            wch!("recursive entity reference\x00")
-        }
+        XML_ERROR_RECURSIVE_ENTITY_REF => wch!("recursive entity reference\x00"),
         XML_ERROR_ASYNC_ENTITY => wch!("asynchronous entity\x00"),
-        XML_ERROR_BAD_CHAR_REF => {
-            wch!("reference to invalid character number\x00")
-        }
-        XML_ERROR_BINARY_ENTITY_REF => {
-            wch!("reference to binary entity\x00")
-        }
+        XML_ERROR_BAD_CHAR_REF => wch!("reference to invalid character number\x00"),
+        XML_ERROR_BINARY_ENTITY_REF => wch!("reference to binary entity\x00"),
         XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
             wch!("reference to external entity in attribute\x00")
         }
-        XML_ERROR_MISPLACED_XML_PI => {
-            wch!("XML or text declaration not at start of entity\x00")
-        }
+        XML_ERROR_MISPLACED_XML_PI => wch!("XML or text declaration not at start of entity\x00"),
         XML_ERROR_UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
         XML_ERROR_INCORRECT_ENCODING => {
             wch!("encoding specified in XML declaration is incorrect\x00")
         }
-        XML_ERROR_UNCLOSED_CDATA_SECTION => {
-            wch!("unclosed CDATA section\x00")
-        }
+        XML_ERROR_UNCLOSED_CDATA_SECTION => wch!("unclosed CDATA section\x00"),
         XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
             wch!("error in processing external entity reference\x00")
         }
-        XML_ERROR_NOT_STANDALONE => {
-            wch!("document is not standalone\x00")
-        }
+        XML_ERROR_NOT_STANDALONE => wch!("document is not standalone\x00"),
         XML_ERROR_UNEXPECTED_STATE => {
             wch!("unexpected parser state - please send a bug report\x00")
         }
-        XML_ERROR_ENTITY_DECLARED_IN_PE => {
-            wch!("entity declared in parameter entity\x00")
-        }
+        XML_ERROR_ENTITY_DECLARED_IN_PE => wch!("entity declared in parameter entity\x00"),
         XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
             wch!("requested feature requires XML_DTD support in Expat\x00")
         }
@@ -2637,35 +2620,21 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LCha
             wch!("cannot change setting once parsing has begun\x00")
         }
         /* Added in 1.95.7. */
-        XML_ERROR_UNBOUND_PREFIX => {
-            wch!("unbound prefix\x00")
-        }
+        XML_ERROR_UNBOUND_PREFIX => wch!("unbound prefix\x00"),
         /* Added in 1.95.8. */
-        XML_ERROR_UNDECLARING_PREFIX => {
-            wch!("must not undeclare prefix\x00")
-        }
-        XML_ERROR_INCOMPLETE_PE => {
-            wch!("incomplete markup in parameter entity\x00")
-        }
-        XML_ERROR_XML_DECL => {
-            wch!("XML declaration not well-formed\x00")
-        }
-        XML_ERROR_TEXT_DECL => {
-            wch!("text declaration not well-formed\x00")
-        }
-        XML_ERROR_PUBLICID => {
-            wch!("illegal character(s) in public id\x00")
-        }
+        XML_ERROR_UNDECLARING_PREFIX => wch!("must not undeclare prefix\x00"),
+        XML_ERROR_INCOMPLETE_PE => wch!("incomplete markup in parameter entity\x00"),
+        XML_ERROR_XML_DECL => wch!("XML declaration not well-formed\x00"),
+        XML_ERROR_TEXT_DECL => wch!("text declaration not well-formed\x00"),
+        XML_ERROR_PUBLICID => wch!("illegal character(s) in public id\x00"),
         XML_ERROR_SUSPENDED => wch!("parser suspended\x00"),
         XML_ERROR_NOT_SUSPENDED => wch!("parser not suspended\x00"),
         XML_ERROR_ABORTED => wch!("parsing aborted\x00"),
         XML_ERROR_FINISHED => wch!("parsing finished\x00"),
-        XML_ERROR_SUSPEND_PE => {
-            wch!("cannot suspend in external parameter entity\x00")
-        }
+        XML_ERROR_SUSPEND_PE => wch!("cannot suspend in external parameter entity\x00"),
         XML_ERROR_RESERVED_PREFIX_XML => {
             /* Added in 2.0.0. */
-             wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
+            wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
         }
         XML_ERROR_RESERVED_PREFIX_XMLNS => {
             wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
@@ -2674,7 +2643,8 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LCha
             wch!("prefix must not be bound to one of the reserved namespace names\x00")
         }
         /* Added in 2.2.5. */
-        XML_ERROR_INVALID_ARGUMENT => { /* Constant added in 2.2.1, already */
+        XML_ERROR_INVALID_ARGUMENT => {
+            /* Constant added in 2.2.1, already */
             wch!("invalid argument\x00")
         }
         _ => NULL as *const XML_LChar,
@@ -2816,8 +2786,12 @@ unsafe extern "C" fn storeRawNames(mut parser: XML_Parser) -> XML_Bool {
                then update it as well, since it will always point into tag->buf
             */
             if !(*tag).name.localPart.is_null() {
-                (*tag).name.localPart =
-                    (temp).offset((*tag).name.localPart.wrapping_offset_from((*tag).buf as *const XML_Char)) as *const XML_Char
+                (*tag).name.localPart = (temp).offset(
+                    (*tag)
+                        .name
+                        .localPart
+                        .wrapping_offset_from((*tag).buf as *const XML_Char),
+                ) as *const XML_Char
             } /* XmlContentTok doesn't always set the last arg */
             (*tag).buf = temp;
             (*tag).bufEnd = temp.offset(bufSize as isize);
@@ -3241,14 +3215,13 @@ unsafe extern "C" fn doContent(
                 loop {
                     let mut bufSize: c_int = 0;
                     let mut convLen: c_int = 0;
-                    let convert_res: super::xmltok::XML_Convert_Result =
-                        XmlConvert!(
-                            enc,
-                            &mut fromPtr,
-                            rawNameEnd,
-                            &mut toPtr as *mut *mut XML_Char,
-                            ((*tag).bufEnd).offset(-(1)) as *const XML_Char,
-                        );
+                    let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
+                        enc,
+                        &mut fromPtr,
+                        rawNameEnd,
+                        &mut toPtr as *mut *mut XML_Char,
+                        ((*tag).bufEnd).offset(-(1)) as *const XML_Char,
+                    );
                     convLen = toPtr.wrapping_offset_from((*tag).buf as *const XML_Char) as c_int;
                     if fromPtr >= rawNameEnd
                         || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
@@ -3517,13 +3490,7 @@ unsafe extern "C" fn doContent(
                 if (*parser).m_characterDataHandler.is_some() {
                     if MUST_CONVERT!(enc, s) {
                         let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-                        XmlConvert!(
-                            enc,
-                            &mut s,
-                            end,
-                            &mut dataPtr,
-                            (*parser).m_dataBufEnd,
-                        );
+                        XmlConvert!(enc, &mut s, end, &mut dataPtr, (*parser).m_dataBufEnd,);
                         (*parser)
                             .m_characterDataHandler
                             .expect("non-null function pointer")(
@@ -3579,14 +3546,13 @@ unsafe extern "C" fn doContent(
                     if MUST_CONVERT!(enc, s) {
                         loop {
                             let mut dataPtr_0: *mut ICHAR = (*parser).m_dataBuf;
-                            let convert_res_0: super::xmltok::XML_Convert_Result =
-                                XmlConvert!(
-                                    enc,
-                                    &mut s,
-                                    next,
-                                    &mut dataPtr_0,
-                                    (*parser).m_dataBufEnd,
-                                );
+                            let convert_res_0: super::xmltok::XML_Convert_Result = XmlConvert!(
+                                enc,
+                                &mut s,
+                                next,
+                                &mut dataPtr_0,
+                                (*parser).m_dataBufEnd,
+                            );
                             *eventEndPP = s;
                             charDataHandler.expect("non-null function pointer")(
                                 (*parser).m_handlerArg,
@@ -4440,8 +4406,7 @@ unsafe extern "C" fn addBinding(
     (*b).attId = attId;
     (*b).prevPrefixBinding = (*prefix).binding;
     /* NULL binding when default namespace undeclared */
-    if *uri == '\u{0}' as XML_Char
-        && prefix == &mut (*(*parser).m_dtd).defaultPrefix as *mut PREFIX
+    if *uri == '\u{0}' as XML_Char && prefix == &mut (*(*parser).m_dtd).defaultPrefix as *mut PREFIX
     {
         (*prefix).binding = NULL as *mut BINDING
     } else {
@@ -4578,14 +4543,13 @@ unsafe extern "C" fn doCdataSection(
                     if MUST_CONVERT!(enc, s) {
                         loop {
                             let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-                            let convert_res: super::xmltok::XML_Convert_Result =
-                                XmlConvert!(
-                                    enc,
-                                    &mut s,
-                                    next,
-                                    &mut dataPtr,
-                                    (*parser).m_dataBufEnd,
-                                );
+                            let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
+                                enc,
+                                &mut s,
+                                next,
+                                &mut dataPtr,
+                                (*parser).m_dataBufEnd,
+                            );
                             *eventEndPP = next;
                             charDataHandler.expect("non-null function pointer")(
                                 (*parser).m_handlerArg,
@@ -4783,10 +4747,10 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
             while *(*parser).m_protocolEncodingName.offset(i as isize) != 0 {
                 if i as libc::c_ulong
                     == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
-                    .wrapping_sub(1 as libc::c_int as libc::c_ulong)
+                        .wrapping_sub(1 as libc::c_int as libc::c_ulong)
                     || *(*parser).m_protocolEncodingName.offset(i as isize) as libc::c_int
-                    & !(0x7f as libc::c_int)
-                    != 0 as libc::c_int
+                        & !(0x7f as libc::c_int)
+                        != 0 as libc::c_int
                 {
                     encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
                     break;
@@ -5322,7 +5286,11 @@ unsafe extern "C" fn doProlog(
         ASCII_A as XML_Char,
         '\u{0}' as XML_Char,
     ];
-    static mut atypeID: [XML_Char; 3] = [ASCII_I as XML_Char, ASCII_D as XML_Char, '\u{0}' as XML_Char];
+    static mut atypeID: [XML_Char; 3] = [
+        ASCII_I as XML_Char,
+        ASCII_D as XML_Char,
+        '\u{0}' as XML_Char,
+    ];
     static mut atypeIDREF: [XML_Char; 6] = [
         ASCII_I as XML_Char,
         ASCII_D as XML_Char,
@@ -7783,13 +7751,7 @@ unsafe extern "C" fn reportDefault(
         }
         loop {
             let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-            convert_res = XmlConvert!(
-                enc,
-                &mut s,
-                end,
-                &mut dataPtr,
-                (*parser).m_dataBufEnd,
-            );
+            convert_res = XmlConvert!(enc, &mut s, end, &mut dataPtr, (*parser).m_dataBufEnd,);
             *eventEndPP = s;
             (*parser)
                 .m_defaultHandler
@@ -8067,7 +8029,7 @@ unsafe extern "C" fn getAttributeId(
 }
 
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
-    
+
 unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
@@ -9109,14 +9071,13 @@ unsafe extern "C" fn poolAppend(
         return NULL as *mut XML_Char;
     }
     loop {
-        let convert_res: super::xmltok::XML_Convert_Result =
-            XmlConvert!(
-                enc,
-                &mut ptr,
-                end,
-                &mut (*pool).ptr as *mut *mut XML_Char,
-                (*pool).end as *mut ICHAR,
-            );
+        let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
+            enc,
+            &mut ptr,
+            end,
+            &mut (*pool).ptr as *mut *mut XML_Char,
+            (*pool).end as *mut ICHAR,
+        );
         if convert_res == super::xmltok::XML_CONVERT_COMPLETED
             || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
         {
