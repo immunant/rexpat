@@ -2705,6 +2705,15 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
             };
             init
         },
+        #[cfg(feature = "unicode_wchar_t")]
+        {
+            let mut init = XML_Feature {
+                feature: XML_FEATURE_UNICODE_WCHAR_T,
+                name: wch!("XML_UNICODE_WHCAR_T\x00"),
+                value: 0i64,
+            };
+            init
+        },
         {
             let mut init = XML_Feature {
                 feature: XML_FEATURE_DTD,
