@@ -2,8 +2,6 @@
 -- to all functions that are renamed using `#define`
 -- inside Firefox's `expat_config.h`, which we parse here
 
-require('pl')
-
 local Visitor = {}
 Visitor.__index = Visitor
 
