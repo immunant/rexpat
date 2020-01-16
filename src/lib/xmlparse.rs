@@ -945,49 +945,28 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     );
     (*parser).m_userData = NULL as *mut c_void;
     (*parser).m_handlerArg = NULL as *mut c_void;
-    (*parser).m_startElementHandler =
-        ::std::mem::transmute::<intptr_t, XML_StartElementHandler>(NULL as intptr_t);
-    (*parser).m_endElementHandler =
-        ::std::mem::transmute::<intptr_t, XML_EndElementHandler>(NULL as intptr_t);
-    (*parser).m_characterDataHandler =
-        ::std::mem::transmute::<intptr_t, XML_CharacterDataHandler>(NULL as intptr_t);
-    (*parser).m_processingInstructionHandler =
-        ::std::mem::transmute::<intptr_t, XML_ProcessingInstructionHandler>(NULL as intptr_t);
-    (*parser).m_commentHandler =
-        ::std::mem::transmute::<intptr_t, XML_CommentHandler>(NULL as intptr_t);
-    (*parser).m_startCdataSectionHandler =
-        ::std::mem::transmute::<intptr_t, XML_StartCdataSectionHandler>(NULL as intptr_t);
-    (*parser).m_endCdataSectionHandler =
-        ::std::mem::transmute::<intptr_t, XML_EndCdataSectionHandler>(NULL as intptr_t);
-    (*parser).m_defaultHandler =
-        ::std::mem::transmute::<intptr_t, XML_DefaultHandler>(NULL as intptr_t);
-    (*parser).m_startDoctypeDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_StartDoctypeDeclHandler>(NULL as intptr_t);
-    (*parser).m_endDoctypeDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_EndDoctypeDeclHandler>(NULL as intptr_t);
-    (*parser).m_unparsedEntityDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_UnparsedEntityDeclHandler>(NULL as intptr_t);
-    (*parser).m_notationDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_NotationDeclHandler>(NULL as intptr_t);
-    (*parser).m_startNamespaceDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_StartNamespaceDeclHandler>(NULL as intptr_t);
-    (*parser).m_endNamespaceDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_EndNamespaceDeclHandler>(NULL as intptr_t);
-    (*parser).m_notStandaloneHandler =
-        ::std::mem::transmute::<intptr_t, XML_NotStandaloneHandler>(NULL as intptr_t);
-    (*parser).m_externalEntityRefHandler =
-        ::std::mem::transmute::<intptr_t, XML_ExternalEntityRefHandler>(NULL as intptr_t);
+    (*parser).m_startElementHandler = None;
+    (*parser).m_endElementHandler = None;
+    (*parser).m_characterDataHandler = None;
+    (*parser).m_processingInstructionHandler = None;
+    (*parser).m_commentHandler = None;
+    (*parser).m_startCdataSectionHandler = None;
+    (*parser).m_endCdataSectionHandler = None;
+    (*parser).m_defaultHandler = None;
+    (*parser).m_startDoctypeDeclHandler = None;
+    (*parser).m_endDoctypeDeclHandler = None;
+    (*parser).m_unparsedEntityDeclHandler = None;
+    (*parser).m_notationDeclHandler = None;
+    (*parser).m_startNamespaceDeclHandler = None;
+    (*parser).m_endNamespaceDeclHandler = None;
+    (*parser).m_notStandaloneHandler = None;
+    (*parser).m_externalEntityRefHandler = None;
     (*parser).m_externalEntityRefHandlerArg = parser;
-    (*parser).m_skippedEntityHandler =
-        ::std::mem::transmute::<intptr_t, XML_SkippedEntityHandler>(NULL as intptr_t);
-    (*parser).m_elementDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_ElementDeclHandler>(NULL as intptr_t);
-    (*parser).m_attlistDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_AttlistDeclHandler>(NULL as intptr_t);
-    (*parser).m_entityDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_EntityDeclHandler>(NULL as intptr_t);
-    (*parser).m_xmlDeclHandler =
-        ::std::mem::transmute::<intptr_t, XML_XmlDeclHandler>(NULL as intptr_t);
+    (*parser).m_skippedEntityHandler = None;
+    (*parser).m_elementDeclHandler = None;
+    (*parser).m_attlistDeclHandler = None;
+    (*parser).m_entityDeclHandler = None;
+    (*parser).m_xmlDeclHandler = None;
     (*parser).m_bufferPtr = (*parser).m_buffer;
     (*parser).m_bufferEnd = (*parser).m_buffer;
     (*parser).m_parseEndByteIndex = 0i64;
