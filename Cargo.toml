@@ -1,11 +1,3 @@
-[workspace]
-members = [
-]
-exclude = [
-    "deps/wchar",
-    "deps/wchar",
-]
-
 [package]
 name = "libexpat-rs"
 authors = ["C2Rust"]
