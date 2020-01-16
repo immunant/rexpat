@@ -4003,12 +4003,12 @@ unsafe extern "C" fn storeAtts(
     /* expand prefixed attribute names, check for duplicates,
     and clear flags that say whether attributes were specified */
     i = 0; /* hash table index */
-    if nPrefixes != 0 || nXMLNSDeclarations != 0 {
+    if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
         let mut j_0: c_int = 0;
         let mut version: c_ulong = (*parser).m_nsAttsVersion;
         let mut nsAttsSize: c_int = (1) << (*parser).m_nsAttsPower as c_int;
         let mut oldNsAttsPower: c_uchar = (*parser).m_nsAttsPower;
-        if nPrefixes != 0 {
+        if nPrefixes != 0 { // MOZILLA CHANGE
             /* size of hash table must be at least 2 * (# of prefixed attributes) */
             if nPrefixes << 1 >> (*parser).m_nsAttsPower as c_int != 0 {
                 /* true for m_nsAttsPower = 0 */
@@ -4051,7 +4051,7 @@ unsafe extern "C" fn storeAtts(
             }
             version = version.wrapping_sub(1);
             (*parser).m_nsAttsVersion = version;
-        }
+        } // MOZILLA CHANGE
         /* expand prefixed names and check for duplicates */
         while i < attIndex {
             let mut s: *const XML_Char = *appAtts.offset(i as isize);
@@ -4259,11 +4259,11 @@ unsafe extern "C" fn storeAtts(
                     ASCII_n as XML_Char,
                     ASCII_s as XML_Char,
                     ASCII_SLASH as XML_Char,
-                    '\0' as XML_Char
+                    '\u{0}' as XML_Char
                 ];
                 const xmlnsPrefix: [XML_Char; 6] = [
                     ASCII_x as XML_Char, ASCII_m as XML_Char, ASCII_l as XML_Char,
-                    ASCII_n as XML_Char, ASCII_s as XML_Char, '\0' as XML_Char
+                    ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                 ];
 
                 *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
@@ -4280,7 +4280,7 @@ unsafe extern "C" fn storeAtts(
                         if !poolAppendChar(&mut (*parser).m_tempPool, *s) {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        if *s == '\0' as XML_Char {
+                        if *s == '\u{0}' as XML_Char {
                             s = s.offset(1);
                             break;
                         }
@@ -4290,7 +4290,7 @@ unsafe extern "C" fn storeAtts(
                     if (*parser).m_ns_triplets != 0 { /* append namespace separator and prefix */
                         *(*parser).m_tempPool.ptr.offset(-1) = (*parser).m_namespaceSeparator;
                         if poolAppendString(&mut (*parser).m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
-                            !poolAppendChar(&mut (*parser).m_tempPool, '\0' as XML_Char)
+                            !poolAppendChar(&mut (*parser).m_tempPool, '\u{0}' as XML_Char)
                         {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -4298,7 +4298,7 @@ unsafe extern "C" fn storeAtts(
                 } else {
                     /* xlmns attribute without a prefix. */
                     if poolAppendString(&mut (*parser).m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
-                        !poolAppendChar(&mut (*parser).m_tempPool, '\0' as XML_Char)
+                        !poolAppendChar(&mut (*parser).m_tempPool, '\u{0}' as XML_Char)
                     {
                         return XML_ERROR_NO_MEMORY;
                     }
