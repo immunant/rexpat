@@ -15175,7 +15175,7 @@ static mut ascii_encoding: normal_encoding = unsafe {
 
 pub const BT_COLON_4: c_int = BT_NMSTRT as c_int;
 
-unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> c_int {
+pub(crate) unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> c_int {
     match hi as c_uchar as c_int {
         216 | 217 | 218 | 219 => {
             /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
@@ -18380,6 +18380,9 @@ static mut KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, '\u{0}' as c_char];
 
 static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
 
+#[cfg(feature = "mozilla")]
+static mut KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, '\u{0}' as c_char];
+
 unsafe extern "C" fn doParseXmlDecl(
     mut encodingFinder: Option<
         unsafe extern "C" fn(
@@ -18427,6 +18430,16 @@ unsafe extern "C" fn doParseXmlDecl(
         }
         if !versionEndPtr.is_null() {
             *versionEndPtr = ptr
+        }
+        #[cfg(feature = "mozilla")]
+        {
+            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
+                enc, val, ptr.offset(-((*enc).minBytesPerChar as isize)),
+                KW_XML_1_0.as_ptr()) == 0
+            {
+                *badPtr = val;
+                return 0i32;
+            }
         }
         if parsePseudoAttribute(enc, ptr, end, &mut name, &mut nameEnd, &mut val, &mut ptr) == 0 {
             *badPtr = ptr;

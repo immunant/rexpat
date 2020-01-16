@@ -133,6 +133,17 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
+#[inline]
+unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
+    if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+        false
+    } else {
+        *(*pool).ptr = c;
+        (*pool).ptr = (*pool).ptr.offset(1);
+        true
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_ParserStruct {
@@ -233,6 +244,9 @@ pub struct XML_ParserStruct {
     pub m_useForeignDTD: XML_Bool,
     pub m_paramEntityParsing: XML_ParamEntityParsing,
     pub m_hash_secret_salt: c_ulong,
+
+    #[cfg(feature = "mozilla")]
+    pub m_mismatch: *const XML_Char,
 }
 
 #[repr(C)]
@@ -529,7 +543,19 @@ pub const INIT_ATTS_SIZE: c_int = 16;
 
 pub const INIT_ATTS_VERSION: c_uint = 0xffffffff;
 
-pub const INIT_BLOCK_SIZE: c_int = 1024;
+pub const INIT_BLOCK_SIZE: c_int = init_block_size_const();
+
+#[cfg(feature = "mozilla")]
+const fn init_block_size_const() -> c_int {
+    // FIXME: should be `offset_of(BLOCK, s)`, but that's not supported yet,
+    // so we over-estimate its offset
+    1024 - (std::mem::size_of::<BLOCK>() / std::mem::size_of::<XML_Char>()) as c_int
+}
+
+#[cfg(not(feature = "mozilla"))]
+const fn init_block_size_const() -> c_int {
+    1024
+}
 
 pub const INIT_BUFFER_SIZE: c_int = 1024;
 
@@ -739,6 +765,10 @@ unsafe extern "C" fn gather_time_entropy() -> c_ulong {
 /* ! defined(HAVE_ARC4RANDOM_BUF) && ! defined(HAVE_ARC4RANDOM) */
 
 unsafe extern "C" fn ENTROPY_DEBUG(mut label: *const c_char, mut entropy: c_ulong) -> c_ulong {
+    if cfg!(feature = "mozilla") {
+        return entropy;
+    }
+
     let EXPAT_ENTROPY_DEBUG: *const c_char =
         getenv(b"EXPAT_ENTROPY_DEBUG\x00".as_ptr() as *const c_char);
     if !EXPAT_ENTROPY_DEBUG.is_null()
@@ -927,6 +957,11 @@ unsafe extern "C" fn parserCreate(
         (*parser).m_namespaceSeparator = *nameSep
     } else {
         (*parser).m_internalEncoding = XmlGetInternalEncoding()
+    }
+
+    #[cfg(feature = "mozilla")]
+    {
+        (*parser).m_mismatch = NULL as *const XML_Char;
     }
     return parser;
 }
@@ -2344,6 +2379,12 @@ pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status 
         &mut (*parser).m_position,
     );
     (*parser).m_positionPtr = (*parser).m_bufferPtr;
+
+    #[cfg(feature = "mozilla")]
+    {
+        (*parser).m_eventPtr = (*parser).m_bufferPtr;
+        (*parser).m_eventEndPtr = (*parser).m_bufferPtr;
+    }
     return result;
 }
 /* Returns status of parser with respect to being initialized, parsing,
@@ -2394,6 +2435,9 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_
             - (*parser)
                 .m_parseEndPtr
                 .wrapping_offset_from((*parser).m_eventPtr) as c_long;
+    }
+    if cfg!(feature = "mozilla") {
+        return (*parser).m_parseEndByteIndex;
     }
     return -1i64;
 }
@@ -2736,6 +2780,19 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
     ];
     return features.as_ptr();
 }
+
+#[cfg(feature = "mozilla")]
+#[no_mangle]
+pub unsafe extern "C" fn MOZ_XML_GetMismatchedTag(parser: XML_Parser) -> *const XML_Char {
+    (*parser).m_mismatch
+}
+
+#[cfg(feature = "mozilla")]
+#[no_mangle]
+pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XML_Bool {
+    !(*parser).m_openInternalEntities.is_null() as XML_Bool
+}
+
 /* Initially tag->rawName always points into the parse buffer;
    for those TAG instances opened while the current parse buffer was
    processed, and not yet closed, we need to store tag->rawName in a more
@@ -3110,6 +3167,8 @@ unsafe extern "C" fn doContent(
                                 name,
                                 0i32,
                             );
+                        } else if cfg!(feature = "mozilla") {
+                            return XML_ERROR_UNDEFINED_ENTITY;
                         } else if (*parser).m_defaultHandler.is_some() {
                             reportDefault(parser, enc, s, next);
                         }
@@ -3342,6 +3401,45 @@ unsafe extern "C" fn doContent(
                             len as c_ulong,
                         ) != 0
                     {
+                        #[cfg(feature = "mozilla")]
+                        {
+                            /* This code is copied from the |if (endElementHandler)| block below */
+                            let mut localPart: *const XML_Char = 0 as *const XML_Char;
+                            let mut prefix: *const XML_Char = 0 as *const XML_Char;
+                            let mut uri: *mut XML_Char = 0 as *mut XML_Char;
+                            localPart = (*tag_0).name.localPart;
+                            if (*parser).m_ns as c_int != 0 && !localPart.is_null() {
+                                /* localPart and prefix may have been overwritten in
+                                   tag->name.str, since this points to the binding->uri
+                                   buffer which gets re-used; so we have to add them again
+                                */
+                                uri = ((*tag_0).name.str_0 as *mut XML_Char)
+                                    .offset((*tag_0).name.uriLen as isize);
+                                /* don't need to check for space - already done in storeAtts() */
+                                while *localPart != 0 {
+                                    let fresh2 = localPart;
+                                    localPart = localPart.offset(1);
+                                    let fresh3 = uri;
+                                    uri = uri.offset(1);
+                                    *fresh3 = *fresh2
+                                }
+                                prefix = (*tag_0).name.prefix as *mut XML_Char;
+                                if (*parser).m_ns_triplets as c_int != 0 && !prefix.is_null() {
+                                    let fresh4 = uri;
+                                    uri = uri.offset(1);
+                                    *fresh4 = (*parser).m_namespaceSeparator;
+                                    while *prefix != 0 {
+                                        let fresh5 = prefix;
+                                        prefix = prefix.offset(1);
+                                        let fresh6 = uri;
+                                        uri = uri.offset(1);
+                                        *fresh6 = *fresh5
+                                    }
+                                }
+                                *uri = '\u{0}' as XML_Char
+                            }
+                            (*parser).m_mismatch = (*tag_0).name.str_0;
+                        }
                         *eventPP = rawName_0;
                         return XML_ERROR_TAG_MISMATCH;
                     }
@@ -3663,6 +3761,7 @@ unsafe extern "C" fn storeAtts(
     let mut n: c_int = 0;
     let mut uri: *mut XML_Char = 0 as *mut XML_Char;
     let mut nPrefixes: c_int = 0;
+    let mut nXMLNSDeclarations: c_int = 0;
     let mut binding: *mut BINDING = 0 as *mut BINDING;
     let mut localPart: *const XML_Char = 0 as *const XML_Char;
     /* lookup the element type name */
@@ -3809,7 +3908,15 @@ unsafe extern "C" fn storeAtts(
                 if result_0 as u64 != 0 {
                     return result_0;
                 }
-                attIndex -= 1
+                attIndex -= 1;
+                #[cfg(feature = "mozilla")]
+                {
+                    // Mozilla code replaces `--attIndex` with `attIndex++`,
+                    // which is a shift by 2 positions
+                    attIndex += 2;
+                    nXMLNSDeclarations += 1;
+                    *(*attId).name.offset(-1) = 3;
+                }
             } else {
                 /* deal with other prefixed names later */
                 attIndex += 1;
@@ -3853,6 +3960,15 @@ unsafe extern "C" fn storeAtts(
                     if result_1 as u64 != 0 {
                         return result_1;
                     }
+                    #[cfg(feature = "mozilla")]
+                    {
+                        *(*(*da).id).name.offset(-1) = 3;
+                        nXMLNSDeclarations += 1;
+                        *appAtts.offset(attIndex as isize) = (*(*da).id).name;
+                        attIndex += 1;
+                        *appAtts.offset(attIndex as isize) = (*da).value;
+                        attIndex += 1;
+                    }
                 } else {
                     *(*(*da).id).name.offset(-1) = 2;
                     nPrefixes += 1;
@@ -3884,53 +4000,55 @@ unsafe extern "C" fn storeAtts(
     /* expand prefixed attribute names, check for duplicates,
     and clear flags that say whether attributes were specified */
     i = 0; /* hash table index */
-    if nPrefixes != 0 {
+    if nPrefixes != 0 || nXMLNSDeclarations != 0 {
         let mut j_0: c_int = 0;
         let mut version: c_ulong = (*parser).m_nsAttsVersion;
         let mut nsAttsSize: c_int = (1) << (*parser).m_nsAttsPower as c_int;
         let mut oldNsAttsPower: c_uchar = (*parser).m_nsAttsPower;
-        /* size of hash table must be at least 2 * (# of prefixed attributes) */
-        if nPrefixes << 1 >> (*parser).m_nsAttsPower as c_int != 0 {
-            /* true for m_nsAttsPower = 0 */
-            let mut temp_0: *mut NS_ATT = 0 as *mut NS_ATT;
-            loop
-            /* hash table size must also be a power of 2 and >= 8 */
-            {
-                let fresh20 = (*parser).m_nsAttsPower;
-                (*parser).m_nsAttsPower = (*parser).m_nsAttsPower.wrapping_add(1);
-                if !(nPrefixes >> fresh20 as c_int != 0) {
-                    break;
+        if nPrefixes != 0 {
+            /* size of hash table must be at least 2 * (# of prefixed attributes) */
+            if nPrefixes << 1 >> (*parser).m_nsAttsPower as c_int != 0 {
+                /* true for m_nsAttsPower = 0 */
+                let mut temp_0: *mut NS_ATT = 0 as *mut NS_ATT;
+                loop
+                /* hash table size must also be a power of 2 and >= 8 */
+                {
+                    let fresh20 = (*parser).m_nsAttsPower;
+                    (*parser).m_nsAttsPower = (*parser).m_nsAttsPower.wrapping_add(1);
+                    if !(nPrefixes >> fresh20 as c_int != 0) {
+                        break;
+                    }
+                }
+                if ((*parser).m_nsAttsPower as c_int) < 3 {
+                    (*parser).m_nsAttsPower = 3u8
+                }
+                nsAttsSize = (1) << (*parser).m_nsAttsPower as c_int;
+                temp_0 = REALLOC!(
+                    parser,
+                    (*parser).m_nsAtts as *mut c_void,
+                    (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
+                ) as *mut NS_ATT;
+                if temp_0.is_null() {
+                    /* Restore actual size of memory in m_nsAtts */
+                    (*parser).m_nsAttsPower = oldNsAttsPower;
+                    return XML_ERROR_NO_MEMORY;
+                }
+                (*parser).m_nsAtts = temp_0;
+                version = 0
+            }
+            /* using a version flag saves us from initializing m_nsAtts every time */
+            if version == 0 {
+                /* initialize version flags when version wraps around */
+                version = INIT_ATTS_VERSION as c_ulong;
+                j_0 = nsAttsSize;
+                while j_0 != 0 {
+                    j_0 -= 1;
+                    (*(*parser).m_nsAtts.offset(j_0 as isize)).version = version
                 }
             }
-            if ((*parser).m_nsAttsPower as c_int) < 3 {
-                (*parser).m_nsAttsPower = 3u8
-            }
-            nsAttsSize = (1) << (*parser).m_nsAttsPower as c_int;
-            temp_0 = REALLOC!(
-                parser,
-                (*parser).m_nsAtts as *mut c_void,
-                (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
-            ) as *mut NS_ATT;
-            if temp_0.is_null() {
-                /* Restore actual size of memory in m_nsAtts */
-                (*parser).m_nsAttsPower = oldNsAttsPower;
-                return XML_ERROR_NO_MEMORY;
-            }
-            (*parser).m_nsAtts = temp_0;
-            version = 0
+            version = version.wrapping_sub(1);
+            (*parser).m_nsAttsVersion = version;
         }
-        /* using a version flag saves us from initializing m_nsAtts every time */
-        if version == 0 {
-            /* initialize version flags when version wraps around */
-            version = INIT_ATTS_VERSION as c_ulong;
-            j_0 = nsAttsSize;
-            while j_0 != 0 {
-                j_0 -= 1;
-                (*(*parser).m_nsAtts.offset(j_0 as isize)).version = version
-            }
-        }
-        version = version.wrapping_sub(1);
-        (*parser).m_nsAttsVersion = version;
         /* expand prefixed names and check for duplicates */
         while i < attIndex {
             let mut s: *const XML_Char = *appAtts.offset(i as isize);
@@ -4103,7 +4221,94 @@ unsafe extern "C" fn storeAtts(
                 let ref mut fresh28 = (*(*parser).m_nsAtts.offset(j_0 as isize)).uriName;
                 *fresh28 = s;
                 nPrefixes -= 1;
-                if nPrefixes == 0 {
+                if nPrefixes == 0 && nXMLNSDeclarations == 0 {
+                    i += 2;
+                    break;
+                }
+            } else if cfg!(feature = "mozilla") && *s.offset(-1) as c_int == 3 {
+                const xmlnsNamespace: [XML_Char; 30] = [
+                    ASCII_h as XML_Char,
+                    ASCII_t as XML_Char,
+                    ASCII_t as XML_Char,
+                    ASCII_p as XML_Char,
+                    ASCII_COLON as XML_Char,
+                    ASCII_SLASH as XML_Char,
+                    ASCII_SLASH as XML_Char,
+                    ASCII_w as XML_Char,
+                    ASCII_w as XML_Char,
+                    ASCII_w as XML_Char,
+                    ASCII_PERIOD as XML_Char,
+                    ASCII_w as XML_Char,
+                    ASCII_3 as XML_Char,
+                    ASCII_PERIOD as XML_Char,
+                    ASCII_o as XML_Char,
+                    ASCII_r as XML_Char,
+                    ASCII_g as XML_Char,
+                    ASCII_SLASH as XML_Char,
+                    ASCII_2 as XML_Char,
+                    ASCII_0 as XML_Char,
+                    ASCII_0 as XML_Char,
+                    ASCII_0 as XML_Char,
+                    ASCII_SLASH as XML_Char,
+                    ASCII_x as XML_Char,
+                    ASCII_m as XML_Char,
+                    ASCII_l as XML_Char,
+                    ASCII_n as XML_Char,
+                    ASCII_s as XML_Char,
+                    ASCII_SLASH as XML_Char,
+                    '\0' as XML_Char
+                ];
+                const xmlnsPrefix: [XML_Char; 6] = [
+                    ASCII_x as XML_Char, ASCII_m as XML_Char, ASCII_l as XML_Char,
+                    ASCII_n as XML_Char, ASCII_s as XML_Char, '\0' as XML_Char
+                ];
+
+                *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
+                if poolAppendString(&mut (*parser).m_tempPool, xmlnsNamespace.as_ptr()).is_null() ||
+                    !poolAppendChar(&mut (*parser).m_tempPool, (*parser).m_namespaceSeparator)
+                {
+                    return XML_ERROR_NO_MEMORY;
+                }
+
+                s = s.offset(xmlnsPrefix.len() as isize - 1);
+                if *s == ':' as XML_Char {
+                    s = s.offset(1);
+                    loop { /* copies null terminator */
+                        if !poolAppendChar(&mut (*parser).m_tempPool, *s) {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if *s == '\0' as XML_Char {
+                            s = s.offset(1);
+                            break;
+                        }
+                        s = s.offset(1);
+                    }
+
+                    if (*parser).m_ns_triplets != 0 { /* append namespace separator and prefix */
+                        *(*parser).m_tempPool.ptr.offset(-1) = (*parser).m_namespaceSeparator;
+                        if poolAppendString(&mut (*parser).m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
+                            !poolAppendChar(&mut (*parser).m_tempPool, '\0' as XML_Char)
+                        {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                    }
+                } else {
+                    /* xlmns attribute without a prefix. */
+                    if poolAppendString(&mut (*parser).m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
+                        !poolAppendChar(&mut (*parser).m_tempPool, '\0' as XML_Char)
+                    {
+                        return XML_ERROR_NO_MEMORY;
+                    }
+                }
+
+                /* store expanded name in attribute list */
+                s = (*parser).m_tempPool.start;
+                (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
+                let ref mut fresh27 = *appAtts.offset(i as isize);
+                *fresh27 = s;
+
+                nXMLNSDeclarations -= 1;
+                if nXMLNSDeclarations == 0 && nPrefixes == 0 {
                     i += 2;
                     break;
                 }
@@ -6462,11 +6667,16 @@ unsafe extern "C" fn doProlog(
                             } else if (*parser).m_externalEntityRefHandler.is_some() {
                                 (*dtd).paramEntityRead = XML_FALSE;
                                 (*entity_1).open = XML_TRUE;
+                                let entity_1_name = if cfg!(feature = "mozilla") {
+                                    (*entity_1).name
+                                } else {
+                                    0 as *const XML_Char
+                                };
                                 if (*parser)
                                     .m_externalEntityRefHandler
                                     .expect("non-null function pointer")(
                                     (*parser).m_externalEntityRefHandlerArg,
-                                    0 as *const XML_Char,
+                                    entity_1_name,
                                     (*entity_1).base,
                                     (*entity_1).systemId,
                                     (*entity_1).publicId,
@@ -6968,7 +7178,30 @@ unsafe extern "C" fn processInternalEntity(
             (*parser).m_processor = Some(internalEntityProcessor as Processor)
         } else {
             (*entity).open = XML_FALSE;
-            (*parser).m_openInternalEntities = (*openEntity).next;
+            if cfg!(feature = "mozilla") {
+                if (*parser).m_openInternalEntities == openEntity {
+                    (*parser).m_openInternalEntities = (*openEntity).next;
+                } else {
+					/* openEntity should be closed, but it contains an inner entity that is
+					   still open. Remove openEntity from the openInternalEntities linked
+					   list by looking for the inner entity in the list that links to
+					   openEntity and fixing up its 'next' member
+					*/
+                    let mut innerOpenEntity = (*parser).m_openInternalEntities;
+                    loop {
+                        if (*innerOpenEntity).next == openEntity {
+                            (*innerOpenEntity).next = (*openEntity).next;
+                            break;
+                        }
+                        innerOpenEntity = (*innerOpenEntity).next;
+                        if innerOpenEntity.is_null() {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                (*parser).m_openInternalEntities = (*openEntity).next;
+            }
             /* put openEntity back in list of free instances */
             (*openEntity).next = (*parser).m_freeInternalEntities;
             (*parser).m_freeInternalEntities = openEntity
@@ -7276,6 +7509,9 @@ unsafe extern "C" fn appendAttributeValue(
                         }
                         current_block_62 = 11777552016271000781;
                     } else if entity.is_null() {
+                        if cfg!(feature = "mozilla") {
+                            return XML_ERROR_UNDEFINED_ENTITY;
+                        }
                         current_block_62 = 11796148217846552555;
                     } else {
                         current_block_62 = 11777552016271000781;

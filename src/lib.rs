@@ -35,4 +35,7 @@ pub mod lib {
     pub mod xmlparse;
     pub mod xmlrole;
     pub mod xmltok;
+
+    #[cfg(feature = "mozilla")]
+    pub mod moz_extensions;
 }
