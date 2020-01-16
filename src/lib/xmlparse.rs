@@ -144,13 +144,68 @@ unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
     }
 }
 
+trait XmlHandlers {
+    fn setStartElement(&mut self, handler: XML_StartElementHandler);
+    unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
+    fn setDefault(&mut self, handler: XML_DefaultHandler);
+    fn hasDefault(&self) -> bool;
+    unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+struct CXmlHandlers {
+    m_handlerArg: *mut c_void,
+    m_startElementHandler: XML_StartElementHandler,
+    m_defaultHandler: XML_DefaultHandler,
+}
+
+impl Default for CXmlHandlers {
+    fn default() -> Self {
+        CXmlHandlers {
+            m_handlerArg: std::ptr::null_mut(),
+            m_startElementHandler: None,
+            m_defaultHandler: None,
+        }
+    }
+}
+
+impl XmlHandlers for CXmlHandlers {
+    fn setStartElement(&mut self, handler: XML_StartElementHandler) {
+        self.m_startElementHandler = handler;
+    }
+
+    unsafe fn startElement(&self, b: *const XML_Char, c: *mut ATTRIBUTE) -> bool {
+        self.m_startElementHandler.map(|handler| {
+            handler(self.m_handlerArg, b, c as *mut *const XML_Char);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    fn hasDefault(&self) -> bool {
+        self.m_defaultHandler.is_some()
+    }
+
+    fn setDefault(&mut self, handler: XML_DefaultHandler) {
+        self.m_defaultHandler = handler;
+    }
+
+    unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
+        self.m_defaultHandler.map(|handler| {
+            handler(self.m_handlerArg, s, next);
+
+            true
+        }).unwrap_or(false)
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
     pub m_userData: *mut c_void,
-    pub m_handlerArg: *mut c_void,
     pub m_buffer: *mut c_char,
     pub m_mem: XML_Memory_Handling_Suite,
     /* first character to be parsed */
@@ -165,14 +220,12 @@ pub struct XML_ParserStruct {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    pub m_startElementHandler: XML_StartElementHandler,
     pub m_endElementHandler: XML_EndElementHandler,
     pub m_characterDataHandler: XML_CharacterDataHandler,
     pub m_processingInstructionHandler: XML_ProcessingInstructionHandler,
     pub m_commentHandler: XML_CommentHandler,
     pub m_startCdataSectionHandler: XML_StartCdataSectionHandler,
     pub m_endCdataSectionHandler: XML_EndCdataSectionHandler,
-    pub m_defaultHandler: XML_DefaultHandler,
     pub m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
     pub m_endDoctypeDeclHandler: XML_EndDoctypeDeclHandler,
     pub m_unparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler,
@@ -188,6 +241,7 @@ pub struct XML_ParserStruct {
     pub m_attlistDeclHandler: XML_AttlistDeclHandler,
     pub m_entityDeclHandler: XML_EntityDeclHandler,
     pub m_xmlDeclHandler: XML_XmlDeclHandler,
+    m_handlers: CXmlHandlers,
     pub m_encoding: *const super::xmltok::ENCODING,
     pub m_initEncoding: super::xmltok::INIT_ENCODING,
     pub m_internalEncoding: *const super::xmltok::ENCODING,
@@ -979,15 +1033,13 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
         0 as *const c_char,
     );
     (*parser).m_userData = NULL as *mut c_void;
-    (*parser).m_handlerArg = NULL as *mut c_void;
-    (*parser).m_startElementHandler = None;
+    (*parser).m_handlers = Default::default();
     (*parser).m_endElementHandler = None;
     (*parser).m_characterDataHandler = None;
     (*parser).m_processingInstructionHandler = None;
     (*parser).m_commentHandler = None;
     (*parser).m_startCdataSectionHandler = None;
     (*parser).m_endCdataSectionHandler = None;
-    (*parser).m_defaultHandler = None;
     (*parser).m_startDoctypeDeclHandler = None;
     (*parser).m_endDoctypeDeclHandler = None;
     (*parser).m_unparsedEntityDeclHandler = None;
@@ -1214,14 +1266,15 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     }
     /* Stash the original parser contents on the stack */
     oldDtd = (*parser).m_dtd;
-    oldStartElementHandler = (*parser).m_startElementHandler;
+    // TODO: Maybe just copy/clone the handler struct?
+    oldStartElementHandler = (*parser).m_handlers.m_startElementHandler;
     oldEndElementHandler = (*parser).m_endElementHandler;
     oldCharacterDataHandler = (*parser).m_characterDataHandler;
     oldProcessingInstructionHandler = (*parser).m_processingInstructionHandler;
     oldCommentHandler = (*parser).m_commentHandler;
     oldStartCdataSectionHandler = (*parser).m_startCdataSectionHandler;
     oldEndCdataSectionHandler = (*parser).m_endCdataSectionHandler;
-    oldDefaultHandler = (*parser).m_defaultHandler;
+    oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
     oldUnparsedEntityDeclHandler = (*parser).m_unparsedEntityDeclHandler;
     oldNotationDeclHandler = (*parser).m_notationDeclHandler;
     oldStartNamespaceDeclHandler = (*parser).m_startNamespaceDeclHandler;
@@ -1236,7 +1289,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     oldXmlDeclHandler = (*parser).m_xmlDeclHandler;
     oldDeclElementType = (*parser).m_declElementType;
     oldUserData = (*parser).m_userData;
-    oldHandlerArg = (*parser).m_handlerArg;
+    oldHandlerArg = (*parser).m_handlers.m_handlerArg;
     oldDefaultExpandInternalEntities = (*parser).m_defaultExpandInternalEntities;
     oldExternalEntityRefHandlerArg = (*parser).m_externalEntityRefHandlerArg;
     oldParamEntityParsing = (*parser).m_paramEntityParsing;
@@ -1272,14 +1325,14 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if parser.is_null() {
         return NULL as XML_Parser;
     }
-    (*parser).m_startElementHandler = oldStartElementHandler;
+    (*parser).m_handlers.setStartElement(oldStartElementHandler);
     (*parser).m_endElementHandler = oldEndElementHandler;
     (*parser).m_characterDataHandler = oldCharacterDataHandler;
     (*parser).m_processingInstructionHandler = oldProcessingInstructionHandler;
     (*parser).m_commentHandler = oldCommentHandler;
     (*parser).m_startCdataSectionHandler = oldStartCdataSectionHandler;
     (*parser).m_endCdataSectionHandler = oldEndCdataSectionHandler;
-    (*parser).m_defaultHandler = oldDefaultHandler;
+    (*parser).m_handlers.setDefault(oldDefaultHandler);
     (*parser).m_unparsedEntityDeclHandler = oldUnparsedEntityDeclHandler;
     (*parser).m_notationDeclHandler = oldNotationDeclHandler;
     (*parser).m_startNamespaceDeclHandler = oldStartNamespaceDeclHandler;
@@ -1295,9 +1348,9 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     (*parser).m_declElementType = oldDeclElementType;
     (*parser).m_userData = oldUserData;
     if oldUserData == oldHandlerArg {
-        (*parser).m_handlerArg = (*parser).m_userData
+        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
     } else {
-        (*parser).m_handlerArg = parser as *mut c_void
+        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
     }
     if oldExternalEntityRefHandlerArg != oldParser {
         (*parser).m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
@@ -1420,7 +1473,7 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
 #[no_mangle]
 pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
     if !parser.is_null() {
-        (*parser).m_handlerArg = parser as *mut c_void
+        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
     };
 }
 /* If useDTD == XML_TRUE is passed to this function, then the parser
@@ -1491,9 +1544,9 @@ pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_v
     if parser.is_null() {
         return;
     }
-    if (*parser).m_handlerArg == (*parser).m_userData {
+    if (*parser).m_handlers.m_handlerArg == (*parser).m_userData {
         (*parser).m_userData = p;
-        (*parser).m_handlerArg = (*parser).m_userData
+        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
     } else {
         (*parser).m_userData = p
     };
@@ -1564,7 +1617,7 @@ pub unsafe extern "C" fn XML_SetElementHandler(
     if parser.is_null() {
         return;
     }
-    (*parser).m_startElementHandler = start;
+    (*parser).m_handlers.setStartElement(start);
     (*parser).m_endElementHandler = end;
 }
 #[no_mangle]
@@ -1573,7 +1626,7 @@ pub unsafe extern "C" fn XML_SetStartElementHandler(
     mut start: XML_StartElementHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_startElementHandler = start
+        (*parser).m_handlers.setStartElement(start)
     };
 }
 #[no_mangle]
@@ -1654,7 +1707,7 @@ pub unsafe extern "C" fn XML_SetDefaultHandler(
     if parser.is_null() {
         return;
     }
-    (*parser).m_defaultHandler = handler;
+    (*parser).m_handlers.setDefault(handler);
     (*parser).m_defaultExpandInternalEntities = XML_FALSE;
 }
 /* This sets the default handler but does not inhibit expansion of
@@ -1669,7 +1722,7 @@ pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
     if parser.is_null() {
         return;
     }
-    (*parser).m_defaultHandler = handler;
+    (*parser).m_handlers.setDefault(handler);
     (*parser).m_defaultExpandInternalEntities = XML_TRUE;
 }
 #[no_mangle]
@@ -2589,7 +2642,7 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
-    if (*parser).m_defaultHandler.is_some() {
+    if (*parser).m_handlers.hasDefault() {
         if !(*parser).m_openInternalEntities.is_null() {
             reportDefault(
                 parser,
@@ -3061,9 +3114,9 @@ unsafe extern "C" fn doContent(
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg, &mut c, 1i32
+                        (*parser).m_handlers.m_handlerArg, &mut c, 1i32
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, end);
                 }
                 /* LCOV_EXCL_STOP */
@@ -3126,11 +3179,11 @@ unsafe extern "C" fn doContent(
                         (*parser)
                             .m_characterDataHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             &mut ch,
                             1i32,
                         );
-                    } else if (*parser).m_defaultHandler.is_some() {
+                    } else if (*parser).m_handlers.hasDefault() {
                         reportDefault(parser, enc, s, next);
                     }
                 } else {
@@ -3163,11 +3216,11 @@ unsafe extern "C" fn doContent(
                             (*parser)
                                 .m_skippedEntityHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 name,
                                 0i32,
                             );
-                        } else if (*parser).m_defaultHandler.is_some() {
+                        } else if (*parser).m_handlers.hasDefault() {
                             if !cfg!(feature = "mozilla") {
                                 reportDefault(parser, enc, s, next);
                             }
@@ -3195,11 +3248,11 @@ unsafe extern "C" fn doContent(
                                         (*parser)
                                             .m_skippedEntityHandler
                                             .expect("non-null function pointer")(
-                                            (*parser).m_handlerArg,
+                                            (*parser).m_handlers.m_handlerArg,
                                             (*entity).name,
                                             0i32,
                                         );
-                                    } else if (*parser).m_defaultHandler.is_some() {
+                                    } else if (*parser).m_handlers.hasDefault() {
                                         reportDefault(parser, enc, s, next);
                                     }
                                 } else {
@@ -3229,7 +3282,7 @@ unsafe extern "C" fn doContent(
                                     return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
                                 }
                                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
-                            } else if (*parser).m_defaultHandler.is_some() {
+                            } else if (*parser).m_handlers.hasDefault() {
                                 reportDefault(parser, enc, s, next);
                             }
                         }
@@ -3305,15 +3358,11 @@ unsafe extern "C" fn doContent(
                 if result_0 as u64 != 0 {
                     return result_0;
                 }
-                if (*parser).m_startElementHandler.is_some() {
-                    (*parser)
-                        .m_startElementHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
-                        (*tag).name.str_0,
-                        (*parser).m_atts as *mut *const XML_Char,
-                    );
-                } else if (*parser).m_defaultHandler.is_some() {
+
+                let handlers = (*parser).m_handlers;
+                let started = handlers.startElement((*tag).name.str_0, (*parser).m_atts);
+
+                if !started && handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
                 poolClear(&mut (*parser).m_tempPool);
@@ -3351,28 +3400,23 @@ unsafe extern "C" fn doContent(
                     return result_1;
                 }
                 (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                if (*parser).m_startElementHandler.is_some() {
-                    (*parser)
-                        .m_startElementHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
-                        name_0.str_0,
-                        (*parser).m_atts as *mut *const XML_Char,
-                    );
+                let handlers = (*parser).m_handlers;
+                let started = handlers.startElement(name_0.str_0, (*parser).m_atts);
+                if started {
                     noElmHandlers = XML_FALSE
                 }
                 if (*parser).m_endElementHandler.is_some() {
-                    if (*parser).m_startElementHandler.is_some() {
+                    if started {
                         *eventPP = *eventEndPP
                     }
                     (*parser)
                         .m_endElementHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg, name_0.str_0
+                        (*parser).m_handlers.m_handlerArg, name_0.str_0
                     );
                     noElmHandlers = XML_FALSE
                 }
-                if noElmHandlers as c_int != 0 && (*parser).m_defaultHandler.is_some() {
+                if noElmHandlers as c_int != 0 && (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
                 poolClear(&mut (*parser).m_tempPool);
@@ -3485,10 +3529,10 @@ unsafe extern "C" fn doContent(
                         (*parser)
                             .m_endElementHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*tag_0).name.str_0,
                         );
-                    } else if (*parser).m_defaultHandler.is_some() {
+                    } else if (*parser).m_handlers.hasDefault() {
                         reportDefault(parser, enc, s, next);
                     }
                     while !(*tag_0).bindings.is_null() {
@@ -3497,7 +3541,7 @@ unsafe extern "C" fn doContent(
                             (*parser)
                                 .m_endNamespaceDeclHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 (*(*b).prefix).name,
                             );
                         }
@@ -3527,11 +3571,11 @@ unsafe extern "C" fn doContent(
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         buf.as_mut_ptr(),
                         XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR),
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -3542,11 +3586,11 @@ unsafe extern "C" fn doContent(
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         &mut c_0,
                         1i32,
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -3556,17 +3600,17 @@ unsafe extern "C" fn doContent(
                     (*parser)
                         .m_startCdataSectionHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg
+                        (*parser).m_handlers.m_handlerArg
                     );
                 } else if 0 != 0 && (*parser).m_characterDataHandler.is_some() {
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_dataBuf,
                         0i32,
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
                 result_2 = doCdataSection(parser, enc, &mut next, end, nextPtr, haveMore);
@@ -3592,7 +3636,7 @@ unsafe extern "C" fn doContent(
                         (*parser)
                             .m_characterDataHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*parser).m_dataBuf,
                             dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                         );
@@ -3600,13 +3644,13 @@ unsafe extern "C" fn doContent(
                         (*parser)
                             .m_characterDataHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             s as *mut XML_Char,
                             (end as *mut XML_Char).wrapping_offset_from(s as *mut XML_Char)
                                 as c_int,
                         );
                     }
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, end);
                 }
                 /* BEGIN disabled code */
@@ -3653,7 +3697,7 @@ unsafe extern "C" fn doContent(
                             );
                             *eventEndPP = s;
                             charDataHandler.expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 (*parser).m_dataBuf,
                                 dataPtr_0.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                             );
@@ -3666,13 +3710,13 @@ unsafe extern "C" fn doContent(
                         }
                     } else {
                         charDataHandler.expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             s as *mut XML_Char,
                             (next as *mut XML_Char).wrapping_offset_from(s as *mut XML_Char)
                                 as c_int,
                         );
                     }
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -3694,7 +3738,7 @@ unsafe extern "C" fn doContent(
                  *
                  * LCOV_EXCL_START
                  */
-                if (*parser).m_defaultHandler.is_some() {
+                if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -3728,7 +3772,7 @@ unsafe extern "C" fn freeBindings(mut parser: XML_Parser, mut bindings: *mut BIN
             (*parser)
                 .m_endNamespaceDeclHandler
                 .expect("non-null function pointer")(
-                (*parser).m_handlerArg, (*(*b).prefix).name
+                (*parser).m_handlers.m_handlerArg, (*(*b).prefix).name
             );
         }
         bindings = (*bindings).nextTagBinding;
@@ -4624,7 +4668,7 @@ unsafe extern "C" fn addBinding(
         (*parser)
             .m_startNamespaceDeclHandler
             .expect("non-null function pointer")(
-            (*parser).m_handlerArg,
+            (*parser).m_handlers.m_handlerArg,
             (*prefix).name,
             if !(*prefix).binding.is_null() {
                 uri
@@ -4704,17 +4748,17 @@ unsafe extern "C" fn doCdataSection(
                     (*parser)
                         .m_endCdataSectionHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg
+                        (*parser).m_handlers.m_handlerArg
                     );
                 } else if 0 != 0 && (*parser).m_characterDataHandler.is_some() {
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_dataBuf,
                         0i32,
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
                 *startPtr = next;
@@ -4735,9 +4779,9 @@ unsafe extern "C" fn doCdataSection(
                     (*parser)
                         .m_characterDataHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg, &mut c, 1i32
+                        (*parser).m_handlers.m_handlerArg, &mut c, 1i32
                     );
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -4757,7 +4801,7 @@ unsafe extern "C" fn doCdataSection(
                             );
                             *eventEndPP = next;
                             charDataHandler.expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 (*parser).m_dataBuf,
                                 dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                             );
@@ -4770,13 +4814,13 @@ unsafe extern "C" fn doCdataSection(
                         }
                     } else {
                         charDataHandler.expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             s as *mut XML_Char,
                             (next as *mut XML_Char).wrapping_offset_from(s as *mut XML_Char)
                                 as c_int,
                         );
                     }
-                } else if (*parser).m_defaultHandler.is_some() {
+                } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
             }
@@ -4893,7 +4937,7 @@ unsafe extern "C" fn doIgnoreSection(
     *eventEndPP = next;
     match tok {
         super::xmltok::XML_TOK_IGNORE_SECT => {
-            if (*parser).m_defaultHandler.is_some() {
+            if (*parser).m_handlers.hasDefault() {
                 reportDefault(parser, enc, s, next);
             }
             *startPtr = next;
@@ -5104,12 +5148,12 @@ unsafe extern "C" fn processXmlDecl(
         (*parser)
             .m_xmlDeclHandler
             .expect("non-null function pointer")(
-            (*parser).m_handlerArg,
+            (*parser).m_handlers.m_handlerArg,
             storedversion,
             storedEncName,
             standalone,
         );
-    } else if (*parser).m_defaultHandler.is_some() {
+    } else if (*parser).m_handlers.hasDefault() {
         reportDefault(parser, (*parser).m_encoding, s, next);
     }
     if (*parser).m_protocolEncodingName.is_null() {
@@ -5672,7 +5716,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_startDoctypeDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_doctypeName,
                         (*parser).m_doctypeSysid,
                         (*parser).m_doctypePubid,
@@ -5744,7 +5788,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_startDoctypeDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_doctypeName,
                         (*parser).m_doctypeSysid,
                         (*parser).m_doctypePubid,
@@ -5801,7 +5845,7 @@ unsafe extern "C" fn doProlog(
                                 && (*parser)
                                     .m_notStandaloneHandler
                                     .expect("non-null function pointer")(
-                                    (*parser).m_handlerArg
+                                    (*parser).m_handlers.m_handlerArg
                                 ) == 0
                             {
                                 return XML_ERROR_NOT_STANDALONE;
@@ -5820,7 +5864,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_endDoctypeDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg
+                        (*parser).m_handlers.m_handlerArg
                     );
                     handleDefault = XML_FALSE
                 }
@@ -5865,7 +5909,7 @@ unsafe extern "C" fn doProlog(
                                 && (*parser)
                                     .m_notStandaloneHandler
                                     .expect("non-null function pointer")(
-                                    (*parser).m_handlerArg
+                                    (*parser).m_handlers.m_handlerArg
                                 ) == 0
                             {
                                 return XML_ERROR_NOT_STANDALONE;
@@ -6010,7 +6054,7 @@ unsafe extern "C" fn doProlog(
                         (*parser)
                             .m_attlistDeclHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*(*parser).m_declElementType).name,
                             (*(*parser).m_declAttributeId).name,
                             (*parser).m_declAttributeType,
@@ -6091,7 +6135,7 @@ unsafe extern "C" fn doProlog(
                         (*parser)
                             .m_attlistDeclHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*(*parser).m_declElementType).name,
                             (*(*parser).m_declAttributeId).name,
                             (*parser).m_declAttributeType,
@@ -6125,7 +6169,7 @@ unsafe extern "C" fn doProlog(
                             (*parser)
                                 .m_entityDeclHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 (*(*parser).m_declEntity).name,
                                 (*(*parser).m_declEntity).is_param as c_int,
                                 (*(*parser).m_declEntity).textPtr,
@@ -6174,7 +6218,7 @@ unsafe extern "C" fn doProlog(
                     && (*parser)
                         .m_notStandaloneHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg
+                        (*parser).m_handlers.m_handlerArg
                     ) == 0
                 {
                     return XML_ERROR_NOT_STANDALONE;
@@ -6206,7 +6250,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_entityDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*(*parser).m_declEntity).name,
                         (*(*parser).m_declEntity).is_param as c_int,
                         0 as *const XML_Char,
@@ -6233,7 +6277,7 @@ unsafe extern "C" fn doProlog(
                         (*parser)
                             .m_unparsedEntityDeclHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*(*parser).m_declEntity).name,
                             (*(*parser).m_declEntity).base,
                             (*(*parser).m_declEntity).systemId,
@@ -6246,7 +6290,7 @@ unsafe extern "C" fn doProlog(
                         (*parser)
                             .m_entityDeclHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*(*parser).m_declEntity).name,
                             0,
                             0 as *const XML_Char,
@@ -6400,7 +6444,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_notationDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_declNotationName,
                         (*parser).m_curBase,
                         systemId,
@@ -6419,7 +6463,7 @@ unsafe extern "C" fn doProlog(
                     (*parser)
                         .m_notationDeclHandler
                         .expect("non-null function pointer")(
-                        (*parser).m_handlerArg,
+                        (*parser).m_handlers.m_handlerArg,
                         (*parser).m_declNotationName,
                         (*parser).m_curBase,
                         0 as *const XML_Char,
@@ -6443,7 +6487,7 @@ unsafe extern "C" fn doProlog(
             }
             58 => {
                 let mut result_3: XML_Error = XML_ERROR_NONE;
-                if (*parser).m_defaultHandler.is_some() {
+                if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
                 handleDefault = XML_FALSE;
@@ -6638,7 +6682,7 @@ unsafe extern "C" fn doProlog(
                             (*parser)
                                 .m_skippedEntityHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 name_1,
                                 1,
                             );
@@ -6713,7 +6757,7 @@ unsafe extern "C" fn doProlog(
                             && (*parser)
                                 .m_notStandaloneHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg
+                                (*parser).m_handlers.m_handlerArg
                             ) == 0
                         {
                             return XML_ERROR_NOT_STANDALONE;
@@ -6758,7 +6802,7 @@ unsafe extern "C" fn doProlog(
                         (*parser)
                             .m_elementDeclHandler
                             .expect("non-null function pointer")(
-                            (*parser).m_handlerArg,
+                            (*parser).m_handlers.m_handlerArg,
                             (*(*parser).m_declElementType).name,
                             content,
                         );
@@ -6970,7 +7014,7 @@ unsafe extern "C" fn doProlog(
                             (*parser)
                                 .m_elementDeclHandler
                                 .expect("non-null function pointer")(
-                                (*parser).m_handlerArg,
+                                (*parser).m_handlers.m_handlerArg,
                                 (*(*parser).m_declElementType).name,
                                 model,
                             );
@@ -7012,7 +7056,7 @@ unsafe extern "C" fn doProlog(
         }
         /* not XML_DTD */
         /* XML_DTD */
-        if handleDefault as c_int != 0 && (*parser).m_defaultHandler.is_some() {
+        if handleDefault as c_int != 0 && (*parser).m_handlers.hasDefault() {
             reportDefault(parser, enc, s, next);
         }
         match (*parser).m_parsingStatus.parsing {
@@ -7049,7 +7093,7 @@ unsafe extern "C" fn epilogProcessor(
         match tok {
             -15 => {
                 /* report partial linebreak - it might be the last token */
-                if (*parser).m_defaultHandler.is_some() {
+                if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, (*parser).m_encoding, s, next);
                     if (*parser).m_parsingStatus.parsing == XML_FINISHED {
                         return XML_ERROR_ABORTED;
@@ -7063,7 +7107,7 @@ unsafe extern "C" fn epilogProcessor(
                 return XML_ERROR_NONE;
             }
             super::xmltok::XML_TOK_PROLOG_S => {
-                if (*parser).m_defaultHandler.is_some() {
+                if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, (*parser).m_encoding, s, next);
                 }
             }
@@ -7891,7 +7935,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     let mut data: *mut XML_Char = 0 as *mut XML_Char;
     let mut tem: *const c_char = 0 as *const c_char;
     if (*parser).m_processingInstructionHandler.is_none() {
-        if (*parser).m_defaultHandler.is_some() {
+        if (*parser).m_handlers.hasDefault() {
             reportDefault(parser, enc, start, end);
         }
         return 1i32;
@@ -7915,7 +7959,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     normalizeLines(data);
     (*parser)
         .m_processingInstructionHandler
-        .expect("non-null function pointer")((*parser).m_handlerArg, target, data);
+        .expect("non-null function pointer")((*parser).m_handlers.m_handlerArg, target, data);
     poolClear(&mut (*parser).m_tempPool);
     return 1;
 }
@@ -7928,7 +7972,7 @@ unsafe extern "C" fn reportComment(
 ) -> c_int {
     let mut data: *mut XML_Char = 0 as *mut XML_Char;
     if (*parser).m_commentHandler.is_none() {
-        if (*parser).m_defaultHandler.is_some() {
+        if (*parser).m_handlers.hasDefault() {
             reportDefault(parser, enc, start, end);
         }
         return 1i32;
@@ -7945,7 +7989,7 @@ unsafe extern "C" fn reportComment(
     normalizeLines(data);
     (*parser)
         .m_commentHandler
-        .expect("non-null function pointer")((*parser).m_handlerArg, data);
+        .expect("non-null function pointer")((*parser).m_handlers.m_handlerArg, data);
     poolClear(&mut (*parser).m_tempPool);
     return 1;
 }
@@ -7990,13 +8034,17 @@ unsafe extern "C" fn reportDefault(
             convert_res = XmlConvert!(enc, &mut s, end, &mut dataPtr,
                                       (*parser).m_dataBufEnd as *mut ICHAR);
             *eventEndPP = s;
-            (*parser)
-                .m_defaultHandler
-                .expect("non-null function pointer")(
-                (*parser).m_handlerArg,
+
+            let defaultRan = (*parser).m_handlers.default(
                 (*parser).m_dataBuf,
                 dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
             );
+
+            // Previously unwrapped an Option
+            if !defaultRan {
+                panic!("Expected default handler to be set");
+            }
+
             *eventPP = s;
             if !(convert_res != super::xmltok::XML_CONVERT_COMPLETED
                 && convert_res != super::xmltok::XML_CONVERT_INPUT_INCOMPLETE)
@@ -8005,13 +8053,15 @@ unsafe extern "C" fn reportDefault(
             }
         }
     } else {
-        (*parser)
-            .m_defaultHandler
-            .expect("non-null function pointer")(
-            (*parser).m_handlerArg,
+        let defaultRan = (*parser).m_handlers.default(
             s as *mut XML_Char,
             (end as *mut XML_Char).wrapping_offset_from(s as *mut XML_Char) as c_int,
         );
+
+        // Previously unwrapped an Option
+        if !defaultRan {
+            panic!("Expected default handler to be set");
+        }
     };
 }
 
