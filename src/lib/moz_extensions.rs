@@ -1,6 +1,6 @@
 use libc::{c_char, c_uchar, c_ushort, c_int, c_uint};
 use crate::expat_external_h::XML_Char;
-use crate::src::lib::xmltok::{
+use crate::lib::xmltok::{
     MOZ_XmlGetUtf16InternalEncodingNS,
     MOZ_XmlUtf16Encode,
     XML_TOK_INVALID,
@@ -9,8 +9,8 @@ use crate::src::lib::xmltok::{
     normal_encoding,
     unicode_byte_type,
 };
-use crate::src::lib::xmltok::nametab_h::{namingBitmap, nmstrtPages, namePages};
-use crate::src::lib::xmltok::xmltok_impl_c::{
+use crate::lib::xmltok::nametab_h::{namingBitmap, nmstrtPages, namePages};
+use crate::lib::xmltok::xmltok_impl_c::{
     little2_scanRef,
     big2_scanRef,
 };
