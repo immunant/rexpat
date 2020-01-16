@@ -38,7 +38,7 @@ use ::libexpat_rs::expat_h::{
     XML_STATUS_OK_0, XML_STATUS_SUSPENDED_0, XML_SUSPENDED, XML_TRUE,
 };
 use ::libexpat_rs::siphash_h::{siphash, sipkey};
-use ::libexpat_rs::src::lib::xmlparse::{
+use ::libexpat_rs::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
     XML_ExternalEntityParserCreate, XML_FreeContentModel, XML_GetBase, XML_GetBuffer,
     XML_GetCurrentByteCount, XML_GetCurrentByteIndex, XML_GetCurrentColumnNumber,
@@ -59,7 +59,7 @@ use ::libexpat_rs::src::lib::xmlparse::{
     XML_SetUnknownEncodingHandler, XML_SetUnparsedEntityDeclHandler, XML_SetUserData,
     XML_SetXmlDeclHandler, XML_StopParser, XML_UseForeignDTD, XML_UseParserAsHandlerArg, INT_MAX,
 };
-use ::libexpat_rs::src::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
+use ::libexpat_rs::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::libexpat_rs::stdbool_h::{false_0, true_0};
 use ::libexpat_rs::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::libexpat_rs::*;

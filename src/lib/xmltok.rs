@@ -10576,8 +10576,8 @@ pub mod xmltok_impl_c {
         }
     }
 
-    use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
-    use crate::src::lib::xmltok::{checkCharRefNumber, normal_encoding, unicode_byte_type};
+    use crate::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
+    use crate::lib::xmltok::{checkCharRefNumber, normal_encoding, unicode_byte_type};
 
     /* XML_TOK_IMPL_C */
     /* XML_TOK_IMPL_C */
@@ -11057,7 +11057,7 @@ pub mod xmltok_ns_c {
         );
     }
 
-    use crate::src::lib::xmltok::{
+    use crate::lib::xmltok::{
         doParseXmlDecl, getEncodingIndex, initScan, initUpdatePosition, internal_little2_encoding,
         internal_little2_encoding_ns, internal_utf8_encoding, internal_utf8_encoding_ns, streqci,
         ENCODING, INIT_ENCODING, KW_UTF_16, POSITION, UNKNOWN_ENC, XML_CONTENT_STATE,
@@ -11077,8 +11077,8 @@ pub use crate::ascii_h::{
     ASCII_Z,
 };
 pub use crate::expat_external_h::XML_Size;
-pub use crate::src::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
-pub use crate::src::lib::xmltok::xmltok_impl_c::{
+pub use crate::lib::xmltok::nametab_h::{namePages, namingBitmap, nmstrtPages};
+pub use crate::lib::xmltok::xmltok_impl_c::{
     big2_attributeValueTok, big2_cdataSectionTok, big2_charRefNumber, big2_checkPiTarget,
     big2_contentTok, big2_entityValueTok, big2_getAtts, big2_ignoreSectionTok, big2_isPublicId,
     big2_nameLength, big2_nameMatchesAscii, big2_predefinedEntityName, big2_prologTok,
@@ -11099,7 +11099,7 @@ pub use crate::src::lib::xmltok::xmltok_impl_c::{
     normal_scanHexCharRef, normal_scanLit, normal_scanLt, normal_scanPercent, normal_scanPi,
     normal_scanPoundName, normal_scanRef, normal_skipS, normal_updatePosition,
 };
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
+pub use crate::lib::xmltok::xmltok_ns_c::{
     encodings, encodingsNS, findEncoding, findEncodingNS, initScanContent, initScanContentNS,
     initScanProlog, initScanPrologNS, XmlGetUtf16InternalEncoding, XmlGetUtf16InternalEncodingNS,
     XmlGetUtf8InternalEncoding, XmlGetUtf8InternalEncodingNS, XmlInitEncoding, XmlInitEncodingNS,

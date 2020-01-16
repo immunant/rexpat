@@ -11,7 +11,7 @@
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
 
 use ::libexpat_rs::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
-use ::libexpat_rs::src::lib::xmlparse::{
+use ::libexpat_rs::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler,
 };

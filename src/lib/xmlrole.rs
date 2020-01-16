@@ -128,7 +128,7 @@ pub use crate::ascii_h::{
     ASCII_Y,
 };
 pub use crate::expat_external_h::XML_Size;
-pub use crate::src::lib::xmltok::{
+pub use crate::lib::xmltok::{
     encoding, position, XML_Convert_Result, ATTRIBUTE, ENCODING, POSITION, SCANNER,
     XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_BOM,
     XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,

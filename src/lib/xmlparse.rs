@@ -81,7 +81,7 @@ pub use crate::siphash_h::{
     sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash, siphash24,
     sipkey,
 };
-pub use crate::src::lib::xmlrole::{
+pub use crate::lib::xmlrole::{
     prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
     PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME, XML_ROLE_ATTLIST_NONE,
     XML_ROLE_ATTRIBUTE_ENUM_VALUE, XML_ROLE_ATTRIBUTE_NAME, XML_ROLE_ATTRIBUTE_NOTATION_VALUE,
@@ -105,10 +105,10 @@ pub use crate::src::lib::xmlrole::{
     XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI, XML_ROLE_REQUIRED_ATTRIBUTE_VALUE, XML_ROLE_TEXT_DECL,
     XML_ROLE_XML_DECL,
 };
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
+pub use crate::lib::xmltok::xmltok_ns_c::{
     XmlInitEncoding, XmlInitEncodingNS, XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
-pub use crate::src::lib::xmltok::{
+pub use crate::lib::xmltok::{
     encoding, position, XML_Convert_Result, XmlInitUnknownEncoding, XmlInitUnknownEncodingNS,
     XmlSizeOfUnknownEncoding, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING, POSITION, SCANNER,
     XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED,
@@ -464,10 +464,10 @@ pub struct HASH_TABLE_ITER {
 #[cfg(feature = "unicode")]
 #[macro_use]
 mod unicode_defines {
-    pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF16_ENCODE_MAX as usize;
-    pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncoding as XmlGetInternalEncoding;
-    pub use crate::src::lib::xmltok::XmlGetUtf16InternalEncodingNS as XmlGetInternalEncodingNS;
-    pub use crate::src::lib::xmltok::XmlUtf16Encode as XmlEncode;
+    pub const XML_ENCODE_MAX: usize = crate::lib::xmltok::XML_UTF16_ENCODE_MAX as usize;
+    pub use crate::lib::xmltok::XmlGetUtf16InternalEncoding as XmlGetInternalEncoding;
+    pub use crate::lib::xmltok::XmlGetUtf16InternalEncodingNS as XmlGetInternalEncodingNS;
+    pub use crate::lib::xmltok::XmlUtf16Encode as XmlEncode;
     pub use crate::XmlUtf16Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {
@@ -496,10 +496,10 @@ mod unicode_defines {
 #[cfg(not(feature = "unicode"))]
 #[macro_use]
 mod unicode_defines {
-    pub const XML_ENCODE_MAX: usize = crate::src::lib::xmltok::XML_UTF8_ENCODE_MAX as usize;
-    pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncoding as XmlGetInternalEncoding;
-    pub use crate::src::lib::xmltok::XmlGetUtf8InternalEncodingNS as XmlGetInternalEncodingNS;
-    pub use crate::src::lib::xmltok::XmlUtf8Encode as XmlEncode;
+    pub const XML_ENCODE_MAX: usize = crate::lib::xmltok::XML_UTF8_ENCODE_MAX as usize;
+    pub use crate::lib::xmltok::XmlGetUtf8InternalEncoding as XmlGetInternalEncoding;
+    pub use crate::lib::xmltok::XmlGetUtf8InternalEncodingNS as XmlGetInternalEncodingNS;
+    pub use crate::lib::xmltok::XmlUtf8Encode as XmlEncode;
     pub use crate::XmlUtf8Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {

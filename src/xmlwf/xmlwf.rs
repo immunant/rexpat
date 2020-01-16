@@ -22,7 +22,7 @@ use ::libexpat_rs::expat_h::{
     XML_Encoding, XML_Feature, XML_FEATURE_END, XML_PARAM_ENTITY_PARSING_ALWAYS,
     XML_PARAM_ENTITY_PARSING_NEVER,
 };
-use ::libexpat_rs::src::lib::xmlparse::{
+use ::libexpat_rs::lib::xmlparse::{
     XML_DefaultCurrent, XML_ExpatVersion, XML_GetBase, XML_GetCurrentByteCount,
     XML_GetCurrentByteIndex, XML_GetFeatureList, XML_GetIdAttributeIndex,
     XML_GetSpecifiedAttributeCount, XML_ParserCreate, XML_ParserCreateNS,
@@ -592,8 +592,8 @@ unsafe extern "C" fn metaLocation(mut parser: XML_Parser) {
         b" byte=\"%ld\" nbytes=\"%d\" line=\"%lu\" col=\"%lu\"\x00".as_ptr() as *const c_char,
         XML_GetCurrentByteIndex(parser),
         XML_GetCurrentByteCount(parser),
-        ::libexpat_rs::src::lib::xmlparse::XML_GetCurrentLineNumber(parser),
-        ::libexpat_rs::src::lib::xmlparse::XML_GetCurrentColumnNumber(parser),
+        ::libexpat_rs::lib::xmlparse::XML_GetCurrentLineNumber(parser),
+        ::libexpat_rs::lib::xmlparse::XML_GetCurrentColumnNumber(parser),
     );
 }
 
@@ -1568,7 +1568,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             }
             free(outName as *mut c_void);
         }
-        ::libexpat_rs::src::lib::xmlparse::XML_ParserFree(parser);
+        ::libexpat_rs::lib::xmlparse::XML_ParserFree(parser);
         if result == 0 {
             exit(2i32);
         }

@@ -8,9 +8,7 @@ autobins = false
 
 [lib]
 name = "libexpat_rs"
-path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
-
 
 [[bin]]
 path = "src/examples/outline.rs"
