@@ -145,9 +145,7 @@ unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
 }
 
 trait XmlHandlers {
-    fn setStartElement(&mut self, handler: XML_StartElementHandler);
     unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
-    fn setDefault(&mut self, handler: XML_DefaultHandler);
     fn hasDefault(&self) -> bool;
     unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
 }
@@ -170,11 +168,17 @@ impl Default for CXmlHandlers {
     }
 }
 
-impl XmlHandlers for CXmlHandlers {
+impl CXmlHandlers {
     fn setStartElement(&mut self, handler: XML_StartElementHandler) {
         self.m_startElementHandler = handler;
     }
 
+    fn setDefault(&mut self, handler: XML_DefaultHandler) {
+        self.m_defaultHandler = handler;
+    }
+}
+
+impl XmlHandlers for CXmlHandlers {
     unsafe fn startElement(&self, b: *const XML_Char, c: *mut ATTRIBUTE) -> bool {
         self.m_startElementHandler.map(|handler| {
             handler(self.m_handlerArg, b, c as *mut *const XML_Char);
@@ -185,10 +189,6 @@ impl XmlHandlers for CXmlHandlers {
 
     fn hasDefault(&self) -> bool {
         self.m_defaultHandler.is_some()
-    }
-
-    fn setDefault(&mut self, handler: XML_DefaultHandler) {
-        self.m_defaultHandler = handler;
     }
 
     unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
