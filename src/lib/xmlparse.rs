@@ -3167,10 +3167,13 @@ unsafe extern "C" fn doContent(
                                 name,
                                 0i32,
                             );
-                        } else if cfg!(feature = "mozilla") {
-                            return XML_ERROR_UNDEFINED_ENTITY;
                         } else if (*parser).m_defaultHandler.is_some() {
-                            reportDefault(parser, enc, s, next);
+                            if !cfg!(feature = "mozilla") {
+                                reportDefault(parser, enc, s, next);
+                            }
+                        }
+                        if cfg!(feature = "mozilla") {
+                            return XML_ERROR_UNDEFINED_ENTITY;
                         }
                         current_block_275 = 17939951368883298147;
                     } else {
