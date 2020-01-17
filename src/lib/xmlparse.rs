@@ -3278,7 +3278,7 @@ unsafe extern "C" fn doContent(
                         &mut fromPtr,
                         rawNameEnd,
                         &mut toPtr as *mut *mut _ as *mut *mut ICHAR,
-                        ((*tag).bufEnd).offset(-(1)) as *const ICHAR,
+                        ((*tag).bufEnd as *const ICHAR).offset(-1),
                     );
                     convLen = toPtr.wrapping_offset_from((*tag).buf as *const XML_Char) as c_int;
                     if fromPtr >= rawNameEnd
