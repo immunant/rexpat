@@ -4741,6 +4741,7 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
     }
     return XML_ERROR_NONE;
 
+    // TODO(SJC): replace
     // return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
 }
 
