@@ -150,12 +150,20 @@ trait XmlHandlers {
     unsafe fn characterData(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
     unsafe fn comment(&self, b: *const XML_Char) -> bool;
+    unsafe fn startCDataSection(&self) -> bool;
+    unsafe fn endCDataSection(&self) -> bool;
+    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
+    unsafe fn endDoctypeDecl(&self) -> bool;
     unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
     fn hasDefault(&self) -> bool;
     fn hasEndElement(&self) -> bool;
     fn hasCharacterData(&self) -> bool;
     fn hasProcessingInstruction(&self) -> bool;
     fn hasComment(&self) -> bool;
+    fn hasStartCDataSection(&self) -> bool;
+    fn hasEndCDataSection(&self) -> bool;
+    fn hasStartDoctypeDecl(&self) -> bool;
+    fn hasEndDoctypeDecl(&self) -> bool;
 }
 
 #[repr(C)]
@@ -168,6 +176,10 @@ struct CXmlHandlers {
     m_characterDataHandler: XML_CharacterDataHandler,
     m_processingInstructionHandler: XML_ProcessingInstructionHandler,
     m_commentHandler: XML_CommentHandler,
+    m_startCdataSectionHandler: XML_StartCdataSectionHandler,
+    m_endCdataSectionHandler: XML_EndCdataSectionHandler,
+    m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
+    m_endDoctypeDeclHandler: XML_EndDoctypeDeclHandler,
 }
 
 impl Default for CXmlHandlers {
@@ -180,6 +192,10 @@ impl Default for CXmlHandlers {
             m_characterDataHandler: None,
             m_processingInstructionHandler: None,
             m_commentHandler: None,
+            m_startCdataSectionHandler: None,
+            m_endCdataSectionHandler: None,
+            m_startDoctypeDeclHandler: None,
+            m_endDoctypeDeclHandler: None,
         }
     }
 }
@@ -207,6 +223,22 @@ impl CXmlHandlers {
 
     fn setDefault(&mut self, handler: XML_DefaultHandler) {
         self.m_defaultHandler = handler;
+    }
+
+    fn setStartCDataSection(&mut self, handler: XML_StartCdataSectionHandler) {
+        self.m_startCdataSectionHandler = handler;
+    }
+
+    fn setEndCDataSection(&mut self, handler: XML_EndCdataSectionHandler) {
+        self.m_endCdataSectionHandler = handler;
+    }
+
+    fn setStartDoctypeDecl(&mut self, handler: XML_StartDoctypeDeclHandler) {
+        self.m_startDoctypeDeclHandler = handler;
+    }
+
+    fn setEndDoctypeDecl(&mut self, handler: XML_EndDoctypeDeclHandler) {
+        self.m_endDoctypeDeclHandler = handler;
     }
 }
 
@@ -251,6 +283,38 @@ impl XmlHandlers for CXmlHandlers {
         }).unwrap_or(false)
     }
 
+    unsafe fn startCDataSection(&self) -> bool {
+        self.m_startCdataSectionHandler.map(|handler| {
+            handler(self.m_handlerArg);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn endCDataSection(&self) -> bool {
+        self.m_endCdataSectionHandler.map(|handler| {
+            handler(self.m_handlerArg);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool {
+        self.m_startDoctypeDeclHandler.map(|handler| {
+            handler(self.m_handlerArg, a, b, c, d);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn endDoctypeDecl(&self) -> bool {
+        self.m_endDoctypeDeclHandler.map(|handler| {
+            handler(self.m_handlerArg);
+
+            true
+        }).unwrap_or(false)
+    }
+
     unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
         self.m_defaultHandler.map(|handler| {
             handler(self.m_handlerArg, s, next);
@@ -278,6 +342,22 @@ impl XmlHandlers for CXmlHandlers {
     fn hasComment(&self) -> bool {
         self.m_commentHandler.is_some()
     }
+
+    fn hasStartCDataSection(&self) -> bool {
+        self.m_startCdataSectionHandler.is_some()
+    }
+
+    fn hasEndCDataSection(&self) -> bool {
+        self.m_endCdataSectionHandler.is_some()
+    }
+
+    fn hasStartDoctypeDecl(&self) -> bool {
+        self.m_startDoctypeDeclHandler.is_some()
+    }
+
+    fn hasEndDoctypeDecl(&self) -> bool {
+        self.m_endDoctypeDeclHandler.is_some()
+    }
 }
 
 #[repr(C)]
@@ -300,10 +380,6 @@ pub struct XML_ParserStruct {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    pub m_startCdataSectionHandler: XML_StartCdataSectionHandler,
-    pub m_endCdataSectionHandler: XML_EndCdataSectionHandler,
-    pub m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
-    pub m_endDoctypeDeclHandler: XML_EndDoctypeDeclHandler,
     pub m_unparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler,
     pub m_notationDeclHandler: XML_NotationDeclHandler,
     pub m_startNamespaceDeclHandler: XML_StartNamespaceDeclHandler,
@@ -1110,10 +1186,6 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     );
     (*parser).m_userData = NULL as *mut c_void;
     (*parser).m_handlers = Default::default();
-    (*parser).m_startCdataSectionHandler = None;
-    (*parser).m_endCdataSectionHandler = None;
-    (*parser).m_startDoctypeDeclHandler = None;
-    (*parser).m_endDoctypeDeclHandler = None;
     (*parser).m_unparsedEntityDeclHandler = None;
     (*parser).m_notationDeclHandler = None;
     (*parser).m_startNamespaceDeclHandler = None;
@@ -1344,8 +1416,8 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     oldCharacterDataHandler = (*parser).m_handlers.m_characterDataHandler;
     oldProcessingInstructionHandler = (*parser).m_handlers.m_processingInstructionHandler;
     oldCommentHandler = (*parser).m_handlers.m_commentHandler;
-    oldStartCdataSectionHandler = (*parser).m_startCdataSectionHandler;
-    oldEndCdataSectionHandler = (*parser).m_endCdataSectionHandler;
+    oldStartCdataSectionHandler = (*parser).m_handlers.m_startCdataSectionHandler;
+    oldEndCdataSectionHandler = (*parser).m_handlers.m_endCdataSectionHandler;
     oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
     oldUnparsedEntityDeclHandler = (*parser).m_unparsedEntityDeclHandler;
     oldNotationDeclHandler = (*parser).m_notationDeclHandler;
@@ -1402,8 +1474,8 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     (*parser).m_handlers.setCharacterData(oldCharacterDataHandler);
     (*parser).m_handlers.setProcessingInstruction(oldProcessingInstructionHandler);
     (*parser).m_handlers.setComment(oldCommentHandler);
-    (*parser).m_startCdataSectionHandler = oldStartCdataSectionHandler;
-    (*parser).m_endCdataSectionHandler = oldEndCdataSectionHandler;
+    (*parser).m_handlers.setStartCDataSection(oldStartCdataSectionHandler);
+    (*parser).m_handlers.setEndCDataSection(oldEndCdataSectionHandler);
     (*parser).m_handlers.setDefault(oldDefaultHandler);
     (*parser).m_unparsedEntityDeclHandler = oldUnparsedEntityDeclHandler;
     (*parser).m_notationDeclHandler = oldNotationDeclHandler;
@@ -1746,8 +1818,8 @@ pub unsafe extern "C" fn XML_SetCdataSectionHandler(
     if parser.is_null() {
         return;
     }
-    (*parser).m_startCdataSectionHandler = start;
-    (*parser).m_endCdataSectionHandler = end;
+    (*parser).m_handlers.setStartCDataSection(start);
+    (*parser).m_handlers.setEndCDataSection(end);
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
@@ -1755,7 +1827,7 @@ pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
     mut start: XML_StartCdataSectionHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_startCdataSectionHandler = start
+        (*parser).m_handlers.setStartCDataSection(start);
     };
 }
 #[no_mangle]
@@ -1764,7 +1836,7 @@ pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
     mut end: XML_EndCdataSectionHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_endCdataSectionHandler = end
+        (*parser).m_handlers.setEndCDataSection(end)
     };
 }
 /* This sets the default handler and also inhibits expansion of
@@ -1806,8 +1878,8 @@ pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
     if parser.is_null() {
         return;
     }
-    (*parser).m_startDoctypeDeclHandler = start;
-    (*parser).m_endDoctypeDeclHandler = end;
+    (*parser).m_handlers.setStartDoctypeDecl(start);
+    (*parser).m_handlers.setEndDoctypeDecl(end);
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
@@ -1815,7 +1887,7 @@ pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
     mut start: XML_StartDoctypeDeclHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_startDoctypeDeclHandler = start
+        (*parser).m_handlers.setStartDoctypeDecl(start)
     };
 }
 #[no_mangle]
@@ -1824,7 +1896,7 @@ pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
     mut end: XML_EndDoctypeDeclHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_endDoctypeDeclHandler = end
+        (*parser).m_handlers.setEndDoctypeDecl(end)
     };
 }
 #[no_mangle]
@@ -3649,12 +3721,10 @@ unsafe extern "C" fn doContent(
             }
             super::xmltok::XML_TOK_CDATA_SECT_OPEN => {
                 let mut result_2: XML_Error = XML_ERROR_NONE;
-                if (*parser).m_startCdataSectionHandler.is_some() {
-                    (*parser)
-                        .m_startCdataSectionHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg
-                    );
+
+                let startHandlerRan = (*parser).m_handlers.startCDataSection();
+
+                if startHandlerRan {
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
                     (*parser).m_handlers.characterData((*parser).m_dataBuf, 0);
                 } else if (*parser).m_handlers.hasDefault() {
@@ -4782,12 +4852,9 @@ unsafe extern "C" fn doCdataSection(
         *eventEndPP = next;
         match tok {
             super::xmltok::XML_TOK_CDATA_SECT_CLOSE => {
-                if (*parser).m_endCdataSectionHandler.is_some() {
-                    (*parser)
-                        .m_endCdataSectionHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg
-                    );
+                let endHandlerRan = (*parser).m_handlers.endCDataSection();
+
+                if endHandlerRan {
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
                     (*parser).m_handlers.characterData((*parser).m_dataBuf, 0);
                 } else if (*parser).m_handlers.hasDefault() {
@@ -5723,7 +5790,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             4 => {
-                if (*parser).m_startDoctypeDeclHandler.is_some() {
+                if (*parser).m_handlers.hasStartDoctypeDecl() {
                     (*parser).m_doctypeName =
                         poolStoreString(&mut (*parser).m_tempPool, enc, s, next);
                     if (*parser).m_doctypeName.is_null() {
@@ -5737,16 +5804,14 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             7 => {
-                if (*parser).m_startDoctypeDeclHandler.is_some() {
-                    (*parser)
-                        .m_startDoctypeDeclHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg,
-                        (*parser).m_doctypeName,
-                        (*parser).m_doctypeSysid,
-                        (*parser).m_doctypePubid,
-                        1,
-                    );
+                let startHandlerRan = (*parser).m_handlers.startDoctypeDecl(
+                    (*parser).m_doctypeName,
+                    (*parser).m_doctypeSysid,
+                    (*parser).m_doctypePubid,
+                    1,
+                );
+
+                if startHandlerRan {
                     (*parser).m_doctypeName = NULL as *const XML_Char;
                     poolClear(&mut (*parser).m_tempPool);
                     handleDefault = XML_FALSE
@@ -5776,7 +5841,7 @@ unsafe extern "C" fn doProlog(
                 }
                 /* XML_DTD */
                 (*dtd).hasParamEntityRefs = XML_TRUE;
-                if (*parser).m_startDoctypeDeclHandler.is_some() {
+                if (*parser).m_handlers.hasStartDoctypeDecl() {
                     let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
                     if (*enc).isPublicId.expect("non-null function pointer")(enc, s, next, eventPP)
                         == 0
@@ -5810,10 +5875,7 @@ unsafe extern "C" fn doProlog(
                     return XML_ERROR_INVALID_TOKEN;
                 }
                 if !(*parser).m_doctypeName.is_null() {
-                    (*parser)
-                        .m_startDoctypeDeclHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg,
+                    (*parser).m_handlers.startDoctypeDecl(
                         (*parser).m_doctypeName,
                         (*parser).m_doctypeSysid,
                         (*parser).m_doctypePubid,
@@ -5885,12 +5947,9 @@ unsafe extern "C" fn doProlog(
                    is no external subset and we must reset dtd->hasParamEntityRefs
                 */
                 /* XML_DTD */
-                if (*parser).m_endDoctypeDeclHandler.is_some() {
-                    (*parser)
-                        .m_endDoctypeDeclHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg
-                    );
+                let endHandlerRan = (*parser).m_handlers.endDoctypeDecl();
+
+                if endHandlerRan {
                     handleDefault = XML_FALSE
                 }
                 current_block = 1553878188884632965;
@@ -6219,7 +6278,7 @@ unsafe extern "C" fn doProlog(
                 (*parser).m_useForeignDTD = XML_FALSE;
                 /* XML_DTD */
                 (*dtd).hasParamEntityRefs = XML_TRUE;
-                if (*parser).m_startDoctypeDeclHandler.is_some() {
+                if (*parser).m_handlers.hasStartDoctypeDecl() {
                     (*parser).m_doctypeSysid = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
@@ -6904,7 +6963,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             3 => {
-                if (*parser).m_startDoctypeDeclHandler.is_some() {
+                if (*parser).m_handlers.hasStartDoctypeDecl() {
                     handleDefault = XML_FALSE
                 }
                 current_block = 1553878188884632965;
