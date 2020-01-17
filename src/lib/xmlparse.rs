@@ -148,10 +148,14 @@ trait XmlHandlers {
     unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
     unsafe fn endElement(&self, _: *const XML_Char) -> bool;
     unsafe fn characterData(&self, _: *const XML_Char, _: c_int) -> bool;
+    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
+    unsafe fn comment(&self, b: *const XML_Char) -> bool;
     unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
     fn hasDefault(&self) -> bool;
     fn hasEndElement(&self) -> bool;
     fn hasCharacterData(&self) -> bool;
+    fn hasProcessingInstruction(&self) -> bool;
+    fn hasComment(&self) -> bool;
 }
 
 #[repr(C)]
@@ -162,6 +166,8 @@ struct CXmlHandlers {
     m_defaultHandler: XML_DefaultHandler,
     m_endElementHandler: XML_EndElementHandler,
     m_characterDataHandler: XML_CharacterDataHandler,
+    m_processingInstructionHandler: XML_ProcessingInstructionHandler,
+    m_commentHandler: XML_CommentHandler,
 }
 
 impl Default for CXmlHandlers {
@@ -172,6 +178,8 @@ impl Default for CXmlHandlers {
             m_defaultHandler: None,
             m_endElementHandler: None,
             m_characterDataHandler: None,
+            m_processingInstructionHandler: None,
+            m_commentHandler: None,
         }
     }
 }
@@ -187,6 +195,14 @@ impl CXmlHandlers {
 
     fn setCharacterData(&mut self, handler: XML_CharacterDataHandler) {
         self.m_characterDataHandler = handler;
+    }
+
+    fn setProcessingInstruction(&mut self, handler: XML_ProcessingInstructionHandler) {
+        self.m_processingInstructionHandler = handler;
+    }
+
+    fn setComment(&mut self, handler: XML_CommentHandler) {
+        self.m_commentHandler = handler;
     }
 
     fn setDefault(&mut self, handler: XML_DefaultHandler) {
@@ -219,6 +235,22 @@ impl XmlHandlers for CXmlHandlers {
         }).unwrap_or(false)
     }
 
+    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool {
+        self.m_processingInstructionHandler.map(|handler| {
+            handler(self.m_handlerArg, b, c);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn comment(&self, b: *const XML_Char) -> bool {
+        self.m_commentHandler.map(|handler| {
+            handler(self.m_handlerArg, b);
+
+            true
+        }).unwrap_or(false)
+    }
+
     unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
         self.m_defaultHandler.map(|handler| {
             handler(self.m_handlerArg, s, next);
@@ -237,6 +269,14 @@ impl XmlHandlers for CXmlHandlers {
 
     fn hasCharacterData(&self) -> bool {
         self.m_characterDataHandler.is_some()
+    }
+
+    fn hasProcessingInstruction(&self) -> bool {
+        self.m_processingInstructionHandler.is_some()
+    }
+
+    fn hasComment(&self) -> bool {
+        self.m_commentHandler.is_some()
     }
 }
 
@@ -260,8 +300,6 @@ pub struct XML_ParserStruct {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    pub m_processingInstructionHandler: XML_ProcessingInstructionHandler,
-    pub m_commentHandler: XML_CommentHandler,
     pub m_startCdataSectionHandler: XML_StartCdataSectionHandler,
     pub m_endCdataSectionHandler: XML_EndCdataSectionHandler,
     pub m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
@@ -1072,8 +1110,6 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     );
     (*parser).m_userData = NULL as *mut c_void;
     (*parser).m_handlers = Default::default();
-    (*parser).m_processingInstructionHandler = None;
-    (*parser).m_commentHandler = None;
     (*parser).m_startCdataSectionHandler = None;
     (*parser).m_endCdataSectionHandler = None;
     (*parser).m_startDoctypeDeclHandler = None;
@@ -1306,8 +1342,8 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     oldStartElementHandler = (*parser).m_handlers.m_startElementHandler;
     oldEndElementHandler = (*parser).m_handlers.m_endElementHandler;
     oldCharacterDataHandler = (*parser).m_handlers.m_characterDataHandler;
-    oldProcessingInstructionHandler = (*parser).m_processingInstructionHandler;
-    oldCommentHandler = (*parser).m_commentHandler;
+    oldProcessingInstructionHandler = (*parser).m_handlers.m_processingInstructionHandler;
+    oldCommentHandler = (*parser).m_handlers.m_commentHandler;
     oldStartCdataSectionHandler = (*parser).m_startCdataSectionHandler;
     oldEndCdataSectionHandler = (*parser).m_endCdataSectionHandler;
     oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
@@ -1364,8 +1400,8 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     (*parser).m_handlers.setStartElement(oldStartElementHandler);
     (*parser).m_handlers.setEndElement(oldEndElementHandler);
     (*parser).m_handlers.setCharacterData(oldCharacterDataHandler);
-    (*parser).m_processingInstructionHandler = oldProcessingInstructionHandler;
-    (*parser).m_commentHandler = oldCommentHandler;
+    (*parser).m_handlers.setProcessingInstruction(oldProcessingInstructionHandler);
+    (*parser).m_handlers.setComment(oldCommentHandler);
     (*parser).m_startCdataSectionHandler = oldStartCdataSectionHandler;
     (*parser).m_endCdataSectionHandler = oldEndCdataSectionHandler;
     (*parser).m_handlers.setDefault(oldDefaultHandler);
@@ -1689,7 +1725,7 @@ pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
     mut handler: XML_ProcessingInstructionHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_processingInstructionHandler = handler
+        (*parser).m_handlers.setProcessingInstruction(handler)
     };
 }
 #[no_mangle]
@@ -1698,7 +1734,7 @@ pub unsafe extern "C" fn XML_SetCommentHandler(
     mut handler: XML_CommentHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_commentHandler = handler
+        (*parser).m_handlers.setComment(handler)
     };
 }
 #[no_mangle]
@@ -3147,7 +3183,7 @@ unsafe extern "C" fn doContent(
                 *eventEndPP = end;
                 if (*parser).m_handlers.hasCharacterData() {
                     let mut c: XML_Char = 0xa;
-                    (*parser).m_handlers.characterData(&mut c, 1i32);
+                    (*parser).m_handlers.characterData(&mut c, 1);
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, end);
                 }
@@ -4753,7 +4789,7 @@ unsafe extern "C" fn doCdataSection(
                         (*parser).m_handlers.m_handlerArg
                     );
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
-                    (*parser).m_handlers.characterData((*parser).m_dataBuf, 0i32);
+                    (*parser).m_handlers.characterData((*parser).m_dataBuf, 0);
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc, s, next);
                 }
@@ -7923,7 +7959,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     let mut target: *const XML_Char = 0 as *const XML_Char;
     let mut data: *mut XML_Char = 0 as *mut XML_Char;
     let mut tem: *const c_char = 0 as *const c_char;
-    if (*parser).m_processingInstructionHandler.is_none() {
+    if !(*parser).m_handlers.hasProcessingInstruction() {
         if (*parser).m_handlers.hasDefault() {
             reportDefault(parser, enc, start, end);
         }
@@ -7946,9 +7982,7 @@ unsafe extern "C" fn reportProcessingInstruction(
         return 0i32;
     }
     normalizeLines(data);
-    (*parser)
-        .m_processingInstructionHandler
-        .expect("non-null function pointer")((*parser).m_handlers.m_handlerArg, target, data);
+    (*parser).m_handlers.processingInstruction(target, data);
     poolClear(&mut (*parser).m_tempPool);
     return 1;
 }
@@ -7960,7 +7994,7 @@ unsafe extern "C" fn reportComment(
     mut end: *const c_char,
 ) -> c_int {
     let mut data: *mut XML_Char = 0 as *mut XML_Char;
-    if (*parser).m_commentHandler.is_none() {
+    if !(*parser).m_handlers.hasComment() {
         if (*parser).m_handlers.hasDefault() {
             reportDefault(parser, enc, start, end);
         }
@@ -7976,9 +8010,7 @@ unsafe extern "C" fn reportComment(
         return 0i32;
     }
     normalizeLines(data);
-    (*parser)
-        .m_commentHandler
-        .expect("non-null function pointer")((*parser).m_handlers.m_handlerArg, data);
+    (*parser).m_handlers.comment(data);
     poolClear(&mut (*parser).m_tempPool);
     return 1;
 }
