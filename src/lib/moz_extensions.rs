@@ -32,7 +32,7 @@ unsafe fn BYTE_TYPE(ptr: *const c_char) -> c_uint {
     };
     if *ptr.offset(msb) == 0 as c_char {
         let enc = MOZ_XmlGetUtf16InternalEncodingNS();
-        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(msb) as usize]
+        (*(enc as *mut normal_encoding)).type_0[*ptr.offset(lsb) as usize]
             as c_uint
     } else {
         unicode_byte_type(*ptr.offset(msb), *ptr.offset(lsb)) as c_uint
