@@ -1642,15 +1642,7 @@ pub mod xmltok_ns_c {
     /* XML_TOK_NS_C */
 }
 
-pub use crate::ascii_h::{
-    ASCII_a, ASCII_b, ASCII_c, ASCII_d, ASCII_e, ASCII_f, ASCII_g, ASCII_i, ASCII_l, ASCII_m,
-    ASCII_n, ASCII_o, ASCII_q, ASCII_r, ASCII_s, ASCII_t, ASCII_v, ASCII_x, ASCII_y, ASCII_z,
-    ASCII_0, ASCII_1, ASCII_2, ASCII_3, ASCII_4, ASCII_5, ASCII_6, ASCII_7, ASCII_8, ASCII_9,
-    ASCII_A, ASCII_AMP, ASCII_APOS, ASCII_B, ASCII_C, ASCII_COLON, ASCII_D, ASCII_E, ASCII_EQUALS,
-    ASCII_F, ASCII_GT, ASCII_I, ASCII_L, ASCII_LSQB, ASCII_LT, ASCII_M, ASCII_MINUS, ASCII_O,
-    ASCII_PERIOD, ASCII_QUOT, ASCII_S, ASCII_SPACE, ASCII_T, ASCII_U, ASCII_UNDERSCORE, ASCII_X,
-    ASCII_Z,
-};
+pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 pub use crate::src::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::src::lib::xmltok::xmltok_ns_c::{
@@ -1662,63 +1654,27 @@ pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::xmltok_impl_c::{
     inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other, other_0, other_1,
 };
-pub use crate::xmltok_impl_h::{
-    C2RustUnnamed_2, BT_AMP, BT_APOS, BT_AST, BT_COLON, BT_COMMA, BT_CR, BT_DIGIT, BT_EQUALS,
-    BT_EXCL, BT_GT, BT_HEX, BT_LEAD2, BT_LEAD3, BT_LEAD4, BT_LF, BT_LPAR, BT_LSQB, BT_LT,
-    BT_MALFORM, BT_MINUS, BT_NAME, BT_NMSTRT, BT_NONASCII, BT_NONXML, BT_NUM, BT_OTHER, BT_PERCNT,
-    BT_PLUS, BT_QUEST, BT_QUOT, BT_RPAR, BT_RSQB, BT_S, BT_SEMI, BT_SOL, BT_TRAIL, BT_VERBAR,
-};
+pub use crate::xmltok_impl_h::*;
 
-// TODO: Temporary
-// use NormalEncoding as normal_encoding;
-// #[repr(C)]
-// #[derive(Copy, Clone)]
-// pub struct normal_encoding {
-//     pub enc: ENCODING,
-//     pub type_0: [c_uchar; 256],
-//     pub isName2: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isName3: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isName4: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isNmstrt2: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isNmstrt3: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isNmstrt4: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isInvalid2: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isInvalid3: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//     pub isInvalid4: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-// }
 pub type normal_encoding = Box<dyn XmlEncoding>;
 
 pub const UTF8_cval2: C2RustUnnamed_7 = 192;
-
 pub const UTF8_cval4: C2RustUnnamed_7 = 240;
-
 pub const UTF8_cval3: C2RustUnnamed_7 = 224;
-
 pub const UNKNOWN_ENC: C2RustUnnamed_8 = -1;
 /* must match encodingNames up to here */
-
 pub const NO_ENC: C2RustUnnamed_8 = 6;
-
 pub const UTF_16LE_ENC: C2RustUnnamed_8 = 5;
-
 pub const UTF_16BE_ENC: C2RustUnnamed_8 = 4;
-
 pub const UTF_8_ENC: C2RustUnnamed_8 = 2;
-
 pub const UTF_16_ENC: C2RustUnnamed_8 = 3;
-
 pub const ISO_8859_1_ENC: C2RustUnnamed_8 = 0;
-
 pub const min4: C2RustUnnamed_6 = 65536;
-
 pub const min3: C2RustUnnamed_6 = 2048;
 /* UTF8_cvalN is value of masked first byte of N byte sequence */
-
 pub const UTF8_cval1: C2RustUnnamed_7 = 0;
 /* minN is minimum legal resulting value for N byte sequence */
-
 pub const min2: C2RustUnnamed_6 = 128;
-
 pub type C2RustUnnamed_6 = c_uint;
 
 #[repr(C)]
@@ -1791,100 +1747,6 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
      (A & 0xC0) == 0xC0  means A > 0xBF
 */
 
-unsafe extern "C" fn isNever(mut _enc: *const ENCODING, mut _p: *const c_char) -> c_int {
-    return 0;
-}
-
-unsafe extern "C" fn utf8_isName2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
-        as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) as c_int;
-}
-
-unsafe extern "C" fn utf8_isName3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
-        as usize] as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) as c_int;
-}
-
-pub const utf8_isName4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int =
-    isNever;
-
-unsafe extern "C" fn utf8_isNmstrt2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages
-        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
-        as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) as c_int;
-}
-
-unsafe extern "C" fn utf8_isNmstrt3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
-        as usize] as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) as c_int;
-}
-
-pub const utf8_isNmstrt4: unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int =
-    isNever;
-
-unsafe extern "C" fn utf8_isInvalid2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return ((*(p as *const c_uchar) as c_int) < 0xc2
-        || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int;
-}
-
-unsafe extern "C" fn utf8_isInvalid3(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-        || (if *(p as *const c_uchar) as c_int == 0xef
-            && *(p as *const c_uchar).offset(1) as c_int == 0xbf
-        {
-            (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0) as c_int
-        }) != 0
-        || (if *(p as *const c_uchar) as c_int == 0xe0 {
-            ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                || (if *(p as *const c_uchar) as c_int == 0xed {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f) as c_int
-                } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-                }) != 0) as c_int
-        }) != 0) as c_int;
-}
-
-unsafe extern "C" fn utf8_isInvalid4(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
-        || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
-        || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-        || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
-        || (if *(p as *const c_uchar) as c_int == 0xf0 {
-            ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                || (if *(p as *const c_uchar) as c_int == 0xf4 {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f) as c_int
-                } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-                }) != 0) as c_int
-        }) != 0) as c_int;
-}
 /* internal.h
 
    Internal definitions used by Expat.  This is not needed to compile
