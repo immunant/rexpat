@@ -145,92 +145,110 @@ unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
 }
 
 trait XmlHandlers {
-    unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
-    unsafe fn endElement(&self, _: *const XML_Char) -> bool;
-    unsafe fn characterData(&self, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
-    unsafe fn comment(&self, b: *const XML_Char) -> bool;
-    unsafe fn startCDataSection(&self) -> bool;
-    unsafe fn endCDataSection(&self) -> bool;
-    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
-    unsafe fn endDoctypeDecl(&self) -> bool;
-    unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
-    unsafe fn endNamespaceDecl(&self, _: *const XML_Char) -> bool;
-    unsafe fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
-    unsafe fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn entityDecl(&self, _: *const XML_Char, _: c_int, _: *const XML_Char, _: c_int, _: *const XML_Char,
-                         _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
-    unsafe fn xmlDecl(&self, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
-    unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
-    fn hasDefault(&self) -> bool;
-    fn hasEndElement(&self) -> bool;
-    fn hasCharacterData(&self) -> bool;
-    fn hasProcessingInstruction(&self) -> bool;
-    fn hasComment(&self) -> bool;
-    fn hasStartCDataSection(&self) -> bool;
-    fn hasEndCDataSection(&self) -> bool;
-    fn hasStartDoctypeDecl(&self) -> bool;
-    fn hasEndDoctypeDecl(&self) -> bool;
-    fn hasStartNamespaceDecl(&self) -> bool;
-    fn hasEndNamespaceDecl(&self) -> bool;
-    fn hasElementDecl(&self) -> bool;
     fn hasAttlistDecl(&self) -> bool;
+    fn hasCharacterData(&self) -> bool;
+    fn hasComment(&self) -> bool;
+    fn hasDefault(&self) -> bool;
+    fn hasElementDecl(&self) -> bool;
+    fn hasEndCDataSection(&self) -> bool;
+    fn hasEndDoctypeDecl(&self) -> bool;
+    fn hasEndElement(&self) -> bool;
+    fn hasEndNamespaceDecl(&self) -> bool;
     fn hasEntityDecl(&self) -> bool;
-    fn hasXmlDecl(&self) -> bool;
+    fn hasExternalEntityRef(&self) -> bool;
+    fn hasNotationDecl(&self) -> bool;
+    fn hasNotStandalone(&self) -> bool;
+    fn hasProcessingInstruction(&self) -> bool;
     fn hasSkippedEntity(&self) -> bool;
+    fn hasStartCDataSection(&self) -> bool;
+    fn hasStartDoctypeDecl(&self) -> bool;
+    fn hasStartNamespaceDecl(&self) -> bool;
     fn hasUnknownEncoding(&self) -> bool;
+    fn hasUnparsedEntityDecl(&self) -> bool;
+    fn hasXmlDecl(&self) -> bool;
+    unsafe fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
+    unsafe fn characterData(&self, _: *const XML_Char, _: c_int) -> bool;
+    unsafe fn comment(&self, b: *const XML_Char) -> bool;
+    unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
+    unsafe fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
+    unsafe fn endCDataSection(&self) -> bool;
+    unsafe fn endDoctypeDecl(&self) -> bool;
+    unsafe fn endElement(&self, _: *const XML_Char) -> bool;
+    unsafe fn endNamespaceDecl(&self, _: *const XML_Char) -> bool;
+    unsafe fn entityDecl(&self, _: *const XML_Char, _: c_int, _: *const XML_Char, _: c_int, _: *const XML_Char,
+                                _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
+    unsafe fn externalEntityRef(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> Result<c_int, ()>;
+    unsafe fn notationDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
+    unsafe fn notStandalone(&self) -> Result<c_int, ()>;
+    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
+    unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
+    unsafe fn startCDataSection(&self) -> bool;
+    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
+    unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
+    unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
+    unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
+    unsafe fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
+    unsafe fn xmlDecl(&self, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 struct CXmlHandlers {
-    m_handlerArg: *mut c_void,
-    m_unknownEncodingHandlerData: *mut c_void,
-    m_startElementHandler: XML_StartElementHandler,
-    m_defaultHandler: XML_DefaultHandler,
-    m_endElementHandler: XML_EndElementHandler,
-    m_characterDataHandler: XML_CharacterDataHandler,
-    m_processingInstructionHandler: XML_ProcessingInstructionHandler,
-    m_commentHandler: XML_CommentHandler,
-    m_startCdataSectionHandler: XML_StartCdataSectionHandler,
-    m_endCdataSectionHandler: XML_EndCdataSectionHandler,
-    m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
-    m_endDoctypeDeclHandler: XML_EndDoctypeDeclHandler,
-    m_startNamespaceDeclHandler: XML_StartNamespaceDeclHandler,
-    m_endNamespaceDeclHandler: XML_EndNamespaceDeclHandler,
-    m_elementDeclHandler: XML_ElementDeclHandler,
     m_attlistDeclHandler: XML_AttlistDeclHandler,
+    m_characterDataHandler: XML_CharacterDataHandler,
+    m_commentHandler: XML_CommentHandler,
+    m_defaultHandler: XML_DefaultHandler,
+    m_elementDeclHandler: XML_ElementDeclHandler,
+    m_endCdataSectionHandler: XML_EndCdataSectionHandler,
+    m_endDoctypeDeclHandler: XML_EndDoctypeDeclHandler,
+    m_endElementHandler: XML_EndElementHandler,
+    m_endNamespaceDeclHandler: XML_EndNamespaceDeclHandler,
     m_entityDeclHandler: XML_EntityDeclHandler,
-    m_xmlDeclHandler: XML_XmlDeclHandler,
+    m_externalEntityRefHandler: XML_ExternalEntityRefHandler,
+    m_externalEntityRefHandlerArg: XML_Parser,
+    m_handlerArg: *mut c_void,
+    m_notationDeclHandler: XML_NotationDeclHandler,
+    m_notStandaloneHandler: XML_NotStandaloneHandler,
+    m_processingInstructionHandler: XML_ProcessingInstructionHandler,
     m_skippedEntityHandler: XML_SkippedEntityHandler,
+    m_startCdataSectionHandler: XML_StartCdataSectionHandler,
+    m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
+    m_startElementHandler: XML_StartElementHandler,
+    m_startNamespaceDeclHandler: XML_StartNamespaceDeclHandler,
     m_unknownEncodingHandler: XML_UnknownEncodingHandler,
+    m_unknownEncodingHandlerData: *mut c_void,
+    m_unparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler,
+    m_xmlDeclHandler: XML_XmlDeclHandler,
 }
 
 impl Default for CXmlHandlers {
     fn default() -> Self {
         CXmlHandlers {
-            m_handlerArg: std::ptr::null_mut(),
-            m_unknownEncodingHandlerData: std::ptr::null_mut(),
-            m_startElementHandler: None,
-            m_defaultHandler: None,
-            m_endElementHandler: None,
-            m_characterDataHandler: None,
-            m_processingInstructionHandler: None,
-            m_commentHandler: None,
-            m_startCdataSectionHandler: None,
-            m_endCdataSectionHandler: None,
-            m_startDoctypeDeclHandler: None,
-            m_endDoctypeDeclHandler: None,
-            m_startNamespaceDeclHandler: None,
-            m_endNamespaceDeclHandler: None,
-            m_elementDeclHandler: None,
             m_attlistDeclHandler: None,
+            m_characterDataHandler: None,
+            m_commentHandler: None,
+            m_defaultHandler: None,
+            m_elementDeclHandler: None,
+            m_endCdataSectionHandler: None,
+            m_endDoctypeDeclHandler: None,
+            m_endElementHandler: None,
+            m_endNamespaceDeclHandler: None,
             m_entityDeclHandler: None,
-            m_xmlDeclHandler: None,
+            m_externalEntityRefHandler: None,
+            m_externalEntityRefHandlerArg: std::ptr::null_mut(),
+            m_handlerArg: std::ptr::null_mut(),
+            m_notationDeclHandler: None,
+            m_notStandaloneHandler: None,
+            m_processingInstructionHandler: None,
             m_skippedEntityHandler: None,
+            m_startCdataSectionHandler: None,
+            m_startDoctypeDeclHandler: None,
+            m_startElementHandler: None,
+            m_startNamespaceDeclHandler: None,
             m_unknownEncodingHandler: None,
+            m_unknownEncodingHandlerData: std::ptr::null_mut(),
+            m_unparsedEntityDeclHandler: None,
+            m_xmlDeclHandler: None,
         }
     }
 }
@@ -307,44 +325,66 @@ impl CXmlHandlers {
     fn setUnknownEncoding(&mut self, handler: XML_UnknownEncodingHandler) {
         self.m_unknownEncodingHandler = handler;
     }
+
+    fn setUnparsedEntityDecl(&mut self, handler: XML_UnparsedEntityDeclHandler) {
+        self.m_unparsedEntityDeclHandler = handler;
+    }
+
+    fn setNotationDecl(&mut self, handler: XML_NotationDeclHandler) {
+        self.m_notationDeclHandler = handler;
+    }
+
+    fn setNotStandalone(&mut self, handler: XML_NotStandaloneHandler) {
+        self.m_notStandaloneHandler = handler;
+    }
+
+    fn setExternalEntityRef(&mut self, handler: XML_ExternalEntityRefHandler) {
+        self.m_externalEntityRefHandler = handler;
+    }
 }
 
 impl XmlHandlers for CXmlHandlers {
-    unsafe fn startElement(&self, b: *const XML_Char, c: *mut ATTRIBUTE) -> bool {
+    unsafe fn startElement(&self, a: *const XML_Char, b: *mut ATTRIBUTE) -> bool {
         self.m_startElementHandler.map(|handler| {
-            handler(self.m_handlerArg, b, c as *mut *const XML_Char);
+            handler(self.m_handlerArg, a, b as *mut *const XML_Char);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn endElement(&self, b: *const XML_Char) -> bool {
+    unsafe fn endElement(&self, a: *const XML_Char) -> bool {
         self.m_endElementHandler.map(|handler| {
-            handler(self.m_handlerArg, b);
+            handler(self.m_handlerArg, a);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn characterData(&self, b: *const XML_Char, c: c_int) -> bool {
+    unsafe fn characterData(&self, a: *const XML_Char, b: c_int) -> bool {
         self.m_characterDataHandler.map(|handler| {
-            handler(self.m_handlerArg, b, c);
+            handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool {
+    unsafe fn externalEntityRef(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: *const XML_Char) -> Result<c_int, ()> {
+        self.m_externalEntityRefHandler
+            .map(|handler| Ok(handler(self.m_externalEntityRefHandlerArg, a, b, c, d)))
+            .unwrap_or(Err(()))
+    }
+
+    unsafe fn processingInstruction(&self, a: *const XML_Char, b: *const XML_Char) -> bool {
         self.m_processingInstructionHandler.map(|handler| {
-            handler(self.m_handlerArg, b, c);
+            handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn comment(&self, b: *const XML_Char) -> bool {
+    unsafe fn comment(&self, a: *const XML_Char) -> bool {
         self.m_commentHandler.map(|handler| {
-            handler(self.m_handlerArg, b);
+            handler(self.m_handlerArg, a);
 
             true
         }).unwrap_or(false)
@@ -454,6 +494,41 @@ impl XmlHandlers for CXmlHandlers {
         }).unwrap_or(false)
     }
 
+    unsafe fn unparsedEntityDecl(
+        &self,
+        a: *const XML_Char,
+        b: *const XML_Char,
+        c: *const XML_Char,
+        d: *const XML_Char,
+        e: *const XML_Char,
+    ) -> bool {
+        self.m_unparsedEntityDeclHandler.map(|handler| {
+            handler(self.m_handlerArg, a, b, c, d, e);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn notationDecl(
+        &self,
+        a: *const XML_Char,
+        b: *const XML_Char,
+        c: *const XML_Char,
+        d: *const XML_Char,
+    ) -> bool {
+        self.m_notationDeclHandler.map(|handler| {
+            handler(self.m_handlerArg, a, b, c, d);
+
+            true
+        }).unwrap_or(false)
+    }
+
+    unsafe fn notStandalone(&self) -> Result<c_int, ()> {
+        self.m_notStandaloneHandler
+            .map(|handler| Ok(handler(self.m_handlerArg)))
+            .unwrap_or(Err(()))
+    }
+
     unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
         self.m_defaultHandler.map(|handler| {
             handler(self.m_handlerArg, s, next);
@@ -529,6 +604,22 @@ impl XmlHandlers for CXmlHandlers {
     fn hasUnknownEncoding(&self) -> bool {
         self.m_unknownEncodingHandler.is_some()
     }
+
+    fn hasUnparsedEntityDecl(&self) -> bool {
+        self.m_unparsedEntityDeclHandler.is_some()
+    }
+
+    fn hasNotationDecl(&self) -> bool {
+        self.m_notationDeclHandler.is_some()
+    }
+
+    fn hasNotStandalone(&self) -> bool {
+        self.m_notStandaloneHandler.is_some()
+    }
+
+    fn hasExternalEntityRef(&self) -> bool {
+        self.m_externalEntityRefHandler.is_some()
+    }
 }
 
 #[repr(C)]
@@ -551,11 +642,6 @@ pub struct XML_ParserStruct {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    pub m_unparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler,
-    pub m_notationDeclHandler: XML_NotationDeclHandler,
-    pub m_notStandaloneHandler: XML_NotStandaloneHandler,
-    pub m_externalEntityRefHandler: XML_ExternalEntityRefHandler,
-    pub m_externalEntityRefHandlerArg: XML_Parser,
     m_handlers: CXmlHandlers,
     pub m_encoding: *const super::xmltok::ENCODING,
     pub m_initEncoding: super::xmltok::INIT_ENCODING,
@@ -1347,12 +1433,7 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     );
     (*parser).m_userData = NULL as *mut c_void;
     (*parser).m_handlers = Default::default();
-    (*parser).m_unparsedEntityDeclHandler = None;
-    (*parser).m_notationDeclHandler = None;
-    (*parser).m_notStandaloneHandler = None;
-    (*parser).m_externalEntityRefHandler = None;
-    (*parser).m_externalEntityRefHandlerArg = parser;
-    (*parser).m_handlers.m_skippedEntityHandler = None;
+    (*parser).m_handlers.m_externalEntityRefHandlerArg = parser;
     (*parser).m_bufferPtr = (*parser).m_buffer;
     (*parser).m_bufferEnd = (*parser).m_buffer;
     (*parser).m_parseEndByteIndex = 0i64;
@@ -1574,12 +1655,12 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     oldStartCdataSectionHandler = (*parser).m_handlers.m_startCdataSectionHandler;
     oldEndCdataSectionHandler = (*parser).m_handlers.m_endCdataSectionHandler;
     oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
-    oldUnparsedEntityDeclHandler = (*parser).m_unparsedEntityDeclHandler;
-    oldNotationDeclHandler = (*parser).m_notationDeclHandler;
+    oldUnparsedEntityDeclHandler = (*parser).m_handlers.m_unparsedEntityDeclHandler;
+    oldNotationDeclHandler = (*parser).m_handlers.m_notationDeclHandler;
     oldStartNamespaceDeclHandler = (*parser).m_handlers.m_startNamespaceDeclHandler;
     oldEndNamespaceDeclHandler = (*parser).m_handlers.m_endNamespaceDeclHandler;
-    oldNotStandaloneHandler = (*parser).m_notStandaloneHandler;
-    oldExternalEntityRefHandler = (*parser).m_externalEntityRefHandler;
+    oldNotStandaloneHandler = (*parser).m_handlers.m_notStandaloneHandler;
+    oldExternalEntityRefHandler = (*parser).m_handlers.m_externalEntityRefHandler;
     oldSkippedEntityHandler = (*parser).m_handlers.m_skippedEntityHandler;
     oldUnknownEncodingHandler = (*parser).m_handlers.m_unknownEncodingHandler;
     oldElementDeclHandler = (*parser).m_handlers.m_elementDeclHandler;
@@ -1590,7 +1671,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     oldUserData = (*parser).m_userData;
     oldHandlerArg = (*parser).m_handlers.m_handlerArg;
     oldDefaultExpandInternalEntities = (*parser).m_defaultExpandInternalEntities;
-    oldExternalEntityRefHandlerArg = (*parser).m_externalEntityRefHandlerArg;
+    oldExternalEntityRefHandlerArg = (*parser).m_handlers.m_externalEntityRefHandlerArg;
     oldParamEntityParsing = (*parser).m_paramEntityParsing;
     oldInEntityValue = (*parser).m_prologState.inEntityValue;
     oldns_triplets = (*parser).m_ns_triplets;
@@ -1632,12 +1713,12 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     (*parser).m_handlers.setStartCDataSection(oldStartCdataSectionHandler);
     (*parser).m_handlers.setEndCDataSection(oldEndCdataSectionHandler);
     (*parser).m_handlers.setDefault(oldDefaultHandler);
-    (*parser).m_unparsedEntityDeclHandler = oldUnparsedEntityDeclHandler;
-    (*parser).m_notationDeclHandler = oldNotationDeclHandler;
+    (*parser).m_handlers.setUnparsedEntityDecl(oldUnparsedEntityDeclHandler);
+    (*parser).m_handlers.setNotationDecl(oldNotationDeclHandler);
     (*parser).m_handlers.setStartNamespaceDecl(oldStartNamespaceDeclHandler);
     (*parser).m_handlers.setEndNamespaceDecl(oldEndNamespaceDeclHandler);
-    (*parser).m_notStandaloneHandler = oldNotStandaloneHandler;
-    (*parser).m_externalEntityRefHandler = oldExternalEntityRefHandler;
+    (*parser).m_handlers.setNotStandalone(oldNotStandaloneHandler);
+    (*parser).m_handlers.setExternalEntityRef(oldExternalEntityRefHandler);
     (*parser).m_handlers.setSkippedEntity(oldSkippedEntityHandler);
     (*parser).m_handlers.setUnknownEncoding(oldUnknownEncodingHandler);
     (*parser).m_handlers.setElementDecl(oldElementDeclHandler);
@@ -1652,7 +1733,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
         (*parser).m_handlers.m_handlerArg = parser as *mut c_void
     }
     if oldExternalEntityRefHandlerArg != oldParser {
-        (*parser).m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
     }
     (*parser).m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
     (*parser).m_ns_triplets = oldns_triplets;
@@ -2060,7 +2141,7 @@ pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
     mut handler: XML_UnparsedEntityDeclHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_unparsedEntityDeclHandler = handler
+        (*parser).m_handlers.setUnparsedEntityDecl(handler)
     };
 }
 #[no_mangle]
@@ -2069,7 +2150,7 @@ pub unsafe extern "C" fn XML_SetNotationDeclHandler(
     mut handler: XML_NotationDeclHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_notationDeclHandler = handler
+        (*parser).m_handlers.setNotationDecl(handler)
     };
 }
 #[no_mangle]
@@ -2108,7 +2189,7 @@ pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
     mut handler: XML_NotStandaloneHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_notStandaloneHandler = handler
+        (*parser).m_handlers.setNotStandalone(handler)
     };
 }
 #[no_mangle]
@@ -2117,7 +2198,7 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
     mut handler: XML_ExternalEntityRefHandler,
 ) {
     if !parser.is_null() {
-        (*parser).m_externalEntityRefHandler = handler
+        (*parser).m_handlers.setExternalEntityRef(handler)
     };
 }
 /* If a non-NULL value for arg is specified here, then it will be
@@ -2133,9 +2214,9 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
         return;
     }
     if !arg.is_null() {
-        (*parser).m_externalEntityRefHandlerArg = arg as XML_Parser
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = arg as XML_Parser
     } else {
-        (*parser).m_externalEntityRefHandlerArg = parser
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = parser
     };
 }
 #[no_mangle]
@@ -3541,7 +3622,7 @@ unsafe extern "C" fn doContent(
                                         return result;
                                     }
                                 }
-                            } else if (*parser).m_externalEntityRefHandler.is_some() {
+                            } else if (*parser).m_handlers.hasExternalEntityRef() {
                                 let mut context: *const XML_Char = 0 as *const XML_Char;
                                 (*entity).open = XML_TRUE;
                                 context = getContext(parser);
@@ -3549,15 +3630,12 @@ unsafe extern "C" fn doContent(
                                 if context.is_null() {
                                     return XML_ERROR_NO_MEMORY;
                                 }
-                                if (*parser)
-                                    .m_externalEntityRefHandler
-                                    .expect("non-null function pointer")(
-                                    (*parser).m_externalEntityRefHandlerArg,
+                                if (*parser).m_handlers.externalEntityRef(
                                     context,
                                     (*entity).base,
                                     (*entity).systemId,
                                     (*entity).publicId,
-                                ) == 0
+                                ) == Ok(0)
                                 {
                                     return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
                                 }
@@ -6011,7 +6089,7 @@ unsafe extern "C" fn doProlog(
                     let mut hadParamEntityRefs: XML_Bool = (*dtd).hasParamEntityRefs;
                     (*dtd).hasParamEntityRefs = XML_TRUE;
                     if (*parser).m_paramEntityParsing != 0
-                        && (*parser).m_externalEntityRefHandler.is_some()
+                        && (*parser).m_handlers.hasExternalEntityRef()
                     {
                         let mut entity: *mut ENTITY = lookup(
                             parser,
@@ -6033,27 +6111,17 @@ unsafe extern "C" fn doProlog(
                             (*entity).base = (*parser).m_curBase
                         }
                         (*dtd).paramEntityRead = XML_FALSE;
-                        if (*parser)
-                            .m_externalEntityRefHandler
-                            .expect("non-null function pointer")(
-                            (*parser).m_externalEntityRefHandlerArg,
+                        if (*parser).m_handlers.externalEntityRef(
                             0 as *const XML_Char,
                             (*entity).base,
                             (*entity).systemId,
                             (*entity).publicId,
-                        ) == 0
+                        ) == Ok(0)
                         {
                             return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
                         }
                         if (*dtd).paramEntityRead != 0 {
-                            if (*dtd).standalone == 0
-                                && (*parser).m_notStandaloneHandler.is_some()
-                                && (*parser)
-                                    .m_notStandaloneHandler
-                                    .expect("non-null function pointer")(
-                                    (*parser).m_handlers.m_handlerArg
-                                ) == 0
-                            {
+                            if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
                                 return XML_ERROR_NOT_STANDALONE;
                             }
                         } else if (*parser).m_doctypeSysid.is_null() {
@@ -6080,9 +6148,7 @@ unsafe extern "C" fn doProlog(
                 if (*parser).m_useForeignDTD != 0 {
                     let mut hadParamEntityRefs_0: XML_Bool = (*dtd).hasParamEntityRefs;
                     (*dtd).hasParamEntityRefs = XML_TRUE;
-                    if (*parser).m_paramEntityParsing != 0
-                        && (*parser).m_externalEntityRefHandler.is_some()
-                    {
+                    if (*parser).m_paramEntityParsing != 0 && (*parser).m_handlers.hasExternalEntityRef() {
                         let mut entity_0: *mut ENTITY = lookup(
                             parser,
                             &mut (*dtd).paramEntities,
@@ -6094,27 +6160,17 @@ unsafe extern "C" fn doProlog(
                         }
                         (*entity_0).base = (*parser).m_curBase;
                         (*dtd).paramEntityRead = XML_FALSE;
-                        if (*parser)
-                            .m_externalEntityRefHandler
-                            .expect("non-null function pointer")(
-                            (*parser).m_externalEntityRefHandlerArg,
+                        if (*parser).m_handlers.externalEntityRef(
                             0 as *const XML_Char,
                             (*entity_0).base,
                             (*entity_0).systemId,
                             (*entity_0).publicId,
-                        ) == 0
+                        ) == Ok(0)
                         {
                             return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
                         }
                         if (*dtd).paramEntityRead != 0 {
-                            if (*dtd).standalone == 0
-                                && (*parser).m_notStandaloneHandler.is_some()
-                                && (*parser)
-                                    .m_notStandaloneHandler
-                                    .expect("non-null function pointer")(
-                                    (*parser).m_handlers.m_handlerArg
-                                ) == 0
-                            {
+                            if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
                                 return XML_ERROR_NOT_STANDALONE;
                             }
                         } else {
@@ -6408,12 +6464,7 @@ unsafe extern "C" fn doProlog(
                 /* XML_DTD */
                 if (*dtd).standalone == 0
                     && (*parser).m_paramEntityParsing as u64 == 0
-                    && (*parser).m_notStandaloneHandler.is_some()
-                    && (*parser)
-                        .m_notStandaloneHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg
-                    ) == 0
+                    && (*parser).m_handlers.notStandalone() == Ok(0)
                 {
                     return XML_ERROR_NOT_STANDALONE;
                 }
@@ -6463,12 +6514,9 @@ unsafe extern "C" fn doProlog(
                         return XML_ERROR_NO_MEMORY;
                     }
                     (*dtd).pool.start = (*dtd).pool.ptr;
-                    if (*parser).m_unparsedEntityDeclHandler.is_some() {
+                    if (*parser).m_handlers.hasUnparsedEntityDecl() {
                         *eventEndPP = s;
-                        (*parser)
-                            .m_unparsedEntityDeclHandler
-                            .expect("non-null function pointer")(
-                            (*parser).m_handlers.m_handlerArg,
+                        (*parser).m_handlers.unparsedEntityDecl(
                             (*(*parser).m_declEntity).name,
                             (*(*parser).m_declEntity).base,
                             (*(*parser).m_declEntity).systemId,
@@ -6581,7 +6629,7 @@ unsafe extern "C" fn doProlog(
             18 => {
                 (*parser).m_declNotationPublicId = NULL as *const XML_Char;
                 (*parser).m_declNotationName = NULL as *const XML_Char;
-                if (*parser).m_notationDeclHandler.is_some() {
+                if (*parser).m_handlers.hasNotationDecl() {
                     (*parser).m_declNotationName =
                         poolStoreString(&mut (*parser).m_tempPool, enc, s, next);
                     if (*parser).m_declNotationName.is_null() {
@@ -6617,7 +6665,7 @@ unsafe extern "C" fn doProlog(
             }
             19 => {
                 if !(*parser).m_declNotationName.is_null()
-                    && (*parser).m_notationDeclHandler.is_some()
+                    && (*parser).m_handlers.hasNotationDecl()
                 {
                     let mut systemId: *const XML_Char = poolStoreString(
                         &mut (*parser).m_tempPool,
@@ -6629,10 +6677,7 @@ unsafe extern "C" fn doProlog(
                         return XML_ERROR_NO_MEMORY;
                     }
                     *eventEndPP = s;
-                    (*parser)
-                        .m_notationDeclHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg,
+                    (*parser).m_handlers.notationDecl(
                         (*parser).m_declNotationName,
                         (*parser).m_curBase,
                         systemId,
@@ -6645,13 +6690,10 @@ unsafe extern "C" fn doProlog(
             }
             20 => {
                 if !(*parser).m_declNotationPublicId.is_null()
-                    && (*parser).m_notationDeclHandler.is_some()
+                    && (*parser).m_handlers.hasNotationDecl()
                 {
                     *eventEndPP = s;
-                    (*parser)
-                        .m_notationDeclHandler
-                        .expect("non-null function pointer")(
-                        (*parser).m_handlers.m_handlerArg,
+                    (*parser).m_handlers.notationDecl(
                         (*parser).m_declNotationName,
                         (*parser).m_curBase,
                         0 as *const XML_Char,
@@ -6894,7 +6936,7 @@ unsafe extern "C" fn doProlog(
                                 }
                                 handleDefault = XML_FALSE;
                                 current_block = 1553878188884632965;
-                            } else if (*parser).m_externalEntityRefHandler.is_some() {
+                            } else if (*parser).m_handlers.hasExternalEntityRef() {
                                 (*dtd).paramEntityRead = XML_FALSE;
                                 (*entity_1).open = XML_TRUE;
                                 let entity_1_name = if cfg!(feature = "mozilla") {
@@ -6902,15 +6944,12 @@ unsafe extern "C" fn doProlog(
                                 } else {
                                     0 as *const XML_Char
                                 };
-                                if (*parser)
-                                    .m_externalEntityRefHandler
-                                    .expect("non-null function pointer")(
-                                    (*parser).m_externalEntityRefHandlerArg,
+                                if (*parser).m_handlers.externalEntityRef(
                                     entity_1_name,
                                     (*entity_1).base,
                                     (*entity_1).systemId,
                                     (*entity_1).publicId,
-                                ) == 0
+                                ) == Ok(0)
                                 {
                                     (*entity_1).open = XML_FALSE;
                                     return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
@@ -6934,14 +6973,7 @@ unsafe extern "C" fn doProlog(
                     1553878188884632965 => {}
                     _ => {
                         /* XML_DTD */
-                        if (*dtd).standalone == 0
-                            && (*parser).m_notStandaloneHandler.is_some()
-                            && (*parser)
-                                .m_notStandaloneHandler
-                                .expect("non-null function pointer")(
-                                (*parser).m_handlers.m_handlerArg
-                            ) == 0
-                        {
+                        if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
                             return XML_ERROR_NOT_STANDALONE;
                         }
                         current_block = 1553878188884632965;
@@ -7067,7 +7099,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             17 => {
-                if (*parser).m_notationDeclHandler.is_some() {
+                if (*parser).m_handlers.hasNotationDecl() {
                     handleDefault = XML_FALSE
                 }
                 current_block = 1553878188884632965;
@@ -7903,18 +7935,15 @@ unsafe extern "C" fn storeEntityValue(
                             result = XML_ERROR_RECURSIVE_ENTITY_REF;
                             break;
                         } else if !(*entity).systemId.is_null() {
-                            if (*parser).m_externalEntityRefHandler.is_some() {
+                            if (*parser).m_handlers.hasExternalEntityRef() {
                                 (*dtd).paramEntityRead = XML_FALSE;
                                 (*entity).open = XML_TRUE;
-                                if (*parser)
-                                    .m_externalEntityRefHandler
-                                    .expect("non-null function pointer")(
-                                    (*parser).m_externalEntityRefHandlerArg,
+                                if (*parser).m_handlers.externalEntityRef(
                                     0 as *const XML_Char,
                                     (*entity).base,
                                     (*entity).systemId,
                                     (*entity).publicId,
-                                ) == 0
+                                ) == Ok(0)
                                 {
                                     (*entity).open = XML_FALSE;
                                     result = XML_ERROR_EXTERNAL_ENTITY_HANDLING;
