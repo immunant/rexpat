@@ -10,6 +10,7 @@
 #![feature(extern_types)]
 #![feature(label_break_value)]
 #![feature(main)]
+#![feature(const_in_array_repeat_expressions)]
 #![feature(ptr_wrapping_offset_from)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
@@ -49,5 +50,7 @@ pub mod src {
         pub mod xmlparse;
         pub mod xmlrole;
         pub mod xmltok;
+        pub mod xmltok_impl;
+        pub mod nametab;
     } // mod lib
 } // mod src

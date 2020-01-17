@@ -106,20 +106,9 @@ pub use crate::src::lib::xmlrole::{
     XML_ROLE_XML_DECL,
 };
 pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    XmlInitEncoding, XmlInitEncodingNS, XmlParseXmlDecl, XmlParseXmlDeclNS,
+    XmlInitEncoding, XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
-pub use crate::src::lib::xmltok::{
-    encoding, position, XML_Convert_Result, XmlInitUnknownEncoding, XmlInitUnknownEncodingNS,
-    XmlSizeOfUnknownEncoding, ATTRIBUTE, CONVERTER, ENCODING, INIT_ENCODING, POSITION, SCANNER,
-    XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED,
-    XML_TOK_ATTRIBUTE_VALUE_S, XML_TOK_BOM, XML_TOK_CDATA_SECT_CLOSE, XML_TOK_CDATA_SECT_OPEN,
-    XML_TOK_CHAR_REF, XML_TOK_COMMENT, XML_TOK_DATA_CHARS, XML_TOK_DATA_NEWLINE,
-    XML_TOK_EMPTY_ELEMENT_NO_ATTS, XML_TOK_EMPTY_ELEMENT_WITH_ATTS, XML_TOK_END_TAG,
-    XML_TOK_ENTITY_REF, XML_TOK_IGNORE_SECT, XML_TOK_INSTANCE_START, XML_TOK_INVALID, XML_TOK_NONE,
-    XML_TOK_PARAM_ENTITY_REF, XML_TOK_PARTIAL, XML_TOK_PARTIAL_CHAR, XML_TOK_PI, XML_TOK_PROLOG_S,
-    XML_TOK_START_TAG_NO_ATTS, XML_TOK_START_TAG_WITH_ATTS, XML_TOK_TRAILING_CR,
-    XML_TOK_TRAILING_RSQB, XML_TOK_XML_DECL, XML_UTF16_ENCODE_MAX, XML_UTF8_ENCODE_MAX,
-};
+pub use crate::src::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __pid_t, __ssize_t,
@@ -132,7 +121,6 @@ pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 
 #[repr(C)]
-#[derive(Copy, Clone)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
@@ -502,7 +490,7 @@ mod unicode_defines {
 
     macro_rules! MUST_CONVERT {
         ($enc:path, $s:expr $(,)?) => {
-            (*$enc).isUtf8 == 0
+            !(*$enc).isUtf8()
         };
     }
 
@@ -858,6 +846,7 @@ unsafe extern "C" fn parserCreate(
     if parser.is_null() {
         return parser;
     }
+
     (*parser).m_buffer = NULL as *mut c_char;
     (*parser).m_bufferLim = NULL as *const c_char;
     (*parser).m_attsSize = INIT_ATTS_SIZE;
@@ -932,7 +921,7 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     (*parser).m_curBase = NULL as *const XML_Char;
     super::xmltok::xmltok_ns_c::XmlInitEncoding(
         &mut (*parser).m_initEncoding as *mut _,
-        &mut (*parser).m_encoding as *mut _,
+        &mut (*parser).m_encoding,
         0 as *const c_char,
     );
     (*parser).m_userData = NULL as *mut c_void;
@@ -1958,10 +1947,7 @@ pub unsafe extern "C" fn XML_Parse(
                      *
                      * LCOV_EXCL_START
                      */
-                    (*(*parser).m_encoding)
-                        .updatePosition
-                        .expect("non-null function pointer")(
-                        (*parser).m_encoding,
+                    (*(*parser).m_encoding).updatePosition(
                         (*parser).m_positionPtr,
                         (*parser).m_bufferPtr,
                         &mut (*parser).m_position,
@@ -2053,10 +2039,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
             _ => {}
         }
     }
-    (*(*parser).m_encoding)
-        .updatePosition
-        .expect("non-null function pointer")(
-        (*parser).m_encoding,
+    (*(*parser).m_encoding).updatePosition(
         (*parser).m_positionPtr,
         (*parser).m_bufferPtr,
         &mut (*parser).m_position,
@@ -2348,10 +2331,7 @@ pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status 
             _ => {}
         }
     }
-    (*(*parser).m_encoding)
-        .updatePosition
-        .expect("non-null function pointer")(
-        (*parser).m_encoding,
+    (*(*parser).m_encoding).updatePosition(
         (*parser).m_positionPtr,
         (*parser).m_bufferPtr,
         &mut (*parser).m_position,
@@ -2486,10 +2466,7 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
         return 0u64;
     }
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
-        (*(*parser).m_encoding)
-            .updatePosition
-            .expect("non-null function pointer")(
-            (*parser).m_encoding,
+        (*(*parser).m_encoding).updatePosition(
             (*parser).m_positionPtr,
             (*parser).m_eventPtr,
             &mut (*parser).m_position,
@@ -2504,10 +2481,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
         return 0u64;
     }
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
-        (*(*parser).m_encoding)
-            .updatePosition
-            .expect("non-null function pointer")(
-            (*parser).m_encoding,
+        (*(*parser).m_encoding).updatePosition(
             (*parser).m_positionPtr,
             (*parser).m_eventPtr,
             &mut (*parser).m_position,
@@ -2861,8 +2835,8 @@ unsafe extern "C" fn externalEntityInitProcessor2(
     mut endPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = start;
-    let mut tok: c_int = (*(*parser).m_encoding).scanners[1].expect("non-null function pointer")(
-        (*parser).m_encoding,
+    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
+        XML_CONTENT_STATE,
         start,
         end,
         &mut next,
@@ -2911,8 +2885,8 @@ unsafe extern "C" fn externalEntityInitProcessor3(
     let mut tok: c_int = 0;
     let mut next: *const c_char = start;
     (*parser).m_eventPtr = start;
-    tok = (*(*parser).m_encoding).scanners[1].expect("non-null function pointer")(
-        (*parser).m_encoding,
+    tok = (*(*parser).m_encoding).xmlTok(
+        XML_CONTENT_STATE,
         start,
         end,
         &mut next,
@@ -3002,7 +2976,7 @@ unsafe extern "C" fn doContent(
     loop {
         let mut next: *const c_char = s;
         let mut tok: c_int =
-            (*enc).scanners[1].expect("non-null function pointer")(enc, s, end, &mut next);
+            (*enc).xmlTok(XML_CONTENT_STATE, s, end, &mut next);
         *eventEndPP = next;
         let mut current_block_275: u64;
         match tok {
@@ -3070,12 +3044,9 @@ unsafe extern "C" fn doContent(
             super::xmltok::XML_TOK_ENTITY_REF => {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
                 let mut entity: *mut ENTITY = 0 as *mut ENTITY;
-                let mut ch: XML_Char = (*enc)
-                    .predefinedEntityName
-                    .expect("non-null function pointer")(
-                    enc,
-                    s.offset((*enc).minBytesPerChar as isize),
-                    next.offset(-((*enc).minBytesPerChar as isize)),
+                let mut ch: XML_Char = (*enc).predefinedEntityName(
+                    s.offset((*enc).minBytesPerChar() as isize),
+                    next.offset(-((*enc).minBytesPerChar() as isize)),
                 ) as XML_Char;
                 if ch != 0 {
                     if (*parser).m_characterDataHandler.is_some() {
@@ -3093,8 +3064,8 @@ unsafe extern "C" fn doContent(
                     name = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -3213,9 +3184,8 @@ unsafe extern "C" fn doContent(
                 (*parser).m_tagStack = tag;
                 (*tag).name.localPart = NULL as *const XML_Char;
                 (*tag).name.prefix = NULL as *const XML_Char;
-                (*tag).rawName = s.offset((*enc).minBytesPerChar as isize);
-                (*tag).rawNameLength =
-                    (*enc).nameLength.expect("non-null function pointer")(enc, (*tag).rawName);
+                (*tag).rawName = s.offset((*enc).minBytesPerChar() as isize);
+                (*tag).rawNameLength = (*enc).nameLength((*tag).rawName);
                 (*parser).m_tagLevel += 1;
                 let mut rawNameEnd: *const c_char =
                     (*tag).rawName.offset((*tag).rawNameLength as isize);
@@ -3272,7 +3242,7 @@ unsafe extern "C" fn doContent(
             super::xmltok::XML_TOK_EMPTY_ELEMENT_NO_ATTS
             | super::xmltok::XML_TOK_EMPTY_ELEMENT_WITH_ATTS => {
                 /* fall through */
-                let mut rawName: *const c_char = s.offset((*enc).minBytesPerChar as isize);
+                let mut rawName: *const c_char = s.offset((*enc).minBytesPerChar() as isize);
                 let mut result_1: XML_Error = XML_ERROR_NONE;
                 let mut bindings: *mut BINDING = NULL as *mut BINDING;
                 let mut noElmHandlers: XML_Bool = XML_TRUE;
@@ -3288,9 +3258,7 @@ unsafe extern "C" fn doContent(
                     &mut (*parser).m_tempPool,
                     enc,
                     rawName,
-                    rawName.offset((*enc).nameLength.expect("non-null function pointer")(
-                        enc, rawName,
-                    ) as isize),
+                    rawName.offset((*enc).nameLength(rawName) as isize),
                 );
                 if name_0.str_0.is_null() {
                     return XML_ERROR_NO_MEMORY;
@@ -3346,8 +3314,8 @@ unsafe extern "C" fn doContent(
                     (*parser).m_tagStack = (*tag_0).parent;
                     (*tag_0).parent = (*parser).m_freeTagList;
                     (*parser).m_freeTagList = tag_0;
-                    rawName_0 = s.offset(((*enc).minBytesPerChar * 2i32) as isize);
-                    len = (*enc).nameLength.expect("non-null function pointer")(enc, rawName_0);
+                    rawName_0 = s.offset(((*enc).minBytesPerChar() * 2i32) as isize);
+                    len = (*enc).nameLength(rawName_0);
                     if len != (*tag_0).rawNameLength
                         || memcmp(
                             (*tag_0).rawName as *const c_void,
@@ -3430,7 +3398,7 @@ unsafe extern "C" fn doContent(
                 }
             }
             super::xmltok::XML_TOK_CHAR_REF => {
-                let mut n: c_int = (*enc).charRefNumber.expect("non-null function pointer")(enc, s);
+                let mut n: c_int = (*enc).charRefNumber(s);
                 if n < 0 {
                     return XML_ERROR_BAD_CHAR_REF;
                 }
@@ -3701,8 +3669,7 @@ unsafe extern "C" fn storeAtts(
     }
     nDefaultAtts = (*elementType).nDefaultAtts;
     /* get the attributes from the tokenizer */
-    n = (*enc).getAtts.expect("non-null function pointer")(
-        enc,
+    n = (*enc).getAtts(
         attStr,
         (*parser).m_attsSize,
         (*parser).m_atts,
@@ -3723,7 +3690,7 @@ unsafe extern "C" fn storeAtts(
         }
         (*parser).m_atts = temp;
         if n > oldAttsSize {
-            (*enc).getAtts.expect("non-null function pointer")(enc, attStr, n, (*parser).m_atts);
+            (*enc).getAtts(attStr, n, (*parser).m_atts);
         }
     }
     appAtts = (*parser).m_atts as *mut *const XML_Char;
@@ -3739,7 +3706,7 @@ unsafe extern "C" fn storeAtts(
             (*currAtt)
                 .name
                 .offset(
-                    (*enc).nameLength.expect("non-null function pointer")(enc, (*currAtt).name)
+                    (*enc).nameLength((*currAtt).name)
                         as isize,
                 ),
         );
@@ -4500,7 +4467,7 @@ unsafe extern "C" fn doCdataSection(
     loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok: c_int =
-            (*enc).scanners[2].expect("non-null function pointer")(enc, s, end, &mut next);
+            (*enc).xmlTok(XML_CDATA_SECTION_STATE, s, end, &mut next);
         *eventEndPP = next;
         match tok {
             super::xmltok::XML_TOK_CDATA_SECT_CLOSE => {
@@ -4693,7 +4660,7 @@ unsafe extern "C" fn doIgnoreSection(
     }
     *eventPP = s;
     *startPtr = NULL as *const c_char;
-    tok = (*enc).scanners[3].expect("non-null function pointer")(enc, s, end, &mut next);
+    tok = (*enc).xmlTok(XML_IGNORE_SECTION_STATE, s, end, &mut next);
     *eventEndPP = next;
     match tok {
         super::xmltok::XML_TOK_IGNORE_SECT => {
@@ -4776,33 +4743,23 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
         s = (*parser).m_protocolEncodingName as *const c_char;
     }
     if if (*parser).m_ns as c_int != 0 {
-        Some(
-            super::xmltok::xmltok_ns_c::XmlInitEncodingNS
-                as unsafe extern "C" fn(
-                    _: *mut super::xmltok::INIT_ENCODING,
-                    _: *mut *const super::xmltok::ENCODING,
-                    _: *const c_char,
-                ) -> c_int,
+        super::xmltok::xmltok_ns_c::XmlInitEncodingNS(
+            &mut (*parser).m_initEncoding,
+            &mut (*parser).m_encoding,
+            s,
         )
     } else {
-        Some(
-            super::xmltok::xmltok_ns_c::XmlInitEncoding
-                as unsafe extern "C" fn(
-                    _: *mut super::xmltok::INIT_ENCODING,
-                    _: *mut *const super::xmltok::ENCODING,
-                    _: *const c_char,
-                ) -> c_int,
+        super::xmltok::xmltok_ns_c::XmlInitEncoding(
+            &mut (*parser).m_initEncoding,
+            &mut (*parser).m_encoding,
+            s,
         )
-    }
-    .expect("non-null function pointer")(
-        &mut (*parser).m_initEncoding,
-        &mut (*parser).m_encoding,
-        s,
-    ) != 0
-    {
+    } != 0 {
         return XML_ERROR_NONE;
     }
-    return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
+    return XML_ERROR_NONE;
+
+    // return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
 }
 
 unsafe extern "C" fn processXmlDecl(
@@ -4813,45 +4770,16 @@ unsafe extern "C" fn processXmlDecl(
 ) -> XML_Error {
     let mut encodingName: *const c_char = NULL as *const c_char;
     let mut storedEncName: *const XML_Char = NULL as *const XML_Char;
-    let mut newEncoding: *const super::xmltok::ENCODING = NULL as *const super::xmltok::ENCODING;
+    let mut newEncoding: Option<*const super::xmltok::ENCODING> = None;
     let mut version: *const c_char = NULL as *const c_char;
     let mut versionend: *const c_char = 0 as *const c_char;
     let mut storedversion: *const XML_Char = NULL as *const XML_Char;
     let mut standalone: c_int = -(1);
     if if (*parser).m_ns as c_int != 0 {
-        Some(
-            super::xmltok::xmltok_ns_c::XmlParseXmlDeclNS
-                as unsafe extern "C" fn(
-                    _: c_int,
-                    _: *const super::xmltok::ENCODING,
-                    _: *const c_char,
-                    _: *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const super::xmltok::ENCODING,
-                    _: *mut c_int,
-                ) -> c_int,
-        )
+        super::xmltok::xmltok_ns_c::XmlParseXmlDeclNS
     } else {
-        Some(
-            super::xmltok::xmltok_ns_c::XmlParseXmlDecl
-                as unsafe extern "C" fn(
-                    _: c_int,
-                    _: *const super::xmltok::ENCODING,
-                    _: *const c_char,
-                    _: *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const c_char,
-                    _: *mut *const super::xmltok::ENCODING,
-                    _: *mut c_int,
-                ) -> c_int,
-        )
-    }
-    .expect("non-null function pointer")(
+        super::xmltok::xmltok_ns_c::XmlParseXmlDecl
+    }(
         isGeneralTextEntity,
         (*parser).m_encoding,
         s,
@@ -4883,11 +4811,7 @@ unsafe extern "C" fn processXmlDecl(
                 &mut (*parser).m_temp2Pool,
                 (*parser).m_encoding,
                 encodingName,
-                encodingName.offset((*(*parser).m_encoding)
-                    .nameLength
-                    .expect("non-null function pointer")(
-                    (*parser).m_encoding, encodingName
-                ) as isize),
+                encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
             );
             if storedEncName.is_null() {
                 return XML_ERROR_NO_MEMORY;
@@ -4899,7 +4823,7 @@ unsafe extern "C" fn processXmlDecl(
                 &mut (*parser).m_temp2Pool,
                 (*parser).m_encoding,
                 version,
-                versionend.offset(-((*(*parser).m_encoding).minBytesPerChar as isize)),
+                versionend.offset(-((*(*parser).m_encoding).minBytesPerChar() as isize)),
             );
             if storedversion.is_null() {
                 return XML_ERROR_NO_MEMORY;
@@ -4917,14 +4841,14 @@ unsafe extern "C" fn processXmlDecl(
         reportDefault(parser, (*parser).m_encoding, s, next);
     }
     if (*parser).m_protocolEncodingName.is_null() {
-        if !newEncoding.is_null() {
+        if let Some(newEncoding) = newEncoding {
             /* Check that the specified encoding does not conflict with what
              * the parser has already deduced.  Do we have the same number
              * of bytes in the smallest representation of a character?  If
              * this is UTF-16, is it the same endianness?
              */
-            if (*newEncoding).minBytesPerChar != (*(*parser).m_encoding).minBytesPerChar
-                || (*newEncoding).minBytesPerChar == 2 && newEncoding != (*parser).m_encoding
+            if (*newEncoding).minBytesPerChar() != (*(*parser).m_encoding).minBytesPerChar()
+                || (*newEncoding).minBytesPerChar() == 2 && newEncoding != (*parser).m_encoding
             {
                 (*parser).m_eventPtr = encodingName;
                 return XML_ERROR_INCORRECT_ENCODING;
@@ -4937,17 +4861,14 @@ unsafe extern "C" fn processXmlDecl(
                     &mut (*parser).m_temp2Pool,
                     (*parser).m_encoding,
                     encodingName,
-                    encodingName.offset((*(*parser).m_encoding)
-                        .nameLength
-                        .expect("non-null function pointer")(
-                        (*parser).m_encoding, encodingName
-                    ) as isize),
+                    encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
                 );
                 if storedEncName.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
             }
-            result = handleUnknownEncoding(parser, storedEncName);
+            // TODO(SJC): replace
+            // result = handleUnknownEncoding(parser, storedEncName);
             poolClear(&mut (*parser).m_temp2Pool);
             if result == XML_ERROR_UNKNOWN_ENCODING {
                 (*parser).m_eventPtr = encodingName
@@ -4961,91 +4882,93 @@ unsafe extern "C" fn processXmlDecl(
     return XML_ERROR_NONE;
 }
 
-unsafe extern "C" fn handleUnknownEncoding(
-    mut parser: XML_Parser,
-    mut encodingName: *const XML_Char,
-) -> XML_Error {
-    if (*parser).m_unknownEncodingHandler.is_some() {
-        let mut info: XML_Encoding = XML_Encoding {
-            map: [0; 256],
-            data: 0 as *mut c_void,
-            convert: None,
-            release: None,
-        };
-        let mut i: c_int = 0;
-        i = 0;
-        while i < 256 {
-            info.map[i as usize] = -(1);
-            i += 1
-        }
-        info.convert = ::std::mem::transmute::<
-            intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-        >(NULL as intptr_t);
-        info.data = NULL as *mut c_void;
-        info.release = ::std::mem::transmute::<
-            intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-        >(NULL as intptr_t);
-        if (*parser)
-            .m_unknownEncodingHandler
-            .expect("non-null function pointer")(
-            (*parser).m_unknownEncodingHandlerData,
-            encodingName,
-            &mut info,
-        ) != 0
-        {
-            let mut enc: *mut super::xmltok::ENCODING = 0 as *mut super::xmltok::ENCODING;
-            (*parser).m_unknownEncodingMem =
-                MALLOC!(parser, super::xmltok::XmlSizeOfUnknownEncoding() as size_t);
-            if (*parser).m_unknownEncodingMem.is_null() {
-                if info.release.is_some() {
-                    info.release.expect("non-null function pointer")(info.data);
-                }
-                return XML_ERROR_NO_MEMORY;
-            }
-            enc = if (*parser).m_ns as c_int != 0 {
-                Some(
-                    super::xmltok::XmlInitUnknownEncodingNS
-                        as unsafe extern "C" fn(
-                            _: *mut c_void,
-                            _: *mut c_int,
-                            _: super::xmltok::CONVERTER,
-                            _: *mut c_void,
-                        )
-                            -> *mut super::xmltok::ENCODING,
-                )
-            } else {
-                Some(
-                    super::xmltok::XmlInitUnknownEncoding
-                        as unsafe extern "C" fn(
-                            _: *mut c_void,
-                            _: *mut c_int,
-                            _: super::xmltok::CONVERTER,
-                            _: *mut c_void,
-                        )
-                            -> *mut super::xmltok::ENCODING,
-                )
-            }
-            .expect("non-null function pointer")(
-                (*parser).m_unknownEncodingMem,
-                info.map.as_mut_ptr(),
-                info.convert,
-                info.data,
-            );
-            if !enc.is_null() {
-                (*parser).m_unknownEncodingData = info.data;
-                (*parser).m_unknownEncodingRelease = info.release;
-                (*parser).m_encoding = enc;
-                return XML_ERROR_NONE;
-            }
-        }
-        if info.release.is_some() {
-            info.release.expect("non-null function pointer")(info.data);
-        }
-    }
-    return XML_ERROR_UNKNOWN_ENCODING;
-}
+// TODO(SJC): replace
+
+// unsafe extern "C" fn handleUnknownEncoding(
+//     mut parser: XML_Parser,
+//     mut encodingName: *const XML_Char,
+// ) -> XML_Error {
+//     if (*parser).m_unknownEncodingHandler.is_some() {
+//         let mut info: XML_Encoding = XML_Encoding {
+//             map: [0; 256],
+//             data: 0 as *mut c_void,
+//             convert: None,
+//             release: None,
+//         };
+//         let mut i: c_int = 0;
+//         i = 0;
+//         while i < 256 {
+//             info.map[i as usize] = -(1);
+//             i += 1
+//         }
+//         info.convert = ::std::mem::transmute::<
+//             intptr_t,
+//             Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
+//         >(NULL as intptr_t);
+//         info.data = NULL as *mut c_void;
+//         info.release = ::std::mem::transmute::<
+//             intptr_t,
+//             Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
+//         >(NULL as intptr_t);
+//         if (*parser)
+//             .m_unknownEncodingHandler
+//             .expect("non-null function pointer")(
+//             (*parser).m_unknownEncodingHandlerData,
+//             encodingName,
+//             &mut info,
+//         ) != 0
+//         {
+//             let mut enc: *mut super::xmltok::ENCODING = 0 as *mut super::xmltok::ENCODING;
+//             (*parser).m_unknownEncodingMem =
+//                 MALLOC!(parser, super::xmltok::XmlSizeOfUnknownEncoding() as size_t);
+//             if (*parser).m_unknownEncodingMem.is_null() {
+//                 if info.release.is_some() {
+//                     info.release.expect("non-null function pointer")(info.data);
+//                 }
+//                 return XML_ERROR_NO_MEMORY;
+//             }
+//             enc = if (*parser).m_ns as c_int != 0 {
+//                 Some(
+//                     super::xmltok::XmlInitUnknownEncodingNS
+//                         as unsafe extern "C" fn(
+//                             _: *mut c_void,
+//                             _: *mut c_int,
+//                             _: super::xmltok::CONVERTER,
+//                             _: *mut c_void,
+//                         )
+//                             -> *mut super::xmltok::ENCODING,
+//                 )
+//             } else {
+//                 Some(
+//                     super::xmltok::XmlInitUnknownEncoding
+//                         as unsafe extern "C" fn(
+//                             _: *mut c_void,
+//                             _: *mut c_int,
+//                             _: super::xmltok::CONVERTER,
+//                             _: *mut c_void,
+//                         )
+//                             -> *mut super::xmltok::ENCODING,
+//                 )
+//             }
+//             .expect("non-null function pointer")(
+//                 (*parser).m_unknownEncodingMem,
+//                 info.map.as_mut_ptr(),
+//                 info.convert,
+//                 info.data,
+//             );
+//             if !enc.is_null() {
+//                 (*parser).m_unknownEncodingData = info.data;
+//                 (*parser).m_unknownEncodingRelease = info.release;
+//                 (*parser).m_encoding = enc;
+//                 return XML_ERROR_NONE;
+//             }
+//         }
+//         if info.release.is_some() {
+//             info.release.expect("non-null function pointer")(info.data);
+//         }
+//     }
+//     return XML_ERROR_UNKNOWN_ENCODING;
+// }
 
 unsafe extern "C" fn prologInitProcessor(
     mut parser: XML_Parser,
@@ -5094,8 +5017,8 @@ unsafe extern "C" fn entityValueInitProcessor(
     let mut next: *const c_char = start;
     (*parser).m_eventPtr = start;
     loop {
-        tok = (*(*parser).m_encoding).scanners[0].expect("non-null function pointer")(
-            (*parser).m_encoding,
+        tok = (*(*parser).m_encoding).xmlTok(
+            XML_PROLOG_STATE,
             start,
             end,
             &mut next,
@@ -5172,8 +5095,8 @@ unsafe extern "C" fn externalParEntProcessor(
 ) -> XML_Error {
     let mut next: *const c_char = s;
     let mut tok: c_int = 0;
-    tok = (*(*parser).m_encoding).scanners[0].expect("non-null function pointer")(
-        (*parser).m_encoding,
+    tok = (*(*parser).m_encoding).xmlTok(
+        XML_PROLOG_STATE,
         s,
         end,
         &mut next,
@@ -5191,8 +5114,8 @@ unsafe extern "C" fn externalParEntProcessor(
         }
     } else if tok == super::xmltok::XML_TOK_BOM {
         s = next;
-        tok = (*(*parser).m_encoding).scanners[0].expect("non-null function pointer")(
-            (*parser).m_encoding,
+        tok = (*(*parser).m_encoding).xmlTok(
+            XML_PROLOG_STATE,
             s,
             end,
             &mut next,
@@ -5223,7 +5146,7 @@ unsafe extern "C" fn entityValueProcessor(
     let mut enc: *const super::xmltok::ENCODING = (*parser).m_encoding;
     let mut tok: c_int = 0;
     loop {
-        tok = (*enc).scanners[0].expect("non-null function pointer")(enc, start, end, &mut next);
+        tok = (*enc).xmlTok(XML_PROLOG_STATE, start, end, &mut next);
         if tok <= 0 {
             if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
                 *nextPtr = s;
@@ -5254,8 +5177,8 @@ unsafe extern "C" fn prologProcessor(
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = s;
-    let mut tok: c_int = (*(*parser).m_encoding).scanners[0].expect("non-null function pointer")(
-        (*parser).m_encoding,
+    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
+        XML_PROLOG_STATE,
         s,
         end,
         &mut next,
@@ -5513,7 +5436,7 @@ unsafe extern "C" fn doProlog(
                 (*dtd).hasParamEntityRefs = XML_TRUE;
                 if (*parser).m_startDoctypeDeclHandler.is_some() {
                     let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
-                    if (*enc).isPublicId.expect("non-null function pointer")(enc, s, next, eventPP)
+                    if (*enc).isPublicId(s, next, eventPP)
                         == 0
                     {
                         return XML_ERROR_PUBLICID;
@@ -5521,8 +5444,8 @@ unsafe extern "C" fn doProlog(
                     pubId = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if pubId.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -5834,8 +5757,8 @@ unsafe extern "C" fn doProlog(
                         parser,
                         enc,
                         (*parser).m_declAttributeIsCdata,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                         &mut (*dtd).pool,
                     );
                     if result_1 as u64 != 0 {
@@ -5913,8 +5836,8 @@ unsafe extern "C" fn doProlog(
                     let mut result_2: XML_Error = storeEntityValue(
                         parser,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if !(*parser).m_declEntity.is_null() {
                         (*(*parser).m_declEntity).textPtr = (*dtd).entityValuePool.start;
@@ -5958,8 +5881,8 @@ unsafe extern "C" fn doProlog(
                     (*parser).m_doctypeSysid = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if (*parser).m_doctypeSysid.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6067,8 +5990,7 @@ unsafe extern "C" fn doProlog(
             }
             9 => {
                 if (*enc)
-                    .predefinedEntityName
-                    .expect("non-null function pointer")(enc, s, next)
+                    .predefinedEntityName(s, next)
                     != 0
                 {
                     (*parser).m_declEntity = NULL as *mut ENTITY
@@ -6165,7 +6087,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             21 => {
-                if (*enc).isPublicId.expect("non-null function pointer")(enc, s, next, eventPP) == 0
+                if (*enc).isPublicId(s, next, eventPP) == 0
                 {
                     return XML_ERROR_PUBLICID;
                 }
@@ -6174,8 +6096,8 @@ unsafe extern "C" fn doProlog(
                     let mut tem_0: *mut XML_Char = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if tem_0.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6194,8 +6116,8 @@ unsafe extern "C" fn doProlog(
                     let mut systemId: *const XML_Char = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if systemId.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6385,8 +6307,8 @@ unsafe extern "C" fn doProlog(
                     name_1 = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6671,7 +6593,7 @@ unsafe extern "C" fn doProlog(
             926243229934402080 =>
             /* fall through */
             {
-                if (*enc).isPublicId.expect("non-null function pointer")(enc, s, next, eventPP) == 0
+                if (*enc).isPublicId(s, next, eventPP) == 0
                 {
                     return XML_ERROR_PUBLICID;
                 }
@@ -6685,8 +6607,8 @@ unsafe extern "C" fn doProlog(
                     (*(*parser).m_declEntity).systemId = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if (*(*parser).m_declEntity).systemId.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6718,7 +6640,7 @@ unsafe extern "C" fn doProlog(
                     let mut nxt: *const c_char = if quant == XML_CQUANT_NONE {
                         next
                     } else {
-                        next.offset(-((*enc).minBytesPerChar as isize))
+                        next.offset(-((*enc).minBytesPerChar() as isize))
                     };
                     let mut myindex_0: c_int = nextScaffoldPart(parser);
                     if myindex_0 < 0 {
@@ -6788,8 +6710,8 @@ unsafe extern "C" fn doProlog(
                     let mut tem: *mut XML_Char = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        s.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        s.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if tem.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6822,7 +6744,7 @@ unsafe extern "C" fn doProlog(
             2 => return XML_ERROR_ABORTED,
             _ => {
                 s = next;
-                tok = (*enc).scanners[0].expect("non-null function pointer")(enc, s, end, &mut next)
+                tok = (*enc).xmlTok(XML_PROLOG_STATE, s, end, &mut next)
             }
         }
     }
@@ -6840,9 +6762,9 @@ unsafe extern "C" fn epilogProcessor(
     (*parser).m_eventPtr = s;
     loop {
         let mut next: *const c_char = NULL as *const c_char;
-        let mut tok: c_int = (*(*parser).m_encoding).scanners[0]
-            .expect("non-null function pointer")(
-            (*parser).m_encoding, s, end, &mut next
+        let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
+            XML_PROLOG_STATE,
+            s, end, &mut next
         );
         (*parser).m_eventEndPtr = next;
         match tok {
@@ -6945,9 +6867,8 @@ unsafe extern "C" fn processInternalEntity(
     /* Set a safe default value in case 'next' does not get set */
     next = textStart;
     if (*entity).is_param != 0 {
-        let mut tok: c_int = (*(*parser).m_internalEncoding).scanners[0]
-            .expect("non-null function pointer")(
-            (*parser).m_internalEncoding,
+        let mut tok: c_int = (*(*parser).m_internalEncoding).xmlTok(
+            XML_PROLOG_STATE,
             textStart,
             textEnd,
             &mut next,
@@ -7011,9 +6932,8 @@ unsafe extern "C" fn internalEntityProcessor(
     /* Set a safe default value in case 'next' does not get set */
     next = textStart;
     if (*entity).is_param != 0 {
-        let mut tok: c_int = (*(*parser).m_internalEncoding).scanners[0]
-            .expect("non-null function pointer")(
-            (*parser).m_internalEncoding,
+        let mut tok: c_int = (*(*parser).m_internalEncoding).xmlTok(
+            XML_PROLOG_STATE,
             textStart,
             textEnd,
             &mut next,
@@ -7059,8 +6979,8 @@ unsafe extern "C" fn internalEntityProcessor(
     if (*entity).is_param != 0 {
         let mut tok_0: c_int = 0;
         (*parser).m_processor = Some(prologProcessor as Processor);
-        tok_0 = (*(*parser).m_encoding).scanners[0].expect("non-null function pointer")(
-            (*parser).m_encoding,
+        tok_0 = (*(*parser).m_encoding).xmlTok(
+            XML_PROLOG_STATE,
             s,
             end,
             &mut next,
@@ -7149,7 +7069,7 @@ unsafe extern "C" fn appendAttributeValue(
     loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok: c_int =
-            (*enc).literalScanners[0].expect("non-null function pointer")(enc, ptr, end, &mut next);
+            (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, ptr, end, &mut next);
         let mut current_block_62: u64;
         match tok {
             super::xmltok::XML_TOK_NONE => {
@@ -7172,7 +7092,7 @@ unsafe extern "C" fn appendAttributeValue(
                 let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int =
-                    (*enc).charRefNumber.expect("non-null function pointer")(enc, ptr);
+                    (*enc).charRefNumber(ptr);
                 if n < 0 {
                     if enc == (*parser).m_encoding {
                         (*parser).m_eventPtr = ptr
@@ -7221,7 +7141,7 @@ unsafe extern "C" fn appendAttributeValue(
                 current_block_62 = 11796148217846552555;
             }
             super::xmltok::XML_TOK_TRAILING_CR => {
-                next = ptr.offset((*enc).minBytesPerChar as isize);
+                next = ptr.offset((*enc).minBytesPerChar() as isize);
                 current_block_62 = 9696599617798541816;
             }
             super::xmltok::XML_TOK_ATTRIBUTE_VALUE_S | super::xmltok::XML_TOK_DATA_NEWLINE => {
@@ -7231,12 +7151,9 @@ unsafe extern "C" fn appendAttributeValue(
                 let mut name: *const XML_Char = 0 as *const XML_Char;
                 let mut entity: *mut ENTITY = 0 as *mut ENTITY;
                 let mut checkEntityDecl: c_char = 0;
-                let mut ch: XML_Char = (*enc)
-                    .predefinedEntityName
-                    .expect("non-null function pointer")(
-                    enc,
-                    ptr.offset((*enc).minBytesPerChar as isize),
-                    next.offset(-((*enc).minBytesPerChar as isize)),
+                let mut ch: XML_Char = (*enc).predefinedEntityName(
+                    ptr.offset((*enc).minBytesPerChar() as isize),
+                    next.offset(-((*enc).minBytesPerChar() as isize)),
                 ) as XML_Char;
                 if ch != 0 {
                     if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
@@ -7254,8 +7171,8 @@ unsafe extern "C" fn appendAttributeValue(
                     name = poolStoreString(
                         &mut (*parser).m_temp2Pool,
                         enc,
-                        ptr.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        ptr.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -7423,8 +7340,8 @@ unsafe extern "C" fn storeEntityValue(
     }
     's_41: loop {
         let mut next: *const c_char = 0 as *const c_char;
-        let mut tok: c_int = (*enc).literalScanners[1].expect("non-null function pointer")(
-            enc,
+        let mut tok: c_int = (*enc).xmlLiteralTok(
+            XML_ENTITY_VALUE_LITERAL,
             entityTextPtr,
             entityTextEnd,
             &mut next,
@@ -7437,8 +7354,8 @@ unsafe extern "C" fn storeEntityValue(
                     name = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        entityTextPtr.offset((*enc).minBytesPerChar as isize),
-                        next.offset(-((*enc).minBytesPerChar as isize)),
+                        entityTextPtr.offset((*enc).minBytesPerChar() as isize),
+                        next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
                     if name.is_null() {
                         result = XML_ERROR_NO_MEMORY;
@@ -7525,7 +7442,7 @@ unsafe extern "C" fn storeEntityValue(
                 }
             }
             super::xmltok::XML_TOK_TRAILING_CR => {
-                next = entityTextPtr.offset((*enc).minBytesPerChar as isize);
+                next = entityTextPtr.offset((*enc).minBytesPerChar() as isize);
                 current_block = 13862322071133341448;
             }
             super::xmltok::XML_TOK_DATA_NEWLINE => {
@@ -7535,7 +7452,7 @@ unsafe extern "C" fn storeEntityValue(
                 let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int =
-                    (*enc).charRefNumber.expect("non-null function pointer")(enc, entityTextPtr);
+                    (*enc).charRefNumber(entityTextPtr);
                 if n < 0 {
                     if enc == (*parser).m_encoding {
                         (*parser).m_eventPtr = entityTextPtr
@@ -7669,8 +7586,8 @@ unsafe extern "C" fn reportProcessingInstruction(
         }
         return 1i32;
     }
-    start = start.offset(((*enc).minBytesPerChar * 2i32) as isize);
-    tem = start.offset((*enc).nameLength.expect("non-null function pointer")(enc, start) as isize);
+    start = start.offset(((*enc).minBytesPerChar() * 2i32) as isize);
+    tem = start.offset((*enc).nameLength(start) as isize);
     target = poolStoreString(&mut (*parser).m_tempPool, enc, start, tem);
     if target.is_null() {
         return 0i32;
@@ -7679,8 +7596,8 @@ unsafe extern "C" fn reportProcessingInstruction(
     data = poolStoreString(
         &mut (*parser).m_tempPool,
         enc,
-        (*enc).skipS.expect("non-null function pointer")(enc, tem),
-        end.offset(-(((*enc).minBytesPerChar * 2i32) as isize)),
+        (*enc).skipS(tem),
+        end.offset(-(((*enc).minBytesPerChar() * 2i32) as isize)),
     );
     if data.is_null() {
         return 0i32;
@@ -7709,8 +7626,8 @@ unsafe extern "C" fn reportComment(
     data = poolStoreString(
         &mut (*parser).m_tempPool,
         enc,
-        start.offset(((*enc).minBytesPerChar * 4i32) as isize),
-        end.offset(-(((*enc).minBytesPerChar * 3i32) as isize)),
+        start.offset(((*enc).minBytesPerChar() * 4i32) as isize),
+        end.offset(-(((*enc).minBytesPerChar() * 3i32) as isize)),
     );
     if data.is_null() {
         return 0i32;
