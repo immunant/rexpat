@@ -105,7 +105,7 @@ pub use crate::src::lib::xmlrole::{
     XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI, XML_ROLE_REQUIRED_ATTRIBUTE_VALUE, XML_ROLE_TEXT_DECL,
     XML_ROLE_XML_DECL,
 };
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
+pub use crate::src::lib::xmltok::{
     XmlInitEncoding, XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
 pub use crate::src::lib::xmltok::*;
@@ -919,7 +919,7 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
         (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem)
     }
     (*parser).m_curBase = NULL as *const XML_Char;
-    super::xmltok::xmltok_ns_c::XmlInitEncoding(
+    super::xmltok::XmlInitEncoding(
         &mut (*parser).m_initEncoding as *mut _,
         &mut (*parser).m_encoding,
         0 as *const c_char,
@@ -4724,13 +4724,13 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
         s = (*parser).m_protocolEncodingName as *const c_char;
     }
     if if (*parser).m_ns as c_int != 0 {
-        super::xmltok::xmltok_ns_c::XmlInitEncodingNS(
+        super::xmltok::XmlInitEncodingNS(
             &mut (*parser).m_initEncoding,
             &mut (*parser).m_encoding,
             s,
         )
     } else {
-        super::xmltok::xmltok_ns_c::XmlInitEncoding(
+        super::xmltok::XmlInitEncoding(
             &mut (*parser).m_initEncoding,
             &mut (*parser).m_encoding,
             s,
@@ -4758,9 +4758,9 @@ unsafe extern "C" fn processXmlDecl(
     let mut storedversion: *const XML_Char = NULL as *const XML_Char;
     let mut standalone: c_int = -(1);
     if if (*parser).m_ns as c_int != 0 {
-        super::xmltok::xmltok_ns_c::XmlParseXmlDeclNS
+        super::xmltok::XmlParseXmlDeclNS
     } else {
-        super::xmltok::xmltok_ns_c::XmlParseXmlDecl
+        super::xmltok::XmlParseXmlDecl
     }(
         isGeneralTextEntity,
         (*parser).m_encoding,

@@ -341,8 +341,13 @@ struct NormalEncoding<T: NormalEncodingTable> {
 }
 
 trait NormalEncodingTable {
-    const MINBPC: isize;
     const types: [C2RustUnnamed_2; 256];
+}
+
+macro_rules! UCS2_GET_NAMING {
+    ($pages:path, $hi:expr, $lo:expr) => {
+        (namingBitmap[(($pages[$hi as usize] as usize) << 3) + (($lo as usize) >> 5)] & (1 << (($lo as usize)&0x1F)))
+    };
 }
 
 struct Utf8Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
@@ -351,7 +356,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     const isUtf8: bool = true;
     const isUtf16: bool = false;
 
-    const MINBPC: isize = T::MINBPC;
+    const MINBPC: isize = 1;
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
@@ -528,7 +533,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
     const isUtf8: bool = false;
     const isUtf16: bool = false;
 
-    const MINBPC: isize = T::MINBPC;
+    const MINBPC: isize = 1;
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
@@ -597,7 +602,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
     const isUtf8: bool = true;
     const isUtf16: bool = false;
 
-    const MINBPC: isize = T::MINBPC;
+    const MINBPC: isize = 1;
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
@@ -660,11 +665,174 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
     }
 }
 
+struct Little2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
+    const isUtf8: bool = false;
+
+    #[cfg(taget_endian = "little")]
+    const isUtf16: bool = true;
+
+    #[cfg(not(taget_endian = "little"))]
+    const isUtf16: bool = false;
+
+    const MINBPC: isize = 2;
+
+    #[inline]
+    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+        let bytes = unsafe { (*p, *p.offset(1)) };
+        if bytes.1 == 0 {
+            T::types[bytes.0 as usize]
+        } else {
+            unsafe { unicode_byte_type(bytes.1, bytes.0) }
+        }
+    }
+
+    #[inline]
+    fn byte_to_ascii(p: *const c_char) -> c_char {
+        let bytes = unsafe { (*p, *p.offset(1)) };
+        if bytes.1 == 0 {
+            bytes.0
+        } else {
+            -1
+        }
+    }
+
+    #[inline]
+    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+    #[inline]
+    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_name_char_minbpc(p: *const c_char) -> bool {
+        unsafe { UCS2_GET_NAMING!(namePages, *p.offset(1), *p) != 0 }
+    }
+
+    #[inline]
+    fn is_nmstrt_char_minbpc(p: *const c_char) -> bool {
+        unsafe { UCS2_GET_NAMING!(nmstrtPages, *p.offset(1), *p) != 0 }
+    }
+
+    #[inline]
+    fn char_matches(p: *const c_char, c: c_char) -> bool {
+        unsafe { *p.offset(1) == 0 && *p == c }
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf8Convert(
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_char,
+        toLim: *const c_char,
+    ) -> XML_Convert_Result {
+        little2_toUtf8(fromP, fromLim, toP, toLim)
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf16Convert(
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_ushort,
+        toLim: *const c_ushort,
+    ) -> XML_Convert_Result {
+        little2_toUtf16(fromP, fromLim, toP, toLim)
+    }
+}
+
+struct Big2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
+    const MINBPC: isize = 2;
+    const isUtf8: bool = false;
+
+    #[cfg(taget_endian = "big")]
+    const isUtf16: bool = true;
+
+    #[cfg(not(taget_endian = "big"))]
+    const isUtf16: bool = false;
+
+    #[inline]
+    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+        let bytes = unsafe { (*p, *p.offset(1)) };
+        if bytes.0 == 0 {
+            T::types[bytes.1 as usize]
+        } else {
+            unsafe { unicode_byte_type(bytes.0, bytes.1) }
+        }
+    }
+
+    #[inline]
+    fn byte_to_ascii(p: *const c_char) -> c_char {
+        let bytes = unsafe { (*p, *p.offset(1)) };
+        if bytes.0 == 0 {
+            bytes.1
+        } else {
+            -1
+        }
+    }
+
+    #[inline]
+    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+    #[inline]
+    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_name_char_minbpc(p: *const c_char) -> bool {
+        unsafe { UCS2_GET_NAMING!(namePages, *p, *p.offset(1)) != 0 }
+    }
+
+    #[inline]
+    fn is_nmstrt_char_minbpc(p: *const c_char) -> bool {
+        unsafe { UCS2_GET_NAMING!(nmstrtPages, *p, *p.offset(1)) != 0 }
+    }
+
+    #[inline]
+    fn char_matches(p: *const c_char, c: c_char) -> bool {
+        unsafe { *p == 0 && *p.offset(1) == c }
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf8Convert(
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_char,
+        toLim: *const c_char,
+    ) -> XML_Convert_Result {
+        big2_toUtf8(fromP, fromLim, toP, toLim)
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf16Convert(
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_ushort,
+        toLim: *const c_ushort,
+    ) -> XML_Convert_Result {
+        big2_toUtf16(fromP, fromLim, toP, toLim)
+    }
+}
+
 struct Utf8EncodingTable;
 
 impl NormalEncodingTable for Utf8EncodingTable {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -739,8 +907,6 @@ impl NormalEncodingTable for Utf8EncodingTable {
 struct Utf8EncodingTableNS;
 
 impl NormalEncodingTable for Utf8EncodingTableNS {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -815,8 +981,6 @@ impl NormalEncodingTable for Utf8EncodingTableNS {
 struct InternalUtf8EncodingTable;
 
 impl NormalEncodingTable for InternalUtf8EncodingTable {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // iasciitab.h
         /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
@@ -892,8 +1056,6 @@ impl NormalEncodingTable for InternalUtf8EncodingTable {
 struct InternalUtf8EncodingTableNS;
 
 impl NormalEncodingTable for InternalUtf8EncodingTableNS {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // iasciitab.h
         /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
@@ -969,8 +1131,6 @@ impl NormalEncodingTable for InternalUtf8EncodingTableNS {
 struct Latin1EncodingTable;
 
 impl NormalEncodingTable for Latin1EncodingTable {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -1045,8 +1205,6 @@ impl NormalEncodingTable for Latin1EncodingTable {
 struct Latin1EncodingTableNS;
 
 impl NormalEncodingTable for Latin1EncodingTableNS {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -1118,11 +1276,159 @@ impl NormalEncodingTable for Latin1EncodingTableNS {
     ];
 }
 
+struct InternalLatin1EncodingTable;
+
+impl NormalEncodingTable for InternalLatin1EncodingTable {
+    const types: [C2RustUnnamed_2; 256] = [
+        // iasciitab.h
+        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
+        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
+        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
+        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
+        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
+        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
+        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
+        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
+        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
+        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
+        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
+        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
+        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
+        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
+        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
+        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
+        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
+        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+
+        // latin1tab.h
+        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
+        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
+        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
+        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+    ];
+}
+
+struct InternalLatin1EncodingTableNS;
+
+impl NormalEncodingTable for InternalLatin1EncodingTableNS {
+    const types: [C2RustUnnamed_2; 256] = [
+        // iasciitab.h
+        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
+        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
+        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
+        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
+        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
+        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
+        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
+        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
+        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
+        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
+        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
+        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
+        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
+        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
+        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
+        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
+        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
+        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+
+        // latin1tab.h
+        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
+        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
+        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
+        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
+        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+    ];
+}
+
 struct AsciiEncodingTable;
 
 impl NormalEncodingTable for AsciiEncodingTable {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -1196,8 +1502,6 @@ impl NormalEncodingTable for AsciiEncodingTable {
 struct AsciiEncodingTableNS;
 
 impl NormalEncodingTable for AsciiEncodingTableNS {
-    const MINBPC: isize = 1;
-
     const types: [C2RustUnnamed_2; 256] = [
         // asciitab.h
         /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
@@ -1267,7 +1571,6 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
         /* 0xFC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
     ];
 }
-
 
 pub struct InitEncoding {
     encoding_index: c_int,
@@ -1439,8 +1742,19 @@ static mut internal_utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut internal_utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
+static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+#[cfg(taget_endian = "little")]
+static mut internal_little2_encoding: Option<Box<dyn XmlEncoding>> = None;
+#[cfg(taget_endian = "little")]
+static mut internal_little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
+static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+#[cfg(taget_endian = "big")]
+static mut internal_big2_encoding: Option<Box<dyn XmlEncoding>> = None;
+#[cfg(taget_endian = "big")]
+static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 
-pub mod xmltok_ns_c {
     /* This file is included!
                                 __  __            _
                              ___\ \/ /_ __   __ _| |_
@@ -1473,38 +1787,50 @@ pub mod xmltok_ns_c {
        USE OR OTHER DEALINGS IN THE SOFTWARE.
     */
 
-    use libc::{c_char, c_int};
-
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf8InternalEncodingNS() -> *const super::ENCODING {
-        return &**super::internal_utf8_encoding_ns.as_ref().unwrap();
+    pub unsafe extern "C" fn XmlGetUtf8InternalEncodingNS() -> *const ENCODING {
+        return &**internal_utf8_encoding_ns.as_ref().unwrap();
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf8InternalEncoding() -> *const super::ENCODING {
-        return &**super::internal_utf8_encoding.as_ref().unwrap();
+    pub unsafe extern "C" fn XmlGetUtf8InternalEncoding() -> *const ENCODING {
+        return &**internal_utf8_encoding.as_ref().unwrap();
     }
 
-    // #[no_mangle]
-    // pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> super::ENCODING {
-    //     return &super::internal_little2_encoding;
-    // }
+    #[cfg(taget_endian = "little")]
+    #[no_mangle]
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> ENCODING {
+        return &internal_little2_encoding;
+    }
 
-    // #[no_mangle]
-    // pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> super::ENCODING {
-    //     return &super::internal_little2_encoding_ns;
-    // }
+    #[cfg(taget_endian = "big")]
+    #[no_mangle]
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> ENCODING {
+        return &internal_big2_encoding;
+    }
+
+    #[cfg(taget_endian = "little")]
+    #[no_mangle]
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> ENCODING {
+        return &internal_little2_encoding_ns;
+    }
+
+    #[cfg(taget_endian = "big")]
+    #[no_mangle]
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> ENCODING {
+        return &internal_big2_encoding_ns;
+    }
 
     // Initialized in run_static_initializers
-    pub static mut encodingsNS: [Option<&'static Box<super::ENCODING>>; 7] = [None; 7];
+    pub static mut encodingsNS: [Option<&'static Box<ENCODING>>; 7] = [None; 7];
 
     // Initialized in run_static_initializers
-    pub static mut encodings: [Option<&'static Box<super::ENCODING>>; 7] = [None; 7];
+    pub static mut encodings: [Option<&'static Box<ENCODING>>; 7] = [None; 7];
 
     #[no_mangle]
     pub unsafe extern "C" fn XmlInitEncodingNS(
-        mut p: *mut super::INIT_ENCODING,
-        mut encPtr: &mut *const super::ENCODING,
+        mut p: *mut INIT_ENCODING,
+        mut encPtr: &mut *const ENCODING,
         mut name: *const c_char,
     ) -> c_int {
         let mut i: c_int = getEncodingIndex(name);
@@ -1519,8 +1845,8 @@ pub mod xmltok_ns_c {
 
     #[no_mangle]
     pub unsafe extern "C" fn XmlInitEncoding(
-        mut p: *mut super::INIT_ENCODING,
-        mut encPtr: *mut *const super::ENCODING,
+        mut p: *mut INIT_ENCODING,
+        mut encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> c_int {
         let mut i: c_int = getEncodingIndex(name);
@@ -1534,10 +1860,10 @@ pub mod xmltok_ns_c {
     }
 
     pub unsafe extern "C" fn findEncoding(
-        mut enc: *const super::ENCODING,
+        mut enc: *const ENCODING,
         mut ptr: *const c_char,
         mut end: *const c_char,
-    ) -> Option<*const super::ENCODING> {
+    ) -> Option<*const ENCODING> {
         let mut buf: [c_char; 128] = [0; 128];
         let mut p: *mut c_char = buf.as_mut_ptr();
         let mut i: c_int = 0;
@@ -1557,10 +1883,10 @@ pub mod xmltok_ns_c {
     }
 
     pub unsafe extern "C" fn findEncodingNS(
-        mut enc: *const super::ENCODING,
+        mut enc: *const ENCODING,
         mut ptr: *const c_char,
         mut end: *const c_char,
-    ) -> Option<*const super::ENCODING> {
+    ) -> Option<*const ENCODING> {
         let mut buf: [c_char; 128] = [0; 128];
         let mut p: *mut c_char = buf.as_mut_ptr();
         let mut i: c_int = 0;
@@ -1582,14 +1908,14 @@ pub mod xmltok_ns_c {
 
     pub unsafe extern "C" fn XmlParseXmlDeclNS(
         mut isGeneralTextEntity: c_int,
-        mut enc: *const super::ENCODING,
+        mut enc: *const ENCODING,
         mut ptr: *const c_char,
         mut end: *const c_char,
         mut badPtr: *mut *const c_char,
         mut versionPtr: *mut *const c_char,
         mut versionEndPtr: *mut *const c_char,
         mut encodingName: *mut *const c_char,
-        mut encoding: *mut Option<*const super::ENCODING>,
+        mut encoding: *mut Option<*const ENCODING>,
         mut standalone: *mut c_int,
     ) -> c_int {
         return doParseXmlDecl(
@@ -1610,14 +1936,14 @@ pub mod xmltok_ns_c {
 
     pub unsafe extern "C" fn XmlParseXmlDecl(
         mut isGeneralTextEntity: c_int,
-        mut enc: *const super::ENCODING,
+        mut enc: *const ENCODING,
         mut ptr: *const c_char,
         mut end: *const c_char,
         mut badPtr: *mut *const c_char,
         mut versionPtr: *mut *const c_char,
         mut versionEndPtr: *mut *const c_char,
         mut encodingName: *mut *const c_char,
-        mut encoding: *mut Option<*const super::ENCODING>,
+        mut encoding: *mut Option<*const ENCODING>,
         mut standalone: *mut c_int,
     ) -> c_int {
         return doParseXmlDecl(
@@ -1635,20 +1961,9 @@ pub mod xmltok_ns_c {
         );
     }
 
-    use crate::src::lib::xmltok::{
-        doParseXmlDecl, getEncodingIndex, streqci, KW_UTF_16, UNKNOWN_ENC,
-    };
-    /* XML_TOK_NS_C */
-    /* XML_TOK_NS_C */
-}
-
 pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 pub use crate::src::lib::nametab::{namePages, namingBitmap, nmstrtPages};
-pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    encodings, encodingsNS, findEncoding, findEncodingNS, XmlGetUtf8InternalEncoding,
-    XmlGetUtf8InternalEncodingNS, XmlParseXmlDecl, XmlParseXmlDeclNS,
-};
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::xmltok_impl_c::{
@@ -1978,8 +2293,6 @@ unsafe extern "C" fn utf8_toUtf16<E: NormalEncodingTable>(
     return res;
 }
 
-pub const BT_COLON_5: c_int = BT_NMSTRT as c_int;
-
 unsafe extern "C" fn latin1_toUtf8(
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
@@ -2036,8 +2349,6 @@ unsafe extern "C" fn latin1_toUtf16(
     };
 }
 
-pub const BT_COLON_1: c_int = BT_NMSTRT as c_int;
-
 unsafe extern "C" fn ascii_toUtf8(
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
@@ -2058,31 +2369,29 @@ unsafe extern "C" fn ascii_toUtf8(
     };
 }
 
-pub const BT_COLON_4: c_int = BT_NMSTRT as c_int;
-
-unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> c_int {
+unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2RustUnnamed_2 {
     match hi as c_uchar as c_int {
         216 | 217 | 218 | 219 => {
             /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
-            return BT_LEAD4 as c_int;
+            return BT_LEAD4;
         }
         220 | 221 | 222 | 223 => {
             /* 0xDC00–0xDFFF second 16-bit code unit or low surrogate (W2) */
-            return BT_TRAIL as c_int;
+            return BT_TRAIL;
         }
         255 => {
             match lo as c_uchar as c_int {
                 255 | 254 => {
                     /* noncharacter-FFFF */
                     /* noncharacter-FFFE */
-                    return BT_NONXML as c_int;
+                    return BT_NONXML;
                 }
                 _ => {}
             }
         }
         _ => {}
     }
-    return BT_NONASCII as c_int;
+    return BT_NONASCII;
 }
 /* shrink to even */
 /* fall through */
@@ -2091,7 +2400,6 @@ unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> c_int 
 /* Avoid copying first half only of surrogate */
 
 unsafe extern "C" fn little2_toUtf8(
-    mut _enc: *const ENCODING,
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
     mut toP: *mut *mut c_char,
@@ -2195,7 +2503,6 @@ unsafe extern "C" fn little2_toUtf8(
 }
 
 unsafe extern "C" fn little2_toUtf16(
-    mut _enc: *const ENCODING,
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
     mut toP: *mut *mut c_ushort,
@@ -2226,7 +2533,6 @@ unsafe extern "C" fn little2_toUtf16(
 }
 
 unsafe extern "C" fn big2_toUtf8(
-    mut _enc: *const ENCODING,
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
     mut toP: *mut *mut c_char,
@@ -2330,7 +2636,6 @@ unsafe extern "C" fn big2_toUtf8(
 }
 
 unsafe extern "C" fn big2_toUtf16(
-    mut _enc: *const ENCODING,
     mut fromP: *mut *const c_char,
     mut fromLim: *const c_char,
     mut toP: *mut *mut c_ushort,
@@ -2359,2711 +2664,6 @@ unsafe extern "C" fn big2_toUtf16(
         return res;
     };
 }
-/* not XML_MIN_SIZE */
-/* CHAR_MATCHES is guaranteed to have MINBPC bytes available. */
-/* not XML_MIN_SIZE */
-
-// static mut little2_encoding_ns: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             little2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             little2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         little2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         little2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         little2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         little2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         little2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         little2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         little2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         little2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         little2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         little2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 1i8,
-//                 };
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_CR as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-// static mut little2_encoding: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             little2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             little2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         little2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         little2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         little2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         little2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         little2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         little2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         little2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         little2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         little2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         little2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 1i8,
-//                 };
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_CR as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON_2 as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-// pub const BT_COLON_2: c_int = BT_NMSTRT as c_int;
-
-// static mut internal_little2_encoding_ns: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             little2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             little2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         little2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         little2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         little2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         little2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         little2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         little2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         little2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         little2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         little2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         little2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 1i8,
-//                 };
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-// static mut internal_little2_encoding: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             little2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             little2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             little2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         little2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         little2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         little2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         little2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         little2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         little2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         little2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         little2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         little2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         little2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 1i8,
-//                 };
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON_6 as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-// pub const BT_COLON_6: c_int = BT_NMSTRT as c_int;
-// /* not XML_MIN_SIZE */
-// /* CHAR_MATCHES is guaranteed to have MINBPC bytes available. */
-// /* not XML_MIN_SIZE */
-// static mut big2_encoding_ns: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             big2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             big2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         big2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         big2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         big2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         big2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         big2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         big2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         big2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         big2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         big2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         big2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 0i8,
-//                 }; /* LCOV_EXCL_LINE */
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_CR as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-// static mut big2_encoding: normal_encoding = unsafe {
-//     {
-//         let mut init = normal_encoding {
-//             enc: {
-//                 let mut init = encoding {
-//                     scanners: [
-//                         Some(
-//                             big2_prologTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_contentTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_cdataSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_ignoreSectionTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     literalScanners: [
-//                         Some(
-//                             big2_attributeValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                         Some(
-//                             big2_entityValueTok
-//                                 as unsafe extern "C" fn(
-//                                     _: *const ENCODING,
-//                                     _: *const c_char,
-//                                     _: *const c_char,
-//                                     _: *mut *const c_char,
-//                                 ) -> c_int,
-//                         ),
-//                     ],
-//                     nameMatchesAscii: Some(
-//                         big2_nameMatchesAscii
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     nameLength: Some(
-//                         big2_nameLength
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     skipS: Some(
-//                         big2_skipS
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                             ) -> *const c_char,
-//                     ),
-//                     getAtts: Some(
-//                         big2_getAtts
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: c_int,
-//                                 _: *mut ATTRIBUTE,
-//                             ) -> c_int,
-//                     ),
-//                     charRefNumber: Some(
-//                         big2_charRefNumber
-//                             as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//                     ),
-//                     predefinedEntityName: Some(
-//                         big2_predefinedEntityName
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     updatePosition: Some(
-//                         big2_updatePosition
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut POSITION,
-//                             ) -> (),
-//                     ),
-//                     isPublicId: Some(
-//                         big2_isPublicId
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *const c_char,
-//                             ) -> c_int,
-//                     ),
-//                     utf8Convert: Some(
-//                         big2_toUtf8
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_char,
-//                                 _: *const c_char,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     utf16Convert: Some(
-//                         big2_toUtf16
-//                             as unsafe extern "C" fn(
-//                                 _: *const ENCODING,
-//                                 _: *mut *const c_char,
-//                                 _: *const c_char,
-//                                 _: *mut *mut c_ushort,
-//                                 _: *const c_ushort,
-//                             )
-//                                 -> XML_Convert_Result,
-//                     ),
-//                     minBytesPerChar: 2,
-//                     isUtf8: 0i8,
-//                     isUtf16: 0i8,
-//                 };
-//                 init
-//             },
-//             type_0: [
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_LF as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_CR as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_NONXML as c_uchar,
-//                 BT_S as c_uchar,
-//                 BT_EXCL as c_uchar,
-//                 BT_QUOT as c_uchar,
-//                 BT_NUM as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_PERCNT as c_uchar,
-//                 BT_AMP as c_uchar,
-//                 BT_APOS as c_uchar,
-//                 BT_LPAR as c_uchar,
-//                 BT_RPAR as c_uchar,
-//                 BT_AST as c_uchar,
-//                 BT_PLUS as c_uchar,
-//                 BT_COMMA as c_uchar,
-//                 BT_MINUS as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_SOL as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_DIGIT as c_uchar,
-//                 BT_COLON_3 as c_uchar,
-//                 BT_SEMI as c_uchar,
-//                 BT_LT as c_uchar,
-//                 BT_EQUALS as c_uchar,
-//                 BT_GT as c_uchar,
-//                 BT_QUEST as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_LSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_RSQB as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_HEX as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_VERBAR as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NAME as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_OTHER as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//                 BT_NMSTRT as c_uchar,
-//             ],
-//             isName2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isName4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isNmstrt4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid2: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid3: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//             isInvalid4: ::std::mem::transmute::<
-//                 intptr_t,
-//                 Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-//             >(NULL as intptr_t),
-//         };
-//         init
-//     }
-// };
-
-pub const BT_COLON_3: c_int = BT_NMSTRT as c_int;
 
 unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
     loop {
@@ -6010,28 +3610,52 @@ unsafe extern "C" fn run_static_initializers() {
     ascii_encoding_ns = Some(Box::new(
         XmlTokImpl::<AsciiEncoding<AsciiEncodingTableNS>>::new(),
     ));
+    little2_encoding = Some(Box::new(
+        XmlTokImpl::<Little2Encoding<Latin1EncodingTable>>::new(),
+    ));
+    little2_encoding_ns = Some(Box::new(
+        XmlTokImpl::<Little2Encoding<Latin1EncodingTableNS>>::new(),
+    ));
+    #[cfg(taget_endian = "little")]
+    {
+        internal_little2_encoding = Some(Box::new(
+            XmlTokImpl::<Little2Encoding<InternalLatin1EncodingTable>>::new(),
+        ));
+        internal_little2_encoding_ns = Some(Box::new(
+            XmlTokImpl::<Little2Encoding<InternalLatin1EncodingTableNS>>::new(),
+        ));
+    }
+    big2_encoding = Some(Box::new(
+        XmlTokImpl::<Big2Encoding<Latin1EncodingTable>>::new(),
+    ));
+    big2_encoding_ns = Some(Box::new(
+        XmlTokImpl::<Big2Encoding<Latin1EncodingTableNS>>::new(),
+    ));
+    #[cfg(taget_endian = "big")]
+    {
+        internal_big2_encoding = Some(Box::new(
+            XmlTokImpl::<Big2Encoding<InternalLatin1EncodingTable>>::new(),
+        ));
+        internal_big2_encoding_ns = Some(Box::new(
+            XmlTokImpl::<Big2Encoding<InternalLatin1EncodingTableNS>>::new(),
+        ));
+    }
     encodingsNS = [
         latin1_encoding_ns.as_ref(),
         ascii_encoding_ns.as_ref(),
         utf8_encoding_ns.as_ref(),
-        None,
-        None,
-        None,
-        // big2_encoding_ns.as_ref(),
-        // big2_encoding_ns.as_ref(),
-        // little2_encoding_ns.as_ref(),
+        big2_encoding_ns.as_ref(),
+        big2_encoding_ns.as_ref(),
+        little2_encoding_ns.as_ref(),
         utf8_encoding_ns.as_ref(),
     ];
     encodings = [
         latin1_encoding.as_ref(),
         ascii_encoding.as_ref(),
         utf8_encoding.as_ref(),
-        None,
-        None,
-        None,
-        // big2_encoding.as_ref(),
-        // big2_encoding.as_ref(),
-        // little2_encoding.as_ref(),
+        big2_encoding.as_ref(),
+        big2_encoding.as_ref(),
+        little2_encoding.as_ref(),
         utf8_encoding.as_ref(),
     ]
 }
