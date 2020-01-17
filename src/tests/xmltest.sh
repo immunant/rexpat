@@ -24,7 +24,7 @@ shopt -s nullglob
 
 # Note: OUTPUT must terminate with the directory separator.
 
-TS="/tmp/libexpat/XML-Test-Suite/"
+TS="/tmp/libexpat/xml-test-suite"
 OUTPUT="/tmp/libexpat/tests/out/"
 
 MYDIR="`dirname \"$0\"`"
