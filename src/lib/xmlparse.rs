@@ -3277,8 +3277,8 @@ unsafe extern "C" fn doContent(
                         enc,
                         &mut fromPtr,
                         rawNameEnd,
-                        &mut toPtr as *mut *mut XML_Char,
-                        ((*tag).bufEnd).offset(-(1)) as *const XML_Char,
+                        &mut toPtr as *mut *mut _ as *mut *mut ICHAR,
+                        ((*tag).bufEnd).offset(-(1)) as *const ICHAR,
                     );
                     convLen = toPtr.wrapping_offset_from((*tag).buf as *const XML_Char) as c_int;
                     if fromPtr >= rawNameEnd
@@ -3529,7 +3529,7 @@ unsafe extern "C" fn doContent(
                         .expect("non-null function pointer")(
                         (*parser).m_handlerArg,
                         buf.as_mut_ptr(),
-                        XmlEncode(n, buf.as_mut_ptr()),
+                        XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR),
                     );
                 } else if (*parser).m_defaultHandler.is_some() {
                     reportDefault(parser, enc, s, next);
@@ -3586,14 +3586,15 @@ unsafe extern "C" fn doContent(
                 }
                 if (*parser).m_characterDataHandler.is_some() {
                     if MUST_CONVERT!(enc, s) {
-                        let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-                        XmlConvert!(enc, &mut s, end, &mut dataPtr, (*parser).m_dataBufEnd,);
+                        let mut dataPtr = (*parser).m_dataBuf as *mut ICHAR;
+                        XmlConvert!(enc, &mut s, end, &mut dataPtr,
+                                    (*parser).m_dataBufEnd as *mut ICHAR);
                         (*parser)
                             .m_characterDataHandler
                             .expect("non-null function pointer")(
                             (*parser).m_handlerArg,
                             (*parser).m_dataBuf,
-                            dataPtr.wrapping_offset_from((*parser).m_dataBuf) as c_int,
+                            dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                         );
                     } else {
                         (*parser)
@@ -3642,19 +3643,19 @@ unsafe extern "C" fn doContent(
                 if charDataHandler.is_some() {
                     if MUST_CONVERT!(enc, s) {
                         loop {
-                            let mut dataPtr_0: *mut ICHAR = (*parser).m_dataBuf;
+                            let mut dataPtr_0 = (*parser).m_dataBuf as *mut ICHAR;
                             let convert_res_0: super::xmltok::XML_Convert_Result = XmlConvert!(
                                 enc,
                                 &mut s,
                                 next,
                                 &mut dataPtr_0,
-                                (*parser).m_dataBufEnd,
+                                (*parser).m_dataBufEnd as *mut ICHAR,
                             );
                             *eventEndPP = s;
                             charDataHandler.expect("non-null function pointer")(
                                 (*parser).m_handlerArg,
                                 (*parser).m_dataBuf,
-                                dataPtr_0.wrapping_offset_from((*parser).m_dataBuf) as c_int,
+                                dataPtr_0.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                             );
                             if convert_res_0 == super::xmltok::XML_CONVERT_COMPLETED
                                 || convert_res_0 == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
@@ -4746,19 +4747,19 @@ unsafe extern "C" fn doCdataSection(
                 if charDataHandler.is_some() {
                     if MUST_CONVERT!(enc, s) {
                         loop {
-                            let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
+                            let mut dataPtr = (*parser).m_dataBuf as *mut ICHAR;
                             let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
                                 enc,
                                 &mut s,
                                 next,
                                 &mut dataPtr,
-                                (*parser).m_dataBufEnd,
+                                (*parser).m_dataBufEnd as *mut ICHAR,
                             );
                             *eventEndPP = next;
                             charDataHandler.expect("non-null function pointer")(
                                 (*parser).m_handlerArg,
                                 (*parser).m_dataBuf,
-                                dataPtr.wrapping_offset_from((*parser).m_dataBuf) as c_int,
+                                dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
                             );
                             if convert_res == super::xmltok::XML_CONVERT_COMPLETED
                                 || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
@@ -7409,7 +7410,7 @@ unsafe extern "C" fn appendAttributeValue(
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
-                    n = XmlEncode(n, buf.as_mut_ptr());
+                    n = XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7769,7 +7770,7 @@ unsafe extern "C" fn storeEntityValue(
                     result = XML_ERROR_BAD_CHAR_REF;
                     break;
                 } else {
-                    n = XmlEncode(n, buf.as_mut_ptr());
+                    n = XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7985,15 +7986,16 @@ unsafe extern "C" fn reportDefault(
             /* LCOV_EXCL_STOP */
         }
         loop {
-            let mut dataPtr: *mut ICHAR = (*parser).m_dataBuf;
-            convert_res = XmlConvert!(enc, &mut s, end, &mut dataPtr, (*parser).m_dataBufEnd,);
+            let mut dataPtr = (*parser).m_dataBuf as *mut ICHAR;
+            convert_res = XmlConvert!(enc, &mut s, end, &mut dataPtr,
+                                      (*parser).m_dataBufEnd as *mut ICHAR);
             *eventEndPP = s;
             (*parser)
                 .m_defaultHandler
                 .expect("non-null function pointer")(
                 (*parser).m_handlerArg,
                 (*parser).m_dataBuf,
-                dataPtr.wrapping_offset_from((*parser).m_dataBuf) as c_int,
+                dataPtr.wrapping_offset_from((*parser).m_dataBuf as *mut ICHAR) as c_int,
             );
             *eventPP = s;
             if !(convert_res != super::xmltok::XML_CONVERT_COMPLETED
@@ -9310,7 +9312,7 @@ unsafe extern "C" fn poolAppend(
             enc,
             &mut ptr,
             end,
-            &mut (*pool).ptr as *mut *mut XML_Char,
+            &mut (*pool).ptr as *mut *mut _ as *mut *mut ICHAR,
             (*pool).end as *mut ICHAR,
         );
         if convert_res == super::xmltok::XML_CONVERT_COMPLETED
