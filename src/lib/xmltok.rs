@@ -144,91 +144,10 @@ pub struct ATTRIBUTE {
 
 pub type ENCODING = dyn XmlEncoding;
 
-// impl PartialEq<ENCODING> for ENCODING {
-//     fn eq(&self, other: &Self) -> bool {
-//         self as *const ENCODING == other as *const ENCODING
-//     }
-// }
-
-pub type SCANNER = Option<
-    unsafe extern "C" fn(
-        _: *const ENCODING,
-        _: *const c_char,
-        _: *const c_char,
-        _: *mut *const c_char,
-    ) -> c_int,
->;
-
 pub type XML_Convert_Result = c_uint;
 pub const XML_CONVERT_COMPLETED: XML_Convert_Result = 0;
 pub const XML_CONVERT_INPUT_INCOMPLETE: XML_Convert_Result = 1;
 pub const XML_CONVERT_OUTPUT_EXHAUSTED: XML_Convert_Result = 2; /* and therefore potentially input remaining as well */
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct encoding {
-    pub scanners: [SCANNER; 4],
-    pub literalScanners: [SCANNER; 2],
-    pub nameMatchesAscii: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *const c_char,
-            _: *const c_char,
-            _: *const c_char,
-        ) -> c_int,
-    >,
-    pub nameLength: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-    pub skipS: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> *const c_char>,
-    pub getAtts: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *const c_char,
-            _: c_int,
-            _: *mut ATTRIBUTE,
-        ) -> c_int,
-    >,
-    pub charRefNumber: Option<unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int>,
-    pub predefinedEntityName: Option<
-        unsafe extern "C" fn(_: *const ENCODING, _: *const c_char, _: *const c_char) -> c_int,
-    >,
-    pub updatePosition: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *const c_char,
-            _: *const c_char,
-            _: *mut POSITION,
-        ) -> (),
-    >,
-    pub isPublicId: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *const c_char,
-            _: *const c_char,
-            _: *mut *const c_char,
-        ) -> c_int,
-    >,
-    pub utf8Convert: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *mut *const c_char,
-            _: *const c_char,
-            _: *mut *mut c_char,
-            _: *const c_char,
-        ) -> XML_Convert_Result,
-    >,
-    pub utf16Convert: Option<
-        unsafe extern "C" fn(
-            _: *const ENCODING,
-            _: *mut *const c_char,
-            _: *const c_char,
-            _: *mut *mut c_ushort,
-            _: *const c_ushort,
-        ) -> XML_Convert_Result,
-    >,
-    pub minBytesPerChar: c_int,
-    pub isUtf8: c_char,
-    pub isUtf16: c_char,
-}
 
 #[macro_export]
 macro_rules! XmlUtf8Convert {
@@ -243,12 +162,6 @@ macro_rules! XmlUtf16Convert {
         (*$enc).utf16Convert($fromP, $fromLim, $toP, $toLim)
     };
 }
-
-// #[repr(C)]
-// pub struct INIT_ENCODING {
-//     pub initEnc: ENCODING,
-//     pub encPtr: *mut *const ENCODING,
-// }
 
 pub type INIT_ENCODING = InitEncoding;
 
@@ -362,7 +275,13 @@ pub trait XmlEncoding {
 
     // xmlTok and xmlLiteralTok were macros
     #[inline]
-    unsafe fn xmlTok(&self, state: c_int, ptr: *const c_char, end: *const c_char, nextTokPtr: *mut *const c_char) -> c_int {
+    unsafe fn xmlTok(
+        &self,
+        state: c_int,
+        ptr: *const c_char,
+        end: *const c_char,
+        nextTokPtr: *mut *const c_char,
+    ) -> c_int {
         match state {
             XML_PROLOG_STATE => self.prologTok(ptr, end, nextTokPtr),
             XML_CONTENT_STATE => self.contentTok(ptr, end, nextTokPtr),
@@ -373,7 +292,13 @@ pub trait XmlEncoding {
     }
 
     #[inline]
-    unsafe fn xmlLiteralTok(&self, literal_type: c_int, ptr: *const c_char, end: *const c_char, nextTokPtr: *mut *const c_char) -> c_int {
+    unsafe fn xmlLiteralTok(
+        &self,
+        literal_type: c_int,
+        ptr: *const c_char,
+        end: *const c_char,
+        nextTokPtr: *mut *const c_char,
+    ) -> c_int {
         match literal_type {
             XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(ptr, end, nextTokPtr),
             XML_ENTITY_VALUE_LITERAL => self.entityValueTok(ptr, end, nextTokPtr),
@@ -412,7 +337,7 @@ pub trait XmlEncodingImpl {
 }
 
 struct NormalEncoding<T: NormalEncodingTable> {
-    t: std::marker::PhantomData::<T>,
+    t: std::marker::PhantomData<T>,
 }
 
 trait NormalEncodingTable {
@@ -420,7 +345,7 @@ trait NormalEncodingTable {
     const types: [C2RustUnnamed_2; 256];
 }
 
-struct Utf8Encoding<T: NormalEncodingTable>(std::marker::PhantomData::<T>);
+struct Utf8Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     const isUtf8: bool = true;
@@ -444,18 +369,28 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
         unsafe {
             match n {
                 2 => {
-                    (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize] as c_int) << 3)
-                                   + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-                                   + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
-                     & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) != 0
+                    (namingBitmap[(((namePages
+                        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+                        as c_int)
+                        << 3)
+                        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
+                        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
+                        as usize]
+                        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
+                        != 0
                 }
-                3 => (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
-        as usize] as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) != 0,
+                3 => {
+                    (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf)
+                        << 4)
+                        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+                        as usize] as c_int)
+                        << 3)
+                        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
+                        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
+                        as usize]
+                        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
+                        != 0
+                }
                 4 => false,
                 _ => panic!("Unexpected byte length"),
             }
@@ -465,20 +400,30 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     fn is_nmstrt_char(p: *const c_char, n: isize) -> bool {
         unsafe {
             match n {
-                2 => (namingBitmap[(((nmstrtPages
-        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
-        as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f)) != 0,
-                3 => (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf) << 4)
-        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
-        as usize] as c_int)
-        << 3)
-        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1)) as usize]
-        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f)) != 0,
+                2 => {
+                    (namingBitmap[(((nmstrtPages
+                        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+                        as c_int)
+                        << 3)
+                        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
+                        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
+                        as usize]
+                        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
+                        != 0
+                }
+                3 => {
+                    (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0) as c_int
+                        & 0xf)
+                        << 4)
+                        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+                        as usize] as c_int)
+                        << 3)
+                        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
+                        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
+                        as usize]
+                        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
+                        != 0
+                }
                 4 => false,
                 _ => panic!("Unexpected byte length"),
             }
@@ -489,43 +434,53 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     fn is_invalid_char(p: *const c_char, n: isize) -> bool {
         unsafe {
             match n {
-                2 => ((*(p as *const c_uchar) as c_int) < 0xc2
-                      || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                      || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0),
-                3 => (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-                      || (if *(p as *const c_uchar) as c_int == 0xef
-                          && *(p as *const c_uchar).offset(1) as c_int == 0xbf
-                          {
-            (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0) as c_int
-        }) != 0
-        || (if *(p as *const c_uchar) as c_int == 0xe0 {
-            ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                || (if *(p as *const c_uchar) as c_int == 0xed {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f) as c_int
-                } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-                }) != 0) as c_int
-        }) != 0),
-                4 => (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
-        || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
-        || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-        || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
-        || (if *(p as *const c_uchar) as c_int == 0xf0 {
-            ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
-                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-        } else {
-            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                || (if *(p as *const c_uchar) as c_int == 0xf4 {
-                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f) as c_int
-                } else {
-                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0) as c_int
-                }) != 0) as c_int
-        }) != 0),
+                2 => {
+                    ((*(p as *const c_uchar) as c_int) < 0xc2
+                        || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
+                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                }
+                3 => {
+                    (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
+                        || (if *(p as *const c_uchar) as c_int == 0xef
+                            && *(p as *const c_uchar).offset(1) as c_int == 0xbf
+                        {
+                            (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
+                        } else {
+                            (*(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0) as c_int
+                        }) != 0
+                        || (if *(p as *const c_uchar) as c_int == 0xe0 {
+                            ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
+                                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                as c_int
+                        } else {
+                            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
+                                || (if *(p as *const c_uchar) as c_int == 0xed {
+                                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f) as c_int
+                                } else {
+                                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                        as c_int
+                                }) != 0) as c_int
+                        }) != 0)
+                }
+                4 => {
+                    (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
+                        || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
+                        || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
+                        || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
+                        || (if *(p as *const c_uchar) as c_int == 0xf0 {
+                            ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
+                                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                as c_int
+                        } else {
+                            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
+                                || (if *(p as *const c_uchar) as c_int == 0xf4 {
+                                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f) as c_int
+                                } else {
+                                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                        as c_int
+                                }) != 0) as c_int
+                        }) != 0)
+                }
                 _ => panic!("Unexpected byte length"),
             }
         }
@@ -567,7 +522,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     }
 }
 
-struct Latin1Encoding<T: NormalEncodingTable>(std::marker::PhantomData::<T>);
+struct Latin1Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
     const isUtf8: bool = false;
@@ -636,7 +591,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
     }
 }
 
-struct AsciiEncoding<T: NormalEncodingTable>(std::marker::PhantomData::<T>);
+struct AsciiEncoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
     const isUtf8: bool = true;
@@ -1350,7 +1305,7 @@ impl XmlEncoding for InitEncoding {
             end,
             nextTokPtr,
         )
-    }        
+    }
     unsafe extern "C" fn cdataSectionTok(
         &self,
         ptr: *const libc::c_char,
@@ -1430,7 +1385,10 @@ impl XmlEncoding for InitEncoding {
         end: *const libc::c_char,
         pos: *mut POSITION,
     ) {
-        utf8_encoding.as_ref().unwrap().updatePosition(ptr, end, pos);
+        utf8_encoding
+            .as_ref()
+            .unwrap()
+            .updatePosition(ptr, end, pos);
     }
 
     unsafe extern "C" fn isPublicId(
@@ -1481,49 +1439,8 @@ static mut internal_utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut internal_utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-// const utf8_encoding: Box<dyn XmlEncoding> = Box::new(
-//     XmlTokImpl::<NormalEncoding<Latin1EncodingTable>, Utf8Encoding<Latin1EncodingTable>>::new()
-// );
-// const internal_utf8_encoding: Box<dyn XmlEncoding> = Box::new(
-//     XmlTokImpl::<NormalEncoding<InternalUtf8EncodingTable>, Utf8Encoding<InternalUtf8EncodingTable>>::new()
-// );
-// const internal_utf8_encoding_ns: Box<dyn XmlEncoding> = Box::new(
-//     XmlTokImpl::<NormalEncoding<InternalUtf8EncodingTableNS>, Utf8Encoding<InternalUtf8EncodingTableNS>>::new()
-// );
-
 
 pub mod xmltok_ns_c {
-    /* This file is included!
-                                __  __            _
-                             ___\ \/ /_ __   __ _| |_
-                            / _ \\  /| '_ \ / _` | __|
-                           |  __//  \| |_) | (_| | |_
-                            \___/_/\_\ .__/ \__,_|\__|
-                                     |_| XML parser
-
-       Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-       Copyright (c) 2000-2017 Expat development team
-       Licensed under the MIT license:
-
-       Permission is  hereby granted,  free of charge,  to any  person obtaining
-       a  copy  of  this  software   and  associated  documentation  files  (the
-       "Software"),  to  deal in  the  Software  without restriction,  including
-       without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-       distribute, sublicense, and/or sell copies of the Software, and to permit
-       persons  to whom  the Software  is  furnished to  do so,  subject to  the
-       following conditions:
-
-       The above copyright  notice and this permission notice  shall be included
-       in all copies or substantial portions of the Software.
-
-       THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-       EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-       MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-       NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-       DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-       OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-       USE OR OTHER DEALINGS IN THE SOFTWARE.
-    */
     /* This file is included!
                                 __  __            _
                              ___\ \/ /_ __   __ _| |_
@@ -1567,86 +1484,22 @@ pub mod xmltok_ns_c {
     pub unsafe extern "C" fn XmlGetUtf8InternalEncoding() -> *const super::ENCODING {
         return &**super::internal_utf8_encoding.as_ref().unwrap();
     }
-    // #[no_mangle]
 
+    // #[no_mangle]
     // pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> super::ENCODING {
     //     return &super::internal_little2_encoding;
     // }
-    // #[no_mangle]
 
+    // #[no_mangle]
     // pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> super::ENCODING {
     //     return &super::internal_little2_encoding_ns;
     // }
-    // Initialized in run_static_initializers
 
+    // Initialized in run_static_initializers
     pub static mut encodingsNS: [Option<&'static Box<super::ENCODING>>; 7] = [None; 7];
+
     // Initialized in run_static_initializers
-
     pub static mut encodings: [Option<&'static Box<super::ENCODING>>; 7] = [None; 7];
-
-    // pub unsafe extern "C" fn initScanProlog(
-    //     mut enc: &super::ENCODING,
-    //     mut ptr: *const c_char,
-    //     mut end: *const c_char,
-    //     mut nextTokPtr: *mut *const c_char,
-    // ) -> c_int {
-    //     return initScan(
-    //         encodings.as_ptr(),
-    //         enc as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
-    //         super::XML_PROLOG_STATE,
-    //         ptr,
-    //         end,
-    //         nextTokPtr,
-    //     );
-    // }
-
-    // pub unsafe extern "C" fn initScanPrologNS(
-    //     mut enc: &super::ENCODING,
-    //     mut ptr: *const c_char,
-    //     mut end: *const c_char,
-    //     mut nextTokPtr: *mut *const c_char,
-    // ) -> c_int {
-    //     return initScan(
-    //         encodingsNS.as_ptr(),
-    //         enc as *const super::INIT_ENCODING,
-    //         super::XML_PROLOG_STATE,
-    //         ptr,
-    //         end,
-    //         nextTokPtr,
-    //     );
-    // }
-
-    // pub unsafe extern "C" fn initScanContentNS(
-    //     mut enc: &super::ENCODING,
-    //     mut ptr: *const c_char,
-    //     mut end: *const c_char,
-    //     mut nextTokPtr: *mut *const c_char,
-    // ) -> c_int {
-    //     return initScan(
-    //         encodingsNS.as_ptr(),
-    //         enc as *const super::INIT_ENCODING,
-    //         super::XML_CONTENT_STATE,
-    //         ptr,
-    //         end,
-    //         nextTokPtr,
-    //     );
-    // }
-
-    // pub unsafe extern "C" fn initScanContent(
-    //     mut enc: &super::ENCODING,
-    //     mut ptr: *const c_char,
-    //     mut end: *const c_char,
-    //     mut nextTokPtr: *mut *const c_char,
-    // ) -> c_int {
-    //     return initScan(
-    //         encodings.as_ptr(),
-    //         enc as *const super::INIT_ENCODING,
-    //         super::XML_CONTENT_STATE,
-    //         ptr,
-    //         end,
-    //         nextTokPtr,
-    //     );
-    // }
 
     #[no_mangle]
     pub unsafe extern "C" fn XmlInitEncodingNS(
@@ -1688,12 +1541,7 @@ pub mod xmltok_ns_c {
         let mut buf: [c_char; 128] = [0; 128];
         let mut p: *mut c_char = buf.as_mut_ptr();
         let mut i: c_int = 0;
-        (*enc).utf8Convert(
-            &mut ptr,
-            end,
-            &mut p,
-            p.offset(128).offset(-(1)),
-        );
+        (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
         if ptr != end {
             return None;
         }
@@ -1716,12 +1564,7 @@ pub mod xmltok_ns_c {
         let mut buf: [c_char; 128] = [0; 128];
         let mut p: *mut c_char = buf.as_mut_ptr();
         let mut i: c_int = 0;
-        (*enc).utf8Convert(
-            &mut ptr,
-            end,
-            &mut p,
-            p.offset(128).offset(-(1)),
-        );
+        (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
         if ptr != end {
             return None;
         }
@@ -1793,8 +1636,7 @@ pub mod xmltok_ns_c {
     }
 
     use crate::src::lib::xmltok::{
-        doParseXmlDecl, getEncodingIndex,
-        streqci, KW_UTF_16, UNKNOWN_ENC,
+        doParseXmlDecl, getEncodingIndex, streqci, KW_UTF_16, UNKNOWN_ENC,
     };
     /* XML_TOK_NS_C */
     /* XML_TOK_NS_C */
@@ -1812,9 +1654,8 @@ pub use crate::ascii_h::{
 pub use crate::expat_external_h::XML_Size;
 pub use crate::src::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::src::lib::xmltok::xmltok_ns_c::{
-    encodings, encodingsNS, findEncoding, findEncodingNS,
-    XmlGetUtf8InternalEncoding, XmlGetUtf8InternalEncodingNS,
-    XmlParseXmlDecl, XmlParseXmlDeclNS,
+    encodings, encodingsNS, findEncoding, findEncodingNS, XmlGetUtf8InternalEncoding,
+    XmlGetUtf8InternalEncodingNS, XmlParseXmlDecl, XmlParseXmlDeclNS,
 };
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
@@ -1827,7 +1668,6 @@ pub use crate::xmltok_impl_h::{
     BT_MALFORM, BT_MINUS, BT_NAME, BT_NMSTRT, BT_NONASCII, BT_NONXML, BT_NUM, BT_OTHER, BT_PERCNT,
     BT_PLUS, BT_QUEST, BT_QUOT, BT_RPAR, BT_RSQB, BT_S, BT_SEMI, BT_SOL, BT_TRAIL, BT_VERBAR,
 };
-
 
 // TODO: Temporary
 // use NormalEncoding as normal_encoding;
@@ -1956,7 +1796,8 @@ unsafe extern "C" fn isNever(mut _enc: *const ENCODING, mut _p: *const c_char) -
 }
 
 unsafe extern "C" fn utf8_isName2(mut _enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize] as c_int)
+    return (namingBitmap[(((namePages[(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+        as c_int)
         << 3)
         + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
         + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1)) as usize]
@@ -2274,7 +2115,6 @@ unsafe extern "C" fn utf8_toUtf16<E: NormalEncodingTable>(
     *toP = to;
     return res;
 }
-
 
 // static mut utf8_encoding_ns: normal_encoding = {
 //     let mut init = normal_encoding {
@@ -7987,7 +7827,6 @@ unsafe extern "C" fn big2_toUtf16(
 // /* not XML_MIN_SIZE */
 // /* CHAR_MATCHES is guaranteed to have MINBPC bytes available. */
 // /* not XML_MIN_SIZE */
-
 // static mut big2_encoding_ns: normal_encoding = unsafe {
 //     {
 //         let mut init = normal_encoding {
@@ -8921,8 +8760,11 @@ unsafe extern "C" fn initUpdatePosition(
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut pos: *mut POSITION,
-) { 
-    utf8_encoding.as_ref().unwrap().updatePosition(ptr, end, pos);
+) {
+    utf8_encoding
+        .as_ref()
+        .unwrap()
+        .updatePosition(ptr, end, pos);
 }
 
 unsafe extern "C" fn toAscii(
@@ -9117,12 +8959,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
         *badPtr = ptr;
         return 0i32;
     }
-    if (*enc).nameMatchesAscii(
-        name,
-        nameEnd,
-        KW_version.as_ptr(),
-    ) == 0
-    {
+    if (*enc).nameMatchesAscii(name, nameEnd, KW_version.as_ptr()) == 0 {
         if isGeneralTextEntity == 0 {
             *badPtr = name;
             return 0i32;
@@ -9147,12 +8984,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(
-        name,
-        nameEnd,
-        KW_encoding.as_ptr(),
-    ) != 0
-    {
+    if (*enc).nameMatchesAscii(name, nameEnd, KW_encoding.as_ptr()) != 0 {
         let mut c: c_int = toAscii(enc, val, end);
         if !(ASCII_a as c_int <= c && c <= ASCII_z as c_int)
             && !(ASCII_A as c_int <= c && c <= ASCII_Z as c_int)
@@ -9178,11 +9010,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(
-        name,
-        nameEnd,
-        KW_standalone.as_ptr(),
-    ) == 0
+    if (*enc).nameMatchesAscii(name, nameEnd, KW_standalone.as_ptr()) == 0
         || isGeneralTextEntity != 0
     {
         *badPtr = name;
@@ -9705,8 +9533,7 @@ unsafe extern "C" fn initScan(
         let mut current_block_26: u64;
         match (*ptr.offset(0) as c_uchar as c_int) << 8 | *ptr.offset(1) as c_uchar as c_int {
             65279 => {
-                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC
-                    && state == XML_CONTENT_STATE)
+                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
                 {
                     *nextTokPtr = ptr.offset(2);
                     *encPtr = &***encodingTable[UTF_16BE_ENC as usize].as_ref().unwrap();
@@ -9724,8 +9551,7 @@ unsafe extern "C" fn initScan(
                 }
             }
             65534 => {
-                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC
-                    && state == XML_CONTENT_STATE)
+                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
                 {
                     *nextTokPtr = ptr.offset(2);
                     *encPtr = &***encodingTable[UTF_16LE_ENC as usize].as_ref().unwrap();
@@ -9800,7 +9626,9 @@ unsafe extern "C" fn initScan(
             }
         }
     }
-    *encPtr = &***encodingTable[(*enc).encoding_index as c_int as usize].as_ref().unwrap();
+    *encPtr = &***encodingTable[(*enc).encoding_index as c_int as usize]
+        .as_ref()
+        .unwrap();
     return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
 }
 
@@ -9821,34 +9649,36 @@ unsafe extern "C" fn initScan(
 
 unsafe extern "C" fn run_static_initializers() {
     latin1_encoding = Some(Box::new(
-        XmlTokImpl::<Latin1Encoding<Latin1EncodingTable>>::new()
+        XmlTokImpl::<Latin1Encoding<Latin1EncodingTable>>::new(),
     ));
     latin1_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Latin1Encoding<Latin1EncodingTableNS>>::new()
+        XmlTokImpl::<Latin1Encoding<Latin1EncodingTableNS>>::new(),
     ));
     utf8_encoding = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<Utf8EncodingTable>>::new()
+        XmlTokImpl::<Utf8Encoding<Utf8EncodingTable>>::new(),
     ));
     utf8_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<Utf8EncodingTableNS>>::new()
+        XmlTokImpl::<Utf8Encoding<Utf8EncodingTableNS>>::new(),
     ));
-    internal_utf8_encoding = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<InternalUtf8EncodingTable>>::new()
-    ));
-    internal_utf8_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<InternalUtf8EncodingTableNS>>::new()
-    ));
+    internal_utf8_encoding = Some(Box::new(XmlTokImpl::<
+        Utf8Encoding<InternalUtf8EncodingTable>,
+    >::new()));
+    internal_utf8_encoding_ns = Some(Box::new(XmlTokImpl::<
+        Utf8Encoding<InternalUtf8EncodingTableNS>,
+    >::new()));
     ascii_encoding = Some(Box::new(
-        XmlTokImpl::<AsciiEncoding<AsciiEncodingTable>>::new()
+        XmlTokImpl::<AsciiEncoding<AsciiEncodingTable>>::new(),
     ));
     ascii_encoding_ns = Some(Box::new(
-        XmlTokImpl::<AsciiEncoding<AsciiEncodingTableNS>>::new()
+        XmlTokImpl::<AsciiEncoding<AsciiEncodingTableNS>>::new(),
     ));
     encodingsNS = [
         latin1_encoding_ns.as_ref(),
         ascii_encoding_ns.as_ref(),
         utf8_encoding_ns.as_ref(),
-        None, None, None,
+        None,
+        None,
+        None,
         // big2_encoding_ns.as_ref(),
         // big2_encoding_ns.as_ref(),
         // little2_encoding_ns.as_ref(),
@@ -9858,7 +9688,9 @@ unsafe extern "C" fn run_static_initializers() {
         latin1_encoding.as_ref(),
         ascii_encoding.as_ref(),
         utf8_encoding.as_ref(),
-        None, None, None,
+        None,
+        None,
+        None,
         // big2_encoding.as_ref(),
         // big2_encoding.as_ref(),
         // little2_encoding.as_ref(),

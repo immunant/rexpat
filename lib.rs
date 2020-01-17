@@ -47,10 +47,10 @@ extern crate libc;
 
 pub mod src {
     pub mod lib {
+        pub mod nametab;
         pub mod xmlparse;
         pub mod xmlrole;
         pub mod xmltok;
         pub mod xmltok_impl;
-        pub mod nametab;
     } // mod lib
 } // mod src

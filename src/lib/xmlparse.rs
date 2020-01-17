@@ -2835,12 +2835,7 @@ unsafe extern "C" fn externalEntityInitProcessor2(
     mut endPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = start;
-    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
-        XML_CONTENT_STATE,
-        start,
-        end,
-        &mut next,
-    );
+    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
     match tok {
         super::xmltok::XML_TOK_BOM => {
             /* If we are at the end of the buffer, this would cause the next stage,
@@ -2885,12 +2880,7 @@ unsafe extern "C" fn externalEntityInitProcessor3(
     let mut tok: c_int = 0;
     let mut next: *const c_char = start;
     (*parser).m_eventPtr = start;
-    tok = (*(*parser).m_encoding).xmlTok(
-        XML_CONTENT_STATE,
-        start,
-        end,
-        &mut next,
-    );
+    tok = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
     (*parser).m_eventEndPtr = next;
     match tok {
         super::xmltok::XML_TOK_XML_DECL => {
@@ -2975,8 +2965,7 @@ unsafe extern "C" fn doContent(
     *eventPP = s;
     loop {
         let mut next: *const c_char = s;
-        let mut tok: c_int =
-            (*enc).xmlTok(XML_CONTENT_STATE, s, end, &mut next);
+        let mut tok: c_int = (*enc).xmlTok(XML_CONTENT_STATE, s, end, &mut next);
         *eventEndPP = next;
         let mut current_block_275: u64;
         match tok {
@@ -3669,11 +3658,7 @@ unsafe extern "C" fn storeAtts(
     }
     nDefaultAtts = (*elementType).nDefaultAtts;
     /* get the attributes from the tokenizer */
-    n = (*enc).getAtts(
-        attStr,
-        (*parser).m_attsSize,
-        (*parser).m_atts,
-    );
+    n = (*enc).getAtts(attStr, (*parser).m_attsSize, (*parser).m_atts);
     if n + nDefaultAtts > (*parser).m_attsSize {
         let mut oldAttsSize: c_int = (*parser).m_attsSize;
         let mut temp: *mut super::xmltok::ATTRIBUTE = 0 as *mut super::xmltok::ATTRIBUTE;
@@ -3705,10 +3690,7 @@ unsafe extern "C" fn storeAtts(
             (*currAtt).name,
             (*currAtt)
                 .name
-                .offset(
-                    (*enc).nameLength((*currAtt).name)
-                        as isize,
-                ),
+                .offset((*enc).nameLength((*currAtt).name) as isize),
         );
         if attId.is_null() {
             return XML_ERROR_NO_MEMORY;
@@ -4466,8 +4448,7 @@ unsafe extern "C" fn doCdataSection(
     *startPtr = NULL as *const c_char;
     loop {
         let mut next: *const c_char = 0 as *const c_char;
-        let mut tok: c_int =
-            (*enc).xmlTok(XML_CDATA_SECTION_STATE, s, end, &mut next);
+        let mut tok: c_int = (*enc).xmlTok(XML_CDATA_SECTION_STATE, s, end, &mut next);
         *eventEndPP = next;
         match tok {
             super::xmltok::XML_TOK_CDATA_SECT_CLOSE => {
@@ -4754,7 +4735,8 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
             &mut (*parser).m_encoding,
             s,
         )
-    } != 0 {
+    } != 0
+    {
         return XML_ERROR_NONE;
     }
     return XML_ERROR_NONE;
@@ -5017,12 +4999,7 @@ unsafe extern "C" fn entityValueInitProcessor(
     let mut next: *const c_char = start;
     (*parser).m_eventPtr = start;
     loop {
-        tok = (*(*parser).m_encoding).xmlTok(
-            XML_PROLOG_STATE,
-            start,
-            end,
-            &mut next,
-        );
+        tok = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, start, end, &mut next);
         (*parser).m_eventEndPtr = next;
         if tok <= 0 {
             if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
@@ -5095,12 +5072,7 @@ unsafe extern "C" fn externalParEntProcessor(
 ) -> XML_Error {
     let mut next: *const c_char = s;
     let mut tok: c_int = 0;
-    tok = (*(*parser).m_encoding).xmlTok(
-        XML_PROLOG_STATE,
-        s,
-        end,
-        &mut next,
-    );
+    tok = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
     if tok <= 0 {
         if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
             *nextPtr = s;
@@ -5114,12 +5086,7 @@ unsafe extern "C" fn externalParEntProcessor(
         }
     } else if tok == super::xmltok::XML_TOK_BOM {
         s = next;
-        tok = (*(*parser).m_encoding).xmlTok(
-            XML_PROLOG_STATE,
-            s,
-            end,
-            &mut next,
-        )
+        tok = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next)
     }
     (*parser).m_processor = Some(prologProcessor as Processor);
     return doProlog(
@@ -5177,12 +5144,7 @@ unsafe extern "C" fn prologProcessor(
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = s;
-    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
-        XML_PROLOG_STATE,
-        s,
-        end,
-        &mut next,
-    );
+    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
     return doProlog(
         parser,
         (*parser).m_encoding,
@@ -5436,9 +5398,7 @@ unsafe extern "C" fn doProlog(
                 (*dtd).hasParamEntityRefs = XML_TRUE;
                 if (*parser).m_startDoctypeDeclHandler.is_some() {
                     let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
-                    if (*enc).isPublicId(s, next, eventPP)
-                        == 0
-                    {
+                    if (*enc).isPublicId(s, next, eventPP) == 0 {
                         return XML_ERROR_PUBLICID;
                     }
                     pubId = poolStoreString(
@@ -5989,10 +5949,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             9 => {
-                if (*enc)
-                    .predefinedEntityName(s, next)
-                    != 0
-                {
+                if (*enc).predefinedEntityName(s, next) != 0 {
                     (*parser).m_declEntity = NULL as *mut ENTITY
                 } else if (*dtd).keepProcessing != 0 {
                     let mut name: *const XML_Char = poolStoreString(&mut (*dtd).pool, enc, s, next);
@@ -6087,8 +6044,7 @@ unsafe extern "C" fn doProlog(
                 current_block = 1553878188884632965;
             }
             21 => {
-                if (*enc).isPublicId(s, next, eventPP) == 0
-                {
+                if (*enc).isPublicId(s, next, eventPP) == 0 {
                     return XML_ERROR_PUBLICID;
                 }
                 if !(*parser).m_declNotationName.is_null() {
@@ -6593,8 +6549,7 @@ unsafe extern "C" fn doProlog(
             926243229934402080 =>
             /* fall through */
             {
-                if (*enc).isPublicId(s, next, eventPP) == 0
-                {
+                if (*enc).isPublicId(s, next, eventPP) == 0 {
                     return XML_ERROR_PUBLICID;
                 }
                 current_block = 9007411418488376351;
@@ -6762,10 +6717,7 @@ unsafe extern "C" fn epilogProcessor(
     (*parser).m_eventPtr = s;
     loop {
         let mut next: *const c_char = NULL as *const c_char;
-        let mut tok: c_int = (*(*parser).m_encoding).xmlTok(
-            XML_PROLOG_STATE,
-            s, end, &mut next
-        );
+        let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
         (*parser).m_eventEndPtr = next;
         match tok {
             -15 => {
@@ -6867,12 +6819,8 @@ unsafe extern "C" fn processInternalEntity(
     /* Set a safe default value in case 'next' does not get set */
     next = textStart;
     if (*entity).is_param != 0 {
-        let mut tok: c_int = (*(*parser).m_internalEncoding).xmlTok(
-            XML_PROLOG_STATE,
-            textStart,
-            textEnd,
-            &mut next,
-        );
+        let mut tok: c_int =
+            (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
         result = doProlog(
             parser,
             (*parser).m_internalEncoding,
@@ -6932,12 +6880,8 @@ unsafe extern "C" fn internalEntityProcessor(
     /* Set a safe default value in case 'next' does not get set */
     next = textStart;
     if (*entity).is_param != 0 {
-        let mut tok: c_int = (*(*parser).m_internalEncoding).xmlTok(
-            XML_PROLOG_STATE,
-            textStart,
-            textEnd,
-            &mut next,
-        );
+        let mut tok: c_int =
+            (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
         result = doProlog(
             parser,
             (*parser).m_internalEncoding,
@@ -6979,12 +6923,7 @@ unsafe extern "C" fn internalEntityProcessor(
     if (*entity).is_param != 0 {
         let mut tok_0: c_int = 0;
         (*parser).m_processor = Some(prologProcessor as Processor);
-        tok_0 = (*(*parser).m_encoding).xmlTok(
-            XML_PROLOG_STATE,
-            s,
-            end,
-            &mut next,
-        );
+        tok_0 = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
         return doProlog(
             parser,
             (*parser).m_encoding,
@@ -7068,8 +7007,7 @@ unsafe extern "C" fn appendAttributeValue(
     let dtd: *mut DTD = (*parser).m_dtd;
     loop {
         let mut next: *const c_char = 0 as *const c_char;
-        let mut tok: c_int =
-            (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, ptr, end, &mut next);
+        let mut tok: c_int = (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, ptr, end, &mut next);
         let mut current_block_62: u64;
         match tok {
             super::xmltok::XML_TOK_NONE => {
@@ -7091,8 +7029,7 @@ unsafe extern "C" fn appendAttributeValue(
             super::xmltok::XML_TOK_CHAR_REF => {
                 let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
-                let mut n: c_int =
-                    (*enc).charRefNumber(ptr);
+                let mut n: c_int = (*enc).charRefNumber(ptr);
                 if n < 0 {
                     if enc == (*parser).m_encoding {
                         (*parser).m_eventPtr = ptr
@@ -7451,8 +7388,7 @@ unsafe extern "C" fn storeEntityValue(
             super::xmltok::XML_TOK_CHAR_REF => {
                 let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
-                let mut n: c_int =
-                    (*enc).charRefNumber(entityTextPtr);
+                let mut n: c_int = (*enc).charRefNumber(entityTextPtr);
                 if n < 0 {
                     if enc == (*parser).m_encoding {
                         (*parser).m_eventPtr = entityTextPtr

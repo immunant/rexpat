@@ -1,11 +1,11 @@
 use libc::{c_char, c_int, c_long, c_ushort, size_t};
 
 use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
+use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
 use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_h::*;
 use crate::xmltok_impl_h::*;
-use super::xmltok::{XmlEncoding, XmlEncodingImpl, XML_Convert_Result};
 
 pub const other: C2RustUnnamed_2 = 0;
 pub const other_0: C2RustUnnamed_2 = 0;
@@ -132,7 +132,7 @@ macro_rules! HAS_CHAR {
 
 impl<E: XmlEncodingImpl> XmlTokImpl<E> {
     pub fn new() -> Self {
-        Self (std::marker::PhantomData)
+        Self(std::marker::PhantomData)
     }
 
     unsafe extern "C" fn scanComment(
