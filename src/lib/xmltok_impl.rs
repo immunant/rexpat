@@ -554,18 +554,26 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
+        #[derive(PartialEq)]
+        enum Label {
+            None,
+            Sol,
+            Gt,
+            EqFallthrough,
+        }
+
         let mut hadColon: libc::c_int = 0 as libc::c_int;
         while HAS_CHAR!(enc, ptr, end) {
-            let mut current_block_186: u64 = 0;
+            let mut current_block: Label = Label::None;
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, E),
                 match E::byte_type(ptr),
-                23 => {
+                BT_COLON => {
                     if hadColon != 0 {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID
                     }
-                    hadColon = 1 as libc::c_int;
+                    hadColon = 1;
                     ptr = ptr.offset(E::MINBPC as isize);
                     if !(end.wrapping_offset_from(ptr) as libc::c_long >=
                              (1 as libc::c_int * 1 as libc::c_int) as
@@ -577,9 +585,8 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
                         match E::byte_type(ptr),
                         _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
                     }
-                    current_block_186 = 11099343707781121639;
                 }
-                21 | 9 | 10 => {
+                BT_S | BT_CR | BT_LF => {
                     loop  {
                         let mut t: C2RustUnnamed_2 = 0;
                         ptr = ptr.offset(E::MINBPC as isize);
@@ -591,161 +598,148 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
                         t = E::byte_type(ptr);
                         if t == BT_EQUALS { break ; }
                         match t {
-                            21 | 10 | 9 => { }
+                            BT_S | BT_LF | BT_CR => { }
                             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
                         }
                     }
-                    current_block_186 = 17167606947040001567;
+                    current_block = Label::EqFallthrough;
                 }
-                14 => { current_block_186 = 17167606947040001567; }
+                BT_EQUALS => { current_block = Label::EqFallthrough; }
                 _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
             }
-            match current_block_186 {
-                17167606947040001567 =>
+            if current_block == Label::EqFallthrough {
                 /* fall through */
-                /* fall through */
-                /* fall through */
-                {
-                    let mut open: C2RustUnnamed_2 = 0;
-                    hadColon = 0 as libc::c_int;
-                    loop {
-                        ptr = ptr.offset(E::MINBPC as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long
-                            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                        {
-                            return XML_TOK_PARTIAL;
-                        }
-                        open = E::byte_type(ptr);
-                        if open == BT_QUOT || open == BT_APOS {
-                            break;
-                        }
-                        match open {
-                            21 | 10 | 9 => {}
-                            _ => {
-                                *nextTokPtr = ptr;
-                                return XML_TOK_INVALID;
-                            }
-                        }
-                    }
-                    ptr = ptr.offset(E::MINBPC as isize);
-                    loop
-                    /* in attribute value */
-                    /* in attribute value */
-                    /* in attribute value */
-                    {
-                        let mut t_0: C2RustUnnamed_2 = 0;
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long
-                            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                        {
-                            return XML_TOK_PARTIAL;
-                        }
-                        t_0 = E::byte_type(ptr);
-                        if t_0 == open {
-                            break;
-                        }
-                        MATCH_INVALID_CASES! {
-                            (ptr, end, nextTokPtr, E),
-                            match t_0,
-                            BT_AMP => {
-                                let mut tok: libc::c_int =
-                                    self.scanRef(ptr.offset(E::MINBPC as isize),
-                                                 end, &mut ptr);
-                                if tok <= 0 as libc::c_int {
-                                    if tok == XML_TOK_INVALID {
-                                        *nextTokPtr = ptr
-                                    }
-                                    return tok
-                                }
-                            }
-                            BT_LT => { *nextTokPtr = ptr; return XML_TOK_INVALID }
-                            _ => { ptr = ptr.offset(E::MINBPC as isize) }
-                        }
-                    }
+                // BT_S | BT_CR | BT_LF | BT_EQUALS =>
+                let mut open: C2RustUnnamed_2 = 0;
+                hadColon = 0;
+                loop {
                     ptr = ptr.offset(E::MINBPC as isize);
                     if !(end.wrapping_offset_from(ptr) as libc::c_long
-                        >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
+                         >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
                     {
                         return XML_TOK_PARTIAL;
                     }
-                    match E::byte_type(ptr) {
-                        21 | 9 | 10 => {
-                            loop
-                            /* ptr points to closing quote */
-                            /* ptr points to closing quote */
-                            /* ptr points to closing quote */
-                            {
-                                ptr = ptr.offset(E::MINBPC as isize);
-                                if !(end.wrapping_offset_from(ptr) as libc::c_long
-                                    >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                                {
-                                    return XML_TOK_PARTIAL;
-                                }
-                                CHECK_NMSTRT_CASES! {
-                                    (ptr, end, nextTokPtr, E),
-                                    match E::byte_type(ptr),
-                                    21 | 9 | 10 => { }
-                                    11 => {
-                                        current_block_186 =
-                                            13385392526463315240;
-                                        break ;
-                                    }
-                                    17 => {
-                                        current_block_186 =
-                                            2770777659816718462;
-                                        break ;
-                                    }
-                                    _ => {
-                                        *nextTokPtr = ptr;
-                                        return XML_TOK_INVALID
-                                    }
-                                }
-                            }
-                            match current_block_186 {
-                                13385392526463315240 => {}
-                                2770777659816718462 => {}
-                                11099343707781121639 => {}
-                                _ => {
-                                    ptr = ptr.offset(1 as libc::c_int as isize);
-                                    current_block_186 = 11099343707781121639;
-                                }
-                            }
-                        }
-                        17 => {
-                            current_block_186 = 2770777659816718462;
-                        }
-                        11 => {
-                            current_block_186 = 13385392526463315240;
-                        }
+                    open = E::byte_type(ptr);
+                    if open == BT_QUOT || open == BT_APOS {
+                        break;
+                    }
+                    match open {
+                        21 | 10 | 9 => {}
                         _ => {
                             *nextTokPtr = ptr;
                             return XML_TOK_INVALID;
                         }
                     }
-                    match current_block_186 {
-                        11099343707781121639 => {}
-                        _ => match current_block_186 {
-                            2770777659816718462 => {
-                                ptr = ptr.offset(E::MINBPC as isize);
-                                if !(end.wrapping_offset_from(ptr) as libc::c_long
-                                    >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                                {
-                                    return XML_TOK_PARTIAL;
+                }
+                ptr = ptr.offset(E::MINBPC as isize);
+                /* in attribute value */
+                loop {
+                    let mut t: C2RustUnnamed_2 = 0;
+                    if !(end.wrapping_offset_from(ptr) as libc::c_long
+                         >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
+                    {
+                        return XML_TOK_PARTIAL;
+                    }
+                    t = E::byte_type(ptr);
+                    if t == open {
+                        break;
+                    }
+                    MATCH_INVALID_CASES! {
+                        (ptr, end, nextTokPtr, E),
+                        match t,
+                        BT_AMP => {
+                            let mut tok: libc::c_int =
+                                self.scanRef(ptr.offset(E::MINBPC as isize),
+                                             end, &mut ptr);
+                            if tok <= 0 as libc::c_int {
+                                if tok == XML_TOK_INVALID {
+                                    *nextTokPtr = ptr
                                 }
-                                if !E::char_matches(ptr, ASCII_GT) {
-                                    *nextTokPtr = ptr;
-                                    return XML_TOK_INVALID;
-                                }
-                                *nextTokPtr = ptr.offset(E::MINBPC as isize);
-                                return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
+                                return tok
                             }
-                            _ => {
-                                *nextTokPtr = ptr.offset(E::MINBPC as isize);
-                                return XML_TOK_START_TAG_WITH_ATTS;
-                            }
-                        },
+                        }
+                        BT_LT => { *nextTokPtr = ptr; return XML_TOK_INVALID }
+                        _ => { ptr = ptr.offset(E::MINBPC as isize) }
                     }
                 }
-                _ => {}
+                ptr = ptr.offset(E::MINBPC as isize);
+                if !(end.wrapping_offset_from(ptr) as libc::c_long
+                     >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
+                {
+                    return XML_TOK_PARTIAL;
+                }
+                match E::byte_type(ptr) {
+                    BT_S | BT_CR | BT_LF => { }
+                    BT_SOL => {
+                        // goto sol;
+                        current_block = Label::Sol;
+                    }
+                    BT_GT => {
+                        // goto gt;
+                        current_block = Label::Gt;
+                    }
+                    _ => {
+                        *nextTokPtr = ptr;
+                        return XML_TOK_INVALID;
+                    }
+                }
+                match current_block {
+                    Label::Sol | Label::Gt => { }
+                    _ => {
+                        // Didn't take goto
+                        /* ptr points to closing quote */
+                        loop {
+                            ptr = ptr.offset(E::MINBPC as isize);
+                            if !(end.wrapping_offset_from(ptr) as libc::c_long
+                                 >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
+                            {
+                                return XML_TOK_PARTIAL;
+                            }
+                            CHECK_NMSTRT_CASES! {
+                                (ptr, end, nextTokPtr, E),
+                                match E::byte_type(ptr),
+                                BT_S | BT_CR | BT_LF => {
+                                    continue;
+                                }
+                                BT_GT => {
+                                    current_block = Label::Gt;
+                                    break ;
+                                }
+                                BT_SOL => {
+                                    current_block = Label::Sol;
+                                    break ;
+                                }
+                                _ => {
+                                    *nextTokPtr = ptr;
+                                    return XML_TOK_INVALID
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                match current_block {
+                    Label::Gt => {
+                        *nextTokPtr = ptr.offset(E::MINBPC as isize);
+                        return XML_TOK_START_TAG_WITH_ATTS;
+                    }
+                    Label::Sol => {
+                        ptr = ptr.offset(E::MINBPC as isize);
+                        if !(end.wrapping_offset_from(ptr) as libc::c_long
+                             >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
+                        {
+                            return XML_TOK_PARTIAL;
+                        }
+                        if !E::char_matches(ptr, ASCII_GT) {
+                            *nextTokPtr = ptr;
+                            return XML_TOK_INVALID;
+                        }
+                        *nextTokPtr = ptr.offset(E::MINBPC as isize);
+                        return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
+                    }
+                    _ => { }
+                }
             }
         }
         return XML_TOK_PARTIAL;
