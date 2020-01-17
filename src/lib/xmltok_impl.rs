@@ -39,7 +39,7 @@ macro_rules! MATCH_LEAD_CASES {
 
 macro_rules! MATCH_INVALID_CASES {
     {
-        ($ptr:ident, $end:ident, $nextTokPtr:ident),
+        ($ptr:ident, $end:ident, $nextTokPtr:ident, $enc:ty),
         match $e:expr,
         $($tail:tt)*
     } => {
@@ -49,7 +49,15 @@ macro_rules! MATCH_INVALID_CASES {
                 if $end.wrapping_offset_from($ptr) < n {
                     return XML_TOK_PARTIAL_CHAR;
                 }
+                if <$enc>::is_invalid_char($ptr, n) {
+                    *$nextTokPtr = $ptr;
+                    return XML_TOK_INVALID;
+                }
                 $ptr = $ptr.offset(n);
+            }
+            BT_NONXML | BT_MALFORM | BT_TRAIL => {
+                *$nextTokPtr = $ptr;
+                return XML_TOK_INVALID;
             }
             $($tail)*
         }
@@ -149,7 +157,7 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
             ptr = ptr.offset(E::MINBPC as isize);
             while HAS_CHAR!(enc, ptr, end) {
                 MATCH_INVALID_CASES! {
-                    (ptr, end, nextTokPtr),
+                    (ptr, end, nextTokPtr, E),
                     match E::byte_type(ptr),
                     BT_MINUS => {
                         ptr = ptr.offset(E::MINBPC as isize);
@@ -307,7 +315,7 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
                     ptr = ptr.offset(E::MINBPC as isize);
                     while HAS_CHAR!(enc, ptr, end) {
                         MATCH_INVALID_CASES! {
-                            (ptr, end, nextTokPtr),
+                            (ptr, end, nextTokPtr, E),
                             match E::byte_type(ptr),
                             15 => {
                                 ptr = ptr.offset(E::MINBPC as isize);
@@ -636,7 +644,7 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
                             break;
                         }
                         MATCH_INVALID_CASES! {
-                            (ptr, end, nextTokPtr),
+                            (ptr, end, nextTokPtr, E),
                             match t_0,
                             BT_AMP => {
                                 let mut tok: libc::c_int =
@@ -947,7 +955,7 @@ impl<E: XmlEncodingImpl> XmlTokImpl<E> {
         while HAS_CHAR!(enc, ptr, end) {
             let mut t: C2RustUnnamed_2 = E::byte_type(ptr);
             MATCH_INVALID_CASES! {
-                (ptr, end, nextTokPtr),
+                (ptr, end, nextTokPtr, E),
                 match t,
                 BT_QUOT | BT_APOS => {
                     ptr = ptr.offset(E::MINBPC as isize);
@@ -992,7 +1000,7 @@ impl<E: XmlEncodingImpl> XmlEncoding for XmlTokImpl<E> {
             }
         }
         MATCH_INVALID_CASES! {
-            (ptr, end, nextTokPtr),
+            (ptr, end, nextTokPtr, E),
             match E::byte_type(ptr),
             4 => {
                 ptr = ptr.offset(E::MINBPC as isize);
@@ -1075,7 +1083,7 @@ impl<E: XmlEncodingImpl> XmlEncoding for XmlTokImpl<E> {
             }
         }
         MATCH_INVALID_CASES! {
-            (ptr, end, nextTokPtr),
+            (ptr, end, nextTokPtr, E),
             match E::byte_type(ptr),
             2 => {
                 return self.scanLt(ptr.offset(E::MINBPC as isize),
@@ -1609,7 +1617,7 @@ impl<E: XmlEncodingImpl> XmlEncoding for XmlTokImpl<E> {
         }
         while HAS_CHAR!(enc, ptr, end) {
             MATCH_INVALID_CASES! {
-                (ptr, end, nextTokPtr),
+                (ptr, end, nextTokPtr, E),
                 match E::byte_type(ptr),
                 2 => {
                     ptr = ptr.offset(E::MINBPC as isize);
