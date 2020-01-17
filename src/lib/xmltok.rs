@@ -346,7 +346,7 @@ trait NormalEncodingTable {
 
 macro_rules! UCS2_GET_NAMING {
     ($pages:path, $hi:expr, $lo:expr) => {
-        (namingBitmap[(($pages[$hi as usize] as usize) << 3) + (($lo as usize) >> 5)] & (1 << (($lo as usize)&0x1F)))
+        (namingBitmap[(($pages[$hi as u8 as usize] as usize) << 3) + (($lo as u8 as usize) >> 5)] & (1 << (($lo as u8 as usize)&0x1F)))
     };
 }
 
@@ -360,7 +360,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
-        let idx = unsafe { *p } as usize;
+        let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
@@ -537,7 +537,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
-        let idx = unsafe { *p } as usize;
+        let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
@@ -606,7 +606,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
 
     #[inline]
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
-        let idx = unsafe { *p } as usize;
+        let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
@@ -682,7 +682,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
     fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.1 == 0 {
-            T::types[bytes.0 as usize]
+            T::types[bytes.0 as u8 as usize]
         } else {
             unsafe { unicode_byte_type(bytes.1, bytes.0) }
         }
