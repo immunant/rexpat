@@ -375,10 +375,35 @@ impl PartialEq for HashKey {
 
 impl Eq for HashKey {}
 
+macro_rules! hash_insert {
+    ($map:expr, $key:expr, $et:ident) => {{
+        let __key = $key;
+        $map.entry(HashKey(__key))
+            .or_insert_with(|| $et { name: __key, ..std::mem::zeroed() })
+    }};
+    ($map:expr, $key:expr, #[boxed] $et:ident) => {{
+        let __key = $key;
+        $map.entry(HashKey(__key))
+            .or_insert_with(|| Box::new($et { name: __key, ..std::mem::zeroed() }))
+            .as_mut()
+    }};
+}
+
+macro_rules! hash_lookup {
+    ($map:expr, $key:expr, $et:ident) => {
+        $map.get_mut(&HashKey($key))
+            .map_or_else(std::ptr::null_mut, |x| x)
+    };
+    ($map:expr, $key:expr, #[boxed] $et:ident) => {
+        $map.get_mut(&HashKey($key))
+            .map_or_else(std::ptr::null_mut, |x| x.as_mut())
+    };
+}
+
 #[repr(C)]
 #[derive(Clone)]
 pub struct DTD {
-    pub generalEntities: HashMap<HashKey, ENTITY>,
+    pub generalEntities: HashMap<HashKey, Box<ENTITY>>,
     pub elementTypes: HashMap<HashKey, ELEMENT_TYPE>,
     pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
     pub prefixes: HashMap<HashKey, Box<PREFIX>>,
@@ -3169,23 +3194,22 @@ unsafe extern "C" fn doContent(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = (*dtd).generalEntities.get_mut(&HashKey(name));
+                    let entity = hash_lookup!((*dtd).generalEntities, name, #[boxed] ENTITY);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
                        otherwise call the skipped entity or default handler.
                     */
                     if (*dtd).hasParamEntityRefs == 0 || (*dtd).standalone as c_int != 0 {
-                        if entity.is_none() {
+                        if entity.is_null() {
                             return XML_ERROR_UNDEFINED_ENTITY;
                         } else {
-                            let entity = entity.as_ref().unwrap();
                             if (*entity).is_internal == 0 {
                                 return XML_ERROR_ENTITY_DECLARED_IN_PE;
                             }
                         }
                         current_block_275 = 10067844863897285902;
-                    } else if entity.is_none() {
+                    } else if entity.is_null() {
                         if (*parser).m_skippedEntityHandler.is_some() {
                             (*parser)
                                 .m_skippedEntityHandler
@@ -3209,7 +3233,6 @@ unsafe extern "C" fn doContent(
                     match current_block_275 {
                         17939951368883298147 => {}
                         _ => {
-                            let entity = entity.unwrap();
                             if (*entity).open != 0 {
                                 return XML_ERROR_RECURSIVE_ENTITY_REF;
                             }
@@ -6295,25 +6318,23 @@ unsafe extern "C" fn doProlog(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let declEntity = (*dtd).generalEntities
-                        .entry(HashKey(name))
-                        .or_insert_with(|| ENTITY { name, ..std::mem::zeroed() });
+                    let declEntity = hash_insert!((*dtd).generalEntities, name, #[boxed] ENTITY);
                     (*parser).m_declEntity = declEntity;
                     if (*parser).m_declEntity.is_null() {
                         // FIXME: this never happens in Rust, it just panics
                         return XML_ERROR_NO_MEMORY;
                     }
-                    if declEntity.name != name {
+                    if (*declEntity).name != name {
                         (*dtd).pool.ptr = (*dtd).pool.start;
                         (*parser).m_declEntity = NULL as *mut ENTITY
                     } else {
                         (*dtd).pool.start = (*dtd).pool.ptr;
-                        declEntity.publicId = NULL as *const XML_Char;
-                        declEntity.is_param = XML_FALSE;
+                        (*declEntity).publicId = NULL as *const XML_Char;
+                        (*declEntity).is_param = XML_FALSE;
                         /* if we have a parent parser or are reading an internal parameter
                            entity, then the entity declaration is not considered "internal"
                         */
-                        declEntity.is_internal =
+                        (*declEntity).is_internal =
                             !(!(*parser).m_parentParser.is_null()
                                 || !(*parser).m_openInternalEntities.is_null())
                                 as XML_Bool;
@@ -7504,7 +7525,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = (*dtd).generalEntities.get_mut(&HashKey(name));
+                    let entity = hash_lookup!((*dtd).generalEntities, name, #[boxed] ENTITY);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7524,7 +7545,7 @@ unsafe extern "C" fn appendAttributeValue(
                             as c_char
                     }
                     if checkEntityDecl != 0 {
-                        if entity.is_none() {
+                        if entity.is_null() {
                             return XML_ERROR_UNDEFINED_ENTITY;
                         } else {
                             let entity = entity.as_ref().unwrap();
@@ -7533,7 +7554,7 @@ unsafe extern "C" fn appendAttributeValue(
                             }
                         }
                         current_block_62 = 11777552016271000781;
-                    } else if entity.is_none() {
+                    } else if entity.is_null() {
                         if cfg!(feature = "mozilla") {
                             return XML_ERROR_UNDEFINED_ENTITY;
                         }
@@ -7544,7 +7565,6 @@ unsafe extern "C" fn appendAttributeValue(
                     match current_block_62 {
                         11796148217846552555 => {}
                         _ => {
-                            let entity = entity.unwrap();
                             if (*entity).open != 0 {
                                 if enc == (*parser).m_encoding {
                                     /* It does not appear that this line can be executed.
