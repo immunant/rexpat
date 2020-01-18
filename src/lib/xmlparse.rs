@@ -6318,23 +6318,22 @@ unsafe extern "C" fn doProlog(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let declEntity = hash_insert!((*dtd).generalEntities, name, #[boxed] ENTITY);
-                    (*parser).m_declEntity = declEntity;
+                    (*parser).m_declEntity = hash_insert!((*dtd).generalEntities, name, #[boxed] ENTITY);
                     if (*parser).m_declEntity.is_null() {
                         // FIXME: this never happens in Rust, it just panics
                         return XML_ERROR_NO_MEMORY;
                     }
-                    if (*declEntity).name != name {
+                    if (*(*parser).m_declEntity).name != name {
                         (*dtd).pool.ptr = (*dtd).pool.start;
                         (*parser).m_declEntity = NULL as *mut ENTITY
                     } else {
                         (*dtd).pool.start = (*dtd).pool.ptr;
-                        (*declEntity).publicId = NULL as *const XML_Char;
-                        (*declEntity).is_param = XML_FALSE;
+                        (*(*parser).m_declEntity).publicId = NULL as *const XML_Char;
+                        (*(*parser).m_declEntity).is_param = XML_FALSE;
                         /* if we have a parent parser or are reading an internal parameter
                            entity, then the entity declaration is not considered "internal"
                         */
-                        (*declEntity).is_internal =
+                        (*(*parser).m_declEntity).is_internal =
                             !(!(*parser).m_parentParser.is_null()
                                 || !(*parser).m_openInternalEntities.is_null())
                                 as XML_Bool;
