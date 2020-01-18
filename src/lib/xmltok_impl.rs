@@ -1337,10 +1337,17 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 ptr = ptr.offset(self.MINBPC() as isize);
                 current_block_112 = 2222055338596505704;
             }
-            BT_NONASCII | _ => {
-                /* fall through */
-                /* fall through */
-                /* fall through */
+            BT_NONASCII => {
+                if self.is_nmstrt_char_minbpc(ptr) {
+                    ptr = ptr.offset(self.MINBPC() as isize);
+                    tok = XML_TOK_NAME;
+                } else if self.is_name_char_minbpc(ptr) {
+                    ptr = ptr.offset(self.MINBPC() as isize);
+                    tok = XML_TOK_NMTOKEN;
+                }
+                current_block_112 = 2222055338596505704;
+            }
+            _ => {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID
             }
