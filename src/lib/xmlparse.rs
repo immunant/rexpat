@@ -398,7 +398,7 @@ macro_rules! hash_insert {
 }
 
 macro_rules! hash_lookup {
-    ($map:expr, $key:expr, $et:ident) => {
+    ($map:expr, $key:expr) => {
         $map.get_mut(&HashKey($key))
             .map_or_else(std::ptr::null_mut, |x| x.as_mut())
     }
@@ -3260,7 +3260,7 @@ unsafe extern "C" fn doContent(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -6702,7 +6702,7 @@ unsafe extern "C" fn doProlog(
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1, ENTITY);
+                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* first, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -7598,7 +7598,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7785,7 +7785,7 @@ unsafe extern "C" fn storeEntityValue(
                         result = XML_ERROR_NO_MEMORY;
                         break;
                     } else {
-                        entity = hash_lookup!((*dtd).paramEntities, name, ENTITY);
+                        entity = hash_lookup!((*dtd).paramEntities, name);
                         (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
                         if entity.is_null() {
                             /* not a well-formedness error - see XML 1.0: WFC Entity Declared */
@@ -8870,8 +8870,7 @@ unsafe extern "C" fn dtdCopy(
             } else {
                 (*newA).prefix = hash_lookup!(
                     (*newDtd).prefixes,
-                    (*(*oldA).prefix).name,
-                    PREFIX
+                    (*(*oldA).prefix).name
                 );
             }
         }
@@ -8897,8 +8896,7 @@ unsafe extern "C" fn dtdCopy(
         if !(*oldE).idAtt.is_null() {
             (*newE).idAtt = hash_lookup!(
                 (*newDtd).attributeIds,
-                (*(*oldE).idAtt).name as KEY,
-                PREFIX
+                (*(*oldE).idAtt).name as KEY
             );
         }
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
@@ -8906,8 +8904,7 @@ unsafe extern "C" fn dtdCopy(
         if !(*oldE).prefix.is_null() {
             (*newE).prefix = hash_lookup!(
                 (*newDtd).prefixes,
-                (*(*oldE).prefix).name,
-                PREFIX
+                (*(*oldE).prefix).name
             );
         }
         i = 0;
@@ -8915,8 +8912,7 @@ unsafe extern "C" fn dtdCopy(
             let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
             *fresh69 = hash_lookup!(
                 (*newDtd).attributeIds,
-                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY,
-                ATTRIBUTE_ID
+                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY
             );
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
