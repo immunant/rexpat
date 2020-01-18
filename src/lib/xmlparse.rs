@@ -381,7 +381,7 @@ pub struct DTD {
     pub generalEntities: HashMap<HashKey, ENTITY>,
     pub elementTypes: HashMap<HashKey, ELEMENT_TYPE>,
     pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
-    pub prefixes: HASH_TABLE,
+    pub prefixes: HashMap<HashKey, Box<PREFIX>>,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
     pub keepProcessing: XML_Bool,
@@ -8111,7 +8111,6 @@ unsafe extern "C" fn setElementTypePrefix(
     name = (*elementType).name;
     while *name != 0 {
         if *name == ASCII_COLON as XML_Char {
-            let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
             let mut s: *const XML_Char = 0 as *const XML_Char;
             s = (*elementType).name;
             while s != name {
@@ -8143,15 +8142,12 @@ unsafe extern "C" fn setElementTypePrefix(
             {
                 return 0i32;
             }
-            prefix = lookup(
-                parser,
-                &mut (*dtd).prefixes,
-                (*dtd).pool.start as KEY,
-                ::std::mem::size_of::<PREFIX>() as c_ulong,
-            ) as *mut PREFIX;
-            if prefix.is_null() {
-                return 0i32;
-            }
+            let prefix = (*dtd).prefixes
+                .entry(HashKey((*dtd).pool.start as KEY))
+                .or_insert_with(|| Box::new(PREFIX {
+                    name: (*dtd).pool.start as KEY,
+                    ..std::mem::zeroed()
+                })).as_mut();
             if (*prefix).name == (*dtd).pool.start as *const XML_Char {
                 (*dtd).pool.start = (*dtd).pool.ptr
             } else {
@@ -8213,12 +8209,12 @@ unsafe extern "C" fn getAttributeId(
                 if *name.offset(5) == '\u{0}' as XML_Char {
                     (*id).prefix = &mut (*dtd).defaultPrefix
                 } else {
-                    (*id).prefix = lookup(
-                        parser,
-                        &mut (*dtd).prefixes,
-                        name.offset(6),
-                        ::std::mem::size_of::<PREFIX>() as c_ulong,
-                    ) as *mut PREFIX
+                    (*id).prefix = (*dtd).prefixes
+                        .entry(HashKey(name.offset(6)))
+                        .or_insert_with(|| Box::new(PREFIX {
+                            name: name.offset(6),
+                            ..std::mem::zeroed()
+                        })).as_mut();
                 }
                 (*id).xmlns = XML_TRUE
             } else {
@@ -8258,15 +8254,12 @@ unsafe extern "C" fn getAttributeId(
                         {
                             return NULL as *mut ATTRIBUTE_ID;
                         }
-                        (*id).prefix = lookup(
-                            parser,
-                            &mut (*dtd).prefixes,
-                            (*dtd).pool.start as KEY,
-                            ::std::mem::size_of::<PREFIX>() as c_ulong,
-                        ) as *mut PREFIX;
-                        if (*id).prefix.is_null() {
-                            return NULL as *mut ATTRIBUTE_ID;
-                        }
+                        (*id).prefix = (*dtd).prefixes
+                            .entry(HashKey((*dtd).pool.start as KEY))
+                            .or_insert_with(|| Box::new(PREFIX {
+                                name: (*dtd).pool.start as KEY,
+                                ..std::mem::zeroed()
+                            })).as_mut();
                         if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
                             (*dtd).pool.start = (*dtd).pool.ptr
                         } else {
@@ -8287,10 +8280,6 @@ const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
 unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
     let dtd: *mut DTD = (*parser).m_dtd;
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     let mut needSep: XML_Bool = XML_FALSE;
     if !(*dtd).defaultPrefix.binding.is_null() {
         let mut i: c_int = 0;
@@ -8351,8 +8340,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         }
         needSep = XML_TRUE
     }
-    hashTableIterInit(&mut iter, &mut (*dtd).prefixes);
-    loop
+    for prefix in (*dtd).prefixes.values_mut()
     /* This test appears to be (justifiable) paranoia.  There does
      * not seem to be a way of injecting a prefix without a binding
      * that doesn't get errored long before this function is called.
@@ -8363,10 +8351,6 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         let mut i_0: c_int = 0; /* save one level of indirection */
         let mut len_0: c_int = 0;
         let mut s: *const XML_Char = 0 as *const XML_Char;
-        let mut prefix: *mut PREFIX = hashTableIterNext(&mut iter) as *mut PREFIX;
-        if prefix.is_null() {
-            break;
-        }
         if !(*prefix).binding.is_null() {
             if needSep as c_int != 0
                 && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
@@ -8517,7 +8501,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             context = s;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
         } else if *s == ASCII_EQUALS as XML_Char {
-            let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
+            let prefix;
             if (*parser)
                 .m_tempPool
                 .ptr
@@ -8539,15 +8523,12 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 {
                     return XML_FALSE;
                 }
-                prefix = lookup(
-                    parser,
-                    &mut (*dtd).prefixes,
-                    (*parser).m_tempPool.start as KEY,
-                    ::std::mem::size_of::<PREFIX>() as c_ulong,
-                ) as *mut PREFIX;
-                if prefix.is_null() {
-                    return XML_FALSE;
-                }
+                prefix = (*dtd).prefixes
+                    .entry(HashKey((*parser).m_tempPool.start as KEY))
+                    .or_insert_with(|| Box::new(PREFIX {
+                        name: (*parser).m_tempPool.start as KEY,
+                        ..std::mem::zeroed()
+                    }));
                 if (*prefix).name == (*parser).m_tempPool.start as *const XML_Char {
                     (*prefix).name = poolCopyString(&mut (*dtd).pool, (*prefix).name);
                     if (*prefix).name.is_null() {
@@ -8661,7 +8642,7 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
     std::ptr::write(&mut (*p).attributeIds, Default::default());
-    hashTableInit(&mut (*p).prefixes, ms);
+    std::ptr::write(&mut (*p).prefixes, Default::default());
     (*p).paramEntityRead = XML_FALSE;
     hashTableInit(&mut (*p).paramEntities, ms);
     /* XML_DTD */
@@ -8693,7 +8674,7 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handlin
     /* XML_DTD */
     (*p).elementTypes.clear();
     (*p).attributeIds.clear();
-    hashTableClear(&mut (*p).prefixes);
+    (*p).prefixes.clear();
     poolClear(&mut (*p).pool);
     poolClear(&mut (*p).entityValuePool);
     (*p).defaultPrefix.name = NULL as *const XML_Char;
@@ -8727,7 +8708,7 @@ unsafe extern "C" fn dtdDestroy(
     /* XML_DTD */
     let _ = std::mem::take(&mut (*p).elementTypes);
     let _ = std::mem::take(&mut (*p).attributeIds);
-    hashTableDestroy(&mut (*p).prefixes);
+    let _ = std::mem::take(&mut (*p).prefixes);
     poolDestroy(&mut (*p).pool);
     poolDestroy(&mut (*p).entityValuePool);
     if isDocEntity != 0 {
@@ -8746,32 +8727,16 @@ unsafe extern "C" fn dtdCopy(
     mut oldDtd: *const DTD,
     mut ms: *const XML_Memory_Handling_Suite,
 ) -> c_int {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     /* Copy the prefix table. */
-    hashTableIterInit(&mut iter, &(*oldDtd).prefixes);
-    loop {
+    for oldP in (*oldDtd).prefixes.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        let mut oldP: *const PREFIX = hashTableIterNext(&mut iter) as *mut PREFIX;
-        if oldP.is_null() {
-            break;
-        }
         name = poolCopyString(&mut (*newDtd).pool, (*oldP).name);
         if name.is_null() {
             return 0i32;
         }
-        if lookup(
-            oldParser,
-            &mut (*newDtd).prefixes,
-            name,
-            ::std::mem::size_of::<PREFIX>() as c_ulong,
-        )
-        .is_null()
-        {
-            return 0i32;
-        }
+        let _ = (*newDtd).prefixes
+            .entry(HashKey(name))
+            .or_insert_with(|| Box::new(PREFIX { name, ..std::mem::zeroed() }));
     }
     for oldA in (*oldDtd).attributeIds.values()
     /* Copy the attribute id table. */
@@ -8808,12 +8773,9 @@ unsafe extern "C" fn dtdCopy(
             if (*oldA).prefix == &(*oldDtd).defaultPrefix as *const PREFIX as *mut PREFIX {
                 (*newA).prefix = &mut (*newDtd).defaultPrefix
             } else {
-                (*newA).prefix = lookup(
-                    oldParser,
-                    &mut (*newDtd).prefixes,
-                    (*(*oldA).prefix).name,
-                    0,
-                ) as *mut PREFIX
+                (*newA).prefix = (*newDtd).prefixes
+                    .get_mut(&HashKey((*(*oldA).prefix).name))
+                    .map_or_else(std::ptr::null_mut, |x| x.as_mut());
             }
         }
     }
@@ -8845,12 +8807,9 @@ unsafe extern "C" fn dtdCopy(
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
         (*newE).allocDefaultAtts = (*newE).nDefaultAtts;
         if !(*oldE).prefix.is_null() {
-            (*newE).prefix = lookup(
-                oldParser,
-                &mut (*newDtd).prefixes,
-                (*(*oldE).prefix).name,
-                0,
-            ) as *mut PREFIX
+            (*newE).prefix = (*newDtd).prefixes
+                .get_mut(&HashKey((*(*oldE).prefix).name))
+                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
         }
         i = 0;
         while i < (*newE).nDefaultAtts {
