@@ -8883,7 +8883,12 @@ unsafe extern "C" fn dtdCopy(
         if name_1.is_null() {
             return 0i32;
         }
-        let newE = hash_insert!(parser, (*newDtd).elementTypes, name_1, ELEMENT_TYPE);
+        let newE = hash_insert!(
+            parser,
+            (*newDtd).elementTypes,
+            name_1,
+            ELEMENT_TYPE
+        );
         if (*oldE).nDefaultAtts != 0 {
             (*newE).defaultAtts = (*ms).malloc_fcn.expect("non-null function pointer")(
                 ((*oldE).nDefaultAtts as c_ulong)
