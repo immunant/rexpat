@@ -135,6 +135,8 @@ use libc::{SYS_getrandom, syscall};
 
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
 #[inline]
 unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
@@ -376,16 +378,22 @@ impl PartialEq for HashKey {
 impl Eq for HashKey {}
 
 macro_rules! hash_insert {
-    ($map:expr, $key:expr, $et:ident) => {{
+    ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
         $map.entry(HashKey(__key))
             .or_insert_with(|| $et { name: __key, ..std::mem::zeroed() })
     }};
-    ($map:expr, $key:expr, #[boxed] $et:ident) => {{
+    ($parser:expr, $map:expr, $key:expr, #[boxed] $et:ident) => {{
         let __key = $key;
         $map.entry(HashKey(__key))
             .or_insert_with(|| Box::new($et { name: __key, ..std::mem::zeroed() }))
             .as_mut()
+    }};
+    ($parser:expr, $map:expr, $key:expr, #[expat_boxed] $et:ident) => {{
+        let __key = $key;
+        $map.entry(HashKey(__key))
+            .or_insert_with(|| ExpatBox::new($parser, $et { name: __key, ..std::mem::zeroed() }))
+            .ptr
     }};
 }
 
@@ -398,12 +406,16 @@ macro_rules! hash_lookup {
         $map.get_mut(&HashKey($key))
             .map_or_else(std::ptr::null_mut, |x| x.as_mut())
     };
+    ($map:expr, $key:expr, #[expat_boxed] $et:ident) => {
+        $map.get_mut(&HashKey($key))
+            .map_or_else(std::ptr::null_mut, |x| x.ptr)
+    };
 }
 
 #[repr(C)]
 #[derive(Clone)]
 pub struct DTD {
-    pub generalEntities: HashMap<HashKey, Box<ENTITY>>,
+    pub generalEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
     pub elementTypes: HashMap<HashKey, ELEMENT_TYPE>,
     pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
     pub prefixes: HashMap<HashKey, Box<PREFIX>>,
@@ -413,7 +425,9 @@ pub struct DTD {
     pub hasParamEntityRefs: XML_Bool,
     pub standalone: XML_Bool,
     pub paramEntityRead: XML_Bool,
-    pub paramEntities: HASH_TABLE,
+    // `test_alloc_nested_entities` counts the allocations,
+    // so we need to use `ExpatBox` here to pass that test
+    pub paramEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
     pub defaultPrefix: PREFIX,
     pub in_eldecl: XML_Bool,
     pub scaffold: *mut CONTENT_SCAFFOLD,
@@ -638,6 +652,71 @@ macro_rules! FREE {
             .free_fcn
             .expect("non-null function pointer")($ptr)
     };
+}
+
+// We need `ExpatBox` to hold `ENTITY` because one of the tests
+// checks the number of allocations, so we need to allocate
+// `ENTITY` structures using the provided `malloc` function
+pub struct ExpatBox<T> {
+    parser: XML_Parser,
+    ptr: *mut T,
+    _marker: PhantomData<T>,
+}
+
+impl<T> ExpatBox<T> {
+    unsafe fn new(parser: XML_Parser, value: T) -> Self {
+       let ptr = MALLOC!(parser, std::mem::size_of::<T>() as c_ulong) as *mut T;
+       if !ptr.is_null() {
+           std::ptr::write(ptr, value);
+       }
+       ExpatBox { parser, ptr, _marker: PhantomData }
+    }
+}
+
+impl<T: Clone> Clone for ExpatBox<T> {
+    fn clone(&self) -> Self {
+        if self.ptr.is_null() {
+            ExpatBox { ..*self }
+        } else {
+            unsafe { Self::new(self.parser, (*self.ptr).clone()) }
+        }
+    }
+}
+
+// FIXME: use `#[may_dangle]` for `T`
+impl<T> Drop for ExpatBox<T> {
+    fn drop(&mut self) {
+        let ptr = std::mem::replace(&mut self.ptr, std::ptr::null_mut());
+        if !ptr.is_null() {
+            let parser = self.parser;
+            unsafe {
+                std::ptr::drop_in_place(ptr);
+                FREE!(parser, ptr as *mut c_void);
+            }
+        }
+    }
+}
+
+impl<T> Deref for ExpatBox<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        if self.ptr.is_null() {
+            panic!("Dereferencing NULL pointer in ExpatBox");
+        } else {
+            unsafe { &*self.ptr }
+        }
+    }
+}
+
+impl<T> DerefMut for ExpatBox<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        if self.ptr.is_null() {
+            panic!("Dereferencing NULL pointer in ExpatBox");
+        } else {
+            unsafe { &mut *self.ptr }
+        }
+    }
 }
 
 /* Constructs a new parser; encoding is the encoding specified by the
@@ -3194,7 +3273,7 @@ unsafe extern "C" fn doContent(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, #[boxed] ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name, #[expat_boxed] ENTITY);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -5741,12 +5820,12 @@ unsafe extern "C" fn doProlog(
             6 => {
                 /* XML_DTD */
                 (*parser).m_useForeignDTD = XML_FALSE;
-                (*parser).m_declEntity = lookup(
+                (*parser).m_declEntity = hash_insert!(
                     parser,
-                    &mut (*dtd).paramEntities,
+                    (*dtd).paramEntities,
                     externalSubsetName.as_ptr(),
-                    ::std::mem::size_of::<ENTITY>() as c_ulong,
-                ) as *mut ENTITY;
+                    #[expat_boxed] ENTITY
+                );
                 if (*parser).m_declEntity.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
@@ -5808,12 +5887,12 @@ unsafe extern "C" fn doProlog(
                     if (*parser).m_paramEntityParsing != 0
                         && (*parser).m_externalEntityRefHandler.is_some()
                     {
-                        let mut entity: *mut ENTITY = lookup(
+                        let mut entity = hash_insert!(
                             parser,
-                            &mut (*dtd).paramEntities,
+                            (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            ::std::mem::size_of::<ENTITY>() as c_ulong,
-                        ) as *mut ENTITY;
+                            #[expat_boxed] ENTITY
+                        );
                         if entity.is_null() {
                             /* end of DTD - no need to update dtd->keepProcessing */
                             /* The external subset name "#" will have already been
@@ -5881,12 +5960,12 @@ unsafe extern "C" fn doProlog(
                     if (*parser).m_paramEntityParsing != 0
                         && (*parser).m_externalEntityRefHandler.is_some()
                     {
-                        let mut entity_0: *mut ENTITY = lookup(
+                        let mut entity_0 = hash_insert!(
                             parser,
-                            &mut (*dtd).paramEntities,
+                            (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            ::std::mem::size_of::<ENTITY>() as c_ulong,
-                        ) as *mut ENTITY;
+                            #[expat_boxed] ENTITY
+                        );
                         if entity_0.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -6226,12 +6305,12 @@ unsafe extern "C" fn doProlog(
                 }
                 /* XML_DTD */
                 if (*parser).m_declEntity.is_null() {
-                    (*parser).m_declEntity = lookup(
+                    (*parser).m_declEntity = hash_insert!(
                         parser,
-                        &mut (*dtd).paramEntities,
+                        (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
-                        ::std::mem::size_of::<ENTITY>() as c_ulong,
-                    ) as *mut ENTITY;
+                        #[expat_boxed] ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6318,7 +6397,7 @@ unsafe extern "C" fn doProlog(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*parser).m_declEntity = hash_insert!((*dtd).generalEntities, name, #[boxed] ENTITY);
+                    (*parser).m_declEntity = hash_insert!(parser, (*dtd).generalEntities, name, #[expat_boxed] ENTITY);
                     if (*parser).m_declEntity.is_null() {
                         // FIXME: this never happens in Rust, it just panics
                         return XML_ERROR_NO_MEMORY;
@@ -6354,12 +6433,12 @@ unsafe extern "C" fn doProlog(
                     if name_0.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*parser).m_declEntity = lookup(
+                    (*parser).m_declEntity = hash_insert!(
                         parser,
-                        &mut (*dtd).paramEntities,
+                        (*dtd).paramEntities,
                         name_0,
-                        ::std::mem::size_of::<ENTITY>() as c_ulong,
-                    ) as *mut ENTITY;
+                        #[expat_boxed] ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6628,7 +6707,7 @@ unsafe extern "C" fn doProlog(
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity_1 = lookup(parser, &mut (*dtd).paramEntities, name_1, 0) as *mut ENTITY;
+                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1, #[expat_boxed] ENTITY);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* first, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -7524,7 +7603,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, #[boxed] ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name, #[expat_boxed] ENTITY);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7712,7 +7791,7 @@ unsafe extern "C" fn storeEntityValue(
                         result = XML_ERROR_NO_MEMORY;
                         break;
                     } else {
-                        entity = lookup(parser, &mut (*dtd).paramEntities, name, 0) as *mut ENTITY;
+                        entity = hash_lookup!((*dtd).paramEntities, name, #[expat_boxed] ENTITY);
                         (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
                         if entity.is_null() {
                             /* not a well-formedness error - see XML 1.0: WFC Entity Declared */
@@ -8663,7 +8742,7 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
     std::ptr::write(&mut (*p).attributeIds, Default::default());
     std::ptr::write(&mut (*p).prefixes, Default::default());
     (*p).paramEntityRead = XML_FALSE;
-    hashTableInit(&mut (*p).paramEntities, ms);
+    std::ptr::write(&mut (*p).paramEntities, Default::default());
     /* XML_DTD */
     (*p).defaultPrefix.name = NULL as *const XML_Char;
     (*p).defaultPrefix.binding = NULL as *mut BINDING;
@@ -8689,7 +8768,7 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handlin
     }
     (*p).generalEntities.clear();
     (*p).paramEntityRead = XML_FALSE;
-    hashTableClear(&mut (*p).paramEntities);
+    (*p).paramEntities.clear();
     /* XML_DTD */
     (*p).elementTypes.clear();
     (*p).attributeIds.clear();
@@ -8723,7 +8802,7 @@ unsafe extern "C" fn dtdDestroy(
         }
     }
     let _ = std::mem::take(&mut (*p).generalEntities);
-    hashTableDestroy(&mut (*p).paramEntities);
+    let _ = std::mem::take(&mut (*p).paramEntities);
     /* XML_DTD */
     let _ = std::mem::take(&mut (*p).elementTypes);
     let _ = std::mem::take(&mut (*p).attributeIds);
@@ -8856,7 +8935,15 @@ unsafe extern "C" fn dtdCopy(
         }
     }
     /* Copy the entity tables. */
-    (*newDtd).generalEntities.clone_from(&(*oldDtd).generalEntities);
+    if copyEntityTable(
+        oldParser,
+        &mut (*newDtd).generalEntities,
+        &mut (*newDtd).pool,
+        &(*oldDtd).generalEntities,
+    ) == 0
+    {
+        return 0i32;
+    }
     if copyEntityTable(
         oldParser,
         &mut (*newDtd).paramEntities,
@@ -8884,34 +8971,19 @@ unsafe extern "C" fn dtdCopy(
 
 unsafe extern "C" fn copyEntityTable(
     mut oldParser: XML_Parser,
-    mut newTable: *mut HASH_TABLE,
+    mut newTable: &mut HashMap<HashKey, ExpatBox<ENTITY>>,
     mut newPool: *mut STRING_POOL,
-    mut oldTable: *const HASH_TABLE,
+    mut oldTable: &HashMap<HashKey, ExpatBox<ENTITY>>,
 ) -> c_int {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     let mut cachedOldBase: *const XML_Char = NULL as *const XML_Char;
     let mut cachedNewBase: *const XML_Char = NULL as *const XML_Char;
-    hashTableIterInit(&mut iter, oldTable);
-    loop {
-        let mut newE: *mut ENTITY = 0 as *mut ENTITY;
+    for oldE in oldTable.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        let mut oldE: *const ENTITY = hashTableIterNext(&mut iter) as *mut ENTITY;
-        if oldE.is_null() {
-            break;
-        }
         name = poolCopyString(newPool, (*oldE).name);
         if name.is_null() {
             return 0i32;
         }
-        newE = lookup(
-            oldParser,
-            newTable,
-            name,
-            ::std::mem::size_of::<ENTITY>() as c_ulong,
-        ) as *mut ENTITY;
+        let newE = hash_insert!(oldParser, newTable, name, #[expat_boxed] ENTITY);
         if newE.is_null() {
             return 0i32;
         }
