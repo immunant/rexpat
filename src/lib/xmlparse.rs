@@ -3905,7 +3905,12 @@ unsafe extern "C" fn storeAtts(
         if name.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        let elementType = hash_insert!(parser, (*dtd).elementTypes, name, ELEMENT_TYPE);
+        let elementType = hash_insert!(
+            parser,
+            (*dtd).elementTypes,
+            name,
+            ELEMENT_TYPE
+        );
         if (*parser).m_ns as c_int != 0 && setElementTypePrefix(parser, elementType) == 0 {
             return XML_ERROR_NO_MEMORY;
         }
