@@ -400,16 +400,8 @@ macro_rules! hash_insert {
 macro_rules! hash_lookup {
     ($map:expr, $key:expr, $et:ident) => {
         $map.get_mut(&HashKey($key))
-            .map_or_else(std::ptr::null_mut, |x| x)
-    };
-    ($map:expr, $key:expr, #[boxed] $et:ident) => {
-        $map.get_mut(&HashKey($key))
             .map_or_else(std::ptr::null_mut, |x| x.as_mut())
-    };
-    ($map:expr, $key:expr, #[expat_boxed] $et:ident) => {
-        $map.get_mut(&HashKey($key))
-            .map_or_else(std::ptr::null_mut, |x| x.ptr)
-    };
+    }
 }
 
 #[repr(C)]
@@ -699,6 +691,18 @@ impl<T> DerefMut for ExpatBox<T> {
         } else {
             unsafe { &mut *self.ptr }
         }
+    }
+}
+
+impl<T> AsRef<T> for ExpatBox<T> {
+    fn as_ref(&self) -> &T {
+        &**self
+    }
+}
+
+impl<T> AsMut<T> for ExpatBox<T> {
+    fn as_mut(&mut self) -> &mut T {
+        &mut **self
     }
 }
 
@@ -3256,7 +3260,7 @@ unsafe extern "C" fn doContent(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, #[expat_boxed] ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name, ENTITY);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -6698,7 +6702,7 @@ unsafe extern "C" fn doProlog(
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1, #[expat_boxed] ENTITY);
+                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1, ENTITY);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* first, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -7594,7 +7598,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    let entity = hash_lookup!((*dtd).generalEntities, name, #[expat_boxed] ENTITY);
+                    let entity = hash_lookup!((*dtd).generalEntities, name, ENTITY);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7781,7 +7785,7 @@ unsafe extern "C" fn storeEntityValue(
                         result = XML_ERROR_NO_MEMORY;
                         break;
                     } else {
-                        entity = hash_lookup!((*dtd).paramEntities, name, #[expat_boxed] ENTITY);
+                        entity = hash_lookup!((*dtd).paramEntities, name, ENTITY);
                         (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
                         if entity.is_null() {
                             /* not a well-formedness error - see XML 1.0: WFC Entity Declared */
@@ -8867,7 +8871,7 @@ unsafe extern "C" fn dtdCopy(
                 (*newA).prefix = hash_lookup!(
                     (*newDtd).prefixes,
                     (*(*oldA).prefix).name,
-                    #[boxed] PREFIX
+                    PREFIX
                 );
             }
         }
@@ -8894,7 +8898,7 @@ unsafe extern "C" fn dtdCopy(
             (*newE).idAtt = hash_lookup!(
                 (*newDtd).attributeIds,
                 (*(*oldE).idAtt).name as KEY,
-                #[boxed] PREFIX
+                PREFIX
             );
         }
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
@@ -8903,7 +8907,7 @@ unsafe extern "C" fn dtdCopy(
             (*newE).prefix = hash_lookup!(
                 (*newDtd).prefixes,
                 (*(*oldE).prefix).name,
-                #[boxed] PREFIX
+                PREFIX
             );
         }
         i = 0;
@@ -8912,7 +8916,7 @@ unsafe extern "C" fn dtdCopy(
             *fresh69 = hash_lookup!(
                 (*newDtd).attributeIds,
                 (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY,
-                #[boxed] ATTRIBUTE_ID
+                ATTRIBUTE_ID
             );
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
