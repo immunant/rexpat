@@ -8827,7 +8827,7 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         let _ = hash_insert!(
-            parser,
+            oldParser,
             (*newDtd).prefixes,
             name,
             #[boxed] PREFIX
@@ -8857,7 +8857,7 @@ unsafe extern "C" fn dtdCopy(
         }
         name_0 = name_0.offset(1);
         let newA = hash_insert!(
-            parser,
+            oldParser,
             (*newDtd).attributeIds,
             name_0 as *mut XML_Char,
             #[boxed] ATTRIBUTE_ID
@@ -8884,7 +8884,7 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         let newE = hash_insert!(
-            parser,
+            oldParser,
             (*newDtd).elementTypes,
             name_1,
             ELEMENT_TYPE
