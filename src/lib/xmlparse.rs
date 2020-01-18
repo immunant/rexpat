@@ -7629,7 +7629,6 @@ unsafe extern "C" fn appendAttributeValue(
                         if entity.is_null() {
                             return XML_ERROR_UNDEFINED_ENTITY;
                         } else {
-                            let entity = entity.as_ref().unwrap();
                             if (*entity).is_internal == 0 {
                                 return XML_ERROR_ENTITY_DECLARED_IN_PE;
                             }
