@@ -1003,7 +1003,7 @@ impl<E: XmlEncodingImpl> XmlEncoding for XmlTokImpl<E> {
                              libc::c_long) {
                     return XML_TOK_PARTIAL
                 }
-                if !E::char_matches(ptr, ASCII_RSQB) {
+                if E::char_matches(ptr, ASCII_RSQB) {
                     ptr = ptr.offset(E::MINBPC as isize);
                     if !(end.wrapping_offset_from(ptr) as libc::c_long >=
                              (1 as libc::c_int * 1 as libc::c_int) as
