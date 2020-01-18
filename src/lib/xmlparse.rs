@@ -380,7 +380,7 @@ impl Eq for HashKey {}
 pub struct DTD {
     pub generalEntities: HashMap<HashKey, ENTITY>,
     pub elementTypes: HashMap<HashKey, ELEMENT_TYPE>,
-    pub attributeIds: HASH_TABLE,
+    pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
     pub prefixes: HASH_TABLE,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
@@ -4079,7 +4079,6 @@ unsafe extern "C" fn storeAtts(
         while i < attIndex {
             let mut s: *const XML_Char = *appAtts.offset(i as isize);
             if *s.offset(-1) as c_int == 2 {
-                let mut id: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
                 let mut b: *const BINDING = 0 as *const BINDING;
                 let mut uriHash: c_ulong = 0;
                 let mut sip_state: siphash = siphash {
@@ -4098,8 +4097,8 @@ unsafe extern "C" fn storeAtts(
                 /* not prefixed */
                 /* prefixed */
                 *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                id = lookup(parser, &mut (*dtd).attributeIds, s, 0) as *mut ATTRIBUTE_ID;
-                if id.is_null() || (*id).prefix.is_null() {
+                let id = (*dtd).attributeIds.get(&HashKey(s));
+                if id.is_none() || id.unwrap().prefix.is_null() {
                     /* This code is walking through the appAtts array, dealing
                      * with (in this case) a prefixed attribute name.  To be in
                      * the array, the attribute must have already been bound, so
@@ -4117,6 +4116,7 @@ unsafe extern "C" fn storeAtts(
                     return XML_ERROR_NO_MEMORY;
                     /* LCOV_EXCL_LINE */
                 }
+                let id = id.unwrap();
                 b = (*(*id).prefix).binding;
                 if b.is_null() {
                     return XML_ERROR_UNBOUND_PREFIX;
@@ -8173,7 +8173,6 @@ unsafe extern "C" fn getAttributeId(
     mut end: *const c_char,
 ) -> *mut ATTRIBUTE_ID {
     let dtd: *mut DTD = (*parser).m_dtd;
-    let mut id: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
     let mut name: *const XML_Char = 0 as *const XML_Char;
     if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && poolGrow(&mut (*dtd).pool) == 0 {
         0
@@ -8192,15 +8191,12 @@ unsafe extern "C" fn getAttributeId(
     }
     /* skip quotation mark - its storage will be re-used (like in name[-1]) */
     name = name.offset(1);
-    id = lookup(
-        parser,
-        &mut (*dtd).attributeIds,
-        name,
-        ::std::mem::size_of::<ATTRIBUTE_ID>() as c_ulong,
-    ) as *mut ATTRIBUTE_ID;
-    if id.is_null() {
-        return NULL as *mut ATTRIBUTE_ID;
-    }
+    let id = (*dtd).attributeIds
+        .entry(HashKey(name))
+        .or_insert_with(|| Box::new(ATTRIBUTE_ID {
+            name: name as *mut XML_Char,
+            ..std::mem::zeroed()
+        })).as_mut();
     if (*id).name != name as *mut XML_Char {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
@@ -8664,7 +8660,7 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
     // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
-    hashTableInit(&mut (*p).attributeIds, ms);
+    std::ptr::write(&mut (*p).attributeIds, Default::default());
     hashTableInit(&mut (*p).prefixes, ms);
     (*p).paramEntityRead = XML_FALSE;
     hashTableInit(&mut (*p).paramEntities, ms);
@@ -8696,7 +8692,7 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handlin
     hashTableClear(&mut (*p).paramEntities);
     /* XML_DTD */
     (*p).elementTypes.clear();
-    hashTableClear(&mut (*p).attributeIds);
+    (*p).attributeIds.clear();
     hashTableClear(&mut (*p).prefixes);
     poolClear(&mut (*p).pool);
     poolClear(&mut (*p).entityValuePool);
@@ -8730,7 +8726,7 @@ unsafe extern "C" fn dtdDestroy(
     hashTableDestroy(&mut (*p).paramEntities);
     /* XML_DTD */
     let _ = std::mem::take(&mut (*p).elementTypes);
-    hashTableDestroy(&mut (*p).attributeIds);
+    let _ = std::mem::take(&mut (*p).attributeIds);
     hashTableDestroy(&mut (*p).prefixes);
     poolDestroy(&mut (*p).pool);
     poolDestroy(&mut (*p).entityValuePool);
@@ -8777,16 +8773,10 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
     }
-    hashTableIterInit(&mut iter, &(*oldDtd).attributeIds);
-    loop
+    for oldA in (*oldDtd).attributeIds.values()
     /* Copy the attribute id table. */
     {
-        let mut newA: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
         let mut name_0: *const XML_Char = 0 as *const XML_Char;
-        let mut oldA: *const ATTRIBUTE_ID = hashTableIterNext(&mut iter) as *mut ATTRIBUTE_ID;
-        if oldA.is_null() {
-            break;
-        }
         /* Remember to allocate the scratch byte before the name. */
         if if (*newDtd).pool.ptr == (*newDtd).pool.end as *mut XML_Char
             && poolGrow(&mut (*newDtd).pool) == 0
@@ -8806,15 +8796,12 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         name_0 = name_0.offset(1);
-        newA = lookup(
-            oldParser,
-            &mut (*newDtd).attributeIds,
-            name_0,
-            ::std::mem::size_of::<ATTRIBUTE_ID>() as c_ulong,
-        ) as *mut ATTRIBUTE_ID;
-        if newA.is_null() {
-            return 0i32;
-        }
+        let newA = (*newDtd).attributeIds
+            .entry(HashKey(name_0))
+            .or_insert_with(|| Box::new(ATTRIBUTE_ID {
+                name: name_0 as *mut XML_Char,
+                ..std::mem::zeroed()
+            }));
         (*newA).maybeTokenized = (*oldA).maybeTokenized;
         if !(*oldA).prefix.is_null() {
             (*newA).xmlns = (*oldA).xmlns;
@@ -8851,12 +8838,9 @@ unsafe extern "C" fn dtdCopy(
             }
         }
         if !(*oldE).idAtt.is_null() {
-            (*newE).idAtt = lookup(
-                oldParser,
-                &mut (*newDtd).attributeIds,
-                (*(*oldE).idAtt).name as KEY,
-                0,
-            ) as *mut ATTRIBUTE_ID
+            (*newE).idAtt = (*newDtd).attributeIds
+                .get_mut(&HashKey((*(*oldE).idAtt).name as KEY))
+                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
         }
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
         (*newE).allocDefaultAtts = (*newE).nDefaultAtts;
@@ -8871,12 +8855,10 @@ unsafe extern "C" fn dtdCopy(
         i = 0;
         while i < (*newE).nDefaultAtts {
             let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
-            *fresh69 = lookup(
-                oldParser,
-                &mut (*newDtd).attributeIds,
-                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY,
-                0,
-            ) as *mut ATTRIBUTE_ID;
+            let key = (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY;
+            *fresh69 = (*newDtd).attributeIds
+                .get_mut(&HashKey(key))
+                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
             if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
