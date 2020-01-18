@@ -8921,8 +8921,11 @@ unsafe extern "C" fn dtdCopy(
         i = 0;
         while i < (*newE).nDefaultAtts {
             let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
-            let key = (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY;
-            *fresh69 = hash_lookup!((*newDtd).attributeIds, key, #[boxed] ATTRIBUTE_ID);
+            *fresh69 = hash_lookup!(
+                (*newDtd).attributeIds,
+                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY,
+                #[boxed] ATTRIBUTE_ID
+            );
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
             if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
@@ -8990,7 +8993,12 @@ unsafe extern "C" fn copyEntityTable(
         if name.is_null() {
             return 0i32;
         }
-        let newE = hash_insert!(oldParser, newTable, name, #[expat_boxed] ENTITY);
+        let newE = hash_insert!(
+            oldParser,
+            newTable,
+            name,
+            #[expat_boxed] ENTITY
+        );
         if newE.is_null() {
             return 0i32;
         }
@@ -9744,7 +9752,12 @@ unsafe extern "C" fn getElementType(
     if name.is_null() {
         return NULL as *mut ELEMENT_TYPE;
     }
-    let ret = hash_insert!(parser, (*dtd).elementTypes, name, ELEMENT_TYPE);
+    let ret = hash_insert!(
+        parser,
+        (*dtd).elementTypes,
+        name,
+        ELEMENT_TYPE
+    );
     if (*ret).name != name {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
