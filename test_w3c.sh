@@ -1,7 +1,19 @@
+#! /usr/bin/env bash
 set -e
 
+SCRIPT_DIR="$(dirname "$0")"
+EXP_OUTPUT="$SCRIPT_DIR/upstream/expat/tests/xmltest.log.expected"
+
+[ -f "$EXP_OUTPUT" ] || {
+    echo "$EXP_OUTPUT: No such file; did you checkout submodule?"; exit 1
+}
+
+XMLWF="$SCRIPT_DIR/target/debug/xmlwf"
+[ -f "$XMLWF" ] || {
+    echo "$XMLWF: No such file; did you \`cargo build\`?"; exit 1
+}
+
 # download W3C test suite
-BUILD_DIR="$PWD"
 TEST_TMP=/tmp/libexpat
 TEST_SUITE=/tmp/libexpat/xml-test-suite
 ARCHIVE="$TEST_TMP/xmlts20020606.tar" 
