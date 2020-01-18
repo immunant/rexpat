@@ -1575,6 +1575,9 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
 pub struct InitEncoding {
     encoding_index: c_int,
     encPtr: *mut *const ENCODING,
+
+    // TODO(SJC): this is UB when uninitialized
+    encoding_table: *const [Option<&'static Box<ENCODING>>],
 }
 
 impl XmlEncoding for InitEncoding {
@@ -1586,7 +1589,7 @@ impl XmlEncoding for InitEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         initScan(
-            &encodings,
+            &*self.encoding_table,
             self as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
             XML_PROLOG_STATE,
             ptr,
@@ -1601,7 +1604,7 @@ impl XmlEncoding for InitEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         initScan(
-            &encodings,
+            &*self.encoding_table,
             self as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
             XML_PROLOG_STATE,
             ptr,
@@ -1837,6 +1840,7 @@ static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
         if i == UNKNOWN_ENC {
             return 0i32;
         }
+        (*p).encoding_table = &encodingsNS;
         (*p).encoding_index = i;
         (*p).encPtr = encPtr;
         *encPtr = p;
@@ -1853,6 +1857,7 @@ static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
         if i == UNKNOWN_ENC {
             return 0i32;
         }
+        (*p).encoding_table = &encodings;
         (*p).encoding_index = i;
         (*p).encPtr = encPtr;
         *encPtr = p;
@@ -1902,7 +1907,7 @@ static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
         if i == UNKNOWN_ENC {
             return None;
         }
-        return encodings[i as usize].as_ref().map(|x| &***x as *const _);
+        return encodingsNS[i as usize].as_ref().map(|x| &***x as *const _);
     }
     #[no_mangle]
 
