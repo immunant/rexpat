@@ -6395,7 +6395,12 @@ unsafe extern "C" fn doProlog(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*parser).m_declEntity = hash_insert!(parser, (*dtd).generalEntities, name, #[expat_boxed] ENTITY);
+                    (*parser).m_declEntity = hash_insert!(
+                        parser,
+                        (*dtd).generalEntities,
+                        name,
+                        #[expat_boxed] ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
                         // FIXME: this never happens in Rust, it just panics
                         return XML_ERROR_NO_MEMORY;
