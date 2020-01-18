@@ -3905,9 +3905,7 @@ unsafe extern "C" fn storeAtts(
         if name.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        let elementType = (*dtd).elementTypes
-            .entry(HashKey(name))
-            .or_insert_with(|| ELEMENT_TYPE { name, ..std::mem::zeroed() });
+        let elementType = hash_insert!(parser, (*dtd).elementTypes, name, ELEMENT_TYPE);
         if (*parser).m_ns as c_int != 0 && setElementTypePrefix(parser, elementType) == 0 {
             return XML_ERROR_NO_MEMORY;
         }
@@ -8240,12 +8238,12 @@ unsafe extern "C" fn setElementTypePrefix(
             {
                 return 0i32;
             }
-            let prefix = (*dtd).prefixes
-                .entry(HashKey((*dtd).pool.start as KEY))
-                .or_insert_with(|| Box::new(PREFIX {
-                    name: (*dtd).pool.start as KEY,
-                    ..std::mem::zeroed()
-                })).as_mut();
+            let prefix = hash_insert!(
+                parser,
+                (*dtd).prefixes,
+                (*dtd).pool.start as KEY,
+                #[boxed] PREFIX
+            );
             if (*prefix).name == (*dtd).pool.start as *const XML_Char {
                 (*dtd).pool.start = (*dtd).pool.ptr
             } else {
@@ -8285,12 +8283,12 @@ unsafe extern "C" fn getAttributeId(
     }
     /* skip quotation mark - its storage will be re-used (like in name[-1]) */
     name = name.offset(1);
-    let id = (*dtd).attributeIds
-        .entry(HashKey(name))
-        .or_insert_with(|| Box::new(ATTRIBUTE_ID {
-            name: name as *mut XML_Char,
-            ..std::mem::zeroed()
-        })).as_mut();
+    let id = hash_insert!(
+        parser,
+        (*dtd).attributeIds,
+        name as *mut XML_Char,
+        #[boxed] ATTRIBUTE_ID
+    );
     if (*id).name != name as *mut XML_Char {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
@@ -8307,12 +8305,12 @@ unsafe extern "C" fn getAttributeId(
                 if *name.offset(5) == '\u{0}' as XML_Char {
                     (*id).prefix = &mut (*dtd).defaultPrefix
                 } else {
-                    (*id).prefix = (*dtd).prefixes
-                        .entry(HashKey(name.offset(6)))
-                        .or_insert_with(|| Box::new(PREFIX {
-                            name: name.offset(6),
-                            ..std::mem::zeroed()
-                        })).as_mut();
+                    (*id).prefix = hash_insert!(
+                        parser,
+                        (*dtd).prefixes,
+                        name.offset(6),
+                        #[boxed] PREFIX
+                    );
                 }
                 (*id).xmlns = XML_TRUE
             } else {
@@ -8352,12 +8350,12 @@ unsafe extern "C" fn getAttributeId(
                         {
                             return NULL as *mut ATTRIBUTE_ID;
                         }
-                        (*id).prefix = (*dtd).prefixes
-                            .entry(HashKey((*dtd).pool.start as KEY))
-                            .or_insert_with(|| Box::new(PREFIX {
-                                name: (*dtd).pool.start as KEY,
-                                ..std::mem::zeroed()
-                            })).as_mut();
+                        (*id).prefix = hash_insert!(
+                            parser,
+                            (*dtd).prefixes,
+                            (*dtd).pool.start as KEY,
+                            #[boxed] PREFIX
+                        );
                         if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
                             (*dtd).pool.start = (*dtd).pool.ptr
                         } else {
@@ -8621,12 +8619,12 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 {
                     return XML_FALSE;
                 }
-                prefix = (*dtd).prefixes
-                    .entry(HashKey((*parser).m_tempPool.start as KEY))
-                    .or_insert_with(|| Box::new(PREFIX {
-                        name: (*parser).m_tempPool.start as KEY,
-                        ..std::mem::zeroed()
-                    }));
+                prefix = hash_insert!(
+                    parser,
+                    (*dtd).prefixes,
+                    (*parser).m_tempPool.start as KEY,
+                    #[boxed] PREFIX
+                );
                 if (*prefix).name == (*parser).m_tempPool.start as *const XML_Char {
                     (*prefix).name = poolCopyString(&mut (*dtd).pool, (*prefix).name);
                     if (*prefix).name.is_null() {
@@ -8832,9 +8830,12 @@ unsafe extern "C" fn dtdCopy(
         if name.is_null() {
             return 0i32;
         }
-        let _ = (*newDtd).prefixes
-            .entry(HashKey(name))
-            .or_insert_with(|| Box::new(PREFIX { name, ..std::mem::zeroed() }));
+        let _ = hash_insert!(
+            parser,
+            (*newDtd).prefixes,
+            name,
+            #[boxed] PREFIX
+        );
     }
     for oldA in (*oldDtd).attributeIds.values()
     /* Copy the attribute id table. */
@@ -8859,21 +8860,23 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         name_0 = name_0.offset(1);
-        let newA = (*newDtd).attributeIds
-            .entry(HashKey(name_0))
-            .or_insert_with(|| Box::new(ATTRIBUTE_ID {
-                name: name_0 as *mut XML_Char,
-                ..std::mem::zeroed()
-            }));
+        let newA = hash_insert!(
+            parser,
+            (*newDtd).attributeIds,
+            name_0 as *mut XML_Char,
+            #[boxed] ATTRIBUTE_ID
+        );
         (*newA).maybeTokenized = (*oldA).maybeTokenized;
         if !(*oldA).prefix.is_null() {
             (*newA).xmlns = (*oldA).xmlns;
             if (*oldA).prefix == &(*oldDtd).defaultPrefix as *const PREFIX as *mut PREFIX {
                 (*newA).prefix = &mut (*newDtd).defaultPrefix
             } else {
-                (*newA).prefix = (*newDtd).prefixes
-                    .get_mut(&HashKey((*(*oldA).prefix).name))
-                    .map_or_else(std::ptr::null_mut, |x| x.as_mut());
+                (*newA).prefix = hash_lookup!(
+                    (*newDtd).prefixes,
+                    (*(*oldA).prefix).name,
+                    #[boxed] PREFIX
+                );
             }
         }
     }
@@ -8885,9 +8888,7 @@ unsafe extern "C" fn dtdCopy(
         if name_1.is_null() {
             return 0i32;
         }
-        let newE = (*newDtd).elementTypes
-            .entry(HashKey(name_1))
-            .or_insert_with(|| ELEMENT_TYPE { name: name_1, ..std::mem::zeroed() });
+        let newE = hash_insert!(parser, (*newDtd).elementTypes, name_1, ELEMENT_TYPE);
         if (*oldE).nDefaultAtts != 0 {
             (*newE).defaultAtts = (*ms).malloc_fcn.expect("non-null function pointer")(
                 ((*oldE).nDefaultAtts as c_ulong)
@@ -8898,24 +8899,26 @@ unsafe extern "C" fn dtdCopy(
             }
         }
         if !(*oldE).idAtt.is_null() {
-            (*newE).idAtt = (*newDtd).attributeIds
-                .get_mut(&HashKey((*(*oldE).idAtt).name as KEY))
-                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
+            (*newE).idAtt = hash_lookup!(
+                (*newDtd).attributeIds,
+                (*(*oldE).idAtt).name as KEY,
+                #[boxed] PREFIX
+            );
         }
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
         (*newE).allocDefaultAtts = (*newE).nDefaultAtts;
         if !(*oldE).prefix.is_null() {
-            (*newE).prefix = (*newDtd).prefixes
-                .get_mut(&HashKey((*(*oldE).prefix).name))
-                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
+            (*newE).prefix = hash_lookup!(
+                (*newDtd).prefixes,
+                (*(*oldE).prefix).name,
+                #[boxed] PREFIX
+            );
         }
         i = 0;
         while i < (*newE).nDefaultAtts {
             let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
             let key = (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY;
-            *fresh69 = (*newDtd).attributeIds
-                .get_mut(&HashKey(key))
-                .map_or_else(std::ptr::null_mut, |x| x.as_mut());
+            *fresh69 = hash_lookup!((*newDtd).attributeIds, key, #[boxed] ATTRIBUTE_ID);
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
             if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
@@ -9737,9 +9740,7 @@ unsafe extern "C" fn getElementType(
     if name.is_null() {
         return NULL as *mut ELEMENT_TYPE;
     }
-    let ret = (*dtd).elementTypes
-        .entry(HashKey(name))
-        .or_insert_with(|| ELEMENT_TYPE { name, ..std::mem::zeroed() });
+    let ret = hash_insert!(parser, (*dtd).elementTypes, name, ELEMENT_TYPE);
     if (*ret).name != name {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
