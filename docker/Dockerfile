@@ -12,6 +12,10 @@ USER root
 RUN groupadd -f -g $GID $USER
 RUN useradd --create-home -u $UID -g $GID --create-home --shell /bin/bash $USER
 
+# /home/docker needs to be accessible by other users because we always run the
+# cargo binary from /home/docker.cargo/bin
+RUN chmod 755 /home/docker
+
 RUN apt-get update -qq && \
     apt-get install -qq \
     curl git clang python3.7-minimal && \
@@ -34,3 +38,10 @@ RUN mkdir -p "${XML_TEST_TMP}" && \
     curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "${XML_ARCHIVE}" && \
     tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
     rm "${XML_ARCHIVE}"
+
+ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
+ENV CARGO_HOME="/tmp/.cargo"
+ENV RUSTUP_HOME="/home/${USER}/.rustup"
+
+# Need to switch back to root for Teamcity and Azure DevOps compatibility
+USER root
