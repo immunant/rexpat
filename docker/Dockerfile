@@ -14,8 +14,11 @@ RUN useradd --create-home -u $UID -g $GID --create-home --shell /bin/bash $USER
 
 RUN apt-get update -qq && \
     apt-get install -qq \
-    curl git clang python3-minimal && \
+    curl git clang python3.7-minimal && \
     rm -rf /tar/lib/apt/lists/*
+# Ubuntu 18.04 ships with Python3.6 by default which triggers a UnicodeException
+# in the W3C testsuite so we update the default python3 to Python3.7.
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100
 
 ARG RUST_VER=nightly-2019-12-17
 USER docker
@@ -29,4 +32,5 @@ ENV XML_TEST_SUITE=/tmp/libexpat/xml-test-suite
 ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20020606.tar
 RUN mkdir -p "${XML_TEST_TMP}" && \
     curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "${XML_ARCHIVE}" && \
-    tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" 
+    tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
+    rm "${XML_ARCHIVE}"
