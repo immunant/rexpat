@@ -169,8 +169,6 @@ pub type CONVERTER = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_cha
 
 // =============== END xmltok_h ================
 
-use super::xmltok_impl::XmlTokImpl;
-
 // Replaces ENCODING
 pub trait XmlEncoding {
     // scanners[4]
@@ -308,20 +306,21 @@ pub trait XmlEncoding {
 }
 
 pub trait XmlEncodingImpl {
-    const MINBPC: isize;
-    const isUtf8: bool;
-    const isUtf16: bool;
+    fn MINBPC(&self) -> isize;
+    fn isUtf8(&self) -> bool;
+    fn isUtf16(&self) -> bool;
 
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2;
-    fn byte_to_ascii(p: *const c_char) -> c_char;
-    fn is_name_char(p: *const c_char, n: isize) -> bool;
-    fn is_nmstrt_char(p: *const c_char, n: isize) -> bool;
-    fn is_invalid_char(p: *const c_char, n: isize) -> bool;
-    fn is_name_char_minbpc(p: *const c_char) -> bool;
-    fn is_nmstrt_char_minbpc(p: *const c_char) -> bool;
-    fn char_matches(p: *const c_char, c: c_char) -> bool;
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2;
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char;
+    fn is_name_char(&self, p: *const c_char, n: isize) -> bool;
+    fn is_nmstrt_char(&self, p: *const c_char, n: isize) -> bool;
+    fn is_invalid_char(&self, p: *const c_char, n: isize) -> bool;
+    fn is_name_char_minbpc(&self, p: *const c_char) -> bool;
+    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -329,6 +328,7 @@ pub trait XmlEncodingImpl {
     ) -> XML_Convert_Result;
 
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -352,25 +352,40 @@ macro_rules! UCS2_GET_NAMING {
 
 struct Utf8Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
-    const isUtf8: bool = true;
-    const isUtf16: bool = false;
+impl<T: NormalEncodingTable> Utf8Encoding<T> {
+    fn new() -> Box<dyn XmlEncoding> {
+        Box::new(Utf8Encoding::<Utf8EncodingTable>(std::marker::PhantomData))
+    }
+    fn newNS() -> Box<dyn XmlEncoding> {
+        Box::new(Utf8Encoding::<Utf8EncodingTableNS>(std::marker::PhantomData))
+    }
+    fn new_internal() -> Box<dyn XmlEncoding> {
+        Box::new(Utf8Encoding::<InternalUtf8EncodingTable>(std::marker::PhantomData))
+    }
+    fn newNS_internal() -> Box<dyn XmlEncoding> {
+        Box::new(Utf8Encoding::<InternalUtf8EncodingTableNS>(std::marker::PhantomData))
+    }
+}
 
-    const MINBPC: isize = 1;
+impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
+    fn isUtf8(&self) -> bool { true }
+    fn isUtf16(&self) -> bool { false }
+
+    fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(p: *const c_char) -> c_char {
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
         unsafe { *p }
     }
 
     #[inline]
-    fn is_name_char(p: *const c_char, n: isize) -> bool {
+    fn is_name_char(&self, p: *const c_char, n: isize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -402,7 +417,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
         }
     }
     #[inline]
-    fn is_nmstrt_char(p: *const c_char, n: isize) -> bool {
+    fn is_nmstrt_char(&self, p: *const c_char, n: isize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -436,7 +451,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     }
 
     #[inline]
-    fn is_invalid_char(p: *const c_char, n: isize) -> bool {
+    fn is_invalid_char(&self, p: *const c_char, n: isize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -492,22 +507,23 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     }
 
     #[inline]
-    fn is_name_char_minbpc(_p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(_p: *const c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(p: *const c_char, c: c_char) -> bool {
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
         unsafe { *p == c }
     }
 
     #[inline]
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -518,6 +534,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -530,53 +547,54 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
 struct Latin1Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
-    const isUtf8: bool = false;
-    const isUtf16: bool = false;
+    fn isUtf8(&self) -> bool { false }
+    fn isUtf16(&self) -> bool { false }
 
-    const MINBPC: isize = 1;
+    fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(p: *const c_char) -> c_char {
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
         unsafe { *p }
     }
 
     #[inline]
-    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(_p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(_p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(p: *const c_char, c: c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+        false
+    }
+
+    #[inline]
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
         unsafe { *p == c }
     }
 
     #[inline]
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -587,6 +605,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -598,54 +617,64 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
 
 struct AsciiEncoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
-    const isUtf8: bool = true;
-    const isUtf16: bool = false;
+impl<T: NormalEncodingTable> AsciiEncoding<T> {
+    fn new() -> Box<dyn XmlEncoding> {
+        Box::new(AsciiEncoding::<AsciiEncodingTable>(std::marker::PhantomData))
+    }
+    fn newNS() -> Box<dyn XmlEncoding> {
+        Box::new(AsciiEncoding::<AsciiEncodingTableNS>(std::marker::PhantomData))
+    }
+}
 
-    const MINBPC: isize = 1;
+impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
+    fn isUtf8(&self) -> bool { true }
+    fn isUtf16(&self) -> bool { false }
+
+    fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(p: *const c_char) -> c_char {
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
         unsafe { *p }
     }
 
     #[inline]
-    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(_p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(_p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(p: *const c_char, c: c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+        false
+    }
+
+    #[inline]
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
         unsafe { *p == c }
     }
 
     #[inline]
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -656,6 +685,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -668,18 +698,18 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
 struct Little2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
-    const isUtf8: bool = false;
+    fn isUtf8(&self) -> bool { false }
 
     #[cfg(taget_endian = "little")]
-    const isUtf16: bool = true;
+    fn isUtf16(&self) -> bool { true }
 
     #[cfg(not(taget_endian = "little"))]
-    const isUtf16: bool = false;
+    fn isUtf16(&self) -> bool { false }
 
-    const MINBPC: isize = 2;
+    fn MINBPC(&self) -> isize { 2 }
 
     #[inline]
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.1 == 0 {
             T::types[bytes.0 as u8 as usize]
@@ -689,7 +719,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
     }
 
     #[inline]
-    fn byte_to_ascii(p: *const c_char) -> c_char {
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.1 == 0 {
             bytes.0
@@ -699,36 +729,37 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
     }
 
     #[inline]
-    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_name_char_minbpc(&self, p: *const c_char) -> bool {
         unsafe { UCS2_GET_NAMING!(namePages, *p.offset(1), *p) != 0 }
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(p: *const c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool {
         unsafe { UCS2_GET_NAMING!(nmstrtPages, *p.offset(1), *p) != 0 }
     }
 
     #[inline]
-    fn char_matches(p: *const c_char, c: c_char) -> bool {
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
         unsafe { *p.offset(1) == 0 && *p == c }
     }
 
     #[inline]
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -739,6 +770,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -751,17 +783,17 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
 struct Big2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
-    const MINBPC: isize = 2;
-    const isUtf8: bool = false;
+    fn MINBPC(&self) -> isize { 2 }
+    fn isUtf8(&self) -> bool { false }
 
     #[cfg(taget_endian = "big")]
-    const isUtf16: bool = true;
+    fn isUtf16(&self) -> bool { true }
 
     #[cfg(not(taget_endian = "big"))]
-    const isUtf16: bool = false;
+    fn isUtf16(&self) -> bool { false }
 
     #[inline]
-    fn byte_type(p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.0 == 0 {
             T::types[bytes.1 as usize]
@@ -771,7 +803,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
     }
 
     #[inline]
-    fn byte_to_ascii(p: *const c_char) -> c_char {
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.0 == 0 {
             bytes.1
@@ -781,36 +813,37 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
     }
 
     #[inline]
-    fn is_name_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(_p: *const c_char, _n: isize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(_p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_name_char_minbpc(&self, p: *const c_char) -> bool {
         unsafe { UCS2_GET_NAMING!(namePages, *p, *p.offset(1)) != 0 }
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(p: *const c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool {
         unsafe { UCS2_GET_NAMING!(nmstrtPages, *p, *p.offset(1)) != 0 }
     }
 
     #[inline]
-    fn char_matches(p: *const c_char, c: c_char) -> bool {
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
         unsafe { *p == 0 && *p.offset(1) == c }
     }
 
     #[inline]
     unsafe extern "C" fn utf8Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_char,
@@ -821,6 +854,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
+        &self,
         fromP: *mut *const c_char,
         fromLim: *const c_char,
         toP: *mut *mut c_ushort,
@@ -1737,6 +1771,238 @@ impl XmlEncoding for InitEncoding {
     }
 }
 
+pub struct UnknownEncoding {
+    types: [C2RustUnnamed_2; 256],
+    convert: CONVERTER,
+    userData: *mut c_void,
+    utf16: [c_ushort; 256],
+    utf8: [[c_char; 4]; 256],
+}
+
+impl UnknownEncoding {
+    fn initialize(&mut self, table: *mut c_int, convert: CONVERTER, userData: *mut c_void) -> bool {
+        self.types = Latin1EncodingTable::types;
+        for i in 0..128 {
+            if Latin1EncodingTable::types[i] != BT_OTHER
+                && Latin1EncodingTable::types[i] != BT_NONXML
+                && unsafe { *table.offset(i as isize) } != i as c_int
+            {
+                return false;
+            }
+        }
+        for i in 0..256 {
+            let mut c: c_int = unsafe { *table.offset(i as isize) };
+            if c == -1 {
+                self.types[i] = BT_MALFORM;
+                /* This shouldn't really get used. */
+                self.utf16[i] = 0xffff;
+                self.utf8[i][0] = 1;
+                self.utf8[i][1] = 0
+            } else if c < 0 {
+                if c < -(4) {
+                    return false;
+                }
+                /* Multi-byte sequences need a converter function */
+                if convert.is_none() {
+                    return false;
+                }
+                self.types[i] = (BT_LEAD2 as c_int - (c + 2)) as C2RustUnnamed_2;
+                self.utf8[i][0] = 0;
+                self.utf16[i] = 0
+            } else if c < 0x80 {
+                if Latin1EncodingTable::types[c as usize] != BT_OTHER
+                    && Latin1EncodingTable::types[c as usize] != BT_NONXML
+                    && c != i as c_int
+                {
+                    return false;
+                }
+                self.types[i] = Latin1EncodingTable::types[c as usize];
+                self.utf8[i][0] = 1;
+                self.utf8[i][1] = c as c_char;
+                self.utf16[i] = if c == 0 { 0xffff } else { c } as c_ushort
+            } else if checkCharRefNumber(c) < 0 {
+                self.types[i] = BT_NONXML;
+                /* This shouldn't really get used. */
+                self.utf16[i] = 0xffff;
+                self.utf8[i][0] = 1;
+                self.utf8[i][1] = 0
+            } else {
+                if c > 0xffff {
+                    return false;
+                }
+                if namingBitmap
+                    [(((nmstrtPages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
+                    & (1) << (c & 0xff & 0x1f)
+                    != 0
+                {
+                    self.types[i] = BT_NMSTRT;
+                } else if namingBitmap
+                    [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
+                    & (1) << (c & 0xff & 0x1f)
+                    != 0
+                {
+                    self.types[i] = BT_NAME;
+                } else {
+                    self.types[i] = BT_OTHER;
+                }
+                self.utf8[i][0] =
+                    unsafe { XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
+                self.utf16[i] = c as c_ushort
+            }
+        }
+        self.userData = userData;
+        self.convert = convert;
+
+        true
+    }
+}
+
+impl XmlEncodingImpl for UnknownEncoding {
+    fn isUtf8(&self) -> bool { false }
+    fn isUtf16(&self) -> bool { false }
+
+    fn MINBPC(&self) -> isize { 1 }
+
+    #[inline]
+    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+        let idx = unsafe { *(p as *const u8) } as usize;
+        self.types[idx]
+    }
+
+    #[inline]
+    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
+        unsafe { *p }
+    }
+
+    #[inline]
+    fn is_name_char(&self, p: *const c_char, _n: isize) -> bool {
+        if let Some(convert) = self.convert {
+            let mut c: c_int = unsafe { convert(self.userData, p) };
+            if c & !(0xffff) != 0 {
+                return false;
+            }
+            UCS2_GET_NAMING!(namePages, c >> 8, c & 0xff) != 0
+        } else {
+            false
+        }
+    }
+    #[inline]
+    fn is_nmstrt_char(&self, p: *const c_char, _n: isize) -> bool {
+        if let Some(convert) = self.convert {
+            let mut c: c_int = unsafe { convert(self.userData, p) };
+            if c & !(0xffff) != 0 {
+                return false;
+            }
+            UCS2_GET_NAMING!(nmstrtPages, c >> 8, c & 0xff) != 0
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    fn is_invalid_char(&self, p: *const c_char, _n: isize) -> bool {
+        if let Some(convert) = self.convert {
+            let mut c: c_int = unsafe { convert(self.userData, p) };
+            if c & !(0xffff) != 0 {
+                return false;
+            }
+            (c & !(0xffff)) != 0 || checkCharRefNumber(c) < 0
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+        false
+    }
+
+    #[inline]
+    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
+        unsafe { *p == c }
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf8Convert(
+        &self,
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_char,
+        toLim: *const c_char,
+    ) -> XML_Convert_Result {
+        let mut buf: [c_char; 4] = [0; 4];
+        loop {
+            let mut utf8: *const c_char = 0 as *const c_char;
+            let mut n: c_int = 0;
+            if *fromP == fromLim {
+                return XML_CONVERT_COMPLETED;
+            }
+            utf8 = self.utf8[**fromP as c_uchar as usize].as_ptr();
+            let fresh60 = utf8;
+            utf8 = utf8.offset(1);
+            n = *fresh60 as c_int;
+            if n == 0 {
+                let mut c: c_int =
+                    self.convert.expect("non-null function pointer")(self.userData, *fromP);
+                n = XmlUtf8Encode(c, buf.as_mut_ptr());
+                if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
+                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                }
+                utf8 = buf.as_mut_ptr();
+                *fromP = (*fromP).offset(
+                    (self.types[**fromP as c_uchar as usize] as c_int
+                     - (BT_LEAD2 as c_int - 2)) as isize,
+                )
+            } else {
+                if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
+                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                }
+                *fromP = (*fromP).offset(1)
+            }
+            memcpy(*toP as *mut c_void, utf8 as *const c_void, n as c_ulong);
+            *toP = (*toP).offset(n as isize)
+        }
+    }
+
+    #[inline]
+    unsafe extern "C" fn utf16Convert(
+        &self,
+        fromP: *mut *const c_char,
+        fromLim: *const c_char,
+        toP: *mut *mut c_ushort,
+        toLim: *const c_ushort,
+    ) -> XML_Convert_Result {
+        while *fromP < fromLim && *toP < toLim as *mut c_ushort {
+            let mut c: c_ushort = self.utf16[**fromP as c_uchar as usize];
+            if c as c_int == 0 {
+                c = self.convert.expect("non-null function pointer")(self.userData, *fromP)
+                    as c_ushort;
+                *fromP = (*fromP).offset(
+                    (self.types[**fromP as c_uchar as usize] as c_int
+                     - (BT_LEAD2 as c_int - 2)) as isize,
+                )
+            } else {
+                *fromP = (*fromP).offset(1)
+            }
+            let fresh61 = *toP;
+            *toP = (*toP).offset(1);
+            *fresh61 = c
+        }
+        if *toP == toLim as *mut c_ushort && *fromP < fromLim {
+            return XML_CONVERT_OUTPUT_EXHAUSTED;
+        } else {
+            return XML_CONVERT_COMPLETED;
+        };
+    }
+}
+
+
+
 static mut latin1_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut latin1_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
@@ -1997,14 +2263,16 @@ pub const UTF8_cval1: C2RustUnnamed_7 = 0;
 pub const min2: C2RustUnnamed_6 = 128;
 pub type C2RustUnnamed_6 = c_uint;
 
-#[repr(C)]
-pub struct unknown_encoding {
-    pub normal: normal_encoding,
-    pub convert: CONVERTER,
-    pub userData: *mut c_void,
-    pub utf16: [c_ushort; 256],
-    pub utf8: [[c_char; 4]; 256],
-}
+// #[repr(C)]
+// pub struct unknown_encoding {
+//     pub normal: normal_encoding,
+//     pub convert: CONVERTER,
+//     pub userData: *mut c_void,
+//     pub utf16: [c_ushort; 256],
+//     pub utf8: [[c_char; 4]; 256],
+// }
+
+pub type unknown_encoding = UnknownEncoding;
 /* minimum bytes per character */
 /* c is an ASCII character */
 
@@ -2815,9 +3083,9 @@ unsafe extern "C" fn parsePseudoAttribute(
         if c == open as c_int {
             break;
         }
-        if !(ASCII_a as c_int <= c && c <= ASCII_z as c_int)
-            && !(ASCII_A as c_int <= c && c <= ASCII_Z as c_int)
-            && !(ASCII_0 as c_int <= c && c <= ASCII_9 as c_int)
+        if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
+            && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
+            && !((ASCII_0 as c_int) <= c && c <= (ASCII_9 as c_int))
             && c != ASCII_PERIOD as c_int
             && c != ASCII_MINUS as c_int
             && c != ASCII_UNDERSCORE as c_int
@@ -2929,8 +3197,8 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
     }
     if (*enc).nameMatchesAscii(name, nameEnd, KW_encoding.as_ptr()) != 0 {
         let mut c: c_int = toAscii(enc, val, end);
-        if !(ASCII_a as c_int <= c && c <= ASCII_z as c_int)
-            && !(ASCII_A as c_int <= c && c <= ASCII_Z as c_int)
+        if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
+            && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
         {
             *badPtr = val;
             return 0i32;
@@ -3001,7 +3269,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
 /* isInvalid3 */
 /* isInvalid4 */
 
-pub unsafe extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
+pub extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
         216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
         0 => {
@@ -3067,8 +3335,8 @@ pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_usho
     }
     return 0;
 }
-#[no_mangle]
 
+#[no_mangle]
 pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
     return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
@@ -3175,149 +3443,21 @@ unsafe extern "C" fn unknown_isInvalid(mut enc: *const ENCODING, mut p: *const c
 //         return XML_CONVERT_COMPLETED;
 //     };
 // }
-// #[no_mangle]
 
-// pub unsafe extern "C" fn XmlInitUnknownEncoding(
-//     mut mem: *mut c_void,
-//     mut table: *mut c_int,
-//     mut convert: CONVERTER,
-//     mut userData: *mut c_void,
-// ) -> *mut ENCODING {
-//     let mut i: c_int = 0;
-//     let mut e: *mut unknown_encoding = mem as *mut unknown_encoding;
-//     memcpy(
-//         mem,
-//         &latin1_encoding as *const normal_encoding as *const c_void,
-//         ::std::mem::size_of::<normal_encoding>() as c_ulong,
-//     );
-//     i = 0;
-//     while i < 128 {
-//         if latin1_encoding.type_0[i as usize] as c_int != BT_OTHER as c_int
-//             && latin1_encoding.type_0[i as usize] as c_int != BT_NONXML as c_int
-//             && *table.offset(i as isize) != i
-//         {
-//             return 0 as *mut ENCODING;
-//         }
-//         i += 1
-//     }
-//     i = 0;
-//     while i < 256 {
-//         let mut c: c_int = *table.offset(i as isize);
-//         if c == -1 {
-//             (*e).normal.type_0[i as usize] = BT_MALFORM as c_uchar;
-//             /* This shouldn't really get used. */
-//             (*e).utf16[i as usize] = 0xffff;
-//             (*e).utf8[i as usize][0] = 1;
-//             (*e).utf8[i as usize][1] = 0
-//         } else if c < 0 {
-//             if c < -(4) {
-//                 return 0 as *mut ENCODING;
-//             }
-//             /* Multi-byte sequences need a converter function */
-//             if convert.is_none() {
-//                 return 0 as *mut ENCODING;
-//             }
-//             (*e).normal.type_0[i as usize] = (BT_LEAD2 as c_int - (c + 2)) as c_uchar;
-//             (*e).utf8[i as usize][0] = 0;
-//             (*e).utf16[i as usize] = 0
-//         } else if c < 0x80 {
-//             if latin1_encoding.type_0[c as usize] as c_int != BT_OTHER as c_int
-//                 && latin1_encoding.type_0[c as usize] as c_int != BT_NONXML as c_int
-//                 && c != i
-//             {
-//                 return 0 as *mut ENCODING;
-//             }
-//             (*e).normal.type_0[i as usize] = latin1_encoding.type_0[c as usize];
-//             (*e).utf8[i as usize][0] = 1;
-//             (*e).utf8[i as usize][1] = c as c_char;
-//             (*e).utf16[i as usize] = if c == 0 { 0xffff } else { c } as c_ushort
-//         } else if checkCharRefNumber(c) < 0 {
-//             (*e).normal.type_0[i as usize] = BT_NONXML as c_uchar;
-//             /* This shouldn't really get used. */
-//             (*e).utf16[i as usize] = 0xffff;
-//             (*e).utf8[i as usize][0] = 1;
-//             (*e).utf8[i as usize][1] = 0
-//         } else {
-//             if c > 0xffff {
-//                 return 0 as *mut ENCODING;
-//             }
-//             if namingBitmap
-//                 [(((nmstrtPages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
-//                 & (1) << (c & 0xff & 0x1f)
-//                 != 0
-//             {
-//                 (*e).normal.type_0[i as usize] = BT_NMSTRT as c_uchar
-//             } else if namingBitmap
-//                 [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
-//                 & (1) << (c & 0xff & 0x1f)
-//                 != 0
-//             {
-//                 (*e).normal.type_0[i as usize] = BT_NAME as c_uchar
-//             } else {
-//                 (*e).normal.type_0[i as usize] = BT_OTHER as c_uchar
-//             }
-//             (*e).utf8[i as usize][0] =
-//                 XmlUtf8Encode(c, (*e).utf8[i as usize].as_mut_ptr().offset(1)) as c_char;
-//             (*e).utf16[i as usize] = c as c_ushort
-//         }
-//         i += 1
-//     }
-//     (*e).userData = userData;
-//     (*e).convert = convert;
-//     if convert.is_some() {
-//         (*e).normal.isName2 = Some(
-//             unknown_isName as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isName3 = Some(
-//             unknown_isName as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isName4 = Some(
-//             unknown_isName as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isNmstrt2 = Some(
-//             unknown_isNmstrt as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isNmstrt3 = Some(
-//             unknown_isNmstrt as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isNmstrt4 = Some(
-//             unknown_isNmstrt as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isInvalid2 = Some(
-//             unknown_isInvalid
-//                 as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isInvalid3 = Some(
-//             unknown_isInvalid
-//                 as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         );
-//         (*e).normal.isInvalid4 = Some(
-//             unknown_isInvalid
-//                 as unsafe extern "C" fn(_: *const ENCODING, _: *const c_char) -> c_int,
-//         )
-//     }
-//     (*e).normal.enc.utf8Convert = Some(
-//         unknown_toUtf8
-//             as unsafe extern "C" fn(
-//                 _: *const ENCODING,
-//                 _: *mut *const c_char,
-//                 _: *const c_char,
-//                 _: *mut *mut c_char,
-//                 _: *const c_char,
-//             ) -> XML_Convert_Result,
-//     );
-//     (*e).normal.enc.utf16Convert = Some(
-//         unknown_toUtf16
-//             as unsafe extern "C" fn(
-//                 _: *const ENCODING,
-//                 _: *mut *const c_char,
-//                 _: *const c_char,
-//                 _: *mut *mut c_ushort,
-//                 _: *const c_ushort,
-//             ) -> XML_Convert_Result,
-//     );
-//     return &mut (*e).normal.enc;
-// }
+#[no_mangle]
+pub unsafe extern "C" fn XmlInitUnknownEncoding(
+    mut mem: *mut c_void,
+    mut table: *mut c_int,
+    mut convert: CONVERTER,
+    mut userData: *mut c_void,
+) -> *mut unknown_encoding {
+    let mut e: *mut unknown_encoding = mem as *mut unknown_encoding;
+    if (*e).initialize(table, convert, userData) {
+        e
+    } else {
+        std::ptr::null_mut()
+    }
+}
 
 static mut KW_ISO_8859_1: [c_char; 11] = [
     ASCII_I,
@@ -3575,75 +3715,47 @@ unsafe extern "C" fn initScan(
     return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
 }
 
-// TODO(SJC): replace
-// #[no_mangle]
-// pub unsafe extern "C" fn XmlInitUnknownEncodingNS(
-//     mut mem: *mut c_void,
-//     mut table: *mut c_int,
-//     mut convert: CONVERTER,
-//     mut userData: *mut c_void,
-// ) -> *mut ENCODING {
-//     let mut enc: *mut ENCODING = XmlInitUnknownEncoding(mem, table, convert, userData);
-//     if !enc.is_null() {
-//         (*(enc as *mut normal_encoding)).type_0[ASCII_COLON as usize] = BT_COLON as c_uchar
-//     }
-//     return enc;
-// }
+#[no_mangle]
+pub unsafe extern "C" fn XmlInitUnknownEncodingNS(
+    mut mem: *mut c_void,
+    mut table: *mut c_int,
+    mut convert: CONVERTER,
+    mut userData: *mut c_void,
+) -> *mut unknown_encoding {
+    let mut enc: *mut unknown_encoding = XmlInitUnknownEncoding(mem, table, convert, userData);
+    if !enc.is_null() {
+        (*enc).types[ASCII_COLON as usize] = BT_COLON;
+    }
+    return enc;
+}
 
+macro_rules! init_encoding {
+    ($name:ident, $enc:ident, $table:ident) => {
+        $name = Some(Box::new($enc::<$table>(std::marker::PhantomData)));
+    };
+}
 unsafe extern "C" fn run_static_initializers() {
-    latin1_encoding = Some(Box::new(
-        XmlTokImpl::<Latin1Encoding<Latin1EncodingTable>>::new(),
-    ));
-    latin1_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Latin1Encoding<Latin1EncodingTableNS>>::new(),
-    ));
-    utf8_encoding = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<Utf8EncodingTable>>::new(),
-    ));
-    utf8_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Utf8Encoding<Utf8EncodingTableNS>>::new(),
-    ));
-    internal_utf8_encoding = Some(Box::new(XmlTokImpl::<
-        Utf8Encoding<InternalUtf8EncodingTable>,
-    >::new()));
-    internal_utf8_encoding_ns = Some(Box::new(XmlTokImpl::<
-        Utf8Encoding<InternalUtf8EncodingTableNS>,
-    >::new()));
-    ascii_encoding = Some(Box::new(
-        XmlTokImpl::<AsciiEncoding<AsciiEncodingTable>>::new(),
-    ));
-    ascii_encoding_ns = Some(Box::new(
-        XmlTokImpl::<AsciiEncoding<AsciiEncodingTableNS>>::new(),
-    ));
-    little2_encoding = Some(Box::new(
-        XmlTokImpl::<Little2Encoding<Latin1EncodingTable>>::new(),
-    ));
-    little2_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Little2Encoding<Latin1EncodingTableNS>>::new(),
-    ));
+    init_encoding!(latin1_encoding, Latin1Encoding, Latin1EncodingTable);
+    init_encoding!(latin1_encoding_ns, Latin1Encoding, Latin1EncodingTableNS);
+    init_encoding!(utf8_encoding, Utf8Encoding, Utf8EncodingTable);
+    init_encoding!(utf8_encoding_ns, Utf8Encoding, Utf8EncodingTableNS);
+    init_encoding!(internal_utf8_encoding, Utf8Encoding, InternalUtf8EncodingTable);
+    init_encoding!(internal_utf8_encoding_ns, Utf8Encoding, InternalUtf8EncodingTableNS);
+    init_encoding!(ascii_encoding, AsciiEncoding, AsciiEncodingTable);
+    init_encoding!(ascii_encoding_ns, AsciiEncoding, AsciiEncodingTableNS);
+    init_encoding!(little2_encoding, Little2Encoding, Latin1EncodingTable);
+    init_encoding!(little2_encoding_ns, Little2Encoding, Latin1EncodingTableNS);
     #[cfg(taget_endian = "little")]
     {
-        internal_little2_encoding = Some(Box::new(
-            XmlTokImpl::<Little2Encoding<InternalLatin1EncodingTable>>::new(),
-        ));
-        internal_little2_encoding_ns = Some(Box::new(
-            XmlTokImpl::<Little2Encoding<InternalLatin1EncodingTableNS>>::new(),
-        ));
+        init_encoding!(internal_little2_encoding, Little2Encoding, InternalLatin1EncodingTable);
+        init_encoding!(internal_little2_encoding_ns, Little2Encoding, InternalLatin1EncodingTableNS);
     }
-    big2_encoding = Some(Box::new(
-        XmlTokImpl::<Big2Encoding<Latin1EncodingTable>>::new(),
-    ));
-    big2_encoding_ns = Some(Box::new(
-        XmlTokImpl::<Big2Encoding<Latin1EncodingTableNS>>::new(),
-    ));
+    init_encoding!(big2_encoding, Big2Encoding, Latin1EncodingTable);
+    init_encoding!(big2_encoding_ns, Big2Encoding, Latin1EncodingTableNS);
     #[cfg(taget_endian = "big")]
     {
-        internal_big2_encoding = Some(Box::new(
-            XmlTokImpl::<Big2Encoding<InternalLatin1EncodingTable>>::new(),
-        ));
-        internal_big2_encoding_ns = Some(Box::new(
-            XmlTokImpl::<Big2Encoding<InternalLatin1EncodingTableNS>>::new(),
-        ));
+        init_encoding!(internal_big2_encoding, Big2Encoding, InternalLatin1EncodingTable);
+        init_encoding!(internal_big2_encoding_ns, Big2Encoding, InternalLatin1EncodingTableNS);
     }
     encodingsNS = [
         latin1_encoding_ns.as_ref(),

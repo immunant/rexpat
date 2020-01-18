@@ -4739,10 +4739,8 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
     {
         return XML_ERROR_NONE;
     }
-    return XML_ERROR_NONE;
 
-    // TODO(SJC): replace
-    // return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
+    return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
 }
 
 unsafe extern "C" fn processXmlDecl(
@@ -4850,8 +4848,7 @@ unsafe extern "C" fn processXmlDecl(
                     return XML_ERROR_NO_MEMORY;
                 }
             }
-            // TODO(SJC): replace
-            // result = handleUnknownEncoding(parser, storedEncName);
+            result = handleUnknownEncoding(parser, storedEncName);
             poolClear(&mut (*parser).m_temp2Pool);
             if result == XML_ERROR_UNKNOWN_ENCODING {
                 (*parser).m_eventPtr = encodingName
@@ -4865,93 +4862,76 @@ unsafe extern "C" fn processXmlDecl(
     return XML_ERROR_NONE;
 }
 
-// TODO(SJC): replace
-
-// unsafe extern "C" fn handleUnknownEncoding(
-//     mut parser: XML_Parser,
-//     mut encodingName: *const XML_Char,
-// ) -> XML_Error {
-//     if (*parser).m_unknownEncodingHandler.is_some() {
-//         let mut info: XML_Encoding = XML_Encoding {
-//             map: [0; 256],
-//             data: 0 as *mut c_void,
-//             convert: None,
-//             release: None,
-//         };
-//         let mut i: c_int = 0;
-//         i = 0;
-//         while i < 256 {
-//             info.map[i as usize] = -(1);
-//             i += 1
-//         }
-//         info.convert = ::std::mem::transmute::<
-//             intptr_t,
-//             Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-//         >(NULL as intptr_t);
-//         info.data = NULL as *mut c_void;
-//         info.release = ::std::mem::transmute::<
-//             intptr_t,
-//             Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-//         >(NULL as intptr_t);
-//         if (*parser)
-//             .m_unknownEncodingHandler
-//             .expect("non-null function pointer")(
-//             (*parser).m_unknownEncodingHandlerData,
-//             encodingName,
-//             &mut info,
-//         ) != 0
-//         {
-//             let mut enc: *mut super::xmltok::ENCODING = 0 as *mut super::xmltok::ENCODING;
-//             (*parser).m_unknownEncodingMem =
-//                 MALLOC!(parser, super::xmltok::XmlSizeOfUnknownEncoding() as size_t);
-//             if (*parser).m_unknownEncodingMem.is_null() {
-//                 if info.release.is_some() {
-//                     info.release.expect("non-null function pointer")(info.data);
-//                 }
-//                 return XML_ERROR_NO_MEMORY;
-//             }
-//             enc = if (*parser).m_ns as c_int != 0 {
-//                 Some(
-//                     super::xmltok::XmlInitUnknownEncodingNS
-//                         as unsafe extern "C" fn(
-//                             _: *mut c_void,
-//                             _: *mut c_int,
-//                             _: super::xmltok::CONVERTER,
-//                             _: *mut c_void,
-//                         )
-//                             -> *mut super::xmltok::ENCODING,
-//                 )
-//             } else {
-//                 Some(
-//                     super::xmltok::XmlInitUnknownEncoding
-//                         as unsafe extern "C" fn(
-//                             _: *mut c_void,
-//                             _: *mut c_int,
-//                             _: super::xmltok::CONVERTER,
-//                             _: *mut c_void,
-//                         )
-//                             -> *mut super::xmltok::ENCODING,
-//                 )
-//             }
-//             .expect("non-null function pointer")(
-//                 (*parser).m_unknownEncodingMem,
-//                 info.map.as_mut_ptr(),
-//                 info.convert,
-//                 info.data,
-//             );
-//             if !enc.is_null() {
-//                 (*parser).m_unknownEncodingData = info.data;
-//                 (*parser).m_unknownEncodingRelease = info.release;
-//                 (*parser).m_encoding = enc;
-//                 return XML_ERROR_NONE;
-//             }
-//         }
-//         if info.release.is_some() {
-//             info.release.expect("non-null function pointer")(info.data);
-//         }
-//     }
-//     return XML_ERROR_UNKNOWN_ENCODING;
-// }
+unsafe extern "C" fn handleUnknownEncoding(
+    mut parser: XML_Parser,
+    mut encodingName: *const XML_Char,
+) -> XML_Error {
+    if (*parser).m_unknownEncodingHandler.is_some() {
+        let mut info: XML_Encoding = XML_Encoding {
+            map: [0; 256],
+            data: 0 as *mut c_void,
+            convert: None,
+            release: None,
+        };
+        let mut i: c_int = 0;
+        i = 0;
+        while i < 256 {
+            info.map[i as usize] = -(1);
+            i += 1
+        }
+        info.convert = ::std::mem::transmute::<
+            intptr_t,
+            Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
+        >(NULL as intptr_t);
+        info.data = NULL as *mut c_void;
+        info.release = ::std::mem::transmute::<
+            intptr_t,
+            Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
+        >(NULL as intptr_t);
+        if (*parser)
+            .m_unknownEncodingHandler
+            .expect("non-null function pointer")(
+            (*parser).m_unknownEncodingHandlerData,
+            encodingName,
+            &mut info,
+        ) != 0
+        {
+            (*parser).m_unknownEncodingMem =
+                MALLOC!(parser, super::xmltok::XmlSizeOfUnknownEncoding() as size_t);
+            if (*parser).m_unknownEncodingMem.is_null() {
+                if info.release.is_some() {
+                    info.release.expect("non-null function pointer")(info.data);
+                }
+                return XML_ERROR_NO_MEMORY;
+            }
+            let enc = if (*parser).m_ns != 0 {
+                super::xmltok::XmlInitUnknownEncodingNS(
+                    (*parser).m_unknownEncodingMem,
+                    info.map.as_mut_ptr(),
+                    info.convert,
+                    info.data,
+                )
+            } else {
+                super::xmltok::XmlInitUnknownEncoding(
+                    (*parser).m_unknownEncodingMem,
+                    info.map.as_mut_ptr(),
+                    info.convert,
+                    info.data,
+                )
+            };
+            if !enc.is_null() {
+                (*parser).m_unknownEncodingData = info.data;
+                (*parser).m_unknownEncodingRelease = info.release;
+                (*parser).m_encoding = enc;
+                return XML_ERROR_NONE;
+            }
+        }
+        if info.release.is_some() {
+            info.release.expect("non-null function pointer")(info.data);
+        }
+    }
+    return XML_ERROR_UNKNOWN_ENCODING;
+}
 
 unsafe extern "C" fn prologInitProcessor(
     mut parser: XML_Parser,
