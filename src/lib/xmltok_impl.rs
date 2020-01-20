@@ -1378,6 +1378,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             return XML_TOK_NONE;
         } else {
             if !HAS_CHAR!(ptr, end, self) {
+                /* This line cannot be executed.  The incoming data has already
+                 * been tokenized once, so incomplete characters like this have
+                 * already been eliminated from the input.  Retaining the paranoia
+                 * check is still valuable, however.
+                 */
                 return XML_TOK_PARTIAL;
             }
         }
@@ -1397,7 +1402,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     *nextTokPtr = ptr;
                     return XML_TOK_DATA_CHARS
                 }
-                BT_LT => { *nextTokPtr = ptr; return XML_TOK_INVALID }
+                BT_LT => {
+                    /* this is for inside entity references */
+                    *nextTokPtr = ptr;
+                    return XML_TOK_INVALID;
+                }
                 BT_LF => {
                     if ptr == start {
                         *nextTokPtr = ptr.offset(self.MINBPC());
