@@ -126,49 +126,56 @@ macro_rules! CHECK_NMSTRT_CASES {
 
 
 macro_rules! HAS_CHARS {
-    ($enc:expr, $ptr:expr, $end:expr, $count:expr, $self:ident) => {
+    ($ptr:expr, $end:expr, $count:expr, $self:ident) => {
         $end.wrapping_offset_from($ptr) as c_long >= ($self.MINBPC() * $count) as c_long
     };
 }
 
 macro_rules! HAS_CHAR {
-    ($enc:expr, $ptr:expr, $end:expr, $self:ident) => {
-        HAS_CHARS!($enc, $ptr, $end, 1, $self)
+    ($ptr:expr, $end:expr, $self:ident) => {
+        HAS_CHARS!($ptr, $end, 1, $self)
     };
 }
 
+macro_rules! REQUIRE_CHARS {
+    ($ptr:expr, $end:expr, $count:expr, $self:ident) => {
+        if !HAS_CHARS!($ptr, $end, $count, $self) {
+            return XML_TOK_PARTIAL;
+        }
+    };
+}
+
+macro_rules! REQUIRE_CHAR {
+    ($ptr:expr, $end:expr, $self:ident) => {
+        REQUIRE_CHARS!($ptr, $end, 1, $self)
+    };
+}
+
+
 pub trait XmlTokImpl: XmlEncodingImpl {
+    /* ptr points to character following "<!-" */
     unsafe extern "C" fn scanComment(
         &self,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if HAS_CHAR!(enc, ptr, end, self) {
+        if HAS_CHAR!(ptr, end, self) {
             if !self.char_matches(ptr, ASCII_MINUS) {
                 *nextTokPtr = ptr;
                 return XML_TOK_INVALID;
             }
             ptr = ptr.offset(self.MINBPC() as isize);
-            while HAS_CHAR!(enc, ptr, end, self) {
+            while HAS_CHAR!(ptr, end, self) {
                 MATCH_INVALID_CASES! {
                     (ptr, end, nextTokPtr, self),
                     match self.byte_type(ptr),
                     BT_MINUS => {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                                 (1 as libc::c_int * 1 as libc::c_int) as
-                                     libc::c_long) {
-                            return XML_TOK_PARTIAL
-                        }
+                        REQUIRE_CHAR!(ptr, end, self);
                         if self.char_matches(ptr, ASCII_MINUS) {
                             ptr = ptr.offset(self.MINBPC() as isize);
-                            if !(end.wrapping_offset_from(ptr) as libc::c_long
-                                     >=
-                                     (1 as libc::c_int * 1 as libc::c_int) as
-                                         libc::c_long) {
-                                return XML_TOK_PARTIAL
-                            }
+                            REQUIRE_CHAR!(ptr, end, self);
                             if !self.char_matches(ptr, ASCII_GT) {
                                 *nextTokPtr = ptr;
                                 return XML_TOK_INVALID
@@ -183,17 +190,15 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "<!" */
     unsafe extern "C" fn scanDecl(
         &self,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         match self.byte_type(ptr) {
             BT_MINUS => return self.scanComment(ptr.offset(self.MINBPC() as isize), end, nextTokPtr),
             BT_LSQB => {
@@ -206,17 +211,11 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 return XML_TOK_INVALID;
             }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             's_151: {
                 match self.byte_type(ptr) {
                     BT_PERCNT => {
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long
-                            >= (2 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                        {
-                            return XML_TOK_PARTIAL;
-                        }
-                        /* don't allow <!ENTITY% foo "whatever"> */
-                        /* don't allow <!ENTITY% foo "whatever"> */
+                        REQUIRE_CHARS!(ptr, end, 2, self);
                         /* don't allow <!ENTITY% foo "whatever"> */
                         match self.byte_type(ptr.offset(self.MINBPC())) {
                             BT_S | BT_CR | BT_LF | BT_PERCNT => {
@@ -236,8 +235,6 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         return XML_TOK_INVALID;
                     }
                 }
-                /* fall through */
-                /* fall through */
                 /* fall through */
                 *nextTokPtr = ptr;
                 return XML_TOK_DECL_OPEN;
@@ -287,17 +284,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     ) -> libc::c_int {
         let mut tok: libc::c_int = 0;
         let mut target: *const libc::c_char = ptr;
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
@@ -308,18 +301,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         return XML_TOK_INVALID
                     }
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    while HAS_CHAR!(enc, ptr, end, self) {
+                    while HAS_CHAR!(ptr, end, self) {
                         MATCH_INVALID_CASES! {
                             (ptr, end, nextTokPtr, self),
                             match self.byte_type(ptr),
                             BT_QUEST => {
                                 ptr = ptr.offset(self.MINBPC() as isize);
-                                if !(end.wrapping_offset_from(ptr) as
-                                         libc::c_long >=
-                                         (1 as libc::c_int * 1 as libc::c_int)
-                                             as libc::c_long) {
-                                    return XML_TOK_PARTIAL
-                                }
+                                REQUIRE_CHAR!(ptr, end, self);
                                 if self.char_matches(ptr, ASCII_GT) {
                                     *nextTokPtr =
                                         ptr.offset(self.MINBPC() as isize);
@@ -338,11 +326,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         return XML_TOK_INVALID
                     }
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     if self.char_matches(ptr, ASCII_GT) {
                         *nextTokPtr = ptr.offset(self.MINBPC() as isize);
                         return tok
@@ -373,11 +357,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             ASCII_LSQB as libc::c_char,
         ];
         let mut i: libc::c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (6 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHARS!(ptr, end, 6, self);
         i = 0 as libc::c_int;
         while i < 6 as libc::c_int {
             if !self.char_matches(ptr, CDATA_LSQB[i as usize]) {
@@ -396,23 +376,19 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
                 BT_S | BT_CR | BT_LF => {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    while HAS_CHAR!(enc, ptr, end, self) {
+                    while HAS_CHAR!(ptr, end, self) {
                         match self.byte_type(ptr) {
                             BT_S | BT_CR | BT_LF => { }
                             BT_GT => {
@@ -446,7 +422,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if HAS_CHAR!(enc, ptr, end, self) {
+        if HAS_CHAR!(ptr, end, self) {
             match self.byte_type(ptr) {
                 BT_DIGIT | BT_HEX => {}
                 _ => {
@@ -455,7 +431,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
             }
             ptr = ptr.offset(self.MINBPC() as isize);
-            while HAS_CHAR!(enc, ptr, end, self) {
+            while HAS_CHAR!(ptr, end, self) {
                 match self.byte_type(ptr) {
                     BT_DIGIT | BT_HEX => {}
                     BT_SEMI => {
@@ -478,7 +454,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if HAS_CHAR!(enc, ptr, end, self) {
+        if HAS_CHAR!(ptr, end, self) {
             if self.char_matches(ptr, ASCII_x) {
                 return self.scanHexCharRef(ptr.offset(self.MINBPC() as isize), end, nextTokPtr);
             }
@@ -490,7 +466,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
             }
             ptr = ptr.offset(self.MINBPC() as isize);
-            while HAS_CHAR!(enc, ptr, end, self) {
+            while HAS_CHAR!(ptr, end, self) {
                 match self.byte_type(ptr) {
                     BT_DIGIT => {}
                     BT_SEMI => {
@@ -513,11 +489,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
@@ -530,7 +502,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             }
             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
@@ -558,7 +530,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
 
         let mut hadColon: libc::c_int = 0 as libc::c_int;
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             let mut current_block: Label = Label::None;
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
@@ -570,11 +542,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                     hadColon = 1;
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     CHECK_NMSTRT_CASES! {
                         (ptr, end, nextTokPtr, self),
                         match self.byte_type(ptr),
@@ -585,11 +553,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     loop  {
                         let mut t: C2RustUnnamed_2 = 0;
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                                 (1 as libc::c_int * 1 as libc::c_int) as
-                                     libc::c_long) {
-                            return XML_TOK_PARTIAL
-                        }
+                        REQUIRE_CHAR!(ptr, end, self);
                         t = self.byte_type(ptr);
                         if t == BT_EQUALS { break ; }
                         match t {
@@ -609,11 +573,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 hadColon = 0;
                 loop {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long
-                         >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                    {
-                        return XML_TOK_PARTIAL;
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     open = self.byte_type(ptr);
                     if open == BT_QUOT || open == BT_APOS {
                         break;
@@ -630,11 +590,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 /* in attribute value */
                 loop {
                     let mut t: C2RustUnnamed_2 = 0;
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long
-                         >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                    {
-                        return XML_TOK_PARTIAL;
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     t = self.byte_type(ptr);
                     if t == open {
                         break;
@@ -658,11 +614,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                 }
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !(end.wrapping_offset_from(ptr) as libc::c_long
-                     >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                {
-                    return XML_TOK_PARTIAL;
-                }
+                REQUIRE_CHAR!(ptr, end, self);
                 match self.byte_type(ptr) {
                     BT_S | BT_CR | BT_LF => { }
                     BT_SOL => {
@@ -685,11 +637,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         /* ptr points to closing quote */
                         loop {
                             ptr = ptr.offset(self.MINBPC() as isize);
-                            if !(end.wrapping_offset_from(ptr) as libc::c_long
-                                 >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                            {
-                                return XML_TOK_PARTIAL;
-                            }
+                            REQUIRE_CHAR!(ptr, end, self);
                             CHECK_NMSTRT_CASES! {
                                 (ptr, end, nextTokPtr, self),
                                 match self.byte_type(ptr),
@@ -721,11 +669,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                     Label::Sol => {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long
-                             >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                        {
-                            return XML_TOK_PARTIAL;
-                        }
+                        REQUIRE_CHAR!(ptr, end, self);
                         if !self.char_matches(ptr, ASCII_GT) {
                             *nextTokPtr = ptr;
                             return XML_TOK_INVALID;
@@ -746,21 +690,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         let mut hadColon: libc::c_int = 0;
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
             BT_EXCL => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                         (1 as libc::c_int * 1 as libc::c_int) as
-                             libc::c_long) {
-                    return XML_TOK_PARTIAL
-                }
+                REQUIRE_CHAR!(ptr, end, self);
                 match self.byte_type(ptr) {
                     BT_MINUS => {
                         return self.scanComment(ptr.offset(self.MINBPC() as isize),
@@ -789,7 +725,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         /* we have a start-tag */
         /* we have a start-tag */
         /* we have a start-tag */
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             let mut current_block_161: u64 = 0;
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
@@ -801,11 +737,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                     hadColon = 1 as libc::c_int;
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     CHECK_NMSTRT_CASES! {
                         (ptr, end, nextTokPtr, self),
                         match self.byte_type(ptr),
@@ -816,7 +748,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 BT_S | BT_CR | BT_LF => {
                     ptr = ptr.offset(self.MINBPC() as isize);
                     loop  {
-                        if !(HAS_CHAR!(enc, ptr, end, self)) {
+                        if !(HAS_CHAR!(ptr, end, self)) {
                             current_block_161 = 13000670339742628194;
                             break ;
                         }
@@ -852,11 +784,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             match current_block_161 {
                 3926109038817298867 => {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long
-                        >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-                    {
-                        return XML_TOK_PARTIAL;
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     if !self.char_matches(ptr, ASCII_GT) {
                         *nextTokPtr = ptr;
                         return XML_TOK_INVALID;
@@ -868,30 +796,28 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     *nextTokPtr = ptr.offset(self.MINBPC() as isize);
                     return XML_TOK_START_TAG_NO_ATTS;
                 }
-                16331546839105579257 => ptr = ptr.offset(1 as libc::c_int as isize),
+                16331546839105579257 => ptr = ptr.offset(self.MINBPC()),
                 _ => {}
             }
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "%" */
     unsafe extern "C" fn scanPercent(
         &self,
         mut ptr: *const libc::c_char,
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
             BT_S | BT_LF | BT_CR | BT_PERCNT => { *nextTokPtr = ptr; return XML_TOK_PERCENT }
             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
@@ -910,17 +836,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        if !(end.wrapping_offset_from(ptr) as libc::c_long
-            >= (1 as libc::c_int * 1 as libc::c_int) as libc::c_long)
-        {
-            return XML_TOK_PARTIAL;
-        }
+        REQUIRE_CHAR!(ptr, end, self);
         CHECK_NMSTRT_CASES! {
             (ptr, end, nextTokPtr, self),
             match self.byte_type(ptr),
             _ => { *nextTokPtr = ptr; return XML_TOK_INVALID }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
@@ -941,7 +863,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         mut end: *const libc::c_char,
         mut nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             let mut t: C2RustUnnamed_2 = self.byte_type(ptr);
             MATCH_INVALID_CASES! {
                 (ptr, end, nextTokPtr, self),
@@ -949,7 +871,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 BT_QUOT | BT_APOS => {
                     ptr = ptr.offset(self.MINBPC() as isize);
                     if !(t != open) {
-                        if !HAS_CHAR!(enc, ptr, end, self) {
+                        if !HAS_CHAR!(ptr, end, self) {
                             return -XML_TOK_LITERAL
                         }
                         *nextTokPtr = ptr;
@@ -995,18 +917,10 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             match self.byte_type(ptr),
             BT_RSQB => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                         (1 as libc::c_int * 1 as libc::c_int) as
-                             libc::c_long) {
-                    return XML_TOK_PARTIAL
-                }
+                REQUIRE_CHAR!(ptr, end, self);
                 if self.char_matches(ptr, ASCII_RSQB) {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     if !self.char_matches(ptr, ASCII_GT) {
                         ptr = ptr.offset(-(self.MINBPC() as isize))
                     } else {
@@ -1017,11 +931,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_CR => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                         (1 as libc::c_int * 1 as libc::c_int) as
-                             libc::c_long) {
-                    return XML_TOK_PARTIAL
-                }
+                REQUIRE_CHAR!(ptr, end, self);
                 if self.byte_type(ptr) == BT_LF {
                     ptr = ptr.offset(self.MINBPC() as isize)
                 }
@@ -1034,7 +944,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             _ => { ptr = ptr.offset(self.MINBPC() as isize) }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             MATCH_LEAD_CASES! {
                 self.byte_type(ptr),
                 LEAD_CASE(n) => {
@@ -1086,7 +996,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_CR => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !HAS_CHAR!(enc, ptr, end, self) {
+                if !HAS_CHAR!(ptr, end, self) {
                     return XML_TOK_TRAILING_CR
                 }
                 if self.byte_type(ptr) == BT_LF {
@@ -1101,12 +1011,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_RSQB => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !HAS_CHAR!(enc, ptr, end, self) {
+                if !HAS_CHAR!(ptr, end, self) {
                     return XML_TOK_TRAILING_RSQB
                 }
                 if !self.char_matches(ptr, ASCII_RSQB) {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !HAS_CHAR!(enc, ptr, end, self) {
+                    if !HAS_CHAR!(ptr, end, self) {
                         return XML_TOK_TRAILING_RSQB
                     }
                     if !self.char_matches(ptr, ASCII_GT) {
@@ -1116,7 +1026,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             _ => { ptr = ptr.offset(self.MINBPC() as isize) }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             let mut current_block_76: u64;
             MATCH_LEAD_CASES! {
                 self.byte_type(ptr),
@@ -1129,11 +1039,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     current_block_76 = 10213293998891106930;
                 }
                 BT_RSQB => {
-                    if HAS_CHARS!(enc, ptr, end, 2, self) {
+                    if HAS_CHARS!(ptr, end, 2, self) {
                         if !self.char_matches(ptr.offset(self.MINBPC()), ASCII_RSQB) {
                             ptr = ptr.offset(self.MINBPC() as isize);
                             current_block_76 = 10213293998891106930;
-                        } else if HAS_CHARS!(enc, ptr, end, 3, self) {
+                        } else if HAS_CHARS!(ptr, end, 3, self) {
                             if !self.char_matches(ptr.offset(2 * self.MINBPC()), ASCII_GT) {
                                 ptr = ptr.offset(self.MINBPC() as isize)
                             } else {
@@ -1215,11 +1125,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_LT => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                         (1 as libc::c_int * 1 as libc::c_int) as
-                             libc::c_long) {
-                    return XML_TOK_PARTIAL
-                }
+                REQUIRE_CHAR!(ptr, end, self);
                 match self.byte_type(ptr) {
                     BT_EXCL => {
                         return self.scanDecl(ptr.offset(self.MINBPC() as
@@ -1265,15 +1171,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_RSQB => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !HAS_CHAR!(enc, ptr, end, self) {
+                if !HAS_CHAR!(ptr, end, self) {
                     return -XML_TOK_CLOSE_BRACKET
                 }
                 if self.char_matches(ptr, ASCII_RSQB) {
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (2 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHARS!(ptr, end, 2, self);
                     if self.char_matches(ptr.offset(self.MINBPC()), ASCII_GT) {
                         *nextTokPtr =
                             ptr.offset((2 * self.MINBPC()) as isize);
@@ -1289,7 +1191,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             BT_RPAR => {
                 ptr = ptr.offset(self.MINBPC() as isize);
-                if !HAS_CHAR!(enc, ptr, end, self) {
+                if !HAS_CHAR!(ptr, end, self) {
                     return -XML_TOK_CLOSE_PAREN
                 }
                 match self.byte_type(ptr) {
@@ -1361,7 +1263,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             {
                 loop {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !HAS_CHAR!(enc, ptr, end, self) {
+                    if !HAS_CHAR!(ptr, end, self) {
                         break;
                     }
                     let mut current_block_32: u64;
@@ -1399,7 +1301,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 return XML_TOK_PROLOG_S;
             }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             CHECK_NAME_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
@@ -1411,12 +1313,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     ptr = ptr.offset(self.MINBPC() as isize);
                     match tok {
                         XML_TOK_NAME => {
-                            if !(end.wrapping_offset_from(ptr) as libc::c_long
-                                     >=
-                                     (1 as libc::c_int * 1 as libc::c_int) as
-                                         libc::c_long) {
-                                return XML_TOK_PARTIAL
-                            }
+                            REQUIRE_CHAR!(ptr, end, self);
                             tok = XML_TOK_PREFIXED_NAME;
                             CHECK_NAME_CASES! {
                                 (ptr, end, nextTokPtr, self),
@@ -1469,12 +1366,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !HAS_CHAR!(enc, ptr, end, self) {
+            if !HAS_CHAR!(ptr, end, self) {
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             MATCH_LEAD_CASES! {
                 self.byte_type(ptr),
                 LEAD_CASE(n) => {
@@ -1501,7 +1398,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 BT_CR => {
                     if ptr == start {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !HAS_CHAR!(enc, ptr, end, self) {
+                        if !HAS_CHAR!(ptr, end, self) {
                             return XML_TOK_TRAILING_CR
                         }
                         if self.byte_type(ptr) == BT_LF {
@@ -1537,12 +1434,17 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         if ptr >= end {
             return XML_TOK_NONE;
         } else {
-            if !HAS_CHAR!(enc, ptr, end, self) {
+            if !HAS_CHAR!(ptr, end, self) {
+                /* This line cannot be executed.  The incoming data has already
+                 * been tokenized once, so incomplete characters like this have
+                 * already been eliminated from the input.  Retaining the paranoia
+                 * check is still valuable, however.
+                 */
                 return XML_TOK_PARTIAL;
             }
         }
         start = ptr;
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             MATCH_LEAD_CASES! {
                 self.byte_type(ptr),
                 LEAD_CASE(n) => {
@@ -1581,7 +1483,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 BT_CR => {
                     if ptr == start {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !HAS_CHAR!(enc, ptr, end, self) {
+                        if !HAS_CHAR!(ptr, end, self) {
                             return XML_TOK_TRAILING_CR
                         }
                         if self.byte_type(ptr) == BT_LF {
@@ -1613,24 +1515,16 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 end = ptr.offset(n as isize)
             }
         }
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             MATCH_INVALID_CASES! {
                 (ptr, end, nextTokPtr, self),
                 match self.byte_type(ptr),
                 BT_LT => {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     if self.char_matches(ptr, ASCII_EXCL) {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                                 (1 as libc::c_int * 1 as libc::c_int) as
-                                     libc::c_long) {
-                            return XML_TOK_PARTIAL
-                        }
+                        REQUIRE_CHAR!(ptr, end, self);
                         if self.char_matches(ptr, ASCII_LSQB) {
                             level += 1;
                             ptr = ptr.offset(self.MINBPC() as isize)
@@ -1639,18 +1533,10 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 }
                 BT_RSQB => {
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                             (1 as libc::c_int * 1 as libc::c_int) as
-                                 libc::c_long) {
-                        return XML_TOK_PARTIAL
-                    }
+                    REQUIRE_CHAR!(ptr, end, self);
                     if self.char_matches(ptr, ASCII_RSQB) {
                         ptr = ptr.offset(self.MINBPC() as isize);
-                        if !(end.wrapping_offset_from(ptr) as libc::c_long >=
-                                 (1 as libc::c_int * 1 as libc::c_int) as
-                                     libc::c_long) {
-                            return XML_TOK_PARTIAL
-                        }
+                        REQUIRE_CHAR!(ptr, end, self);
                         if self.char_matches(ptr, ASCII_GT) {
                             ptr = ptr.offset(self.MINBPC() as isize);
                             if level == 0 as libc::c_int {
@@ -1674,7 +1560,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     ) -> libc::c_int {
         ptr = ptr.offset(self.MINBPC() as isize);
         end = end.offset(-(self.MINBPC() as isize));
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             let mut current_block_8: u64;
             match self.byte_type(ptr) {
                 BT_DIGIT | BT_HEX | BT_MINUS | BT_APOS | BT_LPAR | BT_RPAR | BT_PLUS | BT_COMMA | BT_SOL | BT_EQUALS | BT_QUEST | BT_CR | BT_LF | BT_SEMI | BT_EXCL | 33
@@ -2016,7 +1902,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         mut end: *const libc::c_char,
         mut pos: *mut POSITION,
     ) {
-        while HAS_CHAR!(enc, ptr, end, self) {
+        while HAS_CHAR!(ptr, end, self) {
             MATCH_LEAD_CASES! {
                 self.byte_type(ptr),
                 LEAD_CASE(n) => {
@@ -2030,7 +1916,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 BT_CR => {
                     (*pos).lineNumber = (*pos).lineNumber.wrapping_add(1);
                     ptr = ptr.offset(self.MINBPC() as isize);
-                    if HAS_CHAR!(enc, ptr, end, self) &&
+                    if HAS_CHAR!(ptr, end, self) &&
                            self.byte_type(ptr) == BT_LF {
                         ptr = ptr.offset(self.MINBPC() as isize)
                     }
