@@ -1029,7 +1029,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 if !HAS_CHAR!(ptr, end, self) {
                     return XML_TOK_TRAILING_RSQB
                 }
-                if !self.char_matches(ptr, ASCII_RSQB) {
+                if self.char_matches(ptr, ASCII_RSQB) {
                     ptr = ptr.offset(self.MINBPC());
                     if !HAS_CHAR!(ptr, end, self) {
                         return XML_TOK_TRAILING_RSQB
