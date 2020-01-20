@@ -1113,13 +1113,13 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         MATCH_LEAD_CASES! {
             self.byte_type(ptr),
             LEAD_CASE(n) => {
-                if (end.wrapping_offset_from(ptr) as c_long) < 2 {
+                if (end.wrapping_offset_from(ptr) as c_long) < n as c_long {
                     return XML_TOK_PARTIAL_CHAR;
                 }
-                if self.is_nmstrt_char(ptr, 2) {
+                if self.is_nmstrt_char(ptr, n) {
                     ptr = ptr.offset(n);
                     tok = XML_TOK_NAME;
-                } else if self.is_name_char(ptr, 2) {
+                } else if self.is_name_char(ptr, n) {
                     ptr = ptr.offset(n);
                     tok = XML_TOK_NMTOKEN
                 } else {
