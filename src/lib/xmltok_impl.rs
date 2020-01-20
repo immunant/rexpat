@@ -1839,6 +1839,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     ) -> libc::c_int {
         while *ptr2 != 0 {
             if end1.wrapping_offset_from(ptr1) < self.MINBPC() {
+                /* This line cannot be executed.  The incoming data has already
+                 * been tokenized once, so incomplete characters like this have
+                 * already been eliminated from the input.  Retaining the
+                 * paranoia check is still valuable, however.
+                 */
                 return 0 as libc::c_int;
             }
             if !self.char_matches(ptr1, *ptr2) {
