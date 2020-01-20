@@ -1165,8 +1165,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 if ptr.offset(self.MINBPC()) == end {
                     *nextTokPtr = end;
                     /* indicate that this might be part of a CR/LF pair */
-                    /* indicate that this might be part of a CR/LF pair */
-                    /* indicate that this might be part of a CR/LF pair */
                     return -XML_TOK_PROLOG_S
                 }
                 current_block_112 = 1103933966285275534;
@@ -1258,11 +1256,15 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 if self.is_nmstrt_char_minbpc(ptr) {
                     ptr = ptr.offset(self.MINBPC());
                     tok = XML_TOK_NAME;
+                    current_block_112 = 2222055338596505704;
                 } else if self.is_name_char_minbpc(ptr) {
                     ptr = ptr.offset(self.MINBPC());
                     tok = XML_TOK_NMTOKEN;
+                    current_block_112 = 2222055338596505704;
+                } else {
+                    *nextTokPtr = ptr;
+                    return XML_TOK_INVALID
                 }
-                current_block_112 = 2222055338596505704;
             }
             _ => {
                 *nextTokPtr = ptr;
@@ -1272,8 +1274,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         match current_block_112 {
             2222055338596505704 => {}
             _ =>
-            /* fall through */
-            /* fall through */
             /* fall through */
             {
                 loop {
@@ -1288,8 +1288,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         }
                         BT_CR => {
                             /* don't split CR/LF pair */
-                            /* don't split CR/LF pair */
-                            /* don't split CR/LF pair */
                             if ptr.offset(self.MINBPC()) != end {
                                 current_block_32 = 14072441030219150333;
                             } else {
@@ -1303,8 +1301,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     match current_block_32 {
                         14072441030219150333 => {}
                         _ =>
-                        /* fall through */
-                        /* fall through */
                         /* fall through */
                         {
                             *nextTokPtr = ptr;
