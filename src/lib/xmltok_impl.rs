@@ -885,7 +885,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 match t,
                 BT_QUOT | BT_APOS => {
                     ptr = ptr.offset(self.MINBPC());
-                    if !(t != open) {
+                    if t == open {
                         if !HAS_CHAR!(ptr, end, self) {
                             return -XML_TOK_LITERAL
                         }
