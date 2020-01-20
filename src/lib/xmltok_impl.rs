@@ -276,6 +276,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         *tokPtr = XML_TOK_XML_DECL;
         return 1 as libc::c_int;
     }
+
+    /* ptr points to character following "<?" */
     unsafe extern "C" fn scanPi(
         &self,
         mut ptr: *const libc::c_char,
@@ -357,6 +359,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             ASCII_LSQB as libc::c_char,
         ];
         let mut i: libc::c_int = 0;
+        /* CDATA[ */
         REQUIRE_CHARS!(ptr, end, 6, self);
         i = 0 as libc::c_int;
         while i < 6 as libc::c_int {
@@ -370,6 +373,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         *nextTokPtr = ptr;
         return XML_TOK_CDATA_SECT_OPEN;
     }
+
+    /* ptr points to character following "</" */
     unsafe extern "C" fn scanEndTag(
         &self,
         mut ptr: *const libc::c_char,
@@ -416,6 +421,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "&#X" */
     unsafe extern "C" fn scanHexCharRef(
         &self,
         mut ptr: *const libc::c_char,
@@ -448,6 +455,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "&#" */
     unsafe extern "C" fn scanCharRef(
         &self,
         mut ptr: *const libc::c_char,
@@ -483,6 +492,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "&" */
     unsafe extern "C" fn scanRef(
         &self,
         mut ptr: *const libc::c_char,
@@ -515,6 +526,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following first character of attribute name */
     unsafe extern "C" fn scanAtts(
         &self,
         mut ptr: *const libc::c_char,
@@ -683,6 +696,8 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
+
+    /* ptr points to character following "<" */
     unsafe extern "C" fn scanLt(
         &self,
         mut ptr: *const libc::c_char,
