@@ -1581,46 +1581,26 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         ptr = ptr.offset(self.MINBPC());
         end = end.offset(-(self.MINBPC()));
         while HAS_CHAR!(ptr, end, self) {
-            let mut current_block_8: u64;
             match self.byte_type(ptr) {
-                BT_DIGIT | BT_HEX | BT_MINUS | BT_APOS | BT_LPAR | BT_RPAR | BT_PLUS | BT_COMMA | BT_SOL | BT_EQUALS | BT_QUEST | BT_CR | BT_LF | BT_SEMI | BT_EXCL | 33
-                | BT_PERCNT | BT_NUM | BT_COLON => {
-                    current_block_8 = 13242334135786603907;
-                }
+                BT_DIGIT | BT_HEX | BT_MINUS | BT_APOS | BT_LPAR | BT_RPAR | BT_PLUS | BT_COMMA | BT_SOL | BT_EQUALS | BT_QUEST | BT_CR | BT_LF | BT_SEMI | BT_EXCL | BT_AST
+                | BT_PERCNT | BT_NUM | BT_COLON => { }
                 BT_S => {
                     if self.char_matches(ptr, ASCII_TAB) {
                         *badPtr = ptr;
                         return 0 as libc::c_int;
                     }
-                    current_block_8 = 13242334135786603907;
                 }
-                BT_NAME | BT_NMSTRT => {
-                    if self.byte_to_ascii(ptr) & !(0x7f as c_char) == 0 {
-                        current_block_8 = 13242334135786603907;
-                    } else {
-                        current_block_8 = 13935456465286830489;
-                    }
-                }
+                BT_NAME | BT_NMSTRT if self.byte_to_ascii(ptr) & !(0x7f as c_char) == 0 => { }
                 _ => {
-                    current_block_8 = 13935456465286830489;
-                }
-            }
-            match current_block_8 {
-                13935456465286830489 =>
-                /* fall through */
-                /* fall through */
-                /* fall through */
-                {
                     match self.byte_to_ascii(ptr) {
-                        36 => {}
-                        64 => {}
+                        0x24 => {} /* $ */
+                        0x40 => {} /* @ */
                         _ => {
                             *badPtr = ptr;
                             return 0 as libc::c_int;
                         }
                     }
                 }
-                _ => {}
             }
             ptr = ptr.offset(self.MINBPC())
         }
