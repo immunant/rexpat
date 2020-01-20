@@ -1606,34 +1606,43 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return 1 as libc::c_int;
     }
+
+    /* This must only be called for a well-formed start-tag or empty
+    element tag.  Returns the number of attributes.  Pointers to the
+    first attsMax attributes are stored in atts.
+     */
     unsafe extern "C" fn getAtts(
         &self,
         mut ptr: *const libc::c_char,
         mut attsMax: libc::c_int,
         mut atts: *mut ATTRIBUTE,
     ) -> libc::c_int {
-        let mut state: C2RustUnnamed_2 = inName;
+        #[derive(PartialEq)]
+        enum State {
+            Other,
+            InName,
+            InValue,
+        };
+        let mut state = State::InName;
         let mut nAtts: libc::c_int = 0 as libc::c_int;
-        let mut open: C2RustUnnamed_2 = 0 as C2RustUnnamed_2;
+
+        /* defined when state == inValue;
+        initialization just to shut up compilers */
+        let mut open: C2RustUnnamed_2 = 0 as C2RustUnnamed_2; 
 
         macro_rules! START_NAME {
             () => {
-                if state as libc::c_uint == other as libc::c_int as libc::c_uint {
+                if state == State::Other {
                     if nAtts < attsMax {
                         let ref mut fresh120 = (*atts.offset(nAtts as isize)).name;
                         *fresh120 = ptr;
                         (*atts.offset(nAtts as isize)).normalized = 1 as libc::c_int as libc::c_char
                     }
-                    state = inName
+                    state = State::InName;
                 }
             };
         }
-        /* defined when state == inValue;
-        initialization just to shut up compilers */
-        /* defined when state == inValue;
-        initialization just to shut up compilers */
-        /* defined when state == inValue;
-        initialization just to shut up compilers */
+
         ptr = ptr.offset(self.MINBPC());
         loop {
             MATCH_LEAD_CASES! {
@@ -1643,30 +1652,19 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        ptr = ptr.offset((n - self.MINBPC()) as isize)
                    }
                    BT_NONASCII | BT_NMSTRT | BT_HEX => {
-                       if state as libc::c_uint ==
-                              other as libc::c_int as libc::c_uint {
-                           if nAtts < attsMax {
-                               let ref mut fresh126 =
-                                   (*atts.offset(nAtts as isize)).name;
-                               *fresh126 = ptr;
-                               (*atts.offset(nAtts as isize)).normalized =
-                                   1 as libc::c_int as libc::c_char
-                           }
-                           state = inName
-                       }
+                       START_NAME!{}
                    }
                    BT_QUOT => {
-                       if state as libc::c_uint !=
-                              inValue as libc::c_int as libc::c_uint {
+                       if state != State::InValue {
                            if nAtts < attsMax {
                                let ref mut fresh127 =
                                    (*atts.offset(nAtts as isize)).valuePtr;
                                *fresh127 = ptr.offset(self.MINBPC())
                            }
-                           state = inValue;
+                           state = State::InValue;
                            open = BT_QUOT
                        } else if open == BT_QUOT {
-                           state = other;
+                           state = State::Other;
                            if nAtts < attsMax {
                                let ref mut fresh128 =
                                    (*atts.offset(nAtts as isize)).valueEnd;
@@ -1676,17 +1674,16 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        }
                    }
                    BT_APOS => {
-                       if state as libc::c_uint !=
-                              inValue as libc::c_int as libc::c_uint {
+                       if state != State::InValue {
                            if nAtts < attsMax {
                                let ref mut fresh129 =
                                    (*atts.offset(nAtts as isize)).valuePtr;
                                *fresh129 = ptr.offset(self.MINBPC())
                            }
-                           state = inValue;
+                           state = State::InValue;
                            open = BT_APOS
                        } else if open == BT_APOS {
-                           state = other;
+                           state = State::Other;
                            if nAtts < attsMax {
                                let ref mut fresh130 =
                                    (*atts.offset(nAtts as isize)).valueEnd;
@@ -1702,47 +1699,31 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        }
                    }
                    BT_S => {
-                       if state as libc::c_uint ==
-                              inName as libc::c_int as libc::c_uint {
-                           state = other
-                       } else if state as libc::c_uint ==
-                                     inValue as libc::c_int as libc::c_uint &&
-                                     nAtts < attsMax &&
-                                     (*atts.offset(nAtts as isize)).normalized as
-                                         libc::c_int != 0 &&
-                                     (ptr ==
-                                          (*atts.offset(nAtts as isize)).valuePtr
-                                          ||
-                                          self.byte_to_ascii(ptr) != ASCII_SPACE
-                                          ||
-                                          self.byte_to_ascii(ptr.offset(self.MINBPC()))
-                                              == ASCII_SPACE ||
-                                          self.byte_type(ptr.offset(self.MINBPC())) ==
-                                              open) {
+                       if state == State::InName {
+                           state = State::Other;
+                       } else if state == State::InValue && nAtts < attsMax
+                           && (*atts.offset(nAtts as isize)).normalized as libc::c_int != 0
+                           && (ptr == (*atts.offset(nAtts as isize)).valuePtr
+                               || self.byte_to_ascii(ptr) != ASCII_SPACE
+                               || self.byte_to_ascii(ptr.offset(self.MINBPC())) == ASCII_SPACE
+                               || self.byte_type(ptr.offset(self.MINBPC())) == open)
+                       {
                            (*atts.offset(nAtts as isize)).normalized =
                                0 as libc::c_int as libc::c_char
                        }
                    }
                    BT_CR | BT_LF => {
                        /* This case ensures that the first attribute name is counted
-            Apart from that we could just change state on the quote. */
-                       /* This case ensures that the first attribute name is counted
-            Apart from that we could just change state on the quote. */
-                       /* This case ensures that the first attribute name is counted
-            Apart from that we could just change state on the quote. */
-                       if state as libc::c_uint ==
-                              inName as libc::c_int as libc::c_uint {
-                           state = other
-                       } else if state as libc::c_uint ==
-                                     inValue as libc::c_int as libc::c_uint &&
-                                     nAtts < attsMax {
+                       Apart from that we could just change state on the quote. */
+                       if state == State::InName {
+                           state = State::Other;
+                       } else if state == State::InValue && nAtts < attsMax {
                            (*atts.offset(nAtts as isize)).normalized =
                                0 as libc::c_int as libc::c_char
                        }
                    }
                    BT_GT | BT_SOL => {
-                       if state as libc::c_uint !=
-                              inValue as libc::c_int as libc::c_uint {
+                       if state != State::InValue {
                            return nAtts
                        }
                    }
@@ -1750,8 +1731,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                }
             ptr = ptr.offset(self.MINBPC())
         }
-        /* not reached */
-        /* not reached */
         /* not reached */
     }
     unsafe extern "C" fn charRefNumber(&self, mut ptr: *const libc::c_char) -> libc::c_int {
