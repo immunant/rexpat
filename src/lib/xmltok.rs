@@ -1903,9 +1903,6 @@ impl XmlEncodingImpl for UnknownEncoding {
     fn is_invalid_char(&self, p: *const c_char, _n: isize) -> bool {
         if let Some(convert) = self.convert {
             let mut c: c_int = unsafe { convert(self.userData, p) };
-            if c & !(0xffff) != 0 {
-                return false;
-            }
             (c & !(0xffff)) != 0 || checkCharRefNumber(c) < 0
         } else {
             false
