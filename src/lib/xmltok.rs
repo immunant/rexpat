@@ -1640,7 +1640,7 @@ impl XmlEncoding for InitEncoding {
         initScan(
             &*self.encoding_table,
             self as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
-            XML_PROLOG_STATE,
+            XML_CONTENT_STATE,
             ptr,
             end,
             nextTokPtr,
