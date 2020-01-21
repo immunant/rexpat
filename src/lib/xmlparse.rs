@@ -3874,7 +3874,7 @@ unsafe extern "C" fn storeAtts(
         }
         let elementType = hash_insert!(
             parser,
-            (*dtd).elementTypes,
+            &mut (*dtd).elementTypes,
             name,
             ELEMENT_TYPE
         );
@@ -5795,7 +5795,7 @@ unsafe extern "C" fn doProlog(
                 (*parser).m_useForeignDTD = XML_FALSE;
                 (*parser).m_declEntity = hash_insert!(
                     parser,
-                    (*dtd).paramEntities,
+                    &mut (*dtd).paramEntities,
                     externalSubsetName.as_ptr(),
                     ENTITY
                 );
@@ -5862,7 +5862,7 @@ unsafe extern "C" fn doProlog(
                     {
                         let mut entity = hash_insert!(
                             parser,
-                            (*dtd).paramEntities,
+                            &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
                             ENTITY
                         );
@@ -5935,7 +5935,7 @@ unsafe extern "C" fn doProlog(
                     {
                         let mut entity_0 = hash_insert!(
                             parser,
-                            (*dtd).paramEntities,
+                            &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
                             ENTITY
                         );
@@ -6280,7 +6280,7 @@ unsafe extern "C" fn doProlog(
                 if (*parser).m_declEntity.is_null() {
                     (*parser).m_declEntity = hash_insert!(
                         parser,
-                        (*dtd).paramEntities,
+                        &mut (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
                         ENTITY
                     );
@@ -6372,7 +6372,7 @@ unsafe extern "C" fn doProlog(
                     }
                     (*parser).m_declEntity = hash_insert!(
                         parser,
-                        (*dtd).generalEntities,
+                        &mut (*dtd).generalEntities,
                         name,
                         ENTITY
                     );
@@ -6413,7 +6413,7 @@ unsafe extern "C" fn doProlog(
                     }
                     (*parser).m_declEntity = hash_insert!(
                         parser,
-                        (*dtd).paramEntities,
+                        &mut (*dtd).paramEntities,
                         name_0,
                         ENTITY
                     );
@@ -8219,7 +8219,7 @@ unsafe extern "C" fn setElementTypePrefix(
             }
             let prefix = hash_insert!(
                 parser,
-                (*dtd).prefixes,
+                &mut (*dtd).prefixes,
                 (*dtd).pool.start as KEY,
                 PREFIX
             );
@@ -8267,7 +8267,7 @@ unsafe extern "C" fn getAttributeId(
     name = name.offset(1);
     let id = hash_insert!(
         parser,
-        (*dtd).attributeIds,
+        &mut (*dtd).attributeIds,
         name as *mut XML_Char,
         ATTRIBUTE_ID
     );
@@ -8292,7 +8292,7 @@ unsafe extern "C" fn getAttributeId(
                 } else {
                     (*id).prefix = hash_insert!(
                         parser,
-                        (*dtd).prefixes,
+                        &mut (*dtd).prefixes,
                         name.offset(6),
                         PREFIX
                     );
@@ -8337,7 +8337,7 @@ unsafe extern "C" fn getAttributeId(
                         }
                         (*id).prefix = hash_insert!(
                             parser,
-                            (*dtd).prefixes,
+                            &mut (*dtd).prefixes,
                             (*dtd).pool.start as KEY,
                             PREFIX
                         );
@@ -8609,7 +8609,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 }
                 prefix = hash_insert!(
                     parser,
-                    (*dtd).prefixes,
+                    &mut (*dtd).prefixes,
                     (*parser).m_tempPool.start as KEY,
                     PREFIX
                 );
@@ -8823,7 +8823,7 @@ unsafe extern "C" fn dtdCopy(
         }
         if hash_insert!(
             oldParser,
-            (*newDtd).prefixes,
+            &mut (*newDtd).prefixes,
             name,
             PREFIX
         )
@@ -8857,7 +8857,7 @@ unsafe extern "C" fn dtdCopy(
         name_0 = name_0.offset(1);
         let newA = hash_insert!(
             oldParser,
-            (*newDtd).attributeIds,
+            &mut (*newDtd).attributeIds,
             name_0 as *mut XML_Char,
             ATTRIBUTE_ID
         );
@@ -8887,7 +8887,7 @@ unsafe extern "C" fn dtdCopy(
         }
         let newE = hash_insert!(
             oldParser,
-            (*newDtd).elementTypes,
+            &mut (*newDtd).elementTypes,
             name_1,
             ELEMENT_TYPE
         );
@@ -8993,7 +8993,7 @@ unsafe extern "C" fn copyEntityTable(
         }
         let newE = hash_insert!(
             oldParser,
-            newTable,
+            &mut newTable,
             name,
             ENTITY
         );
@@ -9577,7 +9577,7 @@ unsafe extern "C" fn getElementType(
     }
     let ret = hash_insert!(
         parser,
-        (*dtd).elementTypes,
+        &mut (*dtd).elementTypes,
         name,
         ELEMENT_TYPE
     );
