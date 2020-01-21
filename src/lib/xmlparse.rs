@@ -133,10 +133,14 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
-use std::collections::HashMap;
+use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, ReallocRef};
+use alloc_wg::boxed::Box;
+
+use std::collections::{HashMap, hash_map};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
+use std::ptr::NonNull;
 
 #[inline]
 unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
@@ -380,20 +384,17 @@ impl Eq for HashKey {}
 macro_rules! hash_insert {
     ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
-        $map.entry(HashKey(__key))
-            .or_insert_with(|| $et { name: __key, ..std::mem::zeroed() })
-    }};
-    ($parser:expr, $map:expr, $key:expr, #[boxed] $et:ident) => {{
-        let __key = $key;
-        $map.entry(HashKey(__key))
-            .or_insert_with(|| Box::new($et { name: __key, ..std::mem::zeroed() }))
-            .as_mut()
-    }};
-    ($parser:expr, $map:expr, $key:expr, #[expat_boxed] $et:ident) => {{
-        let __key = $key;
-        $map.entry(HashKey(__key))
-            .or_insert_with(|| ExpatBox::new($parser, $et { name: __key, ..std::mem::zeroed() }))
-            .ptr
+        match $map.entry(HashKey(__key)) {
+            hash_map::Entry::Occupied(ref mut e) => e.get_mut().as_mut(),
+            hash_map::Entry::Vacant(e) => {
+                let v = $et { name: __key, ..std::mem::zeroed() };
+                let b = ExpatBox::try_new_in(v, (*$parser).m_mem);
+                match b {
+                    Ok(b) => e.insert(b).as_mut(),
+                    Err(_) => std::ptr::null_mut()
+                }
+            }
+        }
     }};
 }
 
@@ -408,9 +409,9 @@ macro_rules! hash_lookup {
 #[derive(Clone)]
 pub struct DTD {
     pub generalEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
-    pub elementTypes: HashMap<HashKey, ELEMENT_TYPE>,
-    pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
-    pub prefixes: HashMap<HashKey, Box<PREFIX>>,
+    pub elementTypes: HashMap<HashKey, ExpatBox<ELEMENT_TYPE>>,
+    pub attributeIds: HashMap<HashKey, ExpatBox<ATTRIBUTE_ID>>,
+    pub prefixes: HashMap<HashKey, ExpatBox<PREFIX>>,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
     pub keepProcessing: XML_Bool,
@@ -629,82 +630,61 @@ macro_rules! FREE {
     };
 }
 
-// We need `ExpatBox` to hold `ENTITY` because one of the tests
-// checks the number of allocations, so we need to allocate
-// `ENTITY` structures using the provided `malloc` function
-pub struct ExpatBox<T> {
-    parser: XML_Parser,
-    ptr: *mut T,
-    _marker: PhantomData<T>,
-}
+impl AllocRef for XML_Memory_Handling_Suite {
+    type Error = ();
 
-impl<T> ExpatBox<T> {
-    unsafe fn new(parser: XML_Parser, value: T) -> Self {
-       let ptr = MALLOC!(parser, std::mem::size_of::<T>() as c_ulong) as *mut T;
-       if !ptr.is_null() {
-           std::ptr::write(ptr, value);
-       }
-       ExpatBox { parser, ptr, _marker: PhantomData }
+    fn alloc(&mut self, layout: NonZeroLayout) -> Result<NonNull<u8>, Self::Error> {
+        let size = layout.size().get() as u64;
+        let ptr = unsafe {
+            self.malloc_fcn
+                .expect("non-null function pointer")(size)
+        };
+        NonNull::new(ptr as *mut u8).ok_or(())
     }
 }
 
-impl<T: Clone> Clone for ExpatBox<T> {
-    fn clone(&self) -> Self {
-        if self.ptr.is_null() {
-            ExpatBox { ..*self }
-        } else {
-            unsafe { Self::new(self.parser, (*self.ptr).clone()) }
-        }
+impl ReallocRef for XML_Memory_Handling_Suite {
+    unsafe fn realloc(
+        &mut self,
+        ptr: NonNull<u8>,
+        _old_layout: NonZeroLayout,
+        new_layout: NonZeroLayout
+    ) -> Result<NonNull<u8>, Self::Error> {
+        let size = new_layout.size().get() as u64;
+        let new_ptr = self
+            .realloc_fcn
+            .expect("non-null function pointer")(ptr.as_ptr() as *mut _, size);
+        NonNull::new(new_ptr as *mut u8).ok_or(())
     }
 }
 
-// FIXME: use `#[may_dangle]` for `T`
-impl<T> Drop for ExpatBox<T> {
-    fn drop(&mut self) {
-        let ptr = std::mem::replace(&mut self.ptr, std::ptr::null_mut());
-        if !ptr.is_null() {
-            let parser = self.parser;
-            unsafe {
-                std::ptr::drop_in_place(ptr);
-                FREE!(parser, ptr as *mut c_void);
-            }
-        }
+impl DeallocRef for XML_Memory_Handling_Suite {
+    type BuildAlloc = Self;
+
+    fn get_build_alloc(&mut self) -> Self::BuildAlloc {
+        self.clone()
+    }
+
+    unsafe fn dealloc(&mut self, ptr: NonNull<u8>, _layout: NonZeroLayout) {
+        self
+            .free_fcn
+            .expect("non-null function pointer")(ptr.as_ptr() as *mut _);
     }
 }
 
-impl<T> Deref for ExpatBox<T> {
-    type Target = T;
+impl BuildAllocRef for XML_Memory_Handling_Suite {
+    type Ref = Self;
 
-    fn deref(&self) -> &T {
-        if self.ptr.is_null() {
-            panic!("Dereferencing NULL pointer in ExpatBox");
-        } else {
-            unsafe { &*self.ptr }
-        }
+    unsafe fn build_alloc_ref(
+        &mut self,
+        _ptr: NonNull<u8>,
+        _layout: Option<NonZeroLayout>,
+    ) -> Self::Ref {
+        self.clone()
     }
 }
 
-impl<T> DerefMut for ExpatBox<T> {
-    fn deref_mut(&mut self) -> &mut T {
-        if self.ptr.is_null() {
-            panic!("Dereferencing NULL pointer in ExpatBox");
-        } else {
-            unsafe { &mut *self.ptr }
-        }
-    }
-}
-
-impl<T> AsRef<T> for ExpatBox<T> {
-    fn as_ref(&self) -> &T {
-        &**self
-    }
-}
-
-impl<T> AsMut<T> for ExpatBox<T> {
-    fn as_mut(&mut self) -> &mut T {
-        &mut **self
-    }
-}
+type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 
 /* Constructs a new parser; encoding is the encoding specified by the
    external protocol or NULL if there is none specified.
@@ -3886,7 +3866,7 @@ unsafe extern "C" fn storeAtts(
     let mut localPart: *const XML_Char = 0 as *const XML_Char;
     /* lookup the element type name */
     let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey((*tagNamePtr).str_0)) {
-        elementType
+        elementType.as_mut()
     } else {
         let mut name: *const XML_Char = poolCopyString(&mut (*dtd).pool, (*tagNamePtr).str_0);
         if name.is_null() {
@@ -3898,6 +3878,9 @@ unsafe extern "C" fn storeAtts(
             name,
             ELEMENT_TYPE
         );
+        if elementType.is_null() {
+            return XML_ERROR_NO_MEMORY;
+        }
         if (*parser).m_ns as c_int != 0 && setElementTypePrefix(parser, elementType) == 0 {
             return XML_ERROR_NO_MEMORY;
         }
@@ -5814,7 +5797,7 @@ unsafe extern "C" fn doProlog(
                     parser,
                     (*dtd).paramEntities,
                     externalSubsetName.as_ptr(),
-                    #[expat_boxed] ENTITY
+                    ENTITY
                 );
                 if (*parser).m_declEntity.is_null() {
                     return XML_ERROR_NO_MEMORY;
@@ -5881,7 +5864,7 @@ unsafe extern "C" fn doProlog(
                             parser,
                             (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            #[expat_boxed] ENTITY
+                            ENTITY
                         );
                         if entity.is_null() {
                             /* end of DTD - no need to update dtd->keepProcessing */
@@ -5954,7 +5937,7 @@ unsafe extern "C" fn doProlog(
                             parser,
                             (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            #[expat_boxed] ENTITY
+                            ENTITY
                         );
                         if entity_0.is_null() {
                             return XML_ERROR_NO_MEMORY;
@@ -6299,7 +6282,7 @@ unsafe extern "C" fn doProlog(
                         parser,
                         (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
-                        #[expat_boxed] ENTITY
+                        ENTITY
                     );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6391,7 +6374,7 @@ unsafe extern "C" fn doProlog(
                         parser,
                         (*dtd).generalEntities,
                         name,
-                        #[expat_boxed] ENTITY
+                        ENTITY
                     );
                     if (*parser).m_declEntity.is_null() {
                         // FIXME: this never happens in Rust, it just panics
@@ -6432,7 +6415,7 @@ unsafe extern "C" fn doProlog(
                         parser,
                         (*dtd).paramEntities,
                         name_0,
-                        #[expat_boxed] ENTITY
+                        ENTITY
                     );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -8238,8 +8221,11 @@ unsafe extern "C" fn setElementTypePrefix(
                 parser,
                 (*dtd).prefixes,
                 (*dtd).pool.start as KEY,
-                #[boxed] PREFIX
+                PREFIX
             );
+            if prefix.is_null() {
+                return 0i32;
+            }
             if (*prefix).name == (*dtd).pool.start as *const XML_Char {
                 (*dtd).pool.start = (*dtd).pool.ptr
             } else {
@@ -8283,8 +8269,11 @@ unsafe extern "C" fn getAttributeId(
         parser,
         (*dtd).attributeIds,
         name as *mut XML_Char,
-        #[boxed] ATTRIBUTE_ID
+        ATTRIBUTE_ID
     );
+    if id.is_null() {
+        return NULL as *mut ATTRIBUTE_ID;
+    }
     if (*id).name != name as *mut XML_Char {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
@@ -8305,7 +8294,7 @@ unsafe extern "C" fn getAttributeId(
                         parser,
                         (*dtd).prefixes,
                         name.offset(6),
-                        #[boxed] PREFIX
+                        PREFIX
                     );
                 }
                 (*id).xmlns = XML_TRUE
@@ -8350,8 +8339,11 @@ unsafe extern "C" fn getAttributeId(
                             parser,
                             (*dtd).prefixes,
                             (*dtd).pool.start as KEY,
-                            #[boxed] PREFIX
+                            PREFIX
                         );
+                        if (*id).prefix.is_null() {
+                            return NULL as *mut ATTRIBUTE_ID;
+                        }
                         if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
                             (*dtd).pool.start = (*dtd).pool.ptr
                         } else {
@@ -8593,7 +8585,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             context = s;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
         } else if *s == ASCII_EQUALS as XML_Char {
-            let prefix;
+            let prefix: *mut PREFIX;
             if (*parser)
                 .m_tempPool
                 .ptr
@@ -8619,8 +8611,11 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                     parser,
                     (*dtd).prefixes,
                     (*parser).m_tempPool.start as KEY,
-                    #[boxed] PREFIX
+                    PREFIX
                 );
+                if prefix.is_null() {
+                    return XML_FALSE;
+                }
                 if (*prefix).name == (*parser).m_tempPool.start as *const XML_Char {
                     (*prefix).name = poolCopyString(&mut (*dtd).pool, (*prefix).name);
                     if (*prefix).name.is_null() {
@@ -8826,12 +8821,16 @@ unsafe extern "C" fn dtdCopy(
         if name.is_null() {
             return 0i32;
         }
-        let _ = hash_insert!(
+        if hash_insert!(
             oldParser,
             (*newDtd).prefixes,
             name,
-            #[boxed] PREFIX
-        );
+            PREFIX
+        )
+        .is_null()
+        {
+            return 0i32;
+        }
     }
     for oldA in (*oldDtd).attributeIds.values()
     /* Copy the attribute id table. */
@@ -8860,8 +8859,11 @@ unsafe extern "C" fn dtdCopy(
             oldParser,
             (*newDtd).attributeIds,
             name_0 as *mut XML_Char,
-            #[boxed] ATTRIBUTE_ID
+            ATTRIBUTE_ID
         );
+        if newA.is_null() {
+            return 0i32;
+        }
         (*newA).maybeTokenized = (*oldA).maybeTokenized;
         if !(*oldA).prefix.is_null() {
             (*newA).xmlns = (*oldA).xmlns;
@@ -8889,6 +8891,9 @@ unsafe extern "C" fn dtdCopy(
             name_1,
             ELEMENT_TYPE
         );
+        if newE.is_null() {
+            return 0i32;
+        }
         if (*oldE).nDefaultAtts != 0 {
             (*newE).defaultAtts = (*ms).malloc_fcn.expect("non-null function pointer")(
                 ((*oldE).nDefaultAtts as c_ulong)
@@ -8990,7 +8995,7 @@ unsafe extern "C" fn copyEntityTable(
             oldParser,
             newTable,
             name,
-            #[expat_boxed] ENTITY
+            ENTITY
         );
         if newE.is_null() {
             return 0i32;
@@ -9576,6 +9581,9 @@ unsafe extern "C" fn getElementType(
         name,
         ELEMENT_TYPE
     );
+    if ret.is_null() {
+        return NULL as *mut ELEMENT_TYPE;
+    }
     if (*ret).name != name {
         (*dtd).pool.ptr = (*dtd).pool.start
     } else {
