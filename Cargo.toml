@@ -35,12 +35,14 @@ name = "xmlwf"
 [[bin]]
 path = "src/tests/runtests.rs"
 name = "runtests"
+required-features = ["tests"]
 
 [dependencies]
 libc = "0.2"
 wchar = { path = "deps/wchar" }
 
 [features]
+default = ["tests"]
 unicode = []
 unicode_wchar_t = []
-default = []
+tests = []
