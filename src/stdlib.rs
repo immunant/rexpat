@@ -21,16 +21,13 @@ extern "C" {
     pub fn getrandom(__buffer: *mut c_void, __length: size_t, __flags: c_uint) -> ssize_t;
 
     #[no_mangle]
-    pub static mut stdin: *mut FILE;
-
-    #[no_mangle]
     pub static mut stdout: *mut FILE;
 
     #[no_mangle]
     pub static mut stderr: *mut FILE;
 
     #[no_mangle]
-    pub static mut stdifjan: *mut FILE;
+    pub static mut stdin: *mut FILE;
 
     #[no_mangle]
     pub fn strncmp(_: *const c_char, _: *const c_char, _: c_ulong) -> c_int;
