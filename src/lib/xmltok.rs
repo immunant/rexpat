@@ -1652,17 +1652,17 @@ impl XmlEncoding for InitEncoding {
     }
     unsafe extern "C" fn cdataSectionTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
-        nextTokPtr: *mut *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
+        _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
     unsafe extern "C" fn ignoreSectionTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
-        nextTokPtr: *mut *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
+        _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
@@ -1670,55 +1670,55 @@ impl XmlEncoding for InitEncoding {
     // literalScanners[2]
     unsafe extern "C" fn attributeValueTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
-        nextTokPtr: *mut *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
+        _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
     unsafe extern "C" fn entityValueTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
-        nextTokPtr: *mut *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
+        _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
 
     unsafe extern "C" fn nameMatchesAscii(
         &self,
-        ptr1: *const libc::c_char,
-        end1: *const libc::c_char,
-        ptr2: *const libc::c_char,
+        _ptr1: *const libc::c_char,
+        _end1: *const libc::c_char,
+        _ptr2: *const libc::c_char,
     ) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int {
+    unsafe extern "C" fn nameLength(&self, _ptr: *const libc::c_char) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn skipS(&self, ptr: *const libc::c_char) -> *const libc::c_char {
+    unsafe extern "C" fn skipS(&self, _ptr: *const libc::c_char) -> *const libc::c_char {
         std::ptr::null()
     }
 
     unsafe extern "C" fn getAtts(
         &self,
-        ptr: *const libc::c_char,
-        attsMax: libc::c_int,
-        atts: *mut ATTRIBUTE,
+        _ptr: *const libc::c_char,
+        _attsMax: libc::c_int,
+        _atts: *mut ATTRIBUTE,
     ) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn charRefNumber(&self, ptr: *const libc::c_char) -> libc::c_int {
+    unsafe extern "C" fn charRefNumber(&self, _ptr: *const libc::c_char) -> libc::c_int {
         0
     }
 
     unsafe extern "C" fn predefinedEntityName(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
     ) -> libc::c_int {
         0
     }
@@ -1737,29 +1737,29 @@ impl XmlEncoding for InitEncoding {
 
     unsafe extern "C" fn isPublicId(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
-        badPtr: *mut *const libc::c_char,
+        _ptr: *const libc::c_char,
+        _end: *const libc::c_char,
+        _badPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
 
     unsafe extern "C" fn utf8Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        _fromP: *mut *const c_char,
+        _fromLim: *const c_char,
+        _toP: *mut *mut c_char,
+        _toLim: *const c_char,
     ) -> XML_Convert_Result {
         0
     }
 
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        _fromP: *mut *const c_char,
+        _fromLim: *const c_char,
+        _toP: *mut *mut c_ushort,
+        _toLim: *const c_ushort,
     ) -> XML_Convert_Result {
         0
     }
