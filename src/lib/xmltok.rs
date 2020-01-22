@@ -354,24 +354,20 @@ macro_rules! UCS2_GET_NAMING {
     };
 }
 
-struct Utf8Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+struct Utf8EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> Utf8Encoding<T> {
-    fn new() -> Box<dyn XmlEncoding> {
-        Box::new(Utf8Encoding::<Utf8EncodingTable>(std::marker::PhantomData))
-    }
-    fn newNS() -> Box<dyn XmlEncoding> {
-        Box::new(Utf8Encoding::<Utf8EncodingTableNS>(std::marker::PhantomData))
-    }
-    fn new_internal() -> Box<dyn XmlEncoding> {
-        Box::new(Utf8Encoding::<InternalUtf8EncodingTable>(std::marker::PhantomData))
-    }
-    fn newNS_internal() -> Box<dyn XmlEncoding> {
-        Box::new(Utf8Encoding::<InternalUtf8EncodingTableNS>(std::marker::PhantomData))
+impl<T: NormalEncodingTable> Utf8EncodingImpl<T> {
+    fn new() -> Self {
+        Self(std::marker::PhantomData)
     }
 }
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
+type Utf8Encoding = Utf8EncodingImpl<Utf8EncodingTable>;
+type Utf8EncodingNS = Utf8EncodingImpl<Utf8EncodingTableNS>;
+type InternalUtf8Encoding = Utf8EncodingImpl<InternalUtf8EncodingTable>;
+type InternalUtf8EncodingNS = Utf8EncodingImpl<InternalUtf8EncodingTableNS>;
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     fn isUtf8(&self) -> bool { true }
     fn isUtf16(&self) -> bool { false }
 
@@ -548,9 +544,18 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8Encoding<T> {
     }
 }
 
-struct Latin1Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+struct Latin1EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
+impl<T: NormalEncodingTable> Latin1EncodingImpl<T> {
+    fn new() -> Self {
+        Self(std::marker::PhantomData)
+    }
+}
+
+type Latin1Encoding = Latin1EncodingImpl<Latin1EncodingTable>;
+type Latin1EncodingNS = Latin1EncodingImpl<Latin1EncodingTableNS>;
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     fn isUtf8(&self) -> bool { false }
     fn isUtf16(&self) -> bool { false }
 
@@ -619,18 +624,18 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1Encoding<T> {
     }
 }
 
-struct AsciiEncoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+struct AsciiEncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> AsciiEncoding<T> {
-    fn new() -> Box<dyn XmlEncoding> {
-        Box::new(AsciiEncoding::<AsciiEncodingTable>(std::marker::PhantomData))
-    }
-    fn newNS() -> Box<dyn XmlEncoding> {
-        Box::new(AsciiEncoding::<AsciiEncodingTableNS>(std::marker::PhantomData))
+impl<T: NormalEncodingTable> AsciiEncodingImpl<T> {
+    fn new() -> Self {
+        Self(std::marker::PhantomData)
     }
 }
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
+type AsciiEncoding = AsciiEncodingImpl<AsciiEncodingTable>;
+type AsciiEncodingNS = AsciiEncodingImpl<AsciiEncodingTableNS>;
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     fn isUtf8(&self) -> bool { true }
     fn isUtf16(&self) -> bool { false }
 
@@ -699,9 +704,20 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncoding<T> {
     }
 }
 
-struct Little2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+struct Little2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
+impl<T: NormalEncodingTable> Little2EncodingImpl<T> {
+    fn new() -> Self {
+        Self(std::marker::PhantomData)
+    }
+}
+
+type Little2Encoding = Little2EncodingImpl<Latin1EncodingTable>;
+type Little2EncodingNS = Little2EncodingImpl<Latin1EncodingTableNS>;
+type InternalLittle2Encoding = Little2EncodingImpl<InternalLatin1EncodingTable>;
+type InternalLittle2EncodingNS = Little2EncodingImpl<InternalLatin1EncodingTableNS>;
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     fn isUtf8(&self) -> bool { false }
 
     #[cfg(target_endian = "little")]
@@ -784,9 +800,20 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
     }
 }
 
-struct Big2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
+struct Big2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
+impl<T: NormalEncodingTable> Big2EncodingImpl<T> {
+    fn new() -> Self {
+        Self(std::marker::PhantomData)
+    }
+}
+
+type Big2Encoding = Big2EncodingImpl<Latin1EncodingTable>;
+type Big2EncodingNS = Big2EncodingImpl<Latin1EncodingTableNS>;
+type InternalBig2Encoding = Big2EncodingImpl<InternalLatin1EncodingTable>;
+type InternalBig2EncodingNS = Big2EncodingImpl<InternalLatin1EncodingTableNS>;
+
+impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     fn MINBPC(&self) -> isize { 2 }
     fn isUtf8(&self) -> bool { false }
 
@@ -2008,22 +2035,22 @@ static mut latin1_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut latin1_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut internal_utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut internal_utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static mut internal_utf8_encoding: Option<Box<InternalUtf8Encoding>> = None;
+static mut internal_utf8_encoding_ns: Option<Box<InternalUtf8EncodingNS>> = None;
 static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding: Option<Box<Little2Encoding::<InternalLatin1EncodingTable>>> = None;
+static mut internal_little2_encoding: Option<Box<InternalLittle2Encoding>> = None;
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding_ns: Option<Box<Little2Encoding::<InternalLatin1EncodingTableNS>>> = None;
+static mut internal_little2_encoding_ns: Option<Box<InternalLittle2EncodingNS>> = None;
 static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding: Option<Box<Big2Encoding::<InternalLatin1EncodingTable>>> = None;
+static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding_ns: Option<Box<Big2Encoding::<InternalLatin1EncodingTableNS>>> = None;
+static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
 
     /* This file is included!
                                 __  __            _
@@ -3743,33 +3770,28 @@ pub unsafe extern "C" fn XmlInitUnknownEncodingNS(
     return enc;
 }
 
-macro_rules! init_encoding {
-    ($name:ident, $enc:ident, $table:ident) => {
-        $name = Some(Box::new($enc::<$table>(std::marker::PhantomData)));
-    };
-}
 unsafe extern "C" fn run_static_initializers() {
-    init_encoding!(latin1_encoding, Latin1Encoding, Latin1EncodingTable);
-    init_encoding!(latin1_encoding_ns, Latin1Encoding, Latin1EncodingTableNS);
-    init_encoding!(utf8_encoding, Utf8Encoding, Utf8EncodingTable);
-    init_encoding!(utf8_encoding_ns, Utf8Encoding, Utf8EncodingTableNS);
-    init_encoding!(internal_utf8_encoding, Utf8Encoding, InternalUtf8EncodingTable);
-    init_encoding!(internal_utf8_encoding_ns, Utf8Encoding, InternalUtf8EncodingTableNS);
-    init_encoding!(ascii_encoding, AsciiEncoding, AsciiEncodingTable);
-    init_encoding!(ascii_encoding_ns, AsciiEncoding, AsciiEncodingTableNS);
-    init_encoding!(little2_encoding, Little2Encoding, Latin1EncodingTable);
-    init_encoding!(little2_encoding_ns, Little2Encoding, Latin1EncodingTableNS);
+    latin1_encoding = Some(Box::new(Latin1Encoding::new()));
+    latin1_encoding_ns = Some(Box::new(Latin1EncodingNS::new()));
+    utf8_encoding = Some(Box::new(Utf8Encoding::new()));
+    utf8_encoding_ns = Some(Box::new(Utf8EncodingNS::new()));
+    internal_utf8_encoding = Some(Box::new(InternalUtf8Encoding::new()));
+    internal_utf8_encoding_ns = Some(Box::new(InternalUtf8EncodingNS::new()));
+    ascii_encoding = Some(Box::new(AsciiEncoding::new()));
+    ascii_encoding_ns = Some(Box::new(AsciiEncodingNS::new()));
+    little2_encoding = Some(Box::new(Little2Encoding::new()));
+    little2_encoding_ns = Some(Box::new(Little2EncodingNS::new()));
     #[cfg(target_endian = "little")]
     {
-        init_encoding!(internal_little2_encoding, Little2Encoding, InternalLatin1EncodingTable);
-        init_encoding!(internal_little2_encoding_ns, Little2Encoding, InternalLatin1EncodingTableNS);
+        internal_little2_encoding = Some(Box::new(InternalLittle2Encoding::new()));
+        internal_little2_encoding_ns = Some(Box::new(InternalLittle2EncodingNS::new()));
     }
-    init_encoding!(big2_encoding, Big2Encoding, Latin1EncodingTable);
-    init_encoding!(big2_encoding_ns, Big2Encoding, Latin1EncodingTableNS);
+    big2_encoding = Some(Box::new(Big2Encoding::new()));
+    big2_encoding_ns = Some(Box::new(Big2EncodingNS::new()));
     #[cfg(target_endian = "big")]
     {
-        init_encoding!(internal_big2_encoding, Big2Encoding, InternalLatin1EncodingTable);
-        init_encoding!(internal_big2_encoding_ns, Big2Encoding, InternalLatin1EncodingTableNS);
+        internal_big2_encoding = Some(Box::new(InternalBig2Encoding::new()));
+        internal_big2_encoding_ns = Some(Box::new(InternalBig2EncodingNS::new()));
     }
     encodingsNS = [
         latin1_encoding_ns.as_ref(),
