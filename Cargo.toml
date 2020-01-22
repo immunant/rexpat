@@ -23,14 +23,17 @@ crate-type = ["staticlib", "rlib"]
 [[bin]]
 path = "src/examples/outline.rs"
 name = "outline"
+required-features = ["examples"]
 
 [[bin]]
 path = "src/examples/elements.rs"
 name = "elements"
+required-features = ["examples"]
 
 [[bin]]
 path = "src/xmlwf/xmlwf.rs"
 name = "xmlwf"
+required-features = ["tools"]
 
 [[bin]]
 path = "src/tests/runtests.rs"
@@ -46,3 +49,5 @@ default = ["tests"]
 unicode = []
 unicode_wchar_t = []
 tests = []
+tools = []
+examples = []
