@@ -138,8 +138,6 @@ use alloc_wg::boxed::Box;
 
 use std::collections::{hash_map, HashMap};
 use std::hash::{Hash, Hasher};
-use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 
 #[inline]
