@@ -700,10 +700,10 @@ struct Little2Encoding<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 impl<T: NormalEncodingTable> XmlEncodingImpl for Little2Encoding<T> {
     fn isUtf8(&self) -> bool { false }
 
-    #[cfg(taget_endian = "little")]
+    #[cfg(target_endian = "little")]
     fn isUtf16(&self) -> bool { true }
 
-    #[cfg(not(taget_endian = "little"))]
+    #[cfg(not(target_endian = "little"))]
     fn isUtf16(&self) -> bool { false }
 
     fn MINBPC(&self) -> isize { 2 }
@@ -786,10 +786,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2Encoding<T> {
     fn MINBPC(&self) -> isize { 2 }
     fn isUtf8(&self) -> bool { false }
 
-    #[cfg(taget_endian = "big")]
+    #[cfg(target_endian = "big")]
     fn isUtf16(&self) -> bool { true }
 
-    #[cfg(not(taget_endian = "big"))]
+    #[cfg(not(target_endian = "big"))]
     fn isUtf16(&self) -> bool { false }
 
     #[inline]
@@ -2010,15 +2010,15 @@ static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-#[cfg(taget_endian = "little")]
+#[cfg(target_endian = "little")]
 static mut internal_little2_encoding: Option<Box<dyn XmlEncoding>> = None;
-#[cfg(taget_endian = "little")]
+#[cfg(target_endian = "little")]
 static mut internal_little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-#[cfg(taget_endian = "big")]
+#[cfg(target_endian = "big")]
 static mut internal_big2_encoding: Option<Box<dyn XmlEncoding>> = None;
-#[cfg(taget_endian = "big")]
+#[cfg(target_endian = "big")]
 static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 
     /* This file is included!
@@ -2063,28 +2063,28 @@ static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
         return &**internal_utf8_encoding.as_ref().unwrap();
     }
 
-    #[cfg(taget_endian = "little")]
+    #[cfg(target_endian = "little")]
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> ENCODING {
-        return &internal_little2_encoding;
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> *const ENCODING {
+        return &**internal_little2_encoding.as_ref().unwrap();
     }
 
-    #[cfg(taget_endian = "big")]
+    #[cfg(target_endian = "big")]
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> ENCODING {
-        return &internal_big2_encoding;
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> *const ENCODING {
+        return &**internal_big2_encoding.as_ref().unwrap();
     }
 
-    #[cfg(taget_endian = "little")]
+    #[cfg(target_endian = "little")]
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> ENCODING {
-        return &internal_little2_encoding_ns;
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> *const ENCODING {
+        return &**internal_little2_encoding_ns.as_ref().unwrap();
     }
 
-    #[cfg(taget_endian = "big")]
+    #[cfg(target_endian = "big")]
     #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> ENCODING {
-        return &internal_big2_encoding_ns;
+    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> *const ENCODING {
+        return &**internal_big2_encoding_ns.as_ref().unwrap();
     }
 
     // Initialized in run_static_initializers
@@ -3742,14 +3742,14 @@ unsafe extern "C" fn run_static_initializers() {
     init_encoding!(ascii_encoding_ns, AsciiEncoding, AsciiEncodingTableNS);
     init_encoding!(little2_encoding, Little2Encoding, Latin1EncodingTable);
     init_encoding!(little2_encoding_ns, Little2Encoding, Latin1EncodingTableNS);
-    #[cfg(taget_endian = "little")]
+    #[cfg(target_endian = "little")]
     {
         init_encoding!(internal_little2_encoding, Little2Encoding, InternalLatin1EncodingTable);
         init_encoding!(internal_little2_encoding_ns, Little2Encoding, InternalLatin1EncodingTableNS);
     }
     init_encoding!(big2_encoding, Big2Encoding, Latin1EncodingTable);
     init_encoding!(big2_encoding_ns, Big2Encoding, Latin1EncodingTableNS);
-    #[cfg(taget_endian = "big")]
+    #[cfg(target_endian = "big")]
     {
         init_encoding!(internal_big2_encoding, Big2Encoding, InternalLatin1EncodingTable);
         init_encoding!(internal_big2_encoding_ns, Big2Encoding, InternalLatin1EncodingTableNS);

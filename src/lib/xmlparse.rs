@@ -458,7 +458,7 @@ mod unicode_defines {
 
     macro_rules! MUST_CONVERT {
         ($enc:path, $s:expr $(,)?) => {
-            (*$enc).isUtf16 == 0 || !$s.is_null()
+            !(*$enc).isUtf16() || !$s.is_null()
         };
     }
 
