@@ -8781,12 +8781,12 @@ unsafe extern "C" fn dtdDestroy(
             (*ms).free_fcn.expect("non-null function pointer")((*e).defaultAtts as *mut c_void);
         }
     }
-    let _ = std::mem::take(&mut (*p).generalEntities);
-    let _ = std::mem::take(&mut (*p).paramEntities);
+    std::ptr::drop_in_place(&mut (*p).generalEntities);
+    std::ptr::drop_in_place(&mut (*p).paramEntities);
     /* XML_DTD */
-    let _ = std::mem::take(&mut (*p).elementTypes);
-    let _ = std::mem::take(&mut (*p).attributeIds);
-    let _ = std::mem::take(&mut (*p).prefixes);
+    std::ptr::drop_in_place(&mut (*p).elementTypes);
+    std::ptr::drop_in_place(&mut (*p).attributeIds);
+    std::ptr::drop_in_place(&mut (*p).prefixes);
     poolDestroy(&mut (*p).pool);
     poolDestroy(&mut (*p).entityValuePool);
     if isDocEntity != 0 {
