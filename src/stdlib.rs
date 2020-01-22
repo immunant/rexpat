@@ -13,9 +13,13 @@ extern "C" {
     pub fn _setjmp(_: *mut __jmp_buf_tag) -> c_int;
 
     #[no_mangle]
+    pub fn clock() -> clock_t;
+
+    #[no_mangle]
     pub fn longjmp(_: *mut __jmp_buf_tag, _: c_int) -> !;
     #[no_mangle]
     pub fn getrandom(__buffer: *mut c_void, __length: size_t, __flags: c_uint) -> ssize_t;
+
     #[no_mangle]
     pub static mut stdout: *mut FILE;
 
@@ -83,6 +87,13 @@ extern "C" {
     pub fn gettimeofday(__tv: *mut timeval, __tz: __timezone_ptr_t) -> c_int;
     #[no_mangle]
     pub fn read(__fd: c_int, __buf: *mut c_void, __nbytes: size_t) -> ssize_t;
+
+    #[no_mangle]
+    pub fn __xstat(
+        __ver: libc::c_int,
+        __filename: *const libc::c_char,
+        __stat_buf: *mut stat,
+    );
 }
 pub const __ASSERT_FUNCTION: [c_char; 46] = unsafe {
     *::std::mem::transmute::<&[u8; 46], &[c_char; 46]>(
@@ -200,6 +211,7 @@ pub type __mode_t = c_uint;
 pub type __nlink_t = c_ulong;
 pub type __off_t = c_long;
 pub type __off64_t = c_long;
+pub type __clock_t = c_long;
 pub type __pid_t = c_int;
 pub type __time_t = c_long;
 pub type __suseconds_t = c_long;
@@ -208,3 +220,8 @@ pub type __blkcnt_t = c_long;
 pub type __ssize_t = c_long;
 pub type __syscall_slong_t = c_long;
 pub type intptr_t = c_long;
+
+pub type clock_t = __clock_t;
+pub const CLOCKS_PER_SEC: c_int = 1000000 as c_int;
+pub const _STAT_VER_LINUX: c_int = 1 as c_int;
+pub const _STAT_VER: c_int = _STAT_VER_LINUX;
