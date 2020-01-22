@@ -137,7 +137,6 @@ use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, Reallo
 use alloc_wg::boxed::Box;
 
 use std::collections::{hash_map, HashMap};
-use std::hash::{Hash, Hasher};
 use std::ptr::NonNull;
 
 #[inline]
@@ -355,34 +354,20 @@ pub struct TAG_NAME {
     pub prefixLen: c_int,
 }
 
-#[derive(Debug, Clone)]
-pub struct HashKey(KEY);
+// FIXME: add a proper lifetime
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct HashKey(&'static [XML_Char]);
 
 impl HashKey {
-    unsafe fn as_slice<'a>(&self) -> &'a [XML_Char] {
-        let len = keylen(self.0);
-        std::slice::from_raw_parts(self.0, len as usize)
+    unsafe fn from(key: KEY) -> Self {
+        HashKey(std::slice::from_raw_parts(key, keylen(key) as usize))
     }
 }
-
-impl Hash for HashKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        unsafe { self.as_slice().hash(state) }
-    }
-}
-
-impl PartialEq for HashKey {
-    fn eq(&self, other: &HashKey) -> bool {
-        unsafe { self.as_slice() == other.as_slice() }
-    }
-}
-
-impl Eq for HashKey {}
 
 macro_rules! hash_insert {
     ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
-        match $map.entry(HashKey(__key)) {
+        match $map.entry(HashKey::from(__key)) {
             hash_map::Entry::Occupied(e) => e.into_mut().as_mut(),
             hash_map::Entry::Vacant(e) => {
                 let v = $et { name: __key, ..std::mem::zeroed() };
@@ -398,7 +383,7 @@ macro_rules! hash_insert {
 
 macro_rules! hash_lookup {
     ($map:expr, $key:expr) => {
-        $map.get_mut(&HashKey($key))
+        $map.get_mut(&HashKey::from($key))
             .map_or_else(std::ptr::null_mut, |x| x.as_mut())
     }
 }
@@ -3863,7 +3848,7 @@ unsafe extern "C" fn storeAtts(
     let mut binding: *mut BINDING = 0 as *mut BINDING;
     let mut localPart: *const XML_Char = 0 as *const XML_Char;
     /* lookup the element type name */
-    let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey((*tagNamePtr).str_0)) {
+    let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey::from((*tagNamePtr).str_0)) {
         elementType.as_mut()
     } else {
         let mut name: *const XML_Char = poolCopyString(&mut (*dtd).pool, (*tagNamePtr).str_0);
@@ -4170,7 +4155,7 @@ unsafe extern "C" fn storeAtts(
                 /* not prefixed */
                 /* prefixed */
                 *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                let id = (*dtd).attributeIds.get(&HashKey(s));
+                let id = (*dtd).attributeIds.get(&HashKey::from(s));
                 if id.is_none() || id.unwrap().prefix.is_null() {
                     /* This code is walking through the appAtts array, dealing
                      * with (in this case) a prefixed attribute name.  To be in
@@ -8574,7 +8559,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             {
                 return XML_FALSE;
             }
-            if let Some(e) = (*dtd).generalEntities.get_mut(&HashKey((*parser).m_tempPool.start as KEY)) {
+            if let Some(e) = (*dtd).generalEntities.get_mut(&HashKey::from((*parser).m_tempPool.start as KEY)) {
                 e.open = XML_TRUE
             }
             if *s != '\u{0}' as XML_Char {
