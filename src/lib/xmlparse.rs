@@ -383,7 +383,7 @@ macro_rules! hash_insert {
     ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
         match $map.entry(HashKey(__key)) {
-            hash_map::Entry::Occupied(ref mut e) => e.get_mut().as_mut(),
+            hash_map::Entry::Occupied(e) => e.into_mut().as_mut(),
             hash_map::Entry::Vacant(e) => {
                 let v = $et { name: __key, ..std::mem::zeroed() };
                 let b = ExpatBox::try_new_in(v, (*$parser).m_mem);
