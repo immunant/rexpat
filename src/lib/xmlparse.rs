@@ -136,7 +136,7 @@ use libc::{SYS_getrandom, syscall};
 use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, ReallocRef};
 use alloc_wg::boxed::Box;
 
-use std::collections::{hash_map, HashMap};
+use std::collections::{hash_map, HashMap, HashSet};
 use std::ptr::NonNull;
 
 #[inline]
@@ -151,7 +151,7 @@ unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
@@ -235,9 +235,7 @@ pub struct XML_ParserStruct {
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: *mut super::xmltok::ATTRIBUTE,
-    pub m_nsAtts: *mut NS_ATT,
-    pub m_nsAttsVersion: c_ulong,
-    pub m_nsAttsPower: c_uchar,
+    pub m_nsAtts: HashSet<HashKey>,
     pub m_position: super::xmltok::POSITION,
     pub m_tempPool: STRING_POOL,
     pub m_temp2Pool: STRING_POOL,
@@ -274,14 +272,6 @@ pub struct block {
     pub next: *mut block,
     pub size: c_int,
     pub s: [XML_Char; 1],
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct NS_ATT {
-    pub version: c_ulong,
-    pub hash: c_ulong,
-    pub uriName: *const XML_Char,
 }
 
 pub type BINDING = binding;
@@ -1021,9 +1011,7 @@ unsafe extern "C" fn parserCreate(
     (*parser).m_namespaceSeparator = ASCII_EXCL as XML_Char;
     (*parser).m_ns = XML_FALSE;
     (*parser).m_ns_triplets = XML_FALSE;
-    (*parser).m_nsAtts = NULL as *mut NS_ATT;
-    (*parser).m_nsAttsVersion = 0;
-    (*parser).m_nsAttsPower = 0;
+    std::ptr::write(&mut (*parser).m_nsAtts, HashSet::new());
     (*parser).m_protocolEncodingName = NULL as *const XML_Char;
     poolInit(&mut (*parser).m_tempPool, &(*parser).m_mem);
     poolInit(&mut (*parser).m_temp2Pool, &(*parser).m_mem);
@@ -1485,7 +1473,7 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
     FREE!(parser, (*parser).m_groupConnector as *mut c_void);
     FREE!(parser, (*parser).m_buffer as *mut c_void);
     FREE!(parser, (*parser).m_dataBuf as *mut c_void);
-    FREE!(parser, (*parser).m_nsAtts as *mut c_void);
+    std::ptr::drop_in_place(&mut (*parser).m_nsAtts);
     FREE!(parser, (*parser).m_unknownEncodingMem);
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
@@ -4086,71 +4074,16 @@ unsafe extern "C" fn storeAtts(
     i = 0; /* hash table index */
     if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
         let mut j_0: c_int = 0;
-        let mut version: c_ulong = (*parser).m_nsAttsVersion;
-        let mut nsAttsSize: c_int = (1) << (*parser).m_nsAttsPower as c_int;
-        let mut oldNsAttsPower: c_uchar = (*parser).m_nsAttsPower;
         if nPrefixes != 0 { // MOZILLA CHANGE
             /* size of hash table must be at least 2 * (# of prefixed attributes) */
-            if nPrefixes << 1 >> (*parser).m_nsAttsPower as c_int != 0 {
-                /* true for m_nsAttsPower = 0 */
-                let mut temp_0: *mut NS_ATT = 0 as *mut NS_ATT;
-                loop
-                /* hash table size must also be a power of 2 and >= 8 */
-                {
-                    let fresh20 = (*parser).m_nsAttsPower;
-                    (*parser).m_nsAttsPower = (*parser).m_nsAttsPower.wrapping_add(1);
-                    if !(nPrefixes >> fresh20 as c_int != 0) {
-                        break;
-                    }
-                }
-                if ((*parser).m_nsAttsPower as c_int) < 3 {
-                    (*parser).m_nsAttsPower = 3u8
-                }
-                nsAttsSize = (1) << (*parser).m_nsAttsPower as c_int;
-                temp_0 = REALLOC!(
-                    parser,
-                    (*parser).m_nsAtts as *mut c_void,
-                    (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
-                ) as *mut NS_ATT;
-                if temp_0.is_null() {
-                    /* Restore actual size of memory in m_nsAtts */
-                    (*parser).m_nsAttsPower = oldNsAttsPower;
-                    return XML_ERROR_NO_MEMORY;
-                }
-                (*parser).m_nsAtts = temp_0;
-                version = 0
-            }
-            /* using a version flag saves us from initializing m_nsAtts every time */
-            if version == 0 {
-                /* initialize version flags when version wraps around */
-                version = INIT_ATTS_VERSION as c_ulong;
-                j_0 = nsAttsSize;
-                while j_0 != 0 {
-                    j_0 -= 1;
-                    (*(*parser).m_nsAtts.offset(j_0 as isize)).version = version
-                }
-            }
-            version = version.wrapping_sub(1);
-            (*parser).m_nsAttsVersion = version;
+            (*parser).m_nsAtts.clear();
+            (*parser).m_nsAtts.reserve((nPrefixes as usize) << 1);
         } // MOZILLA CHANGE
         /* expand prefixed names and check for duplicates */
         while i < attIndex {
             let mut s: *const XML_Char = *appAtts.offset(i as isize);
             if *s.offset(-1) as c_int == 2 {
                 let mut b: *const BINDING = 0 as *const BINDING;
-                let mut uriHash: c_ulong = 0;
-                let mut sip_state: siphash = siphash {
-                    v0: 0,
-                    v1: 0,
-                    v2: 0,
-                    v3: 0,
-                    buf: [0; 8],
-                    p: 0 as *mut c_uchar,
-                    c: 0,
-                };
-                let mut sip_key: sipkey = sipkey { k: [0; 2] };
-                copy_salt_to_sipkey(parser, &mut sip_key);
-                sip24_init(&mut sip_state, &mut sip_key);
                 /* clear flag */
                 /* not prefixed */
                 /* prefixed */
@@ -4197,12 +4130,6 @@ unsafe extern "C" fn storeAtts(
                     }
                     j_0 += 1
                 }
-                sip24_update(
-                    &mut sip_state,
-                    (*b).uri as *const c_void,
-                    ((*b).uriLen as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                );
                 loop {
                     let fresh22 = s;
                     s = s.offset(1);
@@ -4210,11 +4137,6 @@ unsafe extern "C" fn storeAtts(
                         break;
                     }
                 }
-                sip24_update(
-                    &mut sip_state,
-                    s as *const c_void,
-                    keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                );
                 loop {
                     /* copies null terminator */
                     if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
@@ -4236,39 +4158,14 @@ unsafe extern "C" fn storeAtts(
                         break;
                     }
                 }
-                uriHash = sip24_final(&mut sip_state);
                 /* Check hash table for duplicate of expanded name (uriName).
                    Derived from code in lookup(parser, HASH_TABLE *table, ...).
                 */
-                let mut step: c_uchar = 0; /* index into hash table */
-                let mut mask: c_ulong = (nsAttsSize - 1) as c_ulong;
-                j_0 = (uriHash & mask) as c_int;
-                while (*(*parser).m_nsAtts.offset(j_0 as isize)).version == version {
-                    /* for speed we compare stored hash values first */
-                    if uriHash == (*(*parser).m_nsAtts.offset(j_0 as isize)).hash {
-                        let mut s1: *const XML_Char = (*parser).m_tempPool.start;
-                        let mut s2: *const XML_Char =
-                            (*(*parser).m_nsAtts.offset(j_0 as isize)).uriName;
-                        /* s1 is null terminated, but not s2 */
-                        while *s1 as c_int == *s2 as c_int && *s1 as c_int != 0 {
-                            s1 = s1.offset(1);
-                            s2 = s2.offset(1)
-                        }
-                        if *s1 as c_int == 0 {
-                            return XML_ERROR_DUPLICATE_ATTRIBUTE;
-                        }
-                    }
-                    if step == 0 {
-                        step = ((uriHash & !mask) >> (*parser).m_nsAttsPower as c_int - 1
-                            & mask >> 2
-                            | 1) as c_uchar
-                    }
-                    if j_0 < step as c_int {
-                        j_0 += nsAttsSize - step as c_int
-                    } else {
-                        j_0 -= step as c_int
-                    };
+                let hk = HashKey::from((*parser).m_tempPool.start as KEY);
+                if !(*parser).m_nsAtts.insert(hk) {
+                    return XML_ERROR_DUPLICATE_ATTRIBUTE;
                 }
+
                 if (*parser).m_ns_triplets != 0 {
                     /* append namespace separator and prefix */
                     *(*parser).m_tempPool.ptr.offset(-1) = (*parser).m_namespaceSeparator;
@@ -4299,11 +4196,6 @@ unsafe extern "C" fn storeAtts(
                 (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
                 let ref mut fresh27 = *appAtts.offset(i as isize);
                 *fresh27 = s;
-                /* fill empty slot with new version, uriName and hash value */
-                (*(*parser).m_nsAtts.offset(j_0 as isize)).version = version;
-                (*(*parser).m_nsAtts.offset(j_0 as isize)).hash = uriHash;
-                let ref mut fresh28 = (*(*parser).m_nsAtts.offset(j_0 as isize)).uriName;
-                *fresh28 = s;
                 nPrefixes -= 1;
                 if nPrefixes == 0 && nXMLNSDeclarations == 0 {
                     i += 2;
