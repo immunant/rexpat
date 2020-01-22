@@ -8583,7 +8583,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             context = s;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
         } else if *s == ASCII_EQUALS as XML_Char {
-            let prefix: *mut PREFIX;
+            let mut prefix: *mut PREFIX;
             if (*parser)
                 .m_tempPool
                 .ptr
@@ -8605,18 +8605,26 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 {
                     return XML_FALSE;
                 }
-                prefix = hash_insert!(
-                    parser,
+                prefix = hash_lookup!(
                     &mut (*dtd).prefixes,
-                    (*parser).m_tempPool.start as KEY,
-                    PREFIX
+                    (*parser).m_tempPool.start as KEY
                 );
                 if prefix.is_null() {
-                    return XML_FALSE;
-                }
-                if (*prefix).name == (*parser).m_tempPool.start as *const XML_Char {
-                    (*prefix).name = poolCopyString(&mut (*dtd).pool, (*prefix).name);
-                    if (*prefix).name.is_null() {
+                    // libexpat-rs change: we need to copy the prefix name
+                    // into the DTD pool, since the HashMap keeps a permanent
+                    // reference to the name which we can't modify after
+                    // the call to `hash_insert!` (unlike the original C code)
+                    let prefix_name = poolCopyString(&mut (*dtd).pool, (*parser).m_tempPool.start);
+                    if prefix_name.is_null() {
+                        return XML_FALSE;
+                    }
+                    prefix = hash_insert!(
+                        parser,
+                        &mut (*dtd).prefixes,
+                        prefix_name as KEY,
+                        PREFIX
+                    );
+                    if prefix.is_null() {
                         return XML_FALSE;
                     }
                 }
