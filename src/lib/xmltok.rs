@@ -35,6 +35,10 @@
 
 use crate::stdlib::memcpy;
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+
+#[cfg(feature = "mozilla")]
+pub mod moz_extensions;
+
 pub const XML_TOK_TRAILING_RSQB: c_int = -5; /* ] or ]] at the end of the scan; might be
                                              start of illegal ]]> sequence */
 
@@ -2011,15 +2015,15 @@ static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding: Option<Box<dyn XmlEncoding>> = None;
+static mut internal_little2_encoding: Option<Box<Little2Encoding::<InternalLatin1EncodingTable>>> = None;
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static mut internal_little2_encoding_ns: Option<Box<Little2Encoding::<InternalLatin1EncodingTableNS>>> = None;
 static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
 static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding: Option<Box<dyn XmlEncoding>> = None;
+static mut internal_big2_encoding: Option<Box<Big2Encoding::<InternalLatin1EncodingTable>>> = None;
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static mut internal_big2_encoding_ns: Option<Box<Big2Encoding::<InternalLatin1EncodingTableNS>>> = None;
 
     /* This file is included!
                                 __  __            _
@@ -2231,7 +2235,7 @@ static mut internal_big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
 
 pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
-pub use crate::src::lib::nametab::{namePages, namingBitmap, nmstrtPages};
+pub use crate::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::xmltok_impl_c::{
@@ -3137,6 +3141,9 @@ static mut KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, '\u{0}' as c_char];
 
 static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
 
+#[cfg(feature = "mozilla")]
+static mut KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, '\u{0}' as c_char];
+
 unsafe extern "C" fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
         unsafe extern "C" fn(
@@ -3178,6 +3185,16 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
         }
         if !versionEndPtr.is_null() {
             *versionEndPtr = ptr
+        }
+        #[cfg(feature = "mozilla")]
+        {
+            if (*enc).nameMatchesAscii(
+                val, ptr.offset(-((*enc).minBytesPerChar() as isize)),
+                KW_XML_1_0.as_ptr()) == 0
+            {
+                *badPtr = val;
+                return 0i32;
+            }
         }
         if parsePseudoAttribute(enc, ptr, end, &mut name, &mut nameEnd, &mut val, &mut ptr) == 0 {
             *badPtr = ptr;

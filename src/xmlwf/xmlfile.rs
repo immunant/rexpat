@@ -26,7 +26,7 @@ pub use crate::expat_h::{
     XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
     XML_STATUS_OK, XML_STATUS_SUSPENDED,
 };
-pub use crate::src::lib::xmlparse::{
+pub use crate::lib::xmlparse::{
     XML_ErrorString, XML_ExternalEntityParserCreate, XML_GetBuffer, XML_GetCurrentColumnNumber,
     XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,

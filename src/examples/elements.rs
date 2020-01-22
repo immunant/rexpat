@@ -10,23 +10,23 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
 
-use ::c2rust_out::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
-use ::c2rust_out::src::lib::xmlparse::{
+use ::libexpat_rs::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
+use ::libexpat_rs::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
 };
-use ::c2rust_out::stddef_h::NULL;
-use ::c2rust_out::stdlib::fprintf;
+use ::libexpat_rs::stddef_h::NULL;
+use ::libexpat_rs::stdlib::fprintf;
 use ::libc::{printf, putchar};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 
-pub use ::c2rust_out::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use ::c2rust_out::expat_h::{
+pub use ::libexpat_rs::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use ::libexpat_rs::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler, XML_Status,
 };
-pub use ::c2rust_out::stddef_h::size_t;
-pub use ::c2rust_out::stdlib::{
+pub use ::libexpat_rs::stddef_h::size_t;
+pub use ::libexpat_rs::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
 
@@ -106,18 +106,18 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(endElement as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut len: size_t = ::c2rust_out::stdlib::fread(
+        let mut len: size_t = ::libexpat_rs::stdlib::fread(
             buf.as_mut_ptr() as *mut c_void,
             1,
             ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
-            ::c2rust_out::stdlib::stdin,
+            ::libexpat_rs::stdlib::stdin,
         );
         done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
         if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
             == XML_STATUS_ERROR_0 as c_uint
         {
             fprintf(
-                ::c2rust_out::stdlib::stderr,
+                ::libexpat_rs::stdlib::stderr,
                 b"%s at line %lu\n\x00".as_ptr() as *const c_char,
                 XML_ErrorString(XML_GetErrorCode(parser)),
                 XML_GetCurrentLineNumber(parser),

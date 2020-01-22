@@ -1,13 +1,5 @@
-[workspace]
-members = [
-]
-exclude = [
-    "deps/wchar",
-    "deps/wchar",
-]
-
 [package]
-name = "c2rust_out"
+name = "libexpat-rs"
 authors = ["C2Rust"]
 version = "0.0.0"
 publish = false
@@ -15,10 +7,8 @@ edition = "2018"
 autobins = false
 
 [lib]
-name = "c2rust_out"
-path = "lib.rs"
+name = "libexpat_rs"
 crate-type = ["staticlib", "rlib"]
-
 
 [[bin]]
 path = "src/examples/outline.rs"
@@ -42,12 +32,14 @@ required-features = ["tests"]
 
 [dependencies]
 libc = "0.2"
-wchar = { path = "deps/wchar" }
+wchar = { path = "deps/wchar", optional = true }
 
 [features]
 default = ["tests"]
 unicode = []
-unicode_wchar_t = []
 tests = []
 tools = []
 examples = []
+unicode_wchar_t = ["wchar"]
+getrandom_syscall = []
+mozilla = ["unicode"]
