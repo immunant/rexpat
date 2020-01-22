@@ -18,6 +18,9 @@
     register_tool
 )]
 
+#[cfg(all(feature = "unicode", not(feature = "unicode_wchar_t")))]
+compile_error!("Tests are not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
+
 use crate::stdlib::{stderr, strncmp};
 use ::c2rust_out::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::c2rust_out::expat_h::{

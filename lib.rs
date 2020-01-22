@@ -15,6 +15,9 @@
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
+#[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
+compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
+
 #[path = "src/ascii_h.rs"]
 pub mod ascii_h;
 #[path = "src/expat_config_h.rs"]
