@@ -13,22 +13,18 @@ crate-type = ["staticlib", "rlib", "cdylib"]
 [[bin]]
 path = "src/examples/outline.rs"
 name = "outline"
-required-features = ["examples"]
 
 [[bin]]
 path = "src/examples/elements.rs"
 name = "elements"
-required-features = ["examples"]
 
 [[bin]]
 path = "src/xmlwf/xmlwf.rs"
 name = "xmlwf"
-required-features = ["tools"]
 
 [[bin]]
 path = "src/tests/runtests.rs"
 name = "runtests"
-required-features = ["tests"]
 
 [[bin]]
 path = "src/tests/benchmark.rs"
@@ -40,11 +36,7 @@ alloc-wg = "0.7"
 wchar = { path = "deps/wchar", optional = true }
 
 [features]
-default = ["tests", "tools"]
 unicode = []
-tests = []
-tools = []
-examples = []
 unicode_wchar_t = ["wchar"]
 getrandom_syscall = []
 mozilla = ["unicode"]
