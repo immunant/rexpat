@@ -18,6 +18,9 @@
     register_tool
 )]
 
+#[cfg(all(feature = "unicode", not(feature = "unicode_wchar_t")))]
+compile_error!("The xmlwf is not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
+
 use ::expat_rs::expat_h::{
     XML_Encoding, XML_Feature, XML_FEATURE_END, XML_PARAM_ENTITY_PARSING_ALWAYS,
     XML_PARAM_ENTITY_PARSING_NEVER,

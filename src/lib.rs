@@ -11,7 +11,11 @@
 #![feature(extern_types)]
 #![feature(label_break_value)]
 #![feature(main)]
+#![feature(const_in_array_repeat_expressions)]
 #![feature(ptr_wrapping_offset_from)]
+
+#[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
+compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
 
 extern crate libc;
 
@@ -31,10 +35,9 @@ pub mod xmltok_impl_c;
 pub mod xmltok_impl_h;
 
 pub mod lib {
+    pub mod nametab;
     pub mod xmlparse;
     pub mod xmlrole;
     pub mod xmltok;
-
-    #[cfg(feature = "mozilla")]
-    pub mod moz_extensions;
+    pub mod xmltok_impl;
 }

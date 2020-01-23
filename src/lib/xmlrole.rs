@@ -129,15 +129,14 @@ pub use crate::ascii_h::{
 };
 pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::xmltok::{
-    encoding, position, XML_Convert_Result, ATTRIBUTE, ENCODING, POSITION, SCANNER,
-    XML_CONVERT_COMPLETED, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_BOM,
-    XML_TOK_CLOSE_BRACKET, XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK,
-    XML_TOK_CLOSE_PAREN_PLUS, XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT,
-    XML_TOK_COND_SECT_CLOSE, XML_TOK_COND_SECT_OPEN, XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN,
-    XML_TOK_LITERAL, XML_TOK_NAME, XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS, XML_TOK_NAME_QUESTION,
-    XML_TOK_NMTOKEN, XML_TOK_NONE, XML_TOK_OPEN_BRACKET, XML_TOK_OPEN_PAREN, XML_TOK_OR,
-    XML_TOK_PARAM_ENTITY_REF, XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME,
-    XML_TOK_PREFIXED_NAME, XML_TOK_XML_DECL,
+    position, XML_Convert_Result, ATTRIBUTE, ENCODING, POSITION, XML_CONVERT_COMPLETED,
+    XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_OUTPUT_EXHAUSTED, XML_TOK_BOM, XML_TOK_CLOSE_BRACKET,
+    XML_TOK_CLOSE_PAREN, XML_TOK_CLOSE_PAREN_ASTERISK, XML_TOK_CLOSE_PAREN_PLUS,
+    XML_TOK_CLOSE_PAREN_QUESTION, XML_TOK_COMMA, XML_TOK_COMMENT, XML_TOK_COND_SECT_CLOSE,
+    XML_TOK_COND_SECT_OPEN, XML_TOK_DECL_CLOSE, XML_TOK_DECL_OPEN, XML_TOK_LITERAL, XML_TOK_NAME,
+    XML_TOK_NAME_ASTERISK, XML_TOK_NAME_PLUS, XML_TOK_NAME_QUESTION, XML_TOK_NMTOKEN, XML_TOK_NONE,
+    XML_TOK_OPEN_BRACKET, XML_TOK_OPEN_PAREN, XML_TOK_OR, XML_TOK_PARAM_ENTITY_REF,
+    XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME, XML_TOK_PREFIXED_NAME, XML_TOK_XML_DECL,
 };
 pub use crate::xmltok_h::{XML_TOK_INSTANCE_START, XML_TOK_PROLOG_S};
 use ::libc;
@@ -439,9 +438,8 @@ unsafe extern "C" fn prolog0(
         }
         super::xmltok::XML_TOK_BOM => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
-            if !((*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if !((*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
@@ -481,9 +479,8 @@ unsafe extern "C" fn prolog1(
             return XML_ROLE_NONE;
         }
         super::xmltok::XML_TOK_DECL_OPEN => {
-            if !((*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if !((*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
@@ -557,23 +554,11 @@ unsafe extern "C" fn doctype1(
             return XML_ROLE_DOCTYPE_CLOSE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_SYSTEM.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(doctype3 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_PUBLIC.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(doctype2 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
@@ -669,9 +654,8 @@ unsafe extern "C" fn internalSubset(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_ENTITY.as_ptr(),
             ) != 0
@@ -679,9 +663,8 @@ unsafe extern "C" fn internalSubset(
                 (*state).handler = Some(entity0 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_ATTLIST.as_ptr(),
             ) != 0
@@ -689,9 +672,8 @@ unsafe extern "C" fn internalSubset(
                 (*state).handler = Some(attlist0 as PROLOG_HANDLER);
                 return XML_ROLE_ATTLIST_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_ELEMENT.as_ptr(),
             ) != 0
@@ -699,9 +681,8 @@ unsafe extern "C" fn internalSubset(
                 (*state).handler = Some(element0 as PROLOG_HANDLER);
                 return XML_ROLE_ELEMENT_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((2i32 * (*enc).minBytesPerChar) as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
                 end,
                 KW_NOTATION.as_ptr(),
             ) != 0
@@ -818,23 +799,11 @@ unsafe extern "C" fn entity2(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_SYSTEM.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(entity4 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_PUBLIC.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(entity3 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -903,13 +872,7 @@ unsafe extern "C" fn entity5(
             return XML_ROLE_ENTITY_COMPLETE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_NDATA.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_NDATA.as_ptr()) != 0 {
                 (*state).handler = Some(entity6 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -948,23 +911,11 @@ unsafe extern "C" fn entity7(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_SYSTEM.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(entity9 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_PUBLIC.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(entity8 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -1065,23 +1016,11 @@ unsafe extern "C" fn notation1(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_SYSTEM.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(notation3 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_PUBLIC.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(notation2 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
@@ -1228,25 +1167,13 @@ unsafe extern "C" fn attlist2(
                     .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong)
                     as c_int
             {
-                if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                    enc,
-                    ptr,
-                    end,
-                    types[i as usize],
-                ) != 0
-                {
+                if (*enc).nameMatchesAscii(ptr, end, types[i as usize]) != 0 {
                     (*state).handler = Some(attlist8 as PROLOG_HANDLER);
                     return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i;
                 }
                 i += 1
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_NOTATION.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_NOTATION.as_ptr()) != 0 {
                 (*state).handler = Some(attlist5 as PROLOG_HANDLER);
                 return XML_ROLE_ATTLIST_NONE;
             }
@@ -1371,9 +1298,8 @@ unsafe extern "C" fn attlist8(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((*enc).minBytesPerChar as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((*enc).minBytesPerChar() as isize),
                 end,
                 KW_IMPLIED.as_ptr(),
             ) != 0
@@ -1381,9 +1307,8 @@ unsafe extern "C" fn attlist8(
                 (*state).handler = Some(attlist1 as PROLOG_HANDLER);
                 return XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((*enc).minBytesPerChar as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((*enc).minBytesPerChar() as isize),
                 end,
                 KW_REQUIRED.as_ptr(),
             ) != 0
@@ -1391,9 +1316,8 @@ unsafe extern "C" fn attlist8(
                 (*state).handler = Some(attlist1 as PROLOG_HANDLER);
                 return XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((*enc).minBytesPerChar as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((*enc).minBytesPerChar() as isize),
                 end,
                 KW_FIXED.as_ptr(),
             ) != 0
@@ -1457,24 +1381,12 @@ unsafe extern "C" fn element1(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_EMPTY.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_EMPTY.as_ptr()) != 0 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
                 (*state).role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_EMPTY;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_ANY.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_ANY.as_ptr()) != 0 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
                 (*state).role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_ANY;
@@ -1500,9 +1412,8 @@ unsafe extern "C" fn element2(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr.offset((*enc).minBytesPerChar as isize),
+            if (*enc).nameMatchesAscii(
+                ptr.offset((*enc).minBytesPerChar() as isize),
                 end,
                 KW_PCDATA.as_ptr(),
             ) != 0
@@ -1704,23 +1615,11 @@ unsafe extern "C" fn condSect0(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_INCLUDE.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_INCLUDE.as_ptr()) != 0 {
                 (*state).handler = Some(condSect1 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }
-            if (*enc).nameMatchesAscii.expect("non-null function pointer")(
-                enc,
-                ptr,
-                end,
-                KW_IGNORE.as_ptr(),
-            ) != 0
-            {
+            if (*enc).nameMatchesAscii(ptr, end, KW_IGNORE.as_ptr()) != 0 {
                 (*state).handler = Some(condSect2 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }
