@@ -7,8 +7,8 @@ edition = "2018"
 autobins = false
 
 [lib]
-name = "libexpat_rs"
-crate-type = ["staticlib", "rlib"]
+name = "expat_rs"
+crate-type = ["staticlib", "rlib", "cdylib"]
 
 [[bin]]
 path = "src/examples/outline.rs"
@@ -25,6 +25,10 @@ name = "xmlwf"
 [[bin]]
 path = "src/tests/runtests.rs"
 name = "runtests"
+
+[[bin]]
+path = "src/tests/benchmark.rs"
+name = "benchmark"
 
 [dependencies]
 libc = "0.2"
