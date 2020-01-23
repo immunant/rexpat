@@ -130,7 +130,7 @@ pub const XML_UTF16_ENCODE_MAX: c_int = 2;
 pub type POSITION = position;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct position {
     /* first line and first column are 0 not 1 */
     pub lineNumber: XML_Size,
@@ -166,8 +166,6 @@ macro_rules! XmlUtf16Convert {
         (*$enc).utf16Convert($fromP, $fromLim, $toP, $toLim)
     };
 }
-
-pub type INIT_ENCODING = InitEncoding;
 
 pub type CONVERTER = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>;
 
@@ -1637,12 +1635,197 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
     ];
 }
 
+#[derive(Clone)]
 pub struct InitEncoding {
     encoding_index: c_int,
-    encPtr: *mut *const ENCODING,
 
-    // TODO(SJC): this is UB when uninitialized
-    encoding_table: *const [Option<&'static Box<ENCODING>>],
+    encoding_table: &'static [&'static ENCODING],
+
+    encPtr: *mut *const ENCODING,
+}
+
+impl InitEncoding {
+    unsafe fn new_impl(
+        encPtr: *mut *const ENCODING,
+        mut name: *const c_char,
+        encoding_table: &'static [&'static ENCODING],
+    ) -> Option<InitEncoding> {
+        let mut i: c_int = getEncodingIndex(name);
+        if i == UNKNOWN_ENC {
+            return None;
+        }
+        Some(Self {
+            encoding_index: i,
+            encoding_table,
+            encPtr,
+        })
+    }
+
+    pub unsafe fn new_ns(
+        encPtr: *mut *const ENCODING,
+        mut name: *const c_char,
+    ) -> Option<InitEncoding> {
+        Self::new_impl(encPtr, name, encodingsNS.as_ref().unwrap())
+    }
+
+    pub unsafe fn new(
+        encPtr: *mut *const ENCODING,
+        mut name: *const c_char,
+    ) -> Option<InitEncoding> {
+        Self::new_impl(encPtr, name, encodings.as_ref().unwrap())
+    }
+
+    /* This is what detects the encoding.  encodingTable maps from
+    encoding indices to encodings; INIT_ENC_INDEX(enc) is the index of
+    the external (protocol) specified encoding; state is
+    XML_CONTENT_STATE if we're parsing an external text entity, and
+    XML_PROLOG_STATE otherwise.
+     */
+    unsafe fn initScan(
+        &self,
+        mut state: c_int,
+        mut ptr: *const c_char,
+        mut end: *const c_char,
+        mut nextTokPtr: *mut *const c_char,
+    ) -> c_int {
+        if ptr >= end {
+            return crate::xmltok_h::XML_TOK_NONE;
+        }
+        if ptr.offset(1) == end {
+            /* only a single byte available for auto-detection */
+            /* FIXME */
+            /* so we're parsing an external text entity... */
+            /* if UTF-16 was externally specified, then we need at least 2 bytes */
+            match self.encoding_index as c_int {
+                3 | 5 | 4 => return crate::xmltok_h::XML_TOK_PARTIAL,
+                _ => {}
+            }
+            let mut current_block_5: u64;
+            match *ptr as c_uchar as c_int {
+                254 | 255 | 239 => {
+                    /* possibly first byte of UTF-8 BOM */
+                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
+                        current_block_5 = 17965632435239708295;
+                    } else {
+                        current_block_5 = 16867440708908940295;
+                    }
+                }
+                0 | 60 => {
+                    current_block_5 = 16867440708908940295;
+                }
+                _ => {
+                    current_block_5 = 17965632435239708295;
+                }
+            }
+            match current_block_5 {
+                17965632435239708295 => {}
+                _ =>
+                /* fall through */
+                {
+                    return crate::xmltok_h::XML_TOK_PARTIAL
+                }
+            }
+        } else {
+            let mut current_block_26: u64;
+            match (*ptr.offset(0) as c_uchar as c_int) << 8 | *ptr.offset(1) as c_uchar as c_int {
+                65279 => {
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    {
+                        *nextTokPtr = ptr.offset(2);
+                        *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
+                        return crate::xmltok_h::XML_TOK_BOM;
+                    }
+                }
+                15360 => {
+                    /* 00 3C is handled in the default case */
+                    if !((self.encoding_index as c_int == UTF_16BE_ENC
+                          || self.encoding_index as c_int == UTF_16_ENC)
+                         && state == XML_CONTENT_STATE)
+                    {
+                        *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
+                        return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                    }
+                }
+                65534 => {
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    {
+                        *nextTokPtr = ptr.offset(2);
+                        *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
+                        return crate::xmltok_h::XML_TOK_BOM;
+                    }
+                }
+                61371 => {
+                    /* Maybe a UTF-8 BOM (EF BB BF) */
+                    /* If there's an explicitly specified (external) encoding
+                    of ISO-8859-1 or some flavour of UTF-16
+                    and this is an external text entity,
+                    don't look for the BOM,
+                    because it might be a legal data.
+                     */
+                    if state == XML_CONTENT_STATE {
+                        let mut e: c_int = self.encoding_index as c_int;
+                        if e == ISO_8859_1_ENC
+                            || e == UTF_16BE_ENC
+                            || e == UTF_16LE_ENC
+                            || e == UTF_16_ENC
+                        {
+                            current_block_26 = 10758786907990354186;
+                        } else {
+                            current_block_26 = 15925075030174552612;
+                        }
+                    } else {
+                        current_block_26 = 15925075030174552612;
+                    }
+                    match current_block_26 {
+                        10758786907990354186 => {}
+                        _ => {
+                            if ptr.offset(2) == end {
+                                return crate::xmltok_h::XML_TOK_PARTIAL;
+                            }
+                            if *ptr.offset(2) as c_uchar as c_int == 0xbf {
+                                *nextTokPtr = ptr.offset(3);
+                                *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize];
+                                return crate::xmltok_h::XML_TOK_BOM;
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    if *ptr.offset(0) as c_int == '\u{0}' as i32 {
+                        /* 0 isn't a legal data character. Furthermore a document
+                        entity can only start with ASCII characters.  So the only
+                        way this can fail to be big-endian UTF-16 if it it's an
+                        external parsed general entity that's labelled as
+                        UTF-16LE.
+                         */
+                        if !(state == XML_CONTENT_STATE
+                             && self.encoding_index as c_int == UTF_16LE_ENC)
+                        {
+                            *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
+                            return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                        }
+                    } else if *ptr.offset(1) as c_int == '\u{0}' as i32 {
+                        /* We could recover here in the case:
+                        - parsing an external entity
+                        - second byte is 0
+                        - no externally specified encoding
+                        - no encoding declaration
+                        by assuming UTF-16LE.  But we don't, because this would mean when
+                        presented just with a single byte, we couldn't reliably determine
+                        whether we needed further bytes.
+                         */
+                        if !(state == XML_CONTENT_STATE) {
+                            *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
+                            return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                        }
+                    }
+                }
+            }
+        }
+        *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
+        return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+    }
+
 }
 
 impl XmlEncoding for InitEncoding {
@@ -1653,9 +1836,7 @@ impl XmlEncoding for InitEncoding {
         end: *const libc::c_char,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        initScan(
-            &*self.encoding_table,
-            self as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
+        self.initScan(
             XML_PROLOG_STATE,
             ptr,
             end,
@@ -1668,9 +1849,7 @@ impl XmlEncoding for InitEncoding {
         end: *const libc::c_char,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
-        initScan(
-            &*self.encoding_table,
-            self as *const _ as *const INIT_ENCODING, // TODO(SJC): fix this
+        self.initScan(
             XML_CONTENT_STATE,
             ptr,
             end,
@@ -1802,6 +1981,7 @@ impl XmlEncoding for InitEncoding {
     }
 }
 
+#[derive(Clone)]
 pub struct UnknownEncoding {
     types: [C2RustUnnamed_2; 256],
     convert: CONVERTER,
@@ -1811,8 +1991,23 @@ pub struct UnknownEncoding {
 }
 
 impl UnknownEncoding {
-    fn initialize(&mut self, table: *mut c_int, convert: CONVERTER, userData: *mut c_void) -> bool {
-        self.types = Latin1EncodingTable::types;
+    pub fn new() -> Self {
+        Self {
+            types: Latin1EncodingTable::types,
+            convert: None,
+            userData: std::ptr::null_mut(),
+            utf16: [0; 256],
+            utf8: [[0; 4]; 256],
+        }
+    }
+
+    pub fn initialize(
+        &mut self,
+        table: *mut c_int,
+        convert: CONVERTER,
+        userData: *mut c_void,
+        is_ns: bool,
+    ) -> bool {
         for i in 0..128 {
             if Latin1EncodingTable::types[i] != BT_OTHER
                 && Latin1EncodingTable::types[i] != BT_NONXML
@@ -1883,6 +2078,10 @@ impl UnknownEncoding {
         }
         self.userData = userData;
         self.convert = convert;
+
+        if is_ns {
+            self.types[ASCII_COLON as usize] = BT_COLON;
+        }
 
         true
     }
@@ -2052,213 +2251,177 @@ static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
 #[cfg(target_endian = "big")]
 static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
 
-    /* This file is included!
-                                __  __            _
-                             ___\ \/ /_ __   __ _| |_
-                            / _ \\  /| '_ \ / _` | __|
-                           |  __//  \| |_) | (_| | |_
-                            \___/_/\_\ .__/ \__,_|\__|
-                                     |_| XML parser
+/* This file is included!
+__  __            _
+___\ \/ /_ __   __ _| |_
+/ _ \\  /| '_ \ / _` | __|
+|  __//  \| |_) | (_| | |_
+\___/_/\_\ .__/ \__,_|\__|
+|_| XML parser
 
-       Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-       Copyright (c) 2000-2017 Expat development team
-       Licensed under the MIT license:
+Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+Copyright (c) 2000-2017 Expat development team
+Licensed under the MIT license:
 
-       Permission is  hereby granted,  free of charge,  to any  person obtaining
-       a  copy  of  this  software   and  associated  documentation  files  (the
-       "Software"),  to  deal in  the  Software  without restriction,  including
-       without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-       distribute, sublicense, and/or sell copies of the Software, and to permit
-       persons  to whom  the Software  is  furnished to  do so,  subject to  the
-       following conditions:
+Permission is  hereby granted,  free of charge,  to any  person obtaining
+a  copy  of  this  software   and  associated  documentation  files  (the
+"Software"),  to  deal in  the  Software  without restriction,  including
+without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit
+persons  to whom  the Software  is  furnished to  do so,  subject to  the
+following conditions:
 
-       The above copyright  notice and this permission notice  shall be included
-       in all copies or substantial portions of the Software.
+The above copyright  notice and this permission notice  shall be included
+in all copies or substantial portions of the Software.
 
-       THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-       EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-       MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-       NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-       DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-       OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-       USE OR OTHER DEALINGS IN THE SOFTWARE.
-    */
+THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf8InternalEncodingNS() -> *const ENCODING {
-        return &**internal_utf8_encoding_ns.as_ref().unwrap();
+pub fn XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
+    return unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() };
+}
+
+pub fn XmlGetUtf8InternalEncoding() -> &'static ENCODING {
+    return unsafe { &**internal_utf8_encoding.as_ref().unwrap() };
+}
+
+#[cfg(target_endian = "little")]
+#[no_mangle]
+pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
+    return unsafe { &**internal_little2_encoding.as_ref().unwrap() };
+}
+
+#[cfg(target_endian = "big")]
+#[no_mangle]
+pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
+    return unsafe { &**internal_big2_encoding.as_ref().unwrap() };
+}
+
+#[cfg(target_endian = "little")]
+#[no_mangle]
+pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
+    return unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() };
+}
+
+#[cfg(target_endian = "big")]
+#[no_mangle]
+pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
+    return unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() };
+}
+
+// Initialized in run_static_initializers
+pub static mut encodingsNS: Option<[&'static ENCODING; 7]> = None;
+
+// Initialized in run_static_initializers
+pub static mut encodings: Option<[&'static ENCODING; 7]> = None;
+
+pub unsafe extern "C" fn findEncoding(
+    mut enc: &ENCODING,
+    mut ptr: *const c_char,
+    mut end: *const c_char,
+) -> Option<*const ENCODING> {
+    let mut buf: [c_char; 128] = [0; 128];
+    let mut p: *mut c_char = buf.as_mut_ptr();
+    let mut i: c_int = 0;
+    (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
+    if ptr != end {
+        return None;
     }
-
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf8InternalEncoding() -> *const ENCODING {
-        return &**internal_utf8_encoding.as_ref().unwrap();
+    *p = 0;
+    if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+        return Some(enc.clone());
     }
-
-    #[cfg(target_endian = "little")]
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> *const ENCODING {
-        return &**internal_little2_encoding.as_ref().unwrap();
+    i = getEncodingIndex(buf.as_mut_ptr());
+    if i == UNKNOWN_ENC {
+        return None;
     }
+    return Some(encodings.unwrap()[i as usize]);
+}
 
-    #[cfg(target_endian = "big")]
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncoding() -> *const ENCODING {
-        return &**internal_big2_encoding.as_ref().unwrap();
+pub unsafe extern "C" fn findEncodingNS(
+    mut enc: &ENCODING,
+    mut ptr: *const c_char,
+    mut end: *const c_char,
+) -> Option<*const ENCODING> {
+    let mut buf: [c_char; 128] = [0; 128];
+    let mut p: *mut c_char = buf.as_mut_ptr();
+    let mut i: c_int = 0;
+    (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
+    if ptr != end {
+        return None;
     }
-
-    #[cfg(target_endian = "little")]
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> *const ENCODING {
-        return &**internal_little2_encoding_ns.as_ref().unwrap();
+    *p = 0;
+    if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+        return Some(enc.clone());
     }
-
-    #[cfg(target_endian = "big")]
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlGetUtf16InternalEncodingNS() -> *const ENCODING {
-        return &**internal_big2_encoding_ns.as_ref().unwrap();
+    i = getEncodingIndex(buf.as_mut_ptr());
+    if i == UNKNOWN_ENC {
+        return None;
     }
+    return Some(encodingsNS.unwrap()[i as usize]);
+}
+#[no_mangle]
 
-    // Initialized in run_static_initializers
-    pub static mut encodingsNS: [Option<&'static Box<ENCODING>>; 7] = [None; 7];
+pub unsafe extern "C" fn XmlParseXmlDeclNS(
+    mut isGeneralTextEntity: c_int,
+    mut enc: &ENCODING,
+    mut ptr: *const c_char,
+    mut end: *const c_char,
+    mut badPtr: *mut *const c_char,
+    mut versionPtr: *mut *const c_char,
+    mut versionEndPtr: *mut *const c_char,
+    mut encodingName: *mut *const c_char,
+    mut encoding: &mut Option<*const ENCODING>,
+    mut standalone: *mut c_int,
+) -> c_int {
+    return doParseXmlDecl(
+        Some(findEncodingNS),
+        isGeneralTextEntity,
+        enc,
+        ptr,
+        end,
+        badPtr,
+        versionPtr,
+        versionEndPtr,
+        encodingName,
+        encoding,
+        standalone,
+    );
+}
+#[no_mangle]
 
-    // Initialized in run_static_initializers
-    pub static mut encodings: [Option<&'static Box<ENCODING>>; 7] = [None; 7];
-
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlInitEncodingNS(
-        mut p: *mut INIT_ENCODING,
-        mut encPtr: &mut *const ENCODING,
-        mut name: *const c_char,
-    ) -> c_int {
-        let mut i: c_int = getEncodingIndex(name);
-        if i == UNKNOWN_ENC {
-            return 0i32;
-        }
-        (*p).encoding_table = &encodingsNS;
-        (*p).encoding_index = i;
-        (*p).encPtr = encPtr;
-        *encPtr = p;
-        return 1;
-    }
-
-    #[no_mangle]
-    pub unsafe extern "C" fn XmlInitEncoding(
-        mut p: *mut INIT_ENCODING,
-        mut encPtr: *mut *const ENCODING,
-        mut name: *const c_char,
-    ) -> c_int {
-        let mut i: c_int = getEncodingIndex(name);
-        if i == UNKNOWN_ENC {
-            return 0i32;
-        }
-        (*p).encoding_table = &encodings;
-        (*p).encoding_index = i;
-        (*p).encPtr = encPtr;
-        *encPtr = p;
-        return 1;
-    }
-
-    pub unsafe extern "C" fn findEncoding(
-        mut enc: *const ENCODING,
-        mut ptr: *const c_char,
-        mut end: *const c_char,
-    ) -> Option<*const ENCODING> {
-        let mut buf: [c_char; 128] = [0; 128];
-        let mut p: *mut c_char = buf.as_mut_ptr();
-        let mut i: c_int = 0;
-        (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
-        if ptr != end {
-            return None;
-        }
-        *p = 0;
-        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
-            return Some(enc);
-        }
-        i = getEncodingIndex(buf.as_mut_ptr());
-        if i == UNKNOWN_ENC {
-            return None;
-        }
-        return encodings[i as usize].as_ref().map(|x| &***x as *const _);
-    }
-
-    pub unsafe extern "C" fn findEncodingNS(
-        mut enc: *const ENCODING,
-        mut ptr: *const c_char,
-        mut end: *const c_char,
-    ) -> Option<*const ENCODING> {
-        let mut buf: [c_char; 128] = [0; 128];
-        let mut p: *mut c_char = buf.as_mut_ptr();
-        let mut i: c_int = 0;
-        (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
-        if ptr != end {
-            return None;
-        }
-        *p = 0;
-        if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
-            return Some(enc);
-        }
-        i = getEncodingIndex(buf.as_mut_ptr());
-        if i == UNKNOWN_ENC {
-            return None;
-        }
-        return encodingsNS[i as usize].as_ref().map(|x| &***x as *const _);
-    }
-    #[no_mangle]
-
-    pub unsafe extern "C" fn XmlParseXmlDeclNS(
-        mut isGeneralTextEntity: c_int,
-        mut enc: *const ENCODING,
-        mut ptr: *const c_char,
-        mut end: *const c_char,
-        mut badPtr: *mut *const c_char,
-        mut versionPtr: *mut *const c_char,
-        mut versionEndPtr: *mut *const c_char,
-        mut encodingName: *mut *const c_char,
-        mut encoding: *mut Option<*const ENCODING>,
-        mut standalone: *mut c_int,
-    ) -> c_int {
-        return doParseXmlDecl(
-            Some(findEncodingNS),
-            isGeneralTextEntity,
-            enc,
-            ptr,
-            end,
-            badPtr,
-            versionPtr,
-            versionEndPtr,
-            encodingName,
-            encoding,
-            standalone,
-        );
-    }
-    #[no_mangle]
-
-    pub unsafe extern "C" fn XmlParseXmlDecl(
-        mut isGeneralTextEntity: c_int,
-        mut enc: *const ENCODING,
-        mut ptr: *const c_char,
-        mut end: *const c_char,
-        mut badPtr: *mut *const c_char,
-        mut versionPtr: *mut *const c_char,
-        mut versionEndPtr: *mut *const c_char,
-        mut encodingName: *mut *const c_char,
-        mut encoding: *mut Option<*const ENCODING>,
-        mut standalone: *mut c_int,
-    ) -> c_int {
-        return doParseXmlDecl(
-            Some(findEncoding),
-            isGeneralTextEntity,
-            enc,
-            ptr,
-            end,
-            badPtr,
-            versionPtr,
-            versionEndPtr,
-            encodingName,
-            encoding,
-            standalone,
-        );
-    }
+pub unsafe extern "C" fn XmlParseXmlDecl(
+    mut isGeneralTextEntity: c_int,
+    mut enc: &ENCODING,
+    mut ptr: *const c_char,
+    mut end: *const c_char,
+    mut badPtr: *mut *const c_char,
+    mut versionPtr: *mut *const c_char,
+    mut versionEndPtr: *mut *const c_char,
+    mut encodingName: *mut *const c_char,
+    mut encoding: &mut Option<*const ENCODING>,
+    mut standalone: *mut c_int,
+) -> c_int {
+    return doParseXmlDecl(
+        Some(findEncoding),
+        isGeneralTextEntity,
+        enc,
+        ptr,
+        end,
+        badPtr,
+        versionPtr,
+        versionEndPtr,
+        encodingName,
+        encoding,
+        standalone,
+    );
+}
 
 pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
@@ -2995,7 +3158,7 @@ unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_
 }
 
 unsafe extern "C" fn initUpdatePosition(
-    mut _enc: *const ENCODING,
+    mut _enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut pos: *mut POSITION,
@@ -3007,7 +3170,7 @@ unsafe extern "C" fn initUpdatePosition(
 }
 
 unsafe extern "C" fn toAscii(
-    mut enc: *const ENCODING,
+    mut enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
 ) -> c_int {
@@ -3033,7 +3196,7 @@ unsafe extern "C" fn isSpace(mut c: c_int) -> c_int {
 */
 
 unsafe extern "C" fn parsePseudoAttribute(
-    mut enc: *const ENCODING,
+    mut enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut namePtr: *mut *const c_char,
@@ -3171,16 +3334,16 @@ static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
 #[cfg(feature = "mozilla")]
 static mut KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, '\u{0}' as c_char];
 
-unsafe extern "C" fn doParseXmlDecl<'a>(
+unsafe extern "C" fn doParseXmlDecl(
     mut encodingFinder: Option<
         unsafe extern "C" fn(
-            _: *const ENCODING,
+            _: &ENCODING,
             _: *const c_char,
             _: *const c_char,
         ) -> Option<*const ENCODING>,
     >,
     mut isGeneralTextEntity: c_int,
-    mut enc: *const ENCODING,
+    mut enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut badPtr: *mut *const c_char,
@@ -3382,38 +3545,10 @@ pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
     return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
 
-unsafe extern "C" fn unknown_isName(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
-    let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    if c & !(0xffff) != 0 {
-        return 0i32;
-    }
-    return (namingBitmap
-        [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
-        & (1) << (c & 0xff & 0x1f)) as c_int;
-}
-
-unsafe extern "C" fn unknown_isNmstrt(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
-    let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    if c & !(0xffff) != 0 {
-        return 0i32;
-    }
-    return (namingBitmap
-        [(((nmstrtPages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
-        & (1) << (c & 0xff & 0x1f)) as c_int;
-}
-
-unsafe extern "C" fn unknown_isInvalid(mut enc: *const ENCODING, mut p: *const c_char) -> c_int {
-    let mut uenc: *const unknown_encoding = enc as *const unknown_encoding;
-    let mut c: c_int = (*uenc).convert.expect("non-null function pointer")((*uenc).userData, p);
-    return (c & !(0xffff) != 0 || checkCharRefNumber(c) < 0) as c_int;
-}
-
 // TODO(SJC): replace
 
 // unsafe extern "C" fn unknown_toUtf8(
-//     mut enc: *const ENCODING,
+//     mut enc: EncodingType,
 //     mut fromP: *mut *const c_char,
 //     mut fromLim: *const c_char,
 //     mut toP: *mut *mut c_char,
@@ -3455,7 +3590,7 @@ unsafe extern "C" fn unknown_isInvalid(mut enc: *const ENCODING, mut p: *const c
 // }
 
 // unsafe extern "C" fn unknown_toUtf16(
-//     mut enc: *const ENCODING,
+//     mut enc: EncodingType,
 //     mut fromP: *mut *const c_char,
 //     mut fromLim: *const c_char,
 //     mut toP: *mut *mut c_ushort,
@@ -3484,21 +3619,6 @@ unsafe extern "C" fn unknown_isInvalid(mut enc: *const ENCODING, mut p: *const c
 //         return XML_CONVERT_COMPLETED;
 //     };
 // }
-
-#[no_mangle]
-pub unsafe extern "C" fn XmlInitUnknownEncoding(
-    mut mem: *mut c_void,
-    mut table: *mut c_int,
-    mut convert: CONVERTER,
-    mut userData: *mut c_void,
-) -> *mut unknown_encoding {
-    let mut e: *mut unknown_encoding = mem as *mut unknown_encoding;
-    if (*e).initialize(table, convert, userData) {
-        e
-    } else {
-        std::ptr::null_mut()
-    }
-}
 
 static mut KW_ISO_8859_1: [c_char; 11] = [
     ASCII_I,
@@ -3596,179 +3716,6 @@ unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
     }
     return UNKNOWN_ENC;
 }
-/* For binary compatibility, we store the index of the encoding
-   specified at initialization in the isUtf16 member.
-*/
-/* This is what detects the encoding.  encodingTable maps from
-   encoding indices to encodings; INIT_ENC_INDEX(enc) is the index of
-   the external (protocol) specified encoding; state is
-   XML_CONTENT_STATE if we're parsing an external text entity, and
-   XML_PROLOG_STATE otherwise.
-*/
-
-unsafe extern "C" fn initScan(
-    mut encodingTable: &[Option<&'static Box<ENCODING>>],
-    mut enc: *const INIT_ENCODING,
-    mut state: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
-    mut nextTokPtr: *mut *const c_char,
-) -> c_int {
-    let mut encPtr: *mut *const ENCODING = 0 as *mut *const ENCODING;
-    if ptr >= end {
-        return crate::xmltok_h::XML_TOK_NONE;
-    }
-    encPtr = (*enc).encPtr;
-    if ptr.offset(1) == end {
-        /* only a single byte available for auto-detection */
-        /* FIXME */
-        /* so we're parsing an external text entity... */
-        /* if UTF-16 was externally specified, then we need at least 2 bytes */
-        match (*enc).encoding_index as c_int {
-            3 | 5 | 4 => return crate::xmltok_h::XML_TOK_PARTIAL,
-            _ => {}
-        }
-        let mut current_block_5: u64;
-        match *ptr as c_uchar as c_int {
-            254 | 255 | 239 => {
-                /* possibly first byte of UTF-8 BOM */
-                if (*enc).encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
-                    current_block_5 = 17965632435239708295;
-                } else {
-                    current_block_5 = 16867440708908940295;
-                }
-            }
-            0 | 60 => {
-                current_block_5 = 16867440708908940295;
-            }
-            _ => {
-                current_block_5 = 17965632435239708295;
-            }
-        }
-        match current_block_5 {
-            17965632435239708295 => {}
-            _ =>
-            /* fall through */
-            {
-                return crate::xmltok_h::XML_TOK_PARTIAL
-            }
-        }
-    } else {
-        let mut current_block_26: u64;
-        match (*ptr.offset(0) as c_uchar as c_int) << 8 | *ptr.offset(1) as c_uchar as c_int {
-            65279 => {
-                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
-                {
-                    *nextTokPtr = ptr.offset(2);
-                    *encPtr = &***encodingTable[UTF_16BE_ENC as usize].as_ref().unwrap();
-                    return crate::xmltok_h::XML_TOK_BOM;
-                }
-            }
-            15360 => {
-                /* 00 3C is handled in the default case */
-                if !(((*enc).encoding_index as c_int == UTF_16BE_ENC
-                    || (*enc).encoding_index as c_int == UTF_16_ENC)
-                    && state == XML_CONTENT_STATE)
-                {
-                    *encPtr = &***encodingTable[UTF_16LE_ENC as usize].as_ref().unwrap();
-                    return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
-                }
-            }
-            65534 => {
-                if !((*enc).encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
-                {
-                    *nextTokPtr = ptr.offset(2);
-                    *encPtr = &***encodingTable[UTF_16LE_ENC as usize].as_ref().unwrap();
-                    return crate::xmltok_h::XML_TOK_BOM;
-                }
-            }
-            61371 => {
-                /* Maybe a UTF-8 BOM (EF BB BF) */
-                /* If there's an explicitly specified (external) encoding
-                   of ISO-8859-1 or some flavour of UTF-16
-                   and this is an external text entity,
-                   don't look for the BOM,
-                   because it might be a legal data.
-                */
-                if state == XML_CONTENT_STATE {
-                    let mut e: c_int = (*enc).encoding_index as c_int;
-                    if e == ISO_8859_1_ENC
-                        || e == UTF_16BE_ENC
-                        || e == UTF_16LE_ENC
-                        || e == UTF_16_ENC
-                    {
-                        current_block_26 = 10758786907990354186;
-                    } else {
-                        current_block_26 = 15925075030174552612;
-                    }
-                } else {
-                    current_block_26 = 15925075030174552612;
-                }
-                match current_block_26 {
-                    10758786907990354186 => {}
-                    _ => {
-                        if ptr.offset(2) == end {
-                            return crate::xmltok_h::XML_TOK_PARTIAL;
-                        }
-                        if *ptr.offset(2) as c_uchar as c_int == 0xbf {
-                            *nextTokPtr = ptr.offset(3);
-                            *encPtr = &***encodingTable[UTF_8_ENC as usize].as_ref().unwrap();
-                            return crate::xmltok_h::XML_TOK_BOM;
-                        }
-                    }
-                }
-            }
-            _ => {
-                if *ptr.offset(0) as c_int == '\u{0}' as i32 {
-                    /* 0 isn't a legal data character. Furthermore a document
-                       entity can only start with ASCII characters.  So the only
-                       way this can fail to be big-endian UTF-16 if it it's an
-                       external parsed general entity that's labelled as
-                       UTF-16LE.
-                    */
-                    if !(state == XML_CONTENT_STATE
-                        && (*enc).encoding_index as c_int == UTF_16LE_ENC)
-                    {
-                        *encPtr = &***encodingTable[UTF_16BE_ENC as usize].as_ref().unwrap();
-                        return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
-                    }
-                } else if *ptr.offset(1) as c_int == '\u{0}' as i32 {
-                    /* We could recover here in the case:
-                        - parsing an external entity
-                        - second byte is 0
-                        - no externally specified encoding
-                        - no encoding declaration
-                       by assuming UTF-16LE.  But we don't, because this would mean when
-                       presented just with a single byte, we couldn't reliably determine
-                       whether we needed further bytes.
-                    */
-                    if !(state == XML_CONTENT_STATE) {
-                        *encPtr = &***encodingTable[UTF_16LE_ENC as usize].as_ref().unwrap();
-                        return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
-                    }
-                }
-            }
-        }
-    }
-    *encPtr = &***encodingTable[(*enc).encoding_index as c_int as usize]
-        .as_ref()
-        .unwrap();
-    return (**encPtr).xmlTok(state, ptr, end, nextTokPtr);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn XmlInitUnknownEncodingNS(
-    mut mem: *mut c_void,
-    mut table: *mut c_int,
-    mut convert: CONVERTER,
-    mut userData: *mut c_void,
-) -> *mut unknown_encoding {
-    let mut enc: *mut unknown_encoding = XmlInitUnknownEncoding(mem, table, convert, userData);
-    if !enc.is_null() {
-        (*enc).types[ASCII_COLON as usize] = BT_COLON;
-    }
-    return enc;
-}
 
 unsafe extern "C" fn run_static_initializers() {
     latin1_encoding = Some(Box::new(Latin1Encoding::new()));
@@ -3793,24 +3740,24 @@ unsafe extern "C" fn run_static_initializers() {
         internal_big2_encoding = Some(Box::new(InternalBig2Encoding::new()));
         internal_big2_encoding_ns = Some(Box::new(InternalBig2EncodingNS::new()));
     }
-    encodingsNS = [
-        latin1_encoding_ns.as_ref(),
-        ascii_encoding_ns.as_ref(),
-        utf8_encoding_ns.as_ref(),
-        big2_encoding_ns.as_ref(),
-        big2_encoding_ns.as_ref(),
-        little2_encoding_ns.as_ref(),
-        utf8_encoding_ns.as_ref(),
-    ];
-    encodings = [
-        latin1_encoding.as_ref(),
-        ascii_encoding.as_ref(),
-        utf8_encoding.as_ref(),
-        big2_encoding.as_ref(),
-        big2_encoding.as_ref(),
-        little2_encoding.as_ref(),
-        utf8_encoding.as_ref(),
-    ]
+    encodingsNS = Some([
+        &**latin1_encoding_ns.as_ref().unwrap(),
+        &**ascii_encoding_ns.as_ref().unwrap(),
+        &**utf8_encoding_ns.as_ref().unwrap(),
+        &**big2_encoding_ns.as_ref().unwrap(),
+        &**big2_encoding_ns.as_ref().unwrap(),
+        &**little2_encoding_ns.as_ref().unwrap(),
+        &**utf8_encoding_ns.as_ref().unwrap(),
+    ]);
+    encodings = Some([
+        &**latin1_encoding.as_ref().unwrap(),
+        &**ascii_encoding.as_ref().unwrap(),
+        &**utf8_encoding.as_ref().unwrap(),
+        &**big2_encoding.as_ref().unwrap(),
+        &**big2_encoding.as_ref().unwrap(),
+        &**little2_encoding.as_ref().unwrap(),
+        &**utf8_encoding.as_ref().unwrap(),
+    ]);
 }
 #[used]
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]

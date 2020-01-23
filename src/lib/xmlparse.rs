@@ -106,7 +106,7 @@ pub use crate::lib::xmlrole::{
     XML_ROLE_XML_DECL,
 };
 pub use crate::lib::xmltok::{
-    XmlInitEncoding, XmlParseXmlDecl, XmlParseXmlDeclNS,
+    XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
@@ -126,7 +126,8 @@ use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, Reallo
 use alloc_wg::boxed::Box;
 
 use std::collections::{hash_map, HashMap};
-use std::ptr::NonNull;
+use std::mem;
+use std::ptr::{self, NonNull};
 
 #[inline]
 unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
@@ -244,6 +245,28 @@ impl Default for CXmlHandlers {
             m_unknownEncodingHandlerData: std::ptr::null_mut(),
             m_unparsedEntityDeclHandler: None,
             m_xmlDeclHandler: None,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum EncodingType {
+    Normal,
+    Internal,
+}
+
+pub enum OldEncoding {
+    Global(&'static dyn XmlEncoding),
+    Init(ExpatBox<InitEncoding>),
+    Unknown(ExpatBox<UnknownEncoding>),
+    Internal(&'static dyn XmlEncoding),
+}
+
+impl EncodingType {
+    fn is_internal(&self) -> bool {
+        match self {
+            EncodingType::Internal => true,
+            _ => false,
         }
     }
 }
@@ -637,13 +660,13 @@ pub struct XML_ParserStruct {
 
     // Handlers should be trait, with native C callback instance
     m_handlers: CXmlHandlers,
-    pub m_encoding: *const super::xmltok::ENCODING,
-    pub m_initEncoding: super::xmltok::INIT_ENCODING,
-    pub m_internalEncoding: *const super::xmltok::ENCODING,
+    pub m_encoding: *const ENCODING,
+    pub m_initEncoding: Option<InitEncoding>,
+    pub m_internalEncoding: &'static super::xmltok::ENCODING,
     pub m_protocolEncodingName: *const XML_Char,
     pub m_ns: XML_Bool,
     pub m_ns_triplets: XML_Bool,
-    pub m_unknownEncodingMem: *mut c_void,
+    pub m_unknownEncoding: Option<ExpatBox<UnknownEncoding>>,
     pub m_unknownEncodingData: *mut c_void,
     pub m_unknownEncodingRelease: Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
     pub m_prologState: super::xmlrole::PROLOG_STATE,
@@ -697,6 +720,15 @@ pub struct XML_ParserStruct {
     pub m_mismatch: *const XML_Char,
 }
 
+impl XML_ParserStruct {
+    fn encoding(&self, enc_type: EncodingType) -> &dyn XmlEncoding {
+        match enc_type {
+            EncodingType::Normal => unsafe { &*self.m_encoding },
+            EncodingType::Internal => self.m_internalEncoding,
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct STRING_POOL {
@@ -706,6 +738,19 @@ pub struct STRING_POOL {
     pub ptr: *mut XML_Char,
     pub start: *mut XML_Char,
     pub mem: *const XML_Memory_Handling_Suite,
+}
+
+impl STRING_POOL {
+    fn new() -> Self {
+        Self {
+            blocks: ptr::null_mut(),
+            freeBlocks: ptr::null_mut(),
+            end: ptr::null(),
+            ptr: ptr::null_mut(),
+            start: ptr::null_mut(),
+            mem: ptr::null(),
+        }
+    }
 }
 
 pub type BLOCK = block;
@@ -1111,7 +1156,7 @@ impl BuildAllocRef for XML_Memory_Handling_Suite {
     }
 }
 
-type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
+pub type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 
 /* Constructs a new parser; encoding is the encoding specified by the
    external protocol or NULL if there is none specified.
@@ -1120,7 +1165,7 @@ type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> XML_Parser {
     return XML_ParserCreate_MM(
         encodingName,
-        NULL as *const XML_Memory_Handling_Suite,
+        None,
         NULL as *const XML_Char,
     );
 }
@@ -1144,7 +1189,7 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
     *tmp.as_mut_ptr() = nsSep;
     return XML_ParserCreate_MM(
         encodingName,
-        NULL as *const XML_Memory_Handling_Suite,
+        None,
         tmp.as_mut_ptr(),
     );
 }
@@ -1381,114 +1426,191 @@ unsafe extern "C" fn startParsing(mut parser: XML_Parser) -> XML_Bool /* only va
 #[no_mangle]
 pub unsafe extern "C" fn XML_ParserCreate_MM(
     mut encodingName: *const XML_Char,
-    mut memsuite: *const XML_Memory_Handling_Suite,
+    mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
 ) -> XML_Parser {
-    return parserCreate(encodingName, memsuite, nameSep, NULL as *mut DTD);
+    return XML_ParserStruct::create(encodingName, memsuite, nameSep, NULL as *mut DTD);
 }
 
-unsafe extern "C" fn parserCreate(
-    mut encodingName: *const XML_Char,
-    mut memsuite: *const XML_Memory_Handling_Suite,
-    mut nameSep: *const XML_Char,
-    mut dtd: *mut DTD,
-) -> XML_Parser {
-    let mut parser: XML_Parser = 0 as *mut XML_ParserStruct;
-    if !memsuite.is_null() {
-        let mut mtemp: *mut XML_Memory_Handling_Suite = 0 as *mut XML_Memory_Handling_Suite;
-        parser = (*memsuite).malloc_fcn.expect("non-null function pointer")(::std::mem::size_of::<
-            XML_ParserStruct,
-        >() as c_ulong) as XML_Parser;
-        if !parser.is_null() {
-            mtemp = &(*parser).m_mem as *const XML_Memory_Handling_Suite
-                as *mut XML_Memory_Handling_Suite;
-            (*mtemp).malloc_fcn = (*memsuite).malloc_fcn;
-            (*mtemp).realloc_fcn = (*memsuite).realloc_fcn;
-            (*mtemp).free_fcn = (*memsuite).free_fcn
+impl XML_ParserStruct {
+    fn new(use_namespaces: bool) -> Self {
+        Self {
+            m_userData: ptr::null_mut(),
+            m_buffer: ptr::null_mut(),
+            m_mem: XML_Memory_Handling_Suite::default(),
+            /* first character to be parsed */
+            m_bufferPtr: ptr::null(),
+            /* past last character to be parsed */
+            m_bufferEnd: ptr::null_mut(),
+            /* allocated end of m_buffer */
+            m_bufferLim: ptr::null(),
+            m_parseEndByteIndex: 0,
+            m_parseEndPtr: ptr::null(),
+            m_dataBuf: ptr::null_mut(), // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
+            m_dataBufEnd: ptr::null_mut(),
+
+            m_handlers: Default::default(),
+
+            // This is not what the C version does, it leaves this pointer
+            // uninitialized. Unfortunately we don't have that luxury with trait
+            // object pointers.
+            m_encoding: XmlGetInternalEncoding(),
+            m_initEncoding: None,
+
+            // This is not what the C version does, it leaves this pointer
+            // uninitialized. Unfortunately we don't have that luxury with trait
+            // object pointers.
+            m_internalEncoding: {
+                if use_namespaces {
+                    XmlGetInternalEncodingNS()
+                } else {
+                    XmlGetInternalEncoding()
+                }
+            },
+
+            m_protocolEncodingName: ptr::null(),
+            m_ns: 0,
+            m_ns_triplets: 0,
+            m_unknownEncoding: None,
+            m_unknownEncodingData: ptr::null_mut(),
+            m_unknownEncodingRelease: None,
+            m_prologState: super::xmlrole::PROLOG_STATE::default(),
+            m_processor: None,
+            m_errorCode: 0,
+            m_eventPtr: ptr::null(),
+            m_eventEndPtr: ptr::null(),
+            m_positionPtr: ptr::null(),
+            m_openInternalEntities: ptr::null_mut(),
+            m_freeInternalEntities: ptr::null_mut(),
+            m_defaultExpandInternalEntities: 0,
+            m_tagLevel: 0,
+            m_declEntity: ptr::null_mut(),
+            m_doctypeName: ptr::null(),
+            m_doctypeSysid: ptr::null(),
+            m_doctypePubid: ptr::null(),
+            m_declAttributeType: ptr::null(),
+            m_declNotationName: ptr::null(),
+            m_declNotationPublicId: ptr::null(),
+            m_declElementType: ptr::null_mut(),
+            m_declAttributeId: ptr::null_mut(),
+            m_declAttributeIsCdata: 0,
+            m_declAttributeIsId: 0,
+            m_dtd: ptr::null_mut(),
+            m_curBase: ptr::null(),
+            m_tagStack: ptr::null_mut(),
+            m_freeTagList: ptr::null_mut(),
+            m_inheritedBindings: ptr::null_mut(),
+            m_freeBindingList: ptr::null_mut(),
+            m_attsSize: 0,
+            m_nSpecifiedAtts: 0,
+            m_idAttIndex: 0,
+            m_atts: ptr::null_mut(),
+            m_nsAtts: ptr::null_mut(),
+            m_nsAttsVersion: 0,
+            m_nsAttsPower: 0,
+            m_position: super::xmltok::POSITION::default(),
+            m_tempPool: STRING_POOL::new(),
+            m_temp2Pool: STRING_POOL::new(),
+            m_groupConnector: ptr::null_mut(),
+            m_groupSize: 0,
+            m_namespaceSeparator: 0,
+            m_parentParser: ptr::null_mut(),
+            m_parsingStatus: XML_ParsingStatus::default(),
+            m_isParamEntity: 0,
+            m_useForeignDTD: 0,
+            m_paramEntityParsing: 0,
+            m_hash_secret_salt: 0,
+
+            #[cfg(feature = "mozilla")]
+            m_mismatch: ptr::null(),
         }
-    } else {
-        let mut mtemp_0: *mut XML_Memory_Handling_Suite = 0 as *mut XML_Memory_Handling_Suite;
-        parser = malloc(::std::mem::size_of::<XML_ParserStruct>() as c_ulong) as XML_Parser;
-        if !parser.is_null() {
-            mtemp_0 = &(*parser).m_mem as *const XML_Memory_Handling_Suite
-                as *mut XML_Memory_Handling_Suite;
-            (*mtemp_0).malloc_fcn = Some(malloc as unsafe extern "C" fn(_: c_ulong) -> *mut c_void);
-            (*mtemp_0).realloc_fcn =
-                Some(realloc as unsafe extern "C" fn(_: *mut c_void, _: c_ulong) -> *mut c_void);
-            (*mtemp_0).free_fcn = Some(free as unsafe extern "C" fn(_: *mut c_void) -> ())
-        }
-    }
-    if parser.is_null() {
-        return parser;
     }
 
-    (*parser).m_buffer = NULL as *mut c_char;
-    (*parser).m_bufferLim = NULL as *const c_char;
-    (*parser).m_attsSize = INIT_ATTS_SIZE;
-    (*parser).m_atts = MALLOC!(
-        parser,
-        ((*parser).m_attsSize as c_ulong)
-            .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
-    ) as *mut super::xmltok::ATTRIBUTE;
-    if (*parser).m_atts.is_null() {
-        FREE!(parser, parser as *mut c_void);
-        return NULL as XML_Parser;
-    }
-    (*parser).m_dataBuf = MALLOC!(
-        parser,
-        1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
-    ) as *mut XML_Char;
-    if (*parser).m_dataBuf.is_null() {
-        FREE!(parser, (*parser).m_atts as *mut c_void);
-        FREE!(parser, parser as *mut c_void);
-        return NULL as XML_Parser;
-    }
-    (*parser).m_dataBufEnd = (*parser).m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
-    if !dtd.is_null() {
-        (*parser).m_dtd = dtd
-    } else {
-        (*parser).m_dtd = dtdCreate(&(*parser).m_mem);
-        if (*parser).m_dtd.is_null() {
-            FREE!(parser, (*parser).m_dataBuf as *mut c_void);
+    unsafe fn create(
+        mut encodingName: *const XML_Char,
+        mut memsuite: Option<&XML_Memory_Handling_Suite>,
+        mut nameSep: *const XML_Char,
+        mut dtd: *mut DTD,
+    ) -> XML_Parser {
+        let use_namespaces = !nameSep.is_null();
+        let parser = XML_ParserStruct::new(use_namespaces);
+
+        let memsuite = match memsuite {
+            Some(m) => *m,
+            None => XML_Memory_Handling_Suite {
+                malloc_fcn: Some(malloc),
+                realloc_fcn: Some(realloc),
+                free_fcn: Some(free),
+            },
+        };
+        let mut parser = match ExpatBox::try_new_in(parser, memsuite) {
+            Ok(p) => p,
+            Err(_) => return ptr::null_mut(),
+        };
+        parser.m_mem = memsuite;
+
+        (*parser).m_buffer = NULL as *mut c_char;
+        (*parser).m_bufferLim = NULL as *const c_char;
+        (*parser).m_attsSize = INIT_ATTS_SIZE;
+        (*parser).m_atts = MALLOC!(
+            parser,
+            ((*parser).m_attsSize as c_ulong)
+                .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
+        ) as *mut super::xmltok::ATTRIBUTE;
+        if (*parser).m_atts.is_null() {
+            return ptr::null_mut();
+        }
+        (*parser).m_dataBuf = MALLOC!(
+            parser,
+            1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
+        ) as *mut XML_Char;
+        if (*parser).m_dataBuf.is_null() {
             FREE!(parser, (*parser).m_atts as *mut c_void);
-            FREE!(parser, parser as *mut c_void);
-            return NULL as XML_Parser;
+            return ptr::null_mut();
         }
-    }
-    (*parser).m_freeBindingList = NULL as *mut BINDING;
-    (*parser).m_freeTagList = NULL as *mut TAG;
-    (*parser).m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
-    (*parser).m_groupSize = 0;
-    (*parser).m_groupConnector = NULL as *mut c_char;
-    (*parser).m_handlers.m_unknownEncodingHandler = None;
-    (*parser).m_handlers.m_unknownEncodingHandlerData = NULL as *mut c_void;
-    (*parser).m_namespaceSeparator = ASCII_EXCL as XML_Char;
-    (*parser).m_ns = XML_FALSE;
-    (*parser).m_ns_triplets = XML_FALSE;
-    (*parser).m_nsAtts = NULL as *mut NS_ATT;
-    (*parser).m_nsAttsVersion = 0;
-    (*parser).m_nsAttsPower = 0;
-    (*parser).m_protocolEncodingName = NULL as *const XML_Char;
-    poolInit(&mut (*parser).m_tempPool, &(*parser).m_mem);
-    poolInit(&mut (*parser).m_temp2Pool, &(*parser).m_mem);
-    parserInit(parser, encodingName);
-    if !encodingName.is_null() && (*parser).m_protocolEncodingName.is_null() {
-        XML_ParserFree(parser);
-        return NULL as XML_Parser;
-    }
-    if !nameSep.is_null() {
-        (*parser).m_ns = XML_TRUE;
-        (*parser).m_internalEncoding = XmlGetInternalEncodingNS();
-        (*parser).m_namespaceSeparator = *nameSep
-    } else {
-        (*parser).m_internalEncoding = XmlGetInternalEncoding()
-    }
+        (*parser).m_dataBufEnd = (*parser).m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
+        if !dtd.is_null() {
+            (*parser).m_dtd = dtd
+        } else {
+            (*parser).m_dtd = dtdCreate(&(*parser).m_mem);
+            if (*parser).m_dtd.is_null() {
+                FREE!(parser, (*parser).m_dataBuf as *mut c_void);
+                FREE!(parser, (*parser).m_atts as *mut c_void);
+                return ptr::null_mut();
+            }
+        }
+        (*parser).m_freeBindingList = NULL as *mut BINDING;
+        (*parser).m_freeTagList = NULL as *mut TAG;
+        (*parser).m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
+        (*parser).m_groupSize = 0;
+        (*parser).m_groupConnector = NULL as *mut c_char;
+        (*parser).m_initEncoding = None;
+        (*parser).m_unknownEncoding = None;
+        (*parser).m_namespaceSeparator = ASCII_EXCL as XML_Char;
+        (*parser).m_ns = XML_FALSE;
+        (*parser).m_ns_triplets = XML_FALSE;
+        (*parser).m_nsAtts = NULL as *mut NS_ATT;
+        (*parser).m_nsAttsVersion = 0;
+        (*parser).m_nsAttsPower = 0;
+        (*parser).m_protocolEncodingName = NULL as *const XML_Char;
+        poolInit(&mut (*parser).m_tempPool, &(*parser).m_mem);
+        poolInit(&mut (*parser).m_temp2Pool, &(*parser).m_mem);
+        parserInit(&mut *parser, encodingName);
+        if !encodingName.is_null() && (*parser).m_protocolEncodingName.is_null() {
+            XML_ParserFree(ExpatBox::into_raw(parser));
+            return ptr::null_mut();
+        }
+        if !nameSep.is_null() {
+            (*parser).m_ns = XML_TRUE;
+            (*parser).m_namespaceSeparator = *nameSep
+        }
 
-    #[cfg(feature = "mozilla")]
-    {
-        (*parser).m_mismatch = NULL as *const XML_Char;
+        #[cfg(feature = "mozilla")]
+        {
+            (*parser).m_mismatch = NULL as *const XML_Char;
+        }
+        return ExpatBox::into_raw(parser);
     }
-    return parser;
 }
 
 unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const XML_Char) {
@@ -1498,11 +1620,8 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
         (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem)
     }
     (*parser).m_curBase = NULL as *const XML_Char;
-    super::xmltok::XmlInitEncoding(
-        &mut (*parser).m_initEncoding as *mut _,
-        &mut (*parser).m_encoding,
-        0 as *const c_char,
-    );
+    (*parser).m_initEncoding = InitEncoding::new(&mut (*parser).m_encoding, ptr::null());
+    (*parser).m_encoding = &*(*parser).m_initEncoding.as_ref().unwrap();
     (*parser).m_userData = NULL as *mut c_void;
     (*parser).m_handlers = Default::default();
     (*parser).m_handlers.m_externalEntityRefHandlerArg = parser;
@@ -1536,7 +1655,7 @@ unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const
     (*parser).m_tagStack = NULL as *mut TAG;
     (*parser).m_inheritedBindings = NULL as *mut BINDING;
     (*parser).m_nSpecifiedAtts = 0;
-    (*parser).m_unknownEncodingMem = NULL as *mut c_void;
+    (*parser).m_unknownEncoding = None;
     (*parser).m_unknownEncodingRelease = ::std::mem::transmute::<
         intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
@@ -1600,7 +1719,7 @@ pub unsafe extern "C" fn XML_ParserReset(
         (*parser).m_freeInternalEntities = openEntity
     }
     moveToFreeBindingList(parser, (*parser).m_inheritedBindings);
-    FREE!(parser, (*parser).m_unknownEncodingMem);
+    let _ = (*parser).m_unknownEncoding.take();
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
@@ -1765,11 +1884,11 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if (*parser).m_ns != 0 {
         let mut tmp: [XML_Char; 2] = [0; 2];
         *tmp.as_mut_ptr() = (*parser).m_namespaceSeparator;
-        parser = parserCreate(encodingName, &(*parser).m_mem, tmp.as_mut_ptr(), newDtd)
+        parser = XML_ParserStruct::create(encodingName, Some(&(*parser).m_mem), tmp.as_mut_ptr(), newDtd)
     } else {
-        parser = parserCreate(
+        parser = XML_ParserStruct::create(
             encodingName,
-            &(*parser).m_mem,
+            Some(&(*parser).m_mem),
             NULL as *const XML_Char,
             newDtd,
         )
@@ -1857,6 +1976,7 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
+    let mut parser = ExpatBox::from_raw_in(parser, (*parser).m_mem);
     /* free m_tagStack and m_freeTagList */
     tagList = (*parser).m_tagStack;
     loop {
@@ -1871,8 +1991,7 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
         p = tagList;
         tagList = (*tagList).parent;
         FREE!(parser, (*p).buf as *mut c_void);
-        destroyBindings((*p).bindings, parser);
-        FREE!(parser, p as *mut c_void);
+        destroyBindings((*p).bindings, &mut *parser);
     }
     /* free m_openInternalEntities and m_freeInternalEntities */
     entityList = (*parser).m_openInternalEntities;
@@ -1889,8 +2008,8 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
         entityList = (*entityList).next;
         FREE!(parser, openEntity as *mut c_void);
     }
-    destroyBindings((*parser).m_freeBindingList, parser);
-    destroyBindings((*parser).m_inheritedBindings, parser);
+    destroyBindings((*parser).m_freeBindingList, &mut *parser);
+    destroyBindings((*parser).m_inheritedBindings, &mut *parser);
     poolDestroy(&mut (*parser).m_tempPool);
     poolDestroy(&mut (*parser).m_temp2Pool);
     FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
@@ -1910,13 +2029,15 @@ pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
     FREE!(parser, (*parser).m_buffer as *mut c_void);
     FREE!(parser, (*parser).m_dataBuf as *mut c_void);
     FREE!(parser, (*parser).m_nsAtts as *mut c_void);
-    FREE!(parser, (*parser).m_unknownEncodingMem);
+    let _ = (*parser).m_unknownEncoding.take();
+    let _ = (*parser).m_initEncoding.take();
     if (*parser).m_unknownEncodingRelease.is_some() {
         (*parser)
             .m_unknownEncodingRelease
             .expect("non-null function pointer")((*parser).m_unknownEncodingData);
     }
-    FREE!(parser, parser as *mut c_void);
+
+    mem::drop(parser);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
@@ -3083,14 +3204,14 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
         if !(*parser).m_openInternalEntities.is_null() {
             reportDefault(
                 parser,
-                (*parser).m_internalEncoding,
+                EncodingType::Internal,
                 (*(*parser).m_openInternalEntities).internalEventPtr,
                 (*(*parser).m_openInternalEntities).internalEventEndPtr,
             );
         } else {
             reportDefault(
                 parser,
-                (*parser).m_encoding,
+                EncodingType::Normal,
                 (*parser).m_eventPtr,
                 (*parser).m_eventEndPtr,
             );
@@ -3360,7 +3481,7 @@ unsafe extern "C" fn contentProcessor(
     let mut result: XML_Error = doContent(
         parser,
         0,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         start,
         end,
         endPtr,
@@ -3488,7 +3609,7 @@ unsafe extern "C" fn externalEntityContentProcessor(
     let mut result: XML_Error = doContent(
         parser,
         1,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         start,
         end,
         endPtr,
@@ -3505,7 +3626,7 @@ unsafe extern "C" fn externalEntityContentProcessor(
 unsafe extern "C" fn doContent(
     mut parser: XML_Parser,
     mut startTagLevel: c_int,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut s: *const c_char,
     mut end: *const c_char,
     mut nextPtr: *mut *const c_char,
@@ -3515,13 +3636,14 @@ unsafe extern "C" fn doContent(
     let dtd: *mut DTD = (*parser).m_dtd; /* XmlContentTok doesn't always set the last arg */
     let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
     let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-    if enc == (*parser).m_encoding {
-        eventPP = &mut (*parser).m_eventPtr;
-        eventEndPP = &mut (*parser).m_eventEndPtr
-    } else {
+    if enc_type.is_internal() {
         eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
         eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
+    } else {
+        eventPP = &mut (*parser).m_eventPtr;
+        eventEndPP = &mut (*parser).m_eventEndPtr
     }
+    let enc = (*parser).encoding(enc_type);
     *eventPP = s;
     loop {
         let mut next: *const c_char = s;
@@ -3539,7 +3661,7 @@ unsafe extern "C" fn doContent(
                     let mut c: XML_Char = 0xa;
                     (*parser).m_handlers.characterData(&mut c, 1);
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, end);
+                    reportDefault(parser, enc_type, s, end);
                 }
                 /* LCOV_EXCL_STOP */
                 /* We are at the end of the final buffer, should we check for
@@ -3599,7 +3721,7 @@ unsafe extern "C" fn doContent(
                     );
 
                     if !hasCharacterData && (*parser).m_handlers.hasDefault() {
-                        reportDefault(parser, enc, s, next);
+                        reportDefault(parser, enc_type, s, next);
                     }
                 } else {
                     name = poolStoreString(
@@ -3631,7 +3753,7 @@ unsafe extern "C" fn doContent(
 
                         if !skippedHandlerRan && (*parser).m_handlers.hasDefault() {
                             if !cfg!(feature = "mozilla") {
-                                reportDefault(parser, enc, s, next);
+                                reportDefault(parser, enc_type, s, next);
                             }
                         }
                         if cfg!(feature = "mozilla") {
@@ -3656,7 +3778,7 @@ unsafe extern "C" fn doContent(
                                     let skippedHandlerRan = (*parser).m_handlers.skippedEntity((*entity).name, 0);
 
                                     if !skippedHandlerRan && (*parser).m_handlers.hasDefault() {
-                                        reportDefault(parser, enc, s, next);
+                                        reportDefault(parser, enc_type, s, next);
                                     }
                                 } else {
                                     result = processInternalEntity(parser, entity, XML_FALSE);
@@ -3683,7 +3805,7 @@ unsafe extern "C" fn doContent(
                                 }
                                 (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
                             } else if (*parser).m_handlers.hasDefault() {
-                                reportDefault(parser, enc, s, next);
+                                reportDefault(parser, enc_type, s, next);
                             }
                         }
                     }
@@ -3753,7 +3875,7 @@ unsafe extern "C" fn doContent(
                 }
                 (*tag).name.str_0 = (*tag).buf as *const XML_Char;
                 *toPtr = '\u{0}' as XML_Char;
-                result_0 = storeAtts(parser, enc, s, &mut (*tag).name, &mut (*tag).bindings);
+                result_0 = storeAtts(parser, enc_type, s, &mut (*tag).name, &mut (*tag).bindings);
                 if result_0 as u64 != 0 {
                     return result_0;
                 }
@@ -3762,7 +3884,7 @@ unsafe extern "C" fn doContent(
                 let started = handlers.startElement((*tag).name.str_0, (*parser).m_atts);
 
                 if !started && handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
                 poolClear(&mut (*parser).m_tempPool);
             }
@@ -3791,7 +3913,7 @@ unsafe extern "C" fn doContent(
                     return XML_ERROR_NO_MEMORY;
                 }
                 (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                result_1 = storeAtts(parser, enc, s, &mut name_0, &mut bindings);
+                result_1 = storeAtts(parser, enc_type, s, &mut name_0, &mut bindings);
                 if result_1 != XML_ERROR_NONE {
                     freeBindings(parser, bindings);
                     return result_1;
@@ -3812,7 +3934,7 @@ unsafe extern "C" fn doContent(
                     noElmHandlers = XML_FALSE
                 }
                 if noElmHandlers as c_int != 0 && (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
                 poolClear(&mut (*parser).m_tempPool);
                 freeBindings(parser, bindings);
@@ -3924,7 +4046,7 @@ unsafe extern "C" fn doContent(
 
                         (*parser).m_handlers.endElement((*tag_0).name.str_0);
                     } else if (*parser).m_handlers.hasDefault() {
-                        reportDefault(parser, enc, s, next);
+                        reportDefault(parser, enc_type, s, next);
                     }
                     while !(*tag_0).bindings.is_null() {
                         let mut b: *mut BINDING = (*tag_0).bindings;
@@ -3957,7 +4079,7 @@ unsafe extern "C" fn doContent(
                         XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR),
                     );
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
             super::xmltok::XML_TOK_XML_DECL => return XML_ERROR_MISPLACED_XML_PI,
@@ -3969,7 +4091,7 @@ unsafe extern "C" fn doContent(
                         1,
                     );
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
             super::xmltok::XML_TOK_CDATA_SECT_OPEN => {
@@ -3981,9 +4103,9 @@ unsafe extern "C" fn doContent(
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
                     (*parser).m_handlers.characterData((*parser).m_dataBuf, 0);
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
-                result_2 = doCdataSection(parser, enc, &mut next, end, nextPtr, haveMore);
+                result_2 = doCdataSection(parser, enc_type, &mut next, end, nextPtr, haveMore);
                 if result_2 != XML_ERROR_NONE {
                     return result_2;
                 } else {
@@ -4015,7 +4137,7 @@ unsafe extern "C" fn doContent(
                         );
                     }
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, end);
+                    reportDefault(parser, enc_type, s, end);
                 }
                 /* BEGIN disabled code */
                 /* Suppose you doing a transformation on a document that involves
@@ -4078,16 +4200,16 @@ unsafe extern "C" fn doContent(
                         );
                     }
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
             super::xmltok::XML_TOK_PI => {
-                if reportProcessingInstruction(parser, enc, s, next) == 0 {
+                if reportProcessingInstruction(parser, enc_type, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
             }
             super::xmltok::XML_TOK_COMMENT => {
-                if reportComment(parser, enc, s, next) == 0 {
+                if reportComment(parser, enc_type, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
             }
@@ -4100,7 +4222,7 @@ unsafe extern "C" fn doContent(
                  * LCOV_EXCL_START
                  */
                 if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
         }
@@ -4149,7 +4271,7 @@ unsafe extern "C" fn freeBindings(mut parser: XML_Parser, mut bindings: *mut BIN
 
 unsafe extern "C" fn storeAtts(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut attStr: *const c_char,
     mut tagNamePtr: *mut TAG_NAME,
     mut bindingsPtr: *mut *mut BINDING,
@@ -4166,6 +4288,7 @@ unsafe extern "C" fn storeAtts(
     let mut nXMLNSDeclarations: c_int = 0;
     let mut binding: *mut BINDING = 0 as *mut BINDING;
     let mut localPart: *const XML_Char = 0 as *const XML_Char;
+    let enc = (*parser).encoding(enc_type);
     /* lookup the element type name */
     let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey::from((*tagNamePtr).str_0)) {
         elementType.as_mut()
@@ -4218,7 +4341,7 @@ unsafe extern "C" fn storeAtts(
         /* add the name and value to the attribute list */
         let mut attId: *mut ATTRIBUTE_ID = getAttributeId(
             parser,
-            enc,
+            enc_type,
             (*currAtt).name,
             (*currAtt)
                 .name
@@ -4232,7 +4355,7 @@ unsafe extern "C" fn storeAtts(
            namespace are used. For this case we have a check further down.
         */
         if *(*attId).name.offset(-1) != 0 {
-            if enc == (*parser).m_encoding {
+            if !enc_type.is_internal() {
                 (*parser).m_eventPtr = (*(*parser).m_atts.offset(i as isize)).name
             }
             return XML_ERROR_DUPLICATE_ATTRIBUTE;
@@ -4263,7 +4386,7 @@ unsafe extern "C" fn storeAtts(
             /* normalize the attribute value */
             result = storeAttributeValue(
                 parser,
-                enc,
+                enc_type,
                 isCdata,
                 (*(*parser).m_atts.offset(i as isize)).valuePtr,
                 (*(*parser).m_atts.offset(i as isize)).valueEnd,
@@ -5035,7 +5158,7 @@ unsafe extern "C" fn cdataSectionProcessor(
 ) -> XML_Error {
     let mut result: XML_Error = doCdataSection(
         parser,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         &mut start,
         end,
         endPtr,
@@ -5062,7 +5185,7 @@ unsafe extern "C" fn cdataSectionProcessor(
 
 unsafe extern "C" fn doCdataSection(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut startPtr: *mut *const c_char,
     mut end: *const c_char,
     mut nextPtr: *mut *const c_char,
@@ -5071,7 +5194,7 @@ unsafe extern "C" fn doCdataSection(
     let mut s: *const c_char = *startPtr;
     let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
     let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-    if enc == (*parser).m_encoding {
+    if !enc_type.is_internal() {
         eventPP = &mut (*parser).m_eventPtr;
         *eventPP = s;
         eventEndPP = &mut (*parser).m_eventEndPtr
@@ -5081,6 +5204,7 @@ unsafe extern "C" fn doCdataSection(
     }
     *eventPP = s;
     *startPtr = NULL as *const c_char;
+    let enc = (*parser).encoding(enc_type);
     loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok: c_int = (*enc).xmlTok(XML_CDATA_SECTION_STATE, s, end, &mut next);
@@ -5093,7 +5217,7 @@ unsafe extern "C" fn doCdataSection(
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
                     (*parser).m_handlers.characterData((*parser).m_dataBuf, 0);
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
                 *startPtr = next;
                 *nextPtr = next;
@@ -5112,7 +5236,7 @@ unsafe extern "C" fn doCdataSection(
                     let mut c: XML_Char = 0xa;
                     (*parser).m_handlers.characterData(&mut c, 1);
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
             super::xmltok::XML_TOK_DATA_CHARS => {
@@ -5148,7 +5272,7 @@ unsafe extern "C" fn doCdataSection(
                         );
                     }
                 } else if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
             }
             super::xmltok::XML_TOK_INVALID => {
@@ -5206,7 +5330,7 @@ unsafe extern "C" fn ignoreSectionProcessor(
 ) -> XML_Error {
     let mut result: XML_Error = doIgnoreSection(
         parser,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         &mut start,
         end,
         endPtr,
@@ -5227,7 +5351,7 @@ unsafe extern "C" fn ignoreSectionProcessor(
 
 unsafe extern "C" fn doIgnoreSection(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut startPtr: *mut *const c_char,
     mut end: *const c_char,
     mut nextPtr: *mut *const c_char,
@@ -5238,7 +5362,7 @@ unsafe extern "C" fn doIgnoreSection(
     let mut s: *const c_char = *startPtr;
     let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
     let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-    if enc == (*parser).m_encoding {
+    if !enc_type.is_internal() {
         eventPP = &mut (*parser).m_eventPtr;
         *eventPP = s;
         eventEndPP = &mut (*parser).m_eventEndPtr
@@ -5260,12 +5384,13 @@ unsafe extern "C" fn doIgnoreSection(
     }
     *eventPP = s;
     *startPtr = NULL as *const c_char;
+    let enc = (*parser).encoding(enc_type);
     tok = (*enc).xmlTok(XML_IGNORE_SECTION_STATE, s, end, &mut next);
     *eventEndPP = next;
     match tok {
         super::xmltok::XML_TOK_IGNORE_SECT => {
             if (*parser).m_handlers.hasDefault() {
-                reportDefault(parser, enc, s, next);
+                reportDefault(parser, enc_type, s, next);
             }
             *startPtr = next;
             *nextPtr = next;
@@ -5342,20 +5467,14 @@ unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
     } else {
         s = (*parser).m_protocolEncodingName as *const c_char;
     }
-    if if (*parser).m_ns as c_int != 0 {
-        super::xmltok::XmlInitEncodingNS(
-            &mut (*parser).m_initEncoding,
-            &mut (*parser).m_encoding,
-            s,
-        )
+    let enc = if (*parser).m_ns as c_int != 0 {
+        InitEncoding::new_ns(&mut (*parser).m_encoding, s)
     } else {
-        super::xmltok::XmlInitEncoding(
-            &mut (*parser).m_initEncoding,
-            &mut (*parser).m_encoding,
-            s,
-        )
-    } != 0
-    {
+        InitEncoding::new(&mut (*parser).m_encoding, s)
+    };
+    if enc.is_some() {
+        (*parser).m_initEncoding = enc;
+        (*parser).m_encoding = &*(*parser).m_initEncoding.as_ref().unwrap();
         return XML_ERROR_NONE;
     }
 
@@ -5370,7 +5489,7 @@ unsafe extern "C" fn processXmlDecl(
 ) -> XML_Error {
     let mut encodingName: *const c_char = NULL as *const c_char;
     let mut storedEncName: *const XML_Char = NULL as *const XML_Char;
-    let mut newEncoding: Option<*const super::xmltok::ENCODING> = None;
+    let mut newEncoding: Option<*const ENCODING> = None;
     let mut version: *const c_char = NULL as *const c_char;
     let mut versionend: *const c_char = 0 as *const c_char;
     let mut storedversion: *const XML_Char = NULL as *const XML_Char;
@@ -5381,7 +5500,7 @@ unsafe extern "C" fn processXmlDecl(
         super::xmltok::XmlParseXmlDecl
     }(
         isGeneralTextEntity,
-        (*parser).m_encoding,
+        &*(*parser).m_encoding,
         s,
         next,
         &mut (*parser).m_eventPtr,
@@ -5409,7 +5528,7 @@ unsafe extern "C" fn processXmlDecl(
         if !encodingName.is_null() {
             storedEncName = poolStoreString(
                 &mut (*parser).m_temp2Pool,
-                (*parser).m_encoding,
+                &*(*parser).m_encoding,
                 encodingName,
                 encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
             );
@@ -5421,7 +5540,7 @@ unsafe extern "C" fn processXmlDecl(
         if !version.is_null() {
             storedversion = poolStoreString(
                 &mut (*parser).m_temp2Pool,
-                (*parser).m_encoding,
+                &*(*parser).m_encoding,
                 version,
                 versionend.offset(-((*(*parser).m_encoding).minBytesPerChar() as isize)),
             );
@@ -5435,7 +5554,7 @@ unsafe extern "C" fn processXmlDecl(
             standalone,
         );
     } else if (*parser).m_handlers.hasDefault() {
-        reportDefault(parser, (*parser).m_encoding, s, next);
+        reportDefault(parser, EncodingType::Normal, s, next);
     }
     if (*parser).m_protocolEncodingName.is_null() {
         if let Some(newEncoding) = newEncoding {
@@ -5445,7 +5564,7 @@ unsafe extern "C" fn processXmlDecl(
              * this is UTF-16, is it the same endianness?
              */
             if (*newEncoding).minBytesPerChar() != (*(*parser).m_encoding).minBytesPerChar()
-                || (*newEncoding).minBytesPerChar() == 2 && newEncoding != (*parser).m_encoding
+                || (*newEncoding).minBytesPerChar() == 2 && !ptr::eq(newEncoding, (*parser).m_encoding)
             {
                 (*parser).m_eventPtr = encodingName;
                 return XML_ERROR_INCORRECT_ENCODING;
@@ -5456,7 +5575,7 @@ unsafe extern "C" fn processXmlDecl(
             if storedEncName.is_null() {
                 storedEncName = poolStoreString(
                     &mut (*parser).m_temp2Pool,
-                    (*parser).m_encoding,
+                    &*(*parser).m_encoding,
                     encodingName,
                     encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
                 );
@@ -5507,34 +5626,29 @@ unsafe extern "C" fn handleUnknownEncoding(
 
         // Unwrapping because the handler was already checked to exist
         if (*parser).m_handlers.unknownEncoding(encodingName, &mut info).unwrap() != 0 {
-            (*parser).m_unknownEncodingMem =
-                MALLOC!(parser, super::xmltok::XmlSizeOfUnknownEncoding() as size_t);
-            if (*parser).m_unknownEncodingMem.is_null() {
-                if info.release.is_some() {
-                    info.release.expect("non-null function pointer")(info.data);
+            let mut unknown_enc = UnknownEncoding::new();
+            let initialized = unknown_enc.initialize(
+                info.map.as_mut_ptr(),
+                info.convert,
+                info.data,
+                (*parser).m_ns != 0
+            );
+            if initialized {
+                match ExpatBox::try_new_in(unknown_enc, (*parser).m_mem) {
+                    Err(_) => {
+                        if info.release.is_some() {
+                            info.release.expect("non-null function pointer")(info.data);
+                        }
+                        return XML_ERROR_NO_MEMORY;
+                    }
+                    Ok(unknown_enc) => {
+                        (*parser).m_encoding = &*unknown_enc;
+                        (*parser).m_unknownEncoding = Some(unknown_enc);
+                        (*parser).m_unknownEncodingData = info.data;
+                        (*parser).m_unknownEncodingRelease = info.release;
+                        return XML_ERROR_NONE;
+                    }
                 }
-                return XML_ERROR_NO_MEMORY;
-            }
-            let enc = if (*parser).m_ns != 0 {
-                super::xmltok::XmlInitUnknownEncodingNS(
-                    (*parser).m_unknownEncodingMem,
-                    info.map.as_mut_ptr(),
-                    info.convert,
-                    info.data,
-                )
-            } else {
-                super::xmltok::XmlInitUnknownEncoding(
-                    (*parser).m_unknownEncodingMem,
-                    info.map.as_mut_ptr(),
-                    info.convert,
-                    info.data,
-                )
-            };
-            if !enc.is_null() {
-                (*parser).m_unknownEncodingData = info.data;
-                (*parser).m_unknownEncodingRelease = info.release;
-                (*parser).m_encoding = enc;
-                return XML_ERROR_NONE;
             }
         }
         if info.release.is_some() {
@@ -5605,7 +5719,7 @@ unsafe extern "C" fn entityValueInitProcessor(
                 super::xmltok::XML_TOK_NONE | _ => {}
             }
             /* found end of entity value - can store it now */
-            return storeEntityValue(parser, (*parser).m_encoding, s, end);
+            return storeEntityValue(parser, EncodingType::Normal, s, end);
         } else {
             if tok == super::xmltok::XML_TOK_XML_DECL {
                 let mut result: XML_Error = XML_ERROR_NONE;
@@ -5683,7 +5797,7 @@ unsafe extern "C" fn externalParEntProcessor(
     (*parser).m_processor = Some(prologProcessor as Processor);
     return doProlog(
         parser,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         s,
         end,
         tok,
@@ -5702,7 +5816,7 @@ unsafe extern "C" fn entityValueProcessor(
 ) -> XML_Error {
     let mut start: *const c_char = s;
     let mut next: *const c_char = s;
-    let mut enc: *const super::xmltok::ENCODING = (*parser).m_encoding;
+    let mut enc: &ENCODING = &*(*parser).m_encoding;
     let mut tok: c_int = 0;
     loop {
         tok = (*enc).xmlTok(XML_PROLOG_STATE, start, end, &mut next);
@@ -5722,7 +5836,7 @@ unsafe extern "C" fn entityValueProcessor(
                as valid, and report a syntax error, so we have to skip the BOM
             */
             /* found end of entity value - can store it now */
-            return storeEntityValue(parser, enc, s, end);
+            return storeEntityValue(parser, EncodingType::Normal, s, end);
         }
         start = next
     }
@@ -5739,7 +5853,7 @@ unsafe extern "C" fn prologProcessor(
     let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
     return doProlog(
         parser,
-        (*parser).m_encoding,
+        EncodingType::Normal,
         s,
         end,
         tok,
@@ -5750,9 +5864,9 @@ unsafe extern "C" fn prologProcessor(
     );
 }
 
-unsafe extern "C" fn doProlog(
+unsafe extern "C" fn doProlog<'a>(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut s: *const c_char,
     mut end: *const c_char,
     mut tok: c_int,
@@ -5854,13 +5968,14 @@ unsafe extern "C" fn doProlog(
     let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
     let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
     let mut quant: XML_Content_Quant = XML_CQUANT_NONE;
-    if enc == (*parser).m_encoding {
-        eventPP = &mut (*parser).m_eventPtr;
-        eventEndPP = &mut (*parser).m_eventEndPtr
-    } else {
+    if enc_type.is_internal() {
         eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
         eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
+    } else {
+        eventPP = &mut (*parser).m_eventPtr;
+        eventEndPP = &mut (*parser).m_eventEndPtr
     }
+    let mut enc = (*parser).encoding(enc_type);
     loop {
         let mut role: c_int = 0;
         let mut handleDefault: XML_Bool = XML_TRUE;
@@ -5882,9 +5997,7 @@ unsafe extern "C" fn doProlog(
                 -15 => tok = -tok,
                 super::xmltok::XML_TOK_NONE => {
                     /* for internal PE NOT referenced between declarations */
-                    if enc != (*parser).m_encoding
-                        && (*(*parser).m_openInternalEntities).betweenDecl == 0
-                    {
+                    if enc_type.is_internal() && (*(*parser).m_openInternalEntities).betweenDecl == 0 {
                         *nextPtr = s;
                         return XML_ERROR_NONE;
                     }
@@ -5892,7 +6005,7 @@ unsafe extern "C" fn doProlog(
                        complete markup, not only for external PEs, but also for
                        internal PEs if the reference occurs between declarations.
                     */
-                    if (*parser).m_isParamEntity as c_int != 0 || enc != (*parser).m_encoding {
+                    if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
                         if (*parser)
                             .m_prologState
                             .handler
@@ -5901,7 +6014,7 @@ unsafe extern "C" fn doProlog(
                             -(4),
                             end,
                             end,
-                            enc,
+                            &*enc,
                         ) == super::xmlrole::XML_ROLE_ERROR
                         {
                             return XML_ERROR_INCOMPLETE_PE;
@@ -5922,7 +6035,7 @@ unsafe extern "C" fn doProlog(
             .m_prologState
             .handler
             .expect("non-null function pointer")(
-            &mut (*parser).m_prologState, tok, s, next, enc
+            &mut (*parser).m_prologState, tok, s, next, &*enc
         );
         match role {
             1 => {
@@ -5930,7 +6043,7 @@ unsafe extern "C" fn doProlog(
                 if result != XML_ERROR_NONE {
                     return result;
                 }
-                enc = (*parser).m_encoding;
+                enc = (*parser).encoding(EncodingType::Normal);
                 handleDefault = XML_FALSE;
                 current_block = 1553878188884632965;
             }
@@ -5968,7 +6081,7 @@ unsafe extern "C" fn doProlog(
                 if result_0 != XML_ERROR_NONE {
                     return result_0;
                 }
-                enc = (*parser).m_encoding;
+                enc = (*parser).encoding(EncodingType::Normal);
                 handleDefault = XML_FALSE;
                 current_block = 1553878188884632965;
             }
@@ -6133,14 +6246,14 @@ unsafe extern "C" fn doProlog(
                 return contentProcessor(parser, s, end, nextPtr);
             }
             34 => {
-                (*parser).m_declElementType = getElementType(parser, enc, s, next);
+                (*parser).m_declElementType = getElementType(parser, enc_type, s, next);
                 if (*parser).m_declElementType.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
                 current_block = 6455255476181645667;
             }
             22 => {
-                (*parser).m_declAttributeId = getAttributeId(parser, enc, s, next);
+                (*parser).m_declAttributeId = getAttributeId(parser, enc_type, s, next);
                 if (*parser).m_declAttributeId.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
@@ -6274,7 +6387,7 @@ unsafe extern "C" fn doProlog(
                     let mut attVal: *const XML_Char = 0 as *const XML_Char;
                     let mut result_1: XML_Error = storeAttributeValue(
                         parser,
-                        enc,
+                        enc_type,
                         (*parser).m_declAttributeIsCdata,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -6351,7 +6464,7 @@ unsafe extern "C" fn doProlog(
                 if (*dtd).keepProcessing != 0 {
                     let mut result_2: XML_Error = storeEntityValue(
                         parser,
-                        enc,
+                        enc_type,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
                     );
@@ -6660,10 +6773,10 @@ unsafe extern "C" fn doProlog(
             58 => {
                 let mut result_3: XML_Error = XML_ERROR_NONE;
                 if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc, s, next);
+                    reportDefault(parser, enc_type, s, next);
                 }
                 handleDefault = XML_FALSE;
-                result_3 = doIgnoreSection(parser, enc, &mut next, end, nextPtr, haveMore);
+                result_3 = doIgnoreSection(parser, enc_type, &mut next, end, nextPtr, haveMore);
                 if result_3 != XML_ERROR_NONE {
                     return result_3;
                 } else {
@@ -6925,7 +7038,7 @@ unsafe extern "C" fn doProlog(
             40 => {
                 /* Element declaration stuff */
                 if (*parser).m_handlers.hasElementDecl() {
-                    (*parser).m_declElementType = getElementType(parser, enc, s, next);
+                    (*parser).m_declElementType = getElementType(parser, enc_type, s, next);
                     if (*parser).m_declElementType.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -7008,14 +7121,14 @@ unsafe extern "C" fn doProlog(
             }
             55 => {
                 /* End element declaration stuff */
-                if reportProcessingInstruction(parser, enc, s, next) == 0 {
+                if reportProcessingInstruction(parser, enc_type, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
                 handleDefault = XML_FALSE;
                 current_block = 1553878188884632965;
             }
             56 => {
-                if reportComment(parser, enc, s, next) == 0 {
+                if reportComment(parser, enc_type, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
                 handleDefault = XML_FALSE;
@@ -7120,7 +7233,7 @@ unsafe extern "C" fn doProlog(
                     }
                     (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
                     (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
-                    el = getElementType(parser, enc, s, nxt);
+                    el = getElementType(parser, enc_type, s, nxt);
                     if el.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -7200,7 +7313,7 @@ unsafe extern "C" fn doProlog(
         /* not XML_DTD */
         /* XML_DTD */
         if handleDefault as c_int != 0 && (*parser).m_handlers.hasDefault() {
-            reportDefault(parser, enc, s, next);
+            reportDefault(parser, enc_type, s, next);
         }
         match (*parser).m_parsingStatus.parsing {
             3 => {
@@ -7234,7 +7347,7 @@ unsafe extern "C" fn epilogProcessor(
             -15 => {
                 /* report partial linebreak - it might be the last token */
                 if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, (*parser).m_encoding, s, next);
+                    reportDefault(parser, EncodingType::Normal, s, next);
                     if (*parser).m_parsingStatus.parsing == XML_FINISHED {
                         return XML_ERROR_ABORTED;
                     }
@@ -7248,16 +7361,16 @@ unsafe extern "C" fn epilogProcessor(
             }
             super::xmltok::XML_TOK_PROLOG_S => {
                 if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, (*parser).m_encoding, s, next);
+                    reportDefault(parser, EncodingType::Normal, s, next);
                 }
             }
             super::xmltok::XML_TOK_PI => {
-                if reportProcessingInstruction(parser, (*parser).m_encoding, s, next) == 0 {
+                if reportProcessingInstruction(parser, EncodingType::Normal, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
             }
             super::xmltok::XML_TOK_COMMENT => {
-                if reportComment(parser, (*parser).m_encoding, s, next) == 0 {
+                if reportComment(parser, EncodingType::Normal, s, next) == 0 {
                     return XML_ERROR_NO_MEMORY;
                 }
             }
@@ -7334,7 +7447,7 @@ unsafe extern "C" fn processInternalEntity(
             (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
         result = doProlog(
             parser,
-            (*parser).m_internalEncoding,
+            EncodingType::Internal,
             textStart,
             textEnd,
             tok,
@@ -7348,7 +7461,7 @@ unsafe extern "C" fn processInternalEntity(
         result = doContent(
             parser,
             (*parser).m_tagLevel,
-            (*parser).m_internalEncoding,
+            EncodingType::Internal,
             textStart,
             textEnd,
             &mut next,
@@ -7418,7 +7531,7 @@ unsafe extern "C" fn internalEntityProcessor(
             (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
         result = doProlog(
             parser,
-            (*parser).m_internalEncoding,
+            EncodingType::Internal,
             textStart,
             textEnd,
             tok,
@@ -7432,7 +7545,7 @@ unsafe extern "C" fn internalEntityProcessor(
         result = doContent(
             parser,
             (*openEntity).startTagLevel,
-            (*parser).m_internalEncoding,
+            EncodingType::Internal,
             textStart,
             textEnd,
             &mut next,
@@ -7460,7 +7573,7 @@ unsafe extern "C" fn internalEntityProcessor(
         tok_0 = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
         return doProlog(
             parser,
-            (*parser).m_encoding,
+            EncodingType::Normal,
             s,
             end,
             tok_0,
@@ -7480,7 +7593,7 @@ unsafe extern "C" fn internalEntityProcessor(
             } else {
                 0i32
             },
-            (*parser).m_encoding,
+            EncodingType::Normal,
             s,
             end,
             nextPtr,
@@ -7500,13 +7613,13 @@ unsafe extern "C" fn errorProcessor(
 
 unsafe extern "C" fn storeAttributeValue(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut pool: *mut STRING_POOL,
 ) -> XML_Error {
-    let mut result: XML_Error = appendAttributeValue(parser, enc, isCdata, ptr, end, pool);
+    let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, ptr, end, pool);
     if result as u64 != 0 {
         return result;
     }
@@ -7532,13 +7645,14 @@ unsafe extern "C" fn storeAttributeValue(
 
 unsafe extern "C" fn appendAttributeValue(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut ptr: *const c_char,
     mut end: *const c_char,
     mut pool: *mut STRING_POOL,
 ) -> XML_Error {
     let dtd: *mut DTD = (*parser).m_dtd;
+    let enc = (*parser).encoding(enc_type);
     loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok: c_int = (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, ptr, end, &mut next);
@@ -7549,13 +7663,13 @@ unsafe extern "C" fn appendAttributeValue(
                 /* LCOV_EXCL_STOP */
             }
             super::xmltok::XML_TOK_INVALID => {
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = next
                 }
                 return XML_ERROR_INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_PARTIAL => {
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = ptr
                 }
                 return XML_ERROR_INVALID_TOKEN;
@@ -7565,7 +7679,7 @@ unsafe extern "C" fn appendAttributeValue(
                 let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(ptr);
                 if n < 0 {
-                    if enc == (*parser).m_encoding {
+                    if !enc_type.is_internal() {
                         (*parser).m_eventPtr = ptr
                     }
                     return XML_ERROR_BAD_CHAR_REF;
@@ -7687,7 +7801,7 @@ unsafe extern "C" fn appendAttributeValue(
                         11796148217846552555 => {}
                         _ => {
                             if (*entity).open != 0 {
-                                if enc == (*parser).m_encoding {
+                                if !enc_type.is_internal() {
                                     /* It does not appear that this line can be executed.
                                      *
                                      * The "if (entity->open)" check catches recursive entity
@@ -7711,13 +7825,13 @@ unsafe extern "C" fn appendAttributeValue(
                                 return XML_ERROR_RECURSIVE_ENTITY_REF;
                             }
                             if !(*entity).notation.is_null() {
-                                if enc == (*parser).m_encoding {
+                                if !enc_type.is_internal() {
                                     (*parser).m_eventPtr = ptr
                                 }
                                 return XML_ERROR_BINARY_ENTITY_REF;
                             }
                             if (*entity).textPtr.is_null() {
-                                if enc == (*parser).m_encoding {
+                                if !enc_type.is_internal() {
                                     (*parser).m_eventPtr = ptr
                                 }
                                 return XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF;
@@ -7728,7 +7842,7 @@ unsafe extern "C" fn appendAttributeValue(
                                 (*entity).open = XML_TRUE;
                                 result = appendAttributeValue(
                                     parser,
-                                    (*parser).m_internalEncoding,
+                                    EncodingType::Internal,
                                     isCdata,
                                     (*entity).textPtr as *mut c_char,
                                     textEnd as *mut c_char,
@@ -7756,7 +7870,7 @@ unsafe extern "C" fn appendAttributeValue(
                  *
                  * LCOV_EXCL_START
                  */
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = ptr
                 }
                 return XML_ERROR_UNEXPECTED_STATE;
@@ -7792,7 +7906,7 @@ unsafe extern "C" fn appendAttributeValue(
 
 unsafe extern "C" fn storeEntityValue(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut entityTextPtr: *const c_char,
     mut entityTextEnd: *const c_char,
 ) -> XML_Error {
@@ -7801,6 +7915,7 @@ unsafe extern "C" fn storeEntityValue(
     let mut pool: *mut STRING_POOL = &mut (*dtd).entityValuePool;
     let mut result: XML_Error = XML_ERROR_NONE;
     let mut oldInEntityValue: c_int = (*parser).m_prologState.inEntityValue;
+    let enc = (*parser).encoding(enc_type);
     (*parser).m_prologState.inEntityValue = 1;
     /* XML_DTD */
     /* never return Null for the value argument in EntityDeclHandler,
@@ -7821,7 +7936,7 @@ unsafe extern "C" fn storeEntityValue(
         );
         match tok {
             super::xmltok::XML_TOK_PARAM_ENTITY_REF => {
-                if (*parser).m_isParamEntity as c_int != 0 || enc != (*parser).m_encoding {
+                if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
                     let mut name: *const XML_Char = 0 as *const XML_Char;
                     let mut entity: *mut ENTITY = 0 as *mut ENTITY;
                     name = poolStoreString(
@@ -7846,7 +7961,7 @@ unsafe extern "C" fn storeEntityValue(
                             (*dtd).keepProcessing = (*dtd).standalone;
                             break;
                         } else if (*entity).open != 0 {
-                            if enc == (*parser).m_encoding {
+                            if !enc_type.is_internal() {
                                 (*parser).m_eventPtr = entityTextPtr
                             }
                             result = XML_ERROR_RECURSIVE_ENTITY_REF;
@@ -7878,7 +7993,7 @@ unsafe extern "C" fn storeEntityValue(
                             (*entity).open = XML_TRUE;
                             result = storeEntityValue(
                                 parser,
-                                (*parser).m_internalEncoding,
+                                EncodingType::Internal,
                                 (*entity).textPtr as *mut c_char,
                                 (*entity).textPtr.offset((*entity).textLen as isize) as *mut c_char,
                             );
@@ -7923,7 +8038,7 @@ unsafe extern "C" fn storeEntityValue(
                 let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(entityTextPtr);
                 if n < 0 {
-                    if enc == (*parser).m_encoding {
+                    if !enc_type.is_internal() {
                         (*parser).m_eventPtr = entityTextPtr
                     }
                     result = XML_ERROR_BAD_CHAR_REF;
@@ -7955,14 +8070,14 @@ unsafe extern "C" fn storeEntityValue(
                 current_block = 10007731352114176167;
             }
             super::xmltok::XML_TOK_PARTIAL => {
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = entityTextPtr
                 }
                 result = XML_ERROR_INVALID_TOKEN;
                 break;
             }
             super::xmltok::XML_TOK_INVALID => {
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = next
                 }
                 result = XML_ERROR_INVALID_TOKEN;
@@ -7976,7 +8091,7 @@ unsafe extern "C" fn storeEntityValue(
                  *
                  * LCOV_EXCL_START
                  */
-                if enc == (*parser).m_encoding {
+                if !enc_type.is_internal() {
                     (*parser).m_eventPtr = entityTextPtr
                 }
                 result = XML_ERROR_UNEXPECTED_STATE;
@@ -8042,7 +8157,7 @@ unsafe extern "C" fn normalizeLines(mut s: *mut XML_Char) {
 
 unsafe extern "C" fn reportProcessingInstruction(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut start: *const c_char,
     mut end: *const c_char,
 ) -> c_int {
@@ -8051,10 +8166,11 @@ unsafe extern "C" fn reportProcessingInstruction(
     let mut tem: *const c_char = 0 as *const c_char;
     if !(*parser).m_handlers.hasProcessingInstruction() {
         if (*parser).m_handlers.hasDefault() {
-            reportDefault(parser, enc, start, end);
+            reportDefault(parser, enc_type, start, end);
         }
         return 1i32;
     }
+    let enc = (*parser).encoding(enc_type);
     start = start.offset(((*enc).minBytesPerChar() * 2i32) as isize);
     tem = start.offset((*enc).nameLength(start) as isize);
     target = poolStoreString(&mut (*parser).m_tempPool, enc, start, tem);
@@ -8079,17 +8195,18 @@ unsafe extern "C" fn reportProcessingInstruction(
 
 unsafe extern "C" fn reportComment(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut start: *const c_char,
     mut end: *const c_char,
 ) -> c_int {
     let mut data: *mut XML_Char = 0 as *mut XML_Char;
     if !(*parser).m_handlers.hasComment() {
         if (*parser).m_handlers.hasDefault() {
-            reportDefault(parser, enc, start, end);
+            reportDefault(parser, enc_type, start, end);
         }
         return 1i32;
     }
+    let enc = (*parser).encoding(enc_type);
     data = poolStoreString(
         &mut (*parser).m_tempPool,
         enc,
@@ -8107,19 +8224,17 @@ unsafe extern "C" fn reportComment(
 
 unsafe extern "C" fn reportDefault(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut s: *const c_char,
     mut end: *const c_char,
 ) {
+    let enc = (*parser).encoding(enc_type);
     if MUST_CONVERT!(enc, s) {
         let mut convert_res: super::xmltok::XML_Convert_Result =
             super::xmltok::XML_CONVERT_COMPLETED;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
         let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-        if enc == (*parser).m_encoding {
-            eventPP = &mut (*parser).m_eventPtr;
-            eventEndPP = &mut (*parser).m_eventEndPtr
-        } else {
+        if enc_type.is_internal() {
             /* To get here, two things must be true; the parser must be
              * using a character encoding that is not the same as the
              * encoding passed in, and the encoding passed in must need
@@ -8139,6 +8254,9 @@ unsafe extern "C" fn reportDefault(
             eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
             eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
             /* LCOV_EXCL_STOP */
+        } else {
+            eventPP = &mut (*parser).m_eventPtr;
+            eventEndPP = &mut (*parser).m_eventEndPtr
         }
         loop {
             let mut dataPtr = (*parser).m_dataBuf as *mut ICHAR;
@@ -8306,7 +8424,7 @@ unsafe extern "C" fn setElementTypePrefix(
 
 unsafe extern "C" fn getAttributeId(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut start: *const c_char,
     mut end: *const c_char,
 ) -> *mut ATTRIBUTE_ID {
@@ -8323,6 +8441,7 @@ unsafe extern "C" fn getAttributeId(
     {
         return NULL as *mut ATTRIBUTE_ID;
     }
+    let enc = (*parser).encoding(enc_type);
     name = poolStoreString(&mut (*dtd).pool, enc, start, end);
     if name.is_null() {
         return NULL as *mut ATTRIBUTE_ID;
@@ -9215,7 +9334,7 @@ unsafe extern "C" fn poolDestroy(mut pool: *mut STRING_POOL) {
 
 unsafe extern "C" fn poolAppend(
     mut pool: *mut STRING_POOL,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
 ) -> *mut XML_Char {
@@ -9332,7 +9451,7 @@ unsafe extern "C" fn poolAppendString(
 
 unsafe extern "C" fn poolStoreString(
     mut pool: *mut STRING_POOL,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc: &ENCODING,
     mut ptr: *const c_char,
     mut end: *const c_char,
 ) -> *mut XML_Char {
@@ -9638,11 +9757,12 @@ unsafe extern "C" fn build_model(mut parser: XML_Parser) -> *mut XML_Content {
 
 unsafe extern "C" fn getElementType(
     mut parser: XML_Parser,
-    mut enc: *const super::xmltok::ENCODING,
+    mut enc_type: EncodingType,
     mut ptr: *const c_char,
     mut end: *const c_char,
 ) -> *mut ELEMENT_TYPE {
     let dtd: *mut DTD = (*parser).m_dtd;
+    let enc = (*parser).encoding(enc_type);
     let mut name: *const XML_Char = poolStoreString(&mut (*dtd).pool, enc, ptr, end);
     if name.is_null() {
         return NULL as *mut ELEMENT_TYPE;

@@ -104,7 +104,7 @@ pub const XML_ROLE_PARAM_ENTITY_REF: C2RustUnnamed_0 = 60;
 pub type PROLOG_STATE = prolog_state;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct prolog_state {
     pub handler: Option<
         unsafe extern "C" fn(
