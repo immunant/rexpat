@@ -10,19 +10,19 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
 
-use ::libexpat_rs::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
-use ::libexpat_rs::lib::xmlparse::{
+use ::expat_rs::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
+use ::expat_rs::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler,
 };
-use ::libexpat_rs::stddef_h::NULL;
-use ::libexpat_rs::stdlib::fprintf;
+use ::expat_rs::stddef_h::NULL;
+use ::expat_rs::stdlib::fprintf;
 use ::libc::{exit, printf};
 
 use libc::{c_char, c_int, c_uint, c_ulong, c_void};
 pub mod stdlib {
 
-    use ::libexpat_rs::stdlib::_IO_FILE;
+    use ::expat_rs::stdlib::_IO_FILE;
     use libc::{c_int, c_long, c_ulong, c_void};
     extern "C" {
         #[no_mangle]
@@ -52,12 +52,12 @@ pub mod stdlib {
     pub type __off64_t = c_long;
 }
 
-pub use ::libexpat_rs::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use ::libexpat_rs::expat_h::{
+pub use ::expat_rs::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use ::expat_rs::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler, XML_Status,
 };
-pub use ::libexpat_rs::stddef_h::size_t;
-pub use ::libexpat_rs::stdlib::{
+pub use ::expat_rs::stddef_h::size_t;
+pub use ::expat_rs::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
 };
 
