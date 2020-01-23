@@ -19,8 +19,8 @@
 )]
 
 use crate::stdlib::{stderr, strncmp};
-use ::libexpat_rs::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
-use ::libexpat_rs::expat_h::{
+use ::expat_rs::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
+use ::expat_rs::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_Memory_Handling_Suite, XML_ParserStruct,
     XML_ParsingStatus, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY, XML_ERROR_BAD_CHAR_REF,
     XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
@@ -37,8 +37,8 @@ use ::libexpat_rs::expat_h::{
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
     XML_STATUS_OK_0, XML_STATUS_SUSPENDED_0, XML_SUSPENDED, XML_TRUE,
 };
-use ::libexpat_rs::siphash_h::{siphash, sipkey};
-use ::libexpat_rs::lib::xmlparse::{
+use ::expat_rs::siphash_h::{siphash, sipkey};
+use ::expat_rs::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
     XML_ExternalEntityParserCreate, XML_FreeContentModel, XML_GetBase, XML_GetBuffer,
     XML_GetCurrentByteCount, XML_GetCurrentByteIndex, XML_GetCurrentColumnNumber,
@@ -59,10 +59,10 @@ use ::libexpat_rs::lib::xmlparse::{
     XML_SetUnknownEncodingHandler, XML_SetUnparsedEntityDeclHandler, XML_SetUserData,
     XML_SetXmlDeclHandler, XML_StopParser, XML_UseForeignDTD, XML_UseParserAsHandlerArg, INT_MAX,
 };
-use ::libexpat_rs::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
-use ::libexpat_rs::stdbool_h::{false_0, true_0};
-use ::libexpat_rs::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
-pub use ::libexpat_rs::*;
+use ::expat_rs::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
+use ::expat_rs::stdbool_h::{false_0, true_0};
+use ::expat_rs::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
+pub use ::expat_rs::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
 
 use ::std::mem::transmute;
@@ -97,7 +97,7 @@ pub mod siphash_h {
 
     use crate::stddef_h::size_t;
     use crate::stdlib::uint64_t;
-    use ::libexpat_rs::siphash_h::{siphash, sipkey};
+    use ::expat_rs::siphash_h::{siphash, sipkey};
     use libc::{c_char, c_int, c_uchar, c_ulong, c_void};
     pub unsafe extern "C" fn sip_tokey(
         mut key: *mut sipkey,
@@ -647,10 +647,10 @@ pub struct DataIssue240 {
 /* XML_UNICODE */
 /* XML_UNICODE_WCHAR_T */
 
-static mut g_parser: XML_Parser = ::libexpat_rs::stddef_h::NULL as XML_Parser;
+static mut g_parser: XML_Parser = ::expat_rs::stddef_h::NULL as XML_Parser;
 
 unsafe extern "C" fn basic_setup() {
-    g_parser = XML_ParserCreate(::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    g_parser = XML_ParserCreate(::expat_rs::stddef_h::NULL as *const XML_Char);
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
@@ -665,7 +665,7 @@ unsafe extern "C" fn basic_setup() {
 unsafe extern "C" fn basic_teardown() {
     if !g_parser.is_null() {
         XML_ParserFree(g_parser);
-        g_parser = ::libexpat_rs::stddef_h::NULL as XML_Parser
+        g_parser = ::expat_rs::stddef_h::NULL as XML_Parser
     };
 }
 /* Generate a failure using the parser state to create an error message;
@@ -960,7 +960,7 @@ unsafe extern "C" fn external_entity_optioner(
             ext_parser = XML_ExternalEntityParserCreate(
                 parser,
                 context,
-                ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                ::expat_rs::stddef_h::NULL as *const XML_Char,
             );
             if ext_parser.is_null() {
                 return XML_STATUS_ERROR_0;
@@ -995,9 +995,9 @@ pub const ENTITY_MATCH_NOT_FOUND: c_int = 0;
 
 pub const ENTITY_MATCH_SUCCESS: c_int = 1;
 
-static mut entity_name_to_match: *const XML_Char = ::libexpat_rs::stddef_h::NULL as *const XML_Char;
+static mut entity_name_to_match: *const XML_Char = ::expat_rs::stddef_h::NULL as *const XML_Char;
 
-static mut entity_value_to_match: *const XML_Char = ::libexpat_rs::stddef_h::NULL as *const XML_Char;
+static mut entity_value_to_match: *const XML_Char = ::expat_rs::stddef_h::NULL as *const XML_Char;
 
 static mut entity_match_flag: c_int = ENTITY_MATCH_NOT_FOUND;
 
@@ -1574,7 +1574,7 @@ unsafe extern "C" fn test_illegal_utf8() {
             );
         }
         /* Reset the parser since we use the same parser repeatedly. */
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         i += 1
     }
 }
@@ -1915,7 +1915,7 @@ unsafe extern "C" fn test_latin1_umlauts() {
             as *const c_char,
         918,
     );
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     _run_attribute_check(
         text,
         expected,
@@ -1924,7 +1924,7 @@ unsafe extern "C" fn test_latin1_umlauts() {
         920,
     );
     /* Repeat with a default handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -1939,7 +1939,7 @@ unsafe extern "C" fn test_latin1_umlauts() {
             as *const c_char,
         924,
     );
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -2992,15 +2992,15 @@ unsafe extern "C" fn UnknownEncodingHandler(
             (*info).map[i as usize] = i;
             i += 1
         }
-        (*info).data = ::libexpat_rs::stddef_h::NULL as *mut c_void;
+        (*info).data = ::expat_rs::stddef_h::NULL as *mut c_void;
         (*info).convert = ::std::mem::transmute::<
             libc::intptr_t,
             Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-        >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+        >(::expat_rs::stddef_h::NULL as libc::intptr_t);
         (*info).release = ::std::mem::transmute::<
             libc::intptr_t,
             Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-        >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+        >(::expat_rs::stddef_h::NULL as libc::intptr_t);
         return XML_STATUS_OK_0;
     }
     return XML_STATUS_ERROR_0;
@@ -3029,7 +3029,7 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
@@ -3051,11 +3051,11 @@ unsafe extern "C" fn UnrecognisedEncodingHandler(
     mut _encoding: *const XML_Char,
     mut info: *mut XML_Encoding,
 ) -> c_int {
-    (*info).data = ::libexpat_rs::stddef_h::NULL as *mut c_void;
+    (*info).data = ::expat_rs::stddef_h::NULL as *mut c_void;
     (*info).convert = ::std::mem::transmute::<
         libc::intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-    >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+    >(::expat_rs::stddef_h::NULL as libc::intptr_t);
     (*info).release = Some(dummy_release as unsafe extern "C" fn(_: *mut c_void) -> ());
     return XML_STATUS_ERROR_0;
 }
@@ -3083,7 +3083,7 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         != XML_STATUS_ERROR_0 as c_uint
@@ -3111,7 +3111,7 @@ unsafe extern "C" fn external_entity_loader(
     extparser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
@@ -3167,7 +3167,7 @@ unsafe extern "C" fn test_ext_entity_set_encoding() {
         let mut init = ExtTest {
             parse_text: b"<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00".as_ptr() as *const c_char,
             encoding: b"utf-8\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3240,7 +3240,7 @@ unsafe extern "C" fn test_ext_entity_set_bom() {
             parse_text: b"\xef\xbb\xbf<?xml encoding=\'iso-8859-3\'?>\xc3\xa9\x00".as_ptr()
                 as *const c_char,
             encoding: b"utf-8\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3280,7 +3280,7 @@ unsafe extern "C" fn external_entity_faulter(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -3514,8 +3514,8 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3563,8 +3563,8 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ENTITY entity \'bar\'>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3612,8 +3612,8 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3662,8 +3662,8 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3695,7 +3695,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
         1744,
     );
     /* Try again but without external entity handling */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetNotStandaloneHandler(
         g_parser,
         Some(reject_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
@@ -3731,8 +3731,8 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -3763,7 +3763,7 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
         1770,
     );
     /* Repeat wtihout the external entity handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetNotStandaloneHandler(
         g_parser,
         Some(accept_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
@@ -3818,7 +3818,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 parse_text: b"<\x00".as_ptr() as *const c_char,
                 fail_text: b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -3827,7 +3827,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
             let mut init = ext_faults {
                 parse_text: b"<\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
@@ -3837,16 +3837,16 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 parse_text: b"<tag>\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Incomplete character in CDATA not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
         },
         {
             let mut init = ext_faults {
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -3877,7 +3877,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 as *const c_char,
             1811,
         );
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         fault = fault.offset(1)
     }
 }
@@ -4085,7 +4085,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 element_name: b"doc\x00".as_ptr() as *const c_char,
                 attr_name: b"a\x00".as_ptr() as *const c_char,
                 attr_type: b"(one|two|three)\x00".as_ptr() as *const c_char,
-                default_value: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                default_value: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 is_required: XML_TRUE,
             };
             init
@@ -4105,7 +4105,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                              
                              b"NOTATION(foo)\x00".as_ptr() as
                                  *const c_char,
-                         default_value: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                         default_value: ::expat_rs::stddef_h::NULL as *const XML_Char,
                          is_required: XML_FALSE,};
             init
         },
@@ -4135,11 +4135,11 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         },
         {
             let mut init = AttTest {
-                definition: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                element_name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                attr_name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                attr_type: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                default_value: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                definition: ::expat_rs::stddef_h::NULL as *const c_char,
+                element_name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                attr_name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                attr_type: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                default_value: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 is_required: XML_FALSE,
             };
             init
@@ -4187,7 +4187,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 1916i32,
             );
         }
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         test = test.offset(1)
     }
 }
@@ -4267,7 +4267,7 @@ unsafe extern "C" fn clearing_aborting_character_handler(
     XML_SetCharacterDataHandler(
         g_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_CharacterDataHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
 }
@@ -4398,7 +4398,7 @@ unsafe extern "C" fn parser_stop_character_handler(
     XML_SetCharacterDataHandler(
         g_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_CharacterDataHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
     if resumable == 0 {
@@ -4484,7 +4484,7 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
             b"Failed to double-stop parser\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -4505,7 +4505,7 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
             b"Failed to double-suspend parser\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -4576,7 +4576,7 @@ unsafe extern "C" fn test_good_cdata_ascii() {
     }
     crate::chardata::CharData_CheckXMLChars(&mut storage as *mut _, expected);
     /* Try again, this time with a default handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     crate::chardata::CharData_Init(&mut storage as *mut _);
     XML_SetUserData(
         g_parser,
@@ -5095,7 +5095,7 @@ unsafe extern "C" fn test_bad_cdata() {
                 message.as_mut_ptr(),
             );
         }
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         i = i.wrapping_add(1)
     }
 }
@@ -5373,7 +5373,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 message.as_mut_ptr(),
             );
         }
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         i = i.wrapping_add(1)
     }
 }
@@ -5626,7 +5626,7 @@ unsafe extern "C" fn test_default_current() {
         b"DCDCDCDCDCDD\x00".as_ptr() as *const c_char,
     );
     /* Again, without the defaulting */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -5661,7 +5661,7 @@ unsafe extern "C" fn test_default_current() {
         b"DcccccD\x00".as_ptr() as *const c_char,
     );
     /* Now with an internal entity to complicate matters */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -5701,7 +5701,7 @@ unsafe extern "C" fn test_default_current() {
         b"DDDDDDDDDDDDDDDDDDD\x00".as_ptr() as *const c_char,
     );
     /* Again, with a skip handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -5748,7 +5748,7 @@ unsafe extern "C" fn test_default_current() {
         b"DDDDDDDDDDDDDDDDDeD\x00".as_ptr() as *const c_char,
     );
     /* This time, allow the entity through */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandlerExpand(
         g_parser,
         Some(
@@ -5787,7 +5787,7 @@ unsafe extern "C" fn test_default_current() {
         b"DDDDDDDDDDDDDDDDDCDD\x00".as_ptr() as *const c_char,
     );
     /* Finally, without passing the cdata to the default handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandlerExpand(
         g_parser,
         Some(
@@ -5875,8 +5875,8 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -5976,8 +5976,8 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -6035,7 +6035,7 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
         let mut init = ext_faults {
             parse_text: b"$\x00".as_ptr() as *const c_char,
             fail_text: b"Dollar not faulted\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_INVALID_TOKEN,
         };
         init
@@ -6082,8 +6082,8 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -6190,7 +6190,7 @@ unsafe extern "C" fn test_foreign_dtd_without_external_subset() {
     let mut text: *const c_char =
         b"<!DOCTYPE doc [<!ENTITY foo \'bar\'>]>\n<doc>&foo;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
-    XML_SetUserData(g_parser, ::libexpat_rs::stddef_h::NULL as *mut c_void);
+    XML_SetUserData(g_parser, ::expat_rs::stddef_h::NULL as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6282,7 +6282,7 @@ unsafe extern "C" fn test_set_base() {
             b"Base setting not correct\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_SetBase(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char)
+    if XML_SetBase(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char)
         != XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
@@ -6437,8 +6437,8 @@ unsafe extern "C" fn test_attributes() {
         },
         {
             let mut init = attrInfo {
-                name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                value: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                value: ::expat_rs::stddef_h::NULL as *const XML_Char,
             };
             init
         },
@@ -6453,8 +6453,8 @@ unsafe extern "C" fn test_attributes() {
         },
         {
             let mut init = attrInfo {
-                name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                value: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                value: ::expat_rs::stddef_h::NULL as *const XML_Char,
             };
             init
         },
@@ -6465,7 +6465,7 @@ unsafe extern "C" fn test_attributes() {
                 name: b"doc\x00".as_ptr() as *const c_char,
                 attr_count: 3,
                 id_name: b"id\x00".as_ptr() as *const c_char,
-                attributes: ::libexpat_rs::stddef_h::NULL as *mut AttrInfo,
+                attributes: ::expat_rs::stddef_h::NULL as *mut AttrInfo,
             };
             init
         },
@@ -6473,17 +6473,17 @@ unsafe extern "C" fn test_attributes() {
             let mut init = elementInfo {
                 name: b"tag\x00".as_ptr() as *const c_char,
                 attr_count: 1,
-                id_name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                attributes: ::libexpat_rs::stddef_h::NULL as *mut AttrInfo,
+                id_name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                attributes: ::expat_rs::stddef_h::NULL as *mut AttrInfo,
             };
             init
         },
         {
             let mut init = elementInfo {
-                name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                name: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 attr_count: 0,
-                id_name: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                attributes: ::libexpat_rs::stddef_h::NULL as *mut AttrInfo,
+                id_name: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                attributes: ::expat_rs::stddef_h::NULL as *mut AttrInfo,
             };
             init
         },
@@ -6559,7 +6559,7 @@ unsafe extern "C" fn test_reset_in_entity() {
             b"Parsing status not SUSPENDED\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
@@ -6734,7 +6734,7 @@ unsafe extern "C" fn external_entity_resetter(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -6799,7 +6799,7 @@ unsafe extern "C" fn external_entity_resetter(
             b"Parsing when finished faulted with wrong code\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(ext_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(ext_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
     if status.parsing != XML_FINISHED {
         crate::minicheck::_fail_unless(
@@ -6880,7 +6880,7 @@ unsafe extern "C" fn entity_suspending_decl_handler(
     XML_SetElementDeclHandler(
         ext_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_ElementDeclHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
     XML_FreeContentModel(g_parser, model);
@@ -6898,7 +6898,7 @@ unsafe extern "C" fn external_entity_suspender(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -6986,7 +6986,7 @@ unsafe extern "C" fn entity_suspending_xdecl_handler(
     XML_SetXmlDeclHandler(
         ext_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_XmlDeclHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
 }
@@ -7009,7 +7009,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -7176,7 +7176,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -7286,7 +7286,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                     as *const c_char,
                 fail_text: b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -7296,16 +7296,16 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                 parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\xe2\x82\x00".as_ptr()
                     as *const c_char,
                 fail_text: b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
         },
         {
             let mut init = ext_faults {
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -7337,7 +7337,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                 as *const c_char,
             3255,
         );
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         fault = fault.offset(1)
     }
 }
@@ -7354,7 +7354,7 @@ unsafe extern "C" fn test_explicit_encoding() {
     let mut text1: *const c_char = b"<doc>Hello \x00".as_ptr() as *const c_char;
     let mut text2: *const c_char = b" World</doc>\x00".as_ptr() as *const c_char;
     /* Just check that we can set the encoding to NULL before starting */
-    if XML_SetEncoding(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char)
+    if XML_SetEncoding(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char)
         != XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
@@ -7410,7 +7410,7 @@ unsafe extern "C" fn test_explicit_encoding() {
         );
     }
     /* Try now the parse is over */
-    if XML_SetEncoding(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char)
+    if XML_SetEncoding(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char)
         != XML_STATUS_OK_0 as c_uint
     {
         crate::minicheck::_fail_unless(
@@ -7477,7 +7477,7 @@ unsafe extern "C" fn test_trailing_cr() {
             b"Did not catch the carriage return\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     /* Now with a default handler instead */
     XML_SetDefaultHandler(
         g_parser,
@@ -7523,7 +7523,7 @@ unsafe extern "C" fn external_entity_cr_catcher(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -7567,7 +7567,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -7655,7 +7655,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
             b"No carriage return found\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     /* Try again with a different trailing CR */
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7747,7 +7747,7 @@ unsafe extern "C" fn test_trailing_rsqb() {
         );
     }
     /* Try again with a different encoding */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -7782,7 +7782,7 @@ unsafe extern "C" fn test_trailing_rsqb() {
         );
     }
     /* And finally with a default handler */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetDefaultHandler(
         g_parser,
         Some(
@@ -7831,7 +7831,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -7942,7 +7942,7 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -8018,7 +8018,7 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
 /* Test user parameter settings */
 /* Variable holding the expected handler userData */
 
-static mut handler_data: *mut c_void = ::libexpat_rs::stddef_h::NULL as *mut c_void;
+static mut handler_data: *mut c_void = ::expat_rs::stddef_h::NULL as *mut c_void;
 /* Count of the number of times the comment handler has been invoked */
 
 static mut comment_count: c_int = 0;
@@ -8113,7 +8113,7 @@ unsafe extern "C" fn external_entity_param_checker(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -8298,7 +8298,7 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     ext_parser = XML_ExternalEntityParserCreate(
         g_parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -8364,7 +8364,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
         );
     }
     /* Now try again with unset args */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -8379,7 +8379,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
                 ) -> c_int,
         ),
     );
-    XML_SetExternalEntityRefHandlerArg(g_parser, ::libexpat_rs::stddef_h::NULL as *mut c_void);
+    XML_SetExternalEntityRefHandlerArg(g_parser, ::expat_rs::stddef_h::NULL as *mut c_void);
     handler_data = g_parser as *mut c_void;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
@@ -8405,7 +8405,7 @@ unsafe extern "C" fn test_empty_parse() {
     let mut partial: *const c_char = b"<doc>\x00".as_ptr() as *const c_char;
     if XML_Parse(
         g_parser,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
         0,
         XML_FALSE as c_int,
     ) == XML_STATUS_ERROR_0 as c_uint
@@ -8420,7 +8420,7 @@ unsafe extern "C" fn test_empty_parse() {
     }
     if XML_Parse(
         g_parser,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
         0,
         XML_TRUE as c_int,
     ) != XML_STATUS_ERROR_0 as c_uint
@@ -8443,7 +8443,7 @@ unsafe extern "C" fn test_empty_parse() {
         );
     }
     /* Now try with valid text before the empty end */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
@@ -8456,7 +8456,7 @@ unsafe extern "C" fn test_empty_parse() {
     }
     if XML_Parse(
         g_parser,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
         0,
         XML_TRUE as c_int,
     ) == XML_STATUS_ERROR_0 as c_uint
@@ -8470,7 +8470,7 @@ unsafe extern "C" fn test_empty_parse() {
         );
     }
     /* Now try with invalid text before the empty end */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     if _XML_Parse_SINGLE_BYTES(g_parser, partial, strlen(partial) as c_int, XML_FALSE)
         == XML_STATUS_ERROR_0 as c_uint
     {
@@ -8483,7 +8483,7 @@ unsafe extern "C" fn test_empty_parse() {
     }
     if XML_Parse(
         g_parser,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
         0,
         XML_TRUE as c_int,
     ) != XML_STATUS_ERROR_0 as c_uint
@@ -8948,7 +8948,7 @@ unsafe extern "C" fn test_predefined_entities() {
     /* The default handler doesn't translate the entities */
     crate::chardata::CharData_CheckXMLChars(&mut storage as *mut _, expected);
     /* Now try again and check the translation */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     _run_character_check(
         text,
         result,
@@ -8984,7 +8984,7 @@ unsafe extern "C" fn external_entity_param(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9096,7 +9096,7 @@ unsafe extern "C" fn test_not_predefined_entities() {
         b"<doc>&amo;</doc>\x00".as_ptr() as *const c_char,
         b"<doc>&quid;</doc>\x00".as_ptr() as *const c_char,
         b"<doc>&apod;</doc>\x00".as_ptr() as *const c_char,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
     ];
     let mut i: c_int = 0;
     while !text[i as usize].is_null() {
@@ -9108,7 +9108,7 @@ unsafe extern "C" fn test_not_predefined_entities() {
                 as *const c_char,
             4038,
         );
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         i += 1
     }
 }
@@ -9127,7 +9127,7 @@ unsafe extern "C" fn external_entity_load_ignore(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9263,7 +9263,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9409,7 +9409,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9557,7 +9557,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
             let mut init = ext_faults {
                 parse_text: b"<![IGNORE[<!ELEM\x00".as_ptr() as *const c_char,
                 fail_text: b"Broken-off declaration not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_SYNTAX,
             };
             init
@@ -9566,7 +9566,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
             let mut init = ext_faults {
                 parse_text: b"<![IGNORE[\x01]]>\x00".as_ptr() as *const c_char,
                 fail_text: b"Invalid XML character not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
             };
             init
@@ -9575,16 +9575,16 @@ unsafe extern "C" fn test_bad_ignore_section() {
             let mut init = ext_faults {
                 parse_text: b"<![IGNORE[\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Partial XML character not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
         },
         {
             let mut init = ext_faults {
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -9616,7 +9616,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
                 as *const c_char,
             4218,
         );
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         fault = fault.offset(1)
     }
 }
@@ -9639,7 +9639,7 @@ unsafe extern "C" fn external_entity_valuer(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9721,8 +9721,8 @@ unsafe extern "C" fn test_external_entity_values() {
         {
             let mut init = ext_faults {
                 parse_text: b"<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -9731,7 +9731,7 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"<!ATTLIST $doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
                 fail_text: b"Invalid token not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
             };
             init
@@ -9740,7 +9740,7 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"\'wombat\x00".as_ptr() as *const c_char,
                 fail_text: b"Unterminated string not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -9749,7 +9749,7 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Partial UTF-8 character not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
@@ -9758,8 +9758,8 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n\x00".as_ptr()
                     as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -9768,7 +9768,7 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"<?xml?>\x00".as_ptr() as *const c_char,
                 fail_text: b"Malformed XML declaration not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_XML_DECL,
             };
             init
@@ -9777,8 +9777,8 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"\xef\xbb\xbf<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr()
                     as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -9789,7 +9789,7 @@ unsafe extern "C" fn test_external_entity_values() {
                     as *const c_char,
                 fail_text: b"Invalid token after text declaration not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_INVALID_TOKEN,
             };
             init
@@ -9800,7 +9800,7 @@ unsafe extern "C" fn test_external_entity_values() {
                     as *const c_char,
                 fail_text: b"Unterminated string after text decl not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_UNCLOSED_TOKEN,
             };
             init
@@ -9811,7 +9811,7 @@ unsafe extern "C" fn test_external_entity_values() {
                     as *const c_char,
                 fail_text: b"Partial UTF-8 character after text decl not faulted\x00".as_ptr()
                     as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_PARTIAL_CHAR,
             };
             init
@@ -9820,16 +9820,16 @@ unsafe extern "C" fn test_external_entity_values() {
             let mut init = ext_faults {
                 parse_text: b"%e1;\x00".as_ptr() as *const c_char,
                 fail_text: b"Recursive parameter entity not faulted\x00".as_ptr() as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_RECURSIVE_ENTITY_REF,
             };
             init
         },
         {
             let mut init = ext_faults {
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                fail_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
-                encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                fail_text: ::expat_rs::stddef_h::NULL as *const c_char,
+                encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 error: XML_ERROR_NONE,
             };
             init
@@ -9866,7 +9866,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 4308i32,
             );
         }
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         i += 1
     }
 }
@@ -9891,7 +9891,7 @@ unsafe extern "C" fn external_entity_not_standalone(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -9929,7 +9929,7 @@ unsafe extern "C" fn external_entity_not_standalone(
         XML_SetNotStandaloneHandler(
             ext_parser,
             ::std::mem::transmute::<libc::intptr_t, XML_NotStandaloneHandler>(
-                ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+                ::expat_rs::stddef_h::NULL as libc::intptr_t,
             ),
         );
         XML_ParserFree(ext_parser);
@@ -10005,7 +10005,7 @@ unsafe extern "C" fn external_entity_value_aborter(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -10156,8 +10156,8 @@ unsafe extern "C" fn test_attribute_enum_value() {
                 ExtTest{parse_text:
                             
                             b"<!ELEMENT animal (#PCDATA|a)*>\n<!ELEMENT a EMPTY>\n<!ATTLIST animal xml:space (default|preserve) \'preserve\'>\x00".as_ptr() as *const c_char,
-                        encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                        storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,};
+                        encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                        storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,};
         init
     };
     let mut expected: *const XML_Char =
@@ -10460,13 +10460,13 @@ unsafe extern "C" fn external_entity_public(
     let mut text1: *const c_char = *(parser as *mut *mut c_void) as *const c_char;
     let mut text2: *const c_char =
         b"<!ATTLIST doc a CDATA \'value\'>\x00".as_ptr() as *const c_char;
-    let mut text: *const c_char = ::libexpat_rs::stddef_h::NULL as *const c_char;
+    let mut text: *const c_char = ::expat_rs::stddef_h::NULL as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut parse_res: c_int = 0;
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         return XML_STATUS_ERROR_0;
@@ -10561,8 +10561,8 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
     let mut dtd_data: ExtTest = {
         let mut init = ExtTest {
             parse_text: b"%pe2;\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -10629,7 +10629,7 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
             parse_text: b"<!ENTITY % pe2 \'&#37;pe2;\'>\n%pe2;\x00".as_ptr() as *const c_char,
             fail_text: b"Recursive external parameter entity not faulted\x00".as_ptr()
                 as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_RECURSIVE_ENTITY_REF,
         };
         init
@@ -10686,7 +10686,7 @@ unsafe extern "C" fn external_entity_devaluer(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -10701,7 +10701,7 @@ unsafe extern "C" fn external_entity_devaluer(
         XML_SetExternalEntityRefHandler(
             ext_parser,
             ::std::mem::transmute::<libc::intptr_t, XML_ExternalEntityRefHandler>(
-                ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+                ::expat_rs::stddef_h::NULL as libc::intptr_t,
             ),
         );
     }
@@ -10759,7 +10759,7 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
     /* Now repeat without the external entity ref handler invoking
      * another copy of itself.
      */
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -10797,7 +10797,7 @@ unsafe extern "C" fn aborting_xdecl_handler(
     XML_SetXmlDeclHandler(
         g_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_XmlDeclHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
 }
@@ -10879,7 +10879,7 @@ unsafe extern "C" fn selective_aborting_default_handler(
         XML_SetDefaultHandler(
             g_parser,
             ::std::mem::transmute::<libc::intptr_t, XML_DefaultHandler>(
-                ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+                ::expat_rs::stddef_h::NULL as libc::intptr_t,
             ),
         );
     };
@@ -11386,7 +11386,7 @@ unsafe extern "C" fn test_restart_on_error() {
     }
     if XML_Parse(
         g_parser,
-        ::libexpat_rs::stddef_h::NULL as *const c_char,
+        ::expat_rs::stddef_h::NULL as *const c_char,
         0,
         XML_TRUE as c_int,
     ) != XML_STATUS_ERROR_0 as c_uint
@@ -11522,8 +11522,8 @@ unsafe extern "C" fn test_skipped_external_entity() {
         let mut init = ExtTest {
             parse_text: b"<!ELEMENT doc EMPTY>\n<!ENTITY % e2 \'%e1;\'>\n\x00".as_ptr()
                 as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -11566,7 +11566,7 @@ unsafe extern "C" fn external_entity_oneshot_loader(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -11676,7 +11676,7 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
                                   b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00".as_ptr() as *const c_char,
                               handler:
                                   ::std::mem::transmute::<libc::intptr_t,
-                                                          XML_ExternalEntityRefHandler>(::libexpat_rs::stddef_h::NULL
+                                                          XML_ExternalEntityRefHandler>(::expat_rs::stddef_h::NULL
                                                                                             as
                                                                                             libc::intptr_t),};
         init
@@ -11727,8 +11727,8 @@ unsafe extern "C" fn test_param_entity_with_trailing_cr() {
         let mut init = ExtTest {
             parse_text: b"<!ENTITY % pe \'<!ATTLIST doc att CDATA \"default\">\r\'>\n%pe;\n\x00"
                 .as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
         };
         init
     };
@@ -12383,7 +12383,7 @@ unsafe extern "C" fn MiscEncodingHandler(
     (*info).release = ::std::mem::transmute::<
         libc::intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-    >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+    >(::expat_rs::stddef_h::NULL as libc::intptr_t);
     if strcmp(encoding, b"failing-conv\x00".as_ptr() as *const c_char) == 0 {
         (*info).convert = Some(
             failing_converter as unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int,
@@ -12396,7 +12396,7 @@ unsafe extern "C" fn MiscEncodingHandler(
         (*info).convert = ::std::mem::transmute::<
             libc::intptr_t,
             Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-        >(::libexpat_rs::stddef_h::NULL as libc::intptr_t)
+        >(::expat_rs::stddef_h::NULL as libc::intptr_t)
     }
     return XML_STATUS_OK_0;
 }
@@ -12424,7 +12424,7 @@ unsafe extern "C" fn test_missing_encoding_conversion_fn() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     /* MiscEncodingHandler sets up an encoding with every top-bit-set
      * character introducing a two-byte sequence.  For this, it
@@ -12465,7 +12465,7 @@ unsafe extern "C" fn test_failing_encoding_conversion_fn() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     /* BadEncodingHandler sets up an encoding with every top-bit-set
      * character introducing a two-byte sequence.  For this, it
@@ -12504,7 +12504,7 @@ unsafe extern "C" fn test_unknown_encoding_success() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _run_character_check(
         text,
@@ -12537,7 +12537,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_name() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12573,7 +12573,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_name_2() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12618,7 +12618,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_1() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     XML_SetStartElementHandler(
         g_parser,
@@ -12681,7 +12681,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_2() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     XML_SetStartElementHandler(
         g_parser,
@@ -12732,7 +12732,7 @@ unsafe extern "C" fn test_invalid_unknown_encoding() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12765,7 +12765,7 @@ unsafe extern "C" fn test_unknown_ascii_encoding_ok() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _run_character_check(
         text,
@@ -12799,7 +12799,7 @@ unsafe extern "C" fn test_unknown_ascii_encoding_fail() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12834,7 +12834,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_length() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12869,7 +12869,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_topbit() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12904,7 +12904,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_surrogate() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12939,7 +12939,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_high() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12974,7 +12974,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_attr_value() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -12998,7 +12998,7 @@ unsafe extern "C" fn external_entity_loader2(
     extparser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
@@ -13081,7 +13081,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom() {
             parse_text: b"\xff\xfeL \x00".as_ptr() as *const c_char,
             parse_len: 4,
             encoding: b"iso-8859-1\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
@@ -13146,7 +13146,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom() {
             parse_text: b"\xfe\xff L\x00".as_ptr() as *const c_char,
             parse_len: 4,
             encoding: b"iso-8859-1\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
@@ -13215,7 +13215,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom2() {
             parse_text: b"\xff\xfeL \x00".as_ptr() as *const c_char,
             parse_len: 4,
             encoding: b"iso-8859-1\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_FULL_BUFFER,
         };
         init
@@ -13280,7 +13280,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom2() {
             parse_text: b"\xfe\xff L\x00".as_ptr() as *const c_char,
             parse_len: 4,
             encoding: b"iso-8859-1\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_FULL_BUFFER,
         };
         init
@@ -13344,7 +13344,7 @@ unsafe extern "C" fn test_ext_entity_utf16_be() {
             parse_text: b"<\x00e\x00/\x00>\x00\x00".as_ptr() as *const c_char,
             parse_len: 8,
             encoding: b"utf-16be\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
@@ -13408,7 +13408,7 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
             parse_text: b"\x00<\x00e\x00/\x00>\x00".as_ptr() as *const c_char,
             parse_len: 8,
             encoding: b"utf-16le\x00".as_ptr() as *const c_char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
@@ -13467,7 +13467,7 @@ unsafe extern "C" fn external_entity_faulter2(
     extparser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if extparser.is_null() {
         crate::minicheck::_fail_unless(
@@ -13532,7 +13532,7 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
             parse_text: b"a\x00b\x00c\x00\x00".as_ptr() as *const c_char,
             parse_len: 6,
             fail_text: b"Invalid character in entity not faulted\x00".as_ptr() as *const c_char,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
             error: XML_ERROR_INVALID_TOKEN,
         };
         init
@@ -13577,8 +13577,8 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
         let mut init = ExtTest2 {
             parse_text: b"\xef\xbb\x80\x00".as_ptr() as *const c_char,
             parse_len: 3,
-            encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-            storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+            encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+            storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
             flags: EE_PARSE_NONE,
         };
         init
@@ -14021,7 +14021,7 @@ unsafe extern "C" fn test_bad_doctype() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _expect_failure(
         text,
@@ -14159,7 +14159,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -14301,8 +14301,8 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
                              
                              b"\x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00".as_ptr() as *const c_char,
                          parse_len: 34,
-                         encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                         storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+                         encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                         storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
                          flags: EE_PARSE_NONE,};
         init
     };
@@ -14369,8 +14369,8 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
                              
                              b"<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00\x00".as_ptr() as *const c_char,
                          parse_len: 34,
-                         encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                         storage: ::libexpat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
+                         encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                         storage: ::expat_rs::stddef_h::NULL as *mut crate::chardata::CharData,
                          flags: EE_PARSE_NONE,};
         init
     };
@@ -14646,7 +14646,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
         },
         {
             let mut init = default_check {
-                expected: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                expected: ::expat_rs::stddef_h::NULL as *const XML_Char,
                 expectedLen: 0,
                 seen: XML_FALSE,
             };
@@ -14745,7 +14745,7 @@ unsafe extern "C" fn test_empty_element_abort() {
 
 unsafe extern "C" fn namespace_setup() {
     g_parser = XML_ParserCreateNS(
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
         ' ' as XML_Char,
     );
     if g_parser.is_null() {
@@ -15063,7 +15063,7 @@ unsafe extern "C" fn start_ns_clearing_start_element(
     XML_SetStartElementHandler(
         userData as XML_Parser,
         ::std::mem::transmute::<libc::intptr_t, XML_StartElementHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
 }
@@ -15147,7 +15147,7 @@ unsafe extern "C" fn external_entity_handler(
     p2 = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if _XML_Parse_SINGLE_BYTES(p2, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
@@ -15203,7 +15203,7 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
                 ) -> (),
         ),
     );
-    XML_SetUserData(g_parser, ::libexpat_rs::stddef_h::NULL as *mut c_void);
+    XML_SetUserData(g_parser, ::expat_rs::stddef_h::NULL as *mut c_void);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
@@ -15543,7 +15543,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
             b"parsing status doesn\'t end FINISHED\x00".as_ptr() as *const c_char,
         );
     }
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
     if status.parsing != XML_INITIALIZED {
         crate::minicheck::_fail_unless(
@@ -15674,7 +15674,7 @@ unsafe extern "C" fn test_ns_reserved_attributes() {
             as *const c_char,
         6922,
     );
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
@@ -15712,7 +15712,7 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
             as *const c_char,
         6939,
     );
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     _expect_failure(
         text2,
         XML_ERROR_RESERVED_NAMESPACE_URI,
@@ -15721,7 +15721,7 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
             as *const c_char,
         6942,
     );
-    XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
     _expect_failure(
         text3,
         XML_ERROR_RESERVED_NAMESPACE_URI,
@@ -15798,7 +15798,7 @@ unsafe extern "C" fn test_ns_unknown_encoding_success() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     _run_character_check(
         text,
@@ -16030,7 +16030,7 @@ unsafe extern "C" fn test_ns_utf16_doctype() {
                     _: *mut XML_Encoding,
                 ) -> c_int,
         )),
-        ::libexpat_rs::stddef_h::NULL as *mut c_void,
+        ::expat_rs::stddef_h::NULL as *mut c_void,
     );
     if _XML_Parse_SINGLE_BYTES(
         g_parser,
@@ -16104,7 +16104,7 @@ static mut reallocation_count: intptr_t = REALLOC_ALWAYS_SUCCEED as intptr_t;
 
 unsafe extern "C" fn duff_allocator(mut size: size_t) -> *mut c_void {
     if allocation_count == 0 {
-        return ::libexpat_rs::stddef_h::NULL as *mut c_void;
+        return ::expat_rs::stddef_h::NULL as *mut c_void;
     }
     if allocation_count != ALLOC_ALWAYS_SUCCEED as c_long {
         allocation_count -= 1
@@ -16115,7 +16115,7 @@ unsafe extern "C" fn duff_allocator(mut size: size_t) -> *mut c_void {
 
 unsafe extern "C" fn duff_reallocator(mut ptr: *mut c_void, mut size: size_t) -> *mut c_void {
     if reallocation_count == 0 {
-        return ::libexpat_rs::stddef_h::NULL as *mut c_void;
+        return ::expat_rs::stddef_h::NULL as *mut c_void;
     }
     if reallocation_count != REALLOC_ALWAYS_SUCCEED as c_long {
         reallocation_count -= 1
@@ -16149,9 +16149,9 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
             &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
             break;
@@ -16207,7 +16207,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
         g_parser = XML_ParserCreate_MM(
             b"us-ascii\x00".as_ptr() as *const c_char,
             &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
             break;
@@ -16243,7 +16243,7 @@ unsafe extern "C" fn test_misc_null_parser() {
             as *const c_char,
         7247,
     );
-    XML_ParserFree(::libexpat_rs::stddef_h::NULL as XML_Parser);
+    XML_ParserFree(::expat_rs::stddef_h::NULL as XML_Parser);
 }
 /* Test that XML_ErrorString rejects out-of-range codes */
 
@@ -16426,7 +16426,7 @@ unsafe extern "C" fn test_misc_features() {
     );
     let mut features: *const XML_Feature = XML_GetFeatureList();
     /* Prevent problems with double-freeing parsers */
-    g_parser = ::libexpat_rs::stddef_h::NULL as XML_Parser;
+    g_parser = ::expat_rs::stddef_h::NULL as XML_Parser;
     if features.is_null() {
         crate::minicheck::_fail_unless(
             0i32,
@@ -16511,7 +16511,7 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     );
     XML_ParserFree(g_parser);
     /* Prevent the teardown trying to double free */
-    g_parser = ::libexpat_rs::stddef_h::NULL as XML_Parser;
+    g_parser = ::expat_rs::stddef_h::NULL as XML_Parser;
     if crate::memcheck::tracking_report() == 0 {
         crate::minicheck::_fail_unless(
             0i32,
@@ -16609,7 +16609,7 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_1() {
     let mut mydata: *mut DataIssue240 = 0 as *mut DataIssue240;
     let mut result: XML_Status = XML_STATUS_ERROR;
     let doc1: *const c_char = b"<doc><e1/><e><foo/></e></doc>\x00".as_ptr() as *const c_char;
-    parser = XML_ParserCreate(::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    parser = XML_ParserCreate(::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetElementHandler(
         parser,
         Some(
@@ -16656,7 +16656,7 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_2() {
     let mut mydata: *mut DataIssue240 = 0 as *mut DataIssue240;
     let mut result: XML_Status = XML_STATUS_ERROR;
     let doc2: *const c_char = b"<doc><elem/></doc>\x00".as_ptr() as *const c_char;
-    parser = XML_ParserCreate(::libexpat_rs::stddef_h::NULL as *const XML_Char);
+    parser = XML_ParserCreate(::expat_rs::stddef_h::NULL as *const XML_Char);
     XML_SetElementHandler(
         parser,
         Some(
@@ -16721,7 +16721,7 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         let mut lineNumber: XML_Size = 0;
         let mut columnNumber: XML_Size = 0;
         let input: *const c_char = inputs[inputIndex as usize];
-        parser = XML_ParserCreate(::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        parser = XML_ParserCreate(::expat_rs::stddef_h::NULL as *const XML_Char);
         setParamEntityResult = XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
         if setParamEntityResult != 1 {
             crate::minicheck::_fail_unless(
@@ -16796,9 +16796,9 @@ unsafe extern "C" fn alloc_setup() {
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
         &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -16892,15 +16892,15 @@ unsafe extern "C" fn long_encoding_handler(
         (*info).map[i as usize] = i;
         i += 1
     }
-    (*info).data = ::libexpat_rs::stddef_h::NULL as *mut c_void;
+    (*info).data = ::expat_rs::stddef_h::NULL as *mut c_void;
     (*info).convert = ::std::mem::transmute::<
         libc::intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-    >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+    >(::expat_rs::stddef_h::NULL as libc::intptr_t);
     (*info).release = ::std::mem::transmute::<
         libc::intptr_t,
         Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-    >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+    >(::expat_rs::stddef_h::NULL as libc::intptr_t);
     return XML_STATUS_OK_0;
 }
 
@@ -16942,7 +16942,7 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
                         _: *mut XML_Encoding,
                     ) -> c_int,
             )),
-            ::libexpat_rs::stddef_h::NULL as *mut c_void,
+            ::expat_rs::stddef_h::NULL as *mut c_void,
         );
         if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
@@ -17266,7 +17266,7 @@ unsafe extern "C" fn external_entity_duff_loader(
         new_parser = XML_ExternalEntityParserCreate(
             parser,
             context,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if !new_parser.is_null() {
             XML_ParserFree(new_parser);
@@ -17427,7 +17427,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
         new_parser = XML_ExternalEntityParserCreate(
             parser,
             context,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if new_parser.is_null() {
             crate::minicheck::_fail_unless(
@@ -17450,7 +17450,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
             new_parser = XML_ExternalEntityParserCreate(
                 parser,
                 context,
-                ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                ::expat_rs::stddef_h::NULL as *const XML_Char,
             );
             if !new_parser.is_null() {
                 break;
@@ -17526,7 +17526,7 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
                 ) -> c_int,
         ),
     );
-    XML_SetUserData(g_parser, ::libexpat_rs::stddef_h::NULL as *mut c_void);
+    XML_SetUserData(g_parser, ::expat_rs::stddef_h::NULL as *mut c_void);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_STATUS_ERROR_0 as c_uint
     {
@@ -17558,7 +17558,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         new_parser = XML_ExternalEntityParserCreate(
             parser,
             context,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if new_parser.is_null() {
             return XML_STATUS_ERROR_0;
@@ -17570,7 +17570,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         new_parser = XML_ExternalEntityParserCreate(
             parser,
             context,
-            ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+            ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if new_parser.is_null() {
             return XML_STATUS_ERROR_0;
@@ -17615,7 +17615,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
                     ) -> c_int,
             ),
         );
-        XML_SetUserData(g_parser, ::libexpat_rs::stddef_h::NULL as *mut c_void);
+        XML_SetUserData(g_parser, ::expat_rs::stddef_h::NULL as *mut c_void);
         allocation_count = i as intptr_t;
         if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
             == XML_STATUS_OK_0 as c_uint
@@ -17664,7 +17664,7 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         return XML_STATUS_ERROR_0;
@@ -17759,11 +17759,11 @@ unsafe extern "C" fn unknown_released_encoding_handler(
             (*info).map[i as usize] = i;
             i += 1
         }
-        (*info).data = ::libexpat_rs::stddef_h::NULL as *mut c_void;
+        (*info).data = ::expat_rs::stddef_h::NULL as *mut c_void;
         (*info).convert = ::std::mem::transmute::<
             libc::intptr_t,
             Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-        >(::libexpat_rs::stddef_h::NULL as libc::intptr_t);
+        >(::expat_rs::stddef_h::NULL as libc::intptr_t);
         (*info).release = Some(dummy_release as unsafe extern "C" fn(_: *mut c_void) -> ());
         return XML_STATUS_OK_0;
     }
@@ -17799,7 +17799,7 @@ unsafe extern "C" fn test_alloc_internal_entity() {
                         _: *mut XML_Encoding,
                     ) -> c_int,
             )),
-            ::libexpat_rs::stddef_h::NULL as *mut c_void,
+            ::expat_rs::stddef_h::NULL as *mut c_void,
         );
         if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
@@ -18199,7 +18199,7 @@ unsafe extern "C" fn external_entity_reallocator(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -18660,7 +18660,7 @@ unsafe extern "C" fn external_entity_alloc(
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
         context,
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if ext_parser.is_null() {
         return XML_STATUS_ERROR_0;
@@ -19987,7 +19987,7 @@ unsafe extern "C" fn test_alloc_nested_entities() {
                                
                                b"Memory Fail not faulted\x00".as_ptr() as
                                    *const c_char,
-                           encoding: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+                           encoding: ::expat_rs::stddef_h::NULL as *const XML_Char,
                            error: XML_ERROR_NO_MEMORY,};
         init
     };
@@ -20276,7 +20276,7 @@ unsafe extern "C" fn test_alloc_long_base() {
             ),
         );
         if XML_SetBase(g_parser, base) == XML_STATUS_ERROR_0 as c_uint {
-            XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+            XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         } else {
             if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
                 != XML_STATUS_ERROR_0 as c_uint
@@ -20460,8 +20460,8 @@ unsafe extern "C" fn test_alloc_long_notation() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -20531,7 +20531,7 @@ unsafe extern "C" fn nsalloc_setup() {
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
-        ::libexpat_rs::stddef_h::NULL as *const XML_Char,
+        ::expat_rs::stddef_h::NULL as *const XML_Char,
         &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
         ns_sep.as_mut_ptr(),
     );
@@ -20752,7 +20752,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     XML_SetCharacterDataHandler(
         g_parser,
         ::std::mem::transmute::<libc::intptr_t, XML_CharacterDataHandler>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
     );
     if XML_ResumeParser(g_parser) != XML_STATUS_OK_0 as c_uint {
@@ -21155,7 +21155,7 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
     /* Now repeat with a longer URI and a duff reallocator */
     i = 0;
     while i < max_realloc_count {
-        XML_ParserReset(g_parser, ::libexpat_rs::stddef_h::NULL as *const XML_Char);
+        XML_ParserReset(g_parser, ::expat_rs::stddef_h::NULL as *const XML_Char);
         reallocation_count = i as intptr_t;
         if _XML_Parse_SINGLE_BYTES(g_parser, second, strlen(second) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
@@ -21407,8 +21407,8 @@ unsafe extern "C" fn test_nsalloc_long_context() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -21483,8 +21483,8 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -21680,8 +21680,8 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -21766,8 +21766,8 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -21846,8 +21846,8 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -21935,8 +21935,8 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -22021,8 +22021,8 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
         },
         {
             let mut init = ExtOption {
-                system_id: ::libexpat_rs::stddef_h::NULL as *const XML_Char,
-                parse_text: ::libexpat_rs::stddef_h::NULL as *const c_char,
+                system_id: ::expat_rs::stddef_h::NULL as *const XML_Char,
+                parse_text: ::expat_rs::stddef_h::NULL as *const c_char,
             };
             init
         },
@@ -23076,7 +23076,7 @@ unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
     crate::minicheck::tcase_add_checked_fixture(
         tc_misc,
         ::std::mem::transmute::<libc::intptr_t, tcase_setup_function>(
-            ::libexpat_rs::stddef_h::NULL as libc::intptr_t,
+            ::expat_rs::stddef_h::NULL as libc::intptr_t,
         ),
         Some(basic_teardown as unsafe extern "C" fn() -> ()),
     );
