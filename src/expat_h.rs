@@ -180,7 +180,7 @@ pub type XML_XmlDeclHandler = Option<
     unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *const XML_Char, _: c_int) -> (),
 >;
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct XML_Memory_Handling_Suite {
     pub malloc_fcn: Option<unsafe extern "C" fn(_: size_t) -> *mut c_void>,
     pub realloc_fcn: Option<unsafe extern "C" fn(_: *mut c_void, _: size_t) -> *mut c_void>,
@@ -405,7 +405,7 @@ pub const XML_PARSING: XML_Parsing = 1;
 pub const XML_FINISHED: XML_Parsing = 2;
 pub const XML_SUSPENDED: XML_Parsing = 3;
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct XML_ParsingStatus {
     pub parsing: XML_Parsing,
     pub finalBuffer: XML_Bool,

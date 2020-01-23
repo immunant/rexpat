@@ -16153,7 +16153,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
             ::expat_rs::stddef_h::NULL as *const XML_Char,
-            &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
+            Some(&memsuite),
             ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
@@ -16209,7 +16209,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
             b"us-ascii\x00".as_ptr() as *const c_char,
-            &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
+            Some(&memsuite),
             ::expat_rs::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
@@ -16501,7 +16501,7 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     };
     g_parser = XML_ParserCreate_MM(
         b"UTF-8\x00".as_ptr() as *const c_char,
-        &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
+        Some(&memsuite),
         b"\n\x00".as_ptr() as *const c_char,
     );
     _expect_failure(
@@ -16800,7 +16800,7 @@ unsafe extern "C" fn alloc_setup() {
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
         ::expat_rs::stddef_h::NULL as *const XML_Char,
-        &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
+        Some(&memsuite),
         ::expat_rs::stddef_h::NULL as *const XML_Char,
     );
     if g_parser.is_null() {
@@ -20535,7 +20535,7 @@ unsafe extern "C" fn nsalloc_setup() {
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
         ::expat_rs::stddef_h::NULL as *const XML_Char,
-        &mut memsuite as *mut _ as *const XML_Memory_Handling_Suite,
+        Some(&memsuite),
         ns_sep.as_mut_ptr(),
     );
     if g_parser.is_null() {
