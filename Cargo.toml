@@ -32,6 +32,7 @@ name = "benchmark"
 
 [dependencies]
 libc = "0.2"
+alloc-wg = "0.7"
 wchar = { path = "deps/wchar", optional = true }
 
 [features]

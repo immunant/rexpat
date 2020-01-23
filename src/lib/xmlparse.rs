@@ -133,6 +133,12 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
+use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, ReallocRef};
+use alloc_wg::boxed::Box;
+
+use std::collections::{hash_map, HashMap};
+use std::ptr::NonNull;
+
 #[inline]
 unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
     if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
@@ -802,20 +808,56 @@ pub struct TAG_NAME {
     pub prefixLen: c_int,
 }
 
+// FIXME: add a proper lifetime
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct HashKey(&'static [XML_Char]);
+
+impl HashKey {
+    unsafe fn from(key: KEY) -> Self {
+        HashKey(std::slice::from_raw_parts(key, keylen(key) as usize))
+    }
+}
+
+macro_rules! hash_insert {
+    ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
+        let __key = $key;
+        match $map.entry(HashKey::from(__key)) {
+            hash_map::Entry::Occupied(e) => e.into_mut().as_mut(),
+            hash_map::Entry::Vacant(e) => {
+                let v = $et { name: __key, ..std::mem::zeroed() };
+                let b = ExpatBox::try_new_in(v, (*$parser).m_mem);
+                match b {
+                    Ok(b) => e.insert(b).as_mut(),
+                    Err(_) => std::ptr::null_mut()
+                }
+            }
+        }
+    }};
+}
+
+macro_rules! hash_lookup {
+    ($map:expr, $key:expr) => {
+        $map.get_mut(&HashKey::from($key))
+            .map_or_else(std::ptr::null_mut, |x| x.as_mut())
+    }
+}
+
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct DTD {
-    pub generalEntities: HASH_TABLE,
-    pub elementTypes: HASH_TABLE,
-    pub attributeIds: HASH_TABLE,
-    pub prefixes: HASH_TABLE,
+    pub generalEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
+    pub elementTypes: HashMap<HashKey, ExpatBox<ELEMENT_TYPE>>,
+    pub attributeIds: HashMap<HashKey, ExpatBox<ATTRIBUTE_ID>>,
+    pub prefixes: HashMap<HashKey, ExpatBox<PREFIX>>,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
     pub keepProcessing: XML_Bool,
     pub hasParamEntityRefs: XML_Bool,
     pub standalone: XML_Bool,
     pub paramEntityRead: XML_Bool,
-    pub paramEntities: HASH_TABLE,
+    // `test_alloc_nested_entities` counts the allocations,
+    // so we need to use `ExpatBox` here to pass that test
+    pub paramEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
     pub defaultPrefix: PREFIX,
     pub in_eldecl: XML_Bool,
     pub scaffold: *mut CONTENT_SCAFFOLD,
@@ -836,16 +878,6 @@ pub struct CONTENT_SCAFFOLD {
     pub lastchild: c_int,
     pub childcnt: c_int,
     pub nextsib: c_int,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct HASH_TABLE {
-    pub v: *mut *mut NAMED,
-    pub power: c_uchar,
-    pub size: size_t,
-    pub used: size_t,
-    pub mem: *const XML_Memory_Handling_Suite,
 }
 
 #[repr(C)]
@@ -921,13 +953,6 @@ pub type Processor = unsafe extern "C" fn(
     _: *const c_char,
     _: *mut *const c_char,
 ) -> XML_Error;
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct HASH_TABLE_ITER {
-    pub p: *mut *mut NAMED,
-    pub end: *mut *mut NAMED,
-}
 
 #[cfg(feature = "unicode")]
 #[macro_use]
@@ -1041,6 +1066,62 @@ macro_rules! FREE {
             .expect("non-null function pointer")($ptr)
     };
 }
+
+impl AllocRef for XML_Memory_Handling_Suite {
+    type Error = ();
+
+    fn alloc(&mut self, layout: NonZeroLayout) -> Result<NonNull<u8>, Self::Error> {
+        let size = layout.size().get() as u64;
+        let ptr = unsafe {
+            self.malloc_fcn
+                .expect("non-null function pointer")(size)
+        };
+        NonNull::new(ptr as *mut u8).ok_or(())
+    }
+}
+
+impl ReallocRef for XML_Memory_Handling_Suite {
+    unsafe fn realloc(
+        &mut self,
+        ptr: NonNull<u8>,
+        _old_layout: NonZeroLayout,
+        new_layout: NonZeroLayout
+    ) -> Result<NonNull<u8>, Self::Error> {
+        let size = new_layout.size().get() as u64;
+        let new_ptr = self
+            .realloc_fcn
+            .expect("non-null function pointer")(ptr.as_ptr() as *mut _, size);
+        NonNull::new(new_ptr as *mut u8).ok_or(())
+    }
+}
+
+impl DeallocRef for XML_Memory_Handling_Suite {
+    type BuildAlloc = Self;
+
+    fn get_build_alloc(&mut self) -> Self::BuildAlloc {
+        self.clone()
+    }
+
+    unsafe fn dealloc(&mut self, ptr: NonNull<u8>, _layout: NonZeroLayout) {
+        self
+            .free_fcn
+            .expect("non-null function pointer")(ptr.as_ptr() as *mut _);
+    }
+}
+
+impl BuildAllocRef for XML_Memory_Handling_Suite {
+    type Ref = Self;
+
+    unsafe fn build_alloc_ref(
+        &mut self,
+        _ptr: NonNull<u8>,
+        _layout: Option<NonZeroLayout>,
+    ) -> Self::Ref {
+        self.clone()
+    }
+}
+
+type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 
 /* Constructs a new parser; encoding is the encoding specified by the
    external protocol or NULL if there is none specified.
@@ -3542,7 +3623,6 @@ unsafe extern "C" fn doContent(
             }
             super::xmltok::XML_TOK_ENTITY_REF => {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
-                let mut entity: *mut ENTITY = 0 as *mut ENTITY;
                 let mut ch: XML_Char = (*enc)
                     .predefinedEntityName
                     .expect("non-null function pointer")(
@@ -3569,7 +3649,7 @@ unsafe extern "C" fn doContent(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity = lookup(parser, &mut (*dtd).generalEntities, name, 0) as *mut ENTITY;
+                    let entity = hash_lookup!((*dtd).generalEntities, name);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -4116,7 +4196,6 @@ unsafe extern "C" fn storeAtts(
     mut bindingsPtr: *mut *mut BINDING,
 ) -> XML_Error {
     let dtd: *mut DTD = (*parser).m_dtd; /* save one level of indirection */
-    let mut elementType: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE; /* the attribute list for the application */
     let mut nDefaultAtts: c_int = 0;
     let mut appAtts: *mut *const XML_Char = 0 as *mut *const XML_Char;
     let mut attIndex: c_int = 0;
@@ -4129,26 +4208,27 @@ unsafe extern "C" fn storeAtts(
     let mut binding: *mut BINDING = 0 as *mut BINDING;
     let mut localPart: *const XML_Char = 0 as *const XML_Char;
     /* lookup the element type name */
-    elementType =
-        lookup(parser, &mut (*dtd).elementTypes, (*tagNamePtr).str_0, 0) as *mut ELEMENT_TYPE;
-    if elementType.is_null() {
+    let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey::from((*tagNamePtr).str_0)) {
+        elementType.as_mut()
+    } else {
         let mut name: *const XML_Char = poolCopyString(&mut (*dtd).pool, (*tagNamePtr).str_0);
         if name.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        elementType = lookup(
+        let elementType = hash_insert!(
             parser,
             &mut (*dtd).elementTypes,
             name,
-            ::std::mem::size_of::<ELEMENT_TYPE>() as c_ulong,
-        ) as *mut ELEMENT_TYPE;
+            ELEMENT_TYPE
+        );
         if elementType.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
         if (*parser).m_ns as c_int != 0 && setElementTypePrefix(parser, elementType) == 0 {
             return XML_ERROR_NO_MEMORY;
         }
-    }
+        elementType
+    };
     nDefaultAtts = (*elementType).nDefaultAtts;
     /* get the attributes from the tokenizer */
     n = (*enc).getAtts.expect("non-null function pointer")(
@@ -4417,7 +4497,6 @@ unsafe extern "C" fn storeAtts(
         while i < attIndex {
             let mut s: *const XML_Char = *appAtts.offset(i as isize);
             if *s.offset(-1) as c_int == 2 {
-                let mut id: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
                 let mut b: *const BINDING = 0 as *const BINDING;
                 let mut uriHash: c_ulong = 0;
                 let mut sip_state: siphash = siphash {
@@ -4436,8 +4515,8 @@ unsafe extern "C" fn storeAtts(
                 /* not prefixed */
                 /* prefixed */
                 *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                id = lookup(parser, &mut (*dtd).attributeIds, s, 0) as *mut ATTRIBUTE_ID;
-                if id.is_null() || (*id).prefix.is_null() {
+                let id = (*dtd).attributeIds.get(&HashKey::from(s));
+                if id.is_none() || id.unwrap().prefix.is_null() {
                     /* This code is walking through the appAtts array, dealing
                      * with (in this case) a prefixed attribute name.  To be in
                      * the array, the attribute must have already been bound, so
@@ -4455,6 +4534,7 @@ unsafe extern "C" fn storeAtts(
                     return XML_ERROR_NO_MEMORY;
                     /* LCOV_EXCL_LINE */
                 }
+                let id = id.unwrap();
                 b = (*(*id).prefix).binding;
                 if b.is_null() {
                     return XML_ERROR_UNBOUND_PREFIX;
@@ -6027,12 +6107,12 @@ unsafe extern "C" fn doProlog(
             6 => {
                 /* XML_DTD */
                 (*parser).m_useForeignDTD = XML_FALSE;
-                (*parser).m_declEntity = lookup(
+                (*parser).m_declEntity = hash_insert!(
                     parser,
                     &mut (*dtd).paramEntities,
                     externalSubsetName.as_ptr(),
-                    ::std::mem::size_of::<ENTITY>() as c_ulong,
-                ) as *mut ENTITY;
+                    ENTITY
+                );
                 if (*parser).m_declEntity.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
@@ -6091,12 +6171,12 @@ unsafe extern "C" fn doProlog(
                     if (*parser).m_paramEntityParsing != 0
                         && (*parser).m_handlers.hasExternalEntityRef()
                     {
-                        let mut entity: *mut ENTITY = lookup(
+                        let mut entity = hash_insert!(
                             parser,
                             &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            ::std::mem::size_of::<ENTITY>() as c_ulong,
-                        ) as *mut ENTITY;
+                            ENTITY
+                        );
                         if entity.is_null() {
                             /* end of DTD - no need to update dtd->keepProcessing */
                             /* The external subset name "#" will have already been
@@ -6149,12 +6229,12 @@ unsafe extern "C" fn doProlog(
                     let mut hadParamEntityRefs_0: XML_Bool = (*dtd).hasParamEntityRefs;
                     (*dtd).hasParamEntityRefs = XML_TRUE;
                     if (*parser).m_paramEntityParsing != 0 && (*parser).m_handlers.hasExternalEntityRef() {
-                        let mut entity_0: *mut ENTITY = lookup(
+                        let mut entity_0 = hash_insert!(
                             parser,
                             &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            ::std::mem::size_of::<ENTITY>() as c_ulong,
-                        ) as *mut ENTITY;
+                            ENTITY
+                        );
                         if entity_0.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -6470,12 +6550,12 @@ unsafe extern "C" fn doProlog(
                 }
                 /* XML_DTD */
                 if (*parser).m_declEntity.is_null() {
-                    (*parser).m_declEntity = lookup(
+                    (*parser).m_declEntity = hash_insert!(
                         parser,
                         &mut (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
-                        ::std::mem::size_of::<ENTITY>() as c_ulong,
-                    ) as *mut ENTITY;
+                        ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6553,13 +6633,14 @@ unsafe extern "C" fn doProlog(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*parser).m_declEntity = lookup(
+                    (*parser).m_declEntity = hash_insert!(
                         parser,
                         &mut (*dtd).generalEntities,
                         name,
-                        ::std::mem::size_of::<ENTITY>() as c_ulong,
-                    ) as *mut ENTITY;
+                        ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
+                        // FIXME: this never happens in Rust, it just panics
                         return XML_ERROR_NO_MEMORY;
                     }
                     if (*(*parser).m_declEntity).name != name {
@@ -6593,12 +6674,12 @@ unsafe extern "C" fn doProlog(
                     if name_0.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*parser).m_declEntity = lookup(
+                    (*parser).m_declEntity = hash_insert!(
                         parser,
                         &mut (*dtd).paramEntities,
                         name_0,
-                        ::std::mem::size_of::<ENTITY>() as c_ulong,
-                    ) as *mut ENTITY;
+                        ENTITY
+                    );
                     if (*parser).m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6861,7 +6942,7 @@ unsafe extern "C" fn doProlog(
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity_1 = lookup(parser, &mut (*dtd).paramEntities, name_1, 0) as *mut ENTITY;
+                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
                     (*dtd).pool.ptr = (*dtd).pool.start;
                     /* first, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal,
@@ -7699,7 +7780,6 @@ unsafe extern "C" fn appendAttributeValue(
             }
             super::xmltok::XML_TOK_ENTITY_REF => {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
-                let mut entity: *mut ENTITY = 0 as *mut ENTITY;
                 let mut checkEntityDecl: c_char = 0;
                 let mut ch: XML_Char = (*enc)
                     .predefinedEntityName
@@ -7730,7 +7810,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    entity = lookup(parser, &mut (*dtd).generalEntities, name, 0) as *mut ENTITY;
+                    let entity = hash_lookup!((*dtd).generalEntities, name);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7917,7 +7997,7 @@ unsafe extern "C" fn storeEntityValue(
                         result = XML_ERROR_NO_MEMORY;
                         break;
                     } else {
-                        entity = lookup(parser, &mut (*dtd).paramEntities, name, 0) as *mut ENTITY;
+                        entity = hash_lookup!((*dtd).paramEntities, name);
                         (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
                         if entity.is_null() {
                             /* not a well-formedness error - see XML 1.0: WFC Entity Declared */
@@ -8334,7 +8414,6 @@ unsafe extern "C" fn setElementTypePrefix(
     name = (*elementType).name;
     while *name != 0 {
         if *name == ASCII_COLON as XML_Char {
-            let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
             let mut s: *const XML_Char = 0 as *const XML_Char;
             s = (*elementType).name;
             while s != name {
@@ -8366,12 +8445,12 @@ unsafe extern "C" fn setElementTypePrefix(
             {
                 return 0i32;
             }
-            prefix = lookup(
+            let prefix = hash_insert!(
                 parser,
                 &mut (*dtd).prefixes,
                 (*dtd).pool.start as KEY,
-                ::std::mem::size_of::<PREFIX>() as c_ulong,
-            ) as *mut PREFIX;
+                PREFIX
+            );
             if prefix.is_null() {
                 return 0i32;
             }
@@ -8396,7 +8475,6 @@ unsafe extern "C" fn getAttributeId(
     mut end: *const c_char,
 ) -> *mut ATTRIBUTE_ID {
     let dtd: *mut DTD = (*parser).m_dtd;
-    let mut id: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
     let mut name: *const XML_Char = 0 as *const XML_Char;
     if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && poolGrow(&mut (*dtd).pool) == 0 {
         0
@@ -8415,12 +8493,12 @@ unsafe extern "C" fn getAttributeId(
     }
     /* skip quotation mark - its storage will be re-used (like in name[-1]) */
     name = name.offset(1);
-    id = lookup(
+    let id = hash_insert!(
         parser,
         &mut (*dtd).attributeIds,
-        name,
-        ::std::mem::size_of::<ATTRIBUTE_ID>() as c_ulong,
-    ) as *mut ATTRIBUTE_ID;
+        name as *mut XML_Char,
+        ATTRIBUTE_ID
+    );
     if id.is_null() {
         return NULL as *mut ATTRIBUTE_ID;
     }
@@ -8440,12 +8518,12 @@ unsafe extern "C" fn getAttributeId(
                 if *name.offset(5) == '\u{0}' as XML_Char {
                     (*id).prefix = &mut (*dtd).defaultPrefix
                 } else {
-                    (*id).prefix = lookup(
+                    (*id).prefix = hash_insert!(
                         parser,
                         &mut (*dtd).prefixes,
                         name.offset(6),
-                        ::std::mem::size_of::<PREFIX>() as c_ulong,
-                    ) as *mut PREFIX
+                        PREFIX
+                    );
                 }
                 (*id).xmlns = XML_TRUE
             } else {
@@ -8485,12 +8563,12 @@ unsafe extern "C" fn getAttributeId(
                         {
                             return NULL as *mut ATTRIBUTE_ID;
                         }
-                        (*id).prefix = lookup(
+                        (*id).prefix = hash_insert!(
                             parser,
                             &mut (*dtd).prefixes,
                             (*dtd).pool.start as KEY,
-                            ::std::mem::size_of::<PREFIX>() as c_ulong,
-                        ) as *mut PREFIX;
+                            PREFIX
+                        );
                         if (*id).prefix.is_null() {
                             return NULL as *mut ATTRIBUTE_ID;
                         }
@@ -8514,10 +8592,6 @@ const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
 unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
     let dtd: *mut DTD = (*parser).m_dtd;
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     let mut needSep: XML_Bool = XML_FALSE;
     if !(*dtd).defaultPrefix.binding.is_null() {
         let mut i: c_int = 0;
@@ -8578,8 +8652,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         }
         needSep = XML_TRUE
     }
-    hashTableIterInit(&mut iter, &mut (*dtd).prefixes);
-    loop
+    for prefix in (*dtd).prefixes.values_mut()
     /* This test appears to be (justifiable) paranoia.  There does
      * not seem to be a way of injecting a prefix without a binding
      * that doesn't get errored long before this function is called.
@@ -8590,10 +8663,6 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         let mut i_0: c_int = 0; /* save one level of indirection */
         let mut len_0: c_int = 0;
         let mut s: *const XML_Char = 0 as *const XML_Char;
-        let mut prefix: *mut PREFIX = hashTableIterNext(&mut iter) as *mut PREFIX;
-        if prefix.is_null() {
-            break;
-        }
         if !(*prefix).binding.is_null() {
             if needSep as c_int != 0
                 && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
@@ -8663,13 +8732,8 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
             needSep = XML_TRUE
         }
     }
-    hashTableIterInit(&mut iter, &mut (*dtd).generalEntities);
-    loop {
+    for e in (*dtd).generalEntities.values() {
         let mut s_0: *const XML_Char = 0 as *const XML_Char;
-        let mut e: *mut ENTITY = hashTableIterNext(&mut iter) as *mut ENTITY;
-        if e.is_null() {
-            break;
-        }
         if (*e).open == 0 {
             continue;
         }
@@ -8727,7 +8791,6 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
     let mut s: *const XML_Char = context;
     while *context != '\u{0}' as XML_Char {
         if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
-            let mut e: *mut ENTITY = 0 as *mut ENTITY;
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
                 && poolGrow(&mut (*parser).m_tempPool) == 0
             {
@@ -8741,14 +8804,8 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             {
                 return XML_FALSE;
             }
-            e = lookup(
-                parser,
-                &mut (*dtd).generalEntities,
-                (*parser).m_tempPool.start as KEY,
-                0,
-            ) as *mut ENTITY;
-            if !e.is_null() {
-                (*e).open = XML_TRUE
+            if let Some(e) = (*dtd).generalEntities.get_mut(&HashKey::from((*parser).m_tempPool.start as KEY)) {
+                e.open = XML_TRUE
             }
             if *s != '\u{0}' as XML_Char {
                 s = s.offset(1)
@@ -8756,7 +8813,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             context = s;
             (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
         } else if *s == ASCII_EQUALS as XML_Char {
-            let mut prefix: *mut PREFIX = 0 as *mut PREFIX;
+            let mut prefix: *mut PREFIX;
             if (*parser)
                 .m_tempPool
                 .ptr
@@ -8778,18 +8835,26 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 {
                     return XML_FALSE;
                 }
-                prefix = lookup(
-                    parser,
+                prefix = hash_lookup!(
                     &mut (*dtd).prefixes,
-                    (*parser).m_tempPool.start as KEY,
-                    ::std::mem::size_of::<PREFIX>() as c_ulong,
-                ) as *mut PREFIX;
+                    (*parser).m_tempPool.start as KEY
+                );
                 if prefix.is_null() {
-                    return XML_FALSE;
-                }
-                if (*prefix).name == (*parser).m_tempPool.start as *const XML_Char {
-                    (*prefix).name = poolCopyString(&mut (*dtd).pool, (*prefix).name);
-                    if (*prefix).name.is_null() {
+                    // libexpat-rs change: we need to copy the prefix name
+                    // into the DTD pool, since the HashMap keeps a permanent
+                    // reference to the name which we can't modify after
+                    // the call to `hash_insert!` (unlike the original C code)
+                    let prefix_name = poolCopyString(&mut (*dtd).pool, (*parser).m_tempPool.start);
+                    if prefix_name.is_null() {
+                        return XML_FALSE;
+                    }
+                    prefix = hash_insert!(
+                        parser,
+                        &mut (*dtd).prefixes,
+                        prefix_name as KEY,
+                        PREFIX
+                    );
+                    if prefix.is_null() {
                         return XML_FALSE;
                     }
                 }
@@ -8896,12 +8961,13 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
     }
     poolInit(&mut (*p).pool, ms);
     poolInit(&mut (*p).entityValuePool, ms);
-    hashTableInit(&mut (*p).generalEntities, ms);
-    hashTableInit(&mut (*p).elementTypes, ms);
-    hashTableInit(&mut (*p).attributeIds, ms);
-    hashTableInit(&mut (*p).prefixes, ms);
+    // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
+    std::ptr::write(&mut (*p).generalEntities, Default::default());
+    std::ptr::write(&mut (*p).elementTypes, Default::default());
+    std::ptr::write(&mut (*p).attributeIds, Default::default());
+    std::ptr::write(&mut (*p).prefixes, Default::default());
     (*p).paramEntityRead = XML_FALSE;
-    hashTableInit(&mut (*p).paramEntities, ms);
+    std::ptr::write(&mut (*p).paramEntities, Default::default());
     /* XML_DTD */
     (*p).defaultPrefix.name = NULL as *const XML_Char;
     (*p).defaultPrefix.binding = NULL as *mut BINDING;
@@ -8920,27 +8986,18 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
 /* do not call if m_parentParser != NULL */
 
 unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handling_Suite) {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
-    hashTableIterInit(&mut iter, &mut (*p).elementTypes);
-    loop {
-        let mut e: *mut ELEMENT_TYPE = hashTableIterNext(&mut iter) as *mut ELEMENT_TYPE;
-        if e.is_null() {
-            break;
-        }
+    for e in (*p).elementTypes.values_mut() {
         if (*e).allocDefaultAtts != 0 {
             (*ms).free_fcn.expect("non-null function pointer")((*e).defaultAtts as *mut c_void);
         }
     }
-    hashTableClear(&mut (*p).generalEntities);
+    (*p).generalEntities.clear();
     (*p).paramEntityRead = XML_FALSE;
-    hashTableClear(&mut (*p).paramEntities);
+    (*p).paramEntities.clear();
     /* XML_DTD */
-    hashTableClear(&mut (*p).elementTypes);
-    hashTableClear(&mut (*p).attributeIds);
-    hashTableClear(&mut (*p).prefixes);
+    (*p).elementTypes.clear();
+    (*p).attributeIds.clear();
+    (*p).prefixes.clear();
     poolClear(&mut (*p).pool);
     poolClear(&mut (*p).entityValuePool);
     (*p).defaultPrefix.name = NULL as *const XML_Char;
@@ -8964,26 +9021,17 @@ unsafe extern "C" fn dtdDestroy(
     mut isDocEntity: XML_Bool,
     mut ms: *const XML_Memory_Handling_Suite,
 ) {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
-    hashTableIterInit(&mut iter, &mut (*p).elementTypes);
-    loop {
-        let mut e: *mut ELEMENT_TYPE = hashTableIterNext(&mut iter) as *mut ELEMENT_TYPE;
-        if e.is_null() {
-            break;
-        }
+    for e in (*p).elementTypes.values_mut() {
         if (*e).allocDefaultAtts != 0 {
             (*ms).free_fcn.expect("non-null function pointer")((*e).defaultAtts as *mut c_void);
         }
     }
-    hashTableDestroy(&mut (*p).generalEntities);
-    hashTableDestroy(&mut (*p).paramEntities);
+    std::ptr::drop_in_place(&mut (*p).generalEntities);
+    std::ptr::drop_in_place(&mut (*p).paramEntities);
     /* XML_DTD */
-    hashTableDestroy(&mut (*p).elementTypes);
-    hashTableDestroy(&mut (*p).attributeIds);
-    hashTableDestroy(&mut (*p).prefixes);
+    std::ptr::drop_in_place(&mut (*p).elementTypes);
+    std::ptr::drop_in_place(&mut (*p).attributeIds);
+    std::ptr::drop_in_place(&mut (*p).prefixes);
     poolDestroy(&mut (*p).pool);
     poolDestroy(&mut (*p).entityValuePool);
     if isDocEntity != 0 {
@@ -9002,43 +9050,28 @@ unsafe extern "C" fn dtdCopy(
     mut oldDtd: *const DTD,
     mut ms: *const XML_Memory_Handling_Suite,
 ) -> c_int {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     /* Copy the prefix table. */
-    hashTableIterInit(&mut iter, &(*oldDtd).prefixes);
-    loop {
+    for oldP in (*oldDtd).prefixes.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        let mut oldP: *const PREFIX = hashTableIterNext(&mut iter) as *mut PREFIX;
-        if oldP.is_null() {
-            break;
-        }
         name = poolCopyString(&mut (*newDtd).pool, (*oldP).name);
         if name.is_null() {
             return 0i32;
         }
-        if lookup(
+        if hash_insert!(
             oldParser,
             &mut (*newDtd).prefixes,
             name,
-            ::std::mem::size_of::<PREFIX>() as c_ulong,
+            PREFIX
         )
         .is_null()
         {
             return 0i32;
         }
     }
-    hashTableIterInit(&mut iter, &(*oldDtd).attributeIds);
-    loop
+    for oldA in (*oldDtd).attributeIds.values()
     /* Copy the attribute id table. */
     {
-        let mut newA: *mut ATTRIBUTE_ID = 0 as *mut ATTRIBUTE_ID;
         let mut name_0: *const XML_Char = 0 as *const XML_Char;
-        let mut oldA: *const ATTRIBUTE_ID = hashTableIterNext(&mut iter) as *mut ATTRIBUTE_ID;
-        if oldA.is_null() {
-            break;
-        }
         /* Remember to allocate the scratch byte before the name. */
         if if (*newDtd).pool.ptr == (*newDtd).pool.end as *mut XML_Char
             && poolGrow(&mut (*newDtd).pool) == 0
@@ -9058,12 +9091,12 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         name_0 = name_0.offset(1);
-        newA = lookup(
+        let newA = hash_insert!(
             oldParser,
             &mut (*newDtd).attributeIds,
-            name_0,
-            ::std::mem::size_of::<ATTRIBUTE_ID>() as c_ulong,
-        ) as *mut ATTRIBUTE_ID;
+            name_0 as *mut XML_Char,
+            ATTRIBUTE_ID
+        );
         if newA.is_null() {
             return 0i32;
         }
@@ -9073,35 +9106,27 @@ unsafe extern "C" fn dtdCopy(
             if (*oldA).prefix == &(*oldDtd).defaultPrefix as *const PREFIX as *mut PREFIX {
                 (*newA).prefix = &mut (*newDtd).defaultPrefix
             } else {
-                (*newA).prefix = lookup(
-                    oldParser,
-                    &mut (*newDtd).prefixes,
-                    (*(*oldA).prefix).name,
-                    0,
-                ) as *mut PREFIX
+                (*newA).prefix = hash_lookup!(
+                    (*newDtd).prefixes,
+                    (*(*oldA).prefix).name
+                );
             }
         }
     }
     /* Copy the element type table. */
-    hashTableIterInit(&mut iter, &(*oldDtd).elementTypes);
-    loop {
+    for oldE in (*oldDtd).elementTypes.values() {
         let mut i: c_int = 0;
-        let mut newE: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
         let mut name_1: *const XML_Char = 0 as *const XML_Char;
-        let mut oldE: *const ELEMENT_TYPE = hashTableIterNext(&mut iter) as *mut ELEMENT_TYPE;
-        if oldE.is_null() {
-            break;
-        }
         name_1 = poolCopyString(&mut (*newDtd).pool, (*oldE).name);
         if name_1.is_null() {
             return 0i32;
         }
-        newE = lookup(
+        let newE = hash_insert!(
             oldParser,
             &mut (*newDtd).elementTypes,
             name_1,
-            ::std::mem::size_of::<ELEMENT_TYPE>() as c_ulong,
-        ) as *mut ELEMENT_TYPE;
+            ELEMENT_TYPE
+        );
         if newE.is_null() {
             return 0i32;
         }
@@ -9115,32 +9140,26 @@ unsafe extern "C" fn dtdCopy(
             }
         }
         if !(*oldE).idAtt.is_null() {
-            (*newE).idAtt = lookup(
-                oldParser,
-                &mut (*newDtd).attributeIds,
-                (*(*oldE).idAtt).name as KEY,
-                0,
-            ) as *mut ATTRIBUTE_ID
+            (*newE).idAtt = hash_lookup!(
+                (*newDtd).attributeIds,
+                (*(*oldE).idAtt).name as KEY
+            );
         }
         (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
         (*newE).allocDefaultAtts = (*newE).nDefaultAtts;
         if !(*oldE).prefix.is_null() {
-            (*newE).prefix = lookup(
-                oldParser,
-                &mut (*newDtd).prefixes,
-                (*(*oldE).prefix).name,
-                0,
-            ) as *mut PREFIX
+            (*newE).prefix = hash_lookup!(
+                (*newDtd).prefixes,
+                (*(*oldE).prefix).name
+            );
         }
         i = 0;
         while i < (*newE).nDefaultAtts {
             let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
-            *fresh69 = lookup(
-                oldParser,
-                &mut (*newDtd).attributeIds,
-                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY,
-                0,
-            ) as *mut ATTRIBUTE_ID;
+            *fresh69 = hash_lookup!(
+                (*newDtd).attributeIds,
+                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY
+            );
             (*(*newE).defaultAtts.offset(i as isize)).isCdata =
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
             if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
@@ -9196,34 +9215,24 @@ unsafe extern "C" fn dtdCopy(
 
 unsafe extern "C" fn copyEntityTable(
     mut oldParser: XML_Parser,
-    mut newTable: *mut HASH_TABLE,
+    mut newTable: &mut HashMap<HashKey, ExpatBox<ENTITY>>,
     mut newPool: *mut STRING_POOL,
-    mut oldTable: *const HASH_TABLE,
+    mut oldTable: &HashMap<HashKey, ExpatBox<ENTITY>>,
 ) -> c_int {
-    let mut iter: HASH_TABLE_ITER = HASH_TABLE_ITER {
-        p: 0 as *mut *mut NAMED,
-        end: 0 as *mut *mut NAMED,
-    };
     let mut cachedOldBase: *const XML_Char = NULL as *const XML_Char;
     let mut cachedNewBase: *const XML_Char = NULL as *const XML_Char;
-    hashTableIterInit(&mut iter, oldTable);
-    loop {
-        let mut newE: *mut ENTITY = 0 as *mut ENTITY;
+    for oldE in oldTable.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        let mut oldE: *const ENTITY = hashTableIterNext(&mut iter) as *mut ENTITY;
-        if oldE.is_null() {
-            break;
-        }
         name = poolCopyString(newPool, (*oldE).name);
         if name.is_null() {
             return 0i32;
         }
-        newE = lookup(
+        let newE = hash_insert!(
             oldParser,
-            newTable,
+            &mut newTable,
             name,
-            ::std::mem::size_of::<ENTITY>() as c_ulong,
-        ) as *mut ENTITY;
+            ENTITY
+        );
         if newE.is_null() {
             return 0i32;
         }
@@ -9321,181 +9330,6 @@ unsafe extern "C" fn hash(mut parser: XML_Parser, mut s: KEY) -> c_ulong {
         keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
     );
     return sip24_final(&mut state);
-}
-
-unsafe extern "C" fn lookup(
-    mut parser: XML_Parser,
-    mut table: *mut HASH_TABLE,
-    mut name: KEY,
-    mut createSize: size_t,
-) -> *mut NAMED {
-    let mut i: size_t = 0;
-    if (*table).size == 0u64 {
-        let mut tsize: size_t = 0;
-        if createSize == 0 {
-            return NULL as *mut NAMED;
-        }
-        (*table).power = INIT_POWER as c_uchar;
-        /* table->size is a power of 2 */
-        (*table).size = (1u64) << INIT_POWER;
-        tsize = (*table)
-            .size
-            .wrapping_mul(::std::mem::size_of::<*mut NAMED>() as c_ulong);
-        (*table).v = (*(*table).mem)
-            .malloc_fcn
-            .expect("non-null function pointer")(tsize) as *mut *mut NAMED;
-        if (*table).v.is_null() {
-            (*table).size = 0u64;
-            return NULL as *mut NAMED;
-        }
-        memset((*table).v as *mut c_void, 0, tsize);
-        i = hash(parser, name) & (*table).size.wrapping_sub(1u64)
-    } else {
-        let mut h: c_ulong = hash(parser, name);
-        let mut mask: c_ulong = (*table).size.wrapping_sub(1u64);
-        let mut step: c_uchar = 0;
-        i = h & mask;
-        while !(*(*table).v.offset(i as isize)).is_null() {
-            if keyeq(name, (**(*table).v.offset(i as isize)).name) != 0 {
-                return *(*table).v.offset(i as isize);
-            }
-            if step == 0 {
-                step = ((h & !mask) >> (*table).power as c_int - 1 & mask >> 2 | 1) as c_uchar
-            }
-            if i < step as c_ulong {
-                i = (i).wrapping_add((*table).size.wrapping_sub(step as c_ulong))
-            } else {
-                i = (i).wrapping_sub(step as c_ulong)
-            };
-        }
-        if createSize == 0 {
-            return NULL as *mut NAMED;
-        }
-        /* check for overflow (table is half full) */
-        if (*table).used >> (*table).power as c_int - 1 != 0 {
-            let mut newPower: c_uchar = ((*table).power as c_int + 1) as c_uchar;
-            let mut newSize: size_t = (1) << newPower as c_int;
-            let mut newMask: c_ulong = newSize.wrapping_sub(1u64);
-            let mut tsize_0: size_t =
-                newSize.wrapping_mul(::std::mem::size_of::<*mut NAMED>() as c_ulong);
-            let mut newV: *mut *mut NAMED = (*(*table).mem)
-                .malloc_fcn
-                .expect("non-null function pointer")(
-                tsize_0
-            ) as *mut *mut NAMED;
-            if newV.is_null() {
-                return NULL as *mut NAMED;
-            }
-            memset(newV as *mut c_void, 0, tsize_0);
-            i = 0;
-            while i < (*table).size {
-                if !(*(*table).v.offset(i as isize)).is_null() {
-                    let mut newHash: c_ulong = hash(parser, (**(*table).v.offset(i as isize)).name);
-                    let mut j: size_t = newHash & newMask;
-                    step = 0;
-                    while !(*newV.offset(j as isize)).is_null() {
-                        if step == 0 {
-                            step = ((newHash & !newMask) >> newPower as c_int - 1 & newMask >> 2
-                                | 1) as c_uchar
-                        }
-                        if j < step as c_ulong {
-                            j = (j).wrapping_add(newSize.wrapping_sub(step as c_ulong))
-                        } else {
-                            j = (j).wrapping_sub(step as c_ulong)
-                        };
-                    }
-                    let ref mut fresh72 = *newV.offset(j as isize);
-                    *fresh72 = *(*table).v.offset(i as isize)
-                }
-                i = i.wrapping_add(1)
-            }
-            (*(*table).mem).free_fcn.expect("non-null function pointer")((*table).v as *mut c_void);
-            (*table).v = newV;
-            (*table).power = newPower;
-            (*table).size = newSize;
-            i = h & newMask;
-            step = 0;
-            while !(*(*table).v.offset(i as isize)).is_null() {
-                if step == 0 {
-                    step = ((h & !newMask) >> newPower as c_int - 1 & newMask >> 2 | 1) as c_uchar
-                }
-                if i < step as c_ulong {
-                    i = (i).wrapping_add(newSize.wrapping_sub(step as c_ulong))
-                } else {
-                    i = (i).wrapping_sub(step as c_ulong)
-                };
-            }
-        }
-    }
-    let ref mut fresh73 = *(*table).v.offset(i as isize);
-    *fresh73 = (*(*table).mem)
-        .malloc_fcn
-        .expect("non-null function pointer")(createSize) as *mut NAMED;
-    if (*(*table).v.offset(i as isize)).is_null() {
-        return NULL as *mut NAMED;
-    }
-    memset(*(*table).v.offset(i as isize) as *mut c_void, 0, createSize);
-    let ref mut fresh74 = (**(*table).v.offset(i as isize)).name;
-    *fresh74 = name;
-    (*table).used = (*table).used.wrapping_add(1);
-    return *(*table).v.offset(i as isize);
-}
-
-unsafe extern "C" fn hashTableClear(mut table: *mut HASH_TABLE) {
-    let mut i: size_t = 0;
-    i = 0;
-    while i < (*table).size {
-        (*(*table).mem).free_fcn.expect("non-null function pointer")(
-            *(*table).v.offset(i as isize) as *mut c_void,
-        );
-        let ref mut fresh75 = *(*table).v.offset(i as isize);
-        *fresh75 = NULL as *mut NAMED;
-        i = i.wrapping_add(1)
-    }
-    (*table).used = 0u64;
-}
-
-unsafe extern "C" fn hashTableDestroy(mut table: *mut HASH_TABLE) {
-    let mut i: size_t = 0;
-    i = 0;
-    while i < (*table).size {
-        (*(*table).mem).free_fcn.expect("non-null function pointer")(
-            *(*table).v.offset(i as isize) as *mut c_void,
-        );
-        i = i.wrapping_add(1)
-    }
-    (*(*table).mem).free_fcn.expect("non-null function pointer")((*table).v as *mut c_void);
-}
-
-unsafe extern "C" fn hashTableInit(
-    mut p: *mut HASH_TABLE,
-    mut ms: *const XML_Memory_Handling_Suite,
-) {
-    (*p).power = 0u8;
-    (*p).size = 0u64;
-    (*p).used = 0u64;
-    (*p).v = NULL as *mut *mut NAMED;
-    (*p).mem = ms;
-}
-
-unsafe extern "C" fn hashTableIterInit(
-    mut iter: *mut HASH_TABLE_ITER,
-    mut table: *const HASH_TABLE,
-) {
-    (*iter).p = (*table).v;
-    (*iter).end = (*iter).p.offset((*table).size as isize);
-}
-
-unsafe extern "C" fn hashTableIterNext(mut iter: *mut HASH_TABLE_ITER) -> *mut NAMED {
-    while (*iter).p != (*iter).end {
-        let fresh76 = (*iter).p;
-        (*iter).p = (*iter).p.offset(1);
-        let mut tem: *mut NAMED = *fresh76;
-        if !tem.is_null() {
-            return tem;
-        }
-    }
-    return NULL as *mut NAMED;
 }
 
 unsafe extern "C" fn poolInit(
@@ -9974,16 +9808,15 @@ unsafe extern "C" fn getElementType(
 ) -> *mut ELEMENT_TYPE {
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut name: *const XML_Char = poolStoreString(&mut (*dtd).pool, enc, ptr, end);
-    let mut ret: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
     if name.is_null() {
         return NULL as *mut ELEMENT_TYPE;
     }
-    ret = lookup(
+    let ret = hash_insert!(
         parser,
         &mut (*dtd).elementTypes,
         name,
-        ::std::mem::size_of::<ELEMENT_TYPE>() as c_ulong,
-    ) as *mut ELEMENT_TYPE;
+        ELEMENT_TYPE
+    );
     if ret.is_null() {
         return NULL as *mut ELEMENT_TYPE;
     }
