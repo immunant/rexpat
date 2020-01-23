@@ -953,7 +953,9 @@ mod unicode_defines {
 
     macro_rules! MUST_CONVERT {
         ($enc:path, $s:expr $(,)?) => {
-            !(*$enc).isUtf16() || !$s.is_null()
+            !(*$enc).isUtf16()
+                // TODO(SJC): should this be MINBPC?
+                || $s.align_offset(2) != 0
         };
     }
 
