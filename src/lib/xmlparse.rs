@@ -3391,74 +3391,50 @@ pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
     const features: &[XML_Feature] = &[
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_SIZEOF_XML_CHAR,
-                name: wch!("sizeof(XML_Char)\x00"),
-                value: ::std::mem::size_of::<XML_Char>() as c_long,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_SIZEOF_XML_CHAR,
+            name: wch!("sizeof(XML_Char)\x00"),
+            value: ::std::mem::size_of::<XML_Char>() as c_long,
         },
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_SIZEOF_XML_LCHAR,
-                name: wch!("sizeof(XML_LChar)\x00"),
-                value: ::std::mem::size_of::<XML_LChar>() as c_long,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_SIZEOF_XML_LCHAR,
+            name: wch!("sizeof(XML_LChar)\x00"),
+            value: ::std::mem::size_of::<XML_LChar>() as c_long,
         },
         #[cfg(feature = "unicode")]
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_UNICODE,
-                name: wch!("XML_UNICODE\x00"),
-                value: 0i64,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_UNICODE,
+            name: wch!("XML_UNICODE\x00"),
+            value: 0i64,
         },
         #[cfg(feature = "unicode_wchar_t")]
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_UNICODE_WCHAR_T,
-                name: wch!("XML_UNICODE_WHCAR_T\x00"),
-                value: 0i64,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_UNICODE_WCHAR_T,
+            name: wch!("XML_UNICODE_WHCAR_T\x00"),
+            value: 0i64,
         },
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_DTD,
-                name: wch!("XML_DTD\x00"),
-                value: 0i64,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_DTD,
+            name: wch!("XML_DTD\x00"),
+            value: 0i64,
         },
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_CONTEXT_BYTES,
-                name: wch!("XML_CONTEXT_BYTES\x00"),
-                value: XML_CONTEXT_BYTES as c_long,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_CONTEXT_BYTES,
+            name: wch!("XML_CONTEXT_BYTES\x00"),
+            value: XML_CONTEXT_BYTES as c_long,
         },
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_NS,
-                name: wch!("XML_NS\x00"),
-                value: 0i64,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_NS,
+            name: wch!("XML_NS\x00"),
+            value: 0i64,
         },
-        {
-            let mut init = XML_Feature {
-                feature: XML_FEATURE_END,
-                name: NULL as *const XML_LChar,
-                value: 0i64,
-            };
-            init
+        XML_Feature {
+            feature: XML_FEATURE_END,
+            name: NULL as *const XML_LChar,
+            value: 0i64,
         },
     ];
-    return features.as_ptr();
+    features.as_ptr()
 }
 
 #[cfg(feature = "mozilla")]
