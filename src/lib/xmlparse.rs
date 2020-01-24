@@ -126,7 +126,6 @@ use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, Reallo
 use alloc_wg::boxed::Box;
 
 use std::collections::{hash_map, HashMap};
-use std::mem;
 use std::ptr::{self, NonNull};
 
 #[inline]
@@ -1094,7 +1093,7 @@ macro_rules! REALLOC {
     };
 }
 macro_rules! FREE {
-    ($parser:path, $ptr:expr $(,)?) => {
+    ($parser:expr, $ptr:expr $(,)?) => {
         (*$parser)
             .m_mem
             .free_fcn
@@ -1549,65 +1548,65 @@ impl XML_ParserStruct {
         };
         parser.m_mem = memsuite;
 
-        (*parser).m_buffer = NULL as *mut c_char;
-        (*parser).m_bufferLim = NULL as *const c_char;
-        (*parser).m_attsSize = INIT_ATTS_SIZE;
-        (*parser).m_atts = MALLOC!(
+        parser.m_buffer = NULL as *mut c_char;
+        parser.m_bufferLim = NULL as *const c_char;
+        parser.m_attsSize = INIT_ATTS_SIZE;
+        parser.m_atts = MALLOC!(
             parser,
-            ((*parser).m_attsSize as c_ulong)
+            (parser.m_attsSize as c_ulong)
                 .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
         ) as *mut super::xmltok::ATTRIBUTE;
-        if (*parser).m_atts.is_null() {
+        if parser.m_atts.is_null() {
             return ptr::null_mut();
         }
-        (*parser).m_dataBuf = MALLOC!(
+        parser.m_dataBuf = MALLOC!(
             parser,
             1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
         ) as *mut XML_Char;
-        if (*parser).m_dataBuf.is_null() {
-            FREE!(parser, (*parser).m_atts as *mut c_void);
+        if parser.m_dataBuf.is_null() {
+            FREE!(parser, parser.m_atts as *mut c_void);
             return ptr::null_mut();
         }
-        (*parser).m_dataBufEnd = (*parser).m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
+        parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
         if !dtd.is_null() {
-            (*parser).m_dtd = dtd
+            parser.m_dtd = dtd
         } else {
-            (*parser).m_dtd = dtdCreate(&(*parser).m_mem);
-            if (*parser).m_dtd.is_null() {
-                FREE!(parser, (*parser).m_dataBuf as *mut c_void);
-                FREE!(parser, (*parser).m_atts as *mut c_void);
+            parser.m_dtd = dtdCreate(&parser.m_mem);
+            if parser.m_dtd.is_null() {
+                FREE!(parser, parser.m_dataBuf as *mut c_void);
+                FREE!(parser, parser.m_atts as *mut c_void);
                 return ptr::null_mut();
             }
         }
-        (*parser).m_freeBindingList = NULL as *mut BINDING;
-        (*parser).m_freeTagList = NULL as *mut TAG;
-        (*parser).m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
-        (*parser).m_groupSize = 0;
-        (*parser).m_groupConnector = NULL as *mut c_char;
-        (*parser).m_initEncoding = None;
-        (*parser).m_unknownEncoding = None;
-        (*parser).m_namespaceSeparator = ASCII_EXCL as XML_Char;
-        (*parser).m_ns = XML_FALSE;
-        (*parser).m_ns_triplets = XML_FALSE;
-        (*parser).m_nsAtts = NULL as *mut NS_ATT;
-        (*parser).m_nsAttsVersion = 0;
-        (*parser).m_nsAttsPower = 0;
-        (*parser).m_protocolEncodingName = NULL as *const XML_Char;
-        poolInit(&mut (*parser).m_tempPool, &(*parser).m_mem);
-        poolInit(&mut (*parser).m_temp2Pool, &(*parser).m_mem);
-        (*parser).init(encodingName);
-        if !encodingName.is_null() && (*parser).m_protocolEncodingName.is_null() {
-            XML_ParserFree(ExpatBox::into_raw(parser));
+        parser.m_freeBindingList = NULL as *mut BINDING;
+        parser.m_freeTagList = NULL as *mut TAG;
+        parser.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
+        parser.m_groupSize = 0;
+        parser.m_groupConnector = NULL as *mut c_char;
+        parser.m_initEncoding = None;
+        parser.m_unknownEncoding = None;
+        parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
+        parser.m_ns = XML_FALSE;
+        parser.m_ns_triplets = XML_FALSE;
+        parser.m_nsAtts = NULL as *mut NS_ATT;
+        parser.m_nsAttsVersion = 0;
+        parser.m_nsAttsPower = 0;
+        parser.m_protocolEncodingName = NULL as *const XML_Char;
+        poolInit(&mut parser.m_tempPool, &parser.m_mem);
+        poolInit(&mut parser.m_temp2Pool, &parser.m_mem);
+        parser.init(encodingName);
+        if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
+            parser.free();
             return ptr::null_mut();
         }
         if !nameSep.is_null() {
-            (*parser).m_ns = XML_TRUE;
-            (*parser).m_namespaceSeparator = *nameSep
+            parser.m_ns = XML_TRUE;
+            parser.m_namespaceSeparator = *nameSep
         }
 
         #[cfg(feature = "mozilla")]
         {
-            (*parser).m_mismatch = NULL as *const XML_Char;
+            parser.m_mismatch = NULL as *const XML_Char;
         }
         ExpatBox::into_raw(parser)
     }
@@ -1657,7 +1656,7 @@ impl XML_ParserStruct {
         self.m_unknownEncoding = None;
         self.m_unknownEncodingRelease = ::std::mem::transmute::<
             intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
+            Option<unsafe extern "C" fn(_: *mut c_void)>,
         >(NULL as intptr_t);
         self.m_unknownEncodingData = NULL as *mut c_void;
         self.m_parentParser = NULL as XML_Parser;
@@ -1677,7 +1676,7 @@ impl XML_ParserStruct {
 
        Added in Expat 1.95.3.
     */
-    unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
+    pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
         let mut tStk: *mut TAG = 0 as *mut TAG;
         let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         if !self.m_parentParser.is_null() {
@@ -1704,8 +1703,7 @@ impl XML_ParserStruct {
         moveToFreeBindingList(self, self.m_inheritedBindings);
         let _ = self.m_unknownEncoding.take();
         if self.m_unknownEncodingRelease.is_some() {
-            self
-                .m_unknownEncodingRelease
+            self.m_unknownEncodingRelease
                 .expect("non-null function pointer")(self.m_unknownEncodingData);
         }
         poolClear(&mut self.m_tempPool);
@@ -1715,6 +1713,70 @@ impl XML_ParserStruct {
         self.init(encodingName);
         dtdReset(self.m_dtd, &self.m_mem);
         XML_TRUE
+    }
+
+    /* Frees memory used by the parser. */
+    pub unsafe extern "C" fn free(mut self: ExpatBox<Self>) {
+        let mut tagList: *mut TAG = 0 as *mut TAG;
+        let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        /* free m_tagStack and m_freeTagList */
+        tagList = self.m_tagStack;
+        loop {
+            let mut p: *mut TAG = 0 as *mut TAG;
+            if tagList.is_null() {
+                if self.m_freeTagList.is_null() {
+                    break;
+                }
+                tagList = self.m_freeTagList;
+                self.m_freeTagList = NULL as *mut TAG
+            }
+            p = tagList;
+            tagList = (*tagList).parent;
+            FREE!(&self, (*p).buf as *mut c_void);
+            destroyBindings((*p).bindings, &mut *self);
+        }
+        /* free m_openInternalEntities and m_freeInternalEntities */
+        entityList = self.m_openInternalEntities;
+        loop {
+            let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+            if entityList.is_null() {
+                if self.m_freeInternalEntities.is_null() {
+                    break;
+                }
+                entityList = self.m_freeInternalEntities;
+                self.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY
+            }
+            openEntity = entityList;
+            entityList = (*entityList).next;
+            FREE!(&self, openEntity as *mut c_void);
+        }
+        destroyBindings(self.m_freeBindingList, &mut *self);
+        destroyBindings(self.m_inheritedBindings, &mut *self);
+        poolDestroy(&mut self.m_tempPool);
+        poolDestroy(&mut self.m_temp2Pool);
+        FREE!(&self, self.m_protocolEncodingName as *mut c_void);
+        /* external parameter entity parsers share the DTD structure
+        parser->m_dtd with the root parser, so we must not destroy it
+        */
+        if self.m_isParamEntity == 0 && !self.m_dtd.is_null() {
+            /* XML_DTD */
+            dtdDestroy(
+                self.m_dtd,
+                self.m_parentParser.is_null() as XML_Bool,
+                &self.m_mem,
+            );
+        }
+        FREE!(&self, self.m_atts as *mut c_void);
+        FREE!(&self, self.m_groupConnector as *mut c_void);
+        FREE!(&self, self.m_buffer as *mut c_void);
+        FREE!(&self, self.m_dataBuf as *mut c_void);
+        FREE!(&self, self.m_nsAtts as *mut c_void);
+        let _ = self.m_unknownEncoding.take();
+        let _ = self.m_initEncoding.take();
+        if self.m_unknownEncodingRelease.is_some() {
+            self.m_unknownEncodingRelease
+                .expect("non-null function pointer")(self.m_unknownEncodingData);
+        }
     }
 }
 /* moves list of bindings to m_freeBindingList */
@@ -1938,7 +2000,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
         if dtdCopy(oldParser, (*parser).m_dtd, oldDtd, &(*parser).m_mem) == 0
             || setContext(parser, context) == 0
         {
-            XML_ParserFree(parser);
+            XML_ParserFree(parser); // TODO: parser.free();
             return NULL as XML_Parser;
         }
         (*parser).m_processor = Some(externalEntityInitProcessor as Processor)
@@ -1955,7 +2017,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
         (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
     }
     /* XML_DTD */
-    return parser;
+    parser
 }
 
 unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
@@ -1969,76 +2031,14 @@ unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML
         FREE!(parser, b as *mut c_void);
     }
 }
-/* Frees memory used by the parser. */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserFree(mut parser: XML_Parser) {
-    let mut tagList: *mut TAG = 0 as *mut TAG;
-    let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
     let mut parser = ExpatBox::from_raw_in(parser, (*parser).m_mem);
-    /* free m_tagStack and m_freeTagList */
-    tagList = (*parser).m_tagStack;
-    loop {
-        let mut p: *mut TAG = 0 as *mut TAG;
-        if tagList.is_null() {
-            if (*parser).m_freeTagList.is_null() {
-                break;
-            }
-            tagList = (*parser).m_freeTagList;
-            (*parser).m_freeTagList = NULL as *mut TAG
-        }
-        p = tagList;
-        tagList = (*tagList).parent;
-        FREE!(parser, (*p).buf as *mut c_void);
-        destroyBindings((*p).bindings, &mut *parser);
-    }
-    /* free m_openInternalEntities and m_freeInternalEntities */
-    entityList = (*parser).m_openInternalEntities;
-    loop {
-        let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
-        if entityList.is_null() {
-            if (*parser).m_freeInternalEntities.is_null() {
-                break;
-            }
-            entityList = (*parser).m_freeInternalEntities;
-            (*parser).m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY
-        }
-        openEntity = entityList;
-        entityList = (*entityList).next;
-        FREE!(parser, openEntity as *mut c_void);
-    }
-    destroyBindings((*parser).m_freeBindingList, &mut *parser);
-    destroyBindings((*parser).m_inheritedBindings, &mut *parser);
-    poolDestroy(&mut (*parser).m_tempPool);
-    poolDestroy(&mut (*parser).m_temp2Pool);
-    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
-    /* external parameter entity parsers share the DTD structure
-       parser->m_dtd with the root parser, so we must not destroy it
-    */
-    if (*parser).m_isParamEntity == 0 && !(*parser).m_dtd.is_null() {
-        /* XML_DTD */
-        dtdDestroy(
-            (*parser).m_dtd,
-            (*parser).m_parentParser.is_null() as XML_Bool,
-            &(*parser).m_mem,
-        );
-    }
-    FREE!(parser, (*parser).m_atts as *mut c_void);
-    FREE!(parser, (*parser).m_groupConnector as *mut c_void);
-    FREE!(parser, (*parser).m_buffer as *mut c_void);
-    FREE!(parser, (*parser).m_dataBuf as *mut c_void);
-    FREE!(parser, (*parser).m_nsAtts as *mut c_void);
-    let _ = (*parser).m_unknownEncoding.take();
-    let _ = (*parser).m_initEncoding.take();
-    if (*parser).m_unknownEncodingRelease.is_some() {
-        (*parser)
-            .m_unknownEncodingRelease
-            .expect("non-null function pointer")((*parser).m_unknownEncodingData);
-    }
 
-    mem::drop(parser);
+    parser.free();
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
@@ -2084,7 +2084,7 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
         return XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
     }
     (*parser).m_useForeignDTD = useDTD;
-    return XML_ERROR_NONE;
+    XML_ERROR_NONE
 }
 /* If do_nst is non-zero, and namespace processing is in effect, and
    a name has a prefix (i.e. an explicit namespace qualifier) then
@@ -2147,14 +2147,14 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
     } else {
         (*parser).m_curBase = NULL as *const XML_Char
     }
-    return XML_STATUS_OK_0 as XML_Status;
+    XML_STATUS_OK_0 as XML_Status
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
     if parser.is_null() {
         return NULL as *const XML_Char;
     }
-    return (*parser).m_curBase;
+    (*parser).m_curBase
 }
 /* Returns the number of the attribute/value pairs passed in last call
    to the XML_StartElementHandler that were specified in the start-tag
@@ -2167,7 +2167,7 @@ pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) 
     if parser.is_null() {
         return -(1i32);
     }
-    return (*parser).m_nSpecifiedAtts;
+    (*parser).m_nSpecifiedAtts
 }
 /* Returns the index of the ID attribute passed in the last call to
    XML_StartElementHandler, or -1 if there is no ID attribute or
@@ -2180,7 +2180,7 @@ pub unsafe extern "C" fn XML_GetIdAttributeIndex(mut parser: XML_Parser) -> c_in
     if parser.is_null() {
         return -(1i32);
     }
-    return (*parser).m_idAttIndex;
+    (*parser).m_idAttIndex
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetElementHandler(
