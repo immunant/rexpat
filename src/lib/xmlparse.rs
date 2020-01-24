@@ -8795,7 +8795,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                     (*parser).m_tempPool.start as KEY
                 );
                 if prefix.is_null() {
-                    // libexpat-rs change: we need to copy the prefix name
+                    // librexpat change: we need to copy the prefix name
                     // into the DTD pool, since the HashMap keeps a permanent
                     // reference to the name which we can't modify after
                     // the call to `hash_insert!` (unlike the original C code)
