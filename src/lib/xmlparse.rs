@@ -128,17 +128,6 @@ use alloc_wg::boxed::Box;
 use std::collections::{hash_map, HashMap};
 use std::ptr::{self, NonNull};
 
-#[inline]
-unsafe fn poolAppendChar(pool: &mut STRING_POOL, c: XML_Char) -> bool {
-    if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
-        false
-    } else {
-        *(*pool).ptr = c;
-        (*pool).ptr = (*pool).ptr.offset(1);
-        true
-    }
-}
-
 trait XmlHandlers {
     fn hasAttlistDecl(&self) -> bool;
     fn hasCharacterData(&self) -> bool;
@@ -767,6 +756,207 @@ impl STRING_POOL {
         self.start = NULL as *mut XML_Char;
         self.ptr = NULL as *mut XML_Char;
         self.end = NULL as *const XML_Char;
+    }
+
+    unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
+        if self.append(enc, ptr, end).is_null() {
+            return NULL as *mut XML_Char;
+        }
+        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+            return NULL as *mut XML_Char;
+        }
+        let fresh81 = self.ptr;
+        self.ptr = self.ptr.offset(1);
+        *fresh81 = 0;
+        self.start
+    }
+
+    unsafe fn grow(&mut self) -> XML_Bool {
+        if !self.freeBlocks.is_null() {
+            if self.start.is_null() {
+                self.blocks = self.freeBlocks;
+                self.freeBlocks = (*self.freeBlocks).next;
+                (*self.blocks).next = NULL as *mut block;
+                self.start = (*self.blocks).s.as_mut_ptr();
+                self.end = self.start.offset((*self.blocks).size as isize);
+                self.ptr = self.start;
+                return XML_TRUE;
+            }
+            if (self.end.wrapping_offset_from(self.start) as c_long)
+                < (*self.freeBlocks).size as c_long
+            {
+                let mut tem: *mut BLOCK = (*self.freeBlocks).next;
+                (*self.freeBlocks).next = self.blocks;
+                self.blocks = self.freeBlocks;
+                self.freeBlocks = tem;
+                memcpy(
+                    (*self.blocks).s.as_mut_ptr() as *mut c_void,
+                    self.start as *const c_void,
+                    (self.end.wrapping_offset_from(self.start) as c_ulong)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                );
+                self.ptr = (*self.blocks)
+                    .s
+                    .as_mut_ptr()
+                    .offset(self.ptr.wrapping_offset_from(self.start));
+                self.start = (*self.blocks).s.as_mut_ptr();
+                self.end = self.start.offset((*self.blocks).size as isize);
+                return XML_TRUE;
+            }
+        }
+        if !self.blocks.is_null() && self.start == (*self.blocks).s.as_mut_ptr() {
+            let mut temp: *mut BLOCK = 0 as *mut BLOCK;
+            let mut blockSize: c_int =
+                (self.end.wrapping_offset_from(self.start) as c_uint).wrapping_mul(2u32) as c_int;
+            let mut bytesToAllocate: size_t = 0;
+            /* NOTE: Needs to be calculated prior to calling `realloc`
+            to avoid dangling pointers: */
+            let offsetInsideBlock: ptrdiff_t =
+                self.ptr.wrapping_offset_from(self.start) as c_long;
+            if blockSize < 0 {
+                /* This condition traps a situation where either more than
+                 * INT_MAX/2 bytes have already been allocated.  This isn't
+                 * readily testable, since it is unlikely that an average
+                 * machine will have that much memory, so we exclude it from the
+                 * coverage statistics.
+                 */
+                return XML_FALSE;
+                /* LCOV_EXCL_LINE */
+            }
+            bytesToAllocate = poolBytesToAllocateFor(blockSize);
+            if bytesToAllocate == 0 {
+                return XML_FALSE;
+            }
+            temp = (*self.mem)
+                .realloc_fcn
+                .expect("non-null function pointer")(
+                self.blocks as *mut c_void,
+                bytesToAllocate as c_uint as size_t,
+            ) as *mut BLOCK;
+            if temp.is_null() {
+                return XML_FALSE;
+            }
+            self.blocks = temp;
+            (*self.blocks).size = blockSize;
+            self.ptr = (*self.blocks)
+                .s
+                .as_mut_ptr()
+                .offset(offsetInsideBlock as isize);
+            self.start = (*self.blocks).s.as_mut_ptr();
+            self.end = self.start.offset(blockSize as isize)
+        } else {
+            let mut tem_0: *mut BLOCK = 0 as *mut BLOCK;
+            let mut blockSize_0: c_int = self.end.wrapping_offset_from(self.start) as c_int;
+            let mut bytesToAllocate_0: size_t = 0;
+            if blockSize_0 < 0 {
+                /* This condition traps a situation where either more than
+                 * INT_MAX bytes have already been allocated (which is prevented
+                 * by various pieces of program logic, not least this one, never
+                 * mind the unlikelihood of actually having that much memory) or
+                 * the pool control fields have been corrupted (which could
+                 * conceivably happen in an extremely buggy user handler
+                 * function).  Either way it isn't readily testable, so we
+                 * exclude it from the coverage statistics.
+                 */
+                return XML_FALSE;
+                /* LCOV_EXCL_LINE */
+            }
+            if blockSize_0 < INIT_BLOCK_SIZE {
+                blockSize_0 = INIT_BLOCK_SIZE
+            } else {
+                /* Detect overflow, avoiding _signed_ overflow undefined behavior */
+                if ((blockSize_0 as c_uint).wrapping_mul(2u32) as c_int) < 0 {
+                    return XML_FALSE;
+                } /* save one level of indirection */
+                blockSize_0 *= 2
+            } /* save one level of indirection */
+            bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0); /* save one level of indirection */
+            if bytesToAllocate_0 == 0 {
+                return XML_FALSE;
+            } /* save one level of indirection */
+            tem_0 = (*self.mem)
+                .malloc_fcn
+                .expect("non-null function pointer")(bytesToAllocate_0) as *mut BLOCK;
+            if tem_0.is_null() {
+                return XML_FALSE;
+            }
+            (*tem_0).size = blockSize_0;
+            (*tem_0).next = self.blocks;
+            self.blocks = tem_0;
+            if self.ptr != self.start {
+                memcpy(
+                    (*tem_0).s.as_mut_ptr() as *mut c_void,
+                    self.start as *const c_void,
+                    (self.ptr.wrapping_offset_from(self.start) as c_ulong)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                );
+            }
+            self.ptr = (*tem_0)
+                .s
+                .as_mut_ptr()
+                .offset(self.ptr.wrapping_offset_from(self.start));
+            self.start = (*tem_0).s.as_mut_ptr();
+            self.end = (*tem_0).s.as_mut_ptr().offset(blockSize_0 as isize)
+        }
+        XML_TRUE
+    }
+
+    unsafe extern "C" fn append(
+        &mut self,
+        enc: &ENCODING,
+        mut ptr: *const c_char,
+        end: *const c_char,
+    ) -> *mut XML_Char {
+        if self.ptr.is_null() && self.grow() == 0 {
+            return NULL as *mut XML_Char;
+        }
+        loop {
+            let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
+                enc,
+                &mut ptr,
+                end,
+                &mut self.ptr as *mut *mut _ as *mut *mut ICHAR,
+                self.end as *mut ICHAR,
+            );
+            if convert_res == super::xmltok::XML_CONVERT_COMPLETED
+                || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+            {
+                break;
+            }
+            if self.grow() == 0 {
+                return NULL as *mut XML_Char;
+            }
+        }
+        self.start
+    }
+
+    unsafe extern "C" fn appendString(&mut self, mut s: *const XML_Char) -> *const XML_Char {
+        while *s != 0 {
+            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+                0
+            } else {
+                let fresh80 = self.ptr;
+                self.ptr = self.ptr.offset(1);
+                *fresh80 = *s;
+                1
+            } == 0
+            {
+                return NULL as *const XML_Char;
+            }
+            s = s.offset(1)
+        }
+        self.start
+    }
+
+    #[inline]
+    unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
+        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+            false
+        } else {
+            *self.ptr = c;
+            self.ptr = self.ptr.offset(1);
+            true
+        }
     }
 }
 
@@ -2412,8 +2602,7 @@ impl XML_ParserStruct {
                             reportDefault(self, enc_type, s, next);
                         }
                     } else {
-                        name = poolStoreString(
-                            &mut (*dtd).pool,
+                        name = (*dtd).pool.storeString(
                             enc,
                             s.offset((*enc).minBytesPerChar() as isize),
                             next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -2591,8 +2780,7 @@ impl XML_ParserStruct {
                         uriLen: 0,
                         prefixLen: 0,
                     };
-                    name_0.str_0 = poolStoreString(
-                        &mut self.m_tempPool,
+                    name_0.str_0 = self.m_tempPool.storeString(
                         enc,
                         rawName,
                         rawName.offset((*enc).nameLength(rawName) as isize),
@@ -3086,8 +3274,7 @@ impl XML_ParserStruct {
             } else {
                 /* the value did not need normalizing */
                 let ref mut fresh10 = *appAtts.offset(attIndex as isize);
-                *fresh10 = poolStoreString(
-                    &mut self.m_tempPool,
+                *fresh10 = self.m_tempPool.storeString(
                     enc,
                     (*self.m_atts.offset(i as isize)).valuePtr,
                     (*self.m_atts.offset(i as isize)).valueEnd,
@@ -3302,7 +3489,7 @@ impl XML_ParserStruct {
                     while j_0 < (*b).uriLen {
                         let c: XML_Char = *(*b).uri.offset(j_0 as isize);
                         if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
-                            && poolGrow(&mut self.m_tempPool) == 0
+                            && self.m_tempPool.grow() == 0
                         {
                             0
                         } else {
@@ -3337,7 +3524,7 @@ impl XML_ParserStruct {
                     loop {
                         /* copies null terminator */
                         if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
-                            && poolGrow(&mut self.m_tempPool) == 0
+                            && self.m_tempPool.grow() == 0
                         {
                             0
                         } else {
@@ -3394,7 +3581,7 @@ impl XML_ParserStruct {
                         s = (*(*b).prefix).name;
                         loop {
                             if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
-                                && poolGrow(&mut self.m_tempPool) == 0
+                                && self.m_tempPool.grow() == 0
                             {
                                 0
                             } else {
@@ -3467,8 +3654,8 @@ impl XML_ParserStruct {
                     ];
 
                     *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                    if poolAppendString(&mut self.m_tempPool, xmlnsNamespace.as_ptr()).is_null() ||
-                        !poolAppendChar(&mut self.m_tempPool, self.m_namespaceSeparator)
+                    if self.m_tempPool.appendString(xmlnsNamespace.as_ptr()).is_null() ||
+                        !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -3477,7 +3664,7 @@ impl XML_ParserStruct {
                     if *s == ':' as XML_Char {
                         s = s.offset(1);
                         loop { /* copies null terminator */
-                            if !poolAppendChar(&mut self.m_tempPool, *s) {
+                            if !self.m_tempPool.appendChar(*s) {
                                 return XML_ERROR_NO_MEMORY;
                             }
                             if *s == '\u{0}' as XML_Char {
@@ -3489,16 +3676,16 @@ impl XML_ParserStruct {
 
                         if self.m_ns_triplets != 0 { /* append namespace separator and prefix */
                             *self.m_tempPool.ptr.offset(-1) = self.m_namespaceSeparator;
-                            if poolAppendString(&mut self.m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
-                                !poolAppendChar(&mut self.m_tempPool, '\u{0}' as XML_Char)
+                            if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()).is_null() ||
+                                !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                             {
                                 return XML_ERROR_NO_MEMORY;
                             }
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if poolAppendString(&mut self.m_tempPool, xmlnsPrefix.as_ptr()).is_null() ||
-                            !poolAppendChar(&mut self.m_tempPool, '\u{0}' as XML_Char)
+                        if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()).is_null() ||
+                            !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                         {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -5611,8 +5798,7 @@ unsafe extern "C" fn processXmlDecl(
     }
     if (*parser).m_handlers.hasXmlDecl() {
         if !encodingName.is_null() {
-            storedEncName = poolStoreString(
-                &mut (*parser).m_temp2Pool,
+            storedEncName = (*parser).m_temp2Pool.storeString(
                 &*(*parser).m_encoding,
                 encodingName,
                 encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
@@ -5623,8 +5809,7 @@ unsafe extern "C" fn processXmlDecl(
             (*parser).m_temp2Pool.start = (*parser).m_temp2Pool.ptr
         }
         if !version.is_null() {
-            storedversion = poolStoreString(
-                &mut (*parser).m_temp2Pool,
+            storedversion = (*parser).m_temp2Pool.storeString(
                 &*(*parser).m_encoding,
                 version,
                 versionend.offset(-((*(*parser).m_encoding).minBytesPerChar() as isize)),
@@ -5658,8 +5843,7 @@ unsafe extern "C" fn processXmlDecl(
         } else if !encodingName.is_null() {
             let mut result: XML_Error = XML_ERROR_NONE;
             if storedEncName.is_null() {
-                storedEncName = poolStoreString(
-                    &mut (*parser).m_temp2Pool,
+                storedEncName = (*parser).m_temp2Pool.storeString(
                     &*(*parser).m_encoding,
                     encodingName,
                     encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
@@ -6135,7 +6319,7 @@ unsafe extern "C" fn doProlog<'a>(
             4 => {
                 if (*parser).m_handlers.hasStartDoctypeDecl() {
                     (*parser).m_doctypeName =
-                        poolStoreString(&mut (*parser).m_tempPool, enc, s, next);
+                    (*parser).m_tempPool.storeString(enc, s, next);
                     if (*parser).m_doctypeName.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6189,8 +6373,7 @@ unsafe extern "C" fn doProlog<'a>(
                     if (*enc).isPublicId(s, next, eventPP) == 0 {
                         return XML_ERROR_PUBLICID;
                     }
-                    pubId = poolStoreString(
-                        &mut (*parser).m_tempPool,
+                    pubId = (*parser).m_tempPool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -6393,10 +6576,10 @@ unsafe extern "C" fn doProlog<'a>(
                             enumValueStart.as_ptr()
                         }
                     }
-                    if poolAppendString(&mut (*parser).m_tempPool, prefix).is_null() {
+                    if (*parser).m_tempPool.appendString(prefix).is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    if poolAppend(&mut (*parser).m_tempPool, enc, s, next).is_null() {
+                    if (*parser).m_tempPool.append(enc, s, next).is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
                     (*parser).m_declAttributeType = (*parser).m_tempPool.start;
@@ -6427,7 +6610,7 @@ unsafe extern "C" fn doProlog<'a>(
                             /* Enumerated or Notation type */
                             if (if (*parser).m_tempPool.ptr
                                 == (*parser).m_tempPool.end as *mut XML_Char
-                                && poolGrow(&mut (*parser).m_tempPool) == 0
+                                && (*parser).m_tempPool.grow() == 0
                             {
                                 0
                             } else {
@@ -6438,7 +6621,7 @@ unsafe extern "C" fn doProlog<'a>(
                             }) == 0
                                 || (if (*parser).m_tempPool.ptr
                                     == (*parser).m_tempPool.end as *mut XML_Char
-                                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                                    && (*parser).m_tempPool.grow() == 0
                                 {
                                     0
                                 } else {
@@ -6505,7 +6688,7 @@ unsafe extern "C" fn doProlog<'a>(
                             /* Enumerated or Notation type */
                             if (if (*parser).m_tempPool.ptr
                                 == (*parser).m_tempPool.end as *mut XML_Char
-                                && poolGrow(&mut (*parser).m_tempPool) == 0
+                                && (*parser).m_tempPool.grow() == 0
                             {
                                 0
                             } else {
@@ -6516,7 +6699,7 @@ unsafe extern "C" fn doProlog<'a>(
                             }) == 0
                                 || (if (*parser).m_tempPool.ptr
                                     == (*parser).m_tempPool.end as *mut XML_Char
-                                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                                    && (*parser).m_tempPool.grow() == 0
                                 {
                                     0
                                 } else {
@@ -6589,8 +6772,7 @@ unsafe extern "C" fn doProlog<'a>(
                 /* XML_DTD */
                 (*dtd).hasParamEntityRefs = XML_TRUE;
                 if (*parser).m_handlers.hasStartDoctypeDecl() {
-                    (*parser).m_doctypeSysid = poolStoreString(
-                        &mut (*parser).m_tempPool,
+                    (*parser).m_doctypeSysid = (*parser).m_tempPool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -6653,7 +6835,7 @@ unsafe extern "C" fn doProlog<'a>(
             16 => {
                 if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
                     (*(*parser).m_declEntity).notation =
-                        poolStoreString(&mut (*dtd).pool, enc, s, next);
+                    (*dtd).pool.storeString(enc, s, next);
                     if (*(*parser).m_declEntity).notation.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6689,7 +6871,7 @@ unsafe extern "C" fn doProlog<'a>(
                 if (*enc).predefinedEntityName(s, next) != 0 {
                     (*parser).m_declEntity = NULL as *mut ENTITY
                 } else if (*dtd).keepProcessing != 0 {
-                    let mut name: *const XML_Char = poolStoreString(&mut (*dtd).pool, enc, s, next);
+                    let mut name: *const XML_Char = (*dtd).pool.storeString(enc, s, next);
                     if name.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6730,7 +6912,7 @@ unsafe extern "C" fn doProlog<'a>(
             10 => {
                 if (*dtd).keepProcessing != 0 {
                     let mut name_0: *const XML_Char =
-                        poolStoreString(&mut (*dtd).pool, enc, s, next);
+                    (*dtd).pool.storeString(enc, s, next);
                     if name_0.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6772,7 +6954,7 @@ unsafe extern "C" fn doProlog<'a>(
                 (*parser).m_declNotationName = NULL as *const XML_Char;
                 if (*parser).m_handlers.hasNotationDecl() {
                     (*parser).m_declNotationName =
-                        poolStoreString(&mut (*parser).m_tempPool, enc, s, next);
+                    (*parser).m_tempPool.storeString(enc, s, next);
                     if (*parser).m_declNotationName.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -6787,8 +6969,7 @@ unsafe extern "C" fn doProlog<'a>(
                 }
                 if !(*parser).m_declNotationName.is_null() {
                     /* means m_notationDeclHandler != NULL */
-                    let mut tem_0: *mut XML_Char = poolStoreString(
-                        &mut (*parser).m_tempPool,
+                    let mut tem_0: *mut XML_Char = (*parser).m_tempPool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -6807,8 +6988,7 @@ unsafe extern "C" fn doProlog<'a>(
                 if !(*parser).m_declNotationName.is_null()
                     && (*parser).m_handlers.hasNotationDecl()
                 {
-                    let mut systemId: *const XML_Char = poolStoreString(
-                        &mut (*parser).m_tempPool,
+                    let mut systemId: *const XML_Char = (*parser).m_tempPool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -6992,8 +7172,7 @@ unsafe extern "C" fn doProlog<'a>(
                 } else {
                     let mut name_1: *const XML_Char = 0 as *const XML_Char;
                     let mut entity_1: *mut ENTITY = 0 as *mut ENTITY;
-                    name_1 = poolStoreString(
-                        &mut (*dtd).pool,
+                    name_1 = (*dtd).pool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -7274,8 +7453,7 @@ unsafe extern "C" fn doProlog<'a>(
             /* fall through */
             {
                 if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
-                    (*(*parser).m_declEntity).systemId = poolStoreString(
-                        &mut (*dtd).pool,
+                    (*(*parser).m_declEntity).systemId = (*dtd).pool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -7371,8 +7549,7 @@ unsafe extern "C" fn doProlog<'a>(
         match current_block {
             9007411418488376351 => {
                 if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
-                    let mut tem: *mut XML_Char = poolStoreString(
-                        &mut (*dtd).pool,
+                    let mut tem: *mut XML_Char = (*dtd).pool.storeString(
                         enc,
                         s.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -7711,7 +7888,7 @@ unsafe extern "C" fn storeAttributeValue(
     {
         (*pool).ptr = (*pool).ptr.offset(-1)
     }
-    if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+    if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
         0
     } else {
         let fresh38 = (*pool).ptr;
@@ -7785,7 +7962,7 @@ unsafe extern "C" fn appendAttributeValue(
                      */
                     i = 0;
                     while i < n {
-                        if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+                        if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
                             0
                         } else {
                             let fresh39 = (*pool).ptr;
@@ -7802,7 +7979,7 @@ unsafe extern "C" fn appendAttributeValue(
                 }
             }
             super::xmltok::XML_TOK_DATA_CHARS => {
-                if poolAppend(pool, enc, ptr, next).is_null() {
+                if (*pool).append(enc, ptr, next).is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
                 current_block_62 = 11796148217846552555;
@@ -7822,7 +7999,7 @@ unsafe extern "C" fn appendAttributeValue(
                     next.offset(-((*enc).minBytesPerChar() as isize)),
                 ) as XML_Char;
                 if ch != 0 {
-                    if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+                    if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
                         0
                     } else {
                         let fresh41 = (*pool).ptr;
@@ -7834,8 +8011,7 @@ unsafe extern "C" fn appendAttributeValue(
                         return XML_ERROR_NO_MEMORY;
                     }
                 } else {
-                    name = poolStoreString(
-                        &mut (*parser).m_temp2Pool,
+                    name = (*parser).m_temp2Pool.storeString(
                         enc,
                         ptr.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -7966,7 +8142,7 @@ unsafe extern "C" fn appendAttributeValue(
                     && ((*pool).ptr.wrapping_offset_from((*pool).start) as c_long == 0
                         || *(*pool).ptr.offset(-1) as c_int == 0x20))
                 {
-                    if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+                    if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
                         0
                     } else {
                         let fresh40 = (*pool).ptr;
@@ -8004,7 +8180,7 @@ unsafe extern "C" fn storeEntityValue(
     since this would indicate an external entity; therefore we
     have to make sure that entityValuePool.start is not null */
     if (*pool).blocks.is_null() {
-        if poolGrow(pool) == 0 {
+        if (*pool).grow() == 0 {
             return XML_ERROR_NO_MEMORY;
         }
     }
@@ -8021,8 +8197,7 @@ unsafe extern "C" fn storeEntityValue(
                 if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
                     let mut name: *const XML_Char = 0 as *const XML_Char;
                     let mut entity: *mut ENTITY = 0 as *mut ENTITY;
-                    name = poolStoreString(
-                        &mut (*parser).m_tempPool,
+                    name = (*parser).m_tempPool.storeString(
                         enc,
                         entityTextPtr.offset((*enc).minBytesPerChar() as isize),
                         next.offset(-((*enc).minBytesPerChar() as isize)),
@@ -8101,7 +8276,7 @@ unsafe extern "C" fn storeEntityValue(
                 break;
             }
             super::xmltok::XML_TOK_ENTITY_REF | super::xmltok::XML_TOK_DATA_CHARS => {
-                if poolAppend(pool, enc, entityTextPtr, next).is_null() {
+                if (*pool).append(enc, entityTextPtr, next).is_null() {
                     result = XML_ERROR_NO_MEMORY;
                     break;
                 } else {
@@ -8138,7 +8313,7 @@ unsafe extern "C" fn storeEntityValue(
                      */
                     i = 0;
                     while i < n {
-                        if (*pool).end == (*pool).ptr as *const XML_Char && poolGrow(pool) == 0 {
+                        if (*pool).end == (*pool).ptr as *const XML_Char && (*pool).grow() == 0 {
                             result = XML_ERROR_NO_MEMORY;
                             break 's_41;
                         } else {
@@ -8184,7 +8359,7 @@ unsafe extern "C" fn storeEntityValue(
             13862322071133341448 =>
             /* fall through */
             {
-                if (*pool).end == (*pool).ptr as *const XML_Char && poolGrow(pool) == 0 {
+                if (*pool).end == (*pool).ptr as *const XML_Char && (*pool).grow() == 0 {
                     result = XML_ERROR_NO_MEMORY;
                     break;
                 } else {
@@ -8255,13 +8430,12 @@ unsafe extern "C" fn reportProcessingInstruction(
     let enc = (*parser).encoding(enc_type);
     start = start.offset(((*enc).minBytesPerChar() * 2i32) as isize);
     tem = start.offset((*enc).nameLength(start) as isize);
-    target = poolStoreString(&mut (*parser).m_tempPool, enc, start, tem);
+    target = (*parser).m_tempPool.storeString(enc, start, tem);
     if target.is_null() {
         return 0i32;
     }
     (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-    data = poolStoreString(
-        &mut (*parser).m_tempPool,
+    data = (*parser).m_tempPool.storeString(
         enc,
         (*enc).skipS(tem),
         end.offset(-(((*enc).minBytesPerChar() * 2i32) as isize)),
@@ -8272,7 +8446,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     normalizeLines(data);
     (*parser).m_handlers.processingInstruction(target, data);
     (*parser).m_tempPool.clear();
-    return 1;
+    1
 }
 
 unsafe extern "C" fn reportComment(
@@ -8289,8 +8463,7 @@ unsafe extern "C" fn reportComment(
         return 1i32;
     }
     let enc = (*parser).encoding(enc_type);
-    data = poolStoreString(
-        &mut (*parser).m_tempPool,
+    data = (*parser).m_tempPool.storeString(
         enc,
         start.offset(((*enc).minBytesPerChar() * 4i32) as isize),
         end.offset(-(((*enc).minBytesPerChar() * 3i32) as isize)),
@@ -8301,7 +8474,7 @@ unsafe extern "C" fn reportComment(
     normalizeLines(data);
     (*parser).m_handlers.comment(data);
     (*parser).m_tempPool.clear();
-    return 1;
+    1
 }
 
 unsafe extern "C" fn reportDefault(
@@ -8454,7 +8627,7 @@ unsafe extern "C" fn setElementTypePrefix(
             s = (*elementType).name;
             while s != name {
                 if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                    && poolGrow(&mut (*dtd).pool) == 0
+                    && (*dtd).pool.grow() == 0
                 {
                     0
                 } else {
@@ -8469,7 +8642,7 @@ unsafe extern "C" fn setElementTypePrefix(
                 s = s.offset(1)
             }
             if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                && poolGrow(&mut (*dtd).pool) == 0
+                && (*dtd).pool.grow() == 0
             {
                 0
             } else {
@@ -8512,7 +8685,7 @@ unsafe extern "C" fn getAttributeId(
 ) -> *mut ATTRIBUTE_ID {
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut name: *const XML_Char = 0 as *const XML_Char;
-    if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && poolGrow(&mut (*dtd).pool) == 0 {
+    if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && (*dtd).pool.grow() == 0 {
         0
     } else {
         let fresh49 = (*dtd).pool.ptr;
@@ -8524,7 +8697,7 @@ unsafe extern "C" fn getAttributeId(
         return NULL as *mut ATTRIBUTE_ID;
     }
     let enc = (*parser).encoding(enc_type);
-    name = poolStoreString(&mut (*dtd).pool, enc, start, end);
+    name = (*dtd).pool.storeString(enc, start, end);
     if name.is_null() {
         return NULL as *mut ATTRIBUTE_ID;
     }
@@ -8573,7 +8746,7 @@ unsafe extern "C" fn getAttributeId(
                         j = 0;
                         while j < i {
                             if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                                && poolGrow(&mut (*dtd).pool) == 0
+                                && (*dtd).pool.grow() == 0
                             {
                                 0
                             } else {
@@ -8588,7 +8761,7 @@ unsafe extern "C" fn getAttributeId(
                             j += 1
                         }
                         if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                            && poolGrow(&mut (*dtd).pool) == 0
+                            && (*dtd).pool.grow() == 0
                         {
                             0
                         } else {
@@ -8634,7 +8807,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         let mut i: c_int = 0;
         let mut len: c_int = 0;
         if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-            && poolGrow(&mut (*parser).m_tempPool) == 0
+            && (*parser).m_tempPool.grow() == 0
         {
             0
         } else {
@@ -8653,7 +8826,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         i = 0;
         while i < len {
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8703,7 +8876,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         if !(*prefix).binding.is_null() {
             if needSep as c_int != 0
                 && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                    && (*parser).m_tempPool.grow() == 0
                 {
                     0
                 } else {
@@ -8718,7 +8891,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
             s = (*prefix).name;
             while *s != 0 {
                 if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                    && (*parser).m_tempPool.grow() == 0
                 {
                     0
                 } else {
@@ -8733,7 +8906,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
                 s = s.offset(1)
             }
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8752,7 +8925,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
             i_0 = 0;
             while i_0 < len_0 {
                 if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                    && (*parser).m_tempPool.grow() == 0
                 {
                     0
                 } else {
@@ -8776,7 +8949,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         }
         if needSep as c_int != 0
             && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8791,7 +8964,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         s_0 = (*e).name;
         while *s_0 != 0 {
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8808,7 +8981,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
         needSep = XML_TRUE
     }
     if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-        && poolGrow(&mut (*parser).m_tempPool) == 0
+        && (*parser).m_tempPool.grow() == 0
     {
         0
     } else {
@@ -8820,7 +8993,7 @@ unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
     {
         return NULL as *const XML_Char;
     }
-    return (*parser).m_tempPool.start;
+    (*parser).m_tempPool.start
 }
 
 unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_Char) -> XML_Bool {
@@ -8829,7 +9002,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
     while *context != '\u{0}' as XML_Char {
         if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8860,7 +9033,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 prefix = &mut (*dtd).defaultPrefix
             } else {
                 if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                    && (*parser).m_tempPool.grow() == 0
                 {
                     0
                 } else {
@@ -8900,7 +9073,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             context = s.offset(1);
             while *context != CONTEXT_SEP && *context != '\u{0}' as XML_Char {
                 if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && poolGrow(&mut (*parser).m_tempPool) == 0
+                    && (*parser).m_tempPool.grow() == 0
                 {
                     0
                 } else {
@@ -8915,7 +9088,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
                 context = context.offset(1)
             }
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -8944,7 +9117,7 @@ unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_
             s = context
         } else {
             if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && poolGrow(&mut (*parser).m_tempPool) == 0
+                && (*parser).m_tempPool.grow() == 0
             {
                 0
             } else {
@@ -9111,7 +9284,7 @@ unsafe extern "C" fn dtdCopy(
         let mut name_0: *const XML_Char = 0 as *const XML_Char;
         /* Remember to allocate the scratch byte before the name. */
         if if (*newDtd).pool.ptr == (*newDtd).pool.end as *mut XML_Char
-            && poolGrow(&mut (*newDtd).pool) == 0
+            && (*newDtd).pool.grow() == 0
         {
             0
         } else {
@@ -9370,41 +9543,12 @@ unsafe extern "C" fn poolDestroy(mut pool: *mut STRING_POOL) {
     }
 }
 
-unsafe extern "C" fn poolAppend(
-    mut pool: *mut STRING_POOL,
-    mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
-) -> *mut XML_Char {
-    if (*pool).ptr.is_null() && poolGrow(pool) == 0 {
-        return NULL as *mut XML_Char;
-    }
-    loop {
-        let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
-            enc,
-            &mut ptr,
-            end,
-            &mut (*pool).ptr as *mut *mut _ as *mut *mut ICHAR,
-            (*pool).end as *mut ICHAR,
-        );
-        if convert_res == super::xmltok::XML_CONVERT_COMPLETED
-            || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
-        {
-            break;
-        }
-        if poolGrow(pool) == 0 {
-            return NULL as *mut XML_Char;
-        }
-    }
-    return (*pool).start;
-}
-
 unsafe extern "C" fn poolCopyString(
     mut pool: *mut STRING_POOL,
     mut s: *const XML_Char,
 ) -> *const XML_Char {
     loop {
-        if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+        if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
             0
         } else {
             let fresh77 = (*pool).ptr;
@@ -9431,7 +9575,7 @@ unsafe extern "C" fn poolCopyStringN(
     mut s: *const XML_Char,
     mut n: c_int,
 ) -> *const XML_Char {
-    if (*pool).ptr.is_null() && poolGrow(pool) == 0 {
+    if (*pool).ptr.is_null() && (*pool).grow() == 0 {
         /* The following line is unreachable given the current usage of
          * poolCopyStringN().  Currently it is called from exactly one
          * place to copy the text of a simple general entity.  By that
@@ -9447,7 +9591,7 @@ unsafe extern "C" fn poolCopyStringN(
         /* LCOV_EXCL_LINE */
     }
     while n > 0 {
-        if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
+        if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
             0
         } else {
             let fresh79 = (*pool).ptr;
@@ -9464,45 +9608,6 @@ unsafe extern "C" fn poolCopyStringN(
     s = (*pool).start;
     (*pool).start = (*pool).ptr;
     return s;
-}
-
-unsafe extern "C" fn poolAppendString(
-    mut pool: *mut STRING_POOL,
-    mut s: *const XML_Char,
-) -> *const XML_Char {
-    while *s != 0 {
-        if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
-            0
-        } else {
-            let fresh80 = (*pool).ptr;
-            (*pool).ptr = (*pool).ptr.offset(1);
-            *fresh80 = *s;
-            1
-        } == 0
-        {
-            return NULL as *const XML_Char;
-        }
-        s = s.offset(1)
-    }
-    return (*pool).start;
-}
-
-unsafe extern "C" fn poolStoreString(
-    mut pool: *mut STRING_POOL,
-    mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
-) -> *mut XML_Char {
-    if poolAppend(pool, enc, ptr, end).is_null() {
-        return NULL as *mut XML_Char;
-    }
-    if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
-        return NULL as *mut XML_Char;
-    }
-    let fresh81 = (*pool).ptr;
-    (*pool).ptr = (*pool).ptr.offset(1);
-    *fresh81 = 0;
-    return (*pool).start;
 }
 
 unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
@@ -9526,137 +9631,7 @@ unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
     if bytesToAllocate < 0 {
         return 0u64;
     }
-    return bytesToAllocate as size_t;
-}
-
-unsafe extern "C" fn poolGrow(mut pool: *mut STRING_POOL) -> XML_Bool {
-    if !(*pool).freeBlocks.is_null() {
-        if (*pool).start.is_null() {
-            (*pool).blocks = (*pool).freeBlocks;
-            (*pool).freeBlocks = (*(*pool).freeBlocks).next;
-            (*(*pool).blocks).next = NULL as *mut block;
-            (*pool).start = (*(*pool).blocks).s.as_mut_ptr();
-            (*pool).end = (*pool).start.offset((*(*pool).blocks).size as isize);
-            (*pool).ptr = (*pool).start;
-            return XML_TRUE;
-        }
-        if ((*pool).end.wrapping_offset_from((*pool).start) as c_long)
-            < (*(*pool).freeBlocks).size as c_long
-        {
-            let mut tem: *mut BLOCK = (*(*pool).freeBlocks).next;
-            (*(*pool).freeBlocks).next = (*pool).blocks;
-            (*pool).blocks = (*pool).freeBlocks;
-            (*pool).freeBlocks = tem;
-            memcpy(
-                (*(*pool).blocks).s.as_mut_ptr() as *mut c_void,
-                (*pool).start as *const c_void,
-                ((*pool).end.wrapping_offset_from((*pool).start) as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-            );
-            (*pool).ptr = (*(*pool).blocks)
-                .s
-                .as_mut_ptr()
-                .offset((*pool).ptr.wrapping_offset_from((*pool).start));
-            (*pool).start = (*(*pool).blocks).s.as_mut_ptr();
-            (*pool).end = (*pool).start.offset((*(*pool).blocks).size as isize);
-            return XML_TRUE;
-        }
-    }
-    if !(*pool).blocks.is_null() && (*pool).start == (*(*pool).blocks).s.as_mut_ptr() {
-        let mut temp: *mut BLOCK = 0 as *mut BLOCK;
-        let mut blockSize: c_int =
-            ((*pool).end.wrapping_offset_from((*pool).start) as c_uint).wrapping_mul(2u32) as c_int;
-        let mut bytesToAllocate: size_t = 0;
-        /* NOTE: Needs to be calculated prior to calling `realloc`
-        to avoid dangling pointers: */
-        let offsetInsideBlock: ptrdiff_t =
-            (*pool).ptr.wrapping_offset_from((*pool).start) as c_long;
-        if blockSize < 0 {
-            /* This condition traps a situation where either more than
-             * INT_MAX/2 bytes have already been allocated.  This isn't
-             * readily testable, since it is unlikely that an average
-             * machine will have that much memory, so we exclude it from the
-             * coverage statistics.
-             */
-            return XML_FALSE;
-            /* LCOV_EXCL_LINE */
-        }
-        bytesToAllocate = poolBytesToAllocateFor(blockSize);
-        if bytesToAllocate == 0 {
-            return XML_FALSE;
-        }
-        temp = (*(*pool).mem)
-            .realloc_fcn
-            .expect("non-null function pointer")(
-            (*pool).blocks as *mut c_void,
-            bytesToAllocate as c_uint as size_t,
-        ) as *mut BLOCK;
-        if temp.is_null() {
-            return XML_FALSE;
-        }
-        (*pool).blocks = temp;
-        (*(*pool).blocks).size = blockSize;
-        (*pool).ptr = (*(*pool).blocks)
-            .s
-            .as_mut_ptr()
-            .offset(offsetInsideBlock as isize);
-        (*pool).start = (*(*pool).blocks).s.as_mut_ptr();
-        (*pool).end = (*pool).start.offset(blockSize as isize)
-    } else {
-        let mut tem_0: *mut BLOCK = 0 as *mut BLOCK;
-        let mut blockSize_0: c_int = (*pool).end.wrapping_offset_from((*pool).start) as c_int;
-        let mut bytesToAllocate_0: size_t = 0;
-        if blockSize_0 < 0 {
-            /* This condition traps a situation where either more than
-             * INT_MAX bytes have already been allocated (which is prevented
-             * by various pieces of program logic, not least this one, never
-             * mind the unlikelihood of actually having that much memory) or
-             * the pool control fields have been corrupted (which could
-             * conceivably happen in an extremely buggy user handler
-             * function).  Either way it isn't readily testable, so we
-             * exclude it from the coverage statistics.
-             */
-            return XML_FALSE;
-            /* LCOV_EXCL_LINE */
-        }
-        if blockSize_0 < INIT_BLOCK_SIZE {
-            blockSize_0 = INIT_BLOCK_SIZE
-        } else {
-            /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-            if ((blockSize_0 as c_uint).wrapping_mul(2u32) as c_int) < 0 {
-                return XML_FALSE;
-            } /* save one level of indirection */
-            blockSize_0 *= 2
-        } /* save one level of indirection */
-        bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0); /* save one level of indirection */
-        if bytesToAllocate_0 == 0 {
-            return XML_FALSE;
-        } /* save one level of indirection */
-        tem_0 = (*(*pool).mem)
-            .malloc_fcn
-            .expect("non-null function pointer")(bytesToAllocate_0) as *mut BLOCK;
-        if tem_0.is_null() {
-            return XML_FALSE;
-        }
-        (*tem_0).size = blockSize_0;
-        (*tem_0).next = (*pool).blocks;
-        (*pool).blocks = tem_0;
-        if (*pool).ptr != (*pool).start {
-            memcpy(
-                (*tem_0).s.as_mut_ptr() as *mut c_void,
-                (*pool).start as *const c_void,
-                ((*pool).ptr.wrapping_offset_from((*pool).start) as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-            );
-        }
-        (*pool).ptr = (*tem_0)
-            .s
-            .as_mut_ptr()
-            .offset((*pool).ptr.wrapping_offset_from((*pool).start));
-        (*pool).start = (*tem_0).s.as_mut_ptr();
-        (*pool).end = (*tem_0).s.as_mut_ptr().offset(blockSize_0 as isize)
-    }
-    return XML_TRUE;
+    bytesToAllocate as size_t
 }
 
 unsafe extern "C" fn nextScaffoldPart(mut parser: XML_Parser) -> c_int {
@@ -9801,7 +9776,7 @@ unsafe extern "C" fn getElementType(
 ) -> *mut ELEMENT_TYPE {
     let dtd: *mut DTD = (*parser).m_dtd;
     let enc = (*parser).encoding(enc_type);
-    let mut name: *const XML_Char = poolStoreString(&mut (*dtd).pool, enc, ptr, end);
+    let mut name: *const XML_Char = (*dtd).pool.storeString(enc, ptr, end);
     if name.is_null() {
         return NULL as *mut ELEMENT_TYPE;
     }
