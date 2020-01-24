@@ -1186,7 +1186,7 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
     mut nsSep: XML_Char,
 ) -> XML_Parser {
     let mut tmp: [XML_Char; 2] = [0; 2];
-    *tmp.as_mut_ptr() = nsSep;
+    tmp[0] = nsSep;
     return XML_ParserCreate_MM(
         encodingName,
         None,
@@ -1595,7 +1595,7 @@ impl XML_ParserStruct {
         (*parser).m_protocolEncodingName = NULL as *const XML_Char;
         poolInit(&mut (*parser).m_tempPool, &(*parser).m_mem);
         poolInit(&mut (*parser).m_temp2Pool, &(*parser).m_mem);
-        parserInit(&mut *parser, encodingName);
+        (*parser).init(encodingName);
         if !encodingName.is_null() && (*parser).m_protocolEncodingName.is_null() {
             XML_ParserFree(ExpatBox::into_raw(parser));
             return ptr::null_mut();
@@ -1609,64 +1609,113 @@ impl XML_ParserStruct {
         {
             (*parser).m_mismatch = NULL as *const XML_Char;
         }
-        return ExpatBox::into_raw(parser);
+        ExpatBox::into_raw(parser)
     }
-}
 
-unsafe extern "C" fn parserInit(mut parser: XML_Parser, mut encodingName: *const XML_Char) {
-    (*parser).m_processor = Some(prologInitProcessor as Processor);
-    super::xmlrole::XmlPrologStateInit(&mut (*parser).m_prologState as *mut _);
-    if !encodingName.is_null() {
-        (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem)
+    unsafe extern "C" fn init(&mut self, mut encodingName: *const XML_Char) {
+        self.m_processor = Some(prologInitProcessor as Processor);
+        super::xmlrole::XmlPrologStateInit(&mut self.m_prologState as *mut _);
+        if !encodingName.is_null() {
+            self.m_protocolEncodingName = copyString(encodingName, &self.m_mem)
+        }
+        self.m_curBase = NULL as *const XML_Char;
+        self.m_initEncoding = InitEncoding::new(&mut self.m_encoding, ptr::null());
+        self.m_encoding = &*self.m_initEncoding.as_ref().unwrap();
+        self.m_userData = NULL as *mut c_void;
+        self.m_handlers = Default::default();
+        self.m_handlers.m_externalEntityRefHandlerArg = self as XML_Parser;
+        self.m_bufferPtr = self.m_buffer;
+        self.m_bufferEnd = self.m_buffer;
+        self.m_parseEndByteIndex = 0i64;
+        self.m_parseEndPtr = NULL as *const c_char;
+        self.m_declElementType = NULL as *mut ELEMENT_TYPE;
+        self.m_declAttributeId = NULL as *mut ATTRIBUTE_ID;
+        self.m_declEntity = NULL as *mut ENTITY;
+        self.m_doctypeName = NULL as *const XML_Char;
+        self.m_doctypeSysid = NULL as *const XML_Char;
+        self.m_doctypePubid = NULL as *const XML_Char;
+        self.m_declAttributeType = NULL as *const XML_Char;
+        self.m_declNotationName = NULL as *const XML_Char;
+        self.m_declNotationPublicId = NULL as *const XML_Char;
+        self.m_declAttributeIsCdata = XML_FALSE;
+        self.m_declAttributeIsId = XML_FALSE;
+        memset(
+            &mut self.m_position as *mut super::xmltok::POSITION as *mut c_void,
+            0,
+            ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
+        );
+        self.m_errorCode = XML_ERROR_NONE;
+        self.m_eventPtr = NULL as *const c_char;
+        self.m_eventEndPtr = NULL as *const c_char;
+        self.m_positionPtr = NULL as *const c_char;
+        self.m_openInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
+        self.m_defaultExpandInternalEntities = XML_TRUE;
+        self.m_tagLevel = 0;
+        self.m_tagStack = NULL as *mut TAG;
+        self.m_inheritedBindings = NULL as *mut BINDING;
+        self.m_nSpecifiedAtts = 0;
+        self.m_unknownEncoding = None;
+        self.m_unknownEncodingRelease = ::std::mem::transmute::<
+            intptr_t,
+            Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
+        >(NULL as intptr_t);
+        self.m_unknownEncodingData = NULL as *mut c_void;
+        self.m_parentParser = NULL as XML_Parser;
+        self.m_parsingStatus.parsing = XML_INITIALIZED;
+        self.m_isParamEntity = XML_FALSE;
+        self.m_useForeignDTD = XML_FALSE;
+        self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+        self.m_hash_secret_salt = 0u64;
     }
-    (*parser).m_curBase = NULL as *const XML_Char;
-    (*parser).m_initEncoding = InitEncoding::new(&mut (*parser).m_encoding, ptr::null());
-    (*parser).m_encoding = &*(*parser).m_initEncoding.as_ref().unwrap();
-    (*parser).m_userData = NULL as *mut c_void;
-    (*parser).m_handlers = Default::default();
-    (*parser).m_handlers.m_externalEntityRefHandlerArg = parser;
-    (*parser).m_bufferPtr = (*parser).m_buffer;
-    (*parser).m_bufferEnd = (*parser).m_buffer;
-    (*parser).m_parseEndByteIndex = 0i64;
-    (*parser).m_parseEndPtr = NULL as *const c_char;
-    (*parser).m_declElementType = NULL as *mut ELEMENT_TYPE;
-    (*parser).m_declAttributeId = NULL as *mut ATTRIBUTE_ID;
-    (*parser).m_declEntity = NULL as *mut ENTITY;
-    (*parser).m_doctypeName = NULL as *const XML_Char;
-    (*parser).m_doctypeSysid = NULL as *const XML_Char;
-    (*parser).m_doctypePubid = NULL as *const XML_Char;
-    (*parser).m_declAttributeType = NULL as *const XML_Char;
-    (*parser).m_declNotationName = NULL as *const XML_Char;
-    (*parser).m_declNotationPublicId = NULL as *const XML_Char;
-    (*parser).m_declAttributeIsCdata = XML_FALSE;
-    (*parser).m_declAttributeIsId = XML_FALSE;
-    memset(
-        &mut (*parser).m_position as *mut super::xmltok::POSITION as *mut c_void,
-        0,
-        ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
-    );
-    (*parser).m_errorCode = XML_ERROR_NONE;
-    (*parser).m_eventPtr = NULL as *const c_char;
-    (*parser).m_eventEndPtr = NULL as *const c_char;
-    (*parser).m_positionPtr = NULL as *const c_char;
-    (*parser).m_openInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
-    (*parser).m_defaultExpandInternalEntities = XML_TRUE;
-    (*parser).m_tagLevel = 0;
-    (*parser).m_tagStack = NULL as *mut TAG;
-    (*parser).m_inheritedBindings = NULL as *mut BINDING;
-    (*parser).m_nSpecifiedAtts = 0;
-    (*parser).m_unknownEncoding = None;
-    (*parser).m_unknownEncodingRelease = ::std::mem::transmute::<
-        intptr_t,
-        Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
-    >(NULL as intptr_t);
-    (*parser).m_unknownEncodingData = NULL as *mut c_void;
-    (*parser).m_parentParser = NULL as XML_Parser;
-    (*parser).m_parsingStatus.parsing = XML_INITIALIZED;
-    (*parser).m_isParamEntity = XML_FALSE;
-    (*parser).m_useForeignDTD = XML_FALSE;
-    (*parser).m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
-    (*parser).m_hash_secret_salt = 0u64;
+
+    /* Prepare a parser object to be re-used.  This is particularly
+       valuable when memory allocation overhead is disproportionately high,
+       such as when a large number of small documnents need to be parsed.
+       All handlers are cleared from the parser, except for the
+       unknownEncodingHandler. The parser's external state is re-initialized
+       except for the values of ns and ns_triplets.
+
+       Added in Expat 1.95.3.
+    */
+    unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
+        let mut tStk: *mut TAG = 0 as *mut TAG;
+        let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        if !self.m_parentParser.is_null() {
+            return XML_FALSE;
+        }
+        /* move m_tagStack to m_freeTagList */
+        tStk = self.m_tagStack;
+        while !tStk.is_null() {
+            let mut tag: *mut TAG = tStk;
+            tStk = (*tStk).parent;
+            (*tag).parent = self.m_freeTagList;
+            moveToFreeBindingList(self, (*tag).bindings);
+            (*tag).bindings = NULL as *mut BINDING;
+            self.m_freeTagList = tag
+        }
+        /* move m_openInternalEntities to m_freeInternalEntities */
+        openEntityList = self.m_openInternalEntities;
+        while !openEntityList.is_null() {
+            let mut openEntity: *mut OPEN_INTERNAL_ENTITY = openEntityList;
+            openEntityList = (*openEntity).next;
+            (*openEntity).next = self.m_freeInternalEntities;
+            self.m_freeInternalEntities = openEntity
+        }
+        moveToFreeBindingList(self, self.m_inheritedBindings);
+        let _ = self.m_unknownEncoding.take();
+        if self.m_unknownEncodingRelease.is_some() {
+            self
+                .m_unknownEncodingRelease
+                .expect("non-null function pointer")(self.m_unknownEncodingData);
+        }
+        poolClear(&mut self.m_tempPool);
+        poolClear(&mut self.m_temp2Pool);
+        FREE!(self, self.m_protocolEncodingName as *mut c_void);
+        self.m_protocolEncodingName = NULL as *const XML_Char;
+        self.init(encodingName);
+        dtdReset(self.m_dtd, &self.m_mem);
+        XML_TRUE
+    }
 }
 /* moves list of bindings to m_freeBindingList */
 
@@ -1678,60 +1727,12 @@ unsafe extern "C" fn moveToFreeBindingList(mut parser: XML_Parser, mut bindings:
         (*parser).m_freeBindingList = b
     }
 }
-/* Prepare a parser object to be re-used.  This is particularly
-   valuable when memory allocation overhead is disproportionately high,
-   such as when a large number of small documnents need to be parsed.
-   All handlers are cleared from the parser, except for the
-   unknownEncodingHandler. The parser's external state is re-initialized
-   except for the values of ns and ns_triplets.
-
-   Added in Expat 1.95.3.
-*/
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserReset(
-    mut parser: XML_Parser,
-    mut encodingName: *const XML_Char,
-) -> XML_Bool {
-    let mut tStk: *mut TAG = 0 as *mut TAG;
-    let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *const XML_Char) -> XML_Bool {
     if parser.is_null() {
         return XML_FALSE;
     }
-    if !(*parser).m_parentParser.is_null() {
-        return XML_FALSE;
-    }
-    /* move m_tagStack to m_freeTagList */
-    tStk = (*parser).m_tagStack;
-    while !tStk.is_null() {
-        let mut tag: *mut TAG = tStk;
-        tStk = (*tStk).parent;
-        (*tag).parent = (*parser).m_freeTagList;
-        moveToFreeBindingList(parser, (*tag).bindings);
-        (*tag).bindings = NULL as *mut BINDING;
-        (*parser).m_freeTagList = tag
-    }
-    /* move m_openInternalEntities to m_freeInternalEntities */
-    openEntityList = (*parser).m_openInternalEntities;
-    while !openEntityList.is_null() {
-        let mut openEntity: *mut OPEN_INTERNAL_ENTITY = openEntityList;
-        openEntityList = (*openEntity).next;
-        (*openEntity).next = (*parser).m_freeInternalEntities;
-        (*parser).m_freeInternalEntities = openEntity
-    }
-    moveToFreeBindingList(parser, (*parser).m_inheritedBindings);
-    let _ = (*parser).m_unknownEncoding.take();
-    if (*parser).m_unknownEncodingRelease.is_some() {
-        (*parser)
-            .m_unknownEncodingRelease
-            .expect("non-null function pointer")((*parser).m_unknownEncodingData);
-    }
-    poolClear(&mut (*parser).m_tempPool);
-    poolClear(&mut (*parser).m_temp2Pool);
-    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
-    (*parser).m_protocolEncodingName = NULL as *const XML_Char;
-    parserInit(parser, encodingName);
-    dtdReset((*parser).m_dtd, &(*parser).m_mem);
-    return XML_TRUE;
+    (*parser).reset(encodingName)
 }
 /* Returns the last value set by XML_SetUserData or NULL. */
 /* This is equivalent to supplying an encoding argument to
