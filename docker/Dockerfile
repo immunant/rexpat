@@ -16,13 +16,23 @@ RUN useradd --create-home -u $UID -g $GID --create-home --shell /bin/bash $USER
 # cargo binary from /home/docker.cargo/bin
 RUN chmod 755 /home/docker
 
-RUN apt-get update -qq && \
-    apt-get install -qq \
-    curl git clang python3.7-minimal && \
-    rm -rf /tar/lib/apt/lists/*
+# required to install package dependencies
+RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
+RUN apt-get update -qq && \    
+    apt-get install -qq   \
+    build-essential       \
+    curl                  \
+    ed                    \
+    git                   \
+    python3.7-minimal     \
+    libcap-dev            \
+    libtool-bin
+RUN apt-get build-dep -qq squid     
 # Ubuntu 18.04 ships with Python3.6 by default which triggers a UnicodeException
 # in the W3C testsuite so we update the default python3 to Python3.7.
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100
+# reduce the size of the resulting image
+RUN rm -rf /tar/lib/apt/lists/*
 
 ARG RUST_VER=nightly-2019-12-17
 USER docker
@@ -31,13 +41,42 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |  \
     sh -s -- -y --default-toolchain $RUST_VER
 RUN echo "source ~/.cargo/env" >> .bashrc
 
-ENV XML_TEST_TMP=/tmp/libexpat
-ENV XML_TEST_SUITE=/tmp/libexpat/xml-test-suite
+ENV TMP=/tmp
+ENV XML_TEST_TMP=${TMP}/libexpat
+ENV XML_TEST_SUITE=${TMP}/libexpat/xml-test-suite
 ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20020606.tar
 RUN mkdir -p "${XML_TEST_TMP}" && \
     curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "${XML_ARCHIVE}" && \
     tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
     rm "${XML_ARCHIVE}"
+
+ENV PYTHON381_TMP=${TMP}/Python-3.8.1
+ENV PYTHON381_URL=https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+ENV PYTHON381_ARCHIVE=${TMP}/Python-3.8.1.tgz
+RUN curl -L ${PYTHON381_URL} --silent --output "${PYTHON381_ARCHIVE}" && \
+    tar -C /tmp -xf "${PYTHON381_ARCHIVE}" && \
+    rm "${PYTHON381_ARCHIVE}"
+RUN cd ${PYTHON381_TMP} && ./configure --quiet --with-system-expat && \
+    make -j`nproc --all` 1> build.stdout.log 2> build.stderr.log
+
+ENV SQUID_TMP=${TMP}/squid-SQUID_4_8 
+ENV SQUID_URL=https://github.com/squid-cache/squid/archive/SQUID_4_8.tar.gz
+ENV SQUID_ARCHIVE=${TMP}/SQUID_4_8.tar.gz
+RUN curl -L ${SQUID_URL} --silent --output "${SQUID_ARCHIVE}" && \
+    tar -C /tmp -xf "${SQUID_ARCHIVE}" && \
+    rm "${SQUID_ARCHIVE}"
+RUN cd ${SQUID_TMP} && ./bootstrap.sh && ./configure --quiet && \
+    make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
+
+ENV GIT_TMP=${TMP}/git-2.25.0  
+ENV GIT_URL=https://github.com/git/git/archive/v2.25.0.tar.gz
+ENV GIT_ARCHIVE=${TMP}/git-2.25.0.tar.gz
+RUN curl -L ${GIT_URL} --silent --output "${GIT_ARCHIVE}" && \
+    tar -C /tmp -xf "${GIT_ARCHIVE}" && \ 
+    rm "${GIT_ARCHIVE}"
+# RUN cd ${GIT_TMP} && ./configure --quiet && \
+#    make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
+
 
 ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
 ENV CARGO_HOME="/tmp/.cargo"
