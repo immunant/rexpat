@@ -11,14 +11,6 @@ name = "rexpat"
 crate-type = ["staticlib", "rlib", "cdylib"]
 
 [[bin]]
-path = "src/examples/outline.rs"
-name = "outline"
-
-[[bin]]
-path = "src/examples/elements.rs"
-name = "elements"
-
-[[bin]]
 path = "src/xmlwf/xmlwf.rs"
 name = "xmlwf"
 
