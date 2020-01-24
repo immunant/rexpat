@@ -1077,7 +1077,7 @@ pub const EXPAND_SPARE: c_int = 24;
 pub const INIT_SCAFFOLD_ELEMENTS: c_int = 32;
 
 macro_rules! MALLOC {
-    ($parser:path, $size:expr $(,)?) => {
+    ($parser:expr, $size:expr $(,)?) => {
         (*$parser)
             .m_mem
             .malloc_fcn
@@ -1391,28 +1391,6 @@ unsafe extern "C" fn generate_hash_secret_salt(mut _parser: XML_Parser) -> c_ulo
     };
 }
 
-unsafe extern "C" fn get_hash_secret_salt(mut parser: XML_Parser) -> c_ulong {
-    if !(*parser).m_parentParser.is_null() {
-        return get_hash_secret_salt((*parser).m_parentParser);
-    }
-    return (*parser).m_hash_secret_salt;
-}
-
-unsafe extern "C" fn startParsing(mut parser: XML_Parser) -> XML_Bool /* only valid for root parser */
-{
-    /* hash functions must be initialized before setContext() is called */
-    if (*parser).m_hash_secret_salt == 0u64 {
-        (*parser).m_hash_secret_salt = generate_hash_secret_salt(parser)
-    }
-    if (*parser).m_ns != 0 {
-        /* implicit context only set for root parser, since child
-           parsers (i.e. external entity parsers) will inherit it
-        */
-        return setContext(parser, implicitContext.as_ptr());
-    }
-    return XML_TRUE;
-}
-
 /* Constructs a new parser using the memory management suite referred to
    by memsuite. If memsuite is NULL, then use the standard library memory
    suite. If namespaceSeparator is non-NULL it creates a parser with
@@ -1428,7 +1406,7 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
 ) -> XML_Parser {
-    return XML_ParserStruct::create(encodingName, memsuite, nameSep, NULL as *mut DTD);
+    XML_ParserStruct::create(encodingName, memsuite, nameSep, NULL as *mut DTD)
 }
 
 impl XML_ParserStruct {
@@ -1778,6 +1756,465 @@ impl XML_ParserStruct {
                 .expect("non-null function pointer")(self.m_unknownEncodingData);
         }
     }
+
+    /* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
+       detected.  The last call to XML_Parse must have isFinal true; len
+       may be zero for this call (or any other).
+
+       Though the return values for these functions has always been
+       described as a Boolean value, the implementation, at least for the
+       1.95.x series, has always returned exactly one of the XML_Status
+       values.
+    */
+    #[no_mangle]
+    pub unsafe extern "C" fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
+        if len < 0 || s.is_null() && len != 0 {
+            return XML_STATUS_ERROR_0 as XML_Status;
+        }
+        match self.m_parsingStatus.parsing {
+            3 => {
+                self.m_errorCode = XML_ERROR_SUSPENDED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            2 => {
+                self.m_errorCode = XML_ERROR_FINISHED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            0 => {
+                if self.m_parentParser.is_null() && self.startParsing() == 0 {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return XML_STATUS_ERROR_0 as XML_Status;
+                }
+            }
+            _ => {}
+        }
+        /* fall through */
+        self.m_parsingStatus.parsing = XML_PARSING;
+        if len == 0 {
+            self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
+            if isFinal == 0 {
+                return XML_STATUS_OK_0 as XML_Status;
+            }
+            self.m_positionPtr = self.m_bufferPtr;
+            self.m_parseEndPtr = self.m_bufferEnd;
+            /* If data are left over from last buffer, and we now know that these
+            data are the final chunk of input, then we have to check them again
+            to detect errors based on that fact.
+            */
+            self.m_errorCode = self.m_processor.expect("non-null function pointer")(
+                self,
+                self.m_bufferPtr,
+                self.m_parseEndPtr,
+                &mut self.m_bufferPtr,
+            );
+            if self.m_errorCode == XML_ERROR_NONE {
+                match self.m_parsingStatus.parsing {
+                    3 => {
+                        /* It is hard to be certain, but it seems that this case
+                        * cannot occur.  This code is cleaning up a previous parse
+                        * with no new data (since len == 0).  Changing the parsing
+                        * state requires getting to execute a handler function, and
+                        * there doesn't seem to be an opportunity for that while in
+                        * this circumstance.
+                        *
+                        * Given the uncertainty, we retain the code but exclude it
+                        * from coverage tests.
+                        *
+                        * LCOV_EXCL_START
+                        */
+                        (*self.m_encoding).updatePosition(
+                            self.m_positionPtr,
+                            self.m_bufferPtr,
+                            &mut self.m_position,
+                        );
+                        self.m_positionPtr = self.m_bufferPtr;
+                        return XML_STATUS_SUSPENDED_0 as XML_Status;
+                    }
+                    0 | 1 => {
+                        /* LCOV_EXCL_STOP */
+                        self.m_parsingStatus.parsing = XML_FINISHED
+                    }
+                    _ => {}
+                }
+                /* fall through */
+                return XML_STATUS_OK_0 as XML_Status;
+            }
+            self.m_eventEndPtr = self.m_eventPtr;
+            self.m_processor = Some(errorProcessor as Processor);
+            XML_STATUS_ERROR_0 as XML_Status
+        } else {
+            /* not defined XML_CONTEXT_BYTES */
+            let mut buff: *mut c_void = self.getBuffer(len);
+            if buff.is_null() {
+                XML_STATUS_ERROR_0 as XML_Status
+            } else {
+                memcpy(buff, s as *const c_void, len as c_ulong);
+                XML_ParseBuffer(self, len, isFinal)
+            }
+        }
+    }
+
+    unsafe fn get_hash_secret_salt(&mut self) -> c_ulong {
+        if !self.m_parentParser.is_null() {
+            return (*self.m_parentParser).get_hash_secret_salt();
+        }
+        return self.m_hash_secret_salt;
+    }
+
+    /* only valid for root parser */
+    unsafe fn startParsing(&mut self) -> XML_Bool {
+        /* hash functions must be initialized before setContext() is called */
+        if self.m_hash_secret_salt == 0u64 {
+            self.m_hash_secret_salt = generate_hash_secret_salt(self)
+        }
+        if self.m_ns != 0 {
+            /* implicit context only set for root parser, since child
+               parsers (i.e. external entity parsers) will inherit it
+            */
+            return setContext(self, implicitContext.as_ptr());
+        }
+        XML_TRUE
+    }
+
+    pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
+        if len < 0 {
+            self.m_errorCode = XML_ERROR_NO_MEMORY;
+            return NULL as *mut c_void;
+        }
+        match self.m_parsingStatus.parsing {
+            3 => {
+                self.m_errorCode = XML_ERROR_SUSPENDED;
+                return NULL as *mut c_void;
+            }
+            2 => {
+                self.m_errorCode = XML_ERROR_FINISHED;
+                return NULL as *mut c_void;
+            }
+            _ => {}
+        }
+        if len as c_long
+            > (if !self.m_bufferLim.is_null() && !self.m_bufferEnd.is_null() {
+                self.m_bufferLim
+                    .wrapping_offset_from(self.m_bufferEnd) as c_long
+            } else {
+                0
+            })
+        {
+            let mut keep: c_int = 0;
+            /* defined XML_CONTEXT_BYTES */
+            /* Do not invoke signed arithmetic overflow: */
+            let mut neededSize: c_int = (len as c_uint).wrapping_add(
+                (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
+                    self.m_bufferEnd
+                        .wrapping_offset_from(self.m_bufferPtr) as c_long
+                } else {
+                    0
+                }) as c_uint,
+            ) as c_int;
+            if neededSize < 0 {
+                self.m_errorCode = XML_ERROR_NO_MEMORY;
+                return NULL as *mut c_void;
+            }
+            keep = if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
+                self.m_bufferPtr
+                    .wrapping_offset_from(self.m_buffer) as c_long
+            } else {
+                0
+            } as c_int;
+            if keep > XML_CONTEXT_BYTES {
+                keep = XML_CONTEXT_BYTES
+            }
+            neededSize += keep;
+            /* defined XML_CONTEXT_BYTES */
+            if neededSize as c_long
+                <= (if !self.m_bufferLim.is_null() && !self.m_buffer.is_null() {
+                    self.m_bufferLim
+                        .wrapping_offset_from(self.m_buffer) as c_long
+                } else {
+                    0
+                })
+            {
+                if (keep as c_long)
+                    < (if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
+                        self.m_bufferPtr
+                            .wrapping_offset_from(self.m_buffer) as c_long
+                    } else {
+                        0
+                    })
+                {
+                    let mut offset: c_int = (if !self.m_bufferPtr.is_null()
+                        && !self.m_buffer.is_null()
+                    {
+                        self.m_bufferPtr
+                            .wrapping_offset_from(self.m_buffer) as c_long
+                    } else {
+                        0
+                    }) as c_int
+                        - keep;
+                    /* The buffer pointers cannot be NULL here; we have at least some bytes
+                     * in the buffer */
+                    memmove(
+                        self.m_buffer as *mut c_void,
+                        &mut *self.m_buffer.offset(offset as isize) as *mut c_char
+                            as *const c_void,
+                        (self
+                            .m_bufferEnd
+                            .wrapping_offset_from(self.m_bufferPtr) as c_long
+                            + keep as c_long) as c_ulong,
+                    );
+                    self.m_bufferEnd = self.m_bufferEnd.offset(-(offset as isize));
+                    self.m_bufferPtr = self.m_bufferPtr.offset(-(offset as isize))
+                }
+            /* not defined XML_CONTEXT_BYTES */
+            } else {
+                let mut newBuf: *mut c_char = 0 as *mut c_char;
+                let mut bufferSize: c_int =
+                    if !self.m_bufferLim.is_null() && !self.m_bufferPtr.is_null() {
+                        self.m_bufferLim
+                            .wrapping_offset_from(self.m_bufferPtr) as c_long
+                    } else {
+                        0
+                    } as c_int;
+                if bufferSize == 0 {
+                    bufferSize = INIT_BUFFER_SIZE
+                }
+                loop {
+                    /* not defined XML_CONTEXT_BYTES */
+                    /* Do not invoke signed arithmetic overflow: */
+                    bufferSize = (2u32).wrapping_mul(bufferSize as c_uint) as c_int;
+                    if !(bufferSize < neededSize && bufferSize > 0) {
+                        break;
+                    }
+                }
+                if bufferSize <= 0 {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return NULL as *mut c_void;
+                }
+                newBuf = MALLOC!(&self, bufferSize as size_t) as *mut c_char;
+                if newBuf.is_null() {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return NULL as *mut c_void;
+                }
+                self.m_bufferLim = newBuf.offset(bufferSize as isize);
+                if !self.m_bufferPtr.is_null() {
+                    memcpy(
+                        newBuf as *mut c_void,
+                        &*self.m_bufferPtr.offset(-keep as isize) as *const c_char
+                            as *const c_void,
+                        ((if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
+                            self.m_bufferEnd
+                                .wrapping_offset_from(self.m_bufferPtr)
+                                as c_long
+                        } else {
+                            0
+                        }) + keep as c_long) as c_ulong,
+                    );
+                    FREE!(&self, self.m_buffer as *mut c_void);
+                    self.m_buffer = newBuf;
+                    self.m_bufferEnd = self
+                        .m_buffer
+                        .offset(
+                            (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
+                                self.m_bufferEnd
+                                    .wrapping_offset_from(self.m_bufferPtr)
+                                    as c_long
+                            } else {
+                                0
+                            }) as isize,
+                        )
+                        .offset(keep as isize);
+                    self.m_bufferPtr = self.m_buffer.offset(keep as isize)
+                } else {
+                    /* This must be a brand new buffer with no data in it yet */
+                    self.m_bufferEnd = newBuf;
+                    self.m_buffer = newBuf;
+                    self.m_bufferPtr = self.m_buffer
+                }
+            }
+            self.m_eventEndPtr = NULL as *const c_char;
+            self.m_eventPtr = self.m_eventEndPtr;
+            self.m_positionPtr = NULL as *const c_char
+        }
+        self.m_bufferEnd as *mut c_void
+    }
+
+    pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
+        let mut start: *const c_char = 0 as *const c_char;
+        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        match self.m_parsingStatus.parsing {
+            3 => {
+                self.m_errorCode = XML_ERROR_SUSPENDED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            2 => {
+                self.m_errorCode = XML_ERROR_FINISHED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            0 => {
+                if self.m_parentParser.is_null() && self.startParsing() == 0 {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return XML_STATUS_ERROR_0 as XML_Status;
+                }
+            }
+            _ => {}
+        }
+        /* fall through */
+        self.m_parsingStatus.parsing = XML_PARSING;
+        start = self.m_bufferPtr;
+        self.m_positionPtr = start;
+        self.m_bufferEnd = self.m_bufferEnd.offset(len as isize);
+        self.m_parseEndPtr = self.m_bufferEnd;
+        self.m_parseEndByteIndex += len as c_long;
+        self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
+        self.m_errorCode = self.m_processor.expect("non-null function pointer")(
+            self,
+            start,
+            self.m_parseEndPtr,
+            &mut self.m_bufferPtr,
+        );
+        if self.m_errorCode != XML_ERROR_NONE {
+            self.m_eventEndPtr = self.m_eventPtr;
+            self.m_processor = Some(errorProcessor as Processor);
+            return XML_STATUS_ERROR_0 as XML_Status;
+        } else {
+            match self.m_parsingStatus.parsing {
+                3 => {
+                    result = XML_STATUS_SUSPENDED_0 as XML_Status
+                    /* should not happen */
+                }
+                0 | 1 => {
+                    if isFinal != 0 {
+                        self.m_parsingStatus.parsing = XML_FINISHED;
+                        return result;
+                    }
+                }
+                _ => {}
+            }
+        }
+        (*self.m_encoding).updatePosition(
+            self.m_positionPtr,
+            self.m_bufferPtr,
+            &mut self.m_position,
+        );
+        self.m_positionPtr = self.m_bufferPtr;
+        return result;
+    }
+
+    /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
+       Must be called from within a call-back handler, except when aborting
+       (resumable = 0) an already suspended parser. Some call-backs may
+       still follow because they would otherwise get lost. Examples:
+       - endElementHandler() for empty elements when stopped in
+           startElementHandler(),
+       - endNameSpaceDeclHandler() when stopped in endElementHandler(),
+       and possibly others.
+
+       Can be called from most handlers, including DTD related call-backs,
+       except when parsing an external parameter entity and resumable != 0.
+       Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
+       Possible error codes:
+       - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
+       - XML_ERROR_FINISHED: when the parser has already finished.
+       - XML_ERROR_SUSPEND_PE: when suspending while parsing an external PE.
+
+       When resumable != 0 (true) then parsing is suspended, that is,
+       XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
+       Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
+       return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
+
+       *Note*:
+       This will be applied to the current parser instance only, that is, if
+       there is a parent parser then it will continue parsing when the
+       externalEntityRefHandler() returns. It is up to the implementation of
+       the externalEntityRefHandler() to call XML_StopParser() on the parent
+       parser (recursively), if one wants to stop parsing altogether.
+
+       When suspended, parsing can be resumed by calling XML_ResumeParser().
+    */
+    #[no_mangle]
+    pub unsafe extern "C" fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
+        match self.m_parsingStatus.parsing {
+            3 => {
+                if resumable != 0 {
+                    self.m_errorCode = XML_ERROR_SUSPENDED;
+                    return XML_STATUS_ERROR_0 as XML_Status;
+                }
+                self.m_parsingStatus.parsing = XML_FINISHED
+            }
+            2 => {
+                self.m_errorCode = XML_ERROR_FINISHED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            _ => {
+                if resumable != 0 {
+                    if self.m_isParamEntity != 0 {
+                        self.m_errorCode = XML_ERROR_SUSPEND_PE;
+                        return XML_STATUS_ERROR_0 as XML_Status;
+                    }
+                    self.m_parsingStatus.parsing = XML_SUSPENDED
+                } else {
+                    self.m_parsingStatus.parsing = XML_FINISHED
+                }
+            }
+        }
+        XML_STATUS_OK_0 as XML_Status
+    }
+
+    /* Resumes parsing after it has been suspended with XML_StopParser().
+       Must not be called from within a handler call-back. Returns same
+       status codes as XML_Parse() or XML_ParseBuffer().
+       Additional error code XML_ERROR_NOT_SUSPENDED possible.
+
+       *Note*:
+       This must be called on the most deeply nested child parser instance
+       first, and on its parent parser only after the child parser has finished,
+       to be applied recursively until the document entity's parser is restarted.
+       That is, the parent parser will not resume by itself and it is up to the
+       application to call XML_ResumeParser() on it at the appropriate moment.
+    */
+    pub unsafe fn resumeParser(&mut self) -> XML_Status {
+        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        if self.m_parsingStatus.parsing != XML_SUSPENDED {
+            self.m_errorCode = XML_ERROR_NOT_SUSPENDED;
+            return XML_STATUS_ERROR_0 as XML_Status;
+        }
+        self.m_parsingStatus.parsing = XML_PARSING;
+        self.m_errorCode = self.m_processor.expect("non-null function pointer")(
+            self,
+            self.m_bufferPtr,
+            self.m_parseEndPtr,
+            &mut self.m_bufferPtr,
+        );
+        if self.m_errorCode != XML_ERROR_NONE {
+            self.m_eventEndPtr = self.m_eventPtr;
+            self.m_processor = Some(errorProcessor as Processor);
+            return XML_STATUS_ERROR_0 as XML_Status;
+        } else {
+            match self.m_parsingStatus.parsing {
+                3 => result = XML_STATUS_SUSPENDED_0 as XML_Status,
+                0 | 1 => {
+                    if self.m_parsingStatus.finalBuffer != 0 {
+                        self.m_parsingStatus.parsing = XML_FINISHED;
+                        return result;
+                    }
+                }
+                _ => {}
+            }
+        }
+        (*self.m_encoding).updatePosition(
+            self.m_positionPtr,
+            self.m_bufferPtr,
+            &mut self.m_position,
+        );
+        self.m_positionPtr = self.m_bufferPtr;
+
+        #[cfg(feature = "mozilla")]
+        {
+            self.m_eventPtr = self.m_bufferPtr;
+            self.m_eventEndPtr = self.m_bufferPtr;
+        }
+        return result;
+    }
 }
 /* moves list of bindings to m_freeBindingList */
 
@@ -1833,7 +2270,7 @@ pub unsafe extern "C" fn XML_SetEncoding(
             return XML_STATUS_ERROR_0 as XML_Status;
         }
     }
-    return XML_STATUS_OK_0 as XML_Status;
+    XML_STATUS_OK_0 as XML_Status
 }
 /* Creates an XML_Parser object that can parse an external general
    entity; context is a '\0'-terminated string specifying the parse
@@ -2556,87 +2993,7 @@ pub unsafe extern "C" fn XML_Parse(
         }
         return XML_STATUS_ERROR_0 as XML_Status;
     }
-    match (*parser).m_parsingStatus.parsing {
-        3 => {
-            (*parser).m_errorCode = XML_ERROR_SUSPENDED;
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        2 => {
-            (*parser).m_errorCode = XML_ERROR_FINISHED;
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        0 => {
-            if (*parser).m_parentParser.is_null() && startParsing(parser) == 0 {
-                (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-                return XML_STATUS_ERROR_0 as XML_Status;
-            }
-        }
-        _ => {}
-    }
-    /* fall through */
-    (*parser).m_parsingStatus.parsing = XML_PARSING;
-    if len == 0 {
-        (*parser).m_parsingStatus.finalBuffer = isFinal as XML_Bool;
-        if isFinal == 0 {
-            return XML_STATUS_OK_0 as XML_Status;
-        }
-        (*parser).m_positionPtr = (*parser).m_bufferPtr;
-        (*parser).m_parseEndPtr = (*parser).m_bufferEnd;
-        /* If data are left over from last buffer, and we now know that these
-           data are the final chunk of input, then we have to check them again
-           to detect errors based on that fact.
-        */
-        (*parser).m_errorCode = (*parser).m_processor.expect("non-null function pointer")(
-            parser,
-            (*parser).m_bufferPtr,
-            (*parser).m_parseEndPtr,
-            &mut (*parser).m_bufferPtr,
-        );
-        if (*parser).m_errorCode == XML_ERROR_NONE {
-            match (*parser).m_parsingStatus.parsing {
-                3 => {
-                    /* It is hard to be certain, but it seems that this case
-                     * cannot occur.  This code is cleaning up a previous parse
-                     * with no new data (since len == 0).  Changing the parsing
-                     * state requires getting to execute a handler function, and
-                     * there doesn't seem to be an opportunity for that while in
-                     * this circumstance.
-                     *
-                     * Given the uncertainty, we retain the code but exclude it
-                     * from coverage tests.
-                     *
-                     * LCOV_EXCL_START
-                     */
-                    (*(*parser).m_encoding).updatePosition(
-                        (*parser).m_positionPtr,
-                        (*parser).m_bufferPtr,
-                        &mut (*parser).m_position,
-                    );
-                    (*parser).m_positionPtr = (*parser).m_bufferPtr;
-                    return XML_STATUS_SUSPENDED_0 as XML_Status;
-                }
-                0 | 1 => {
-                    /* LCOV_EXCL_STOP */
-                    (*parser).m_parsingStatus.parsing = XML_FINISHED
-                }
-                _ => {}
-            }
-            /* fall through */
-            return XML_STATUS_OK_0 as XML_Status;
-        }
-        (*parser).m_eventEndPtr = (*parser).m_eventPtr;
-        (*parser).m_processor = Some(errorProcessor as Processor);
-        return XML_STATUS_ERROR_0 as XML_Status;
-    } else {
-        /* not defined XML_CONTEXT_BYTES */
-        let mut buff: *mut c_void = XML_GetBuffer(parser, len);
-        if buff.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
-        } else {
-            memcpy(buff, s as *const c_void, len as c_ulong);
-            return XML_ParseBuffer(parser, len, isFinal);
-        }
-    };
+    (*parser).parse(s, len, isFinal)
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_ParseBuffer(
@@ -2644,242 +3001,19 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     mut len: c_int,
     mut isFinal: c_int,
 ) -> XML_Status {
-    let mut start: *const c_char = 0 as *const c_char;
-    let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
     if parser.is_null() {
         return XML_STATUS_ERROR_0 as XML_Status;
     }
-    match (*parser).m_parsingStatus.parsing {
-        3 => {
-            (*parser).m_errorCode = XML_ERROR_SUSPENDED;
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        2 => {
-            (*parser).m_errorCode = XML_ERROR_FINISHED;
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        0 => {
-            if (*parser).m_parentParser.is_null() && startParsing(parser) == 0 {
-                (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-                return XML_STATUS_ERROR_0 as XML_Status;
-            }
-        }
-        _ => {}
-    }
-    /* fall through */
-    (*parser).m_parsingStatus.parsing = XML_PARSING;
-    start = (*parser).m_bufferPtr;
-    (*parser).m_positionPtr = start;
-    (*parser).m_bufferEnd = (*parser).m_bufferEnd.offset(len as isize);
-    (*parser).m_parseEndPtr = (*parser).m_bufferEnd;
-    (*parser).m_parseEndByteIndex += len as c_long;
-    (*parser).m_parsingStatus.finalBuffer = isFinal as XML_Bool;
-    (*parser).m_errorCode = (*parser).m_processor.expect("non-null function pointer")(
-        parser,
-        start,
-        (*parser).m_parseEndPtr,
-        &mut (*parser).m_bufferPtr,
-    );
-    if (*parser).m_errorCode != XML_ERROR_NONE {
-        (*parser).m_eventEndPtr = (*parser).m_eventPtr;
-        (*parser).m_processor = Some(errorProcessor as Processor);
-        return XML_STATUS_ERROR_0 as XML_Status;
-    } else {
-        match (*parser).m_parsingStatus.parsing {
-            3 => {
-                result = XML_STATUS_SUSPENDED_0 as XML_Status
-                /* should not happen */
-            }
-            0 | 1 => {
-                if isFinal != 0 {
-                    (*parser).m_parsingStatus.parsing = XML_FINISHED;
-                    return result;
-                }
-            }
-            _ => {}
-        }
-    }
-    (*(*parser).m_encoding).updatePosition(
-        (*parser).m_positionPtr,
-        (*parser).m_bufferPtr,
-        &mut (*parser).m_position,
-    );
-    (*parser).m_positionPtr = (*parser).m_bufferPtr;
-    return result;
+
+    (*parser).parseBuffer(len, isFinal)
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
     if parser.is_null() {
         return NULL as *mut c_void;
     }
-    if len < 0 {
-        (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-        return NULL as *mut c_void;
-    }
-    match (*parser).m_parsingStatus.parsing {
-        3 => {
-            (*parser).m_errorCode = XML_ERROR_SUSPENDED;
-            return NULL as *mut c_void;
-        }
-        2 => {
-            (*parser).m_errorCode = XML_ERROR_FINISHED;
-            return NULL as *mut c_void;
-        }
-        _ => {}
-    }
-    if len as c_long
-        > (if !(*parser).m_bufferLim.is_null() && !(*parser).m_bufferEnd.is_null() {
-            (*parser)
-                .m_bufferLim
-                .wrapping_offset_from((*parser).m_bufferEnd) as c_long
-        } else {
-            0
-        })
-    {
-        let mut keep: c_int = 0;
-        /* defined XML_CONTEXT_BYTES */
-        /* Do not invoke signed arithmetic overflow: */
-        let mut neededSize: c_int = (len as c_uint).wrapping_add(
-            (if !(*parser).m_bufferEnd.is_null() && !(*parser).m_bufferPtr.is_null() {
-                (*parser)
-                    .m_bufferEnd
-                    .wrapping_offset_from((*parser).m_bufferPtr) as c_long
-            } else {
-                0
-            }) as c_uint,
-        ) as c_int;
-        if neededSize < 0 {
-            (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-            return NULL as *mut c_void;
-        }
-        keep = if !(*parser).m_bufferPtr.is_null() && !(*parser).m_buffer.is_null() {
-            (*parser)
-                .m_bufferPtr
-                .wrapping_offset_from((*parser).m_buffer) as c_long
-        } else {
-            0
-        } as c_int;
-        if keep > XML_CONTEXT_BYTES {
-            keep = XML_CONTEXT_BYTES
-        }
-        neededSize += keep;
-        /* defined XML_CONTEXT_BYTES */
-        if neededSize as c_long
-            <= (if !(*parser).m_bufferLim.is_null() && !(*parser).m_buffer.is_null() {
-                (*parser)
-                    .m_bufferLim
-                    .wrapping_offset_from((*parser).m_buffer) as c_long
-            } else {
-                0
-            })
-        {
-            if (keep as c_long)
-                < (if !(*parser).m_bufferPtr.is_null() && !(*parser).m_buffer.is_null() {
-                    (*parser)
-                        .m_bufferPtr
-                        .wrapping_offset_from((*parser).m_buffer) as c_long
-                } else {
-                    0
-                })
-            {
-                let mut offset: c_int = (if !(*parser).m_bufferPtr.is_null()
-                    && !(*parser).m_buffer.is_null()
-                {
-                    (*parser)
-                        .m_bufferPtr
-                        .wrapping_offset_from((*parser).m_buffer) as c_long
-                } else {
-                    0
-                }) as c_int
-                    - keep;
-                /* The buffer pointers cannot be NULL here; we have at least some bytes
-                 * in the buffer */
-                memmove(
-                    (*parser).m_buffer as *mut c_void,
-                    &mut *(*parser).m_buffer.offset(offset as isize) as *mut c_char
-                        as *const c_void,
-                    ((*parser)
-                        .m_bufferEnd
-                        .wrapping_offset_from((*parser).m_bufferPtr) as c_long
-                        + keep as c_long) as c_ulong,
-                );
-                (*parser).m_bufferEnd = (*parser).m_bufferEnd.offset(-(offset as isize));
-                (*parser).m_bufferPtr = (*parser).m_bufferPtr.offset(-(offset as isize))
-            }
-        /* not defined XML_CONTEXT_BYTES */
-        } else {
-            let mut newBuf: *mut c_char = 0 as *mut c_char;
-            let mut bufferSize: c_int =
-                if !(*parser).m_bufferLim.is_null() && !(*parser).m_bufferPtr.is_null() {
-                    (*parser)
-                        .m_bufferLim
-                        .wrapping_offset_from((*parser).m_bufferPtr) as c_long
-                } else {
-                    0
-                } as c_int;
-            if bufferSize == 0 {
-                bufferSize = INIT_BUFFER_SIZE
-            }
-            loop {
-                /* not defined XML_CONTEXT_BYTES */
-                /* Do not invoke signed arithmetic overflow: */
-                bufferSize = (2u32).wrapping_mul(bufferSize as c_uint) as c_int;
-                if !(bufferSize < neededSize && bufferSize > 0) {
-                    break;
-                }
-            }
-            if bufferSize <= 0 {
-                (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-                return NULL as *mut c_void;
-            }
-            newBuf = MALLOC!(parser, bufferSize as size_t) as *mut c_char;
-            if newBuf.is_null() {
-                (*parser).m_errorCode = XML_ERROR_NO_MEMORY;
-                return NULL as *mut c_void;
-            }
-            (*parser).m_bufferLim = newBuf.offset(bufferSize as isize);
-            if !(*parser).m_bufferPtr.is_null() {
-                memcpy(
-                    newBuf as *mut c_void,
-                    &*(*parser).m_bufferPtr.offset(-keep as isize) as *const c_char
-                        as *const c_void,
-                    ((if !(*parser).m_bufferEnd.is_null() && !(*parser).m_bufferPtr.is_null() {
-                        (*parser)
-                            .m_bufferEnd
-                            .wrapping_offset_from((*parser).m_bufferPtr)
-                            as c_long
-                    } else {
-                        0
-                    }) + keep as c_long) as c_ulong,
-                );
-                FREE!(parser, (*parser).m_buffer as *mut c_void);
-                (*parser).m_buffer = newBuf;
-                (*parser).m_bufferEnd = (*parser)
-                    .m_buffer
-                    .offset(
-                        (if !(*parser).m_bufferEnd.is_null() && !(*parser).m_bufferPtr.is_null() {
-                            (*parser)
-                                .m_bufferEnd
-                                .wrapping_offset_from((*parser).m_bufferPtr)
-                                as c_long
-                        } else {
-                            0
-                        }) as isize,
-                    )
-                    .offset(keep as isize);
-                (*parser).m_bufferPtr = (*parser).m_buffer.offset(keep as isize)
-            } else {
-                /* This must be a brand new buffer with no data in it yet */
-                (*parser).m_bufferEnd = newBuf;
-                (*parser).m_buffer = newBuf;
-                (*parser).m_bufferPtr = (*parser).m_buffer
-            }
-        }
-        (*parser).m_eventEndPtr = NULL as *const c_char;
-        (*parser).m_eventPtr = (*parser).m_eventEndPtr;
-        (*parser).m_positionPtr = NULL as *const c_char
-    }
-    return (*parser).m_bufferEnd as *mut c_void;
+
+    (*parser).getBuffer(len)
 }
 /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
    Must be called from within a call-back handler, except when aborting
@@ -2913,38 +3047,11 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
    When suspended, parsing can be resumed by calling XML_ResumeParser().
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_StopParser(
-    mut parser: XML_Parser,
-    mut resumable: XML_Bool,
-) -> XML_Status {
+pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
     if parser.is_null() {
         return XML_STATUS_ERROR_0 as XML_Status;
     }
-    match (*parser).m_parsingStatus.parsing {
-        3 => {
-            if resumable != 0 {
-                (*parser).m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
-            }
-            (*parser).m_parsingStatus.parsing = XML_FINISHED
-        }
-        2 => {
-            (*parser).m_errorCode = XML_ERROR_FINISHED;
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        _ => {
-            if resumable != 0 {
-                if (*parser).m_isParamEntity != 0 {
-                    (*parser).m_errorCode = XML_ERROR_SUSPEND_PE;
-                    return XML_STATUS_ERROR_0 as XML_Status;
-                }
-                (*parser).m_parsingStatus.parsing = XML_SUSPENDED
-            } else {
-                (*parser).m_parsingStatus.parsing = XML_FINISHED
-            }
-        }
-    }
-    return XML_STATUS_OK_0 as XML_Status;
+    (*parser).stopParser(resumable)
 }
 /* Resumes parsing after it has been suspended with XML_StopParser().
    Must not be called from within a handler call-back. Returns same
@@ -2960,50 +3067,11 @@ pub unsafe extern "C" fn XML_StopParser(
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
-    let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
     if parser.is_null() {
         return XML_STATUS_ERROR_0 as XML_Status;
     }
-    if (*parser).m_parsingStatus.parsing != XML_SUSPENDED {
-        (*parser).m_errorCode = XML_ERROR_NOT_SUSPENDED;
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-    (*parser).m_parsingStatus.parsing = XML_PARSING;
-    (*parser).m_errorCode = (*parser).m_processor.expect("non-null function pointer")(
-        parser,
-        (*parser).m_bufferPtr,
-        (*parser).m_parseEndPtr,
-        &mut (*parser).m_bufferPtr,
-    );
-    if (*parser).m_errorCode != XML_ERROR_NONE {
-        (*parser).m_eventEndPtr = (*parser).m_eventPtr;
-        (*parser).m_processor = Some(errorProcessor as Processor);
-        return XML_STATUS_ERROR_0 as XML_Status;
-    } else {
-        match (*parser).m_parsingStatus.parsing {
-            3 => result = XML_STATUS_SUSPENDED_0 as XML_Status,
-            0 | 1 => {
-                if (*parser).m_parsingStatus.finalBuffer != 0 {
-                    (*parser).m_parsingStatus.parsing = XML_FINISHED;
-                    return result;
-                }
-            }
-            _ => {}
-        }
-    }
-    (*(*parser).m_encoding).updatePosition(
-        (*parser).m_positionPtr,
-        (*parser).m_bufferPtr,
-        &mut (*parser).m_position,
-    );
-    (*parser).m_positionPtr = (*parser).m_bufferPtr;
 
-    #[cfg(feature = "mozilla")]
-    {
-        (*parser).m_eventPtr = (*parser).m_bufferPtr;
-        (*parser).m_eventEndPtr = (*parser).m_bufferPtr;
-    }
-    return result;
+    (*parser).resumeParser()
 }
 /* Returns status of parser with respect to being initialized, parsing,
    finished, or suspended and processing the final buffer.
@@ -9264,7 +9332,7 @@ unsafe extern "C" fn keylen(mut s: KEY) -> size_t {
 
 unsafe extern "C" fn copy_salt_to_sipkey(mut parser: XML_Parser, mut key: *mut sipkey) {
     (*key).k[0] = 0u64;
-    (*key).k[1] = get_hash_secret_salt(parser);
+    (*key).k[1] = (*parser).get_hash_secret_salt();
 }
 
 unsafe extern "C" fn hash(mut parser: XML_Parser, mut s: KEY) -> c_ulong {
