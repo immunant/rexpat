@@ -70,7 +70,7 @@ pub use crate::expat_h::{
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
-    XML_INITIALIZED, XML_MAJOR_VERSION, XML_MICRO_VERSION, XML_MINOR_VERSION,
+    XML_INITIALIZED,
     XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
     XML_STATUS_OK, XML_STATUS_OK_0, XML_STATUS_SUSPENDED, XML_STATUS_SUSPENDED_0, XML_SUSPENDED,
@@ -3305,19 +3305,19 @@ pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
     wch!("expat_2.2.9\x00")
 }
 /* Return an XML_Expat_Version structure containing numeric version
-   number information for this version of expat.
+   number information for this version of expat. Expat follows the 
+   semantic versioning convention. See http://semver.org.
 */
+pub const XML_MAJOR_VERSION: c_int = 2;
+pub const XML_MINOR_VERSION: c_int = 2;
+pub const XML_MICRO_VERSION: c_int = 9;
 #[no_mangle]
 pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
-    let mut version: XML_Expat_Version = XML_Expat_Version {
-        major: 0,
-        minor: 0,
-        micro: 0,
-    };
-    version.major = XML_MAJOR_VERSION;
-    version.minor = XML_MINOR_VERSION;
-    version.micro = XML_MICRO_VERSION;
-    return version;
+    XML_Expat_Version {
+        major: XML_MAJOR_VERSION,
+        minor: XML_MINOR_VERSION,
+        micro: XML_MICRO_VERSION,
+    }
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
