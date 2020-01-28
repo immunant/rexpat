@@ -67,6 +67,7 @@ use ::expat_rs::stdbool_h::{false_0, true_0};
 use ::expat_rs::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::expat_rs::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
+use ::expat_rs::lib::xmlparse::ExpatBufRef;
 
 use ::std::mem::transmute;
 
@@ -1697,7 +1698,8 @@ unsafe extern "C" fn test_utf8_auto_align() {
             .offset(strlen(cases[i as usize].input) as isize);
         let fromLimInitially: *const c_char = fromLim;
         let mut actualMovementInChars: ptrdiff_t = 0;
-        _INTERNAL_trim_to_complete_utf8_characters(cases[i as usize].input, &mut fromLim);
+        let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
+        _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
         actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially) as c_long;
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
