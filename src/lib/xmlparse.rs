@@ -3987,6 +3987,7 @@ unsafe extern "C" fn doContent(
                 let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as usize);
                 (*tag).rawName = fromBuf.as_ptr();
                 (*tag).rawNameLength = (*enc).nameLength((*tag).rawName);
+                fromBuf = fromBuf.with_len((*tag).rawNameLength as usize);
                 (*parser).m_tagLevel += 1;
                 // let mut rawNameEnd: *const c_char =
                 //     (*tag).rawName.offset((*tag).rawNameLength as isize);
