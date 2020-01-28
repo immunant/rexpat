@@ -23453,47 +23453,6 @@ unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
     return s;
 }
 
-unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
-    let mut i: c_int = 0;
-    let mut nf: c_int = 0;
-    let mut verbosity: c_int = CK_NORMAL;
-    let mut s: *mut crate::minicheck::Suite = make_suite();
-    let mut sr: *mut crate::minicheck::SRunner = crate::minicheck::srunner_create(s);
-    /* run the tests for internal helper functions */
-    testhelper_is_whitespace_normalized();
-    i = 1;
-    while i < argc {
-        let mut opt: *mut c_char = *argv.offset(i as isize);
-        if strcmp(opt, b"-v\x00".as_ptr() as *const c_char) == 0
-            || strcmp(opt, b"--verbose\x00".as_ptr() as *const c_char) == 0
-        {
-            verbosity = crate::minicheck::CK_VERBOSE
-        } else if strcmp(opt, b"-q\x00".as_ptr() as *const c_char) == 0
-            || strcmp(opt, b"--quiet\x00".as_ptr() as *const c_char) == 0
-        {
-            verbosity = CK_SILENT
-        } else {
-            fprintf(
-                stderr,
-                b"runtests: unknown option \'%s\'\n\x00".as_ptr() as *const c_char,
-                opt,
-            );
-            return 2i32;
-        }
-        i += 1
-    }
-    if verbosity != CK_SILENT {
-        printf(
-            b"Expat version: %s\n\x00".as_ptr() as *const c_char,
-            XML_ExpatVersion(),
-        );
-    }
-    crate::minicheck::srunner_run_all(sr, verbosity);
-    nf = crate::minicheck::srunner_ntests_failed(sr);
-    crate::minicheck::srunner_free(sr);
-    return if nf == 0 { EXIT_SUCCESS } else { EXIT_FAILURE };
-}
-#[main]
 pub fn main() {
     let mut args: Vec<*mut libc::c_char> = Vec::new();
     for arg in ::std::env::args() {
@@ -23504,5 +23463,53 @@ pub fn main() {
         );
     }
     args.push(::std::ptr::null_mut());
-    unsafe { ::std::process::exit(main_0((args.len() - 1) as libc::c_int, args.as_mut_ptr())) }
+    let argc: c_int = (args.len() - 1) as c_int; 
+    let mut argv: *mut *mut c_char = args.as_mut_ptr();
+
+    unsafe {
+        let mut i: c_int = 1;
+        let mut verbosity: c_int = CK_NORMAL;
+        let mut s: *mut crate::minicheck::Suite = make_suite();
+        let mut sr: *mut crate::minicheck::SRunner = crate::minicheck::srunner_create(s);
+        /* run the tests for internal helper functions */
+        testhelper_is_whitespace_normalized();
+        while i < argc {
+            let mut opt: *mut c_char = *argv.offset(i as isize);
+            if strcmp(opt, b"-v\x00".as_ptr() as *const c_char) == 0
+                || strcmp(opt, b"--verbose\x00".as_ptr() as *const c_char) == 0
+            {
+                verbosity = crate::minicheck::CK_VERBOSE
+            } else if strcmp(opt, b"-q\x00".as_ptr() as *const c_char) == 0
+                || strcmp(opt, b"--quiet\x00".as_ptr() as *const c_char) == 0
+            {
+                verbosity = CK_SILENT
+            } else {
+                fprintf(
+                    stderr,
+                    b"runtests: unknown option \'%s\'\n\x00".as_ptr() as *const c_char,
+                    opt,
+                );
+                ::std::process::exit(2);
+            }
+            i += 1
+        }
+        if verbosity != CK_SILENT {
+            printf(
+                b"Expat version: %s\n\x00".as_ptr() as *const c_char,
+                XML_ExpatVersion(),
+            );
+        }
+        crate::minicheck::srunner_run_all(sr, verbosity);
+        let nf = crate::minicheck::srunner_ntests_failed(sr);
+        crate::minicheck::srunner_free(sr);
+        ::std::process::exit(if nf == 0 { EXIT_SUCCESS } else { EXIT_FAILURE });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn runtests() {
+        crate::main();
+    }
 }
