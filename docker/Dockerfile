@@ -20,6 +20,7 @@ RUN chmod 755 /home/docker
 RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update -qq && \    
     apt-get install -qq   \
+    bear                  \
     build-essential       \
     curl                  \
     ed                    \
@@ -27,7 +28,7 @@ RUN apt-get update -qq && \
     python3.7-minimal     \
     libcap-dev            \
     libtool-bin
-RUN apt-get build-dep -qq squid     
+RUN apt-get build-dep -qq squid git    
 # Ubuntu 18.04 ships with Python3.6 by default which triggers a UnicodeException
 # in the W3C testsuite so we update the default python3 to Python3.7.
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100
@@ -59,23 +60,23 @@ RUN curl -L ${PYTHON381_URL} --silent --output "${PYTHON381_ARCHIVE}" && \
 RUN cd ${PYTHON381_TMP} && ./configure --quiet --with-system-expat && \
     make -j`nproc --all` 1> build.stdout.log 2> build.stderr.log
 
-ENV SQUID_TMP=${TMP}/squid-SQUID_4_8 
-ENV SQUID_URL=https://github.com/squid-cache/squid/archive/SQUID_4_8.tar.gz
-ENV SQUID_ARCHIVE=${TMP}/SQUID_4_8.tar.gz
+ENV SQUID_TMP=${TMP}/squid-4.10
+ENV SQUID_URL=http://www.squid-cache.org/Versions/v4/squid-4.10.tar.gz
+ENV SQUID_ARCHIVE=${TMP}/squid-4.10.tar.gz
 RUN curl -L ${SQUID_URL} --silent --output "${SQUID_ARCHIVE}" && \
     tar -C /tmp -xf "${SQUID_ARCHIVE}" && \
     rm "${SQUID_ARCHIVE}"
-RUN cd ${SQUID_TMP} && ./bootstrap.sh && ./configure --quiet && \
-    make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
+RUN cd ${SQUID_TMP} && ./configure --quiet --enable-esi --with-expat 
+# &&   make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
 
-ENV GIT_TMP=${TMP}/git-2.25.0  
-ENV GIT_URL=https://github.com/git/git/archive/v2.25.0.tar.gz
-ENV GIT_ARCHIVE=${TMP}/git-2.25.0.tar.gz
-RUN curl -L ${GIT_URL} --silent --output "${GIT_ARCHIVE}" && \
-    tar -C /tmp -xf "${GIT_ARCHIVE}" && \ 
-    rm "${GIT_ARCHIVE}"
-# RUN cd ${GIT_TMP} && ./configure --quiet && \
-#    make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
+# ENV GIT_TMP=${TMP}/git-2.25.0  
+# ENV GIT_URL=https://github.com/git/git/archive/v2.25.0.tar.gz
+# ENV GIT_ARCHIVE=${TMP}/git-2.25.0.tar.gz
+# RUN curl -L ${GIT_URL} --silent --output "${GIT_ARCHIVE}" && \
+#     tar -C /tmp -xf "${GIT_ARCHIVE}" && \ 
+#     rm "${GIT_ARCHIVE}"
+# RUN cd ${GIT_TMP} && autoconf && ./configure --quiet && \
+#    make -j`nproc --all` 1> build.stdout.log 2> build.stderr.log
 
 
 ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
