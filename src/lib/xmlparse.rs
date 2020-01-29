@@ -1536,7 +1536,7 @@ impl XML_ParserStruct {
         mut dtd: *mut DTD,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
-        let parser = XML_ParserStruct::new(use_namespaces);
+        let mut parser = XML_ParserStruct::new(use_namespaces);
 
         let memsuite = match memsuite {
             Some(m) => *m,
@@ -1546,11 +1546,15 @@ impl XML_ParserStruct {
                 free_fcn: Some(free),
             },
         };
+
+        // NOTE: Parser must have memsuite assigned beforehand or else it cannot deallocate
+        // objects when ExpatBox::try_new_in fails
+        parser.m_mem = memsuite;
+
         let mut parser = match ExpatBox::try_new_in(parser, memsuite) {
             Ok(p) => p,
-            Err(_) => return ptr::null_mut(),
+            Err(()) => return ptr::null_mut(),
         };
-        parser.m_mem = memsuite;
 
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
@@ -1568,7 +1572,6 @@ impl XML_ParserStruct {
             1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
         ) as *mut XML_Char;
         if parser.m_dataBuf.is_null() {
-            FREE!(parser, parser.m_atts as *mut c_void);
             return ptr::null_mut();
         }
         parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
@@ -1577,8 +1580,6 @@ impl XML_ParserStruct {
         } else {
             parser.m_dtd = dtdCreate(&parser.m_mem);
             if parser.m_dtd.is_null() {
-                FREE!(parser, parser.m_dataBuf as *mut c_void);
-                FREE!(parser, parser.m_atts as *mut c_void);
                 return ptr::null_mut();
             }
         }
@@ -1600,7 +1601,6 @@ impl XML_ParserStruct {
         poolInit(&mut parser.m_temp2Pool, &parser.m_mem);
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
-            parser.free();
             return ptr::null_mut();
         }
         if !nameSep.is_null() {
@@ -1975,68 +1975,70 @@ unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML
     }
 }
 
-impl XML_ParserStruct {
+impl Drop for XML_ParserStruct {
     /* Frees memory used by the parser. */
-    pub unsafe extern "C" fn free(mut self: ExpatBox<Self>) {
+    fn drop(&mut self) {
         let mut tagList: *mut TAG = 0 as *mut TAG;
         let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         /* free m_tagStack and m_freeTagList */
         tagList = self.m_tagStack;
-        loop {
-            let mut p: *mut TAG = 0 as *mut TAG;
-            if tagList.is_null() {
-                if self.m_freeTagList.is_null() {
-                    break;
+        unsafe {
+            loop {
+                let mut p: *mut TAG = 0 as *mut TAG;
+                if tagList.is_null() {
+                    if self.m_freeTagList.is_null() {
+                        break;
+                    }
+                    tagList = self.m_freeTagList;
+                    self.m_freeTagList = NULL as *mut TAG
                 }
-                tagList = self.m_freeTagList;
-                self.m_freeTagList = NULL as *mut TAG
+                p = tagList;
+                tagList = (*tagList).parent;
+                FREE!(self, (*p).buf as *mut c_void);
+                destroyBindings((*p).bindings, self);
             }
-            p = tagList;
-            tagList = (*tagList).parent;
-            FREE!(&self, (*p).buf as *mut c_void);
-            destroyBindings((*p).bindings, &mut *self);
-        }
-        /* free m_openInternalEntities and m_freeInternalEntities */
-        entityList = self.m_openInternalEntities;
-        loop {
-            let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
-            if entityList.is_null() {
-                if self.m_freeInternalEntities.is_null() {
-                    break;
+            /* free m_openInternalEntities and m_freeInternalEntities */
+            entityList = self.m_openInternalEntities;
+            loop {
+                let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+                if entityList.is_null() {
+                    if self.m_freeInternalEntities.is_null() {
+                        break;
+                    }
+                    entityList = self.m_freeInternalEntities;
+                    self.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY
                 }
-                entityList = self.m_freeInternalEntities;
-                self.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY
+                openEntity = entityList;
+                entityList = (*entityList).next;
+                FREE!(self, openEntity as *mut c_void);
             }
-            openEntity = entityList;
-            entityList = (*entityList).next;
-            FREE!(&self, openEntity as *mut c_void);
-        }
-        destroyBindings(self.m_freeBindingList, &mut *self);
-        destroyBindings(self.m_inheritedBindings, &mut *self);
-        poolDestroy(&mut self.m_tempPool);
-        poolDestroy(&mut self.m_temp2Pool);
-        FREE!(&self, self.m_protocolEncodingName as *mut c_void);
-        /* external parameter entity parsers share the DTD structure
-        parser->m_dtd with the root parser, so we must not destroy it
-        */
-        if self.m_isParamEntity == 0 && !self.m_dtd.is_null() {
-            /* XML_DTD */
-            dtdDestroy(
-                self.m_dtd,
-                self.m_parentParser.is_null() as XML_Bool,
-                &self.m_mem,
-            );
-        }
-        FREE!(&self, self.m_atts as *mut c_void);
-        FREE!(&self, self.m_groupConnector as *mut c_void);
-        FREE!(&self, self.m_buffer as *mut c_void);
-        FREE!(&self, self.m_dataBuf as *mut c_void);
-        FREE!(&self, self.m_nsAtts as *mut c_void);
-        let _ = self.m_unknownEncoding.take();
-        let _ = self.m_initEncoding.take();
-        if self.m_unknownEncodingRelease.is_some() {
-            self.m_unknownEncodingRelease
-                .expect("non-null function pointer")(self.m_unknownEncodingData);
+            destroyBindings(self.m_freeBindingList, self);
+            destroyBindings(self.m_inheritedBindings, self);
+            poolDestroy(&mut self.m_tempPool);
+            poolDestroy(&mut self.m_temp2Pool);
+            FREE!(self, self.m_protocolEncodingName as *mut c_void);
+            /* external parameter entity parsers share the DTD structure
+            parser->m_dtd with the root parser, so we must not destroy it
+            */
+            if self.m_isParamEntity == 0 && !self.m_dtd.is_null() {
+                /* XML_DTD */
+                dtdDestroy(
+                    self.m_dtd,
+                    self.m_parentParser.is_null() as XML_Bool,
+                    &self.m_mem,
+                );
+            }
+            FREE!(self, self.m_atts as *mut c_void);
+            FREE!(self, self.m_groupConnector as *mut c_void);
+            FREE!(self, self.m_buffer as *mut c_void);
+            FREE!(self, self.m_dataBuf as *mut c_void);
+            FREE!(self, self.m_nsAtts as *mut c_void);
+            let _ = self.m_unknownEncoding.take();
+            let _ = self.m_initEncoding.take();
+            if self.m_unknownEncodingRelease.is_some() {
+                self.m_unknownEncodingRelease
+                    .expect("non-null function pointer")(self.m_unknownEncodingData);
+            }
         }
     }
 }
@@ -2046,9 +2048,7 @@ pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
-    let mut parser = ExpatBox::from_raw_in(parser, (*parser).m_mem);
-
-    parser.free();
+    ExpatBox::from_raw_in(parser, (*parser).m_mem);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
@@ -2870,7 +2870,7 @@ impl XML_ParserStruct {
                             0
                         }) + keep as c_long) as c_ulong,
                     );
-                    FREE!(&self, self.m_buffer as *mut c_void);
+                    FREE!(self, self.m_buffer as *mut c_void);
                     self.m_buffer = newBuf;
                     self.m_bufferEnd = self
                         .m_buffer
