@@ -916,10 +916,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 buf = buf.inc_start((self.MINBPC()) as isize);
                 REQUIRE_CHAR!(buf, self);
                 if self.char_matches(buf.as_ptr(), ASCII_RSQB) {
+                    let prev_buf = buf.clone();
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     REQUIRE_CHAR!(buf, self);
                     if !self.char_matches(buf.as_ptr(), ASCII_GT) {
-                        buf = buf.dec_end(self.MINBPC() as usize);
+                        buf = prev_buf;
                     } else {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
                         return XML_TOK_CDATA_SECT_CLOSE
@@ -1009,12 +1010,13 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     return XML_TOK_TRAILING_RSQB
                 }
                 if self.char_matches(buf.as_ptr(), ASCII_RSQB) {
+                    let prev_buf = buf.clone();
                     buf = buf.inc_start(self.MINBPC() as isize);
                     if !HAS_CHAR!(buf, self) {
                         return XML_TOK_TRAILING_RSQB
                     }
                     if !self.char_matches(buf.as_ptr(), ASCII_GT) {
-                        buf = buf.dec_end(self.MINBPC() as usize)
+                        buf = prev_buf;
                     } else { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
                 }
             }
@@ -1162,7 +1164,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 if self.char_matches(buf.as_ptr(), ASCII_RSQB) {
                     REQUIRE_CHARS!(buf, 2, self);
                     if self.char_matches(buf.as_ptr().offset(self.MINBPC()), ASCII_GT) {
-                        *nextTokPtr = &buf[2 * self.MINBPC() as usize];
+                        *nextTokPtr = buf.as_ptr().offset(2 * self.MINBPC());
                         return XML_TOK_COND_SECT_CLOSE
                     }
                 }
