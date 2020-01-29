@@ -7,6 +7,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "484f71e69fc01231c3d44f939440e2fbcc0935146bad4c44cec187337952e522"
 
 [[package]]
+name = "bencher"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dfdb4953a096c551ce9ace855a604d702e6e62d77fac690575ae347571717f5"
+
+[[package]]
 name = "libc"
 version = "0.2.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -46,6 +52,7 @@ name = "rexpat"
 version = "0.0.0"
 dependencies = [
  "alloc-wg",
+ "bencher",
  "libc",
  "wchar",
 ]

@@ -22,10 +22,16 @@ name = "runtests"
 path = "src/tests/benchmark.rs"
 name = "benchmark"
 
+[[bench]]
+path = "src/tests/benchmark.rs"
+name = "benchmark"
+harness = false
+
 [dependencies]
 libc = "0.2"
 alloc-wg = "0.7"
 wchar = { path = "deps/wchar", optional = true }
+bencher = "0.1"
 
 [features]
 unicode = []
