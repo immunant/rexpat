@@ -128,6 +128,19 @@ use alloc_wg::boxed::Box;
 use std::collections::{hash_map, HashMap};
 use std::ptr::{self, NonNull};
 
+impl STRING_POOL {
+    #[inline]
+    unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
+        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+            false
+        } else {
+            *self.ptr = c;
+            self.ptr = self.ptr.offset(1);
+            true
+        }
+    }
+}
+
 trait XmlHandlers {
     fn hasAttlistDecl(&self) -> bool;
     fn hasCharacterData(&self) -> bool;
@@ -739,225 +752,6 @@ impl STRING_POOL {
             mem: ptr::null(),
         }
     }
-
-    unsafe fn clear(&mut self) {
-        if self.freeBlocks.is_null() {
-            self.freeBlocks = self.blocks
-        } else {
-            let mut p: *mut BLOCK = self.blocks;
-            while !p.is_null() {
-                let mut tem: *mut BLOCK = (*p).next;
-                (*p).next = self.freeBlocks;
-                self.freeBlocks = p;
-                p = tem
-            }
-        }
-        self.blocks = NULL as *mut BLOCK;
-        self.start = NULL as *mut XML_Char;
-        self.ptr = NULL as *mut XML_Char;
-        self.end = NULL as *const XML_Char;
-    }
-
-    unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
-        if self.append(enc, ptr, end).is_null() {
-            return NULL as *mut XML_Char;
-        }
-        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
-            return NULL as *mut XML_Char;
-        }
-        let fresh81 = self.ptr;
-        self.ptr = self.ptr.offset(1);
-        *fresh81 = 0;
-        self.start
-    }
-
-    unsafe fn grow(&mut self) -> XML_Bool {
-        if !self.freeBlocks.is_null() {
-            if self.start.is_null() {
-                self.blocks = self.freeBlocks;
-                self.freeBlocks = (*self.freeBlocks).next;
-                (*self.blocks).next = NULL as *mut block;
-                self.start = (*self.blocks).s.as_mut_ptr();
-                self.end = self.start.offset((*self.blocks).size as isize);
-                self.ptr = self.start;
-                return XML_TRUE;
-            }
-            if (self.end.wrapping_offset_from(self.start) as c_long)
-                < (*self.freeBlocks).size as c_long
-            {
-                let mut tem: *mut BLOCK = (*self.freeBlocks).next;
-                (*self.freeBlocks).next = self.blocks;
-                self.blocks = self.freeBlocks;
-                self.freeBlocks = tem;
-                memcpy(
-                    (*self.blocks).s.as_mut_ptr() as *mut c_void,
-                    self.start as *const c_void,
-                    (self.end.wrapping_offset_from(self.start) as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                );
-                self.ptr = (*self.blocks)
-                    .s
-                    .as_mut_ptr()
-                    .offset(self.ptr.wrapping_offset_from(self.start));
-                self.start = (*self.blocks).s.as_mut_ptr();
-                self.end = self.start.offset((*self.blocks).size as isize);
-                return XML_TRUE;
-            }
-        }
-        if !self.blocks.is_null() && self.start == (*self.blocks).s.as_mut_ptr() {
-            let mut temp: *mut BLOCK = 0 as *mut BLOCK;
-            let mut blockSize: c_int =
-                (self.end.wrapping_offset_from(self.start) as c_uint).wrapping_mul(2u32) as c_int;
-            let mut bytesToAllocate: size_t = 0;
-            /* NOTE: Needs to be calculated prior to calling `realloc`
-            to avoid dangling pointers: */
-            let offsetInsideBlock: ptrdiff_t =
-                self.ptr.wrapping_offset_from(self.start) as c_long;
-            if blockSize < 0 {
-                /* This condition traps a situation where either more than
-                 * INT_MAX/2 bytes have already been allocated.  This isn't
-                 * readily testable, since it is unlikely that an average
-                 * machine will have that much memory, so we exclude it from the
-                 * coverage statistics.
-                 */
-                return XML_FALSE;
-                /* LCOV_EXCL_LINE */
-            }
-            bytesToAllocate = poolBytesToAllocateFor(blockSize);
-            if bytesToAllocate == 0 {
-                return XML_FALSE;
-            }
-            temp = (*self.mem)
-                .realloc_fcn
-                .expect("non-null function pointer")(
-                self.blocks as *mut c_void,
-                bytesToAllocate as c_uint as size_t,
-            ) as *mut BLOCK;
-            if temp.is_null() {
-                return XML_FALSE;
-            }
-            self.blocks = temp;
-            (*self.blocks).size = blockSize;
-            self.ptr = (*self.blocks)
-                .s
-                .as_mut_ptr()
-                .offset(offsetInsideBlock as isize);
-            self.start = (*self.blocks).s.as_mut_ptr();
-            self.end = self.start.offset(blockSize as isize)
-        } else {
-            let mut tem_0: *mut BLOCK = 0 as *mut BLOCK;
-            let mut blockSize_0: c_int = self.end.wrapping_offset_from(self.start) as c_int;
-            let mut bytesToAllocate_0: size_t = 0;
-            if blockSize_0 < 0 {
-                /* This condition traps a situation where either more than
-                 * INT_MAX bytes have already been allocated (which is prevented
-                 * by various pieces of program logic, not least this one, never
-                 * mind the unlikelihood of actually having that much memory) or
-                 * the pool control fields have been corrupted (which could
-                 * conceivably happen in an extremely buggy user handler
-                 * function).  Either way it isn't readily testable, so we
-                 * exclude it from the coverage statistics.
-                 */
-                return XML_FALSE;
-                /* LCOV_EXCL_LINE */
-            }
-            if blockSize_0 < INIT_BLOCK_SIZE {
-                blockSize_0 = INIT_BLOCK_SIZE
-            } else {
-                /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-                if ((blockSize_0 as c_uint).wrapping_mul(2u32) as c_int) < 0 {
-                    return XML_FALSE;
-                } /* save one level of indirection */
-                blockSize_0 *= 2
-            } /* save one level of indirection */
-            bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0); /* save one level of indirection */
-            if bytesToAllocate_0 == 0 {
-                return XML_FALSE;
-            } /* save one level of indirection */
-            tem_0 = (*self.mem)
-                .malloc_fcn
-                .expect("non-null function pointer")(bytesToAllocate_0) as *mut BLOCK;
-            if tem_0.is_null() {
-                return XML_FALSE;
-            }
-            (*tem_0).size = blockSize_0;
-            (*tem_0).next = self.blocks;
-            self.blocks = tem_0;
-            if self.ptr != self.start {
-                memcpy(
-                    (*tem_0).s.as_mut_ptr() as *mut c_void,
-                    self.start as *const c_void,
-                    (self.ptr.wrapping_offset_from(self.start) as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                );
-            }
-            self.ptr = (*tem_0)
-                .s
-                .as_mut_ptr()
-                .offset(self.ptr.wrapping_offset_from(self.start));
-            self.start = (*tem_0).s.as_mut_ptr();
-            self.end = (*tem_0).s.as_mut_ptr().offset(blockSize_0 as isize)
-        }
-        XML_TRUE
-    }
-
-    unsafe extern "C" fn append(
-        &mut self,
-        enc: &ENCODING,
-        mut ptr: *const c_char,
-        end: *const c_char,
-    ) -> *mut XML_Char {
-        if self.ptr.is_null() && self.grow() == 0 {
-            return NULL as *mut XML_Char;
-        }
-        loop {
-            let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
-                enc,
-                &mut ptr,
-                end,
-                &mut self.ptr as *mut *mut _ as *mut *mut ICHAR,
-                self.end as *mut ICHAR,
-            );
-            if convert_res == super::xmltok::XML_CONVERT_COMPLETED
-                || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
-            {
-                break;
-            }
-            if self.grow() == 0 {
-                return NULL as *mut XML_Char;
-            }
-        }
-        self.start
-    }
-
-    unsafe extern "C" fn appendString(&mut self, mut s: *const XML_Char) -> *const XML_Char {
-        while *s != 0 {
-            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
-                0
-            } else {
-                let fresh80 = self.ptr;
-                self.ptr = self.ptr.offset(1);
-                *fresh80 = *s;
-                1
-            } == 0
-            {
-                return NULL as *const XML_Char;
-            }
-            s = s.offset(1)
-        }
-        self.start
-    }
-
-    #[inline]
-    unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
-        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
-            false
-        } else {
-            *self.ptr = c;
-            self.ptr = self.ptr.offset(1);
-            true
-        }
-    }
 }
 
 pub type BLOCK = block;
@@ -1370,11 +1164,11 @@ pub type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> XML_Parser {
-    return XML_ParserCreate_MM(
+    XML_ParserCreate_MM(
         encodingName,
         None,
         NULL as *const XML_Char,
-    );
+    )
 }
 /* Constructs a new parser and namespace processor.  Element type
    names and attribute names that belong to a namespace will be
@@ -1394,11 +1188,11 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
 ) -> XML_Parser {
     let mut tmp: [XML_Char; 2] = [0; 2];
     tmp[0] = nsSep;
-    return XML_ParserCreate_MM(
+    XML_ParserCreate_MM(
         encodingName,
         None,
         tmp.as_mut_ptr(),
-    );
+    )
 }
 
 const implicitContext: [XML_Char; 41] = [
@@ -1599,6 +1393,30 @@ unsafe extern "C" fn generate_hash_secret_salt(mut _parser: XML_Parser) -> c_ulo
     };
 }
 
+impl XML_ParserStruct {
+    unsafe fn get_hash_secret_salt(&mut self) -> c_ulong {
+        if !self.m_parentParser.is_null() {
+            return (*self.m_parentParser).get_hash_secret_salt();
+        }
+        self.m_hash_secret_salt
+    }
+
+    /* only valid for root parser */
+    unsafe fn startParsing(&mut self) -> XML_Bool {
+        /* hash functions must be initialized before setContext() is called */
+        if self.m_hash_secret_salt == 0u64 {
+            self.m_hash_secret_salt = generate_hash_secret_salt(self)
+        }
+        if self.m_ns != 0 {
+            /* implicit context only set for root parser, since child
+               parsers (i.e. external entity parsers) will inherit it
+            */
+            return setContext(self, implicitContext.as_ptr());
+        }
+        XML_TRUE
+    }
+}
+
 /* Constructs a new parser using the memory management suite referred to
    by memsuite. If memsuite is NULL, then use the standard library memory
    suite. If namespaceSeparator is non-NULL it creates a parser with
@@ -1750,7 +1568,6 @@ impl XML_ParserStruct {
             1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
         ) as *mut XML_Char;
         if parser.m_dataBuf.is_null() {
-            FREE!(parser, parser.m_atts as *mut c_void);
             return ptr::null_mut();
         }
         parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
@@ -1759,8 +1576,6 @@ impl XML_ParserStruct {
         } else {
             parser.m_dtd = dtdCreate(&parser.m_mem);
             if parser.m_dtd.is_null() {
-                FREE!(parser, parser.m_dataBuf as *mut c_void);
-                FREE!(parser, parser.m_atts as *mut c_void);
                 return ptr::null_mut();
             }
         }
@@ -1797,7 +1612,7 @@ impl XML_ParserStruct {
         ExpatBox::into_raw(parser)
     }
 
-    unsafe extern "C" fn init(&mut self, mut encodingName: *const XML_Char) {
+    unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
         self.m_processor = Some(prologInitProcessor as Processor);
         super::xmlrole::XmlPrologStateInit(&mut self.m_prologState as *mut _);
         if !encodingName.is_null() {
@@ -1853,15 +1668,27 @@ impl XML_ParserStruct {
         self.m_hash_secret_salt = 0u64;
     }
 
-    /* Prepare a parser object to be re-used.  This is particularly
-       valuable when memory allocation overhead is disproportionately high,
-       such as when a large number of small documnents need to be parsed.
-       All handlers are cleared from the parser, except for the
-       unknownEncodingHandler. The parser's external state is re-initialized
-       except for the values of ns and ns_triplets.
+    /* moves list of bindings to m_freeBindingList */
+    unsafe fn moveToFreeBindingList(&mut self, mut bindings: *mut BINDING) {
+        while !bindings.is_null() {
+            let mut b: *mut BINDING = bindings;
+            bindings = (*bindings).nextTagBinding;
+            (*b).nextTagBinding = self.m_freeBindingList;
+            self.m_freeBindingList = b
+        }
+    }
+}
 
-       Added in Expat 1.95.3.
-    */
+/* Prepare a parser object to be re-used.  This is particularly
+   valuable when memory allocation overhead is disproportionately high,
+   such as when a large number of small documnents need to be parsed.
+   All handlers are cleared from the parser, except for the
+   unknownEncodingHandler. The parser's external state is re-initialized
+   except for the values of ns and ns_triplets.
+
+   Added in Expat 1.95.3.
+*/
+impl XML_ParserStruct {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
         let mut tStk: *mut TAG = 0 as *mut TAG;
         let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
@@ -1900,7 +1727,252 @@ impl XML_ParserStruct {
         dtdReset(self.m_dtd, &self.m_mem);
         XML_TRUE
     }
+}
 
+#[no_mangle]
+pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *const XML_Char) -> XML_Bool {
+    if parser.is_null() {
+        return XML_FALSE;
+    }
+    (*parser).reset(encodingName)
+}
+/* Returns the last value set by XML_SetUserData or NULL. */
+/* This is equivalent to supplying an encoding argument to
+   XML_ParserCreate. On success XML_SetEncoding returns non-zero,
+   zero otherwise.
+   Note: Calling XML_SetEncoding after XML_Parse or XML_ParseBuffer
+     has no effect and returns XML_STATUS_ERROR.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEncoding(
+    mut parser: XML_Parser,
+    mut encodingName: *const XML_Char,
+) -> XML_Status {
+    if parser.is_null() {
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+    /* Block after XML_Parse()/XML_ParseBuffer() has been called.
+       XXX There's no way for the caller to determine which of the
+       XXX possible error cases caused the XML_STATUS_ERROR return.
+    */
+    if (*parser).m_parsingStatus.parsing == XML_PARSING
+        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    {
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+
+    /* Get rid of any previous encoding name */
+    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
+    if encodingName.is_null() {
+        /* No new encoding name */
+        (*parser).m_protocolEncodingName = NULL as *const XML_Char
+    } else {
+        /* Copy the new encoding name into allocated memory */
+        (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem);
+        if (*parser).m_protocolEncodingName.is_null() {
+            return XML_STATUS_ERROR_0 as XML_Status;
+        }
+    }
+    XML_STATUS_OK_0 as XML_Status
+}
+/* Creates an XML_Parser object that can parse an external general
+   entity; context is a '\0'-terminated string specifying the parse
+   context; encoding is a '\0'-terminated string giving the name of
+   the externally specified encoding, or NULL if there is no
+   externally specified encoding.  The context string consists of a
+   sequence of tokens separated by formfeeds (\f); a token consisting
+   of a name specifies that the general entity of the name is open; a
+   token of the form prefix=uri specifies the namespace for a
+   particular prefix; a token of the form =uri specifies the default
+   namespace.  This can be called at any point after the first call to
+   an ExternalEntityRefHandler so longer as the parser has not yet
+   been freed.  The new parser is completely independent and may
+   safely be used in a separate thread.  The handlers and userData are
+   initialized from the parser argument.  Returns NULL if out of memory.
+   Otherwise returns a new XML_Parser object.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
+    mut oldParser: XML_Parser,
+    mut context: *const XML_Char,
+    mut encodingName: *const XML_Char,
+) -> XML_Parser {
+    let mut parser: XML_Parser = oldParser;
+    let mut newDtd: *mut DTD = NULL as *mut DTD;
+    let mut oldDtd: *mut DTD = 0 as *mut DTD;
+    let mut oldStartElementHandler: XML_StartElementHandler = None;
+    let mut oldEndElementHandler: XML_EndElementHandler = None;
+    let mut oldCharacterDataHandler: XML_CharacterDataHandler = None;
+    let mut oldProcessingInstructionHandler: XML_ProcessingInstructionHandler = None;
+    let mut oldCommentHandler: XML_CommentHandler = None;
+    let mut oldStartCdataSectionHandler: XML_StartCdataSectionHandler = None;
+    let mut oldEndCdataSectionHandler: XML_EndCdataSectionHandler = None;
+    let mut oldDefaultHandler: XML_DefaultHandler = None;
+    let mut oldUnparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler = None;
+    let mut oldNotationDeclHandler: XML_NotationDeclHandler = None;
+    let mut oldStartNamespaceDeclHandler: XML_StartNamespaceDeclHandler = None;
+    let mut oldEndNamespaceDeclHandler: XML_EndNamespaceDeclHandler = None;
+    let mut oldNotStandaloneHandler: XML_NotStandaloneHandler = None;
+    let mut oldExternalEntityRefHandler: XML_ExternalEntityRefHandler = None;
+    let mut oldSkippedEntityHandler: XML_SkippedEntityHandler = None;
+    let mut oldUnknownEncodingHandler: XML_UnknownEncodingHandler = None;
+    let mut oldElementDeclHandler: XML_ElementDeclHandler = None;
+    let mut oldAttlistDeclHandler: XML_AttlistDeclHandler = None;
+    let mut oldEntityDeclHandler: XML_EntityDeclHandler = None;
+    let mut oldXmlDeclHandler: XML_XmlDeclHandler = None;
+    let mut oldDeclElementType: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
+    let mut oldUserData: *mut c_void = 0 as *mut c_void;
+    let mut oldHandlerArg: *mut c_void = 0 as *mut c_void;
+    let mut oldDefaultExpandInternalEntities: XML_Bool = 0;
+    let mut oldExternalEntityRefHandlerArg: XML_Parser = 0 as *mut XML_ParserStruct;
+    let mut oldParamEntityParsing: XML_ParamEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+    let mut oldInEntityValue: c_int = 0;
+    let mut oldns_triplets: XML_Bool = 0;
+    /* Note that the new parser shares the same hash secret as the old
+       parser, so that dtdCopy and copyEntityTable can lookup values
+       from hash tables associated with either parser without us having
+       to worry which hash secrets each table has.
+    */
+    let mut oldhash_secret_salt: c_ulong = 0;
+    /* Validate the oldParser parameter before we pull everything out of it */
+    if oldParser.is_null() {
+        return NULL as XML_Parser;
+    }
+    /* Stash the original parser contents on the stack */
+    oldDtd = (*parser).m_dtd;
+    // TODO: Maybe just copy/clone the handler struct?
+    oldStartElementHandler = (*parser).m_handlers.m_startElementHandler;
+    oldEndElementHandler = (*parser).m_handlers.m_endElementHandler;
+    oldCharacterDataHandler = (*parser).m_handlers.m_characterDataHandler;
+    oldProcessingInstructionHandler = (*parser).m_handlers.m_processingInstructionHandler;
+    oldCommentHandler = (*parser).m_handlers.m_commentHandler;
+    oldStartCdataSectionHandler = (*parser).m_handlers.m_startCdataSectionHandler;
+    oldEndCdataSectionHandler = (*parser).m_handlers.m_endCdataSectionHandler;
+    oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
+    oldUnparsedEntityDeclHandler = (*parser).m_handlers.m_unparsedEntityDeclHandler;
+    oldNotationDeclHandler = (*parser).m_handlers.m_notationDeclHandler;
+    oldStartNamespaceDeclHandler = (*parser).m_handlers.m_startNamespaceDeclHandler;
+    oldEndNamespaceDeclHandler = (*parser).m_handlers.m_endNamespaceDeclHandler;
+    oldNotStandaloneHandler = (*parser).m_handlers.m_notStandaloneHandler;
+    oldExternalEntityRefHandler = (*parser).m_handlers.m_externalEntityRefHandler;
+    oldSkippedEntityHandler = (*parser).m_handlers.m_skippedEntityHandler;
+    oldUnknownEncodingHandler = (*parser).m_handlers.m_unknownEncodingHandler;
+    oldElementDeclHandler = (*parser).m_handlers.m_elementDeclHandler;
+    oldAttlistDeclHandler = (*parser).m_handlers.m_attlistDeclHandler;
+    oldEntityDeclHandler = (*parser).m_handlers.m_entityDeclHandler;
+    oldXmlDeclHandler = (*parser).m_handlers.m_xmlDeclHandler;
+    oldDeclElementType = (*parser).m_declElementType;
+    oldUserData = (*parser).m_userData;
+    oldHandlerArg = (*parser).m_handlers.m_handlerArg;
+    oldDefaultExpandInternalEntities = (*parser).m_defaultExpandInternalEntities;
+    oldExternalEntityRefHandlerArg = (*parser).m_handlers.m_externalEntityRefHandlerArg;
+    oldParamEntityParsing = (*parser).m_paramEntityParsing;
+    oldInEntityValue = (*parser).m_prologState.inEntityValue;
+    oldns_triplets = (*parser).m_ns_triplets;
+    /* Note that the new parser shares the same hash secret as the old
+       parser, so that dtdCopy and copyEntityTable can lookup values
+       from hash tables associated with either parser without us having
+       to worry which hash secrets each table has.
+    */
+    oldhash_secret_salt = (*parser).m_hash_secret_salt;
+    if context.is_null() {
+        newDtd = oldDtd
+    }
+    /* XML_DTD */
+    /* Note that the magical uses of the pre-processor to make field
+       access look more like C++ require that `parser' be overwritten
+       here.  This makes this function more painful to follow than it
+       would be otherwise.
+    */
+    if (*parser).m_ns != 0 {
+        let mut tmp: [XML_Char; 2] = [0; 2];
+        *tmp.as_mut_ptr() = (*parser).m_namespaceSeparator;
+        parser = XML_ParserStruct::create(encodingName, Some(&(*parser).m_mem), tmp.as_mut_ptr(), newDtd)
+    } else {
+        parser = XML_ParserStruct::create(
+            encodingName,
+            Some(&(*parser).m_mem),
+            NULL as *const XML_Char,
+            newDtd,
+        )
+    }
+    if parser.is_null() {
+        return NULL as XML_Parser;
+    }
+    (*parser).m_handlers.setStartElement(oldStartElementHandler);
+    (*parser).m_handlers.setEndElement(oldEndElementHandler);
+    (*parser).m_handlers.setCharacterData(oldCharacterDataHandler);
+    (*parser).m_handlers.setProcessingInstruction(oldProcessingInstructionHandler);
+    (*parser).m_handlers.setComment(oldCommentHandler);
+    (*parser).m_handlers.setStartCDataSection(oldStartCdataSectionHandler);
+    (*parser).m_handlers.setEndCDataSection(oldEndCdataSectionHandler);
+    (*parser).m_handlers.setDefault(oldDefaultHandler);
+    (*parser).m_handlers.setUnparsedEntityDecl(oldUnparsedEntityDeclHandler);
+    (*parser).m_handlers.setNotationDecl(oldNotationDeclHandler);
+    (*parser).m_handlers.setStartNamespaceDecl(oldStartNamespaceDeclHandler);
+    (*parser).m_handlers.setEndNamespaceDecl(oldEndNamespaceDeclHandler);
+    (*parser).m_handlers.setNotStandalone(oldNotStandaloneHandler);
+    (*parser).m_handlers.setExternalEntityRef(oldExternalEntityRefHandler);
+    (*parser).m_handlers.setSkippedEntity(oldSkippedEntityHandler);
+    (*parser).m_handlers.setUnknownEncoding(oldUnknownEncodingHandler);
+    (*parser).m_handlers.setElementDecl(oldElementDeclHandler);
+    (*parser).m_handlers.setAttlistDecl(oldAttlistDeclHandler);
+    (*parser).m_handlers.setEntityDecl(oldEntityDeclHandler);
+    (*parser).m_handlers.setXmlDecl(oldXmlDeclHandler);
+    (*parser).m_declElementType = oldDeclElementType;
+    (*parser).m_userData = oldUserData;
+    if oldUserData == oldHandlerArg {
+        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
+    } else {
+        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
+    }
+    if oldExternalEntityRefHandlerArg != oldParser {
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
+    }
+    (*parser).m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
+    (*parser).m_ns_triplets = oldns_triplets;
+    (*parser).m_hash_secret_salt = oldhash_secret_salt;
+    (*parser).m_parentParser = oldParser;
+    (*parser).m_paramEntityParsing = oldParamEntityParsing;
+    (*parser).m_prologState.inEntityValue = oldInEntityValue;
+    if !context.is_null() {
+        /* XML_DTD */
+        if dtdCopy(oldParser, (*parser).m_dtd, oldDtd, &(*parser).m_mem) == 0
+            || setContext(parser, context) == 0
+        {
+            XML_ParserFree(parser);
+            return NULL as XML_Parser;
+        }
+        (*parser).m_processor = Some(externalEntityInitProcessor as Processor)
+    } else {
+        /* The DTD instance referenced by parser->m_dtd is shared between the
+           document's root parser and external PE parsers, therefore one does not
+           need to call setContext. In addition, one also *must* not call
+           setContext, because this would overwrite existing prefix->binding
+           pointers in parser->m_dtd with ones that get destroyed with the external
+           PE parser. This would leave those prefixes with dangling pointers.
+        */
+        (*parser).m_isParamEntity = XML_TRUE;
+        super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
+        (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
+    }
+    /* XML_DTD */
+    parser
+}
+
+unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
+    loop {
+        let mut b: *mut BINDING = bindings;
+        if b.is_null() {
+            break;
+        }
+        bindings = (*b).nextTagBinding;
+        FREE!(parser, (*b).uri as *mut c_void);
+        FREE!(parser, b as *mut c_void);
+    }
+}
+
+impl XML_ParserStruct {
     /* Frees memory used by the parser. */
     pub unsafe extern "C" fn free(mut self: ExpatBox<Self>) {
         let mut tagList: *mut TAG = 0 as *mut TAG;
@@ -1964,18 +2036,523 @@ impl XML_ParserStruct {
                 .expect("non-null function pointer")(self.m_unknownEncodingData);
         }
     }
+}
 
-    /* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
-       detected.  The last call to XML_Parse must have isFinal true; len
-       may be zero for this call (or any other).
+#[no_mangle]
+pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
+    if parser.is_null() {
+        return;
+    }
+    let mut parser = ExpatBox::from_raw_in(parser, (*parser).m_mem);
 
-       Though the return values for these functions has always been
-       described as a Boolean value, the implementation, at least for the
-       1.95.x series, has always returned exactly one of the XML_Status
-       values.
-    */
-    #[no_mangle]
-    pub unsafe extern "C" fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
+    parser.free();
+}
+/* If this function is called, then the parser will be passed as the
+   first argument to callbacks instead of userData.  The userData will
+   still be accessible using XML_GetUserData.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
+    if !parser.is_null() {
+        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
+    };
+}
+/* If useDTD == XML_TRUE is passed to this function, then the parser
+   will assume that there is an external subset, even if none is
+   specified in the document. In such a case the parser will call the
+   externalEntityRefHandler with a value of NULL for the systemId
+   argument (the publicId and context arguments will be NULL as well).
+   Note: For the purpose of checking WFC: Entity Declared, passing
+     useDTD == XML_TRUE will make the parser behave as if the document
+     had a DTD with an external subset.
+   Note: If this function is called, then this must be done before
+     the first call to XML_Parse or XML_ParseBuffer, since it will
+     have no effect after that.  Returns
+     XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING.
+   Note: If the document does not have a DOCTYPE declaration at all,
+     then startDoctypeDeclHandler and endDoctypeDeclHandler will not
+     be called, despite an external subset being parsed.
+   Note: If XML_DTD is not defined when Expat is compiled, returns
+     XML_ERROR_FEATURE_REQUIRES_XML_DTD.
+   Note: If parser == NULL, returns XML_ERROR_INVALID_ARGUMENT.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_UseForeignDTD(
+    mut parser: XML_Parser,
+    mut useDTD: XML_Bool,
+) -> XML_Error {
+    if parser.is_null() {
+        return XML_ERROR_INVALID_ARGUMENT;
+    }
+    /* block after XML_Parse()/XML_ParseBuffer() has been called */
+    if (*parser).m_parsingStatus.parsing == XML_PARSING
+        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    {
+        return XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
+    }
+    (*parser).m_useForeignDTD = useDTD;
+    XML_ERROR_NONE
+}
+/* If do_nst is non-zero, and namespace processing is in effect, and
+   a name has a prefix (i.e. an explicit namespace qualifier) then
+   that name is returned as a triplet in a single string separated by
+   the separator character specified when the parser was created: URI
+   + sep + local_name + sep + prefix.
+
+   If do_nst is zero, then namespace information is returned in the
+   default manner (URI + sep + local_name) whether or not the name
+   has a prefix.
+
+   Note: Calling XML_SetReturnNSTriplet after XML_Parse or
+     XML_ParseBuffer has no effect.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: XML_Bool) {
+    if parser.is_null() {
+        return;
+    }
+    /* block after XML_Parse()/XML_ParseBuffer() has been called */
+    if (*parser).m_parsingStatus.parsing == XML_PARSING
+        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    {
+        return;
+    }
+    (*parser).m_ns_triplets = if do_nst != 0 { XML_TRUE } else { XML_FALSE };
+}
+/* This value is passed as the userData argument to callbacks. */
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_void) {
+    if parser.is_null() {
+        return;
+    }
+    if (*parser).m_handlers.m_handlerArg == (*parser).m_userData {
+        (*parser).m_userData = p;
+        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
+    } else {
+        (*parser).m_userData = p
+    };
+}
+/* Sets the base to be used for resolving relative URIs in system
+   identifiers in declarations.  Resolving relative identifiers is
+   left to the application: this value will be passed through as the
+   base argument to the XML_ExternalEntityRefHandler,
+   XML_NotationDeclHandler and XML_UnparsedEntityDeclHandler. The base
+   argument will be copied.  Returns XML_STATUS_ERROR if out of memory,
+   XML_STATUS_OK otherwise.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
+    if parser.is_null() {
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+    if !p.is_null() {
+        p = poolCopyString(&mut (*(*parser).m_dtd).pool, p);
+        if p.is_null() {
+            return XML_STATUS_ERROR_0 as XML_Status;
+        }
+        (*parser).m_curBase = p
+    } else {
+        (*parser).m_curBase = NULL as *const XML_Char
+    }
+    XML_STATUS_OK_0 as XML_Status
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
+    if parser.is_null() {
+        return NULL as *const XML_Char;
+    }
+    (*parser).m_curBase
+}
+/* Returns the number of the attribute/value pairs passed in last call
+   to the XML_StartElementHandler that were specified in the start-tag
+   rather than defaulted. Each attribute/value pair counts as 2; thus
+   this correspondds to an index into the atts array passed to the
+   XML_StartElementHandler.  Returns -1 if parser == NULL.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) -> c_int {
+    if parser.is_null() {
+        return -(1i32);
+    }
+    (*parser).m_nSpecifiedAtts
+}
+/* Returns the index of the ID attribute passed in the last call to
+   XML_StartElementHandler, or -1 if there is no ID attribute or
+   parser == NULL.  Each attribute/value pair counts as 2; thus this
+   correspondds to an index into the atts array passed to the
+   XML_StartElementHandler.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetIdAttributeIndex(mut parser: XML_Parser) -> c_int {
+    if parser.is_null() {
+        return -(1i32);
+    }
+    (*parser).m_idAttIndex
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetElementHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartElementHandler,
+    mut end: XML_EndElementHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setStartElement(start);
+    (*parser).m_handlers.setEndElement(end);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetStartElementHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartElementHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setStartElement(start)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEndElementHandler(
+    mut parser: XML_Parser,
+    mut end: XML_EndElementHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setEndElement(end)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetCharacterDataHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_CharacterDataHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setCharacterData(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_ProcessingInstructionHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setProcessingInstruction(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetCommentHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_CommentHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setComment(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetCdataSectionHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartCdataSectionHandler,
+    mut end: XML_EndCdataSectionHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setStartCDataSection(start);
+    (*parser).m_handlers.setEndCDataSection(end);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartCdataSectionHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setStartCDataSection(start);
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
+    mut parser: XML_Parser,
+    mut end: XML_EndCdataSectionHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setEndCDataSection(end)
+    };
+}
+/* This sets the default handler and also inhibits expansion of
+   internal entities. These entity references will be passed to the
+   default handler, or to the skipped entity handler, if one is set.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetDefaultHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_DefaultHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setDefault(handler);
+    (*parser).m_defaultExpandInternalEntities = XML_FALSE;
+}
+/* This sets the default handler but does not inhibit expansion of
+   internal entities.  The entity reference will not be passed to the
+   default handler.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
+    mut parser: XML_Parser,
+    mut handler: XML_DefaultHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setDefault(handler);
+    (*parser).m_defaultExpandInternalEntities = XML_TRUE;
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartDoctypeDeclHandler,
+    mut end: XML_EndDoctypeDeclHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setStartDoctypeDecl(start);
+    (*parser).m_handlers.setEndDoctypeDecl(end);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartDoctypeDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setStartDoctypeDecl(start)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
+    mut parser: XML_Parser,
+    mut end: XML_EndDoctypeDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setEndDoctypeDecl(end)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_UnparsedEntityDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setUnparsedEntityDecl(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetNotationDeclHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_NotationDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setNotationDecl(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartNamespaceDeclHandler,
+    mut end: XML_EndNamespaceDeclHandler,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setStartNamespaceDecl(start);
+    (*parser).m_handlers.setEndNamespaceDecl(end);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
+    mut parser: XML_Parser,
+    mut start: XML_StartNamespaceDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setStartNamespaceDecl(start)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
+    mut parser: XML_Parser,
+    mut end: XML_EndNamespaceDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setEndNamespaceDecl(end)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_NotStandaloneHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setNotStandalone(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_ExternalEntityRefHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setExternalEntityRef(handler)
+    };
+}
+/* If a non-NULL value for arg is specified here, then it will be
+   passed as the first argument to the external entity ref handler
+   instead of the parser object.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
+    mut parser: XML_Parser,
+    mut arg: *mut c_void,
+) {
+    if parser.is_null() {
+        return;
+    }
+    if !arg.is_null() {
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = arg as XML_Parser
+    } else {
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = parser
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_SkippedEntityHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setSkippedEntity(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_UnknownEncodingHandler,
+    mut data: *mut c_void,
+) {
+    if parser.is_null() {
+        return;
+    }
+    (*parser).m_handlers.setUnknownEncoding(handler);
+    (*parser).m_handlers.m_unknownEncodingHandlerData = data;
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetElementDeclHandler(
+    mut parser: XML_Parser,
+    mut eldecl: XML_ElementDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setElementDecl(eldecl)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
+    mut parser: XML_Parser,
+    mut attdecl: XML_AttlistDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setAttlistDecl(attdecl)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetEntityDeclHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_EntityDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setEntityDecl(handler)
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetXmlDeclHandler(
+    mut parser: XML_Parser,
+    mut handler: XML_XmlDeclHandler,
+) {
+    if !parser.is_null() {
+        (*parser).m_handlers.setXmlDecl(handler)
+    };
+}
+/* Controls parsing of parameter entities (including the external DTD
+   subset). If parsing of parameter entities is enabled, then
+   references to external parameter entities (including the external
+   DTD subset) will be passed to the handler set with
+   XML_SetExternalEntityRefHandler.  The context passed will be 0.
+
+   Unlike external general entities, external parameter entities can
+   only be parsed synchronously.  If the external parameter entity is
+   to be parsed, it must be parsed during the call to the external
+   entity ref handler: the complete sequence of
+   XML_ExternalEntityParserCreate, XML_Parse/XML_ParseBuffer and
+   XML_ParserFree calls must be made during this call.  After
+   XML_ExternalEntityParserCreate has been called to create the parser
+   for the external parameter entity (context must be 0 for this
+   call), it is illegal to make any calls on the old parser until
+   XML_ParserFree has been called on the newly created parser.
+   If the library has been compiled without support for parameter
+   entity parsing (ie without XML_DTD being defined), then
+   XML_SetParamEntityParsing will return 0 if parsing of parameter
+   entities is requested; otherwise it will return non-zero.
+   Note: If XML_SetParamEntityParsing is called after XML_Parse or
+      XML_ParseBuffer, then it has no effect and will always return 0.
+   Note: If parser == NULL, the function will do nothing and return 0.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetParamEntityParsing(
+    mut parser: XML_Parser,
+    mut peParsing: XML_ParamEntityParsing,
+) -> c_int {
+    if parser.is_null() {
+        return 0i32;
+    }
+    /* block after XML_Parse()/XML_ParseBuffer() has been called */
+    if (*parser).m_parsingStatus.parsing == XML_PARSING
+        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    {
+        return 0i32;
+    }
+    (*parser).m_paramEntityParsing = peParsing;
+    return 1;
+}
+/* Sets the hash salt to use for internal hash calculations.
+   Helps in preventing DoS attacks based on predicting hash
+   function behavior. This must be called before parsing is started.
+   Returns 1 if successful, 0 when called after parsing has started.
+   Note: If parser == NULL, the function will do nothing and return 0.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: c_ulong) -> c_int {
+    if parser.is_null() {
+        return 0i32;
+    }
+    if !(*parser).m_parentParser.is_null() {
+        return XML_SetHashSalt((*parser).m_parentParser, hash_salt);
+    }
+    /* block after XML_Parse()/XML_ParseBuffer() has been called */
+    if (*parser).m_parsingStatus.parsing == XML_PARSING
+        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    {
+        return 0i32;
+    }
+    (*parser).m_hash_secret_salt = hash_salt;
+    return 1;
+}
+/* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
+   detected.  The last call to XML_Parse must have isFinal true; len
+   may be zero for this call (or any other).
+
+   Though the return values for these functions has always been
+   described as a Boolean value, the implementation, at least for the
+   1.95.x series, has always returned exactly one of the XML_Status
+   values.
+*/
+
+impl XML_ParserStruct {
+    pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
             return XML_STATUS_ERROR_0 as XML_Status;
         }
@@ -2061,29 +2638,102 @@ impl XML_ParserStruct {
             }
         }
     }
+}
 
-    unsafe fn get_hash_secret_salt(&mut self) -> c_ulong {
-        if !self.m_parentParser.is_null() {
-            return (*self.m_parentParser).get_hash_secret_salt();
+#[no_mangle]
+pub unsafe extern "C" fn XML_Parse(
+    mut parser: XML_Parser,
+    mut s: *const c_char,
+    mut len: c_int,
+    mut isFinal: c_int,
+) -> XML_Status {
+    if parser.is_null() || len < 0 || s.is_null() && len != 0 {
+        if !parser.is_null() {
+            (*parser).m_errorCode = XML_ERROR_INVALID_ARGUMENT
         }
-        return self.m_hash_secret_salt;
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+    (*parser).parse(s, len, isFinal)
+}
+
+impl XML_ParserStruct {
+    pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
+        let mut start: *const c_char = 0 as *const c_char;
+        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        match self.m_parsingStatus.parsing {
+            3 => {
+                self.m_errorCode = XML_ERROR_SUSPENDED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            2 => {
+                self.m_errorCode = XML_ERROR_FINISHED;
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+            0 => {
+                if self.m_parentParser.is_null() && self.startParsing() == 0 {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return XML_STATUS_ERROR_0 as XML_Status;
+                }
+            }
+            _ => {}
+        }
+        /* fall through */
+        self.m_parsingStatus.parsing = XML_PARSING;
+        start = self.m_bufferPtr;
+        self.m_positionPtr = start;
+        self.m_bufferEnd = self.m_bufferEnd.offset(len as isize);
+        self.m_parseEndPtr = self.m_bufferEnd;
+        self.m_parseEndByteIndex += len as c_long;
+        self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
+        self.m_errorCode = self.m_processor.expect("non-null function pointer")(
+            self,
+            start,
+            self.m_parseEndPtr,
+            &mut self.m_bufferPtr,
+        );
+        if self.m_errorCode != XML_ERROR_NONE {
+            self.m_eventEndPtr = self.m_eventPtr;
+            self.m_processor = Some(errorProcessor as Processor);
+            return XML_STATUS_ERROR_0 as XML_Status;
+        } else {
+            match self.m_parsingStatus.parsing {
+                3 => {
+                    result = XML_STATUS_SUSPENDED_0 as XML_Status
+                    /* should not happen */
+                }
+                0 | 1 => {
+                    if isFinal != 0 {
+                        self.m_parsingStatus.parsing = XML_FINISHED;
+                        return result;
+                    }
+                }
+                _ => {}
+            }
+        }
+        (*self.m_encoding).updatePosition(
+            self.m_positionPtr,
+            self.m_bufferPtr,
+            &mut self.m_position,
+        );
+        self.m_positionPtr = self.m_bufferPtr;
+        return result;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn XML_ParseBuffer(
+    mut parser: XML_Parser,
+    mut len: c_int,
+    mut isFinal: c_int,
+) -> XML_Status {
+    if parser.is_null() {
+        return XML_STATUS_ERROR_0 as XML_Status;
     }
 
-    /* only valid for root parser */
-    unsafe fn startParsing(&mut self) -> XML_Bool {
-        /* hash functions must be initialized before setContext() is called */
-        if self.m_hash_secret_salt == 0u64 {
-            self.m_hash_secret_salt = generate_hash_secret_salt(self)
-        }
-        if self.m_ns != 0 {
-            /* implicit context only set for root parser, since child
-               parsers (i.e. external entity parsers) will inherit it
-            */
-            return setContext(self, implicitContext.as_ptr());
-        }
-        XML_TRUE
-    }
+    (*parser).parseBuffer(len, isFinal)
+}
 
+impl XML_ParserStruct {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
             self.m_errorCode = XML_ERROR_NO_MEMORY;
@@ -2245,102 +2895,50 @@ impl XML_ParserStruct {
         }
         self.m_bufferEnd as *mut c_void
     }
+}
 
-    pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
-        let mut start: *const c_char = 0 as *const c_char;
-        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
-        match self.m_parsingStatus.parsing {
-            3 => {
-                self.m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
-            }
-            2 => {
-                self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
-            }
-            0 => {
-                if self.m_parentParser.is_null() && self.startParsing() == 0 {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return XML_STATUS_ERROR_0 as XML_Status;
-                }
-            }
-            _ => {}
-        }
-        /* fall through */
-        self.m_parsingStatus.parsing = XML_PARSING;
-        start = self.m_bufferPtr;
-        self.m_positionPtr = start;
-        self.m_bufferEnd = self.m_bufferEnd.offset(len as isize);
-        self.m_parseEndPtr = self.m_bufferEnd;
-        self.m_parseEndByteIndex += len as c_long;
-        self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
-        self.m_errorCode = self.m_processor.expect("non-null function pointer")(
-            self,
-            start,
-            self.m_parseEndPtr,
-            &mut self.m_bufferPtr,
-        );
-        if self.m_errorCode != XML_ERROR_NONE {
-            self.m_eventEndPtr = self.m_eventPtr;
-            self.m_processor = Some(errorProcessor as Processor);
-            return XML_STATUS_ERROR_0 as XML_Status;
-        } else {
-            match self.m_parsingStatus.parsing {
-                3 => {
-                    result = XML_STATUS_SUSPENDED_0 as XML_Status
-                    /* should not happen */
-                }
-                0 | 1 => {
-                    if isFinal != 0 {
-                        self.m_parsingStatus.parsing = XML_FINISHED;
-                        return result;
-                    }
-                }
-                _ => {}
-            }
-        }
-        (*self.m_encoding).updatePosition(
-            self.m_positionPtr,
-            self.m_bufferPtr,
-            &mut self.m_position,
-        );
-        self.m_positionPtr = self.m_bufferPtr;
-        return result;
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
+    if parser.is_null() {
+        return NULL as *mut c_void;
     }
 
-    /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
-       Must be called from within a call-back handler, except when aborting
-       (resumable = 0) an already suspended parser. Some call-backs may
-       still follow because they would otherwise get lost. Examples:
-       - endElementHandler() for empty elements when stopped in
-           startElementHandler(),
-       - endNameSpaceDeclHandler() when stopped in endElementHandler(),
-       and possibly others.
+    (*parser).getBuffer(len)
+}
+/* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
+   Must be called from within a call-back handler, except when aborting
+   (resumable = 0) an already suspended parser. Some call-backs may
+   still follow because they would otherwise get lost. Examples:
+   - endElementHandler() for empty elements when stopped in
+     startElementHandler(),
+   - endNameSpaceDeclHandler() when stopped in endElementHandler(),
+   and possibly others.
 
-       Can be called from most handlers, including DTD related call-backs,
-       except when parsing an external parameter entity and resumable != 0.
-       Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
-       Possible error codes:
-       - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
-       - XML_ERROR_FINISHED: when the parser has already finished.
-       - XML_ERROR_SUSPEND_PE: when suspending while parsing an external PE.
+   Can be called from most handlers, including DTD related call-backs,
+   except when parsing an external parameter entity and resumable != 0.
+   Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
+   Possible error codes:
+   - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
+   - XML_ERROR_FINISHED: when the parser has already finished.
+   - XML_ERROR_SUSPEND_PE: when suspending while parsing an external PE.
 
-       When resumable != 0 (true) then parsing is suspended, that is,
-       XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
-       Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
-       return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
+   When resumable != 0 (true) then parsing is suspended, that is,
+   XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
+   Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
+   return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
 
-       *Note*:
-       This will be applied to the current parser instance only, that is, if
-       there is a parent parser then it will continue parsing when the
-       externalEntityRefHandler() returns. It is up to the implementation of
-       the externalEntityRefHandler() to call XML_StopParser() on the parent
-       parser (recursively), if one wants to stop parsing altogether.
+   *Note*:
+   This will be applied to the current parser instance only, that is, if
+   there is a parent parser then it will continue parsing when the
+   externalEntityRefHandler() returns. It is up to the implementation of
+   the externalEntityRefHandler() to call XML_StopParser() on the parent
+   parser (recursively), if one wants to stop parsing altogether.
 
-       When suspended, parsing can be resumed by calling XML_ResumeParser().
-    */
-    #[no_mangle]
-    pub unsafe extern "C" fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
+   When suspended, parsing can be resumed by calling XML_ResumeParser().
+*/
+
+impl XML_ParserStruct {
+    pub unsafe fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
         match self.m_parsingStatus.parsing {
             3 => {
                 if resumable != 0 {
@@ -2367,19 +2965,28 @@ impl XML_ParserStruct {
         }
         XML_STATUS_OK_0 as XML_Status
     }
+}
 
-    /* Resumes parsing after it has been suspended with XML_StopParser().
-       Must not be called from within a handler call-back. Returns same
-       status codes as XML_Parse() or XML_ParseBuffer().
-       Additional error code XML_ERROR_NOT_SUSPENDED possible.
+#[no_mangle]
+pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
+    if parser.is_null() {
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+    (*parser).stopParser(resumable)
+}
+/* Resumes parsing after it has been suspended with XML_StopParser().
+   Must not be called from within a handler call-back. Returns same
+   status codes as XML_Parse() or XML_ParseBuffer().
+   Additional error code XML_ERROR_NOT_SUSPENDED possible.
 
-       *Note*:
-       This must be called on the most deeply nested child parser instance
-       first, and on its parent parser only after the child parser has finished,
-       to be applied recursively until the document entity's parser is restarted.
-       That is, the parent parser will not resume by itself and it is up to the
-       application to call XML_ResumeParser() on it at the appropriate moment.
-    */
+   *Note*:
+   This must be called on the most deeply nested child parser instance
+   first, and on its parent parser only after the child parser has finished,
+   to be applied recursively until the document entity's parser is restarted.
+   That is, the parent parser will not resume by itself and it is up to the
+   application to call XML_ResumeParser() on it at the appropriate moment.
+*/
+impl XML_ParserStruct {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
         let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
         if self.m_parsingStatus.parsing != XML_SUSPENDED {
@@ -2423,12 +3030,398 @@ impl XML_ParserStruct {
         }
         return result;
     }
+}
 
-    /* Initially tag->rawName always points into the parse buffer;
-       for those TAG instances opened while the current parse buffer was
-       processed, and not yet closed, we need to store tag->rawName in a more
-       permanent location, since the parse buffer is about to be discarded.
-    */
+#[no_mangle]
+pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
+    if parser.is_null() {
+        return XML_STATUS_ERROR_0 as XML_Status;
+    }
+
+    (*parser).resumeParser()
+}
+/* Returns status of parser with respect to being initialized, parsing,
+   finished, or suspended and processing the final buffer.
+   XXX XML_Parse() and XML_ParseBuffer() should return XML_ParsingStatus,
+   XXX with XML_FINISHED_OK or XML_FINISHED_ERROR replacing XML_FINISHED
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetParsingStatus(
+    mut parser: XML_Parser,
+    mut status: *mut XML_ParsingStatus,
+) {
+    if parser.is_null() {
+        return;
+    }
+    if !status.is_null() {
+    } else {
+        __assert_fail(
+            b"status != NULL\x00".as_ptr() as *const c_char,
+            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
+                as *const c_char,
+            2113u32,
+            (*::std::mem::transmute::<&[u8; 59], &[c_char; 59]>(
+                b"void XML_GetParsingStatus(XML_Parser, XML_ParsingStatus *)\x00",
+            ))
+            .as_ptr(),
+        );
+    }
+    *status = (*parser).m_parsingStatus;
+}
+/* If XML_Parse or XML_ParseBuffer have returned XML_STATUS_ERROR, then
+   XML_GetErrorCode returns information about the error.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_Error {
+    if parser.is_null() {
+        return XML_ERROR_INVALID_ARGUMENT;
+    }
+    return (*parser).m_errorCode;
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_Index {
+    if parser.is_null() {
+        return -1i64;
+    }
+    if !(*parser).m_eventPtr.is_null() {
+        return (*parser).m_parseEndByteIndex
+            - (*parser)
+                .m_parseEndPtr
+                .wrapping_offset_from((*parser).m_eventPtr) as c_long;
+    }
+    if cfg!(feature = "mozilla") {
+        return (*parser).m_parseEndByteIndex;
+    }
+    return -1i64;
+}
+/* Return the number of bytes in the current event.
+   Returns 0 if the event is in an internal entity.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_int {
+    if parser.is_null() {
+        return 0i32;
+    }
+    if !(*parser).m_eventEndPtr.is_null() && !(*parser).m_eventPtr.is_null() {
+        return (*parser)
+            .m_eventEndPtr
+            .wrapping_offset_from((*parser).m_eventPtr) as c_int;
+    }
+    return 0;
+}
+/* If XML_CONTEXT_BYTES is defined, returns the input buffer, sets
+   the integer pointed to by offset to the offset within this buffer
+   of the current parse position, and sets the integer pointed to by size
+   to the size of this buffer (the number of input bytes). Otherwise
+   returns a NULL pointer. Also returns a NULL pointer if a parse isn't
+   active.
+
+   NOTE: The character pointer returned should not be used outside
+   the handler that makes the call.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetInputContext(
+    mut parser: XML_Parser,
+    mut offset: *mut c_int,
+    mut size: *mut c_int,
+) -> *const c_char {
+    if parser.is_null() {
+        return NULL as *const c_char;
+    }
+    if !(*parser).m_eventPtr.is_null() && !(*parser).m_buffer.is_null() {
+        if !offset.is_null() {
+            *offset = (*parser)
+                .m_eventPtr
+                .wrapping_offset_from((*parser).m_buffer) as c_int
+        }
+        if !size.is_null() {
+            *size = (*parser)
+                .m_bufferEnd
+                .wrapping_offset_from((*parser).m_buffer) as c_int
+        }
+        return (*parser).m_buffer;
+    }
+    /* defined XML_CONTEXT_BYTES */
+    return 0 as *mut c_char;
+}
+/* These functions return information about the current parse
+   location.  They may be called from any callback called to report
+   some parse event; in this case the location is the location of the
+   first of the sequence of characters that generated the event.  When
+   called from callbacks generated by declarations in the document
+   prologue, the location identified isn't as neatly defined, but will
+   be within the relevant markup.  When called outside of the callback
+   functions, the position indicated will be just past the last parse
+   event (regardless of whether there was an associated callback).
+
+   They may also be called after returning from a call to XML_Parse
+   or XML_ParseBuffer.  If the return value is XML_STATUS_ERROR then
+   the location is the location of the character at which the error
+   was detected; otherwise the location is the location of the last
+   parse event, as described above.
+
+   Note: XML_GetCurrentLineNumber and XML_GetCurrentColumnNumber
+   return 0 to indicate an error.
+   Note: XML_GetCurrentByteIndex returns -1 to indicate an error.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML_Size {
+    if parser.is_null() {
+        return 0u64;
+    }
+    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
+        (*(*parser).m_encoding).updatePosition(
+            (*parser).m_positionPtr,
+            (*parser).m_eventPtr,
+            &mut (*parser).m_position,
+        );
+        (*parser).m_positionPtr = (*parser).m_eventPtr
+    }
+    return (*parser).m_position.lineNumber.wrapping_add(1u64);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> XML_Size {
+    if parser.is_null() {
+        return 0u64;
+    }
+    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
+        (*(*parser).m_encoding).updatePosition(
+            (*parser).m_positionPtr,
+            (*parser).m_eventPtr,
+            &mut (*parser).m_position,
+        );
+        (*parser).m_positionPtr = (*parser).m_eventPtr
+    }
+    return (*parser).m_position.columnNumber;
+}
+/* For backwards compatibility with previous versions. */
+/* Frees the content model passed to the element declaration handler */
+#[no_mangle]
+pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
+    if !parser.is_null() {
+        FREE!(parser, model as *mut c_void);
+    };
+}
+/* Exposing the memory handling functions used in Expat */
+#[no_mangle]
+pub unsafe extern "C" fn XML_MemMalloc(mut parser: XML_Parser, mut size: size_t) -> *mut c_void {
+    if parser.is_null() {
+        return NULL as *mut c_void;
+    }
+    return MALLOC!(parser, size);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_MemRealloc(
+    mut parser: XML_Parser,
+    mut ptr: *mut c_void,
+    mut size: size_t,
+) -> *mut c_void {
+    if parser.is_null() {
+        return NULL as *mut c_void;
+    }
+    return REALLOC!(parser, ptr, size);
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
+    if !parser.is_null() {
+        FREE!(parser, ptr);
+    };
+}
+/* This can be called within a handler for a start element, end
+   element, processing instruction or character data.  It causes the
+   corresponding markup to be passed to the default handler.
+*/
+#[no_mangle]
+pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
+    if parser.is_null() {
+        return;
+    }
+    if (*parser).m_handlers.hasDefault() {
+        if !(*parser).m_openInternalEntities.is_null() {
+            reportDefault(
+                parser,
+                EncodingType::Internal,
+                (*(*parser).m_openInternalEntities).internalEventPtr,
+                (*(*parser).m_openInternalEntities).internalEventEndPtr,
+            );
+        } else {
+            reportDefault(
+                parser,
+                EncodingType::Normal,
+                (*parser).m_eventPtr,
+                (*parser).m_eventEndPtr,
+            );
+        }
+    };
+}
+/* Returns a string describing the error. */
+#[no_mangle]
+pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
+    match code {
+        XML_ERROR_NONE => NULL as *const XML_LChar,
+        XML_ERROR_NO_MEMORY => wch!("out of memory\x00"),
+        XML_ERROR_SYNTAX => wch!("syntax error\x00"),
+        XML_ERROR_NO_ELEMENTS => wch!("no element found\x00"),
+        XML_ERROR_INVALID_TOKEN => wch!("not well-formed (invalid token)\x00"),
+        XML_ERROR_UNCLOSED_TOKEN => wch!("unclosed token\x00"),
+        XML_ERROR_PARTIAL_CHAR => wch!("partial character\x00"),
+        XML_ERROR_TAG_MISMATCH => wch!("mismatched tag\x00"),
+        XML_ERROR_DUPLICATE_ATTRIBUTE => wch!("duplicate attribute\x00"),
+        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => wch!("junk after document element\x00"),
+        XML_ERROR_PARAM_ENTITY_REF => wch!("illegal parameter entity reference\x00"),
+        XML_ERROR_UNDEFINED_ENTITY => wch!("undefined entity\x00"),
+        XML_ERROR_RECURSIVE_ENTITY_REF => wch!("recursive entity reference\x00"),
+        XML_ERROR_ASYNC_ENTITY => wch!("asynchronous entity\x00"),
+        XML_ERROR_BAD_CHAR_REF => wch!("reference to invalid character number\x00"),
+        XML_ERROR_BINARY_ENTITY_REF => wch!("reference to binary entity\x00"),
+        XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
+            wch!("reference to external entity in attribute\x00")
+        }
+        XML_ERROR_MISPLACED_XML_PI => wch!("XML or text declaration not at start of entity\x00"),
+        XML_ERROR_UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
+        XML_ERROR_INCORRECT_ENCODING => {
+            wch!("encoding specified in XML declaration is incorrect\x00")
+        }
+        XML_ERROR_UNCLOSED_CDATA_SECTION => wch!("unclosed CDATA section\x00"),
+        XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
+            wch!("error in processing external entity reference\x00")
+        }
+        XML_ERROR_NOT_STANDALONE => wch!("document is not standalone\x00"),
+        XML_ERROR_UNEXPECTED_STATE => {
+            wch!("unexpected parser state - please send a bug report\x00")
+        }
+        XML_ERROR_ENTITY_DECLARED_IN_PE => wch!("entity declared in parameter entity\x00"),
+        XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
+            wch!("requested feature requires XML_DTD support in Expat\x00")
+        }
+        XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
+            wch!("cannot change setting once parsing has begun\x00")
+        }
+        /* Added in 1.95.7. */
+        XML_ERROR_UNBOUND_PREFIX => wch!("unbound prefix\x00"),
+        /* Added in 1.95.8. */
+        XML_ERROR_UNDECLARING_PREFIX => wch!("must not undeclare prefix\x00"),
+        XML_ERROR_INCOMPLETE_PE => wch!("incomplete markup in parameter entity\x00"),
+        XML_ERROR_XML_DECL => wch!("XML declaration not well-formed\x00"),
+        XML_ERROR_TEXT_DECL => wch!("text declaration not well-formed\x00"),
+        XML_ERROR_PUBLICID => wch!("illegal character(s) in public id\x00"),
+        XML_ERROR_SUSPENDED => wch!("parser suspended\x00"),
+        XML_ERROR_NOT_SUSPENDED => wch!("parser not suspended\x00"),
+        XML_ERROR_ABORTED => wch!("parsing aborted\x00"),
+        XML_ERROR_FINISHED => wch!("parsing finished\x00"),
+        XML_ERROR_SUSPEND_PE => wch!("cannot suspend in external parameter entity\x00"),
+        XML_ERROR_RESERVED_PREFIX_XML => {
+            /* Added in 2.0.0. */
+            wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
+        }
+        XML_ERROR_RESERVED_PREFIX_XMLNS => {
+            wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
+        }
+        XML_ERROR_RESERVED_NAMESPACE_URI => {
+            wch!("prefix must not be bound to one of the reserved namespace names\x00")
+        }
+        /* Added in 2.2.5. */
+        XML_ERROR_INVALID_ARGUMENT => {
+            /* Constant added in 2.2.1, already */
+            wch!("invalid argument\x00")
+        }
+        _ => NULL as *const XML_LChar,
+    }
+}
+/* Return a string containing the version number of this expat */
+#[no_mangle]
+pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
+    /* V1 is used to string-ize the version number. However, it would
+    string-ize the actual version macro *names* unless we get them
+    substituted before being passed to V1. CPP is defined to expand
+    a macro, then rescan for more expansions. Thus, we use V2 to expand
+    the version macros, then CPP will expand the resulting V1() macro
+    with the correct numerals. */
+    /* ### I'm assuming cpp is portable in this respect... */
+    wch!("expat_2.2.9\x00")
+}
+/* Return an XML_Expat_Version structure containing numeric version
+   number information for this version of expat. Expat follows the
+   semantic versioning convention. See http://semver.org.
+*/
+pub const XML_MAJOR_VERSION: c_int = 2;
+pub const XML_MINOR_VERSION: c_int = 2;
+pub const XML_MICRO_VERSION: c_int = 9;
+#[no_mangle]
+pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
+    XML_Expat_Version {
+        major: XML_MAJOR_VERSION,
+        minor: XML_MINOR_VERSION,
+        micro: XML_MICRO_VERSION,
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
+    const features: &[XML_Feature] = &[
+        XML_Feature {
+            feature: XML_FEATURE_SIZEOF_XML_CHAR,
+            name: wch!("sizeof(XML_Char)\x00"),
+            value: ::std::mem::size_of::<XML_Char>() as c_long,
+        },
+        XML_Feature {
+            feature: XML_FEATURE_SIZEOF_XML_LCHAR,
+            name: wch!("sizeof(XML_LChar)\x00"),
+            value: ::std::mem::size_of::<XML_LChar>() as c_long,
+        },
+        #[cfg(feature = "unicode")]
+        XML_Feature {
+            feature: XML_FEATURE_UNICODE,
+            name: wch!("XML_UNICODE\x00"),
+            value: 0i64,
+        },
+        #[cfg(feature = "unicode_wchar_t")]
+        XML_Feature {
+            feature: XML_FEATURE_UNICODE_WCHAR_T,
+            name: wch!("XML_UNICODE_WHCAR_T\x00"),
+            value: 0i64,
+        },
+        XML_Feature {
+            feature: XML_FEATURE_DTD,
+            name: wch!("XML_DTD\x00"),
+            value: 0i64,
+        },
+        XML_Feature {
+            feature: XML_FEATURE_CONTEXT_BYTES,
+            name: wch!("XML_CONTEXT_BYTES\x00"),
+            value: XML_CONTEXT_BYTES as c_long,
+        },
+        XML_Feature {
+            feature: XML_FEATURE_NS,
+            name: wch!("XML_NS\x00"),
+            value: 0i64,
+        },
+        XML_Feature {
+            feature: XML_FEATURE_END,
+            name: NULL as *const XML_LChar,
+            value: 0i64,
+        },
+    ];
+    features.as_ptr()
+}
+
+#[cfg(feature = "mozilla")]
+#[no_mangle]
+pub unsafe extern "C" fn MOZ_XML_GetMismatchedTag(parser: XML_Parser) -> *const XML_Char {
+    (*parser).m_mismatch
+}
+
+#[cfg(feature = "mozilla")]
+#[no_mangle]
+pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XML_Bool {
+    !(*parser).m_openInternalEntities.is_null() as XML_Bool
+}
+
+/* Initially tag->rawName always points into the parse buffer;
+   for those TAG instances opened while the current parse buffer was
+   processed, and not yet closed, we need to store tag->rawName in a more
+   permanent location, since the parse buffer is about to be discarded.
+*/
+impl XML_ParserStruct {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
         let mut tag: *mut TAG = self.m_tagStack;
         while !tag.is_null() {
@@ -2490,17 +3483,158 @@ impl XML_ParserStruct {
         }
         XML_TRUE
     }
+}
 
-    /* moves list of bindings to m_freeBindingList */
-    unsafe fn moveToFreeBindingList(&mut self, mut bindings: *mut BINDING) {
-        while !bindings.is_null() {
-            let mut b: *mut BINDING = bindings;
-            bindings = (*bindings).nextTagBinding;
-            (*b).nextTagBinding = self.m_freeBindingList;
-            self.m_freeBindingList = b
+unsafe extern "C" fn contentProcessor(
+    mut parser: XML_Parser,
+    mut start: *const c_char,
+    mut end: *const c_char,
+    mut endPtr: *mut *const c_char,
+) -> XML_Error {
+    let mut result: XML_Error = (*parser).doContent(
+        0,
+        EncodingType::Normal,
+        start,
+        end,
+        endPtr,
+        ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
+    );
+    if result == XML_ERROR_NONE {
+        if (*parser).storeRawNames() == 0 {
+            return XML_ERROR_NO_MEMORY;
         }
     }
+    return result;
+}
 
+unsafe extern "C" fn externalEntityInitProcessor(
+    mut parser: XML_Parser,
+    mut start: *const c_char,
+    mut end: *const c_char,
+    mut endPtr: *mut *const c_char,
+) -> XML_Error {
+    let mut result: XML_Error = initializeEncoding(parser);
+    if result != XML_ERROR_NONE {
+        return result;
+    }
+    (*parser).m_processor = Some(externalEntityInitProcessor2 as Processor);
+    return externalEntityInitProcessor2(parser, start, end, endPtr);
+}
+
+unsafe extern "C" fn externalEntityInitProcessor2(
+    mut parser: XML_Parser,
+    mut start: *const c_char,
+    mut end: *const c_char,
+    mut endPtr: *mut *const c_char,
+) -> XML_Error {
+    let mut next: *const c_char = start;
+    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
+    match tok {
+        super::xmltok::XML_TOK_BOM => {
+            /* If we are at the end of the buffer, this would cause the next stage,
+               i.e. externalEntityInitProcessor3, to pass control directly to
+               doContent (by detecting XML_TOK_NONE) without processing any xml text
+               declaration - causing the error XML_ERROR_MISPLACED_XML_PI in doContent.
+            */
+            if next == end && (*parser).m_parsingStatus.finalBuffer == 0 {
+                *endPtr = next; /* XmlContentTok doesn't always set the last arg */
+                return XML_ERROR_NONE;
+            }
+            start = next
+        }
+        super::xmltok::XML_TOK_PARTIAL => {
+            if (*parser).m_parsingStatus.finalBuffer == 0 {
+                *endPtr = start;
+                return XML_ERROR_NONE;
+            }
+            (*parser).m_eventPtr = start;
+            return XML_ERROR_UNCLOSED_TOKEN;
+        }
+        super::xmltok::XML_TOK_PARTIAL_CHAR => {
+            if (*parser).m_parsingStatus.finalBuffer == 0 {
+                *endPtr = start;
+                return XML_ERROR_NONE;
+            }
+            (*parser).m_eventPtr = start;
+            return XML_ERROR_PARTIAL_CHAR;
+        }
+        _ => {}
+    }
+    (*parser).m_processor = Some(externalEntityInitProcessor3 as Processor);
+    return externalEntityInitProcessor3(parser, start, end, endPtr);
+}
+
+unsafe extern "C" fn externalEntityInitProcessor3(
+    mut parser: XML_Parser,
+    mut start: *const c_char,
+    mut end: *const c_char,
+    mut endPtr: *mut *const c_char,
+) -> XML_Error {
+    let mut tok: c_int = 0;
+    let mut next: *const c_char = start;
+    (*parser).m_eventPtr = start;
+    tok = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
+    (*parser).m_eventEndPtr = next;
+    match tok {
+        super::xmltok::XML_TOK_XML_DECL => {
+            let mut result: XML_Error = XML_ERROR_NONE;
+            result = processXmlDecl(parser, 1, start, next);
+            if result != XML_ERROR_NONE {
+                return result;
+            }
+            match (*parser).m_parsingStatus.parsing {
+                3 => {
+                    *endPtr = next;
+                    return XML_ERROR_NONE;
+                }
+                2 => return XML_ERROR_ABORTED,
+                _ => start = next,
+            }
+        }
+        super::xmltok::XML_TOK_PARTIAL => {
+            if (*parser).m_parsingStatus.finalBuffer == 0 {
+                *endPtr = start;
+                return XML_ERROR_NONE;
+            }
+            return XML_ERROR_UNCLOSED_TOKEN;
+        }
+        super::xmltok::XML_TOK_PARTIAL_CHAR => {
+            if (*parser).m_parsingStatus.finalBuffer == 0 {
+                *endPtr = start;
+                return XML_ERROR_NONE;
+            }
+            return XML_ERROR_PARTIAL_CHAR;
+        }
+        _ => {}
+    }
+    (*parser).m_processor = Some(externalEntityContentProcessor as Processor);
+    (*parser).m_tagLevel = 1;
+    return externalEntityContentProcessor(parser, start, end, endPtr);
+}
+
+unsafe extern "C" fn externalEntityContentProcessor(
+    mut parser: XML_Parser,
+    mut start: *const c_char,
+    mut end: *const c_char,
+    mut endPtr: *mut *const c_char,
+) -> XML_Error {
+    let mut result: XML_Error = (*parser).doContent(
+        1,
+        EncodingType::Normal,
+        start,
+        end,
+        endPtr,
+        ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
+    );
+    if result == XML_ERROR_NONE {
+        if (*parser).storeRawNames() == 0 {
+            return XML_ERROR_NO_MEMORY;
+        }
+    }
+    return result;
+}
+
+impl XML_ParserStruct {
     unsafe fn doContent(
         &mut self,
         startTagLevel: c_int,
@@ -3114,11 +4248,12 @@ impl XML_ParserStruct {
         /* not reached */
     }
 
-    /* XML_DTD */
-    /* This function does not call free() on the allocated memory, merely
-    * moving it to the parser's m_freeBindingList where it can be freed or
-    * reused as appropriate.
-    */
+/* XML_DTD */
+/* This function does not call free() on the allocated memory, merely
+ * moving it to the parser's m_freeBindingList where it can be freed or
+ * reused as appropriate.
+ */
+
     unsafe fn freeBindings(&mut self, mut bindings: *mut BINDING) {
         while !bindings.is_null() {
             let mut b: *mut BINDING = bindings;
@@ -3132,16 +4267,17 @@ impl XML_ParserStruct {
             (*(*b).prefix).binding = (*b).prevPrefixBinding
         }
     }
-    /* Precondition: all arguments must be non-NULL;
-    Purpose:
-    - normalize attributes
-    - check attributes for well-formedness
-    - generate namespace aware attribute names (URI, prefix)
-    - build list of attributes for startElementHandler
-    - default attributes
-    - process namespace declarations (check and report them)
-    - generate namespace aware element name (URI, prefix)
-    */
+/* Precondition: all arguments must be non-NULL;
+   Purpose:
+   - normalize attributes
+   - check attributes for well-formedness
+   - generate namespace aware attribute names (URI, prefix)
+   - build list of attributes for startElementHandler
+   - default attributes
+   - process namespace declarations (check and report them)
+   - generate namespace aware element name (URI, prefix)
+*/
+
     unsafe fn storeAtts(
         &mut self,
         enc_type: EncodingType,
@@ -3811,1404 +4947,6 @@ impl XML_ParserStruct {
         (*tagNamePtr).str_0 = (*binding).uri;
         XML_ERROR_NONE
     }
-
-    unsafe fn copy_salt_to_sipkey(&mut self, mut key: *mut sipkey) {
-        (*key).k[0] = 0u64;
-        (*key).k[1] = self.get_hash_secret_salt();
-    }
-
-    unsafe fn hash(&mut self, mut s: KEY) -> c_ulong {
-        let mut state: siphash = siphash {
-            v0: 0,
-            v1: 0,
-            v2: 0,
-            v3: 0,
-            buf: [0; 8],
-            p: 0 as *mut c_uchar,
-            c: 0,
-        };
-        let mut key: sipkey = sipkey { k: [0; 2] };
-        self.copy_salt_to_sipkey(&mut key);
-        sip24_init(&mut state, &mut key);
-        sip24_update(
-            &mut state,
-            s as *const c_void,
-            keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-        );
-        return sip24_final(&mut state);
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *const XML_Char) -> XML_Bool {
-    if parser.is_null() {
-        return XML_FALSE;
-    }
-    (*parser).reset(encodingName)
-}
-/* Returns the last value set by XML_SetUserData or NULL. */
-/* This is equivalent to supplying an encoding argument to
-   XML_ParserCreate. On success XML_SetEncoding returns non-zero,
-   zero otherwise.
-   Note: Calling XML_SetEncoding after XML_Parse or XML_ParseBuffer
-     has no effect and returns XML_STATUS_ERROR.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEncoding(
-    mut parser: XML_Parser,
-    mut encodingName: *const XML_Char,
-) -> XML_Status {
-    if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-    /* Block after XML_Parse()/XML_ParseBuffer() has been called.
-       XXX There's no way for the caller to determine which of the
-       XXX possible error cases caused the XML_STATUS_ERROR return.
-    */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-
-    /* Get rid of any previous encoding name */
-    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
-    if encodingName.is_null() {
-        /* No new encoding name */
-        (*parser).m_protocolEncodingName = NULL as *const XML_Char
-    } else {
-        /* Copy the new encoding name into allocated memory */
-        (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem);
-        if (*parser).m_protocolEncodingName.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-    }
-    XML_STATUS_OK_0 as XML_Status
-}
-/* Creates an XML_Parser object that can parse an external general
-   entity; context is a '\0'-terminated string specifying the parse
-   context; encoding is a '\0'-terminated string giving the name of
-   the externally specified encoding, or NULL if there is no
-   externally specified encoding.  The context string consists of a
-   sequence of tokens separated by formfeeds (\f); a token consisting
-   of a name specifies that the general entity of the name is open; a
-   token of the form prefix=uri specifies the namespace for a
-   particular prefix; a token of the form =uri specifies the default
-   namespace.  This can be called at any point after the first call to
-   an ExternalEntityRefHandler so longer as the parser has not yet
-   been freed.  The new parser is completely independent and may
-   safely be used in a separate thread.  The handlers and userData are
-   initialized from the parser argument.  Returns NULL if out of memory.
-   Otherwise returns a new XML_Parser object.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
-    mut oldParser: XML_Parser,
-    mut context: *const XML_Char,
-    mut encodingName: *const XML_Char,
-) -> XML_Parser {
-    let mut parser: XML_Parser = oldParser;
-    let mut newDtd: *mut DTD = NULL as *mut DTD;
-    let mut oldDtd: *mut DTD = 0 as *mut DTD;
-    let mut oldStartElementHandler: XML_StartElementHandler = None;
-    let mut oldEndElementHandler: XML_EndElementHandler = None;
-    let mut oldCharacterDataHandler: XML_CharacterDataHandler = None;
-    let mut oldProcessingInstructionHandler: XML_ProcessingInstructionHandler = None;
-    let mut oldCommentHandler: XML_CommentHandler = None;
-    let mut oldStartCdataSectionHandler: XML_StartCdataSectionHandler = None;
-    let mut oldEndCdataSectionHandler: XML_EndCdataSectionHandler = None;
-    let mut oldDefaultHandler: XML_DefaultHandler = None;
-    let mut oldUnparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler = None;
-    let mut oldNotationDeclHandler: XML_NotationDeclHandler = None;
-    let mut oldStartNamespaceDeclHandler: XML_StartNamespaceDeclHandler = None;
-    let mut oldEndNamespaceDeclHandler: XML_EndNamespaceDeclHandler = None;
-    let mut oldNotStandaloneHandler: XML_NotStandaloneHandler = None;
-    let mut oldExternalEntityRefHandler: XML_ExternalEntityRefHandler = None;
-    let mut oldSkippedEntityHandler: XML_SkippedEntityHandler = None;
-    let mut oldUnknownEncodingHandler: XML_UnknownEncodingHandler = None;
-    let mut oldElementDeclHandler: XML_ElementDeclHandler = None;
-    let mut oldAttlistDeclHandler: XML_AttlistDeclHandler = None;
-    let mut oldEntityDeclHandler: XML_EntityDeclHandler = None;
-    let mut oldXmlDeclHandler: XML_XmlDeclHandler = None;
-    let mut oldDeclElementType: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
-    let mut oldUserData: *mut c_void = 0 as *mut c_void;
-    let mut oldHandlerArg: *mut c_void = 0 as *mut c_void;
-    let mut oldDefaultExpandInternalEntities: XML_Bool = 0;
-    let mut oldExternalEntityRefHandlerArg: XML_Parser = 0 as *mut XML_ParserStruct;
-    let mut oldParamEntityParsing: XML_ParamEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
-    let mut oldInEntityValue: c_int = 0;
-    let mut oldns_triplets: XML_Bool = 0;
-    /* Note that the new parser shares the same hash secret as the old
-       parser, so that dtdCopy and copyEntityTable can lookup values
-       from hash tables associated with either parser without us having
-       to worry which hash secrets each table has.
-    */
-    let mut oldhash_secret_salt: c_ulong = 0;
-    /* Validate the oldParser parameter before we pull everything out of it */
-    if oldParser.is_null() {
-        return NULL as XML_Parser;
-    }
-    /* Stash the original parser contents on the stack */
-    oldDtd = (*parser).m_dtd;
-    // TODO: Maybe just copy/clone the handler struct?
-    oldStartElementHandler = (*parser).m_handlers.m_startElementHandler;
-    oldEndElementHandler = (*parser).m_handlers.m_endElementHandler;
-    oldCharacterDataHandler = (*parser).m_handlers.m_characterDataHandler;
-    oldProcessingInstructionHandler = (*parser).m_handlers.m_processingInstructionHandler;
-    oldCommentHandler = (*parser).m_handlers.m_commentHandler;
-    oldStartCdataSectionHandler = (*parser).m_handlers.m_startCdataSectionHandler;
-    oldEndCdataSectionHandler = (*parser).m_handlers.m_endCdataSectionHandler;
-    oldDefaultHandler = (*parser).m_handlers.m_defaultHandler;
-    oldUnparsedEntityDeclHandler = (*parser).m_handlers.m_unparsedEntityDeclHandler;
-    oldNotationDeclHandler = (*parser).m_handlers.m_notationDeclHandler;
-    oldStartNamespaceDeclHandler = (*parser).m_handlers.m_startNamespaceDeclHandler;
-    oldEndNamespaceDeclHandler = (*parser).m_handlers.m_endNamespaceDeclHandler;
-    oldNotStandaloneHandler = (*parser).m_handlers.m_notStandaloneHandler;
-    oldExternalEntityRefHandler = (*parser).m_handlers.m_externalEntityRefHandler;
-    oldSkippedEntityHandler = (*parser).m_handlers.m_skippedEntityHandler;
-    oldUnknownEncodingHandler = (*parser).m_handlers.m_unknownEncodingHandler;
-    oldElementDeclHandler = (*parser).m_handlers.m_elementDeclHandler;
-    oldAttlistDeclHandler = (*parser).m_handlers.m_attlistDeclHandler;
-    oldEntityDeclHandler = (*parser).m_handlers.m_entityDeclHandler;
-    oldXmlDeclHandler = (*parser).m_handlers.m_xmlDeclHandler;
-    oldDeclElementType = (*parser).m_declElementType;
-    oldUserData = (*parser).m_userData;
-    oldHandlerArg = (*parser).m_handlers.m_handlerArg;
-    oldDefaultExpandInternalEntities = (*parser).m_defaultExpandInternalEntities;
-    oldExternalEntityRefHandlerArg = (*parser).m_handlers.m_externalEntityRefHandlerArg;
-    oldParamEntityParsing = (*parser).m_paramEntityParsing;
-    oldInEntityValue = (*parser).m_prologState.inEntityValue;
-    oldns_triplets = (*parser).m_ns_triplets;
-    /* Note that the new parser shares the same hash secret as the old
-       parser, so that dtdCopy and copyEntityTable can lookup values
-       from hash tables associated with either parser without us having
-       to worry which hash secrets each table has.
-    */
-    oldhash_secret_salt = (*parser).m_hash_secret_salt;
-    if context.is_null() {
-        newDtd = oldDtd
-    }
-    /* XML_DTD */
-    /* Note that the magical uses of the pre-processor to make field
-       access look more like C++ require that `parser' be overwritten
-       here.  This makes this function more painful to follow than it
-       would be otherwise.
-    */
-    if (*parser).m_ns != 0 {
-        let mut tmp: [XML_Char; 2] = [0; 2];
-        *tmp.as_mut_ptr() = (*parser).m_namespaceSeparator;
-        parser = XML_ParserStruct::create(encodingName, Some(&(*parser).m_mem), tmp.as_mut_ptr(), newDtd)
-    } else {
-        parser = XML_ParserStruct::create(
-            encodingName,
-            Some(&(*parser).m_mem),
-            NULL as *const XML_Char,
-            newDtd,
-        )
-    }
-    if parser.is_null() {
-        return NULL as XML_Parser;
-    }
-    (*parser).m_handlers.setStartElement(oldStartElementHandler);
-    (*parser).m_handlers.setEndElement(oldEndElementHandler);
-    (*parser).m_handlers.setCharacterData(oldCharacterDataHandler);
-    (*parser).m_handlers.setProcessingInstruction(oldProcessingInstructionHandler);
-    (*parser).m_handlers.setComment(oldCommentHandler);
-    (*parser).m_handlers.setStartCDataSection(oldStartCdataSectionHandler);
-    (*parser).m_handlers.setEndCDataSection(oldEndCdataSectionHandler);
-    (*parser).m_handlers.setDefault(oldDefaultHandler);
-    (*parser).m_handlers.setUnparsedEntityDecl(oldUnparsedEntityDeclHandler);
-    (*parser).m_handlers.setNotationDecl(oldNotationDeclHandler);
-    (*parser).m_handlers.setStartNamespaceDecl(oldStartNamespaceDeclHandler);
-    (*parser).m_handlers.setEndNamespaceDecl(oldEndNamespaceDeclHandler);
-    (*parser).m_handlers.setNotStandalone(oldNotStandaloneHandler);
-    (*parser).m_handlers.setExternalEntityRef(oldExternalEntityRefHandler);
-    (*parser).m_handlers.setSkippedEntity(oldSkippedEntityHandler);
-    (*parser).m_handlers.setUnknownEncoding(oldUnknownEncodingHandler);
-    (*parser).m_handlers.setElementDecl(oldElementDeclHandler);
-    (*parser).m_handlers.setAttlistDecl(oldAttlistDeclHandler);
-    (*parser).m_handlers.setEntityDecl(oldEntityDeclHandler);
-    (*parser).m_handlers.setXmlDecl(oldXmlDeclHandler);
-    (*parser).m_declElementType = oldDeclElementType;
-    (*parser).m_userData = oldUserData;
-    if oldUserData == oldHandlerArg {
-        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
-    } else {
-        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
-    }
-    if oldExternalEntityRefHandlerArg != oldParser {
-        (*parser).m_handlers.m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
-    }
-    (*parser).m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
-    (*parser).m_ns_triplets = oldns_triplets;
-    (*parser).m_hash_secret_salt = oldhash_secret_salt;
-    (*parser).m_parentParser = oldParser;
-    (*parser).m_paramEntityParsing = oldParamEntityParsing;
-    (*parser).m_prologState.inEntityValue = oldInEntityValue;
-    if !context.is_null() {
-        /* XML_DTD */
-        if dtdCopy(oldParser, (*parser).m_dtd, oldDtd, &(*parser).m_mem) == 0
-            || setContext(parser, context) == 0
-        {
-            XML_ParserFree(parser); // TODO: parser.free();
-            return NULL as XML_Parser;
-        }
-        (*parser).m_processor = Some(externalEntityInitProcessor as Processor)
-    } else {
-        /* The DTD instance referenced by parser->m_dtd is shared between the
-           document's root parser and external PE parsers, therefore one does not
-           need to call setContext. In addition, one also *must* not call
-           setContext, because this would overwrite existing prefix->binding
-           pointers in parser->m_dtd with ones that get destroyed with the external
-           PE parser. This would leave those prefixes with dangling pointers.
-        */
-        (*parser).m_isParamEntity = XML_TRUE;
-        super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
-        (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
-    }
-    /* XML_DTD */
-    parser
-}
-
-unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
-    loop {
-        let mut b: *mut BINDING = bindings;
-        if b.is_null() {
-            break;
-        }
-        bindings = (*b).nextTagBinding;
-        FREE!(parser, (*b).uri as *mut c_void);
-        FREE!(parser, b as *mut c_void);
-    }
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
-    if parser.is_null() {
-        return;
-    }
-    let mut parser = ExpatBox::from_raw_in(parser, (*parser).m_mem);
-
-    parser.free();
-}
-/* If this function is called, then the parser will be passed as the
-   first argument to callbacks instead of userData.  The userData will
-   still be accessible using XML_GetUserData.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
-    if !parser.is_null() {
-        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
-    };
-}
-/* If useDTD == XML_TRUE is passed to this function, then the parser
-   will assume that there is an external subset, even if none is
-   specified in the document. In such a case the parser will call the
-   externalEntityRefHandler with a value of NULL for the systemId
-   argument (the publicId and context arguments will be NULL as well).
-   Note: For the purpose of checking WFC: Entity Declared, passing
-     useDTD == XML_TRUE will make the parser behave as if the document
-     had a DTD with an external subset.
-   Note: If this function is called, then this must be done before
-     the first call to XML_Parse or XML_ParseBuffer, since it will
-     have no effect after that.  Returns
-     XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING.
-   Note: If the document does not have a DOCTYPE declaration at all,
-     then startDoctypeDeclHandler and endDoctypeDeclHandler will not
-     be called, despite an external subset being parsed.
-   Note: If XML_DTD is not defined when Expat is compiled, returns
-     XML_ERROR_FEATURE_REQUIRES_XML_DTD.
-   Note: If parser == NULL, returns XML_ERROR_INVALID_ARGUMENT.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_UseForeignDTD(
-    mut parser: XML_Parser,
-    mut useDTD: XML_Bool,
-) -> XML_Error {
-    if parser.is_null() {
-        return XML_ERROR_INVALID_ARGUMENT;
-    }
-    /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
-    }
-    (*parser).m_useForeignDTD = useDTD;
-    XML_ERROR_NONE
-}
-/* If do_nst is non-zero, and namespace processing is in effect, and
-   a name has a prefix (i.e. an explicit namespace qualifier) then
-   that name is returned as a triplet in a single string separated by
-   the separator character specified when the parser was created: URI
-   + sep + local_name + sep + prefix.
-
-   If do_nst is zero, then namespace information is returned in the
-   default manner (URI + sep + local_name) whether or not the name
-   has a prefix.
-
-   Note: Calling XML_SetReturnNSTriplet after XML_Parse or
-     XML_ParseBuffer has no effect.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: XML_Bool) {
-    if parser.is_null() {
-        return;
-    }
-    /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return;
-    }
-    (*parser).m_ns_triplets = if do_nst != 0 { XML_TRUE } else { XML_FALSE };
-}
-/* This value is passed as the userData argument to callbacks. */
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_void) {
-    if parser.is_null() {
-        return;
-    }
-    if (*parser).m_handlers.m_handlerArg == (*parser).m_userData {
-        (*parser).m_userData = p;
-        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
-    } else {
-        (*parser).m_userData = p
-    };
-}
-/* Sets the base to be used for resolving relative URIs in system
-   identifiers in declarations.  Resolving relative identifiers is
-   left to the application: this value will be passed through as the
-   base argument to the XML_ExternalEntityRefHandler,
-   XML_NotationDeclHandler and XML_UnparsedEntityDeclHandler. The base
-   argument will be copied.  Returns XML_STATUS_ERROR if out of memory,
-   XML_STATUS_OK otherwise.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
-    if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-    if !p.is_null() {
-        p = poolCopyString(&mut (*(*parser).m_dtd).pool, p);
-        if p.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-        (*parser).m_curBase = p
-    } else {
-        (*parser).m_curBase = NULL as *const XML_Char
-    }
-    XML_STATUS_OK_0 as XML_Status
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
-    if parser.is_null() {
-        return NULL as *const XML_Char;
-    }
-    (*parser).m_curBase
-}
-/* Returns the number of the attribute/value pairs passed in last call
-   to the XML_StartElementHandler that were specified in the start-tag
-   rather than defaulted. Each attribute/value pair counts as 2; thus
-   this correspondds to an index into the atts array passed to the
-   XML_StartElementHandler.  Returns -1 if parser == NULL.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) -> c_int {
-    if parser.is_null() {
-        return -(1i32);
-    }
-    (*parser).m_nSpecifiedAtts
-}
-/* Returns the index of the ID attribute passed in the last call to
-   XML_StartElementHandler, or -1 if there is no ID attribute or
-   parser == NULL.  Each attribute/value pair counts as 2; thus this
-   correspondds to an index into the atts array passed to the
-   XML_StartElementHandler.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetIdAttributeIndex(mut parser: XML_Parser) -> c_int {
-    if parser.is_null() {
-        return -(1i32);
-    }
-    (*parser).m_idAttIndex
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetElementHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartElementHandler,
-    mut end: XML_EndElementHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setStartElement(start);
-    (*parser).m_handlers.setEndElement(end);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetStartElementHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartElementHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setStartElement(start)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEndElementHandler(
-    mut parser: XML_Parser,
-    mut end: XML_EndElementHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setEndElement(end)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetCharacterDataHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_CharacterDataHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setCharacterData(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_ProcessingInstructionHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setProcessingInstruction(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetCommentHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_CommentHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setComment(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetCdataSectionHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartCdataSectionHandler,
-    mut end: XML_EndCdataSectionHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setStartCDataSection(start);
-    (*parser).m_handlers.setEndCDataSection(end);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartCdataSectionHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setStartCDataSection(start);
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
-    mut parser: XML_Parser,
-    mut end: XML_EndCdataSectionHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setEndCDataSection(end)
-    };
-}
-/* This sets the default handler and also inhibits expansion of
-   internal entities. These entity references will be passed to the
-   default handler, or to the skipped entity handler, if one is set.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetDefaultHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_DefaultHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setDefault(handler);
-    (*parser).m_defaultExpandInternalEntities = XML_FALSE;
-}
-/* This sets the default handler but does not inhibit expansion of
-   internal entities.  The entity reference will not be passed to the
-   default handler.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
-    mut parser: XML_Parser,
-    mut handler: XML_DefaultHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setDefault(handler);
-    (*parser).m_defaultExpandInternalEntities = XML_TRUE;
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartDoctypeDeclHandler,
-    mut end: XML_EndDoctypeDeclHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setStartDoctypeDecl(start);
-    (*parser).m_handlers.setEndDoctypeDecl(end);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartDoctypeDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setStartDoctypeDecl(start)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
-    mut parser: XML_Parser,
-    mut end: XML_EndDoctypeDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setEndDoctypeDecl(end)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_UnparsedEntityDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setUnparsedEntityDecl(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetNotationDeclHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_NotationDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setNotationDecl(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartNamespaceDeclHandler,
-    mut end: XML_EndNamespaceDeclHandler,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setStartNamespaceDecl(start);
-    (*parser).m_handlers.setEndNamespaceDecl(end);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
-    mut parser: XML_Parser,
-    mut start: XML_StartNamespaceDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setStartNamespaceDecl(start)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
-    mut parser: XML_Parser,
-    mut end: XML_EndNamespaceDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setEndNamespaceDecl(end)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_NotStandaloneHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setNotStandalone(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_ExternalEntityRefHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setExternalEntityRef(handler)
-    };
-}
-/* If a non-NULL value for arg is specified here, then it will be
-   passed as the first argument to the external entity ref handler
-   instead of the parser object.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
-    mut parser: XML_Parser,
-    mut arg: *mut c_void,
-) {
-    if parser.is_null() {
-        return;
-    }
-    if !arg.is_null() {
-        (*parser).m_handlers.m_externalEntityRefHandlerArg = arg as XML_Parser
-    } else {
-        (*parser).m_handlers.m_externalEntityRefHandlerArg = parser
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_SkippedEntityHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setSkippedEntity(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_UnknownEncodingHandler,
-    mut data: *mut c_void,
-) {
-    if parser.is_null() {
-        return;
-    }
-    (*parser).m_handlers.setUnknownEncoding(handler);
-    (*parser).m_handlers.m_unknownEncodingHandlerData = data;
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetElementDeclHandler(
-    mut parser: XML_Parser,
-    mut eldecl: XML_ElementDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setElementDecl(eldecl)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
-    mut parser: XML_Parser,
-    mut attdecl: XML_AttlistDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setAttlistDecl(attdecl)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetEntityDeclHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_EntityDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setEntityDecl(handler)
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetXmlDeclHandler(
-    mut parser: XML_Parser,
-    mut handler: XML_XmlDeclHandler,
-) {
-    if !parser.is_null() {
-        (*parser).m_handlers.setXmlDecl(handler)
-    };
-}
-/* Controls parsing of parameter entities (including the external DTD
-   subset). If parsing of parameter entities is enabled, then
-   references to external parameter entities (including the external
-   DTD subset) will be passed to the handler set with
-   XML_SetExternalEntityRefHandler.  The context passed will be 0.
-
-   Unlike external general entities, external parameter entities can
-   only be parsed synchronously.  If the external parameter entity is
-   to be parsed, it must be parsed during the call to the external
-   entity ref handler: the complete sequence of
-   XML_ExternalEntityParserCreate, XML_Parse/XML_ParseBuffer and
-   XML_ParserFree calls must be made during this call.  After
-   XML_ExternalEntityParserCreate has been called to create the parser
-   for the external parameter entity (context must be 0 for this
-   call), it is illegal to make any calls on the old parser until
-   XML_ParserFree has been called on the newly created parser.
-   If the library has been compiled without support for parameter
-   entity parsing (ie without XML_DTD being defined), then
-   XML_SetParamEntityParsing will return 0 if parsing of parameter
-   entities is requested; otherwise it will return non-zero.
-   Note: If XML_SetParamEntityParsing is called after XML_Parse or
-      XML_ParseBuffer, then it has no effect and will always return 0.
-   Note: If parser == NULL, the function will do nothing and return 0.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetParamEntityParsing(
-    mut parser: XML_Parser,
-    mut peParsing: XML_ParamEntityParsing,
-) -> c_int {
-    if parser.is_null() {
-        return 0i32;
-    }
-    /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return 0i32;
-    }
-    (*parser).m_paramEntityParsing = peParsing;
-    return 1;
-}
-/* Sets the hash salt to use for internal hash calculations.
-   Helps in preventing DoS attacks based on predicting hash
-   function behavior. This must be called before parsing is started.
-   Returns 1 if successful, 0 when called after parsing has started.
-   Note: If parser == NULL, the function will do nothing and return 0.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: c_ulong) -> c_int {
-    if parser.is_null() {
-        return 0i32;
-    }
-    if !(*parser).m_parentParser.is_null() {
-        return XML_SetHashSalt((*parser).m_parentParser, hash_salt);
-    }
-    /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return 0i32;
-    }
-    (*parser).m_hash_secret_salt = hash_salt;
-    return 1;
-}
-/* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
-   detected.  The last call to XML_Parse must have isFinal true; len
-   may be zero for this call (or any other).
-
-   Though the return values for these functions has always been
-   described as a Boolean value, the implementation, at least for the
-   1.95.x series, has always returned exactly one of the XML_Status
-   values.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_Parse(
-    mut parser: XML_Parser,
-    mut s: *const c_char,
-    mut len: c_int,
-    mut isFinal: c_int,
-) -> XML_Status {
-    if parser.is_null() || len < 0 || s.is_null() && len != 0 {
-        if !parser.is_null() {
-            (*parser).m_errorCode = XML_ERROR_INVALID_ARGUMENT
-        }
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-    (*parser).parse(s, len, isFinal)
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_ParseBuffer(
-    mut parser: XML_Parser,
-    mut len: c_int,
-    mut isFinal: c_int,
-) -> XML_Status {
-    if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-
-    (*parser).parseBuffer(len, isFinal)
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
-    if parser.is_null() {
-        return NULL as *mut c_void;
-    }
-
-    (*parser).getBuffer(len)
-}
-/* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
-   Must be called from within a call-back handler, except when aborting
-   (resumable = 0) an already suspended parser. Some call-backs may
-   still follow because they would otherwise get lost. Examples:
-   - endElementHandler() for empty elements when stopped in
-     startElementHandler(),
-   - endNameSpaceDeclHandler() when stopped in endElementHandler(),
-   and possibly others.
-
-   Can be called from most handlers, including DTD related call-backs,
-   except when parsing an external parameter entity and resumable != 0.
-   Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
-   Possible error codes:
-   - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
-   - XML_ERROR_FINISHED: when the parser has already finished.
-   - XML_ERROR_SUSPEND_PE: when suspending while parsing an external PE.
-
-   When resumable != 0 (true) then parsing is suspended, that is,
-   XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
-   Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
-   return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
-
-   *Note*:
-   This will be applied to the current parser instance only, that is, if
-   there is a parent parser then it will continue parsing when the
-   externalEntityRefHandler() returns. It is up to the implementation of
-   the externalEntityRefHandler() to call XML_StopParser() on the parent
-   parser (recursively), if one wants to stop parsing altogether.
-
-   When suspended, parsing can be resumed by calling XML_ResumeParser().
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
-    if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-    (*parser).stopParser(resumable)
-}
-/* Resumes parsing after it has been suspended with XML_StopParser().
-   Must not be called from within a handler call-back. Returns same
-   status codes as XML_Parse() or XML_ParseBuffer().
-   Additional error code XML_ERROR_NOT_SUSPENDED possible.
-
-   *Note*:
-   This must be called on the most deeply nested child parser instance
-   first, and on its parent parser only after the child parser has finished,
-   to be applied recursively until the document entity's parser is restarted.
-   That is, the parent parser will not resume by itself and it is up to the
-   application to call XML_ResumeParser() on it at the appropriate moment.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
-    if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
-
-    (*parser).resumeParser()
-}
-/* Returns status of parser with respect to being initialized, parsing,
-   finished, or suspended and processing the final buffer.
-   XXX XML_Parse() and XML_ParseBuffer() should return XML_ParsingStatus,
-   XXX with XML_FINISHED_OK or XML_FINISHED_ERROR replacing XML_FINISHED
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetParsingStatus(
-    mut parser: XML_Parser,
-    mut status: *mut XML_ParsingStatus,
-) {
-    if parser.is_null() {
-        return;
-    }
-    if !status.is_null() {
-    } else {
-        __assert_fail(
-            b"status != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
-                as *const c_char,
-            2113u32,
-            (*::std::mem::transmute::<&[u8; 59], &[c_char; 59]>(
-                b"void XML_GetParsingStatus(XML_Parser, XML_ParsingStatus *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    *status = (*parser).m_parsingStatus;
-}
-/* If XML_Parse or XML_ParseBuffer have returned XML_STATUS_ERROR, then
-   XML_GetErrorCode returns information about the error.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_Error {
-    if parser.is_null() {
-        return XML_ERROR_INVALID_ARGUMENT;
-    }
-    return (*parser).m_errorCode;
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_Index {
-    if parser.is_null() {
-        return -1i64;
-    }
-    if !(*parser).m_eventPtr.is_null() {
-        return (*parser).m_parseEndByteIndex
-            - (*parser)
-                .m_parseEndPtr
-                .wrapping_offset_from((*parser).m_eventPtr) as c_long;
-    }
-    if cfg!(feature = "mozilla") {
-        return (*parser).m_parseEndByteIndex;
-    }
-    return -1i64;
-}
-/* Return the number of bytes in the current event.
-   Returns 0 if the event is in an internal entity.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_int {
-    if parser.is_null() {
-        return 0i32;
-    }
-    if !(*parser).m_eventEndPtr.is_null() && !(*parser).m_eventPtr.is_null() {
-        return (*parser)
-            .m_eventEndPtr
-            .wrapping_offset_from((*parser).m_eventPtr) as c_int;
-    }
-    return 0;
-}
-/* If XML_CONTEXT_BYTES is defined, returns the input buffer, sets
-   the integer pointed to by offset to the offset within this buffer
-   of the current parse position, and sets the integer pointed to by size
-   to the size of this buffer (the number of input bytes). Otherwise
-   returns a NULL pointer. Also returns a NULL pointer if a parse isn't
-   active.
-
-   NOTE: The character pointer returned should not be used outside
-   the handler that makes the call.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetInputContext(
-    mut parser: XML_Parser,
-    mut offset: *mut c_int,
-    mut size: *mut c_int,
-) -> *const c_char {
-    if parser.is_null() {
-        return NULL as *const c_char;
-    }
-    if !(*parser).m_eventPtr.is_null() && !(*parser).m_buffer.is_null() {
-        if !offset.is_null() {
-            *offset = (*parser)
-                .m_eventPtr
-                .wrapping_offset_from((*parser).m_buffer) as c_int
-        }
-        if !size.is_null() {
-            *size = (*parser)
-                .m_bufferEnd
-                .wrapping_offset_from((*parser).m_buffer) as c_int
-        }
-        return (*parser).m_buffer;
-    }
-    /* defined XML_CONTEXT_BYTES */
-    return 0 as *mut c_char;
-}
-/* These functions return information about the current parse
-   location.  They may be called from any callback called to report
-   some parse event; in this case the location is the location of the
-   first of the sequence of characters that generated the event.  When
-   called from callbacks generated by declarations in the document
-   prologue, the location identified isn't as neatly defined, but will
-   be within the relevant markup.  When called outside of the callback
-   functions, the position indicated will be just past the last parse
-   event (regardless of whether there was an associated callback).
-
-   They may also be called after returning from a call to XML_Parse
-   or XML_ParseBuffer.  If the return value is XML_STATUS_ERROR then
-   the location is the location of the character at which the error
-   was detected; otherwise the location is the location of the last
-   parse event, as described above.
-
-   Note: XML_GetCurrentLineNumber and XML_GetCurrentColumnNumber
-   return 0 to indicate an error.
-   Note: XML_GetCurrentByteIndex returns -1 to indicate an error.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML_Size {
-    if parser.is_null() {
-        return 0u64;
-    }
-    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
-        (*(*parser).m_encoding).updatePosition(
-            (*parser).m_positionPtr,
-            (*parser).m_eventPtr,
-            &mut (*parser).m_position,
-        );
-        (*parser).m_positionPtr = (*parser).m_eventPtr
-    }
-    return (*parser).m_position.lineNumber.wrapping_add(1u64);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> XML_Size {
-    if parser.is_null() {
-        return 0u64;
-    }
-    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
-        (*(*parser).m_encoding).updatePosition(
-            (*parser).m_positionPtr,
-            (*parser).m_eventPtr,
-            &mut (*parser).m_position,
-        );
-        (*parser).m_positionPtr = (*parser).m_eventPtr
-    }
-    return (*parser).m_position.columnNumber;
-}
-/* For backwards compatibility with previous versions. */
-/* Frees the content model passed to the element declaration handler */
-#[no_mangle]
-pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
-    if !parser.is_null() {
-        FREE!(parser, model as *mut c_void);
-    };
-}
-/* Exposing the memory handling functions used in Expat */
-#[no_mangle]
-pub unsafe extern "C" fn XML_MemMalloc(mut parser: XML_Parser, mut size: size_t) -> *mut c_void {
-    if parser.is_null() {
-        return NULL as *mut c_void;
-    }
-    return MALLOC!(parser, size);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_MemRealloc(
-    mut parser: XML_Parser,
-    mut ptr: *mut c_void,
-    mut size: size_t,
-) -> *mut c_void {
-    if parser.is_null() {
-        return NULL as *mut c_void;
-    }
-    return REALLOC!(parser, ptr, size);
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
-    if !parser.is_null() {
-        FREE!(parser, ptr);
-    };
-}
-/* This can be called within a handler for a start element, end
-   element, processing instruction or character data.  It causes the
-   corresponding markup to be passed to the default handler.
-*/
-#[no_mangle]
-pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
-    if parser.is_null() {
-        return;
-    }
-    if (*parser).m_handlers.hasDefault() {
-        if !(*parser).m_openInternalEntities.is_null() {
-            reportDefault(
-                parser,
-                EncodingType::Internal,
-                (*(*parser).m_openInternalEntities).internalEventPtr,
-                (*(*parser).m_openInternalEntities).internalEventEndPtr,
-            );
-        } else {
-            reportDefault(
-                parser,
-                EncodingType::Normal,
-                (*parser).m_eventPtr,
-                (*parser).m_eventEndPtr,
-            );
-        }
-    };
-}
-/* Returns a string describing the error. */
-#[no_mangle]
-pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
-    match code {
-        XML_ERROR_NONE => NULL as *const XML_LChar,
-        XML_ERROR_NO_MEMORY => wch!("out of memory\x00"),
-        XML_ERROR_SYNTAX => wch!("syntax error\x00"),
-        XML_ERROR_NO_ELEMENTS => wch!("no element found\x00"),
-        XML_ERROR_INVALID_TOKEN => wch!("not well-formed (invalid token)\x00"),
-        XML_ERROR_UNCLOSED_TOKEN => wch!("unclosed token\x00"),
-        XML_ERROR_PARTIAL_CHAR => wch!("partial character\x00"),
-        XML_ERROR_TAG_MISMATCH => wch!("mismatched tag\x00"),
-        XML_ERROR_DUPLICATE_ATTRIBUTE => wch!("duplicate attribute\x00"),
-        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => wch!("junk after document element\x00"),
-        XML_ERROR_PARAM_ENTITY_REF => wch!("illegal parameter entity reference\x00"),
-        XML_ERROR_UNDEFINED_ENTITY => wch!("undefined entity\x00"),
-        XML_ERROR_RECURSIVE_ENTITY_REF => wch!("recursive entity reference\x00"),
-        XML_ERROR_ASYNC_ENTITY => wch!("asynchronous entity\x00"),
-        XML_ERROR_BAD_CHAR_REF => wch!("reference to invalid character number\x00"),
-        XML_ERROR_BINARY_ENTITY_REF => wch!("reference to binary entity\x00"),
-        XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
-            wch!("reference to external entity in attribute\x00")
-        }
-        XML_ERROR_MISPLACED_XML_PI => wch!("XML or text declaration not at start of entity\x00"),
-        XML_ERROR_UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
-        XML_ERROR_INCORRECT_ENCODING => {
-            wch!("encoding specified in XML declaration is incorrect\x00")
-        }
-        XML_ERROR_UNCLOSED_CDATA_SECTION => wch!("unclosed CDATA section\x00"),
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
-            wch!("error in processing external entity reference\x00")
-        }
-        XML_ERROR_NOT_STANDALONE => wch!("document is not standalone\x00"),
-        XML_ERROR_UNEXPECTED_STATE => {
-            wch!("unexpected parser state - please send a bug report\x00")
-        }
-        XML_ERROR_ENTITY_DECLARED_IN_PE => wch!("entity declared in parameter entity\x00"),
-        XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
-            wch!("requested feature requires XML_DTD support in Expat\x00")
-        }
-        XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
-            wch!("cannot change setting once parsing has begun\x00")
-        }
-        /* Added in 1.95.7. */
-        XML_ERROR_UNBOUND_PREFIX => wch!("unbound prefix\x00"),
-        /* Added in 1.95.8. */
-        XML_ERROR_UNDECLARING_PREFIX => wch!("must not undeclare prefix\x00"),
-        XML_ERROR_INCOMPLETE_PE => wch!("incomplete markup in parameter entity\x00"),
-        XML_ERROR_XML_DECL => wch!("XML declaration not well-formed\x00"),
-        XML_ERROR_TEXT_DECL => wch!("text declaration not well-formed\x00"),
-        XML_ERROR_PUBLICID => wch!("illegal character(s) in public id\x00"),
-        XML_ERROR_SUSPENDED => wch!("parser suspended\x00"),
-        XML_ERROR_NOT_SUSPENDED => wch!("parser not suspended\x00"),
-        XML_ERROR_ABORTED => wch!("parsing aborted\x00"),
-        XML_ERROR_FINISHED => wch!("parsing finished\x00"),
-        XML_ERROR_SUSPEND_PE => wch!("cannot suspend in external parameter entity\x00"),
-        XML_ERROR_RESERVED_PREFIX_XML => {
-            /* Added in 2.0.0. */
-            wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
-        }
-        XML_ERROR_RESERVED_PREFIX_XMLNS => {
-            wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
-        }
-        XML_ERROR_RESERVED_NAMESPACE_URI => {
-            wch!("prefix must not be bound to one of the reserved namespace names\x00")
-        }
-        /* Added in 2.2.5. */
-        XML_ERROR_INVALID_ARGUMENT => {
-            /* Constant added in 2.2.1, already */
-            wch!("invalid argument\x00")
-        }
-        _ => NULL as *const XML_LChar,
-    }
-}
-/* Return a string containing the version number of this expat */
-#[no_mangle]
-pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
-    /* V1 is used to string-ize the version number. However, it would
-    string-ize the actual version macro *names* unless we get them
-    substituted before being passed to V1. CPP is defined to expand
-    a macro, then rescan for more expansions. Thus, we use V2 to expand
-    the version macros, then CPP will expand the resulting V1() macro
-    with the correct numerals. */
-    /* ### I'm assuming cpp is portable in this respect... */
-    wch!("expat_2.2.9\x00")
-}
-/* Return an XML_Expat_Version structure containing numeric version
-   number information for this version of expat. Expat follows the
-   semantic versioning convention. See http://semver.org.
-*/
-pub const XML_MAJOR_VERSION: c_int = 2;
-pub const XML_MINOR_VERSION: c_int = 2;
-pub const XML_MICRO_VERSION: c_int = 9;
-#[no_mangle]
-pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
-    XML_Expat_Version {
-        major: XML_MAJOR_VERSION,
-        minor: XML_MINOR_VERSION,
-        micro: XML_MICRO_VERSION,
-    }
-}
-#[no_mangle]
-pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
-    const features: &[XML_Feature] = &[
-        XML_Feature {
-            feature: XML_FEATURE_SIZEOF_XML_CHAR,
-            name: wch!("sizeof(XML_Char)\x00"),
-            value: ::std::mem::size_of::<XML_Char>() as c_long,
-        },
-        XML_Feature {
-            feature: XML_FEATURE_SIZEOF_XML_LCHAR,
-            name: wch!("sizeof(XML_LChar)\x00"),
-            value: ::std::mem::size_of::<XML_LChar>() as c_long,
-        },
-        #[cfg(feature = "unicode")]
-        XML_Feature {
-            feature: XML_FEATURE_UNICODE,
-            name: wch!("XML_UNICODE\x00"),
-            value: 0i64,
-        },
-        #[cfg(feature = "unicode_wchar_t")]
-        XML_Feature {
-            feature: XML_FEATURE_UNICODE_WCHAR_T,
-            name: wch!("XML_UNICODE_WHCAR_T\x00"),
-            value: 0i64,
-        },
-        XML_Feature {
-            feature: XML_FEATURE_DTD,
-            name: wch!("XML_DTD\x00"),
-            value: 0i64,
-        },
-        XML_Feature {
-            feature: XML_FEATURE_CONTEXT_BYTES,
-            name: wch!("XML_CONTEXT_BYTES\x00"),
-            value: XML_CONTEXT_BYTES as c_long,
-        },
-        XML_Feature {
-            feature: XML_FEATURE_NS,
-            name: wch!("XML_NS\x00"),
-            value: 0i64,
-        },
-        XML_Feature {
-            feature: XML_FEATURE_END,
-            name: NULL as *const XML_LChar,
-            value: 0i64,
-        },
-    ];
-    features.as_ptr()
-}
-
-#[cfg(feature = "mozilla")]
-#[no_mangle]
-pub unsafe extern "C" fn MOZ_XML_GetMismatchedTag(parser: XML_Parser) -> *const XML_Char {
-    (*parser).m_mismatch
-}
-
-#[cfg(feature = "mozilla")]
-#[no_mangle]
-pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XML_Bool {
-    !(*parser).m_openInternalEntities.is_null() as XML_Bool
-}
-
-unsafe extern "C" fn contentProcessor(
-    mut parser: XML_Parser,
-    mut start: *const c_char,
-    mut end: *const c_char,
-    mut endPtr: *mut *const c_char,
-) -> XML_Error {
-    let mut result: XML_Error = (*parser).doContent(
-        0,
-        EncodingType::Normal,
-        start,
-        end,
-        endPtr,
-        ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
-    );
-    if result == XML_ERROR_NONE {
-        if (*parser).storeRawNames() == 0 {
-            return XML_ERROR_NO_MEMORY;
-        }
-    }
-    return result;
-}
-
-unsafe extern "C" fn externalEntityInitProcessor(
-    mut parser: XML_Parser,
-    mut start: *const c_char,
-    mut end: *const c_char,
-    mut endPtr: *mut *const c_char,
-) -> XML_Error {
-    let mut result: XML_Error = initializeEncoding(parser);
-    if result != XML_ERROR_NONE {
-        return result;
-    }
-    (*parser).m_processor = Some(externalEntityInitProcessor2 as Processor);
-    return externalEntityInitProcessor2(parser, start, end, endPtr);
-}
-
-unsafe extern "C" fn externalEntityInitProcessor2(
-    mut parser: XML_Parser,
-    mut start: *const c_char,
-    mut end: *const c_char,
-    mut endPtr: *mut *const c_char,
-) -> XML_Error {
-    let mut next: *const c_char = start;
-    let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
-    match tok {
-        super::xmltok::XML_TOK_BOM => {
-            /* If we are at the end of the buffer, this would cause the next stage,
-               i.e. externalEntityInitProcessor3, to pass control directly to
-               doContent (by detecting XML_TOK_NONE) without processing any xml text
-               declaration - causing the error XML_ERROR_MISPLACED_XML_PI in doContent.
-            */
-            if next == end && (*parser).m_parsingStatus.finalBuffer == 0 {
-                *endPtr = next; /* XmlContentTok doesn't always set the last arg */
-                return XML_ERROR_NONE;
-            }
-            start = next
-        }
-        super::xmltok::XML_TOK_PARTIAL => {
-            if (*parser).m_parsingStatus.finalBuffer == 0 {
-                *endPtr = start;
-                return XML_ERROR_NONE;
-            }
-            (*parser).m_eventPtr = start;
-            return XML_ERROR_UNCLOSED_TOKEN;
-        }
-        super::xmltok::XML_TOK_PARTIAL_CHAR => {
-            if (*parser).m_parsingStatus.finalBuffer == 0 {
-                *endPtr = start;
-                return XML_ERROR_NONE;
-            }
-            (*parser).m_eventPtr = start;
-            return XML_ERROR_PARTIAL_CHAR;
-        }
-        _ => {}
-    }
-    (*parser).m_processor = Some(externalEntityInitProcessor3 as Processor);
-    return externalEntityInitProcessor3(parser, start, end, endPtr);
-}
-
-unsafe extern "C" fn externalEntityInitProcessor3(
-    mut parser: XML_Parser,
-    mut start: *const c_char,
-    mut end: *const c_char,
-    mut endPtr: *mut *const c_char,
-) -> XML_Error {
-    let mut tok: c_int = 0;
-    let mut next: *const c_char = start;
-    (*parser).m_eventPtr = start;
-    tok = (*(*parser).m_encoding).xmlTok(XML_CONTENT_STATE, start, end, &mut next);
-    (*parser).m_eventEndPtr = next;
-    match tok {
-        super::xmltok::XML_TOK_XML_DECL => {
-            let mut result: XML_Error = XML_ERROR_NONE;
-            result = processXmlDecl(parser, 1, start, next);
-            if result != XML_ERROR_NONE {
-                return result;
-            }
-            match (*parser).m_parsingStatus.parsing {
-                3 => {
-                    *endPtr = next;
-                    return XML_ERROR_NONE;
-                }
-                2 => return XML_ERROR_ABORTED,
-                _ => start = next,
-            }
-        }
-        super::xmltok::XML_TOK_PARTIAL => {
-            if (*parser).m_parsingStatus.finalBuffer == 0 {
-                *endPtr = start;
-                return XML_ERROR_NONE;
-            }
-            return XML_ERROR_UNCLOSED_TOKEN;
-        }
-        super::xmltok::XML_TOK_PARTIAL_CHAR => {
-            if (*parser).m_parsingStatus.finalBuffer == 0 {
-                *endPtr = start;
-                return XML_ERROR_NONE;
-            }
-            return XML_ERROR_PARTIAL_CHAR;
-        }
-        _ => {}
-    }
-    (*parser).m_processor = Some(externalEntityContentProcessor as Processor);
-    (*parser).m_tagLevel = 1;
-    return externalEntityContentProcessor(parser, start, end, endPtr);
-}
-
-unsafe extern "C" fn externalEntityContentProcessor(
-    mut parser: XML_Parser,
-    mut start: *const c_char,
-    mut end: *const c_char,
-    mut endPtr: *mut *const c_char,
-) -> XML_Error {
-    let mut result: XML_Error = (*parser).doContent(
-        1,
-        EncodingType::Normal,
-        start,
-        end,
-        endPtr,
-        ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
-    );
-    if result == XML_ERROR_NONE {
-        if (*parser).storeRawNames() == 0 {
-            return XML_ERROR_NO_MEMORY;
-        }
-    }
-    return result;
 }
 
 // Initialized in run_static_initializers
@@ -9516,6 +9254,34 @@ unsafe extern "C" fn keylen(mut s: KEY) -> size_t {
     len
 }
 
+impl XML_ParserStruct {
+    unsafe fn copy_salt_to_sipkey(&mut self, mut key: *mut sipkey) {
+        (*key).k[0] = 0u64;
+        (*key).k[1] = self.get_hash_secret_salt();
+    }
+
+    unsafe fn hash(&mut self, mut s: KEY) -> c_ulong {
+        let mut state: siphash = siphash {
+            v0: 0,
+            v1: 0,
+            v2: 0,
+            v3: 0,
+            buf: [0; 8],
+            p: 0 as *mut c_uchar,
+            c: 0,
+        };
+        let mut key: sipkey = sipkey { k: [0; 2] };
+        self.copy_salt_to_sipkey(&mut key);
+        sip24_init(&mut state, &mut key);
+        sip24_update(
+            &mut state,
+            s as *const c_void,
+            keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+        );
+        return sip24_final(&mut state);
+    }
+}
+
 unsafe extern "C" fn poolInit(
     mut pool: *mut STRING_POOL,
     mut ms: *const XML_Memory_Handling_Suite,
@@ -9526,6 +9292,26 @@ unsafe extern "C" fn poolInit(
     (*pool).ptr = NULL as *mut XML_Char;
     (*pool).end = NULL as *const XML_Char;
     (*pool).mem = ms;
+}
+
+impl STRING_POOL {
+    unsafe fn clear(&mut self) {
+        if self.freeBlocks.is_null() {
+            self.freeBlocks = self.blocks
+        } else {
+            let mut p: *mut BLOCK = self.blocks;
+            while !p.is_null() {
+                let mut tem: *mut BLOCK = (*p).next;
+                (*p).next = self.freeBlocks;
+                self.freeBlocks = p;
+                p = tem
+            }
+        }
+        self.blocks = NULL as *mut BLOCK;
+        self.start = NULL as *mut XML_Char;
+        self.ptr = NULL as *mut XML_Char;
+        self.end = NULL as *const XML_Char;
+    }
 }
 
 unsafe extern "C" fn poolDestroy(mut pool: *mut STRING_POOL) {
@@ -9540,6 +9326,37 @@ unsafe extern "C" fn poolDestroy(mut pool: *mut STRING_POOL) {
         let mut tem_0: *mut BLOCK = (*p).next;
         (*(*pool).mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
         p = tem_0
+    }
+}
+
+impl STRING_POOL {
+    unsafe fn append(
+        &mut self,
+        enc: &ENCODING,
+        mut ptr: *const c_char,
+        end: *const c_char,
+    ) -> *mut XML_Char {
+        if self.ptr.is_null() && self.grow() == 0 {
+            return NULL as *mut XML_Char;
+        }
+        loop {
+            let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
+                enc,
+                &mut ptr,
+                end,
+                &mut self.ptr as *mut *mut _ as *mut *mut ICHAR,
+                self.end as *mut ICHAR,
+            );
+            if convert_res == super::xmltok::XML_CONVERT_COMPLETED
+                || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+            {
+                break;
+            }
+            if self.grow() == 0 {
+                return NULL as *mut XML_Char;
+            }
+        }
+        self.start
     }
 }
 
@@ -9610,6 +9427,39 @@ unsafe extern "C" fn poolCopyStringN(
     return s;
 }
 
+impl STRING_POOL {
+    unsafe fn appendString(&mut self, mut s: *const XML_Char) -> *const XML_Char {
+        while *s != 0 {
+            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+                0
+            } else {
+                let fresh80 = self.ptr;
+                self.ptr = self.ptr.offset(1);
+                *fresh80 = *s;
+                1
+            } == 0
+            {
+                return NULL as *const XML_Char;
+            }
+            s = s.offset(1)
+        }
+        self.start
+    }
+
+    unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
+        if self.append(enc, ptr, end).is_null() {
+            return NULL as *mut XML_Char;
+        }
+        if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+            return NULL as *mut XML_Char;
+        }
+        let fresh81 = self.ptr;
+        self.ptr = self.ptr.offset(1);
+        *fresh81 = 0;
+        self.start
+    }
+}
+
 unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
     /* Unprotected math would be:
      ** return offsetof(BLOCK, s) + blockSize * sizeof(XML_Char);
@@ -9632,6 +9482,138 @@ unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
         return 0u64;
     }
     bytesToAllocate as size_t
+}
+
+impl STRING_POOL {
+    unsafe fn grow(&mut self) -> XML_Bool {
+        if !self.freeBlocks.is_null() {
+            if self.start.is_null() {
+                self.blocks = self.freeBlocks;
+                self.freeBlocks = (*self.freeBlocks).next;
+                (*self.blocks).next = NULL as *mut block;
+                self.start = (*self.blocks).s.as_mut_ptr();
+                self.end = self.start.offset((*self.blocks).size as isize);
+                self.ptr = self.start;
+                return XML_TRUE;
+            }
+            if (self.end.wrapping_offset_from(self.start) as c_long)
+                < (*self.freeBlocks).size as c_long
+            {
+                let mut tem: *mut BLOCK = (*self.freeBlocks).next;
+                (*self.freeBlocks).next = self.blocks;
+                self.blocks = self.freeBlocks;
+                self.freeBlocks = tem;
+                memcpy(
+                    (*self.blocks).s.as_mut_ptr() as *mut c_void,
+                    self.start as *const c_void,
+                    (self.end.wrapping_offset_from(self.start) as c_ulong)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                );
+                self.ptr = (*self.blocks)
+                    .s
+                    .as_mut_ptr()
+                    .offset(self.ptr.wrapping_offset_from(self.start));
+                self.start = (*self.blocks).s.as_mut_ptr();
+                self.end = self.start.offset((*self.blocks).size as isize);
+                return XML_TRUE;
+            }
+        }
+        if !self.blocks.is_null() && self.start == (*self.blocks).s.as_mut_ptr() {
+            let mut temp: *mut BLOCK = 0 as *mut BLOCK;
+            let mut blockSize: c_int =
+                (self.end.wrapping_offset_from(self.start) as c_uint).wrapping_mul(2u32) as c_int;
+            let mut bytesToAllocate: size_t = 0;
+            /* NOTE: Needs to be calculated prior to calling `realloc`
+            to avoid dangling pointers: */
+            let offsetInsideBlock: ptrdiff_t =
+                self.ptr.wrapping_offset_from(self.start) as c_long;
+            if blockSize < 0 {
+                /* This condition traps a situation where either more than
+                 * INT_MAX/2 bytes have already been allocated.  This isn't
+                 * readily testable, since it is unlikely that an average
+                 * machine will have that much memory, so we exclude it from the
+                 * coverage statistics.
+                 */
+                return XML_FALSE;
+                /* LCOV_EXCL_LINE */
+            }
+            bytesToAllocate = poolBytesToAllocateFor(blockSize);
+            if bytesToAllocate == 0 {
+                return XML_FALSE;
+            }
+            temp = (*self.mem)
+                .realloc_fcn
+                .expect("non-null function pointer")(
+                self.blocks as *mut c_void,
+                bytesToAllocate as c_uint as size_t,
+            ) as *mut BLOCK;
+            if temp.is_null() {
+                return XML_FALSE;
+            }
+            self.blocks = temp;
+            (*self.blocks).size = blockSize;
+            self.ptr = (*self.blocks)
+                .s
+                .as_mut_ptr()
+                .offset(offsetInsideBlock as isize);
+            self.start = (*self.blocks).s.as_mut_ptr();
+            self.end = self.start.offset(blockSize as isize)
+        } else {
+            let mut tem_0: *mut BLOCK = 0 as *mut BLOCK;
+            let mut blockSize_0: c_int = self.end.wrapping_offset_from(self.start) as c_int;
+            let mut bytesToAllocate_0: size_t = 0;
+            if blockSize_0 < 0 {
+                /* This condition traps a situation where either more than
+                 * INT_MAX bytes have already been allocated (which is prevented
+                 * by various pieces of program logic, not least this one, never
+                 * mind the unlikelihood of actually having that much memory) or
+                 * the pool control fields have been corrupted (which could
+                 * conceivably happen in an extremely buggy user handler
+                 * function).  Either way it isn't readily testable, so we
+                 * exclude it from the coverage statistics.
+                 */
+                return XML_FALSE;
+                /* LCOV_EXCL_LINE */
+            }
+            if blockSize_0 < INIT_BLOCK_SIZE {
+                blockSize_0 = INIT_BLOCK_SIZE
+            } else {
+                /* Detect overflow, avoiding _signed_ overflow undefined behavior */
+                if ((blockSize_0 as c_uint).wrapping_mul(2u32) as c_int) < 0 {
+                    return XML_FALSE;
+                } /* save one level of indirection */
+                blockSize_0 *= 2
+            } /* save one level of indirection */
+            bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0); /* save one level of indirection */
+            if bytesToAllocate_0 == 0 {
+                return XML_FALSE;
+            } /* save one level of indirection */
+            tem_0 = (*self.mem)
+                .malloc_fcn
+                .expect("non-null function pointer")(bytesToAllocate_0) as *mut BLOCK;
+            if tem_0.is_null() {
+                return XML_FALSE;
+            }
+            (*tem_0).size = blockSize_0;
+            (*tem_0).next = self.blocks;
+            self.blocks = tem_0;
+            if self.ptr != self.start {
+                memcpy(
+                    (*tem_0).s.as_mut_ptr() as *mut c_void,
+                    self.start as *const c_void,
+                    (self.ptr.wrapping_offset_from(self.start) as c_ulong)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                );
+            }
+            self.ptr = (*tem_0)
+                .s
+                .as_mut_ptr()
+                .offset(self.ptr.wrapping_offset_from(self.start));
+            self.start = (*tem_0).s.as_mut_ptr();
+            self.end = (*tem_0).s.as_mut_ptr().offset(blockSize_0 as isize)
+        }
+        XML_TRUE
+    }
 }
 
 unsafe extern "C" fn nextScaffoldPart(mut parser: XML_Parser) -> c_int {
