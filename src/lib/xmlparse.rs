@@ -5846,10 +5846,11 @@ unsafe extern "C" fn externalParEntInitProcessor(
 
 unsafe extern "C" fn entityValueInitProcessor(
     mut parser: XML_Parser,
-    mut buf: ExpatBufRef,
+    init_buf: ExpatBufRef,
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut tok: c_int = 0;
+    let mut buf = init_buf.clone();
     let mut next: *const c_char = buf.as_ptr();
     (*parser).m_eventPtr = buf.as_ptr();
     loop {
@@ -5867,7 +5868,7 @@ unsafe extern "C" fn entityValueInitProcessor(
                 super::xmltok::XML_TOK_NONE | _ => {}
             }
             /* found end of entity value - can store it now */
-            return storeEntityValue(parser, EncodingType::Normal, buf);
+            return storeEntityValue(parser, EncodingType::Normal, init_buf);
         } else {
             if tok == super::xmltok::XML_TOK_XML_DECL {
                 let mut result: XML_Error = XML_ERROR_NONE;
@@ -7628,7 +7629,7 @@ unsafe extern "C" fn processInternalEntity(
     }
     if result == XML_ERROR_NONE {
         if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_SUSPENDED {
-            (*entity).processed = text_buf.len() as i32;
+            (*entity).processed = next.wrapping_offset_from(text_buf.as_ptr()) as i32;
             (*parser).m_processor = Some(internalEntityProcessor as Processor)
         } else {
             (*entity).open = XML_FALSE;

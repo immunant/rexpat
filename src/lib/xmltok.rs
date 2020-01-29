@@ -3327,7 +3327,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
     }
     // TODO(SJC): make toAscii take a buf
     while isSpace(toAscii(enc, buf)) != 0 {
-        buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
     if !buf.is_empty() {
         *badPtr = buf.as_ptr();
