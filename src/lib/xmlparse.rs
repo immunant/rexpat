@@ -1568,6 +1568,7 @@ impl XML_ParserStruct {
             1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
         ) as *mut XML_Char;
         if parser.m_dataBuf.is_null() {
+            FREE!(parser, parser.m_atts as *mut c_void);
             return ptr::null_mut();
         }
         parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
@@ -1576,6 +1577,8 @@ impl XML_ParserStruct {
         } else {
             parser.m_dtd = dtdCreate(&parser.m_mem);
             if parser.m_dtd.is_null() {
+                FREE!(parser, parser.m_dataBuf as *mut c_void);
+                FREE!(parser, parser.m_atts as *mut c_void);
                 return ptr::null_mut();
             }
         }
