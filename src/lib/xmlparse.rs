@@ -1354,10 +1354,10 @@ unsafe extern "C" fn ENTROPY_DEBUG(mut label: *const c_char, mut entropy: c_ulon
             ::std::mem::size_of::<c_ulong>() as c_ulong,
         );
     }
-    return entropy;
+    entropy
 }
 
-unsafe extern "C" fn generate_hash_secret_salt(mut _parser: XML_Parser) -> c_ulong {
+unsafe fn generate_hash_secret_salt() -> c_ulong {
     let mut entropy: c_ulong = 0;
     /* "Failproof" high quality providers: */
     /* Try high quality providers first .. */
@@ -1381,16 +1381,16 @@ unsafe extern "C" fn generate_hash_secret_salt(mut _parser: XML_Parser) -> c_ulo
     entropy = gather_time_entropy() ^ getpid() as c_ulong;
     /* Factors are 2^31-1 and 2^61-1 (Mersenne primes M31 and M61) */
     if ::std::mem::size_of::<c_ulong>() as c_ulong == 4 {
-        return ENTROPY_DEBUG(
+        ENTROPY_DEBUG(
             b"fallback(4)\x00".as_ptr() as *const c_char,
             entropy.wrapping_mul(2147483647u64),
-        );
+        )
     } else {
-        return ENTROPY_DEBUG(
+        ENTROPY_DEBUG(
             b"fallback(8)\x00".as_ptr() as *const c_char,
             entropy.wrapping_mul(2305843009213693951u64),
-        );
-    };
+        )
+    }
 }
 
 impl XML_ParserStruct {
@@ -1405,7 +1405,7 @@ impl XML_ParserStruct {
     unsafe fn startParsing(&mut self) -> XML_Bool {
         /* hash functions must be initialized before setContext() is called */
         if self.m_hash_secret_salt == 0u64 {
-            self.m_hash_secret_salt = generate_hash_secret_salt(self)
+            self.m_hash_secret_salt = generate_hash_secret_salt()
         }
         if self.m_ns != 0 {
             /* implicit context only set for root parser, since child
@@ -1747,6 +1747,35 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
    Note: Calling XML_SetEncoding after XML_Parse or XML_ParseBuffer
      has no effect and returns XML_STATUS_ERROR.
 */
+
+impl XML_ParserStruct {
+    pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
+        /* Block after XML_Parse()/XML_ParseBuffer() has been called.
+        XXX There's no way for the caller to determine which of the
+        XXX possible error cases caused the XML_STATUS_ERROR return.
+        */
+        if self.m_parsingStatus.parsing == XML_PARSING
+            || self.m_parsingStatus.parsing == XML_SUSPENDED
+        {
+            return XML_STATUS_ERROR_0 as XML_Status;
+        }
+
+        /* Get rid of any previous encoding name */
+        FREE!(self, self.m_protocolEncodingName as *mut c_void);
+        if encodingName.is_null() {
+            /* No new encoding name */
+            self.m_protocolEncodingName = NULL as *const XML_Char
+        } else {
+            /* Copy the new encoding name into allocated memory */
+            self.m_protocolEncodingName = copyString(encodingName, &self.m_mem);
+            if self.m_protocolEncodingName.is_null() {
+                return XML_STATUS_ERROR_0 as XML_Status;
+            }
+        }
+        XML_STATUS_OK_0 as XML_Status
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetEncoding(
     mut parser: XML_Parser,
@@ -1755,29 +1784,8 @@ pub unsafe extern "C" fn XML_SetEncoding(
     if parser.is_null() {
         return XML_STATUS_ERROR_0 as XML_Status;
     }
-    /* Block after XML_Parse()/XML_ParseBuffer() has been called.
-       XXX There's no way for the caller to determine which of the
-       XXX possible error cases caused the XML_STATUS_ERROR return.
-    */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
-    {
-        return XML_STATUS_ERROR_0 as XML_Status;
-    }
 
-    /* Get rid of any previous encoding name */
-    FREE!(parser, (*parser).m_protocolEncodingName as *mut c_void);
-    if encodingName.is_null() {
-        /* No new encoding name */
-        (*parser).m_protocolEncodingName = NULL as *const XML_Char
-    } else {
-        /* Copy the new encoding name into allocated memory */
-        (*parser).m_protocolEncodingName = copyString(encodingName, &(*parser).m_mem);
-        if (*parser).m_protocolEncodingName.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
-        }
-    }
-    XML_STATUS_OK_0 as XML_Status
+    (*parser).setEncoding(encodingName)
 }
 /* Creates an XML_Parser object that can parse an external general
    entity; context is a '\0'-terminated string specifying the parse
@@ -1964,7 +1972,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     parser
 }
 
-unsafe extern "C" fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
+unsafe fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
     loop {
         let mut b: *mut BINDING = bindings;
         if b.is_null() {
@@ -2518,7 +2526,7 @@ pub unsafe extern "C" fn XML_SetParamEntityParsing(
         return 0i32;
     }
     (*parser).m_paramEntityParsing = peParsing;
-    return 1;
+    1
 }
 /* Sets the hash salt to use for internal hash calculations.
    Helps in preventing DoS attacks based on predicting hash
@@ -2541,7 +2549,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
         return 0i32;
     }
     (*parser).m_hash_secret_salt = hash_salt;
-    return 1;
+    1
 }
 /* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
    detected.  The last call to XML_Parse must have isFinal true; len
@@ -3094,7 +3102,7 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_
     if cfg!(feature = "mozilla") {
         return (*parser).m_parseEndByteIndex;
     }
-    return -1i64;
+    -1i64
 }
 /* Return the number of bytes in the current event.
    Returns 0 if the event is in an internal entity.
@@ -3109,7 +3117,7 @@ pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_in
             .m_eventEndPtr
             .wrapping_offset_from((*parser).m_eventPtr) as c_int;
     }
-    return 0;
+    0
 }
 /* If XML_CONTEXT_BYTES is defined, returns the input buffer, sets
    the integer pointed to by offset to the offset within this buffer
@@ -3144,7 +3152,7 @@ pub unsafe extern "C" fn XML_GetInputContext(
         return (*parser).m_buffer;
     }
     /* defined XML_CONTEXT_BYTES */
-    return 0 as *mut c_char;
+    ptr::null()
 }
 /* These functions return information about the current parse
    location.  They may be called from any callback called to report
@@ -3515,12 +3523,12 @@ unsafe extern "C" fn externalEntityInitProcessor(
     mut end: *const c_char,
     mut endPtr: *mut *const c_char,
 ) -> XML_Error {
-    let mut result: XML_Error = initializeEncoding(parser);
+    let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_ERROR_NONE {
         return result;
     }
     (*parser).m_processor = Some(externalEntityInitProcessor2 as Processor);
-    return externalEntityInitProcessor2(parser, start, end, endPtr);
+    externalEntityInitProcessor2(parser, start, end, endPtr)
 }
 
 unsafe extern "C" fn externalEntityInitProcessor2(
@@ -3580,7 +3588,7 @@ unsafe extern "C" fn externalEntityInitProcessor3(
     match tok {
         super::xmltok::XML_TOK_XML_DECL => {
             let mut result: XML_Error = XML_ERROR_NONE;
-            result = processXmlDecl(parser, 1, start, next);
+            result = (*parser).processXmlDecl(1, start, next);
             if result != XML_ERROR_NONE {
                 return result;
             }
@@ -5447,224 +5455,228 @@ unsafe extern "C" fn doIgnoreSection(
 }
 /* XML_DTD */
 
-unsafe extern "C" fn initializeEncoding(mut parser: XML_Parser) -> XML_Error {
-    let mut s: *const c_char = 0 as *const c_char;
-    if cfg!(feature = "unicode") {
-        let mut encodingBuf: [libc::c_char; 128] = [0; 128];
-        /* See comments abount `protoclEncodingName` in parserInit() */
-        if (*parser).m_protocolEncodingName.is_null() {
-            s = crate::stddef_h::NULL as *const libc::c_char;
-        } else {
-            let mut i: libc::c_int = 0;
-            i = 0 as libc::c_int;
-            while *(*parser).m_protocolEncodingName.offset(i as isize) != 0 {
-                if i as libc::c_ulong
-                    == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
-                        .wrapping_sub(1 as libc::c_int as libc::c_ulong)
-                    || *(*parser).m_protocolEncodingName.offset(i as isize) as libc::c_int
-                        & !(0x7f as libc::c_int)
-                        != 0 as libc::c_int
-                {
-                    encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
-                    break;
-                } else {
-                    encodingBuf[i as usize] =
-                        *(*parser).m_protocolEncodingName.offset(i as isize) as libc::c_char;
-                    i += 1
+impl XML_ParserStruct {
+    unsafe fn initializeEncoding(&mut self) -> XML_Error {
+        let mut s: *const c_char = 0 as *const c_char;
+        if cfg!(feature = "unicode") {
+            let mut encodingBuf: [libc::c_char; 128] = [0; 128];
+            /* See comments abount `protoclEncodingName` in parserInit() */
+            if self.m_protocolEncodingName.is_null() {
+                s = crate::stddef_h::NULL as *const libc::c_char;
+            } else {
+                let mut i: libc::c_int = 0;
+                i = 0 as libc::c_int;
+                while *self.m_protocolEncodingName.offset(i as isize) != 0 {
+                    if i as libc::c_ulong
+                        == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
+                            .wrapping_sub(1 as libc::c_int as libc::c_ulong)
+                        || *self.m_protocolEncodingName.offset(i as isize) as libc::c_int
+                            & !(0x7f as libc::c_int)
+                            != 0 as libc::c_int
+                    {
+                        encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
+                        break;
+                    } else {
+                        encodingBuf[i as usize] =
+                            *self.m_protocolEncodingName.offset(i as isize) as libc::c_char;
+                        i += 1
+                    }
                 }
+                encodingBuf[i as usize] = '\u{0}' as i32 as libc::c_char;
+                s = encodingBuf.as_mut_ptr();
             }
-            encodingBuf[i as usize] = '\u{0}' as i32 as libc::c_char;
-            s = encodingBuf.as_mut_ptr();
+        } else {
+            s = self.m_protocolEncodingName as *const c_char;
         }
-    } else {
-        s = (*parser).m_protocolEncodingName as *const c_char;
-    }
-    let enc = if (*parser).m_ns as c_int != 0 {
-        InitEncoding::new_ns(&mut (*parser).m_encoding, s)
-    } else {
-        InitEncoding::new(&mut (*parser).m_encoding, s)
-    };
-    if enc.is_some() {
-        (*parser).m_initEncoding = enc;
-        (*parser).m_encoding = &*(*parser).m_initEncoding.as_ref().unwrap();
-        return XML_ERROR_NONE;
-    }
+        let enc = if self.m_ns as c_int != 0 {
+            InitEncoding::new_ns(&mut self.m_encoding, s)
+        } else {
+            InitEncoding::new(&mut self.m_encoding, s)
+        };
+        if enc.is_some() {
+            self.m_initEncoding = enc;
+            self.m_encoding = &*self.m_initEncoding.as_ref().unwrap();
+            return XML_ERROR_NONE;
+        }
 
-    return handleUnknownEncoding(parser, (*parser).m_protocolEncodingName);
+        self.handleUnknownEncoding(self.m_protocolEncodingName)
+    }
 }
 
-unsafe extern "C" fn processXmlDecl(
-    mut parser: XML_Parser,
-    mut isGeneralTextEntity: c_int,
-    mut s: *const c_char,
-    mut next: *const c_char,
-) -> XML_Error {
-    let mut encodingName: *const c_char = NULL as *const c_char;
-    let mut storedEncName: *const XML_Char = NULL as *const XML_Char;
-    let mut newEncoding: Option<*const ENCODING> = None;
-    let mut version: *const c_char = NULL as *const c_char;
-    let mut versionend: *const c_char = 0 as *const c_char;
-    let mut storedversion: *const XML_Char = NULL as *const XML_Char;
-    let mut standalone: c_int = -(1);
-    if if (*parser).m_ns as c_int != 0 {
-        super::xmltok::XmlParseXmlDeclNS
-    } else {
-        super::xmltok::XmlParseXmlDecl
-    }(
-        isGeneralTextEntity,
-        &*(*parser).m_encoding,
-        s,
-        next,
-        &mut (*parser).m_eventPtr,
-        &mut version,
-        &mut versionend,
-        &mut encodingName,
-        &mut newEncoding,
-        &mut standalone,
-    ) == 0
-    {
-        if isGeneralTextEntity != 0 {
-            return XML_ERROR_TEXT_DECL;
+impl XML_ParserStruct {
+    unsafe fn processXmlDecl(
+        &mut self,
+        mut isGeneralTextEntity: c_int,
+        mut s: *const c_char,
+        mut next: *const c_char,
+    ) -> XML_Error {
+        let mut encodingName: *const c_char = NULL as *const c_char;
+        let mut storedEncName: *const XML_Char = NULL as *const XML_Char;
+        let mut newEncoding: Option<*const ENCODING> = None;
+        let mut version: *const c_char = NULL as *const c_char;
+        let mut versionend: *const c_char = 0 as *const c_char;
+        let mut storedversion: *const XML_Char = NULL as *const XML_Char;
+        let mut standalone: c_int = -(1);
+        if if self.m_ns as c_int != 0 {
+            super::xmltok::XmlParseXmlDeclNS
         } else {
-            return XML_ERROR_XML_DECL;
-        }
-    }
-    if isGeneralTextEntity == 0 && standalone == 1 {
-        (*(*parser).m_dtd).standalone = XML_TRUE;
-        if (*parser).m_paramEntityParsing == XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE {
-            (*parser).m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER
-        }
-        /* XML_DTD */
-    }
-    if (*parser).m_handlers.hasXmlDecl() {
-        if !encodingName.is_null() {
-            storedEncName = (*parser).m_temp2Pool.storeString(
-                &*(*parser).m_encoding,
-                encodingName,
-                encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
-            );
-            if storedEncName.is_null() {
-                return XML_ERROR_NO_MEMORY;
-            }
-            (*parser).m_temp2Pool.start = (*parser).m_temp2Pool.ptr
-        }
-        if !version.is_null() {
-            storedversion = (*parser).m_temp2Pool.storeString(
-                &*(*parser).m_encoding,
-                version,
-                versionend.offset(-((*(*parser).m_encoding).minBytesPerChar() as isize)),
-            );
-            if storedversion.is_null() {
-                return XML_ERROR_NO_MEMORY;
+            super::xmltok::XmlParseXmlDecl
+        }(
+            isGeneralTextEntity,
+            &*self.m_encoding,
+            s,
+            next,
+            &mut self.m_eventPtr,
+            &mut version,
+            &mut versionend,
+            &mut encodingName,
+            &mut newEncoding,
+            &mut standalone,
+        ) == 0
+        {
+            if isGeneralTextEntity != 0 {
+                return XML_ERROR_TEXT_DECL;
+            } else {
+                return XML_ERROR_XML_DECL;
             }
         }
-        (*parser).m_handlers.xmlDecl(
-            storedversion,
-            storedEncName,
-            standalone,
-        );
-    } else if (*parser).m_handlers.hasDefault() {
-        reportDefault(parser, EncodingType::Normal, s, next);
-    }
-    if (*parser).m_protocolEncodingName.is_null() {
-        if let Some(newEncoding) = newEncoding {
-            /* Check that the specified encoding does not conflict with what
-             * the parser has already deduced.  Do we have the same number
-             * of bytes in the smallest representation of a character?  If
-             * this is UTF-16, is it the same endianness?
-             */
-            if (*newEncoding).minBytesPerChar() != (*(*parser).m_encoding).minBytesPerChar()
-                || (*newEncoding).minBytesPerChar() == 2 && !ptr::eq(newEncoding, (*parser).m_encoding)
-            {
-                (*parser).m_eventPtr = encodingName;
-                return XML_ERROR_INCORRECT_ENCODING;
+        if isGeneralTextEntity == 0 && standalone == 1 {
+            (*self.m_dtd).standalone = XML_TRUE;
+            if self.m_paramEntityParsing == XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE {
+                self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER
             }
-            (*parser).m_encoding = newEncoding
-        } else if !encodingName.is_null() {
-            let mut result: XML_Error = XML_ERROR_NONE;
-            if storedEncName.is_null() {
-                storedEncName = (*parser).m_temp2Pool.storeString(
-                    &*(*parser).m_encoding,
+            /* XML_DTD */
+        }
+        if self.m_handlers.hasXmlDecl() {
+            if !encodingName.is_null() {
+                storedEncName = self.m_temp2Pool.storeString(
+                    &*self.m_encoding,
                     encodingName,
-                    encodingName.offset((*(*parser).m_encoding).nameLength(encodingName) as isize),
+                    encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
                 );
                 if storedEncName.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
+                self.m_temp2Pool.start = self.m_temp2Pool.ptr
             }
-            result = handleUnknownEncoding(parser, storedEncName);
-            (*parser).m_temp2Pool.clear();
-            if result == XML_ERROR_UNKNOWN_ENCODING {
-                (*parser).m_eventPtr = encodingName
+            if !version.is_null() {
+                storedversion = self.m_temp2Pool.storeString(
+                    &*self.m_encoding,
+                    version,
+                    versionend.offset(-((*self.m_encoding).minBytesPerChar() as isize)),
+                );
+                if storedversion.is_null() {
+                    return XML_ERROR_NO_MEMORY;
+                }
             }
-            return result;
-        }
-    }
-    if !storedEncName.is_null() || !storedversion.is_null() {
-        (*parser).m_temp2Pool.clear();
-    }
-    XML_ERROR_NONE
-}
-
-unsafe extern "C" fn handleUnknownEncoding(
-    mut parser: XML_Parser,
-    mut encodingName: *const XML_Char,
-) -> XML_Error {
-    if (*parser).m_handlers.hasUnknownEncoding() {
-        let mut info: XML_Encoding = XML_Encoding {
-            map: [0; 256],
-            data: 0 as *mut c_void,
-            convert: None,
-            release: None,
-        };
-        let mut i: c_int = 0;
-        i = 0;
-        while i < 256 {
-            info.map[i as usize] = -(1);
-            i += 1
-        }
-        info.convert = ::std::mem::transmute::<
-            intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
-        >(NULL as intptr_t);
-        info.data = NULL as *mut c_void;
-        info.release = ::std::mem::transmute::<
-            intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void)>,
-        >(NULL as intptr_t);
-
-        // Unwrapping because the handler was already checked to exist
-        if (*parser).m_handlers.unknownEncoding(encodingName, &mut info).unwrap() != 0 {
-            let mut unknown_enc = UnknownEncoding::new();
-            let initialized = unknown_enc.initialize(
-                info.map.as_mut_ptr(),
-                info.convert,
-                info.data,
-                (*parser).m_ns != 0
+            self.m_handlers.xmlDecl(
+                storedversion,
+                storedEncName,
+                standalone,
             );
-            if initialized {
-                match ExpatBox::try_new_in(unknown_enc, (*parser).m_mem) {
-                    Err(_) => {
-                        if info.release.is_some() {
-                            info.release.expect("non-null function pointer")(info.data);
-                        }
+        } else if self.m_handlers.hasDefault() {
+            reportDefault(self, EncodingType::Normal, s, next);
+        }
+        if self.m_protocolEncodingName.is_null() {
+            if let Some(newEncoding) = newEncoding {
+                /* Check that the specified encoding does not conflict with what
+                 * the parser has already deduced.  Do we have the same number
+                 * of bytes in the smallest representation of a character?  If
+                 * this is UTF-16, is it the same endianness?
+                 */
+                if (*newEncoding).minBytesPerChar() != (*self.m_encoding).minBytesPerChar()
+                    || (*newEncoding).minBytesPerChar() == 2 && !ptr::eq(newEncoding, self.m_encoding)
+                {
+                    self.m_eventPtr = encodingName;
+                    return XML_ERROR_INCORRECT_ENCODING;
+                }
+                self.m_encoding = newEncoding
+            } else if !encodingName.is_null() {
+                let mut result: XML_Error = XML_ERROR_NONE;
+                if storedEncName.is_null() {
+                    storedEncName = self.m_temp2Pool.storeString(
+                        &*self.m_encoding,
+                        encodingName,
+                        encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
+                    );
+                    if storedEncName.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    Ok(unknown_enc) => {
-                        (*parser).m_encoding = &*unknown_enc;
-                        (*parser).m_unknownEncoding = Some(unknown_enc);
-                        (*parser).m_unknownEncodingData = info.data;
-                        (*parser).m_unknownEncodingRelease = info.release;
-                        return XML_ERROR_NONE;
+                }
+                result = self.handleUnknownEncoding(storedEncName);
+                self.m_temp2Pool.clear();
+                if result == XML_ERROR_UNKNOWN_ENCODING {
+                    self.m_eventPtr = encodingName
+                }
+                return result;
+            }
+        }
+        if !storedEncName.is_null() || !storedversion.is_null() {
+            self.m_temp2Pool.clear();
+        }
+        XML_ERROR_NONE
+    }
+
+    unsafe fn handleUnknownEncoding(
+        &mut self,
+        mut encodingName: *const XML_Char,
+    ) -> XML_Error {
+        if self.m_handlers.hasUnknownEncoding() {
+            let mut info: XML_Encoding = XML_Encoding {
+                map: [0; 256],
+                data: 0 as *mut c_void,
+                convert: None,
+                release: None,
+            };
+            let mut i: c_int = 0;
+            i = 0;
+            while i < 256 {
+                info.map[i as usize] = -(1);
+                i += 1
+            }
+            info.convert = ::std::mem::transmute::<
+                intptr_t,
+                Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>,
+            >(NULL as intptr_t);
+            info.data = NULL as *mut c_void;
+            info.release = ::std::mem::transmute::<
+                intptr_t,
+                Option<unsafe extern "C" fn(_: *mut c_void)>,
+            >(NULL as intptr_t);
+
+            // Unwrapping because the handler was already checked to exist
+            if self.m_handlers.unknownEncoding(encodingName, &mut info).unwrap() != 0 {
+                let mut unknown_enc = UnknownEncoding::new();
+                let initialized = unknown_enc.initialize(
+                    info.map.as_mut_ptr(),
+                    info.convert,
+                    info.data,
+                    self.m_ns != 0
+                );
+                if initialized {
+                    match ExpatBox::try_new_in(unknown_enc, self.m_mem) {
+                        Err(_) => {
+                            if info.release.is_some() {
+                                info.release.expect("non-null function pointer")(info.data);
+                            }
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        Ok(unknown_enc) => {
+                            self.m_encoding = &*unknown_enc;
+                            self.m_unknownEncoding = Some(unknown_enc);
+                            self.m_unknownEncodingData = info.data;
+                            self.m_unknownEncodingRelease = info.release;
+                            return XML_ERROR_NONE;
+                        }
                     }
                 }
             }
+            if info.release.is_some() {
+                info.release.expect("non-null function pointer")(info.data);
+            }
         }
-        if info.release.is_some() {
-            info.release.expect("non-null function pointer")(info.data);
-        }
+        XML_ERROR_UNKNOWN_ENCODING
     }
-    return XML_ERROR_UNKNOWN_ENCODING;
 }
 
 unsafe extern "C" fn prologInitProcessor(
@@ -5673,12 +5685,12 @@ unsafe extern "C" fn prologInitProcessor(
     mut end: *const c_char,
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
-    let mut result: XML_Error = initializeEncoding(parser);
+    let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_ERROR_NONE {
         return result;
     }
     (*parser).m_processor = Some(prologProcessor as Processor);
-    return prologProcessor(parser, s, end, nextPtr);
+    prologProcessor(parser, s, end, nextPtr)
 }
 
 unsafe extern "C" fn externalParEntInitProcessor(
@@ -5687,7 +5699,7 @@ unsafe extern "C" fn externalParEntInitProcessor(
     mut end: *const c_char,
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
-    let mut result: XML_Error = initializeEncoding(parser);
+    let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_ERROR_NONE {
         return result;
     }
@@ -5696,11 +5708,11 @@ unsafe extern "C" fn externalParEntInitProcessor(
     (*(*parser).m_dtd).paramEntityRead = XML_TRUE;
     if (*parser).m_prologState.inEntityValue != 0 {
         (*parser).m_processor = Some(entityValueInitProcessor as Processor);
-        return entityValueInitProcessor(parser, s, end, nextPtr);
+        entityValueInitProcessor(parser, s, end, nextPtr)
     } else {
         (*parser).m_processor = Some(externalParEntProcessor as Processor);
-        return externalParEntProcessor(parser, s, end, nextPtr);
-    };
+        externalParEntProcessor(parser, s, end, nextPtr)
+    }
 }
 
 unsafe extern "C" fn entityValueInitProcessor(
@@ -5732,7 +5744,7 @@ unsafe extern "C" fn entityValueInitProcessor(
         } else {
             if tok == super::xmltok::XML_TOK_XML_DECL {
                 let mut result: XML_Error = XML_ERROR_NONE;
-                result = processXmlDecl(parser, 0, start, next);
+                result = (*parser).processXmlDecl(0, start, next);
                 if result != XML_ERROR_NONE {
                     return result;
                 }
@@ -5804,8 +5816,7 @@ unsafe extern "C" fn externalParEntProcessor(
         tok = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next)
     }
     (*parser).m_processor = Some(prologProcessor as Processor);
-    return doProlog(
-        parser,
+    return (*parser).doProlog(
         EncodingType::Normal,
         s,
         end,
@@ -5860,8 +5871,7 @@ unsafe extern "C" fn prologProcessor(
 ) -> XML_Error {
     let mut next: *const c_char = s;
     let mut tok: c_int = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
-    return doProlog(
-        parser,
+    return (*parser).doProlog(
         EncodingType::Normal,
         s,
         end,
@@ -5873,1463 +5883,1465 @@ unsafe extern "C" fn prologProcessor(
     );
 }
 
-unsafe extern "C" fn doProlog<'a>(
-    mut parser: XML_Parser,
-    mut enc_type: EncodingType,
-    mut s: *const c_char,
-    mut end: *const c_char,
-    mut tok: c_int,
-    mut next: *const c_char,
-    mut nextPtr: *mut *const c_char,
-    mut haveMore: XML_Bool,
-    mut allowClosingDoctype: XML_Bool,
-) -> XML_Error {
-    let mut current_block: u64;
-    static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH as XML_Char, '\u{0}' as XML_Char];
-    /* XML_DTD */
-    static mut atypeCDATA: [XML_Char; 6] = [
-        ASCII_C as XML_Char,
-        ASCII_D as XML_Char,
-        ASCII_A as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_A as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeID: [XML_Char; 3] = [
-        ASCII_I as XML_Char,
-        ASCII_D as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeIDREF: [XML_Char; 6] = [
-        ASCII_I as XML_Char,
-        ASCII_D as XML_Char,
-        ASCII_R as XML_Char,
-        ASCII_E as XML_Char,
-        ASCII_F as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeIDREFS: [XML_Char; 7] = [
-        ASCII_I as XML_Char,
-        ASCII_D as XML_Char,
-        ASCII_R as XML_Char,
-        ASCII_E as XML_Char,
-        ASCII_F as XML_Char,
-        ASCII_S as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeENTITY: [XML_Char; 7] = [
-        ASCII_E as XML_Char,
-        ASCII_N as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_I as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_Y as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeENTITIES: [XML_Char; 9] = [
-        ASCII_E as XML_Char,
-        ASCII_N as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_I as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_I as XML_Char,
-        ASCII_E as XML_Char,
-        ASCII_S as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeNMTOKEN: [XML_Char; 8] = [
-        ASCII_N as XML_Char,
-        ASCII_M as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_O as XML_Char,
-        ASCII_K as XML_Char,
-        ASCII_E as XML_Char,
-        ASCII_N as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut atypeNMTOKENS: [XML_Char; 9] = [
-        ASCII_N as XML_Char,
-        ASCII_M as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_O as XML_Char,
-        ASCII_K as XML_Char,
-        ASCII_E as XML_Char,
-        ASCII_N as XML_Char,
-        ASCII_S as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut notationPrefix: [XML_Char; 10] = [
-        ASCII_N as XML_Char,
-        ASCII_O as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_A as XML_Char,
-        ASCII_T as XML_Char,
-        ASCII_I as XML_Char,
-        ASCII_O as XML_Char,
-        ASCII_N as XML_Char,
-        ASCII_LPAREN as XML_Char,
-        '\u{0}' as XML_Char,
-    ];
-    static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE as XML_Char, '\u{0}' as XML_Char];
-    static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN as XML_Char, '\u{0}' as XML_Char];
-    /* save one level of indirection */
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
-    let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-    let mut quant: XML_Content_Quant = XML_CQUANT_NONE;
-    if enc_type.is_internal() {
-        eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
-        eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
-    } else {
-        eventPP = &mut (*parser).m_eventPtr;
-        eventEndPP = &mut (*parser).m_eventEndPtr
-    }
-    let mut enc = (*parser).encoding(enc_type);
-    loop {
-        let mut role: c_int = 0;
-        let mut handleDefault: XML_Bool = XML_TRUE;
-        *eventPP = s;
-        *eventEndPP = next;
-        if tok <= 0 {
-            if haveMore as c_int != 0 && tok != super::xmltok::XML_TOK_INVALID {
-                *nextPtr = s;
-                return XML_ERROR_NONE;
-            }
-            match tok {
-                super::xmltok::XML_TOK_INVALID => {
-                    *eventPP = next;
-                    return XML_ERROR_INVALID_TOKEN;
+impl XML_ParserStruct {
+    unsafe fn doProlog<'a>(
+        &mut self,
+        mut enc_type: EncodingType,
+        mut s: *const c_char,
+        mut end: *const c_char,
+        mut tok: c_int,
+        mut next: *const c_char,
+        mut nextPtr: *mut *const c_char,
+        mut haveMore: XML_Bool,
+        mut allowClosingDoctype: XML_Bool,
+    ) -> XML_Error {
+        let mut current_block: u64;
+        static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH as XML_Char, '\u{0}' as XML_Char];
+        /* XML_DTD */
+        static mut atypeCDATA: [XML_Char; 6] = [
+            ASCII_C as XML_Char,
+            ASCII_D as XML_Char,
+            ASCII_A as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_A as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeID: [XML_Char; 3] = [
+            ASCII_I as XML_Char,
+            ASCII_D as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeIDREF: [XML_Char; 6] = [
+            ASCII_I as XML_Char,
+            ASCII_D as XML_Char,
+            ASCII_R as XML_Char,
+            ASCII_E as XML_Char,
+            ASCII_F as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeIDREFS: [XML_Char; 7] = [
+            ASCII_I as XML_Char,
+            ASCII_D as XML_Char,
+            ASCII_R as XML_Char,
+            ASCII_E as XML_Char,
+            ASCII_F as XML_Char,
+            ASCII_S as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeENTITY: [XML_Char; 7] = [
+            ASCII_E as XML_Char,
+            ASCII_N as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_I as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_Y as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeENTITIES: [XML_Char; 9] = [
+            ASCII_E as XML_Char,
+            ASCII_N as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_I as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_I as XML_Char,
+            ASCII_E as XML_Char,
+            ASCII_S as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeNMTOKEN: [XML_Char; 8] = [
+            ASCII_N as XML_Char,
+            ASCII_M as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_O as XML_Char,
+            ASCII_K as XML_Char,
+            ASCII_E as XML_Char,
+            ASCII_N as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut atypeNMTOKENS: [XML_Char; 9] = [
+            ASCII_N as XML_Char,
+            ASCII_M as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_O as XML_Char,
+            ASCII_K as XML_Char,
+            ASCII_E as XML_Char,
+            ASCII_N as XML_Char,
+            ASCII_S as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut notationPrefix: [XML_Char; 10] = [
+            ASCII_N as XML_Char,
+            ASCII_O as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_A as XML_Char,
+            ASCII_T as XML_Char,
+            ASCII_I as XML_Char,
+            ASCII_O as XML_Char,
+            ASCII_N as XML_Char,
+            ASCII_LPAREN as XML_Char,
+            '\u{0}' as XML_Char,
+        ];
+        static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE as XML_Char, '\u{0}' as XML_Char];
+        static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN as XML_Char, '\u{0}' as XML_Char];
+        /* save one level of indirection */
+        let dtd: *mut DTD = self.m_dtd;
+        let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
+        let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
+        let mut quant: XML_Content_Quant = XML_CQUANT_NONE;
+        if enc_type.is_internal() {
+            eventPP = &mut (*self.m_openInternalEntities).internalEventPtr;
+            eventEndPP = &mut (*self.m_openInternalEntities).internalEventEndPtr
+        } else {
+            eventPP = &mut self.m_eventPtr;
+            eventEndPP = &mut self.m_eventEndPtr
+        }
+        let mut enc = self.encoding(enc_type);
+        loop {
+            let mut role: c_int = 0;
+            let mut handleDefault: XML_Bool = XML_TRUE;
+            *eventPP = s;
+            *eventEndPP = next;
+            if tok <= 0 {
+                if haveMore as c_int != 0 && tok != super::xmltok::XML_TOK_INVALID {
+                    *nextPtr = s;
+                    return XML_ERROR_NONE;
                 }
-                super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
-                super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
-
-                -15 => tok = -tok,
-                super::xmltok::XML_TOK_NONE => {
-                    /* for internal PE NOT referenced between declarations */
-                    if enc_type.is_internal() && (*(*parser).m_openInternalEntities).betweenDecl == 0 {
-                        *nextPtr = s;
-                        return XML_ERROR_NONE;
+                match tok {
+                    super::xmltok::XML_TOK_INVALID => {
+                        *eventPP = next;
+                        return XML_ERROR_INVALID_TOKEN;
                     }
-                    /* WFC: PE Between Declarations - must check that PE contains
-                       complete markup, not only for external PEs, but also for
-                       internal PEs if the reference occurs between declarations.
-                    */
-                    if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
-                        if (*parser)
-                            .m_prologState
-                            .handler
-                            .expect("non-null function pointer")(
-                            &mut (*parser).m_prologState,
-                            -(4),
-                            end,
-                            end,
-                            &*enc,
-                        ) == super::xmlrole::XML_ROLE_ERROR
-                        {
-                            return XML_ERROR_INCOMPLETE_PE;
+                    super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
+                    super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
+
+                    -15 => tok = -tok,
+                    super::xmltok::XML_TOK_NONE => {
+                        /* for internal PE NOT referenced between declarations */
+                        if enc_type.is_internal() && (*self.m_openInternalEntities).betweenDecl == 0 {
+                            *nextPtr = s;
+                            return XML_ERROR_NONE;
                         }
-                        *nextPtr = s;
-                        return XML_ERROR_NONE;
+                        /* WFC: PE Between Declarations - must check that PE contains
+                           complete markup, not only for external PEs, but also for
+                           internal PEs if the reference occurs between declarations.
+                        */
+                        if self.m_isParamEntity as c_int != 0 || enc_type.is_internal() {
+                            if self
+                                .m_prologState
+                                .handler
+                                .expect("non-null function pointer")(
+                                &mut self.m_prologState,
+                                -(4),
+                                end,
+                                end,
+                                &*enc,
+                            ) == super::xmlrole::XML_ROLE_ERROR
+                            {
+                                return XML_ERROR_INCOMPLETE_PE;
+                            }
+                            *nextPtr = s;
+                            return XML_ERROR_NONE;
+                        }
+                        /* XML_DTD */
+                        return XML_ERROR_NO_ELEMENTS;
                     }
-                    /* XML_DTD */
-                    return XML_ERROR_NO_ELEMENTS;
-                }
-                _ => {
-                    tok = -tok; /* end of big switch */
-                    next = end
-                }
-            }
-        } /* always initialize to NULL */
-        role = (*parser)
-            .m_prologState
-            .handler
-            .expect("non-null function pointer")(
-            &mut (*parser).m_prologState, tok, s, next, &*enc
-        );
-        match role {
-            1 => {
-                let mut result: XML_Error = processXmlDecl(parser, 0, s, next);
-                if result != XML_ERROR_NONE {
-                    return result;
-                }
-                enc = (*parser).encoding(EncodingType::Normal);
-                handleDefault = XML_FALSE;
-                current_block = 1553878188884632965;
-            }
-            4 => {
-                if (*parser).m_handlers.hasStartDoctypeDecl() {
-                    (*parser).m_doctypeName =
-                    (*parser).m_tempPool.storeString(enc, s, next);
-                    if (*parser).m_doctypeName.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                    _ => {
+                        tok = -tok; /* end of big switch */
+                        next = end
                     }
-                    (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                    (*parser).m_doctypePubid = NULL as *const XML_Char;
-                    handleDefault = XML_FALSE
                 }
-                (*parser).m_doctypeSysid = NULL as *const XML_Char;
-                current_block = 1553878188884632965;
-            }
-            7 => {
-                let startHandlerRan = (*parser).m_handlers.startDoctypeDecl(
-                    (*parser).m_doctypeName,
-                    (*parser).m_doctypeSysid,
-                    (*parser).m_doctypePubid,
-                    1,
-                );
-
-                if startHandlerRan {
-                    (*parser).m_doctypeName = NULL as *const XML_Char;
-                    (*parser).m_tempPool.clear();
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            57 => {
-                let mut result_0: XML_Error = processXmlDecl(parser, 1, s, next);
-                if result_0 != XML_ERROR_NONE {
-                    return result_0;
-                }
-                enc = (*parser).encoding(EncodingType::Normal);
-                handleDefault = XML_FALSE;
-                current_block = 1553878188884632965;
-            }
-            6 => {
-                /* XML_DTD */
-                (*parser).m_useForeignDTD = XML_FALSE;
-                (*parser).m_declEntity = hash_insert!(
-                    parser,
-                    &mut (*dtd).paramEntities,
-                    externalSubsetName.as_ptr(),
-                    ENTITY
-                );
-                if (*parser).m_declEntity.is_null() {
-                    return XML_ERROR_NO_MEMORY;
-                }
-                /* XML_DTD */
-                (*dtd).hasParamEntityRefs = XML_TRUE;
-                if (*parser).m_handlers.hasStartDoctypeDecl() {
-                    let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
-                    if (*enc).isPublicId(s, next, eventPP) == 0 {
-                        return XML_ERROR_PUBLICID;
+            } /* always initialize to NULL */
+            role = self
+                .m_prologState
+                .handler
+                .expect("non-null function pointer")(
+                &mut self.m_prologState, tok, s, next, &*enc
+            );
+            match role {
+                1 => {
+                    let mut result: XML_Error = self.processXmlDecl(0, s, next);
+                    if result != XML_ERROR_NONE {
+                        return result;
                     }
-                    pubId = (*parser).m_tempPool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if pubId.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    normalizePublicId(pubId);
-                    (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                    (*parser).m_doctypePubid = pubId;
+                    enc = self.encoding(EncodingType::Normal);
                     handleDefault = XML_FALSE;
-                    current_block = 9007411418488376351;
-                } else {
-                    current_block = 926243229934402080;
+                    current_block = 1553878188884632965;
                 }
-            }
-            14 => {
-                current_block = 926243229934402080;
-            }
-            8 => {
-                if allowClosingDoctype != XML_TRUE {
-                    /* Must not close doctype from within expanded parameter entities */
-                    return XML_ERROR_INVALID_TOKEN;
-                }
-                if !(*parser).m_doctypeName.is_null() {
-                    (*parser).m_handlers.startDoctypeDecl(
-                        (*parser).m_doctypeName,
-                        (*parser).m_doctypeSysid,
-                        (*parser).m_doctypePubid,
-                        0,
-                    );
-                    (*parser).m_tempPool.clear();
-                    handleDefault = XML_FALSE
-                }
-                /* parser->m_doctypeSysid will be non-NULL in the case of a previous
-                   XML_ROLE_DOCTYPE_SYSTEM_ID, even if parser->m_startDoctypeDeclHandler
-                   was not set, indicating an external subset
-                */
-                if !(*parser).m_doctypeSysid.is_null() || (*parser).m_useForeignDTD as c_int != 0 {
-                    let mut hadParamEntityRefs: XML_Bool = (*dtd).hasParamEntityRefs;
-                    (*dtd).hasParamEntityRefs = XML_TRUE;
-                    if (*parser).m_paramEntityParsing != 0
-                        && (*parser).m_handlers.hasExternalEntityRef()
-                    {
-                        let mut entity = hash_insert!(
-                            parser,
-                            &mut (*dtd).paramEntities,
-                            externalSubsetName.as_ptr(),
-                            ENTITY
-                        );
-                        if entity.is_null() {
-                            /* end of DTD - no need to update dtd->keepProcessing */
-                            /* The external subset name "#" will have already been
-                             * inserted into the hash table at the start of the
-                             * external entity parsing, so no allocation will happen
-                             * and lookup() cannot fail.
-                             */
+                4 => {
+                    if self.m_handlers.hasStartDoctypeDecl() {
+                        self.m_doctypeName =
+                        self.m_tempPool.storeString(enc, s, next);
+                        if self.m_doctypeName.is_null() {
                             return XML_ERROR_NO_MEMORY;
-                            /* LCOV_EXCL_LINE */
                         }
-                        if (*parser).m_useForeignDTD != 0 {
-                            (*entity).base = (*parser).m_curBase
-                        }
-                        (*dtd).paramEntityRead = XML_FALSE;
-                        if (*parser).m_handlers.externalEntityRef(
-                            0 as *const XML_Char,
-                            (*entity).base,
-                            (*entity).systemId,
-                            (*entity).publicId,
-                        ) == Ok(0)
-                        {
-                            return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
-                        }
-                        if (*dtd).paramEntityRead != 0 {
-                            if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
-                                return XML_ERROR_NOT_STANDALONE;
-                            }
-                        } else if (*parser).m_doctypeSysid.is_null() {
-                            (*dtd).hasParamEntityRefs = hadParamEntityRefs
-                        }
+                        self.m_tempPool.start = self.m_tempPool.ptr;
+                        self.m_doctypePubid = NULL as *const XML_Char;
+                        handleDefault = XML_FALSE
                     }
-                    (*parser).m_useForeignDTD = XML_FALSE
+                    self.m_doctypeSysid = NULL as *const XML_Char;
+                    current_block = 1553878188884632965;
                 }
-                /* if we didn't read the foreign DTD then this means that there
-                   is no external subset and we must reset dtd->hasParamEntityRefs
-                */
-                /* XML_DTD */
-                let endHandlerRan = (*parser).m_handlers.endDoctypeDecl();
+                7 => {
+                    let startHandlerRan = self.m_handlers.startDoctypeDecl(
+                        self.m_doctypeName,
+                        self.m_doctypeSysid,
+                        self.m_doctypePubid,
+                        1,
+                    );
 
-                if endHandlerRan {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            2 => {
-                /* if there is no DOCTYPE declaration then now is the
-                   last chance to read the foreign DTD
-                */
-                if (*parser).m_useForeignDTD != 0 {
-                    let mut hadParamEntityRefs_0: XML_Bool = (*dtd).hasParamEntityRefs;
-                    (*dtd).hasParamEntityRefs = XML_TRUE;
-                    if (*parser).m_paramEntityParsing != 0 && (*parser).m_handlers.hasExternalEntityRef() {
-                        let mut entity_0 = hash_insert!(
-                            parser,
-                            &mut (*dtd).paramEntities,
-                            externalSubsetName.as_ptr(),
-                            ENTITY
-                        );
-                        if entity_0.is_null() {
-                            return XML_ERROR_NO_MEMORY;
-                        }
-                        (*entity_0).base = (*parser).m_curBase;
-                        (*dtd).paramEntityRead = XML_FALSE;
-                        if (*parser).m_handlers.externalEntityRef(
-                            0 as *const XML_Char,
-                            (*entity_0).base,
-                            (*entity_0).systemId,
-                            (*entity_0).publicId,
-                        ) == Ok(0)
-                        {
-                            return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
-                        }
-                        if (*dtd).paramEntityRead != 0 {
-                            if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
-                                return XML_ERROR_NOT_STANDALONE;
-                            }
-                        } else {
-                            /* end of DTD - no need to update dtd->keepProcessing */
-                            /* if we didn't read the foreign DTD then this means that there
-                               is no external subset and we must reset dtd->hasParamEntityRefs
-                            */
-                            (*dtd).hasParamEntityRefs = hadParamEntityRefs_0
-                        }
-                    }
-                }
-                /* XML_DTD */
-                (*parser).m_processor = Some(contentProcessor as Processor);
-                return contentProcessor(parser, s, end, nextPtr);
-            }
-            34 => {
-                (*parser).m_declElementType = getElementType(parser, enc_type, s, next);
-                if (*parser).m_declElementType.is_null() {
-                    return XML_ERROR_NO_MEMORY;
-                }
-                current_block = 6455255476181645667;
-            }
-            22 => {
-                (*parser).m_declAttributeId = getAttributeId(parser, enc_type, s, next);
-                if (*parser).m_declAttributeId.is_null() {
-                    return XML_ERROR_NO_MEMORY;
-                }
-                (*parser).m_declAttributeIsCdata = XML_FALSE;
-                (*parser).m_declAttributeType = NULL as *const XML_Char;
-                (*parser).m_declAttributeIsId = XML_FALSE;
-                current_block = 6455255476181645667;
-            }
-            23 => {
-                (*parser).m_declAttributeIsCdata = XML_TRUE;
-                (*parser).m_declAttributeType = atypeCDATA.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            24 => {
-                (*parser).m_declAttributeIsId = XML_TRUE;
-                (*parser).m_declAttributeType = atypeID.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            25 => {
-                (*parser).m_declAttributeType = atypeIDREF.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            26 => {
-                (*parser).m_declAttributeType = atypeIDREFS.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            27 => {
-                (*parser).m_declAttributeType = atypeENTITY.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            28 => {
-                (*parser).m_declAttributeType = atypeENTITIES.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            29 => {
-                (*parser).m_declAttributeType = atypeNMTOKEN.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            30 => {
-                (*parser).m_declAttributeType = atypeNMTOKENS.as_ptr();
-                current_block = 6455255476181645667;
-            }
-            31 | 32 => {
-                if (*dtd).keepProcessing as c_int != 0 && (*parser).m_handlers.hasAttlistDecl() {
-                    let mut prefix: *const XML_Char = 0 as *const XML_Char;
-                    if !(*parser).m_declAttributeType.is_null() {
-                        prefix = enumValueSep.as_ptr()
-                    } else {
-                        prefix = if role == super::xmlrole::XML_ROLE_ATTRIBUTE_NOTATION_VALUE {
-                            notationPrefix.as_ptr()
-                        } else {
-                            enumValueStart.as_ptr()
-                        }
-                    }
-                    if (*parser).m_tempPool.appendString(prefix).is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    if (*parser).m_tempPool.append(enc, s, next).is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*parser).m_declAttributeType = (*parser).m_tempPool.start;
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            35 | 36 => {
-                if (*dtd).keepProcessing != 0 {
-                    if defineAttribute(
-                        (*parser).m_declElementType,
-                        (*parser).m_declAttributeId,
-                        (*parser).m_declAttributeIsCdata,
-                        (*parser).m_declAttributeIsId,
-                        0 as *const XML_Char,
-                        parser,
-                    ) == 0
-                    {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    if (*parser).m_handlers.hasAttlistDecl()
-                        && !(*parser).m_declAttributeType.is_null()
-                    {
-                        if *(*parser).m_declAttributeType == ASCII_LPAREN as XML_Char
-                            || *(*parser).m_declAttributeType == ASCII_N as XML_Char
-                                && *(*parser).m_declAttributeType.offset(1) == ASCII_O as XML_Char
-                        {
-                            /* Enumerated or Notation type */
-                            if (if (*parser).m_tempPool.ptr
-                                == (*parser).m_tempPool.end as *mut XML_Char
-                                && (*parser).m_tempPool.grow() == 0
-                            {
-                                0
-                            } else {
-                                let fresh32 = (*parser).m_tempPool.ptr;
-                                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                *fresh32 = ASCII_RPAREN as XML_Char;
-                                1
-                            }) == 0
-                                || (if (*parser).m_tempPool.ptr
-                                    == (*parser).m_tempPool.end as *mut XML_Char
-                                    && (*parser).m_tempPool.grow() == 0
-                                {
-                                    0
-                                } else {
-                                    let fresh33 = (*parser).m_tempPool.ptr;
-                                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                    *fresh33 = '\u{0}' as XML_Char;
-                                    1
-                                }) == 0
-                            {
-                                return XML_ERROR_NO_MEMORY;
-                            }
-                            (*parser).m_declAttributeType = (*parser).m_tempPool.start;
-                            (*parser).m_tempPool.start = (*parser).m_tempPool.ptr
-                        }
-                        *eventEndPP = s;
-                        (*parser).m_handlers.attlistDecl(
-                            (*(*parser).m_declElementType).name,
-                            (*(*parser).m_declAttributeId).name,
-                            (*parser).m_declAttributeType,
-                            0 as *const XML_Char,
-                            (role == super::xmlrole::XML_ROLE_REQUIRED_ATTRIBUTE_VALUE) as c_int,
-                        );
-                        (*parser).m_tempPool.clear();
+                    if startHandlerRan {
+                        self.m_doctypeName = NULL as *const XML_Char;
+                        self.m_tempPool.clear();
                         handleDefault = XML_FALSE
                     }
+                    current_block = 1553878188884632965;
                 }
-                current_block = 1553878188884632965;
-            }
-            37 | 38 => {
-                if (*dtd).keepProcessing != 0 {
-                    let mut attVal: *const XML_Char = 0 as *const XML_Char;
-                    let mut result_1: XML_Error = storeAttributeValue(
-                        parser,
-                        enc_type,
-                        (*parser).m_declAttributeIsCdata,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                        &mut (*dtd).pool,
-                    );
-                    if result_1 as u64 != 0 {
-                        return result_1;
+                57 => {
+                    let mut result_0: XML_Error = self.processXmlDecl(1, s, next);
+                    if result_0 != XML_ERROR_NONE {
+                        return result_0;
                     }
-                    attVal = (*dtd).pool.start;
-                    (*dtd).pool.start = (*dtd).pool.ptr;
-                    /* ID attributes aren't allowed to have a default */
-                    if defineAttribute(
-                        (*parser).m_declElementType,
-                        (*parser).m_declAttributeId,
-                        (*parser).m_declAttributeIsCdata,
-                        XML_FALSE,
-                        attVal,
-                        parser,
-                    ) == 0
-                    {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    if (*parser).m_handlers.hasAttlistDecl()
-                        && !(*parser).m_declAttributeType.is_null()
-                    {
-                        if *(*parser).m_declAttributeType == ASCII_LPAREN as XML_Char
-                            || *(*parser).m_declAttributeType == ASCII_N as XML_Char
-                                && *(*parser).m_declAttributeType.offset(1) == ASCII_O as XML_Char
-                        {
-                            /* Enumerated or Notation type */
-                            if (if (*parser).m_tempPool.ptr
-                                == (*parser).m_tempPool.end as *mut XML_Char
-                                && (*parser).m_tempPool.grow() == 0
-                            {
-                                0
-                            } else {
-                                let fresh34 = (*parser).m_tempPool.ptr;
-                                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                *fresh34 = ASCII_RPAREN as XML_Char;
-                                1
-                            }) == 0
-                                || (if (*parser).m_tempPool.ptr
-                                    == (*parser).m_tempPool.end as *mut XML_Char
-                                    && (*parser).m_tempPool.grow() == 0
-                                {
-                                    0
-                                } else {
-                                    let fresh35 = (*parser).m_tempPool.ptr;
-                                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                                    *fresh35 = '\u{0}' as XML_Char;
-                                    1
-                                }) == 0
-                            {
-                                return XML_ERROR_NO_MEMORY;
-                            }
-                            (*parser).m_declAttributeType = (*parser).m_tempPool.start;
-                            (*parser).m_tempPool.start = (*parser).m_tempPool.ptr
-                        }
-                        *eventEndPP = s;
-                        (*parser).m_handlers.attlistDecl(
-                            (*(*parser).m_declElementType).name,
-                            (*(*parser).m_declAttributeId).name,
-                            (*parser).m_declAttributeType,
-                            attVal,
-                            (role == super::xmlrole::XML_ROLE_FIXED_ATTRIBUTE_VALUE) as c_int,
-                        );
-                        (*parser).m_tempPool.clear();
-                        handleDefault = XML_FALSE
-                    }
+                    enc = self.encoding(EncodingType::Normal);
+                    handleDefault = XML_FALSE;
+                    current_block = 1553878188884632965;
                 }
-                current_block = 1553878188884632965;
-            }
-            12 => {
-                if (*dtd).keepProcessing != 0 {
-                    let mut result_2: XML_Error = storeEntityValue(
-                        parser,
-                        enc_type,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if !(*parser).m_declEntity.is_null() {
-                        (*(*parser).m_declEntity).textPtr = (*dtd).entityValuePool.start;
-                        (*(*parser).m_declEntity).textLen = (*dtd)
-                            .entityValuePool
-                            .ptr
-                            .wrapping_offset_from((*dtd).entityValuePool.start)
-                            as c_int;
-                        (*dtd).entityValuePool.start = (*dtd).entityValuePool.ptr;
-                        if (*parser).m_handlers.hasEntityDecl() {
-                            *eventEndPP = s;
-                            (*parser).m_handlers.entityDecl(
-                                (*(*parser).m_declEntity).name,
-                                (*(*parser).m_declEntity).is_param as c_int,
-                                (*(*parser).m_declEntity).textPtr,
-                                (*(*parser).m_declEntity).textLen,
-                                (*parser).m_curBase,
-                                0 as *const XML_Char,
-                                0 as *const XML_Char,
-                                0 as *const XML_Char,
-                            );
-                            handleDefault = XML_FALSE
-                        }
-                    } else {
-                        (*dtd).entityValuePool.ptr = (*dtd).entityValuePool.start
-                    }
-                    if result_2 != XML_ERROR_NONE {
-                        return result_2;
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            5 => {
-                (*parser).m_useForeignDTD = XML_FALSE;
-                /* XML_DTD */
-                (*dtd).hasParamEntityRefs = XML_TRUE;
-                if (*parser).m_handlers.hasStartDoctypeDecl() {
-                    (*parser).m_doctypeSysid = (*parser).m_tempPool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if (*parser).m_doctypeSysid.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                    handleDefault = XML_FALSE
-                } else {
-                    /* use externalSubsetName to make parser->m_doctypeSysid non-NULL
-                    for the case where no parser->m_startDoctypeDeclHandler is set */
-                    (*parser).m_doctypeSysid = externalSubsetName.as_ptr()
-                }
-                /* XML_DTD */
-                if (*dtd).standalone == 0
-                    && (*parser).m_paramEntityParsing as u64 == 0
-                    && (*parser).m_handlers.notStandalone() == Ok(0)
-                {
-                    return XML_ERROR_NOT_STANDALONE;
-                }
-                /* XML_DTD */
-                if (*parser).m_declEntity.is_null() {
-                    (*parser).m_declEntity = hash_insert!(
-                        parser,
+                6 => {
+                    /* XML_DTD */
+                    self.m_useForeignDTD = XML_FALSE;
+                    self.m_declEntity = hash_insert!(
+                        self,
                         &mut (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
                         ENTITY
                     );
-                    if (*parser).m_declEntity.is_null() {
+                    if self.m_declEntity.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    (*(*parser).m_declEntity).publicId = NULL as *const XML_Char
-                }
-                current_block = 15307276507984219638;
-            }
-            13 => {
-                current_block = 15307276507984219638;
-            }
-            15 => {
-                if (*dtd).keepProcessing as c_int != 0
-                    && !(*parser).m_declEntity.is_null()
-                    && (*parser).m_handlers.hasEntityDecl()
-                {
-                    *eventEndPP = s;
-                    (*parser).m_handlers.entityDecl(
-                        (*(*parser).m_declEntity).name,
-                        (*(*parser).m_declEntity).is_param as c_int,
-                        0 as *const XML_Char,
-                        0,
-                        (*(*parser).m_declEntity).base,
-                        (*(*parser).m_declEntity).systemId,
-                        (*(*parser).m_declEntity).publicId,
-                        0 as *const XML_Char,
-                    );
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            16 => {
-                if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
-                    (*(*parser).m_declEntity).notation =
-                    (*dtd).pool.storeString(enc, s, next);
-                    if (*(*parser).m_declEntity).notation.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*dtd).pool.start = (*dtd).pool.ptr;
-                    if (*parser).m_handlers.hasUnparsedEntityDecl() {
-                        *eventEndPP = s;
-                        (*parser).m_handlers.unparsedEntityDecl(
-                            (*(*parser).m_declEntity).name,
-                            (*(*parser).m_declEntity).base,
-                            (*(*parser).m_declEntity).systemId,
-                            (*(*parser).m_declEntity).publicId,
-                            (*(*parser).m_declEntity).notation,
-                        );
-                        handleDefault = XML_FALSE
-                    } else if (*parser).m_handlers.hasEntityDecl() {
-                        *eventEndPP = s;
-                        (*parser).m_handlers.entityDecl(
-                            (*(*parser).m_declEntity).name,
-                            0,
-                            0 as *const XML_Char,
-                            0,
-                            (*(*parser).m_declEntity).base,
-                            (*(*parser).m_declEntity).systemId,
-                            (*(*parser).m_declEntity).publicId,
-                            (*(*parser).m_declEntity).notation,
-                        );
-                        handleDefault = XML_FALSE
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            9 => {
-                if (*enc).predefinedEntityName(s, next) != 0 {
-                    (*parser).m_declEntity = NULL as *mut ENTITY
-                } else if (*dtd).keepProcessing != 0 {
-                    let mut name: *const XML_Char = (*dtd).pool.storeString(enc, s, next);
-                    if name.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*parser).m_declEntity = hash_insert!(
-                        parser,
-                        &mut (*dtd).generalEntities,
-                        name,
-                        ENTITY
-                    );
-                    if (*parser).m_declEntity.is_null() {
-                        // FIXME: this never happens in Rust, it just panics
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    if (*(*parser).m_declEntity).name != name {
-                        (*dtd).pool.ptr = (*dtd).pool.start;
-                        (*parser).m_declEntity = NULL as *mut ENTITY
-                    } else {
-                        (*dtd).pool.start = (*dtd).pool.ptr;
-                        (*(*parser).m_declEntity).publicId = NULL as *const XML_Char;
-                        (*(*parser).m_declEntity).is_param = XML_FALSE;
-                        /* if we have a parent parser or are reading an internal parameter
-                           entity, then the entity declaration is not considered "internal"
-                        */
-                        (*(*parser).m_declEntity).is_internal =
-                            !(!(*parser).m_parentParser.is_null()
-                                || !(*parser).m_openInternalEntities.is_null())
-                                as XML_Bool;
-                        if (*parser).m_handlers.hasEntityDecl() {
-                            handleDefault = XML_FALSE
+                    /* XML_DTD */
+                    (*dtd).hasParamEntityRefs = XML_TRUE;
+                    if self.m_handlers.hasStartDoctypeDecl() {
+                        let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
+                        if (*enc).isPublicId(s, next, eventPP) == 0 {
+                            return XML_ERROR_PUBLICID;
                         }
-                    }
-                } else {
-                    (*dtd).pool.ptr = (*dtd).pool.start;
-                    (*parser).m_declEntity = NULL as *mut ENTITY
-                }
-                current_block = 1553878188884632965;
-            }
-            10 => {
-                if (*dtd).keepProcessing != 0 {
-                    let mut name_0: *const XML_Char =
-                    (*dtd).pool.storeString(enc, s, next);
-                    if name_0.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*parser).m_declEntity = hash_insert!(
-                        parser,
-                        &mut (*dtd).paramEntities,
-                        name_0,
-                        ENTITY
-                    );
-                    if (*parser).m_declEntity.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    if (*(*parser).m_declEntity).name != name_0 {
-                        (*dtd).pool.ptr = (*dtd).pool.start;
-                        (*parser).m_declEntity = NULL as *mut ENTITY
-                    } else {
-                        (*dtd).pool.start = (*dtd).pool.ptr;
-                        (*(*parser).m_declEntity).publicId = NULL as *const XML_Char;
-                        (*(*parser).m_declEntity).is_param = XML_TRUE;
-                        /* if we have a parent parser or are reading an internal parameter
-                           entity, then the entity declaration is not considered "internal"
-                        */
-                        (*(*parser).m_declEntity).is_internal =
-                            !(!(*parser).m_parentParser.is_null()
-                                || !(*parser).m_openInternalEntities.is_null())
-                                as XML_Bool;
-                        if (*parser).m_handlers.hasEntityDecl() {
-                            handleDefault = XML_FALSE
-                        }
-                    }
-                } else {
-                    (*dtd).pool.ptr = (*dtd).pool.start;
-                    (*parser).m_declEntity = NULL as *mut ENTITY
-                }
-                current_block = 1553878188884632965;
-            }
-            18 => {
-                (*parser).m_declNotationPublicId = NULL as *const XML_Char;
-                (*parser).m_declNotationName = NULL as *const XML_Char;
-                if (*parser).m_handlers.hasNotationDecl() {
-                    (*parser).m_declNotationName =
-                    (*parser).m_tempPool.storeString(enc, s, next);
-                    if (*parser).m_declNotationName.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            21 => {
-                if (*enc).isPublicId(s, next, eventPP) == 0 {
-                    return XML_ERROR_PUBLICID;
-                }
-                if !(*parser).m_declNotationName.is_null() {
-                    /* means m_notationDeclHandler != NULL */
-                    let mut tem_0: *mut XML_Char = (*parser).m_tempPool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if tem_0.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    normalizePublicId(tem_0);
-                    (*parser).m_declNotationPublicId = tem_0;
-                    (*parser).m_tempPool.start = (*parser).m_tempPool.ptr;
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            19 => {
-                if !(*parser).m_declNotationName.is_null()
-                    && (*parser).m_handlers.hasNotationDecl()
-                {
-                    let mut systemId: *const XML_Char = (*parser).m_tempPool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if systemId.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    *eventEndPP = s;
-                    (*parser).m_handlers.notationDecl(
-                        (*parser).m_declNotationName,
-                        (*parser).m_curBase,
-                        systemId,
-                        (*parser).m_declNotationPublicId,
-                    );
-                    handleDefault = XML_FALSE
-                }
-                (*parser).m_tempPool.clear();
-                current_block = 1553878188884632965;
-            }
-            20 => {
-                if !(*parser).m_declNotationPublicId.is_null()
-                    && (*parser).m_handlers.hasNotationDecl()
-                {
-                    *eventEndPP = s;
-                    (*parser).m_handlers.notationDecl(
-                        (*parser).m_declNotationName,
-                        (*parser).m_curBase,
-                        0 as *const XML_Char,
-                        (*parser).m_declNotationPublicId,
-                    );
-                    handleDefault = XML_FALSE
-                }
-                (*parser).m_tempPool.clear();
-                current_block = 1553878188884632965;
-            }
-            -1 => {
-                match tok {
-                    super::xmltok::XML_TOK_PARAM_ENTITY_REF => {
-                        /* PE references in internal subset are
-                        not allowed within declarations. */
-                        return XML_ERROR_PARAM_ENTITY_REF;
-                    }
-                    super::xmltok::XML_TOK_XML_DECL => return XML_ERROR_MISPLACED_XML_PI,
-                    _ => return XML_ERROR_SYNTAX,
-                }
-            }
-            58 => {
-                let mut result_3: XML_Error = XML_ERROR_NONE;
-                if (*parser).m_handlers.hasDefault() {
-                    reportDefault(parser, enc_type, s, next);
-                }
-                handleDefault = XML_FALSE;
-                result_3 = doIgnoreSection(parser, enc_type, &mut next, end, nextPtr, haveMore);
-                if result_3 != XML_ERROR_NONE {
-                    return result_3;
-                } else {
-                    if next.is_null() {
-                        (*parser).m_processor = Some(ignoreSectionProcessor as Processor);
-                        return result_3;
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            44 => {
-                /* XML_DTD */
-                if (*parser).m_prologState.level >= (*parser).m_groupSize {
-                    if (*parser).m_groupSize != 0 {
-                        (*parser).m_groupSize = (*parser).m_groupSize.wrapping_mul(2u32);
-                        let new_connector: *mut c_char = REALLOC!(
-                            parser,
-                            (*parser).m_groupConnector as *mut c_void,
-                            (*parser).m_groupSize as size_t
-                        ) as *mut c_char;
-                        if new_connector.is_null() {
-                            (*parser).m_groupSize = (*parser).m_groupSize.wrapping_div(2u32);
+                        pubId = self.m_tempPool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if pubId.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        (*parser).m_groupConnector = new_connector;
-                        if !(*dtd).scaffIndex.is_null() {
-                            let new_scaff_index: *mut c_int = REALLOC!(
-                                parser,
-                                (*dtd).scaffIndex as *mut c_void,
-                                ((*parser).m_groupSize as c_ulong)
-                                    .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
-                            )
-                                as *mut c_int;
-                            if new_scaff_index.is_null() {
-                                return XML_ERROR_NO_MEMORY;
-                            }
-                            (*dtd).scaffIndex = new_scaff_index
-                        }
+                        normalizePublicId(pubId);
+                        self.m_tempPool.start = self.m_tempPool.ptr;
+                        self.m_doctypePubid = pubId;
+                        handleDefault = XML_FALSE;
+                        current_block = 9007411418488376351;
                     } else {
-                        (*parser).m_groupSize = 32u32;
-                        (*parser).m_groupConnector =
-                            MALLOC!(parser, (*parser).m_groupSize as size_t) as *mut c_char;
-                        if (*parser).m_groupConnector.is_null() {
-                            (*parser).m_groupSize = 0u32;
-                            return XML_ERROR_NO_MEMORY;
-                        }
+                        current_block = 926243229934402080;
                     }
                 }
-                *(*parser)
-                    .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize) = 0i8;
-                if (*dtd).in_eldecl != 0 {
-                    let mut myindex: c_int = nextScaffoldPart(parser);
-                    if myindex < 0 {
-                        return XML_ERROR_NO_MEMORY;
+                14 => {
+                    current_block = 926243229934402080;
+                }
+                8 => {
+                    if allowClosingDoctype != XML_TRUE {
+                        /* Must not close doctype from within expanded parameter entities */
+                        return XML_ERROR_INVALID_TOKEN;
                     }
-                    if !(*dtd).scaffIndex.is_null() {
-                    } else {
-                        __assert_fail(b"dtd->scaffIndex != NULL\x00".as_ptr() as *const c_char,
-
-                                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr() as *const c_char,
-                                      4790u32,
-                                      (*::std::mem::transmute::<&[u8; 136],
-                                                                &[c_char; 136]>(b"enum XML_Error doProlog(XML_Parser, const ENCODING *, const char *, const char *, int, const char *, const char **, XML_Bool, XML_Bool)\x00")).as_ptr());
-                    }
-                    *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
-                    (*dtd).scaffLevel += 1;
-                    (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_CTYPE_SEQ;
-                    if (*parser).m_handlers.hasElementDecl() {
+                    if !self.m_doctypeName.is_null() {
+                        self.m_handlers.startDoctypeDecl(
+                            self.m_doctypeName,
+                            self.m_doctypeSysid,
+                            self.m_doctypePubid,
+                            0,
+                        );
+                        self.m_tempPool.clear();
                         handleDefault = XML_FALSE
                     }
-                }
-                current_block = 1553878188884632965;
-            }
-            50 => {
-                if *(*parser)
-                    .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize)
-                    == ASCII_PIPE
-                {
-                    return XML_ERROR_SYNTAX;
-                }
-                *(*parser)
-                    .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize) = ASCII_COMMA;
-                if (*dtd).in_eldecl as c_int != 0 && (*parser).m_handlers.hasElementDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            49 => {
-                if *(*parser)
-                    .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize)
-                    == ASCII_COMMA
-                {
-                    return XML_ERROR_SYNTAX;
-                }
-                if (*dtd).in_eldecl as c_int != 0
-                    && *(*parser)
-                        .m_groupConnector
-                        .offset((*parser).m_prologState.level as isize)
-                        == 0
-                    && (*(*dtd).scaffold.offset(
-                        *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                    ))
-                    .type_0
-                        != XML_CTYPE_MIXED
-                {
-                    (*(*dtd).scaffold.offset(
-                        *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                    ))
-                    .type_0 = XML_CTYPE_CHOICE;
-                    if (*parser).m_handlers.hasElementDecl() {
-                        handleDefault = XML_FALSE
-                    }
-                }
-                *(*parser)
-                    .m_groupConnector
-                    .offset((*parser).m_prologState.level as isize) = ASCII_PIPE;
-                current_block = 1553878188884632965;
-            }
-            60 | 59 => {
-                (*dtd).hasParamEntityRefs = XML_TRUE;
-                if (*parser).m_paramEntityParsing as u64 == 0 {
-                    (*dtd).keepProcessing = (*dtd).standalone;
-                    current_block = 10770532911212200937;
-                } else {
-                    let mut name_1: *const XML_Char = 0 as *const XML_Char;
-                    let mut entity_1: *mut ENTITY = 0 as *mut ENTITY;
-                    name_1 = (*dtd).pool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if name_1.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
-                    (*dtd).pool.ptr = (*dtd).pool.start;
-                    /* first, determine if a check for an existing declaration is needed;
-                       if yes, check that the entity exists, and that it is internal,
-                       otherwise call the skipped entity handler
+                    /* parser->m_doctypeSysid will be non-NULL in the case of a previous
+                       XML_ROLE_DOCTYPE_SYSTEM_ID, even if parser->m_startDoctypeDeclHandler
+                       was not set, indicating an external subset
                     */
-                    if (*parser).m_prologState.documentEntity != 0
-                        && (if (*dtd).standalone as c_int != 0 {
-                            (*parser).m_openInternalEntities.is_null() as c_int
-                        } else {
-                            ((*dtd).hasParamEntityRefs == 0) as c_int
-                        }) != 0
-                    {
-                        if entity_1.is_null() {
-                            return XML_ERROR_UNDEFINED_ENTITY;
-                        } else {
-                            if (*entity_1).is_internal == 0 {
-                                /* It's hard to exhaustively search the code to be sure,
-                                 * but there doesn't seem to be a way of executing the
-                                 * following line.  There are two cases:
-                                 *
-                                 * If 'standalone' is false, the DTD must have no
-                                 * parameter entities or we wouldn't have passed the outer
-                                 * 'if' statement.  That measn the only entity in the hash
-                                 * table is the external subset name "#" which cannot be
-                                 * given as a parameter entity name in XML syntax, so the
-                                 * lookup must have returned NULL and we don't even reach
-                                 * the test for an internal entity.
-                                 *
-                                 * If 'standalone' is true, it does not seem to be
-                                 * possible to create entities taking this code path that
-                                 * are not internal entities, so fail the test above.
-                                 *
-                                 * Because this analysis is very uncertain, the code is
-                                 * being left in place and merely removed from the
-                                 * coverage test statistics.
+                    if !self.m_doctypeSysid.is_null() || self.m_useForeignDTD as c_int != 0 {
+                        let mut hadParamEntityRefs: XML_Bool = (*dtd).hasParamEntityRefs;
+                        (*dtd).hasParamEntityRefs = XML_TRUE;
+                        if self.m_paramEntityParsing != 0
+                            && self.m_handlers.hasExternalEntityRef()
+                        {
+                            let mut entity = hash_insert!(
+                                self,
+                                &mut (*dtd).paramEntities,
+                                externalSubsetName.as_ptr(),
+                                ENTITY
+                            );
+                            if entity.is_null() {
+                                /* end of DTD - no need to update dtd->keepProcessing */
+                                /* The external subset name "#" will have already been
+                                 * inserted into the hash table at the start of the
+                                 * external entity parsing, so no allocation will happen
+                                 * and lookup() cannot fail.
                                  */
-                                return XML_ERROR_ENTITY_DECLARED_IN_PE;
+                                return XML_ERROR_NO_MEMORY;
                                 /* LCOV_EXCL_LINE */
                             }
+                            if self.m_useForeignDTD != 0 {
+                                (*entity).base = self.m_curBase
+                            }
+                            (*dtd).paramEntityRead = XML_FALSE;
+                            if self.m_handlers.externalEntityRef(
+                                0 as *const XML_Char,
+                                (*entity).base,
+                                (*entity).systemId,
+                                (*entity).publicId,
+                            ) == Ok(0)
+                            {
+                                return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                            }
+                            if (*dtd).paramEntityRead != 0 {
+                                if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
+                                    return XML_ERROR_NOT_STANDALONE;
+                                }
+                            } else if self.m_doctypeSysid.is_null() {
+                                (*dtd).hasParamEntityRefs = hadParamEntityRefs
+                            }
                         }
-                        current_block = 13351260019855268589;
-                    } else if entity_1.is_null() {
-                        (*dtd).keepProcessing = (*dtd).standalone;
-                        /* cannot report skipped entities in declarations */
-                        if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF
-                            && (*parser).m_handlers.hasSkippedEntity()
+                        self.m_useForeignDTD = XML_FALSE
+                    }
+                    /* if we didn't read the foreign DTD then this means that there
+                       is no external subset and we must reset dtd->hasParamEntityRefs
+                    */
+                    /* XML_DTD */
+                    let endHandlerRan = self.m_handlers.endDoctypeDecl();
+
+                    if endHandlerRan {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                2 => {
+                    /* if there is no DOCTYPE declaration then now is the
+                       last chance to read the foreign DTD
+                    */
+                    if self.m_useForeignDTD != 0 {
+                        let mut hadParamEntityRefs_0: XML_Bool = (*dtd).hasParamEntityRefs;
+                        (*dtd).hasParamEntityRefs = XML_TRUE;
+                        if self.m_paramEntityParsing != 0 && self.m_handlers.hasExternalEntityRef() {
+                            let mut entity_0 = hash_insert!(
+                                self,
+                                &mut (*dtd).paramEntities,
+                                externalSubsetName.as_ptr(),
+                                ENTITY
+                            );
+                            if entity_0.is_null() {
+                                return XML_ERROR_NO_MEMORY;
+                            }
+                            (*entity_0).base = self.m_curBase;
+                            (*dtd).paramEntityRead = XML_FALSE;
+                            if self.m_handlers.externalEntityRef(
+                                0 as *const XML_Char,
+                                (*entity_0).base,
+                                (*entity_0).systemId,
+                                (*entity_0).publicId,
+                            ) == Ok(0)
+                            {
+                                return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                            }
+                            if (*dtd).paramEntityRead != 0 {
+                                if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
+                                    return XML_ERROR_NOT_STANDALONE;
+                                }
+                            } else {
+                                /* end of DTD - no need to update dtd->keepProcessing */
+                                /* if we didn't read the foreign DTD then this means that there
+                                   is no external subset and we must reset dtd->hasParamEntityRefs
+                                */
+                                (*dtd).hasParamEntityRefs = hadParamEntityRefs_0
+                            }
+                        }
+                    }
+                    /* XML_DTD */
+                    self.m_processor = Some(contentProcessor as Processor);
+                    return contentProcessor(self, s, end, nextPtr);
+                }
+                34 => {
+                    self.m_declElementType = getElementType(self, enc_type, s, next);
+                    if self.m_declElementType.is_null() {
+                        return XML_ERROR_NO_MEMORY;
+                    }
+                    current_block = 6455255476181645667;
+                }
+                22 => {
+                    self.m_declAttributeId = getAttributeId(self, enc_type, s, next);
+                    if self.m_declAttributeId.is_null() {
+                        return XML_ERROR_NO_MEMORY;
+                    }
+                    self.m_declAttributeIsCdata = XML_FALSE;
+                    self.m_declAttributeType = NULL as *const XML_Char;
+                    self.m_declAttributeIsId = XML_FALSE;
+                    current_block = 6455255476181645667;
+                }
+                23 => {
+                    self.m_declAttributeIsCdata = XML_TRUE;
+                    self.m_declAttributeType = atypeCDATA.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                24 => {
+                    self.m_declAttributeIsId = XML_TRUE;
+                    self.m_declAttributeType = atypeID.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                25 => {
+                    self.m_declAttributeType = atypeIDREF.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                26 => {
+                    self.m_declAttributeType = atypeIDREFS.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                27 => {
+                    self.m_declAttributeType = atypeENTITY.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                28 => {
+                    self.m_declAttributeType = atypeENTITIES.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                29 => {
+                    self.m_declAttributeType = atypeNMTOKEN.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                30 => {
+                    self.m_declAttributeType = atypeNMTOKENS.as_ptr();
+                    current_block = 6455255476181645667;
+                }
+                31 | 32 => {
+                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
+                        let mut prefix: *const XML_Char = 0 as *const XML_Char;
+                        if !self.m_declAttributeType.is_null() {
+                            prefix = enumValueSep.as_ptr()
+                        } else {
+                            prefix = if role == super::xmlrole::XML_ROLE_ATTRIBUTE_NOTATION_VALUE {
+                                notationPrefix.as_ptr()
+                            } else {
+                                enumValueStart.as_ptr()
+                            }
+                        }
+                        if self.m_tempPool.appendString(prefix).is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if self.m_tempPool.append(enc, s, next).is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        self.m_declAttributeType = self.m_tempPool.start;
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                35 | 36 => {
+                    if (*dtd).keepProcessing != 0 {
+                        if defineAttribute(
+                            self.m_declElementType,
+                            self.m_declAttributeId,
+                            self.m_declAttributeIsCdata,
+                            self.m_declAttributeIsId,
+                            0 as *const XML_Char,
+                            self,
+                        ) == 0
                         {
-                            (*parser).m_handlers.skippedEntity(name_1, 1);
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if self.m_handlers.hasAttlistDecl()
+                            && !self.m_declAttributeType.is_null()
+                        {
+                            if *self.m_declAttributeType == ASCII_LPAREN as XML_Char
+                                || *self.m_declAttributeType == ASCII_N as XML_Char
+                                    && *self.m_declAttributeType.offset(1) == ASCII_O as XML_Char
+                            {
+                                /* Enumerated or Notation type */
+                                if (if self.m_tempPool.ptr
+                                    == self.m_tempPool.end as *mut XML_Char
+                                    && self.m_tempPool.grow() == 0
+                                {
+                                    0
+                                } else {
+                                    let fresh32 = self.m_tempPool.ptr;
+                                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                                    *fresh32 = ASCII_RPAREN as XML_Char;
+                                    1
+                                }) == 0
+                                    || (if self.m_tempPool.ptr
+                                        == self.m_tempPool.end as *mut XML_Char
+                                        && self.m_tempPool.grow() == 0
+                                    {
+                                        0
+                                    } else {
+                                        let fresh33 = self.m_tempPool.ptr;
+                                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                                        *fresh33 = '\u{0}' as XML_Char;
+                                        1
+                                    }) == 0
+                                {
+                                    return XML_ERROR_NO_MEMORY;
+                                }
+                                self.m_declAttributeType = self.m_tempPool.start;
+                                self.m_tempPool.start = self.m_tempPool.ptr
+                            }
+                            *eventEndPP = s;
+                            self.m_handlers.attlistDecl(
+                                (*self.m_declElementType).name,
+                                (*self.m_declAttributeId).name,
+                                self.m_declAttributeType,
+                                0 as *const XML_Char,
+                                (role == super::xmlrole::XML_ROLE_REQUIRED_ATTRIBUTE_VALUE) as c_int,
+                            );
+                            self.m_tempPool.clear();
                             handleDefault = XML_FALSE
                         }
-                        current_block = 1553878188884632965;
+                    }
+                    current_block = 1553878188884632965;
+                }
+                37 | 38 => {
+                    if (*dtd).keepProcessing != 0 {
+                        let mut attVal: *const XML_Char = 0 as *const XML_Char;
+                        let mut result_1: XML_Error = storeAttributeValue(
+                            self,
+                            enc_type,
+                            self.m_declAttributeIsCdata,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                            &mut (*dtd).pool,
+                        );
+                        if result_1 as u64 != 0 {
+                            return result_1;
+                        }
+                        attVal = (*dtd).pool.start;
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        /* ID attributes aren't allowed to have a default */
+                        if defineAttribute(
+                            self.m_declElementType,
+                            self.m_declAttributeId,
+                            self.m_declAttributeIsCdata,
+                            XML_FALSE,
+                            attVal,
+                            self,
+                        ) == 0
+                        {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if self.m_handlers.hasAttlistDecl()
+                            && !self.m_declAttributeType.is_null()
+                        {
+                            if *self.m_declAttributeType == ASCII_LPAREN as XML_Char
+                                || *self.m_declAttributeType == ASCII_N as XML_Char
+                                    && *self.m_declAttributeType.offset(1) == ASCII_O as XML_Char
+                            {
+                                /* Enumerated or Notation type */
+                                if (if self.m_tempPool.ptr
+                                    == self.m_tempPool.end as *mut XML_Char
+                                    && self.m_tempPool.grow() == 0
+                                {
+                                    0
+                                } else {
+                                    let fresh34 = self.m_tempPool.ptr;
+                                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                                    *fresh34 = ASCII_RPAREN as XML_Char;
+                                    1
+                                }) == 0
+                                    || (if self.m_tempPool.ptr
+                                        == self.m_tempPool.end as *mut XML_Char
+                                        && self.m_tempPool.grow() == 0
+                                    {
+                                        0
+                                    } else {
+                                        let fresh35 = self.m_tempPool.ptr;
+                                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                                        *fresh35 = '\u{0}' as XML_Char;
+                                        1
+                                    }) == 0
+                                {
+                                    return XML_ERROR_NO_MEMORY;
+                                }
+                                self.m_declAttributeType = self.m_tempPool.start;
+                                self.m_tempPool.start = self.m_tempPool.ptr
+                            }
+                            *eventEndPP = s;
+                            self.m_handlers.attlistDecl(
+                                (*self.m_declElementType).name,
+                                (*self.m_declAttributeId).name,
+                                self.m_declAttributeType,
+                                attVal,
+                                (role == super::xmlrole::XML_ROLE_FIXED_ATTRIBUTE_VALUE) as c_int,
+                            );
+                            self.m_tempPool.clear();
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                12 => {
+                    if (*dtd).keepProcessing != 0 {
+                        let mut result_2: XML_Error = storeEntityValue(
+                            self,
+                            enc_type,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if !self.m_declEntity.is_null() {
+                            (*self.m_declEntity).textPtr = (*dtd).entityValuePool.start;
+                            (*self.m_declEntity).textLen = (*dtd)
+                                .entityValuePool
+                                .ptr
+                                .wrapping_offset_from((*dtd).entityValuePool.start)
+                                as c_int;
+                            (*dtd).entityValuePool.start = (*dtd).entityValuePool.ptr;
+                            if self.m_handlers.hasEntityDecl() {
+                                *eventEndPP = s;
+                                self.m_handlers.entityDecl(
+                                    (*self.m_declEntity).name,
+                                    (*self.m_declEntity).is_param as c_int,
+                                    (*self.m_declEntity).textPtr,
+                                    (*self.m_declEntity).textLen,
+                                    self.m_curBase,
+                                    0 as *const XML_Char,
+                                    0 as *const XML_Char,
+                                    0 as *const XML_Char,
+                                );
+                                handleDefault = XML_FALSE
+                            }
+                        } else {
+                            (*dtd).entityValuePool.ptr = (*dtd).entityValuePool.start
+                        }
+                        if result_2 != XML_ERROR_NONE {
+                            return result_2;
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                5 => {
+                    self.m_useForeignDTD = XML_FALSE;
+                    /* XML_DTD */
+                    (*dtd).hasParamEntityRefs = XML_TRUE;
+                    if self.m_handlers.hasStartDoctypeDecl() {
+                        self.m_doctypeSysid = self.m_tempPool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if self.m_doctypeSysid.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        self.m_tempPool.start = self.m_tempPool.ptr;
+                        handleDefault = XML_FALSE
                     } else {
-                        current_block = 13351260019855268589;
+                        /* use externalSubsetName to make parser->m_doctypeSysid non-NULL
+                        for the case where no parser->m_startDoctypeDeclHandler is set */
+                        self.m_doctypeSysid = externalSubsetName.as_ptr()
+                    }
+                    /* XML_DTD */
+                    if (*dtd).standalone == 0
+                        && self.m_paramEntityParsing as u64 == 0
+                        && self.m_handlers.notStandalone() == Ok(0)
+                    {
+                        return XML_ERROR_NOT_STANDALONE;
+                    }
+                    /* XML_DTD */
+                    if self.m_declEntity.is_null() {
+                        self.m_declEntity = hash_insert!(
+                            self,
+                            &mut (*dtd).paramEntities,
+                            externalSubsetName.as_ptr(),
+                            ENTITY
+                        );
+                        if self.m_declEntity.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        (*self.m_declEntity).publicId = NULL as *const XML_Char
+                    }
+                    current_block = 15307276507984219638;
+                }
+                13 => {
+                    current_block = 15307276507984219638;
+                }
+                15 => {
+                    if (*dtd).keepProcessing as c_int != 0
+                        && !self.m_declEntity.is_null()
+                        && self.m_handlers.hasEntityDecl()
+                    {
+                        *eventEndPP = s;
+                        self.m_handlers.entityDecl(
+                            (*self.m_declEntity).name,
+                            (*self.m_declEntity).is_param as c_int,
+                            0 as *const XML_Char,
+                            0,
+                            (*self.m_declEntity).base,
+                            (*self.m_declEntity).systemId,
+                            (*self.m_declEntity).publicId,
+                            0 as *const XML_Char,
+                        );
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                16 => {
+                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                        (*self.m_declEntity).notation =
+                        (*dtd).pool.storeString(enc, s, next);
+                        if (*self.m_declEntity).notation.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        if self.m_handlers.hasUnparsedEntityDecl() {
+                            *eventEndPP = s;
+                            self.m_handlers.unparsedEntityDecl(
+                                (*self.m_declEntity).name,
+                                (*self.m_declEntity).base,
+                                (*self.m_declEntity).systemId,
+                                (*self.m_declEntity).publicId,
+                                (*self.m_declEntity).notation,
+                            );
+                            handleDefault = XML_FALSE
+                        } else if self.m_handlers.hasEntityDecl() {
+                            *eventEndPP = s;
+                            self.m_handlers.entityDecl(
+                                (*self.m_declEntity).name,
+                                0,
+                                0 as *const XML_Char,
+                                0,
+                                (*self.m_declEntity).base,
+                                (*self.m_declEntity).systemId,
+                                (*self.m_declEntity).publicId,
+                                (*self.m_declEntity).notation,
+                            );
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                9 => {
+                    if (*enc).predefinedEntityName(s, next) != 0 {
+                        self.m_declEntity = NULL as *mut ENTITY
+                    } else if (*dtd).keepProcessing != 0 {
+                        let mut name: *const XML_Char = (*dtd).pool.storeString(enc, s, next);
+                        if name.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        self.m_declEntity = hash_insert!(
+                            self,
+                            &mut (*dtd).generalEntities,
+                            name,
+                            ENTITY
+                        );
+                        if self.m_declEntity.is_null() {
+                            // FIXME: this never happens in Rust, it just panics
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if (*self.m_declEntity).name != name {
+                            (*dtd).pool.ptr = (*dtd).pool.start;
+                            self.m_declEntity = NULL as *mut ENTITY
+                        } else {
+                            (*dtd).pool.start = (*dtd).pool.ptr;
+                            (*self.m_declEntity).publicId = NULL as *const XML_Char;
+                            (*self.m_declEntity).is_param = XML_FALSE;
+                            /* if we have a parent parser or are reading an internal parameter
+                               entity, then the entity declaration is not considered "internal"
+                            */
+                            (*self.m_declEntity).is_internal =
+                                !(!self.m_parentParser.is_null()
+                                    || !self.m_openInternalEntities.is_null())
+                                    as XML_Bool;
+                            if self.m_handlers.hasEntityDecl() {
+                                handleDefault = XML_FALSE
+                            }
+                        }
+                    } else {
+                        (*dtd).pool.ptr = (*dtd).pool.start;
+                        self.m_declEntity = NULL as *mut ENTITY
+                    }
+                    current_block = 1553878188884632965;
+                }
+                10 => {
+                    if (*dtd).keepProcessing != 0 {
+                        let mut name_0: *const XML_Char =
+                        (*dtd).pool.storeString(enc, s, next);
+                        if name_0.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        self.m_declEntity = hash_insert!(
+                            self,
+                            &mut (*dtd).paramEntities,
+                            name_0,
+                            ENTITY
+                        );
+                        if self.m_declEntity.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if (*self.m_declEntity).name != name_0 {
+                            (*dtd).pool.ptr = (*dtd).pool.start;
+                            self.m_declEntity = NULL as *mut ENTITY
+                        } else {
+                            (*dtd).pool.start = (*dtd).pool.ptr;
+                            (*self.m_declEntity).publicId = NULL as *const XML_Char;
+                            (*self.m_declEntity).is_param = XML_TRUE;
+                            /* if we have a parent parser or are reading an internal parameter
+                               entity, then the entity declaration is not considered "internal"
+                            */
+                            (*self.m_declEntity).is_internal =
+                                !(!self.m_parentParser.is_null()
+                                    || !self.m_openInternalEntities.is_null())
+                                    as XML_Bool;
+                            if self.m_handlers.hasEntityDecl() {
+                                handleDefault = XML_FALSE
+                            }
+                        }
+                    } else {
+                        (*dtd).pool.ptr = (*dtd).pool.start;
+                        self.m_declEntity = NULL as *mut ENTITY
+                    }
+                    current_block = 1553878188884632965;
+                }
+                18 => {
+                    self.m_declNotationPublicId = NULL as *const XML_Char;
+                    self.m_declNotationName = NULL as *const XML_Char;
+                    if self.m_handlers.hasNotationDecl() {
+                        self.m_declNotationName =
+                        self.m_tempPool.storeString(enc, s, next);
+                        if self.m_declNotationName.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        self.m_tempPool.start = self.m_tempPool.ptr;
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                21 => {
+                    if (*enc).isPublicId(s, next, eventPP) == 0 {
+                        return XML_ERROR_PUBLICID;
+                    }
+                    if !self.m_declNotationName.is_null() {
+                        /* means m_notationDeclHandler != NULL */
+                        let mut tem_0: *mut XML_Char = self.m_tempPool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if tem_0.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        normalizePublicId(tem_0);
+                        self.m_declNotationPublicId = tem_0;
+                        self.m_tempPool.start = self.m_tempPool.ptr;
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                19 => {
+                    if !self.m_declNotationName.is_null()
+                        && self.m_handlers.hasNotationDecl()
+                    {
+                        let mut systemId: *const XML_Char = self.m_tempPool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if systemId.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        *eventEndPP = s;
+                        self.m_handlers.notationDecl(
+                            self.m_declNotationName,
+                            self.m_curBase,
+                            systemId,
+                            self.m_declNotationPublicId,
+                        );
+                        handleDefault = XML_FALSE
+                    }
+                    self.m_tempPool.clear();
+                    current_block = 1553878188884632965;
+                }
+                20 => {
+                    if !self.m_declNotationPublicId.is_null()
+                        && self.m_handlers.hasNotationDecl()
+                    {
+                        *eventEndPP = s;
+                        self.m_handlers.notationDecl(
+                            self.m_declNotationName,
+                            self.m_curBase,
+                            0 as *const XML_Char,
+                            self.m_declNotationPublicId,
+                        );
+                        handleDefault = XML_FALSE
+                    }
+                    self.m_tempPool.clear();
+                    current_block = 1553878188884632965;
+                }
+                -1 => {
+                    match tok {
+                        super::xmltok::XML_TOK_PARAM_ENTITY_REF => {
+                            /* PE references in internal subset are
+                            not allowed within declarations. */
+                            return XML_ERROR_PARAM_ENTITY_REF;
+                        }
+                        super::xmltok::XML_TOK_XML_DECL => return XML_ERROR_MISPLACED_XML_PI,
+                        _ => return XML_ERROR_SYNTAX,
+                    }
+                }
+                58 => {
+                    let mut result_3: XML_Error = XML_ERROR_NONE;
+                    if self.m_handlers.hasDefault() {
+                        reportDefault(self, enc_type, s, next);
+                    }
+                    handleDefault = XML_FALSE;
+                    result_3 = doIgnoreSection(self, enc_type, &mut next, end, nextPtr, haveMore);
+                    if result_3 != XML_ERROR_NONE {
+                        return result_3;
+                    } else {
+                        if next.is_null() {
+                            self.m_processor = Some(ignoreSectionProcessor as Processor);
+                            return result_3;
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                44 => {
+                    /* XML_DTD */
+                    if self.m_prologState.level >= self.m_groupSize {
+                        if self.m_groupSize != 0 {
+                            self.m_groupSize = self.m_groupSize.wrapping_mul(2u32);
+                            let new_connector: *mut c_char = REALLOC!(
+                                self,
+                                self.m_groupConnector as *mut c_void,
+                                self.m_groupSize as size_t
+                            ) as *mut c_char;
+                            if new_connector.is_null() {
+                                self.m_groupSize = self.m_groupSize.wrapping_div(2u32);
+                                return XML_ERROR_NO_MEMORY;
+                            }
+                            self.m_groupConnector = new_connector;
+                            if !(*dtd).scaffIndex.is_null() {
+                                let new_scaff_index: *mut c_int = REALLOC!(
+                                    self,
+                                    (*dtd).scaffIndex as *mut c_void,
+                                    (self.m_groupSize as c_ulong)
+                                        .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
+                                )
+                                    as *mut c_int;
+                                if new_scaff_index.is_null() {
+                                    return XML_ERROR_NO_MEMORY;
+                                }
+                                (*dtd).scaffIndex = new_scaff_index
+                            }
+                        } else {
+                            self.m_groupSize = 32u32;
+                            self.m_groupConnector =
+                                MALLOC!(self, self.m_groupSize as size_t) as *mut c_char;
+                            if self.m_groupConnector.is_null() {
+                                self.m_groupSize = 0u32;
+                                return XML_ERROR_NO_MEMORY;
+                            }
+                        }
+                    }
+                    *self
+                        .m_groupConnector
+                        .offset(self.m_prologState.level as isize) = 0i8;
+                    if (*dtd).in_eldecl != 0 {
+                        let mut myindex: c_int = self.nextScaffoldPart();
+                        if myindex < 0 {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        if !(*dtd).scaffIndex.is_null() {
+                        } else {
+                            __assert_fail(b"dtd->scaffIndex != NULL\x00".as_ptr() as *const c_char,
+
+                                          b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr() as *const c_char,
+                                          4790u32,
+                                          (*::std::mem::transmute::<&[u8; 136],
+                                                                    &[c_char; 136]>(b"enum XML_Error doProlog(XML_Parser, const ENCODING *, const char *, const char *, int, const char *, const char **, XML_Bool, XML_Bool)\x00")).as_ptr());
+                        }
+                        *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
+                        (*dtd).scaffLevel += 1;
+                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_CTYPE_SEQ;
+                        if self.m_handlers.hasElementDecl() {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                50 => {
+                    if *self
+                        .m_groupConnector
+                        .offset(self.m_prologState.level as isize)
+                        == ASCII_PIPE
+                    {
+                        return XML_ERROR_SYNTAX;
+                    }
+                    *self
+                        .m_groupConnector
+                        .offset(self.m_prologState.level as isize) = ASCII_COMMA;
+                    if (*dtd).in_eldecl as c_int != 0 && self.m_handlers.hasElementDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                49 => {
+                    if *self
+                        .m_groupConnector
+                        .offset(self.m_prologState.level as isize)
+                        == ASCII_COMMA
+                    {
+                        return XML_ERROR_SYNTAX;
+                    }
+                    if (*dtd).in_eldecl as c_int != 0
+                        && *self
+                            .m_groupConnector
+                            .offset(self.m_prologState.level as isize)
+                            == 0
+                        && (*(*dtd).scaffold.offset(
+                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
+                        ))
+                        .type_0
+                            != XML_CTYPE_MIXED
+                    {
+                        (*(*dtd).scaffold.offset(
+                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
+                        ))
+                        .type_0 = XML_CTYPE_CHOICE;
+                        if self.m_handlers.hasElementDecl() {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    *self
+                        .m_groupConnector
+                        .offset(self.m_prologState.level as isize) = ASCII_PIPE;
+                    current_block = 1553878188884632965;
+                }
+                60 | 59 => {
+                    (*dtd).hasParamEntityRefs = XML_TRUE;
+                    if self.m_paramEntityParsing as u64 == 0 {
+                        (*dtd).keepProcessing = (*dtd).standalone;
+                        current_block = 10770532911212200937;
+                    } else {
+                        let mut name_1: *const XML_Char = 0 as *const XML_Char;
+                        let mut entity_1: *mut ENTITY = 0 as *mut ENTITY;
+                        name_1 = (*dtd).pool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if name_1.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
+                        (*dtd).pool.ptr = (*dtd).pool.start;
+                        /* first, determine if a check for an existing declaration is needed;
+                           if yes, check that the entity exists, and that it is internal,
+                           otherwise call the skipped entity handler
+                        */
+                        if self.m_prologState.documentEntity != 0
+                            && (if (*dtd).standalone as c_int != 0 {
+                                self.m_openInternalEntities.is_null() as c_int
+                            } else {
+                                ((*dtd).hasParamEntityRefs == 0) as c_int
+                            }) != 0
+                        {
+                            if entity_1.is_null() {
+                                return XML_ERROR_UNDEFINED_ENTITY;
+                            } else {
+                                if (*entity_1).is_internal == 0 {
+                                    /* It's hard to exhaustively search the code to be sure,
+                                     * but there doesn't seem to be a way of executing the
+                                     * following line.  There are two cases:
+                                     *
+                                     * If 'standalone' is false, the DTD must have no
+                                     * parameter entities or we wouldn't have passed the outer
+                                     * 'if' statement.  That measn the only entity in the hash
+                                     * table is the external subset name "#" which cannot be
+                                     * given as a parameter entity name in XML syntax, so the
+                                     * lookup must have returned NULL and we don't even reach
+                                     * the test for an internal entity.
+                                     *
+                                     * If 'standalone' is true, it does not seem to be
+                                     * possible to create entities taking this code path that
+                                     * are not internal entities, so fail the test above.
+                                     *
+                                     * Because this analysis is very uncertain, the code is
+                                     * being left in place and merely removed from the
+                                     * coverage test statistics.
+                                     */
+                                    return XML_ERROR_ENTITY_DECLARED_IN_PE;
+                                    /* LCOV_EXCL_LINE */
+                                }
+                            }
+                            current_block = 13351260019855268589;
+                        } else if entity_1.is_null() {
+                            (*dtd).keepProcessing = (*dtd).standalone;
+                            /* cannot report skipped entities in declarations */
+                            if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF
+                                && self.m_handlers.hasSkippedEntity()
+                            {
+                                self.m_handlers.skippedEntity(name_1, 1);
+                                handleDefault = XML_FALSE
+                            }
+                            current_block = 1553878188884632965;
+                        } else {
+                            current_block = 13351260019855268589;
+                        }
+                        match current_block {
+                            1553878188884632965 => {}
+                            _ => {
+                                if (*entity_1).open != 0 {
+                                    return XML_ERROR_RECURSIVE_ENTITY_REF;
+                                }
+                                if !(*entity_1).textPtr.is_null() {
+                                    let mut result_4: XML_Error = XML_ERROR_NONE;
+                                    let mut betweenDecl: XML_Bool =
+                                        if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF {
+                                            XML_TRUE
+                                        } else {
+                                            XML_FALSE
+                                        };
+                                    result_4 = processInternalEntity(self, entity_1, betweenDecl);
+                                    if result_4 != XML_ERROR_NONE {
+                                        return result_4;
+                                    }
+                                    handleDefault = XML_FALSE;
+                                    current_block = 1553878188884632965;
+                                } else if self.m_handlers.hasExternalEntityRef() {
+                                    (*dtd).paramEntityRead = XML_FALSE;
+                                    (*entity_1).open = XML_TRUE;
+                                    let entity_1_name = if cfg!(feature = "mozilla") {
+                                        (*entity_1).name
+                                    } else {
+                                        0 as *const XML_Char
+                                    };
+                                    if self.m_handlers.externalEntityRef(
+                                        entity_1_name,
+                                        (*entity_1).base,
+                                        (*entity_1).systemId,
+                                        (*entity_1).publicId,
+                                    ) == Ok(0)
+                                    {
+                                        (*entity_1).open = XML_FALSE;
+                                        return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                    }
+                                    (*entity_1).open = XML_FALSE;
+                                    handleDefault = XML_FALSE;
+                                    if (*dtd).paramEntityRead == 0 {
+                                        (*dtd).keepProcessing = (*dtd).standalone;
+                                        current_block = 1553878188884632965;
+                                    } else {
+                                        current_block = 10770532911212200937;
+                                    }
+                                } else {
+                                    (*dtd).keepProcessing = (*dtd).standalone;
+                                    current_block = 1553878188884632965;
+                                }
+                            }
+                        }
                     }
                     match current_block {
                         1553878188884632965 => {}
                         _ => {
-                            if (*entity_1).open != 0 {
-                                return XML_ERROR_RECURSIVE_ENTITY_REF;
+                            /* XML_DTD */
+                            if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
+                                return XML_ERROR_NOT_STANDALONE;
                             }
-                            if !(*entity_1).textPtr.is_null() {
-                                let mut result_4: XML_Error = XML_ERROR_NONE;
-                                let mut betweenDecl: XML_Bool =
-                                    if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF {
-                                        XML_TRUE
-                                    } else {
-                                        XML_FALSE
-                                    };
-                                result_4 = processInternalEntity(parser, entity_1, betweenDecl);
-                                if result_4 != XML_ERROR_NONE {
-                                    return result_4;
-                                }
-                                handleDefault = XML_FALSE;
-                                current_block = 1553878188884632965;
-                            } else if (*parser).m_handlers.hasExternalEntityRef() {
-                                (*dtd).paramEntityRead = XML_FALSE;
-                                (*entity_1).open = XML_TRUE;
-                                let entity_1_name = if cfg!(feature = "mozilla") {
-                                    (*entity_1).name
-                                } else {
-                                    0 as *const XML_Char
-                                };
-                                if (*parser).m_handlers.externalEntityRef(
-                                    entity_1_name,
-                                    (*entity_1).base,
-                                    (*entity_1).systemId,
-                                    (*entity_1).publicId,
-                                ) == Ok(0)
-                                {
-                                    (*entity_1).open = XML_FALSE;
-                                    return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
-                                }
-                                (*entity_1).open = XML_FALSE;
-                                handleDefault = XML_FALSE;
-                                if (*dtd).paramEntityRead == 0 {
-                                    (*dtd).keepProcessing = (*dtd).standalone;
-                                    current_block = 1553878188884632965;
-                                } else {
-                                    current_block = 10770532911212200937;
-                                }
-                            } else {
-                                (*dtd).keepProcessing = (*dtd).standalone;
-                                current_block = 1553878188884632965;
-                            }
+                            current_block = 1553878188884632965;
                         }
                     }
                 }
-                match current_block {
-                    1553878188884632965 => {}
-                    _ => {
-                        /* XML_DTD */
-                        if (*dtd).standalone == 0 && (*parser).m_handlers.notStandalone() == Ok(0) {
-                            return XML_ERROR_NOT_STANDALONE;
-                        }
-                        current_block = 1553878188884632965;
-                    }
-                }
-            }
-            40 => {
-                /* Element declaration stuff */
-                if (*parser).m_handlers.hasElementDecl() {
-                    (*parser).m_declElementType = getElementType(parser, enc_type, s, next);
-                    if (*parser).m_declElementType.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*dtd).scaffLevel = 0;
-                    (*dtd).scaffCount = 0;
-                    (*dtd).in_eldecl = XML_TRUE;
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            41 | 42 => {
-                if (*dtd).in_eldecl != 0 {
-                    if (*parser).m_handlers.hasElementDecl() {
-                        let mut content: *mut XML_Content =
-                            MALLOC!(parser, ::std::mem::size_of::<XML_Content>() as c_ulong)
-                                as *mut XML_Content;
-                        if content.is_null() {
+                40 => {
+                    /* Element declaration stuff */
+                    if self.m_handlers.hasElementDecl() {
+                        self.m_declElementType = getElementType(self, enc_type, s, next);
+                        if self.m_declElementType.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        (*content).quant = XML_CQUANT_NONE;
-                        (*content).name = NULL as *mut XML_Char;
-                        (*content).numchildren = 0;
-                        (*content).children = NULL as *mut XML_Content;
-                        (*content).type_0 = if role == super::xmlrole::XML_ROLE_CONTENT_ANY {
-                            XML_CTYPE_ANY as c_int
-                        } else {
-                            XML_CTYPE_EMPTY as c_int
-                        } as XML_Content_Type;
-                        *eventEndPP = s;
-                        (*parser).m_handlers.elementDecl((*(*parser).m_declElementType).name, content);
+                        (*dtd).scaffLevel = 0;
+                        (*dtd).scaffCount = 0;
+                        (*dtd).in_eldecl = XML_TRUE;
                         handleDefault = XML_FALSE
                     }
-                    (*dtd).in_eldecl = XML_FALSE
+                    current_block = 1553878188884632965;
                 }
-                current_block = 1553878188884632965;
-            }
-            43 => {
-                if (*dtd).in_eldecl != 0 {
-                    (*(*dtd).scaffold.offset(
-                        *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                    ))
-                    .type_0 = XML_CTYPE_MIXED;
-                    if (*parser).m_handlers.hasElementDecl() {
-                        handleDefault = XML_FALSE
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            51 => {
-                quant = XML_CQUANT_NONE;
-                current_block = 4542134034984465527;
-            }
-            53 => {
-                quant = XML_CQUANT_OPT;
-                current_block = 4542134034984465527;
-            }
-            52 => {
-                quant = XML_CQUANT_REP;
-                current_block = 4542134034984465527;
-            }
-            54 => {
-                quant = XML_CQUANT_PLUS;
-                current_block = 4542134034984465527;
-            }
-            45 => {
-                quant = XML_CQUANT_NONE;
-                current_block = 7739131043814808354;
-            }
-            47 => {
-                quant = XML_CQUANT_OPT;
-                current_block = 7739131043814808354;
-            }
-            46 => {
-                quant = XML_CQUANT_REP;
-                current_block = 7739131043814808354;
-            }
-            48 => {
-                quant = XML_CQUANT_PLUS;
-                current_block = 7739131043814808354;
-            }
-            55 => {
-                /* End element declaration stuff */
-                if reportProcessingInstruction(parser, enc_type, s, next) == 0 {
-                    return XML_ERROR_NO_MEMORY;
-                }
-                handleDefault = XML_FALSE;
-                current_block = 1553878188884632965;
-            }
-            56 => {
-                if reportComment(parser, enc_type, s, next) == 0 {
-                    return XML_ERROR_NO_MEMORY;
-                }
-                handleDefault = XML_FALSE;
-                current_block = 1553878188884632965;
-            }
-            0 => {
-                match tok {
-                    super::xmltok::XML_TOK_BOM => handleDefault = XML_FALSE,
-                    _ => {}
-                }
-                current_block = 1553878188884632965;
-            }
-            3 => {
-                if (*parser).m_handlers.hasStartDoctypeDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            11 => {
-                if (*dtd).keepProcessing as c_int != 0 && (*parser).m_handlers.hasEntityDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            17 => {
-                if (*parser).m_handlers.hasNotationDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            33 => {
-                if (*dtd).keepProcessing as c_int != 0 && (*parser).m_handlers.hasAttlistDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            39 => {
-                if (*parser).m_handlers.hasElementDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            _ => {
-                current_block = 1553878188884632965;
-            }
-        }
-        match current_block {
-            926243229934402080 =>
-            /* fall through */
-            {
-                if (*enc).isPublicId(s, next, eventPP) == 0 {
-                    return XML_ERROR_PUBLICID;
-                }
-                current_block = 9007411418488376351;
-            }
-            15307276507984219638 =>
-            /* XML_DTD */
-            /* fall through */
-            {
-                if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
-                    (*(*parser).m_declEntity).systemId = (*dtd).pool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if (*(*parser).m_declEntity).systemId.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*(*parser).m_declEntity).base = (*parser).m_curBase;
-                    (*dtd).pool.start = (*dtd).pool.ptr;
-                    /* Don't suppress the default handler if we fell through from
-                     * the XML_ROLE_DOCTYPE_SYSTEM_ID case.
-                     */
-                    if (*parser).m_handlers.hasEntityDecl()
-                        && role == super::xmlrole::XML_ROLE_ENTITY_SYSTEM_ID
-                    {
-                        handleDefault = XML_FALSE
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            6455255476181645667 => {
-                if (*dtd).keepProcessing as c_int != 0 && (*parser).m_handlers.hasAttlistDecl() {
-                    handleDefault = XML_FALSE
-                }
-                current_block = 1553878188884632965;
-            }
-            4542134034984465527 => {
-                if (*dtd).in_eldecl != 0 {
-                    let mut el: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
-                    let mut name_2: *const XML_Char = 0 as *const XML_Char;
-                    let mut nameLen: c_int = 0;
-                    let mut nxt: *const c_char = if quant == XML_CQUANT_NONE {
-                        next
-                    } else {
-                        next.offset(-((*enc).minBytesPerChar() as isize))
-                    };
-                    let mut myindex_0: c_int = nextScaffoldPart(parser);
-                    if myindex_0 < 0 {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
-                    (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
-                    el = getElementType(parser, enc_type, s, nxt);
-                    if el.is_null() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    name_2 = (*el).name;
-                    let ref mut fresh36 = (*(*dtd).scaffold.offset(myindex_0 as isize)).name;
-                    *fresh36 = name_2;
-                    nameLen = 0;
-                    loop {
-                        let fresh37 = nameLen;
-                        nameLen = nameLen + 1;
-                        if !(*name_2.offset(fresh37 as isize) != 0) {
-                            break;
-                        }
-                    }
-                    (*dtd).contentStringLen =
-                        (*dtd).contentStringLen.wrapping_add(nameLen as c_uint);
-                    if (*parser).m_handlers.hasElementDecl() {
-                        handleDefault = XML_FALSE
-                    }
-                }
-                current_block = 1553878188884632965;
-            }
-            7739131043814808354 => {
-                if (*dtd).in_eldecl != 0 {
-                    if (*parser).m_handlers.hasElementDecl() {
-                        handleDefault = XML_FALSE
-                    }
-                    (*dtd).scaffLevel -= 1;
-                    (*(*dtd)
-                        .scaffold
-                        .offset(*(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) as isize))
-                    .quant = quant;
-                    if (*dtd).scaffLevel == 0 {
-                        if handleDefault == 0 {
-                            let mut model: *mut XML_Content = build_model(parser);
-                            if model.is_null() {
+                41 | 42 => {
+                    if (*dtd).in_eldecl != 0 {
+                        if self.m_handlers.hasElementDecl() {
+                            let mut content: *mut XML_Content =
+                                MALLOC!(self, ::std::mem::size_of::<XML_Content>() as c_ulong)
+                                    as *mut XML_Content;
+                            if content.is_null() {
                                 return XML_ERROR_NO_MEMORY;
                             }
+                            (*content).quant = XML_CQUANT_NONE;
+                            (*content).name = NULL as *mut XML_Char;
+                            (*content).numchildren = 0;
+                            (*content).children = NULL as *mut XML_Content;
+                            (*content).type_0 = if role == super::xmlrole::XML_ROLE_CONTENT_ANY {
+                                XML_CTYPE_ANY as c_int
+                            } else {
+                                XML_CTYPE_EMPTY as c_int
+                            } as XML_Content_Type;
                             *eventEndPP = s;
-                            (*parser).m_handlers.elementDecl((*(*parser).m_declElementType).name, model);
+                            self.m_handlers.elementDecl((*self.m_declElementType).name, content);
+                            handleDefault = XML_FALSE
                         }
-                        (*dtd).in_eldecl = XML_FALSE;
-                        (*dtd).contentStringLen = 0
+                        (*dtd).in_eldecl = XML_FALSE
                     }
+                    current_block = 1553878188884632965;
                 }
-                current_block = 1553878188884632965;
-            }
-            _ => {}
-        }
-        match current_block {
-            9007411418488376351 => {
-                if (*dtd).keepProcessing as c_int != 0 && !(*parser).m_declEntity.is_null() {
-                    let mut tem: *mut XML_Char = (*dtd).pool.storeString(
-                        enc,
-                        s.offset((*enc).minBytesPerChar() as isize),
-                        next.offset(-((*enc).minBytesPerChar() as isize)),
-                    );
-                    if tem.is_null() {
+                43 => {
+                    if (*dtd).in_eldecl != 0 {
+                        (*(*dtd).scaffold.offset(
+                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
+                        ))
+                        .type_0 = XML_CTYPE_MIXED;
+                        if self.m_handlers.hasElementDecl() {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                51 => {
+                    quant = XML_CQUANT_NONE;
+                    current_block = 4542134034984465527;
+                }
+                53 => {
+                    quant = XML_CQUANT_OPT;
+                    current_block = 4542134034984465527;
+                }
+                52 => {
+                    quant = XML_CQUANT_REP;
+                    current_block = 4542134034984465527;
+                }
+                54 => {
+                    quant = XML_CQUANT_PLUS;
+                    current_block = 4542134034984465527;
+                }
+                45 => {
+                    quant = XML_CQUANT_NONE;
+                    current_block = 7739131043814808354;
+                }
+                47 => {
+                    quant = XML_CQUANT_OPT;
+                    current_block = 7739131043814808354;
+                }
+                46 => {
+                    quant = XML_CQUANT_REP;
+                    current_block = 7739131043814808354;
+                }
+                48 => {
+                    quant = XML_CQUANT_PLUS;
+                    current_block = 7739131043814808354;
+                }
+                55 => {
+                    /* End element declaration stuff */
+                    if reportProcessingInstruction(self, enc_type, s, next) == 0 {
                         return XML_ERROR_NO_MEMORY;
                     }
-                    normalizePublicId(tem);
-                    (*(*parser).m_declEntity).publicId = tem;
-                    (*dtd).pool.start = (*dtd).pool.ptr;
-                    /* Don't suppress the default handler if we fell through from
-                     * the XML_ROLE_DOCTYPE_PUBLIC_ID case.
-                     */
-                    if (*parser).m_handlers.hasEntityDecl()
-                        && role == super::xmlrole::XML_ROLE_ENTITY_PUBLIC_ID
-                    {
+                    handleDefault = XML_FALSE;
+                    current_block = 1553878188884632965;
+                }
+                56 => {
+                    if reportComment(self, enc_type, s, next) == 0 {
+                        return XML_ERROR_NO_MEMORY;
+                    }
+                    handleDefault = XML_FALSE;
+                    current_block = 1553878188884632965;
+                }
+                0 => {
+                    match tok {
+                        super::xmltok::XML_TOK_BOM => handleDefault = XML_FALSE,
+                        _ => {}
+                    }
+                    current_block = 1553878188884632965;
+                }
+                3 => {
+                    if self.m_handlers.hasStartDoctypeDecl() {
                         handleDefault = XML_FALSE
                     }
+                    current_block = 1553878188884632965;
+                }
+                11 => {
+                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasEntityDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                17 => {
+                    if self.m_handlers.hasNotationDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                33 => {
+                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                39 => {
+                    if self.m_handlers.hasElementDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                _ => {
+                    current_block = 1553878188884632965;
                 }
             }
-            _ => {}
-        }
-        /* not XML_DTD */
-        /* XML_DTD */
-        if handleDefault as c_int != 0 && (*parser).m_handlers.hasDefault() {
-            reportDefault(parser, enc_type, s, next);
-        }
-        match (*parser).m_parsingStatus.parsing {
-            3 => {
-                *nextPtr = next;
-                return XML_ERROR_NONE;
+            match current_block {
+                926243229934402080 =>
+                /* fall through */
+                {
+                    if (*enc).isPublicId(s, next, eventPP) == 0 {
+                        return XML_ERROR_PUBLICID;
+                    }
+                    current_block = 9007411418488376351;
+                }
+                15307276507984219638 =>
+                /* XML_DTD */
+                /* fall through */
+                {
+                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                        (*self.m_declEntity).systemId = (*dtd).pool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if (*self.m_declEntity).systemId.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        (*self.m_declEntity).base = self.m_curBase;
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        /* Don't suppress the default handler if we fell through from
+                         * the XML_ROLE_DOCTYPE_SYSTEM_ID case.
+                         */
+                        if self.m_handlers.hasEntityDecl()
+                            && role == super::xmlrole::XML_ROLE_ENTITY_SYSTEM_ID
+                        {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                6455255476181645667 => {
+                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = XML_FALSE
+                    }
+                    current_block = 1553878188884632965;
+                }
+                4542134034984465527 => {
+                    if (*dtd).in_eldecl != 0 {
+                        let mut el: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
+                        let mut name_2: *const XML_Char = 0 as *const XML_Char;
+                        let mut nameLen: c_int = 0;
+                        let mut nxt: *const c_char = if quant == XML_CQUANT_NONE {
+                            next
+                        } else {
+                            next.offset(-((*enc).minBytesPerChar() as isize))
+                        };
+                        let mut myindex_0: c_int = self.nextScaffoldPart();
+                        if myindex_0 < 0 {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
+                        (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
+                        el = getElementType(self, enc_type, s, nxt);
+                        if el.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        name_2 = (*el).name;
+                        let ref mut fresh36 = (*(*dtd).scaffold.offset(myindex_0 as isize)).name;
+                        *fresh36 = name_2;
+                        nameLen = 0;
+                        loop {
+                            let fresh37 = nameLen;
+                            nameLen = nameLen + 1;
+                            if !(*name_2.offset(fresh37 as isize) != 0) {
+                                break;
+                            }
+                        }
+                        (*dtd).contentStringLen =
+                            (*dtd).contentStringLen.wrapping_add(nameLen as c_uint);
+                        if self.m_handlers.hasElementDecl() {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                7739131043814808354 => {
+                    if (*dtd).in_eldecl != 0 {
+                        if self.m_handlers.hasElementDecl() {
+                            handleDefault = XML_FALSE
+                        }
+                        (*dtd).scaffLevel -= 1;
+                        (*(*dtd)
+                            .scaffold
+                            .offset(*(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) as isize))
+                        .quant = quant;
+                        if (*dtd).scaffLevel == 0 {
+                            if handleDefault == 0 {
+                                let mut model: *mut XML_Content = build_model(self);
+                                if model.is_null() {
+                                    return XML_ERROR_NO_MEMORY;
+                                }
+                                *eventEndPP = s;
+                                self.m_handlers.elementDecl((*self.m_declElementType).name, model);
+                            }
+                            (*dtd).in_eldecl = XML_FALSE;
+                            (*dtd).contentStringLen = 0
+                        }
+                    }
+                    current_block = 1553878188884632965;
+                }
+                _ => {}
             }
-            2 => return XML_ERROR_ABORTED,
-            _ => {
-                s = next;
-                tok = (*enc).xmlTok(XML_PROLOG_STATE, s, end, &mut next)
+            match current_block {
+                9007411418488376351 => {
+                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                        let mut tem: *mut XML_Char = (*dtd).pool.storeString(
+                            enc,
+                            s.offset((*enc).minBytesPerChar() as isize),
+                            next.offset(-((*enc).minBytesPerChar() as isize)),
+                        );
+                        if tem.is_null() {
+                            return XML_ERROR_NO_MEMORY;
+                        }
+                        normalizePublicId(tem);
+                        (*self.m_declEntity).publicId = tem;
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        /* Don't suppress the default handler if we fell through from
+                         * the XML_ROLE_DOCTYPE_PUBLIC_ID case.
+                         */
+                        if self.m_handlers.hasEntityDecl()
+                            && role == super::xmlrole::XML_ROLE_ENTITY_PUBLIC_ID
+                        {
+                            handleDefault = XML_FALSE
+                        }
+                    }
+                }
+                _ => {}
+            }
+            /* not XML_DTD */
+            /* XML_DTD */
+            if handleDefault as c_int != 0 && self.m_handlers.hasDefault() {
+                reportDefault(self, enc_type, s, next);
+            }
+            match self.m_parsingStatus.parsing {
+                3 => {
+                    *nextPtr = next;
+                    return XML_ERROR_NONE;
+                }
+                2 => return XML_ERROR_ABORTED,
+                _ => {
+                    s = next;
+                    tok = (*enc).xmlTok(XML_PROLOG_STATE, s, end, &mut next)
+                }
             }
         }
+        /* not reached */
     }
-    /* not reached */
 }
 /* XML_DTD */
 
@@ -7447,8 +7459,7 @@ unsafe extern "C" fn processInternalEntity(
     if (*entity).is_param != 0 {
         let mut tok: c_int =
             (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
-        result = doProlog(
-            parser,
+        result = (*parser).doProlog(
             EncodingType::Internal,
             textStart,
             textEnd,
@@ -7530,8 +7541,7 @@ unsafe extern "C" fn internalEntityProcessor(
     if (*entity).is_param != 0 {
         let mut tok: c_int =
             (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
-        result = doProlog(
-            parser,
+        result = (*parser).doProlog(
             EncodingType::Internal,
             textStart,
             textEnd,
@@ -7571,8 +7581,7 @@ unsafe extern "C" fn internalEntityProcessor(
         let mut tok_0: c_int = 0;
         (*parser).m_processor = Some(prologProcessor as Processor);
         tok_0 = (*(*parser).m_encoding).xmlTok(XML_PROLOG_STATE, s, end, &mut next);
-        doProlog(
-            parser,
+        (*parser).doProlog(
             EncodingType::Normal,
             s,
             end,
@@ -9618,69 +9627,71 @@ impl STRING_POOL {
     }
 }
 
-unsafe extern "C" fn nextScaffoldPart(mut parser: XML_Parser) -> c_int {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
-    let mut next: c_int = 0;
-    if (*dtd).scaffIndex.is_null() {
-        (*dtd).scaffIndex = MALLOC!(
-            parser,
-            ((*parser).m_groupSize as c_ulong)
-                .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
-        ) as *mut c_int;
+impl XML_ParserStruct {
+    unsafe fn nextScaffoldPart(&mut self) -> c_int {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
+        let mut next: c_int = 0;
         if (*dtd).scaffIndex.is_null() {
-            return -(1i32);
-        }
-        *(*dtd).scaffIndex.offset(0) = 0
-    }
-    if (*dtd).scaffCount >= (*dtd).scaffSize {
-        let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
-        if !(*dtd).scaffold.is_null() {
-            temp = REALLOC!(
-                parser,
-                (*dtd).scaffold as *mut c_void,
-                ((*dtd).scaffSize.wrapping_mul(2u32) as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
-            ) as *mut CONTENT_SCAFFOLD;
-            if temp.is_null() {
+            (*dtd).scaffIndex = MALLOC!(
+                self,
+                (self.m_groupSize as c_ulong)
+                    .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
+            ) as *mut c_int;
+            if (*dtd).scaffIndex.is_null() {
                 return -(1i32);
             }
-            (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
-        } else {
-            temp = MALLOC!(
-                parser,
-                32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
-            ) as *mut CONTENT_SCAFFOLD;
-            if temp.is_null() {
-                return -(1i32);
+            *(*dtd).scaffIndex.offset(0) = 0
+        }
+        if (*dtd).scaffCount >= (*dtd).scaffSize {
+            let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
+            if !(*dtd).scaffold.is_null() {
+                temp = REALLOC!(
+                    self,
+                    (*dtd).scaffold as *mut c_void,
+                    ((*dtd).scaffSize.wrapping_mul(2u32) as c_ulong)
+                        .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
+                ) as *mut CONTENT_SCAFFOLD;
+                if temp.is_null() {
+                    return -(1i32);
+                }
+                (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
+            } else {
+                temp = MALLOC!(
+                    self,
+                    32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
+                ) as *mut CONTENT_SCAFFOLD;
+                if temp.is_null() {
+                    return -(1i32);
+                }
+                (*dtd).scaffSize = INIT_SCAFFOLD_ELEMENTS as c_uint
             }
-            (*dtd).scaffSize = INIT_SCAFFOLD_ELEMENTS as c_uint
+            (*dtd).scaffold = temp
         }
-        (*dtd).scaffold = temp
+        let fresh82 = (*dtd).scaffCount;
+        (*dtd).scaffCount = (*dtd).scaffCount.wrapping_add(1);
+        next = fresh82 as c_int;
+        me = &mut *(*dtd).scaffold.offset(next as isize) as *mut CONTENT_SCAFFOLD;
+        if (*dtd).scaffLevel != 0 {
+            let mut parent: *mut CONTENT_SCAFFOLD = &mut *(*dtd)
+                .scaffold
+                .offset(*(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize)
+                as *mut CONTENT_SCAFFOLD;
+            if (*parent).lastchild != 0 {
+                (*(*dtd).scaffold.offset((*parent).lastchild as isize)).nextsib = next
+            }
+            if (*parent).childcnt == 0 {
+                (*parent).firstchild = next
+            }
+            (*parent).lastchild = next;
+            (*parent).childcnt += 1
+        }
+        (*me).nextsib = 0;
+        (*me).childcnt = (*me).nextsib;
+        (*me).lastchild = (*me).childcnt;
+        (*me).firstchild = (*me).lastchild;
+        next
     }
-    let fresh82 = (*dtd).scaffCount;
-    (*dtd).scaffCount = (*dtd).scaffCount.wrapping_add(1);
-    next = fresh82 as c_int;
-    me = &mut *(*dtd).scaffold.offset(next as isize) as *mut CONTENT_SCAFFOLD;
-    if (*dtd).scaffLevel != 0 {
-        let mut parent: *mut CONTENT_SCAFFOLD = &mut *(*dtd)
-            .scaffold
-            .offset(*(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize)
-            as *mut CONTENT_SCAFFOLD;
-        if (*parent).lastchild != 0 {
-            (*(*dtd).scaffold.offset((*parent).lastchild as isize)).nextsib = next
-        }
-        if (*parent).childcnt == 0 {
-            (*parent).firstchild = next
-        }
-        (*parent).lastchild = next;
-        (*parent).childcnt += 1
-    }
-    (*me).nextsib = 0;
-    (*me).childcnt = (*me).nextsib;
-    (*me).lastchild = (*me).childcnt;
-    (*me).firstchild = (*me).lastchild;
-    return next;
 }
 
 unsafe extern "C" fn build_node(
@@ -9752,36 +9763,38 @@ unsafe extern "C" fn build_model(mut parser: XML_Parser) -> *mut XML_Content {
     return ret;
 }
 
-unsafe extern "C" fn getElementType(
-    mut parser: XML_Parser,
-    mut enc_type: EncodingType,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
-) -> *mut ELEMENT_TYPE {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let enc = (*parser).encoding(enc_type);
-    let mut name: *const XML_Char = (*dtd).pool.storeString(enc, ptr, end);
-    if name.is_null() {
-        return NULL as *mut ELEMENT_TYPE;
-    }
-    let ret = hash_insert!(
-        parser,
-        &mut (*dtd).elementTypes,
-        name,
-        ELEMENT_TYPE
-    );
-    if ret.is_null() {
-        return NULL as *mut ELEMENT_TYPE;
-    }
-    if (*ret).name != name {
-        (*dtd).pool.ptr = (*dtd).pool.start
-    } else {
-        (*dtd).pool.start = (*dtd).pool.ptr;
-        if setElementTypePrefix(parser, ret) == 0 {
+impl XML_ParserStruct {
+    unsafe fn getElementType(
+        &mut self,
+        mut enc_type: EncodingType,
+        mut ptr: *const c_char,
+        mut end: *const c_char,
+    ) -> *mut ELEMENT_TYPE {
+        let dtd: *mut DTD = (*parser).m_dtd;
+        let enc = (*parser).encoding(enc_type);
+        let mut name: *const XML_Char = (*dtd).pool.storeString(enc, ptr, end);
+        if name.is_null() {
             return NULL as *mut ELEMENT_TYPE;
         }
+        let ret = hash_insert!(
+            self,
+            &mut (*dtd).elementTypes,
+            name,
+            ELEMENT_TYPE
+        );
+        if ret.is_null() {
+            return NULL as *mut ELEMENT_TYPE;
+        }
+        if (*ret).name != name {
+            (*dtd).pool.ptr = (*dtd).pool.start
+        } else {
+            (*dtd).pool.start = (*dtd).pool.ptr;
+            if setElementTypePrefix(parser, ret) == 0 {
+                return NULL as *mut ELEMENT_TYPE;
+            }
+        }
+        return ret;
     }
-    return ret;
 }
 
 unsafe extern "C" fn copyString(
