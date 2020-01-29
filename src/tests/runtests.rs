@@ -1700,6 +1700,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         let mut actualMovementInChars: ptrdiff_t = 0;
         let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
         _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
+        fromLim = buf.end();
         actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially) as c_long;
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;

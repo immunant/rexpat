@@ -35,6 +35,7 @@
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
+use std::convert::TryInto;
 use std::ptr;
 
 #[cfg(feature = "mozilla")]
@@ -2123,7 +2124,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                 utf8 = buf[..].into();
                 *from_buf = from_buf.inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as usize);
+                     - (BT_LEAD2 as c_int - 2)) as isize);
             } else {
                 if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -2148,7 +2149,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                     as c_ushort;
                 *from_buf = (*from_buf).inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as usize);
+                     - (BT_LEAD2 as c_int - 2)) as isize);
             } else {
                 *from_buf = (*from_buf).inc_start(1)
             }
@@ -2267,10 +2268,10 @@ pub unsafe extern "C" fn findEncoding(
     );
     let mut i: c_int = 0;
     (*enc).utf8Convert(&mut buf, &mut p);
-    if buf.is_empty() {
+    if !buf.is_empty() {
         return None;
     }
-    p[0] = 0;
+    *p.as_mut_ptr() = 0;
     if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
         return Some(enc.clone());
     }
@@ -2292,10 +2293,10 @@ pub unsafe extern "C" fn findEncodingNS(
     );
     let mut i: c_int = 0;
     (*enc).utf8Convert(&mut buf, &mut p);
-    if buf.is_empty() {
+    if !buf.is_empty() {
         return None;
     }
-    p[0] = 0;
+    *p.as_mut_ptr() = 0;
     if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
         return Some(enc.clone());
     }
@@ -2524,7 +2525,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
 ) {
     let mut i = from_buf.len();
     let mut walked: size_t = 0;
-    while !from_buf.is_empty() {
+    while i > 0 && i <= from_buf.len() {
         let prev: c_uchar = from_buf[i-1] as c_uchar;
         if prev as c_uint & 0xf8 == 0xf0 {
             /* 4-byte character, lead by 0b11110xxx byte */
@@ -2560,27 +2561,28 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
 }
 
 unsafe extern "C" fn utf8_toUtf8(
-    from_buf: &mut ExpatBufRef,
+    fromP: &mut ExpatBufRef,
     to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
+    let mut from = fromP.clone();
     let mut input_incomplete: bool = false_0 != 0;
     let mut output_exhausted: bool = false_0 != 0;
     /* Avoid copying partial characters (due to limited space). */
-    let bytesAvailable = from_buf.len();
+    let bytesAvailable = from.len();
     let bytesStorable = to.len();
     if bytesAvailable > bytesStorable {
-        *from_buf = from_buf.with_len(bytesStorable);
+        from = from.with_len(bytesStorable);
         output_exhausted = true_0 != 0
     }
     /* Avoid copying partial characters (from incomplete input). */
-    let len_before = from_buf.len();
-    _INTERNAL_trim_to_complete_utf8_characters(from_buf);
-    if from_buf.len() < len_before {
+    let len_before = from.len();
+    _INTERNAL_trim_to_complete_utf8_characters(&mut from);
+    if from.len() < len_before {
         input_incomplete = true_0 != 0
     }
-    to[..from_buf.len()].copy_from_slice(from_buf);
-    to.inc_start(from_buf.len());
-    *from_buf = from_buf.inc_start(from_buf.len());
+    to[..from.len()].copy_from_slice(&from);
+    to.inc_start(from.len());
+    *fromP = fromP.inc_start(from.len().try_into().unwrap());
     if output_exhausted {
         /* needs to go first */
         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -2780,6 +2782,7 @@ unsafe extern "C" fn little2_toUtf8(
             0 => {
                 if (lo as c_int) < 0x80 {
                     if to.is_empty() {
+                        *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
                     }
                     to[0] = lo as c_char;
@@ -2895,6 +2898,7 @@ unsafe extern "C" fn big2_toUtf8(
             0 => {
                 if (lo as c_int) < 0x80 {
                     if to.is_empty() {
+                        *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
                     }
                     to[0] = lo as c_char;
@@ -3079,7 +3083,7 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
         return 0i32;
     }
     loop {
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
         if !(isSpace(toAscii(enc, buf)) != 0) {
             break;
         }
@@ -3101,7 +3105,7 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
         } else if isSpace(c) != 0 {
             *name = name.map(|name| name.with_end(buf.as_ptr()));
             loop {
-                buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+                buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
                 c = toAscii(enc, buf);
                 if !(isSpace(c) != 0) {
                     break;
@@ -3113,17 +3117,17 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
             }
             break;
         } else {
-            buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+            buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
         }
     }
     if buf.as_ptr() == name.unwrap().as_ptr() {
         *nextTokPtr = buf.as_ptr();
         return 0i32;
     }
-    buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     c = toAscii(enc, buf);
     while isSpace(c) != 0 {
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
         c = toAscii(enc, buf)
     }
     if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
@@ -3131,7 +3135,7 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
         return 0i32;
     }
     open = c as c_char;
-    buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     *val = Some(buf.clone());
     loop {
         c = toAscii(enc, buf);
@@ -3148,9 +3152,9 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
             *nextTokPtr = buf.as_ptr();
             return 0i32;
         }
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as usize);
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
-    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar() as usize).as_ptr();
+    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar() as isize).as_ptr();
     return 1;
 }
 
@@ -3217,7 +3221,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
     let mut val_buf = None;
     let mut name = None;
     buf = buf
-        .inc_start((5i32 * (*enc).minBytesPerChar()) as usize)
+        .inc_start((5i32 * (*enc).minBytesPerChar()) as isize)
         .dec_end((2i32 * (*enc).minBytesPerChar()) as usize);
     let mut pseudo_ptr = buf.as_ptr();
     if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
@@ -3273,7 +3277,10 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
         if !encoding.is_null() {
             *encoding = encodingFinder.expect("non-null function pointer")(
                 enc,
-                val_buf.unwrap().dec_end(((*enc).minBytesPerChar()) as usize),
+                val_buf
+                    .unwrap()
+                    .with_end(buf.as_ptr())
+                    .dec_end(((*enc).minBytesPerChar()) as usize),
             )
         }
         let mut pseudo_ptr = buf.as_ptr();
@@ -3293,7 +3300,10 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
         return 0i32;
     }
     if (*enc).nameMatchesAscii(
-        val_buf.unwrap().dec_end(((*enc).minBytesPerChar()) as usize),
+        val_buf
+            .unwrap()
+            .with_end(buf.as_ptr())
+            .dec_end(((*enc).minBytesPerChar()) as usize),
         KW_yes.as_ptr(),
     ) != 0
     {
@@ -3301,7 +3311,10 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
             *standalone = 1
         }
     } else if (*enc).nameMatchesAscii(
-        val_buf.unwrap().dec_end(((*enc).minBytesPerChar()) as usize),
+        val_buf
+            .unwrap()
+            .with_end(buf.as_ptr())
+            .dec_end(((*enc).minBytesPerChar()) as usize),
         KW_no.as_ptr(),
     ) != 0
     {
@@ -3314,7 +3327,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
     }
     // TODO(SJC): make toAscii take a buf
     while isSpace(toAscii(enc, buf)) != 0 {
-        buf.inc_start(((*enc).minBytesPerChar()) as usize);
+        buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
     if !buf.is_empty() {
         *badPtr = buf.as_ptr();

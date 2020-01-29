@@ -169,11 +169,14 @@ impl<'a, T> ExpatBufRef<'a, T> {
         ExpatBufRef(&self.0[..len])
     }
 
-    pub fn inc_start(&self, offset: usize) -> ExpatBufRef<'a, T> {
-        if offset > self.len() {
+    pub fn inc_start(&self, offset: isize) -> ExpatBufRef<'a, T> {
+        if offset < 0 {
+            panic!("Attempted to decrement the start of an ExpatBufRef");
+        }
+        if offset as usize > self.len() {
             panic!("Attempted to increment the start of an ExpatBufRef by too much: {:?}", offset);
         }
-        ExpatBufRef(&self.0[(offset)..])
+        ExpatBufRef(&self.0[(offset as usize)..])
     }
 
     pub fn dec_end(&self, offset: usize) -> ExpatBufRef<'a, T> {
@@ -3861,7 +3864,9 @@ unsafe extern "C" fn doContent(
             super::xmltok::XML_TOK_ENTITY_REF => {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
                 let mut ch: XML_Char = (*enc).predefinedEntityName(
-                    buf.inc_start((*enc).minBytesPerChar() as usize)
+                    buf
+                        .inc_start((*enc).minBytesPerChar() as isize)
+                        .with_end(next)
                         .dec_end((*enc).minBytesPerChar() as usize)
                 ) as XML_Char;
                 if ch != 0 {
@@ -3874,7 +3879,9 @@ unsafe extern "C" fn doContent(
                     name = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if name.is_null() {
@@ -3984,7 +3991,7 @@ unsafe extern "C" fn doContent(
                 (*parser).m_tagStack = tag;
                 (*tag).name.localPart = NULL as *const XML_Char;
                 (*tag).name.prefix = NULL as *const XML_Char;
-                let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as usize);
+                let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
                 (*tag).rawName = fromBuf.as_ptr();
                 (*tag).rawNameLength = (*enc).nameLength((*tag).rawName);
                 fromBuf = fromBuf.with_len((*tag).rawNameLength as usize);
@@ -4042,7 +4049,7 @@ unsafe extern "C" fn doContent(
             super::xmltok::XML_TOK_EMPTY_ELEMENT_NO_ATTS
             | super::xmltok::XML_TOK_EMPTY_ELEMENT_WITH_ATTS => {
                 /* fall through */
-                let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as usize);
+                let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
                 let mut result_1: XML_Error = XML_ERROR_NONE;
                 let mut bindings: *mut BINDING = NULL as *mut BINDING;
                 let mut noElmHandlers: XML_Bool = XML_TRUE;
@@ -4105,7 +4112,7 @@ unsafe extern "C" fn doContent(
                     (*parser).m_tagStack = (*tag_0).parent;
                     (*tag_0).parent = (*parser).m_freeTagList;
                     (*parser).m_freeTagList = tag_0;
-                    let rawName_0 = buf.inc_start(((*enc).minBytesPerChar() * 2) as usize);
+                    let rawName_0 = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
                     len = (*enc).nameLength(rawName_0.as_ptr());
                     if len != (*tag_0).rawNameLength
                         || memcmp(
@@ -4222,9 +4229,9 @@ unsafe extern "C" fn doContent(
                     return XML_ERROR_BAD_CHAR_REF;
                 }
                 if (*parser).m_handlers.hasCharacterData() {
-                    let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                    let n = XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR) as usize;
-                    (*parser).m_handlers.characterData(&buf[..n]);
+                    let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
+                    let n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR) as usize;
+                    (*parser).m_handlers.characterData(&out_buf[..n]);
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc_type, buf.with_end(next));
                 }
@@ -4244,6 +4251,20 @@ unsafe extern "C" fn doContent(
                 let startHandlerRan = (*parser).m_handlers.startCDataSection();
 
                 if startHandlerRan {
+                /* BEGIN disabled code */
+                /* Suppose you doing a transformation on a document that involves
+                   changing only the character data.  You set up a defaultHandler
+                   and a characterDataHandler.  The defaultHandler simply copies
+                   characters through.  The characterDataHandler does the
+                   transformation and writes the characters out escaping them as
+                   necessary.  This case will fail to work if we leave out the
+                   following two lines (because & and < inside CDATA sections will
+                   be incorrectly escaped).
+
+                   However, now we have a start/endCdataSectionHandler, so it seems
+                   easier to let the user deal with this.
+                */
+                /* END disabled code */
                 } else if 0 != 0 && (*parser).m_handlers.hasCharacterData() {
                     (*parser).m_handlers.characterData(&[]);
                 } else if (*parser).m_handlers.hasDefault() {
@@ -4273,27 +4294,18 @@ unsafe extern "C" fn doContent(
                             (*parser).m_dataBufEnd as *mut ICHAR,
                         );
                         XmlConvert!(enc, &mut buf, &mut dataPtr);
-                        (*parser).m_handlers.characterData(&dataPtr);
+                        (*parser).m_handlers.characterData(
+                            &ExpatBufRef::new(
+                                (*parser).m_dataBuf,
+                                dataPtr.as_ptr(),
+                            ),
+                        );
                     } else {
                         (*parser).m_handlers.characterData(&buf);
                     }
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc_type, buf);
                 }
-                /* BEGIN disabled code */
-                /* Suppose you doing a transformation on a document that involves
-                   changing only the character data.  You set up a defaultHandler
-                   and a characterDataHandler.  The defaultHandler simply copies
-                   characters through.  The characterDataHandler does the
-                   transformation and writes the characters out escaping them as
-                   necessary.  This case will fail to work if we leave out the
-                   following two lines (because & and < inside CDATA sections will
-                   be incorrectly escaped).
-
-                   However, now we have a start/endCdataSectionHandler, so it seems
-                   easier to let the user deal with this.
-                */
-                /* END disabled code */
                 /* We are at the end of the final buffer, should we check for
                    XML_SUSPENDED, XML_FINISHED?
                 */
@@ -5401,7 +5413,7 @@ unsafe extern "C" fn doCdataSection(
                             handlers.characterData(
                                 &ExpatBufRef::new(
                                     (*parser).m_dataBuf,
-                                    to_buf.end(),
+                                    to_buf.as_ptr(),
                                 ),
                             );
                             if convert_res == super::xmltok::XML_CONVERT_COMPLETED
@@ -5947,7 +5959,6 @@ unsafe extern "C" fn entityValueProcessor(
     mut buf: ExpatBufRef,
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
-    // let mut start: *const c_char = buf.as_ptr();
     let mut next: *const c_char = buf.as_ptr();
     let mut enc: &ENCODING = &*(*parser).m_encoding;
     let mut tok: c_int = 0;
@@ -5971,7 +5982,7 @@ unsafe extern "C" fn entityValueProcessor(
             /* found end of entity value - can store it now */
             return storeEntityValue(parser, EncodingType::Normal, buf);
         }
-        // start = next
+        buf = buf.with_start(next);
     }
 }
 /* XML_DTD */
@@ -6237,7 +6248,9 @@ unsafe extern "C" fn doProlog<'a>(
                     pubId = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if pubId.is_null() {
@@ -6519,7 +6532,10 @@ unsafe extern "C" fn doProlog<'a>(
                         parser,
                         enc_type,
                         (*parser).m_declAttributeIsCdata,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize),
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize),
                         &mut (*dtd).pool,
                     );
                     if result_1 as u64 != 0 {
@@ -6594,7 +6610,10 @@ unsafe extern "C" fn doProlog<'a>(
                     let mut result_2: XML_Error = storeEntityValue(
                         parser,
                         enc_type,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if !(*parser).m_declEntity.is_null() {
                         (*(*parser).m_declEntity).textPtr = (*dtd).entityValuePool.start;
@@ -6635,7 +6654,10 @@ unsafe extern "C" fn doProlog<'a>(
                     (*parser).m_doctypeSysid = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if (*parser).m_doctypeSysid.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6832,7 +6854,10 @@ unsafe extern "C" fn doProlog<'a>(
                     let mut tem_0: *mut XML_Char = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if tem_0.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -6851,7 +6876,10 @@ unsafe extern "C" fn doProlog<'a>(
                     let mut systemId: *const XML_Char = poolStoreString(
                         &mut (*parser).m_tempPool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if systemId.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -7037,7 +7065,10 @@ unsafe extern "C" fn doProlog<'a>(
                     name_1 = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if name_1.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -7318,7 +7349,10 @@ unsafe extern "C" fn doProlog<'a>(
                     (*(*parser).m_declEntity).systemId = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize),
                     );
                     if (*(*parser).m_declEntity).systemId.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -7414,7 +7448,10 @@ unsafe extern "C" fn doProlog<'a>(
                     let mut tem: *mut XML_Char = poolStoreString(
                         &mut (*dtd).pool,
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as usize).dec_end((*enc).minBytesPerChar() as usize)
+                        buf
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
+                            .dec_end((*enc).minBytesPerChar() as usize)
                     );
                     if tem.is_null() {
                         return XML_ERROR_NO_MEMORY;
@@ -7788,7 +7825,7 @@ unsafe extern "C" fn appendAttributeValue(
                 return XML_ERROR_INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_CHAR_REF => {
-                let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
+                let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(ExpatBufRef(&buf));
                 if n < 0 {
@@ -7804,7 +7841,7 @@ unsafe extern "C" fn appendAttributeValue(
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
-                    n = XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR);
+                    n = XmlEncode(n, out_buf.as_mut_ptr());
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7816,15 +7853,7 @@ unsafe extern "C" fn appendAttributeValue(
                      */
                     i = 0;
                     while i < n {
-                        if if (*pool).ptr == (*pool).end as *mut XML_Char && poolGrow(pool) == 0 {
-                            0
-                        } else {
-                            let fresh39 = (*pool).ptr;
-                            (*pool).ptr = (*pool).ptr.offset(1);
-                            *fresh39 = buf[i as usize];
-                            1
-                        } == 0
-                        {
+                        if !poolAppendChar(&mut *pool, out_buf[i as usize]) {
                             return XML_ERROR_NO_MEMORY;
                         }
                         i += 1
@@ -7850,7 +7879,7 @@ unsafe extern "C" fn appendAttributeValue(
                 let mut checkEntityDecl: c_char = 0;
                 let mut ch: XML_Char = (*enc).predefinedEntityName(
                     buf
-                        .inc_start((*enc).minBytesPerChar() as usize)
+                        .inc_start((*enc).minBytesPerChar() as isize)
                         .with_end(next)
                         .dec_end((*enc).minBytesPerChar() as usize)
                 ) as XML_Char;
@@ -7871,7 +7900,7 @@ unsafe extern "C" fn appendAttributeValue(
                         &mut (*parser).m_temp2Pool,
                         enc,
                         buf
-                            .inc_start((*enc).minBytesPerChar() as usize)
+                            .inc_start((*enc).minBytesPerChar() as isize)
                             .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
@@ -8060,7 +8089,8 @@ unsafe extern "C" fn storeEntityValue(
                         &mut (*parser).m_tempPool,
                         enc,
                         entityTextBuf
-                            .inc_start((*enc).minBytesPerChar() as usize)
+                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
                     if name.is_null() {
@@ -8154,7 +8184,7 @@ unsafe extern "C" fn storeEntityValue(
                 current_block = 13862322071133341448;
             }
             super::xmltok::XML_TOK_CHAR_REF => {
-                let mut buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
+                let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(entityTextBuf);
                 if n < 0 {
@@ -8164,7 +8194,7 @@ unsafe extern "C" fn storeEntityValue(
                     result = XML_ERROR_BAD_CHAR_REF;
                     break;
                 } else {
-                    n = XmlEncode(n, buf.as_mut_ptr() as *mut ICHAR);
+                    n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -8182,7 +8212,7 @@ unsafe extern "C" fn storeEntityValue(
                         } else {
                             let fresh43 = (*pool).ptr;
                             (*pool).ptr = (*pool).ptr.offset(1);
-                            *fresh43 = buf[i as usize];
+                            *fresh43 = out_buf[i as usize];
                             i += 1
                         }
                     }
@@ -8289,8 +8319,8 @@ unsafe extern "C" fn reportProcessingInstruction(
         return 1i32;
     }
     let enc = (*parser).encoding(enc_type);
-    buf = buf.inc_start(((*enc).minBytesPerChar() * 2) as usize);
-    let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as usize);
+    buf = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
+    let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as isize);
     target = poolStoreString(&mut (*parser).m_tempPool, enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize));
     if target.is_null() {
         return 0i32;
@@ -8330,7 +8360,7 @@ unsafe extern "C" fn reportComment(
     data = poolStoreString(
         &mut (*parser).m_tempPool,
         enc,
-        buf.inc_start(((*enc).minBytesPerChar() * 4) as usize)
+        buf.inc_start(((*enc).minBytesPerChar() * 4) as isize)
             .dec_end(((*enc).minBytesPerChar() * 3) as usize),
     );
     if data.is_null() {
@@ -8387,7 +8417,7 @@ unsafe extern "C" fn reportDefault(
 
             let defaultRan = (*parser).m_handlers.default(
                 (*parser).m_dataBuf,
-                data_buf.len().try_into().unwrap(),
+                data_buf.as_ptr().wrapping_offset_from((*parser).m_dataBuf).try_into().unwrap(),
             );
 
             // Previously unwrapped an Option
@@ -9467,6 +9497,7 @@ unsafe extern "C" fn poolAppend(
             &mut buf,
             &mut pool_buf,
         );
+        (*pool).ptr = pool_buf.as_mut_ptr();
         if convert_res == super::xmltok::XML_CONVERT_COMPLETED
             || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
         {

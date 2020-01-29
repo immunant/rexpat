@@ -437,7 +437,7 @@ unsafe extern "C" fn prolog0(
         super::xmltok::XML_TOK_BOM => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
             {
@@ -476,7 +476,7 @@ unsafe extern "C" fn prolog1(
         }
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
             {
@@ -642,7 +642,7 @@ unsafe extern "C" fn internalSubset(
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if (*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ENTITY.as_ptr(),
             ) != 0
             {
@@ -650,7 +650,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ENTITY_NONE;
             }
             if (*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ATTLIST.as_ptr(),
             ) != 0
             {
@@ -658,7 +658,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ATTLIST_NONE;
             }
             if (*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ELEMENT.as_ptr(),
             ) != 0
             {
@@ -666,7 +666,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ELEMENT_NONE;
             }
             if (*enc).nameMatchesAscii(
-                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as usize),
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_NOTATION.as_ptr(),
             ) != 0
             {
@@ -1255,7 +1255,7 @@ unsafe extern "C" fn attlist8(
         XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii(
-                buf.inc_start(((*enc).minBytesPerChar()) as usize),
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_IMPLIED.as_ptr(),
             ) != 0
             {
@@ -1263,7 +1263,7 @@ unsafe extern "C" fn attlist8(
                 return XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii(
-                buf.inc_start(((*enc).minBytesPerChar()) as usize),
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_REQUIRED.as_ptr(),
             ) != 0
             {
@@ -1271,7 +1271,7 @@ unsafe extern "C" fn attlist8(
                 return XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii(
-                buf.inc_start(((*enc).minBytesPerChar()) as usize),
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_FIXED.as_ptr(),
             ) != 0
             {
@@ -1362,7 +1362,7 @@ unsafe extern "C" fn element2(
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii(
-                buf.inc_start(((*enc).minBytesPerChar()) as usize),
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_PCDATA.as_ptr(),
             ) != 0
             {
