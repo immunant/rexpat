@@ -204,9 +204,11 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     return 0 as c_int;
 }
 #[main]
-pub fn main() {
+pub fn orig_main() {
     let mut args: Vec<*mut c_char> = Vec::new();
     for arg in std::env::args() {
+        // skip extra arguments added by `cargo bench`
+        if arg == "--bench" { break; }
         args.push(
             CString::new(arg)
                 .expect("Failed to convert argument into CString.")
@@ -221,3 +223,14 @@ pub fn main() {
         ) as i32)
     }
 }
+
+#[macro_use]
+extern crate bencher;
+use bencher::Bencher;
+
+fn benchmark(b: &mut Bencher) {
+    b.iter(|| crate::orig_main());
+}
+
+benchmark_group!(benches, benchmark);
+benchmark_main!(benches); // emits a main function
