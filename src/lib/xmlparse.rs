@@ -2034,8 +2034,6 @@ impl Drop for XML_ParserStruct {
             FREE!(self, self.m_buffer as *mut c_void);
             FREE!(self, self.m_dataBuf as *mut c_void);
             FREE!(self, self.m_nsAtts as *mut c_void);
-            let _ = self.m_unknownEncoding.take();
-            let _ = self.m_initEncoding.take();
             if self.m_unknownEncodingRelease.is_some() {
                 self.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_unknownEncodingData);
