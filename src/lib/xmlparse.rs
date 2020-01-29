@@ -1556,6 +1556,7 @@ impl XML_ParserStruct {
             Err(()) => return ptr::null_mut(),
         };
 
+        // TODO: Move initialization into XML_ParserStruct::new
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
         parser.m_attsSize = INIT_ATTS_SIZE;
@@ -2048,7 +2049,7 @@ pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
-    ExpatBox::from_raw_in(parser, (*parser).m_mem);
+    let _ = ExpatBox::from_raw_in(parser, (*parser).m_mem);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
