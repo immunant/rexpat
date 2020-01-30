@@ -2023,8 +2023,8 @@ impl Drop for XML_ParserStruct {
             }
             destroyBindings(self.m_freeBindingList, self);
             destroyBindings(self.m_inheritedBindings, self);
-            poolDestroy(&mut self.m_tempPool);
-            poolDestroy(&mut self.m_temp2Pool);
+            self.m_tempPool.destroy();
+            self.m_temp2Pool.destroy();
             FREE!(self, self.m_protocolEncodingName as *mut c_void);
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
@@ -2156,7 +2156,7 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
         return XML_STATUS_ERROR_0 as XML_Status;
     }
     if !p.is_null() {
-        p = poolCopyString(&mut (*(*parser).m_dtd).pool, p);
+        p = (*(*parser).m_dtd).pool.copyString(p);
         if p.is_null() {
             return XML_STATUS_ERROR_0 as XML_Status;
         }
@@ -4312,7 +4312,7 @@ impl XML_ParserStruct {
         let elementType = if let Some(elementType) = (*dtd).elementTypes.get_mut(&HashKey::from((*tagNamePtr).str_0)) {
             elementType.as_mut()
         } else {
-            let mut name: *const XML_Char = poolCopyString(&mut (*dtd).pool, (*tagNamePtr).str_0);
+            let mut name: *const XML_Char = (*dtd).pool.copyString((*tagNamePtr).str_0);
             if name.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
@@ -8808,7 +8808,7 @@ impl XML_ParserStruct {
                         // into the DTD pool, since the HashMap keeps a permanent
                         // reference to the name which we can't modify after
                         // the call to `hash_insert!` (unlike the original C code)
-                        let prefix_name = poolCopyString(&mut (*dtd).pool, self.m_tempPool.start);
+                        let prefix_name = (*dtd).pool.copyString(self.m_tempPool.start);
                         if prefix_name.is_null() {
                             return XML_FALSE;
                         }
@@ -8997,8 +8997,8 @@ unsafe extern "C" fn dtdDestroy(
     std::ptr::drop_in_place(&mut (*p).elementTypes);
     std::ptr::drop_in_place(&mut (*p).attributeIds);
     std::ptr::drop_in_place(&mut (*p).prefixes);
-    poolDestroy(&mut (*p).pool);
-    poolDestroy(&mut (*p).entityValuePool);
+    (*p).pool.destroy();
+    (*p).entityValuePool.destroy();
     if isDocEntity != 0 {
         (*ms).free_fcn.expect("non-null function pointer")((*p).scaffIndex as *mut c_void);
         (*ms).free_fcn.expect("non-null function pointer")((*p).scaffold as *mut c_void);
@@ -9018,7 +9018,7 @@ unsafe extern "C" fn dtdCopy(
     /* Copy the prefix table. */
     for oldP in (*oldDtd).prefixes.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        name = poolCopyString(&mut (*newDtd).pool, (*oldP).name);
+        name = (*newDtd).pool.copyString((*oldP).name);
         if name.is_null() {
             return 0i32;
         }
@@ -9051,7 +9051,7 @@ unsafe extern "C" fn dtdCopy(
         {
             return 0i32;
         }
-        name_0 = poolCopyString(&mut (*newDtd).pool, (*oldA).name);
+        name_0 = (*newDtd).pool.copyString((*oldA).name);
         if name_0.is_null() {
             return 0i32;
         }
@@ -9082,7 +9082,7 @@ unsafe extern "C" fn dtdCopy(
     for oldE in (*oldDtd).elementTypes.values() {
         let mut i: c_int = 0;
         let mut name_1: *const XML_Char = 0 as *const XML_Char;
-        name_1 = poolCopyString(&mut (*newDtd).pool, (*oldE).name);
+        name_1 = (*newDtd).pool.copyString((*oldE).name);
         if name_1.is_null() {
             return 0i32;
         }
@@ -9129,8 +9129,7 @@ unsafe extern "C" fn dtdCopy(
                 (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
             if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
                 let ref mut fresh70 = (*(*newE).defaultAtts.offset(i as isize)).value;
-                *fresh70 = poolCopyString(
-                    &mut (*newDtd).pool,
+                *fresh70 = (*newDtd).pool.copyString(
                     (*(*oldE).defaultAtts.offset(i as isize)).value,
                 );
                 if (*(*newE).defaultAtts.offset(i as isize)).value.is_null() {
@@ -9188,7 +9187,7 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedNewBase: *const XML_Char = NULL as *const XML_Char;
     for oldE in oldTable.values() {
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        name = poolCopyString(newPool, (*oldE).name);
+        name = (*newPool).copyString((*oldE).name);
         if name.is_null() {
             return 0i32;
         }
@@ -9202,7 +9201,7 @@ unsafe extern "C" fn copyEntityTable(
             return 0i32;
         }
         if !(*oldE).systemId.is_null() {
-            let mut tem: *const XML_Char = poolCopyString(newPool, (*oldE).systemId);
+            let mut tem: *const XML_Char = (*newPool).copyString((*oldE).systemId);
             if tem.is_null() {
                 return 0i32;
             }
@@ -9212,7 +9211,7 @@ unsafe extern "C" fn copyEntityTable(
                     (*newE).base = cachedNewBase
                 } else {
                     cachedOldBase = (*oldE).base;
-                    tem = poolCopyString(newPool, cachedOldBase);
+                    tem = (*newPool).copyString(cachedOldBase);
                     if tem.is_null() {
                         return 0i32;
                     }
@@ -9221,7 +9220,7 @@ unsafe extern "C" fn copyEntityTable(
                 }
             }
             if !(*oldE).publicId.is_null() {
-                tem = poolCopyString(newPool, (*oldE).publicId);
+                tem = (*newPool).copyString((*oldE).publicId);
                 if tem.is_null() {
                     return 0i32;
                 }
@@ -9229,7 +9228,7 @@ unsafe extern "C" fn copyEntityTable(
             }
         } else {
             let mut tem_0: *const XML_Char =
-                poolCopyStringN(newPool, (*oldE).textPtr, (*oldE).textLen);
+                (*newPool).copyStringN((*oldE).textPtr, (*oldE).textLen);
             if tem_0.is_null() {
                 return 0i32;
             }
@@ -9237,7 +9236,7 @@ unsafe extern "C" fn copyEntityTable(
             (*newE).textLen = (*oldE).textLen
         }
         if !(*oldE).notation.is_null() {
-            let mut tem_1: *const XML_Char = poolCopyString(newPool, (*oldE).notation);
+            let mut tem_1: *const XML_Char = (*newPool).copyString((*oldE).notation);
             if tem_1.is_null() {
                 return 0i32;
             }
@@ -9329,24 +9328,22 @@ impl STRING_POOL {
         self.ptr = NULL as *mut XML_Char;
         self.end = NULL as *const XML_Char;
     }
-}
 
-unsafe extern "C" fn poolDestroy(mut pool: *mut STRING_POOL) {
-    let mut p: *mut BLOCK = (*pool).blocks;
-    while !p.is_null() {
-        let mut tem: *mut BLOCK = (*p).next;
-        (*(*pool).mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
-        p = tem
+    unsafe fn destroy(&mut self) {
+        let mut p: *mut BLOCK = self.blocks;
+        while !p.is_null() {
+            let mut tem: *mut BLOCK = (*p).next;
+            (*self.mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
+            p = tem
+        }
+        p = self.freeBlocks;
+        while !p.is_null() {
+            let mut tem_0: *mut BLOCK = (*p).next;
+            (*self.mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
+            p = tem_0
+        }
     }
-    p = (*pool).freeBlocks;
-    while !p.is_null() {
-        let mut tem_0: *mut BLOCK = (*p).next;
-        (*(*pool).mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
-        p = tem_0
-    }
-}
 
-impl STRING_POOL {
     unsafe fn append(
         &mut self,
         enc: &ENCODING,
@@ -9375,76 +9372,74 @@ impl STRING_POOL {
         }
         self.start
     }
-}
 
-unsafe extern "C" fn poolCopyString(
-    mut pool: *mut STRING_POOL,
-    mut s: *const XML_Char,
-) -> *const XML_Char {
-    loop {
-        if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
-            0
-        } else {
-            let fresh77 = (*pool).ptr;
-            (*pool).ptr = (*pool).ptr.offset(1);
-            *fresh77 = *s;
-            1
-        } == 0
-        {
+    unsafe fn copyString(
+        &mut self,
+        mut s: *const XML_Char,
+    ) -> *const XML_Char {
+        loop {
+            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+                0
+            } else {
+                let fresh77 = self.ptr;
+                self.ptr = self.ptr.offset(1);
+                *fresh77 = *s;
+                1
+            } == 0
+            {
+                return NULL as *const XML_Char;
+            }
+            let fresh78 = s;
+            s = s.offset(1);
+            if !(*fresh78 != 0) {
+                break;
+            }
+        }
+        s = self.start;
+        self.start = self.ptr;
+        return s;
+    }
+
+    unsafe fn copyStringN(
+        &mut self,
+        mut s: *const XML_Char,
+        mut n: c_int,
+    ) -> *const XML_Char {
+        if self.ptr.is_null() && self.grow() == 0 {
+            /* The following line is unreachable given the current usage of
+            * poolCopyStringN().  Currently it is called from exactly one
+            * place to copy the text of a simple general entity.  By that
+            * point, the name of the entity is already stored in the pool, so
+            * pool->ptr cannot be NULL.
+            *
+            * If poolCopyStringN() is used elsewhere as it well might be,
+            * this line may well become executable again.  Regardless, this
+            * sort of check shouldn't be removed lightly, so we just exclude
+            * it from the coverage statistics.
+            */
             return NULL as *const XML_Char;
+            /* LCOV_EXCL_LINE */
         }
-        let fresh78 = s;
-        s = s.offset(1);
-        if !(*fresh78 != 0) {
-            break;
+        while n > 0 {
+            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
+                0
+            } else {
+                let fresh79 = self.ptr;
+                self.ptr = self.ptr.offset(1);
+                *fresh79 = *s;
+                1
+            } == 0
+            {
+                return NULL as *const XML_Char;
+            }
+            n -= 1;
+            s = s.offset(1)
         }
+        s = self.start;
+        self.start = self.ptr;
+        return s;
     }
-    s = (*pool).start;
-    (*pool).start = (*pool).ptr;
-    return s;
-}
 
-unsafe extern "C" fn poolCopyStringN(
-    mut pool: *mut STRING_POOL,
-    mut s: *const XML_Char,
-    mut n: c_int,
-) -> *const XML_Char {
-    if (*pool).ptr.is_null() && (*pool).grow() == 0 {
-        /* The following line is unreachable given the current usage of
-         * poolCopyStringN().  Currently it is called from exactly one
-         * place to copy the text of a simple general entity.  By that
-         * point, the name of the entity is already stored in the pool, so
-         * pool->ptr cannot be NULL.
-         *
-         * If poolCopyStringN() is used elsewhere as it well might be,
-         * this line may well become executable again.  Regardless, this
-         * sort of check shouldn't be removed lightly, so we just exclude
-         * it from the coverage statistics.
-         */
-        return NULL as *const XML_Char;
-        /* LCOV_EXCL_LINE */
-    }
-    while n > 0 {
-        if if (*pool).ptr == (*pool).end as *mut XML_Char && (*pool).grow() == 0 {
-            0
-        } else {
-            let fresh79 = (*pool).ptr;
-            (*pool).ptr = (*pool).ptr.offset(1);
-            *fresh79 = *s;
-            1
-        } == 0
-        {
-            return NULL as *const XML_Char;
-        }
-        n -= 1;
-        s = s.offset(1)
-    }
-    s = (*pool).start;
-    (*pool).start = (*pool).ptr;
-    return s;
-}
-
-impl STRING_POOL {
     unsafe fn appendString(&mut self, mut s: *const XML_Char) -> *const XML_Char {
         while *s != 0 {
             if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
@@ -9698,57 +9693,54 @@ impl XML_ParserStruct {
         (*me).firstchild = (*me).lastchild;
         next
     }
-}
 
-unsafe extern "C" fn build_node(
-    mut parser: XML_Parser,
-    mut src_node: c_int,
-    mut dest: *mut XML_Content,
-    mut contpos: *mut *mut XML_Content,
-    mut strpos: *mut *mut XML_Char,
-) {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    (*dest).type_0 = (*(*dtd).scaffold.offset(src_node as isize)).type_0;
-    (*dest).quant = (*(*dtd).scaffold.offset(src_node as isize)).quant;
-    if (*dest).type_0 == XML_CTYPE_NAME {
-        let mut src: *const XML_Char = 0 as *const XML_Char;
-        (*dest).name = *strpos;
-        src = (*(*dtd).scaffold.offset(src_node as isize)).name;
-        loop {
-            let fresh83 = *strpos;
-            *strpos = (*strpos).offset(1);
-            *fresh83 = *src;
-            if *src == 0 {
-                break;
+    unsafe fn build_node(
+        &mut self,
+        mut src_node: c_int,
+        mut dest: *mut XML_Content,
+        mut contpos: *mut *mut XML_Content,
+        mut strpos: *mut *mut XML_Char,
+    ) {
+        let dtd: *mut DTD = self.m_dtd;
+        (*dest).type_0 = (*(*dtd).scaffold.offset(src_node as isize)).type_0;
+        (*dest).quant = (*(*dtd).scaffold.offset(src_node as isize)).quant;
+        if (*dest).type_0 == XML_CTYPE_NAME {
+            let mut src: *const XML_Char = 0 as *const XML_Char;
+            (*dest).name = *strpos;
+            src = (*(*dtd).scaffold.offset(src_node as isize)).name;
+            loop {
+                let fresh83 = *strpos;
+                *strpos = (*strpos).offset(1);
+                *fresh83 = *src;
+                if *src == 0 {
+                    break;
+                }
+                src = src.offset(1)
             }
-            src = src.offset(1)
-        }
-        (*dest).numchildren = 0u32;
-        (*dest).children = NULL as *mut XML_Content
-    } else {
-        let mut i: c_uint = 0;
-        let mut cn: c_int = 0;
-        (*dest).numchildren = (*(*dtd).scaffold.offset(src_node as isize)).childcnt as c_uint;
-        (*dest).children = *contpos;
-        *contpos = (*contpos).offset((*dest).numchildren as isize);
-        i = 0;
-        cn = (*(*dtd).scaffold.offset(src_node as isize)).firstchild;
-        while i < (*dest).numchildren {
-            build_node(
-                parser,
-                cn,
-                &mut *(*dest).children.offset(i as isize),
-                contpos,
-                strpos,
-            );
-            i = i.wrapping_add(1);
-            cn = (*(*dtd).scaffold.offset(cn as isize)).nextsib
-        }
-        (*dest).name = NULL as *mut XML_Char
-    };
-}
+            (*dest).numchildren = 0u32;
+            (*dest).children = NULL as *mut XML_Content
+        } else {
+            let mut i: c_uint = 0;
+            let mut cn: c_int = 0;
+            (*dest).numchildren = (*(*dtd).scaffold.offset(src_node as isize)).childcnt as c_uint;
+            (*dest).children = *contpos;
+            *contpos = (*contpos).offset((*dest).numchildren as isize);
+            i = 0;
+            cn = (*(*dtd).scaffold.offset(src_node as isize)).firstchild;
+            while i < (*dest).numchildren {
+                self.build_node(
+                    cn,
+                    &mut *(*dest).children.offset(i as isize),
+                    contpos,
+                    strpos,
+                );
+                i = i.wrapping_add(1);
+                cn = (*(*dtd).scaffold.offset(cn as isize)).nextsib
+            }
+            (*dest).name = NULL as *mut XML_Char
+        };
+    }
 
-impl XML_ParserStruct {
     unsafe fn build_model(&mut self) -> *mut XML_Content {
         let dtd: *mut DTD = self.m_dtd;
         let mut ret: *mut XML_Content = 0 as *mut XML_Content;
@@ -9766,7 +9758,7 @@ impl XML_ParserStruct {
         }
         str = &mut *ret.offset((*dtd).scaffCount as isize) as *mut XML_Content as *mut XML_Char;
         cpos = &mut *ret.offset(1) as *mut XML_Content;
-        build_node(self, 0, ret, &mut cpos, &mut str);
+        self.build_node(0, ret, &mut cpos, &mut str);
         ret
     }
 
