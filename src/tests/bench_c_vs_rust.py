@@ -89,53 +89,43 @@ def parse_benchmark_output(ctx: BenchContext, output: str) -> float:
     return float(match.group(3))
 
 
-def benchmark_c_code(ctx: BenchContext) -> [float]:
-    results = []
-    for inf in ctx.input_files:
-        args = [ctx.benchmark_c, "-n", inf, ctx.buff, ctx.n]
-        cp: sp.CompletedProcess = sp.run(args, capture_output=True)
-        assert not len(cp.stderr)
-        
-        res = parse_benchmark_output(ctx, str(cp.stdout))
-        bn = os.path.basename(inf)
-        print(f"C...: {bn} -> {res}")
-        results.append(res)
-    return results
+def benchmark_c_code(ctx: BenchContext, inputf:str) -> float:
 
-def benchmark_rs_code(ctx: BenchContext) -> [float]:
-    results = []
+    args = [ctx.benchmark_c, "-n", inputf, ctx.buff, ctx.n]
+    cp: sp.CompletedProcess = sp.run(args, capture_output=True)
+    assert not len(cp.stderr)
     
+    return parse_benchmark_output(ctx, str(cp.stdout))
+
+
+def benchmark_rs_code(ctx: BenchContext, inputf:str) -> float:
     if not os.path.isfile(ctx.benchmark_rs):
         args = ["cargo", "build", "--release", "--bin", "benchmark"]
         cp: sp.CompletedProcess = sp.run(args, capture_output=True, cwd=ctx.root_dir)        
         assert cp.returncode == 0
         assert len(cp.stdout) == 0
     
-    args = [
-            ctx.benchmark_rs, "-n", 
-            None, ctx.buff, ctx.n
-        ]
-    for inf in ctx.input_files:
-        args[2] = inf
-        cp: sp.CompletedProcess = sp.run(args, capture_output=True, cwd=ctx.root_dir)
+    args = [ ctx.benchmark_rs, "-n", inputf, ctx.buff, ctx.n]
+
+    cp: sp.CompletedProcess = sp.run(args, capture_output=True, cwd=ctx.root_dir)
         
-        res = parse_benchmark_output(ctx, str(cp.stdout))
-        bn = os.path.basename(inf)
-        print(f"Rust: {bn} -> {res}")
-        results.append(res)
-    return results    
+    return parse_benchmark_output(ctx, str(cp.stdout))
 
 
 def main():
     have_cargo()
     ctx = BenchContext()
-    c_res = benchmark_c_code(ctx)
-    r_res = benchmark_rs_code(ctx)
 
     # print table of results
-    print(f"File                | C      Rust   Delta")
-    for (f, c, r) in zip(ctx.input_files, c_res, r_res):
-        print(f"{os.path.basename(f):30}| {c:0.4f} {r:0.4f} {(c/r - 1.0) * 100:0.2f}%")
+    print(f"File                          | C      Rust   Delta")
+    try:
+        for f in ctx.input_files:
+            c = benchmark_c_code(ctx, f)
+            r = benchmark_rs_code(ctx, f)
+            print(f"{os.path.basename(f):30}| {c:0.4f} {r:0.4f} {(c/r - 1.0) * 100:0.2f}%")
+    except KeyboardInterrupt:
+        print("\nInterrupted. Terminating.")    
+        exit(1)
     
 
 if __name__ == "__main__":
