@@ -1598,8 +1598,12 @@ impl XML_ParserStruct {
         parser.m_nsAttsVersion = 0;
         parser.m_nsAttsPower = 0;
         parser.m_protocolEncodingName = NULL as *const XML_Char;
-        poolInit(&mut parser.m_tempPool, &parser.m_mem);
-        poolInit(&mut parser.m_temp2Pool, &parser.m_mem);
+
+        if let XML_ParserStruct {ref m_mem, ref mut m_tempPool, ref mut m_temp2Pool, ..} = &mut *parser {
+            m_tempPool.init(m_mem);
+            m_temp2Pool.init(m_mem);
+        };
+
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
             return ptr::null_mut();
@@ -8924,8 +8928,8 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
     if p.is_null() {
         return p;
     }
-    poolInit(&mut (*p).pool, ms);
-    poolInit(&mut (*p).entityValuePool, ms);
+    (*p).pool.init(ms);
+    (*p).entityValuePool.init(ms);
     // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
@@ -9298,19 +9302,20 @@ impl XML_ParserStruct {
     }
 }
 
-unsafe extern "C" fn poolInit(
-    mut pool: *mut STRING_POOL,
-    mut ms: *const XML_Memory_Handling_Suite,
-) {
-    (*pool).blocks = NULL as *mut BLOCK;
-    (*pool).freeBlocks = NULL as *mut BLOCK;
-    (*pool).start = NULL as *mut XML_Char;
-    (*pool).ptr = NULL as *mut XML_Char;
-    (*pool).end = NULL as *const XML_Char;
-    (*pool).mem = ms;
-}
 
 impl STRING_POOL {
+    unsafe fn init(
+        &mut self,
+        mut ms: *const XML_Memory_Handling_Suite,
+    ) {
+        self.blocks = NULL as *mut BLOCK;
+        self.freeBlocks = NULL as *mut BLOCK;
+        self.start = NULL as *mut XML_Char;
+        self.ptr = NULL as *mut XML_Char;
+        self.end = NULL as *const XML_Char;
+        self.mem = ms;
+    }
+
     unsafe fn clear(&mut self) {
         if self.freeBlocks.is_null() {
             self.freeBlocks = self.blocks
