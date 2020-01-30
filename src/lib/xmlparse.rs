@@ -3802,7 +3802,7 @@ impl XML_ParserStruct {
                                             reportDefault(self, enc_type, s, next);
                                         }
                                     } else {
-                                        result = processInternalEntity(self, entity, XML_FALSE);
+                                        result = self.processInternalEntity(entity, XML_FALSE);
                                         if result != XML_ERROR_NONE {
                                             return result;
                                         }
@@ -6999,7 +6999,7 @@ impl XML_ParserStruct {
                                         } else {
                                             XML_FALSE
                                         };
-                                    result_4 = processInternalEntity(self, entity_1, betweenDecl);
+                                    result_4 = self.processInternalEntity(entity_1, betweenDecl);
                                     if result_4 != XML_ERROR_NONE {
                                         return result_4;
                                     }
@@ -7420,101 +7420,103 @@ unsafe extern "C" fn epilogProcessor(
     }
 }
 
-unsafe extern "C" fn processInternalEntity(
-    mut parser: XML_Parser,
-    mut entity: *mut ENTITY,
-    mut betweenDecl: XML_Bool,
-) -> XML_Error {
-    let mut textStart: *const c_char = 0 as *const c_char;
-    let mut textEnd: *const c_char = 0 as *const c_char;
-    let mut next: *const c_char = 0 as *const c_char;
-    let mut result: XML_Error = XML_ERROR_NONE;
-    let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
-    if !(*parser).m_freeInternalEntities.is_null() {
-        openEntity = (*parser).m_freeInternalEntities;
-        (*parser).m_freeInternalEntities = (*openEntity).next
-    } else {
-        openEntity = MALLOC!(
-            parser,
-            ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong
-        ) as *mut OPEN_INTERNAL_ENTITY;
-        if openEntity.is_null() {
-            return XML_ERROR_NO_MEMORY;
-        }
-    }
-    (*entity).open = XML_TRUE;
-    (*entity).processed = 0;
-    (*openEntity).next = (*parser).m_openInternalEntities;
-    (*parser).m_openInternalEntities = openEntity;
-    (*openEntity).entity = entity;
-    (*openEntity).startTagLevel = (*parser).m_tagLevel;
-    (*openEntity).betweenDecl = betweenDecl;
-    (*openEntity).internalEventPtr = NULL as *const c_char;
-    (*openEntity).internalEventEndPtr = NULL as *const c_char;
-    textStart = (*entity).textPtr as *mut c_char;
-    textEnd = (*entity).textPtr.offset((*entity).textLen as isize) as *mut c_char;
-    /* Set a safe default value in case 'next' does not get set */
-    next = textStart;
-    if (*entity).is_param != 0 {
-        let mut tok: c_int =
-            (*(*parser).m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
-        result = (*parser).doProlog(
-            EncodingType::Internal,
-            textStart,
-            textEnd,
-            tok,
-            next,
-            &mut next,
-            XML_FALSE,
-            XML_FALSE,
-        )
-    } else {
-        /* XML_DTD */
-        result = (*parser).doContent(
-            (*parser).m_tagLevel,
-            EncodingType::Internal,
-            textStart,
-            textEnd,
-            &mut next,
-            XML_FALSE,
-        )
-    }
-    if result == XML_ERROR_NONE {
-        if textEnd != next && (*parser).m_parsingStatus.parsing == XML_SUSPENDED {
-            (*entity).processed = next.wrapping_offset_from(textStart) as c_int;
-            (*parser).m_processor = Some(internalEntityProcessor as Processor)
+impl XML_ParserStruct {
+    unsafe fn processInternalEntity(
+        &mut self,
+        mut entity: *mut ENTITY,
+        mut betweenDecl: XML_Bool,
+    ) -> XML_Error {
+        let mut textStart: *const c_char = 0 as *const c_char;
+        let mut textEnd: *const c_char = 0 as *const c_char;
+        let mut next: *const c_char = 0 as *const c_char;
+        let mut result: XML_Error = XML_ERROR_NONE;
+        let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        if !self.m_freeInternalEntities.is_null() {
+            openEntity = self.m_freeInternalEntities;
+            self.m_freeInternalEntities = (*openEntity).next
         } else {
-            (*entity).open = XML_FALSE;
-            if cfg!(feature = "mozilla") {
-                if (*parser).m_openInternalEntities == openEntity {
-                    (*parser).m_openInternalEntities = (*openEntity).next;
-                } else {
-					/* openEntity should be closed, but it contains an inner entity that is
-					   still open. Remove openEntity from the openInternalEntities linked
-					   list by looking for the inner entity in the list that links to
-					   openEntity and fixing up its 'next' member
-					*/
-                    let mut innerOpenEntity = (*parser).m_openInternalEntities;
-                    loop {
-                        if (*innerOpenEntity).next == openEntity {
-                            (*innerOpenEntity).next = (*openEntity).next;
-                            break;
-                        }
-                        innerOpenEntity = (*innerOpenEntity).next;
-                        if innerOpenEntity.is_null() {
-                            break;
+            openEntity = MALLOC!(
+                self,
+                ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong
+            ) as *mut OPEN_INTERNAL_ENTITY;
+            if openEntity.is_null() {
+                return XML_ERROR_NO_MEMORY;
+            }
+        }
+        (*entity).open = XML_TRUE;
+        (*entity).processed = 0;
+        (*openEntity).next = self.m_openInternalEntities;
+        self.m_openInternalEntities = openEntity;
+        (*openEntity).entity = entity;
+        (*openEntity).startTagLevel = self.m_tagLevel;
+        (*openEntity).betweenDecl = betweenDecl;
+        (*openEntity).internalEventPtr = NULL as *const c_char;
+        (*openEntity).internalEventEndPtr = NULL as *const c_char;
+        textStart = (*entity).textPtr as *mut c_char;
+        textEnd = (*entity).textPtr.offset((*entity).textLen as isize) as *mut c_char;
+        /* Set a safe default value in case 'next' does not get set */
+        next = textStart;
+        if (*entity).is_param != 0 {
+            let mut tok: c_int =
+                (*self.m_internalEncoding).xmlTok(XML_PROLOG_STATE, textStart, textEnd, &mut next);
+            result = self.doProlog(
+                EncodingType::Internal,
+                textStart,
+                textEnd,
+                tok,
+                next,
+                &mut next,
+                XML_FALSE,
+                XML_FALSE,
+            )
+        } else {
+            /* XML_DTD */
+            result = self.doContent(
+                self.m_tagLevel,
+                EncodingType::Internal,
+                textStart,
+                textEnd,
+                &mut next,
+                XML_FALSE,
+            )
+        }
+        if result == XML_ERROR_NONE {
+            if textEnd != next && self.m_parsingStatus.parsing == XML_SUSPENDED {
+                (*entity).processed = next.wrapping_offset_from(textStart) as c_int;
+                self.m_processor = Some(internalEntityProcessor as Processor)
+            } else {
+                (*entity).open = XML_FALSE;
+                if cfg!(feature = "mozilla") {
+                    if self.m_openInternalEntities == openEntity {
+                        self.m_openInternalEntities = (*openEntity).next;
+                    } else {
+                        /* openEntity should be closed, but it contains an inner entity that is
+                           still open. Remove openEntity from the openInternalEntities linked
+                           list by looking for the inner entity in the list that links to
+                           openEntity and fixing up its 'next' member
+                        */
+                        let mut innerOpenEntity = self.m_openInternalEntities;
+                        loop {
+                            if (*innerOpenEntity).next == openEntity {
+                                (*innerOpenEntity).next = (*openEntity).next;
+                                break;
+                            }
+                            innerOpenEntity = (*innerOpenEntity).next;
+                            if innerOpenEntity.is_null() {
+                                break;
+                            }
                         }
                     }
+                } else {
+                    self.m_openInternalEntities = (*openEntity).next;
                 }
-            } else {
-                (*parser).m_openInternalEntities = (*openEntity).next;
+                /* put openEntity back in list of free instances */
+                (*openEntity).next = self.m_freeInternalEntities;
+                self.m_freeInternalEntities = openEntity
             }
-            /* put openEntity back in list of free instances */
-            (*openEntity).next = (*parser).m_freeInternalEntities;
-            (*parser).m_freeInternalEntities = openEntity
         }
+        return result;
     }
-    return result;
 }
 
 unsafe extern "C" fn internalEntityProcessor(
