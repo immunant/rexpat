@@ -1411,7 +1411,7 @@ impl XML_ParserStruct {
             /* implicit context only set for root parser, since child
                parsers (i.e. external entity parsers) will inherit it
             */
-            return setContext(self, implicitContext.as_ptr());
+            return self.setContext(implicitContext.as_ptr());
         }
         XML_TRUE
     }
@@ -1950,7 +1950,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if !context.is_null() {
         /* XML_DTD */
         if dtdCopy(oldParser, (*parser).m_dtd, oldDtd, &(*parser).m_mem) == 0
-            || setContext(parser, context) == 0
+            || (*parser).setContext(context) == 0
         {
             XML_ParserFree(parser);
             return NULL as XML_Parser;
@@ -3810,7 +3810,7 @@ impl XML_ParserStruct {
                                 } else if self.m_handlers.hasExternalEntityRef() {
                                     let mut context: *const XML_Char = 0 as *const XML_Char;
                                     (*entity).open = XML_TRUE;
-                                    context = getContext(self);
+                                    context = self.getContext();
                                     (*entity).open = XML_FALSE;
                                     if context.is_null() {
                                         return XML_ERROR_NO_MEMORY;
@@ -4325,7 +4325,7 @@ impl XML_ParserStruct {
             if elementType.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
-            if self.m_ns as c_int != 0 && setElementTypePrefix(self, elementType) == 0 {
+            if self.m_ns as c_int != 0 && self.setElementTypePrefix(elementType) == 0 {
                 return XML_ERROR_NO_MEMORY;
             }
             elementType
@@ -4358,8 +4358,7 @@ impl XML_ParserStruct {
             let mut currAtt: *mut super::xmltok::ATTRIBUTE =
                 &mut *self.m_atts.offset(i as isize) as *mut super::xmltok::ATTRIBUTE;
             /* add the name and value to the attribute list */
-            let mut attId: *mut ATTRIBUTE_ID = getAttributeId(
-                self,
+            let mut attId: *mut ATTRIBUTE_ID = self.getAttributeId(
                 enc_type,
                 (*currAtt).name,
                 (*currAtt)
@@ -6265,14 +6264,14 @@ impl XML_ParserStruct {
                     return contentProcessor(self, s, end, nextPtr);
                 }
                 34 => {
-                    self.m_declElementType = getElementType(self, enc_type, s, next);
+                    self.m_declElementType = self.getElementType(enc_type, s, next);
                     if self.m_declElementType.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
                     current_block = 6455255476181645667;
                 }
                 22 => {
-                    self.m_declAttributeId = getAttributeId(self, enc_type, s, next);
+                    self.m_declAttributeId = self.getAttributeId(enc_type, s, next);
                     if self.m_declAttributeId.is_null() {
                         return XML_ERROR_NO_MEMORY;
                     }
@@ -7053,7 +7052,7 @@ impl XML_ParserStruct {
                 40 => {
                     /* Element declaration stuff */
                     if self.m_handlers.hasElementDecl() {
-                        self.m_declElementType = getElementType(self, enc_type, s, next);
+                        self.m_declElementType = self.getElementType(enc_type, s, next);
                         if self.m_declElementType.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -7247,7 +7246,7 @@ impl XML_ParserStruct {
                         }
                         (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
                         (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
-                        el = getElementType(self, enc_type, s, nxt);
+                        el = self.getElementType(enc_type, s, nxt);
                         if el.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -7282,7 +7281,7 @@ impl XML_ParserStruct {
                         .quant = quant;
                         if (*dtd).scaffLevel == 0 {
                             if handleDefault == 0 {
-                                let mut model: *mut XML_Content = build_model(self);
+                                let mut model: *mut XML_Content = self.build_model();
                                 if model.is_null() {
                                     return XML_ERROR_NO_MEMORY;
                                 }
@@ -8363,525 +8362,530 @@ unsafe extern "C" fn defineAttribute(
     return 1;
 }
 
-unsafe extern "C" fn setElementTypePrefix(
-    mut parser: XML_Parser,
-    mut elementType: *mut ELEMENT_TYPE,
-) -> c_int {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut name: *const XML_Char = 0 as *const XML_Char;
-    name = (*elementType).name;
-    while *name != 0 {
-        if *name == ASCII_COLON as XML_Char {
-            let mut s: *const XML_Char = 0 as *const XML_Char;
-            s = (*elementType).name;
-            while s != name {
+impl XML_ParserStruct {
+    unsafe fn setElementTypePrefix(
+        &mut self,
+        mut elementType: *mut ELEMENT_TYPE,
+    ) -> c_int {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut name: *const XML_Char = 0 as *const XML_Char;
+        name = (*elementType).name;
+        while *name != 0 {
+            if *name == ASCII_COLON as XML_Char {
+                let mut s: *const XML_Char = 0 as *const XML_Char;
+                s = (*elementType).name;
+                while s != name {
+                    if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
+                        && (*dtd).pool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh47 = (*dtd).pool.ptr;
+                        (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
+                        *fresh47 = *s;
+                        1
+                    } == 0
+                    {
+                        return 0i32;
+                    }
+                    s = s.offset(1)
+                }
                 if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
                     && (*dtd).pool.grow() == 0
                 {
                     0
                 } else {
-                    let fresh47 = (*dtd).pool.ptr;
+                    let fresh48 = (*dtd).pool.ptr;
                     (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-                    *fresh47 = *s;
+                    *fresh48 = '\u{0}' as XML_Char;
                     1
                 } == 0
                 {
                     return 0i32;
                 }
-                s = s.offset(1)
-            }
-            if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                && (*dtd).pool.grow() == 0
-            {
-                0
-            } else {
-                let fresh48 = (*dtd).pool.ptr;
-                (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-                *fresh48 = '\u{0}' as XML_Char;
-                1
-            } == 0
-            {
-                return 0i32;
-            }
-            let prefix = hash_insert!(
-                parser,
-                &mut (*dtd).prefixes,
-                (*dtd).pool.start as KEY,
-                PREFIX
-            );
-            if prefix.is_null() {
-                return 0i32;
-            }
-            if (*prefix).name == (*dtd).pool.start as *const XML_Char {
-                (*dtd).pool.start = (*dtd).pool.ptr
-            } else {
-                (*dtd).pool.ptr = (*dtd).pool.start
-            }
-            (*elementType).prefix = prefix;
-            break;
-        } else {
-            name = name.offset(1)
-        }
-    }
-    return 1;
-}
-
-unsafe extern "C" fn getAttributeId(
-    mut parser: XML_Parser,
-    mut enc_type: EncodingType,
-    mut start: *const c_char,
-    mut end: *const c_char,
-) -> *mut ATTRIBUTE_ID {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut name: *const XML_Char = 0 as *const XML_Char;
-    if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && (*dtd).pool.grow() == 0 {
-        0
-    } else {
-        let fresh49 = (*dtd).pool.ptr;
-        (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-        *fresh49 = '\u{0}' as XML_Char;
-        1
-    } == 0
-    {
-        return NULL as *mut ATTRIBUTE_ID;
-    }
-    let enc = (*parser).encoding(enc_type);
-    name = (*dtd).pool.storeString(enc, start, end);
-    if name.is_null() {
-        return NULL as *mut ATTRIBUTE_ID;
-    }
-    /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-    name = name.offset(1);
-    let id = hash_insert!(
-        parser,
-        &mut (*dtd).attributeIds,
-        name as *mut XML_Char,
-        ATTRIBUTE_ID
-    );
-    if id.is_null() {
-        return NULL as *mut ATTRIBUTE_ID;
-    }
-    if (*id).name != name as *mut XML_Char {
-        (*dtd).pool.ptr = (*dtd).pool.start
-    } else {
-        (*dtd).pool.start = (*dtd).pool.ptr;
-        if !((*parser).m_ns == 0) {
-            if *name.offset(0) == ASCII_x as XML_Char
-                && *name.offset(1) == ASCII_m as XML_Char
-                && *name.offset(2) == ASCII_l as XML_Char
-                && *name.offset(3) == ASCII_n as XML_Char
-                && *name.offset(4) == ASCII_s as XML_Char
-                && (*name.offset(5) == '\u{0}' as XML_Char
-                    || *name.offset(5) == ASCII_COLON as XML_Char)
-            {
-                if *name.offset(5) == '\u{0}' as XML_Char {
-                    (*id).prefix = &mut (*dtd).defaultPrefix
-                } else {
-                    (*id).prefix = hash_insert!(
-                        parser,
-                        &mut (*dtd).prefixes,
-                        name.offset(6),
-                        PREFIX
-                    );
+                let prefix = hash_insert!(
+                    self,
+                    &mut (*dtd).prefixes,
+                    (*dtd).pool.start as KEY,
+                    PREFIX
+                );
+                if prefix.is_null() {
+                    return 0i32;
                 }
-                (*id).xmlns = XML_TRUE
+                if (*prefix).name == (*dtd).pool.start as *const XML_Char {
+                    (*dtd).pool.start = (*dtd).pool.ptr
+                } else {
+                    (*dtd).pool.ptr = (*dtd).pool.start
+                }
+                (*elementType).prefix = prefix;
+                break;
             } else {
-                let mut i: c_int = 0;
-                i = 0;
-                while *name.offset(i as isize) != 0 {
-                    /* attributes without prefix are *not* in the default namespace */
-                    if *name.offset(i as isize) == ASCII_COLON as XML_Char {
-                        let mut j: c_int = 0; /* save one level of indirection */
-                        j = 0;
-                        while j < i {
+                name = name.offset(1)
+            }
+        }
+        1
+    }
+
+    unsafe fn getAttributeId(
+        &mut self,
+        mut enc_type: EncodingType,
+        mut start: *const c_char,
+        mut end: *const c_char,
+    ) -> *mut ATTRIBUTE_ID {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut name: *const XML_Char = 0 as *const XML_Char;
+        if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && (*dtd).pool.grow() == 0 {
+            0
+        } else {
+            let fresh49 = (*dtd).pool.ptr;
+            (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
+            *fresh49 = '\u{0}' as XML_Char;
+            1
+        } == 0
+        {
+            return NULL as *mut ATTRIBUTE_ID;
+        }
+        let enc = self.encoding(enc_type);
+        name = (*dtd).pool.storeString(enc, start, end);
+        if name.is_null() {
+            return NULL as *mut ATTRIBUTE_ID;
+        }
+        /* skip quotation mark - its storage will be re-used (like in name[-1]) */
+        name = name.offset(1);
+        let id = hash_insert!(
+            self,
+            &mut (*dtd).attributeIds,
+            name as *mut XML_Char,
+            ATTRIBUTE_ID
+        );
+        if id.is_null() {
+            return NULL as *mut ATTRIBUTE_ID;
+        }
+        if (*id).name != name as *mut XML_Char {
+            (*dtd).pool.ptr = (*dtd).pool.start
+        } else {
+            (*dtd).pool.start = (*dtd).pool.ptr;
+            if !(self.m_ns == 0) {
+                if *name.offset(0) == ASCII_x as XML_Char
+                    && *name.offset(1) == ASCII_m as XML_Char
+                    && *name.offset(2) == ASCII_l as XML_Char
+                    && *name.offset(3) == ASCII_n as XML_Char
+                    && *name.offset(4) == ASCII_s as XML_Char
+                    && (*name.offset(5) == '\u{0}' as XML_Char
+                        || *name.offset(5) == ASCII_COLON as XML_Char)
+                {
+                    if *name.offset(5) == '\u{0}' as XML_Char {
+                        (*id).prefix = &mut (*dtd).defaultPrefix
+                    } else {
+                        (*id).prefix = hash_insert!(
+                            self,
+                            &mut (*dtd).prefixes,
+                            name.offset(6),
+                            PREFIX
+                        );
+                    }
+                    (*id).xmlns = XML_TRUE
+                } else {
+                    let mut i: c_int = 0;
+                    i = 0;
+                    while *name.offset(i as isize) != 0 {
+                        /* attributes without prefix are *not* in the default namespace */
+                        if *name.offset(i as isize) == ASCII_COLON as XML_Char {
+                            let mut j: c_int = 0; /* save one level of indirection */
+                            j = 0;
+                            while j < i {
+                                if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
+                                    && (*dtd).pool.grow() == 0
+                                {
+                                    0
+                                } else {
+                                    let fresh50 = (*dtd).pool.ptr;
+                                    (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
+                                    *fresh50 = *name.offset(j as isize);
+                                    1
+                                } == 0
+                                {
+                                    return NULL as *mut ATTRIBUTE_ID;
+                                }
+                                j += 1
+                            }
                             if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
                                 && (*dtd).pool.grow() == 0
                             {
                                 0
                             } else {
-                                let fresh50 = (*dtd).pool.ptr;
+                                let fresh51 = (*dtd).pool.ptr;
                                 (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-                                *fresh50 = *name.offset(j as isize);
+                                *fresh51 = '\u{0}' as XML_Char;
                                 1
                             } == 0
                             {
                                 return NULL as *mut ATTRIBUTE_ID;
                             }
-                            j += 1
-                        }
-                        if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char
-                            && (*dtd).pool.grow() == 0
-                        {
-                            0
+                            (*id).prefix = hash_insert!(
+                                self,
+                                &mut (*dtd).prefixes,
+                                (*dtd).pool.start as KEY,
+                                PREFIX
+                            );
+                            if (*id).prefix.is_null() {
+                                return NULL as *mut ATTRIBUTE_ID;
+                            }
+                            if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
+                                (*dtd).pool.start = (*dtd).pool.ptr
+                            } else {
+                                (*dtd).pool.ptr = (*dtd).pool.start
+                            }
+                            break;
                         } else {
-                            let fresh51 = (*dtd).pool.ptr;
-                            (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-                            *fresh51 = '\u{0}' as XML_Char;
-                            1
-                        } == 0
-                        {
-                            return NULL as *mut ATTRIBUTE_ID;
+                            i += 1
                         }
-                        (*id).prefix = hash_insert!(
-                            parser,
-                            &mut (*dtd).prefixes,
-                            (*dtd).pool.start as KEY,
-                            PREFIX
-                        );
-                        if (*id).prefix.is_null() {
-                            return NULL as *mut ATTRIBUTE_ID;
-                        }
-                        if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
-                            (*dtd).pool.start = (*dtd).pool.ptr
-                        } else {
-                            (*dtd).pool.ptr = (*dtd).pool.start
-                        }
-                        break;
-                    } else {
-                        i += 1
                     }
                 }
             }
         }
+        id
     }
-    return id;
 }
+
 
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
-unsafe extern "C" fn getContext(mut parser: XML_Parser) -> *const XML_Char {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut needSep: XML_Bool = XML_FALSE;
-    if !(*dtd).defaultPrefix.binding.is_null() {
-        let mut i: c_int = 0;
-        let mut len: c_int = 0;
-        if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-            && (*parser).m_tempPool.grow() == 0
-        {
-            0
-        } else {
-            let fresh52 = (*parser).m_tempPool.ptr;
-            (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-            *fresh52 = ASCII_EQUALS as XML_Char;
-            1
-        } == 0
-        {
-            return NULL as *const XML_Char;
-        }
-        len = (*(*dtd).defaultPrefix.binding).uriLen;
-        if (*parser).m_namespaceSeparator != 0 {
-            len -= 1
-        }
-        i = 0;
-        while i < len {
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
+impl XML_ParserStruct {
+    unsafe fn getContext(&mut self) -> *const XML_Char {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut needSep: XML_Bool = XML_FALSE;
+        if !(*dtd).defaultPrefix.binding.is_null() {
+            let mut i: c_int = 0;
+            let mut len: c_int = 0;
+            if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                && self.m_tempPool.grow() == 0
             {
                 0
             } else {
-                let fresh53 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh53 = *(*(*dtd).defaultPrefix.binding).uri.offset(i as isize);
+                let fresh52 = self.m_tempPool.ptr;
+                self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                *fresh52 = ASCII_EQUALS as XML_Char;
                 1
             } == 0
             {
-                /* Because of memory caching, I don't believe this line can be
-                 * executed.
-                 *
-                 * This is part of a loop copying the default prefix binding
-                 * URI into the parser's temporary string pool.  Previously,
-                 * that URI was copied into the same string pool, with a
-                 * terminating NUL character, as part of setContext().  When
-                 * the pool was cleared, that leaves a block definitely big
-                 * enough to hold the URI on the free block list of the pool.
-                 * The URI copy in getContext() therefore cannot run out of
-                 * memory.
-                 *
-                 * If the pool is used between the setContext() and
-                 * getContext() calls, the worst it can do is leave a bigger
-                 * block on the front of the free list.  Given that this is
-                 * all somewhat inobvious and program logic can be changed, we
-                 * don't delete the line but we do exclude it from the test
-                 * coverage statistics.
-                 */
                 return NULL as *const XML_Char;
-                /* LCOV_EXCL_LINE */
             }
-            i += 1
-        }
-        needSep = XML_TRUE
-    }
-    for prefix in (*dtd).prefixes.values_mut()
-    /* This test appears to be (justifiable) paranoia.  There does
-     * not seem to be a way of injecting a prefix without a binding
-     * that doesn't get errored long before this function is called.
-     * The test should remain for safety's sake, so we instead
-     * exclude the following line from the coverage statistics.
-     */
-    {
-        let mut i_0: c_int = 0; /* save one level of indirection */
-        let mut len_0: c_int = 0;
-        let mut s: *const XML_Char = 0 as *const XML_Char;
-        if !(*prefix).binding.is_null() {
-            if needSep as c_int != 0
-                && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && (*parser).m_tempPool.grow() == 0
+            len = (*(*dtd).defaultPrefix.binding).uriLen;
+            if self.m_namespaceSeparator != 0 {
+                len -= 1
+            }
+            i = 0;
+            while i < len {
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
                 {
                     0
                 } else {
-                    let fresh54 = (*parser).m_tempPool.ptr;
-                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh54 = CONTEXT_SEP;
+                    let fresh53 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh53 = *(*(*dtd).defaultPrefix.binding).uri.offset(i as isize);
+                    1
+                } == 0
+                {
+                    /* Because of memory caching, I don't believe this line can be
+                     * executed.
+                     *
+                     * This is part of a loop copying the default prefix binding
+                     * URI into the parser's temporary string pool.  Previously,
+                     * that URI was copied into the same string pool, with a
+                     * terminating NUL character, as part of setContext().  When
+                     * the pool was cleared, that leaves a block definitely big
+                     * enough to hold the URI on the free block list of the pool.
+                     * The URI copy in getContext() therefore cannot run out of
+                     * memory.
+                     *
+                     * If the pool is used between the setContext() and
+                     * getContext() calls, the worst it can do is leave a bigger
+                     * block on the front of the free list.  Given that this is
+                     * all somewhat inobvious and program logic can be changed, we
+                     * don't delete the line but we do exclude it from the test
+                     * coverage statistics.
+                     */
+                    return NULL as *const XML_Char;
+                    /* LCOV_EXCL_LINE */
+                }
+                i += 1
+            }
+            needSep = XML_TRUE
+        }
+        for prefix in (*dtd).prefixes.values_mut()
+        /* This test appears to be (justifiable) paranoia.  There does
+         * not seem to be a way of injecting a prefix without a binding
+         * that doesn't get errored long before this function is called.
+         * The test should remain for safety's sake, so we instead
+         * exclude the following line from the coverage statistics.
+         */
+        {
+            let mut i_0: c_int = 0; /* save one level of indirection */
+            let mut len_0: c_int = 0;
+            let mut s: *const XML_Char = 0 as *const XML_Char;
+            if !(*prefix).binding.is_null() {
+                if needSep as c_int != 0
+                    && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                        && self.m_tempPool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh54 = self.m_tempPool.ptr;
+                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                        *fresh54 = CONTEXT_SEP;
+                        1
+                    }) == 0
+                {
+                    return NULL as *const XML_Char;
+                }
+                s = (*prefix).name;
+                while *s != 0 {
+                    if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                        && self.m_tempPool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh55 = self.m_tempPool.ptr;
+                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                        *fresh55 = *s;
+                        1
+                    } == 0
+                    {
+                        return NULL as *const XML_Char;
+                    }
+                    s = s.offset(1)
+                }
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
+                {
+                    0
+                } else {
+                    let fresh56 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh56 = ASCII_EQUALS as XML_Char;
+                    1
+                } == 0
+                {
+                    return NULL as *const XML_Char;
+                }
+                len_0 = (*(*prefix).binding).uriLen;
+                if self.m_namespaceSeparator != 0 {
+                    len_0 -= 1
+                }
+                i_0 = 0;
+                while i_0 < len_0 {
+                    if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                        && self.m_tempPool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh57 = self.m_tempPool.ptr;
+                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                        *fresh57 = *(*(*prefix).binding).uri.offset(i_0 as isize);
+                        1
+                    } == 0
+                    {
+                        return NULL as *const XML_Char;
+                    }
+                    i_0 += 1
+                }
+                needSep = XML_TRUE
+            }
+        }
+        for e in (*dtd).generalEntities.values() {
+            let mut s_0: *const XML_Char = 0 as *const XML_Char;
+            if (*e).open == 0 {
+                continue;
+            }
+            if needSep as c_int != 0
+                && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
+                {
+                    0
+                } else {
+                    let fresh58 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh58 = CONTEXT_SEP;
                     1
                 }) == 0
             {
                 return NULL as *const XML_Char;
             }
-            s = (*prefix).name;
-            while *s != 0 {
-                if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && (*parser).m_tempPool.grow() == 0
+            s_0 = (*e).name;
+            while *s_0 != 0 {
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
                 {
                     0
                 } else {
-                    let fresh55 = (*parser).m_tempPool.ptr;
-                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh55 = *s;
+                    let fresh59 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh59 = *s_0;
                     1
                 } == 0
                 {
-                    return NULL as *const XML_Char;
+                    return 0 as *const XML_Char;
                 }
-                s = s.offset(1)
-            }
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
-            } else {
-                let fresh56 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh56 = ASCII_EQUALS as XML_Char;
-                1
-            } == 0
-            {
-                return NULL as *const XML_Char;
-            }
-            len_0 = (*(*prefix).binding).uriLen;
-            if (*parser).m_namespaceSeparator != 0 {
-                len_0 -= 1
-            }
-            i_0 = 0;
-            while i_0 < len_0 {
-                if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && (*parser).m_tempPool.grow() == 0
-                {
-                    0
-                } else {
-                    let fresh57 = (*parser).m_tempPool.ptr;
-                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh57 = *(*(*prefix).binding).uri.offset(i_0 as isize);
-                    1
-                } == 0
-                {
-                    return NULL as *const XML_Char;
-                }
-                i_0 += 1
+                s_0 = s_0.offset(1)
             }
             needSep = XML_TRUE
         }
-    }
-    for e in (*dtd).generalEntities.values() {
-        let mut s_0: *const XML_Char = 0 as *const XML_Char;
-        if (*e).open == 0 {
-            continue;
-        }
-        if needSep as c_int != 0
-            && (if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
-            } else {
-                let fresh58 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh58 = CONTEXT_SEP;
-                1
-            }) == 0
+        if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+            && self.m_tempPool.grow() == 0
+        {
+            0
+        } else {
+            let fresh60 = self.m_tempPool.ptr;
+            self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+            *fresh60 = '\u{0}' as XML_Char;
+            1
+        } == 0
         {
             return NULL as *const XML_Char;
         }
-        s_0 = (*e).name;
-        while *s_0 != 0 {
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
-            } else {
-                let fresh59 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh59 = *s_0;
-                1
-            } == 0
-            {
-                return 0 as *const XML_Char;
-            }
-            s_0 = s_0.offset(1)
-        }
-        needSep = XML_TRUE
+        self.m_tempPool.start
     }
-    if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-        && (*parser).m_tempPool.grow() == 0
-    {
-        0
-    } else {
-        let fresh60 = (*parser).m_tempPool.ptr;
-        (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-        *fresh60 = '\u{0}' as XML_Char;
-        1
-    } == 0
-    {
-        return NULL as *const XML_Char;
-    }
-    (*parser).m_tempPool.start
-}
 
-unsafe extern "C" fn setContext(mut parser: XML_Parser, mut context: *const XML_Char) -> XML_Bool {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut s: *const XML_Char = context;
-    while *context != '\u{0}' as XML_Char {
-        if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
-            } else {
-                let fresh61 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh61 = '\u{0}' as XML_Char;
-                1
-            } == 0
-            {
-                return XML_FALSE;
-            }
-            if let Some(e) = (*dtd).generalEntities.get_mut(&HashKey::from((*parser).m_tempPool.start as KEY)) {
-                e.open = XML_TRUE
-            }
-            if *s != '\u{0}' as XML_Char {
-                s = s.offset(1)
-            }
-            context = s;
-            (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
-        } else if *s == ASCII_EQUALS as XML_Char {
-            let mut prefix: *mut PREFIX;
-            if (*parser)
-                .m_tempPool
-                .ptr
-                .wrapping_offset_from((*parser).m_tempPool.start) as c_long
-                == 0
-            {
-                prefix = &mut (*dtd).defaultPrefix
-            } else {
-                if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && (*parser).m_tempPool.grow() == 0
+    unsafe fn setContext(&mut self, mut context: *const XML_Char) -> XML_Bool {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut s: *const XML_Char = context;
+        while *context != '\u{0}' as XML_Char {
+            if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
                 {
                     0
                 } else {
-                    let fresh62 = (*parser).m_tempPool.ptr;
-                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh62 = '\u{0}' as XML_Char;
+                    let fresh61 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh61 = '\u{0}' as XML_Char;
                     1
                 } == 0
                 {
                     return XML_FALSE;
                 }
-                prefix = hash_lookup!(
-                    &mut (*dtd).prefixes,
-                    (*parser).m_tempPool.start as KEY
-                );
-                if prefix.is_null() {
-                    // librexpat change: we need to copy the prefix name
-                    // into the DTD pool, since the HashMap keeps a permanent
-                    // reference to the name which we can't modify after
-                    // the call to `hash_insert!` (unlike the original C code)
-                    let prefix_name = poolCopyString(&mut (*dtd).pool, (*parser).m_tempPool.start);
-                    if prefix_name.is_null() {
+                if let Some(e) = (*dtd).generalEntities.get_mut(&HashKey::from(self.m_tempPool.start as KEY)) {
+                    e.open = XML_TRUE
+                }
+                if *s != '\u{0}' as XML_Char {
+                    s = s.offset(1)
+                }
+                context = s;
+                self.m_tempPool.ptr = self.m_tempPool.start
+            } else if *s == ASCII_EQUALS as XML_Char {
+                let mut prefix: *mut PREFIX;
+                if self
+                    .m_tempPool
+                    .ptr
+                    .wrapping_offset_from(self.m_tempPool.start) as c_long
+                    == 0
+                {
+                    prefix = &mut (*dtd).defaultPrefix
+                } else {
+                    if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                        && self.m_tempPool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh62 = self.m_tempPool.ptr;
+                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                        *fresh62 = '\u{0}' as XML_Char;
+                        1
+                    } == 0
+                    {
                         return XML_FALSE;
                     }
-                    prefix = hash_insert!(
-                        parser,
+                    prefix = hash_lookup!(
                         &mut (*dtd).prefixes,
-                        prefix_name as KEY,
-                        PREFIX
+                        self.m_tempPool.start as KEY
                     );
                     if prefix.is_null() {
+                        // librexpat change: we need to copy the prefix name
+                        // into the DTD pool, since the HashMap keeps a permanent
+                        // reference to the name which we can't modify after
+                        // the call to `hash_insert!` (unlike the original C code)
+                        let prefix_name = poolCopyString(&mut (*dtd).pool, self.m_tempPool.start);
+                        if prefix_name.is_null() {
+                            return XML_FALSE;
+                        }
+                        prefix = hash_insert!(
+                            self,
+                            &mut (*dtd).prefixes,
+                            prefix_name as KEY,
+                            PREFIX
+                        );
+                        if prefix.is_null() {
+                            return XML_FALSE;
+                        }
+                    }
+                    self.m_tempPool.ptr = self.m_tempPool.start
+                }
+                context = s.offset(1);
+                while *context != CONTEXT_SEP && *context != '\u{0}' as XML_Char {
+                    if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                        && self.m_tempPool.grow() == 0
+                    {
+                        0
+                    } else {
+                        let fresh63 = self.m_tempPool.ptr;
+                        self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                        *fresh63 = *context;
+                        1
+                    } == 0
+                    {
                         return XML_FALSE;
                     }
+                    context = context.offset(1)
                 }
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.start
-            }
-            context = s.offset(1);
-            while *context != CONTEXT_SEP && *context != '\u{0}' as XML_Char {
-                if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                    && (*parser).m_tempPool.grow() == 0
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
                 {
                     0
                 } else {
-                    let fresh63 = (*parser).m_tempPool.ptr;
-                    (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                    *fresh63 = *context;
+                    let fresh64 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh64 = '\u{0}' as XML_Char;
                     1
                 } == 0
                 {
                     return XML_FALSE;
                 }
-                context = context.offset(1)
-            }
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
+                if addBinding(
+                    self,
+                    prefix,
+                    NULL as *const ATTRIBUTE_ID,
+                    self.m_tempPool.start,
+                    &mut self.m_inheritedBindings,
+                ) != XML_ERROR_NONE
+                {
+                    return XML_FALSE;
+                }
+                self.m_tempPool.ptr = self.m_tempPool.start;
+                if *context != '\u{0}' as XML_Char {
+                    context = context.offset(1)
+                }
+                s = context
             } else {
-                let fresh64 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh64 = '\u{0}' as XML_Char;
-                1
-            } == 0
-            {
-                return XML_FALSE;
+                if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                    && self.m_tempPool.grow() == 0
+                {
+                    0
+                } else {
+                    let fresh65 = self.m_tempPool.ptr;
+                    self.m_tempPool.ptr = self.m_tempPool.ptr.offset(1);
+                    *fresh65 = *s;
+                    1
+                } == 0
+                {
+                    return XML_FALSE;
+                }
+                s = s.offset(1)
             }
-            if addBinding(
-                parser,
-                prefix,
-                NULL as *const ATTRIBUTE_ID,
-                (*parser).m_tempPool.start,
-                &mut (*parser).m_inheritedBindings,
-            ) != XML_ERROR_NONE
-            {
-                return XML_FALSE;
-            }
-            (*parser).m_tempPool.ptr = (*parser).m_tempPool.start;
-            if *context != '\u{0}' as XML_Char {
-                context = context.offset(1)
-            }
-            s = context
-        } else {
-            if if (*parser).m_tempPool.ptr == (*parser).m_tempPool.end as *mut XML_Char
-                && (*parser).m_tempPool.grow() == 0
-            {
-                0
-            } else {
-                let fresh65 = (*parser).m_tempPool.ptr;
-                (*parser).m_tempPool.ptr = (*parser).m_tempPool.ptr.offset(1);
-                *fresh65 = *s;
-                1
-            } == 0
-            {
-                return XML_FALSE;
-            }
-            s = s.offset(1)
         }
+        XML_TRUE
     }
-    return XML_TRUE;
 }
 
 unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
@@ -9742,36 +9746,36 @@ unsafe extern "C" fn build_node(
     };
 }
 
-unsafe extern "C" fn build_model(mut parser: XML_Parser) -> *mut XML_Content {
-    let dtd: *mut DTD = (*parser).m_dtd;
-    let mut ret: *mut XML_Content = 0 as *mut XML_Content;
-    let mut cpos: *mut XML_Content = 0 as *mut XML_Content;
-    let mut str: *mut XML_Char = 0 as *mut XML_Char;
-    let mut allocsize: c_int = ((*dtd).scaffCount as c_ulong)
-        .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
-        .wrapping_add(
-            ((*dtd).contentStringLen as c_ulong)
-                .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-        ) as c_int;
-    ret = MALLOC!(parser, allocsize as size_t) as *mut XML_Content;
-    if ret.is_null() {
-        return NULL as *mut XML_Content;
-    }
-    str = &mut *ret.offset((*dtd).scaffCount as isize) as *mut XML_Content as *mut XML_Char;
-    cpos = &mut *ret.offset(1) as *mut XML_Content;
-    build_node(parser, 0, ret, &mut cpos, &mut str);
-    return ret;
-}
-
 impl XML_ParserStruct {
+    unsafe fn build_model(&mut self) -> *mut XML_Content {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut ret: *mut XML_Content = 0 as *mut XML_Content;
+        let mut cpos: *mut XML_Content = 0 as *mut XML_Content;
+        let mut str: *mut XML_Char = 0 as *mut XML_Char;
+        let mut allocsize: c_int = ((*dtd).scaffCount as c_ulong)
+            .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
+            .wrapping_add(
+                ((*dtd).contentStringLen as c_ulong)
+                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+            ) as c_int;
+        ret = MALLOC!(self, allocsize as size_t) as *mut XML_Content;
+        if ret.is_null() {
+            return NULL as *mut XML_Content;
+        }
+        str = &mut *ret.offset((*dtd).scaffCount as isize) as *mut XML_Content as *mut XML_Char;
+        cpos = &mut *ret.offset(1) as *mut XML_Content;
+        build_node(self, 0, ret, &mut cpos, &mut str);
+        ret
+    }
+
     unsafe fn getElementType(
         &mut self,
         mut enc_type: EncodingType,
         mut ptr: *const c_char,
         mut end: *const c_char,
     ) -> *mut ELEMENT_TYPE {
-        let dtd: *mut DTD = (*parser).m_dtd;
-        let enc = (*parser).encoding(enc_type);
+        let dtd: *mut DTD = self.m_dtd;
+        let enc = self.encoding(enc_type);
         let mut name: *const XML_Char = (*dtd).pool.storeString(enc, ptr, end);
         if name.is_null() {
             return NULL as *mut ELEMENT_TYPE;
@@ -9789,7 +9793,7 @@ impl XML_ParserStruct {
             (*dtd).pool.ptr = (*dtd).pool.start
         } else {
             (*dtd).pool.start = (*dtd).pool.ptr;
-            if setElementTypePrefix(parser, ret) == 0 {
+            if self.setElementTypePrefix(ret) == 0 {
                 return NULL as *mut ELEMENT_TYPE;
             }
         }
