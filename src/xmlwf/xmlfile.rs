@@ -33,7 +33,7 @@ pub use crate::lib::xmlparse::{
 };
 pub use crate::stddef_h::{size_t, NULL};
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __ssize_t, fprintf,
+    _IO_lock_t, __off64_t, __off_t, __ssize_t, fprintf,
     ssize_t, stderr, stdout, FILE, _IO_FILE,
 };
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};

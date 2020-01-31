@@ -8,7 +8,7 @@
     unused_mut
 )]
 #![register_tool(c2rust)]
-#![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
+#![feature(const_raw_ptr_to_usize_cast, main, register_tool)]
 
 use ::rexpat::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
 use ::rexpat::lib::xmlparse::{
@@ -27,7 +27,7 @@ pub use ::rexpat::expat_h::{
 };
 pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
+    _IO_lock_t, __off64_t, __off_t, FILE,
 };
 
 /* This is simple demonstration of how to use expat. This program
