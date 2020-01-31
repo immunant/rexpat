@@ -11,7 +11,6 @@
 #![feature(
     const_raw_ptr_to_usize_cast,
     const_transmute,
-    extern_types,
     label_break_value,
     main,
     ptr_wrapping_offset_from,
@@ -464,7 +463,7 @@ pub use crate::siphash_h::{
 };
 pub use crate::stddef_h::{ptrdiff_t, size_t};
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __uint64_t, intptr_t,
+    _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
     uint64_t, FILE,
 };
 

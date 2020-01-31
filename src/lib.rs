@@ -8,7 +8,6 @@
 #![allow(unused_mut)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(const_transmute)]
-#![feature(extern_types)]
 #![feature(label_break_value)]
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]

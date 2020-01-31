@@ -11,7 +11,6 @@
 #![feature(
     const_raw_ptr_to_usize_cast,
     const_transmute,
-    extern_types,
     label_break_value,
     main,
     ptr_wrapping_offset_from,
@@ -58,7 +57,7 @@ pub use crate::expat_h::{
 };
 pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __compar_fn_t, __off64_t, __off_t, fclose,
+    _IO_lock_t, __compar_fn_t, __off64_t, __off_t, fclose,
     fopen, fputs, putc, qsort, setvbuf, stderr, stdout, FILE, __ASSERT_FUNCTION,
 };
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
@@ -1022,7 +1021,7 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
 
 unsafe extern "C" fn usage(mut prog: *const XML_Char, mut rc: c_int) {
     ::rexpat::stdlib::fprintf(stderr,
-            
+
             b"usage: %s [-s] [-n] [-p] [-x] [-e ENCODING] [-w] [-r] [-d DIRECTORY]\n             [-c | -m | -t] [-N]\n             [FILE [FILE ...]]\n\nxmlwf - Determines if an XML document is well-formed\n\npositional arguments:\n  FILE          files to process (default: STDIN)\n\ninput control arguments:\n  -s            print an error if the document is not [s]tandalone\n  -n            enable [n]amespace processing\n  -p            enable processing external DTDs and [p]arameter entities\n  -x            enable processing of e[x]ternal entities\n  -e ENCODING   override any in-document [e]ncoding declaration\n  -w            enable support for [W]indows code pages\n  -r            disable memory-mapping and use normal file [r]ead IO calls instead\n\noutput control arguments:\n  -d DIRECTORY  output [d]estination directory\n  -c            write a [c]opy of input XML, not canonical XML\n  -m            write [m]eta XML, not canonical XML\n  -t            write no XML output for [t]iming of plain parsing\n  -N            enable adding doctype and [n]otation declarations\n\ninfo arguments:\n  -h            show this [h]elp message and exit\n  -v            show program\'s [v]ersion number and exit\n\nlibexpat is software libre, licensed under the MIT license.\nPlease report bugs at https://github.com/libexpat/libexpat/issues.  Thank you!\n\x00".as_ptr() as *const c_char, prog);
     exit(rc);
 }
