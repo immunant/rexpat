@@ -85,3 +85,5 @@ ENV RUSTUP_HOME="/home/${USER}/.rustup"
 
 # Need to switch back to root for Teamcity and Azure DevOps compatibility
 USER root
+
+RUN chmod -R 777 /tmp
