@@ -1,3 +1,4 @@
+-- Copyright (c) 2020 Immunant, Inc.
 -- c2rust-refactor script that prepends the `MOZ_` prefix
 -- to all functions that are renamed using `#define`
 -- inside Firefox's `expat_config.h`, which we parse here

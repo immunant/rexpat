@@ -1,3 +1,4 @@
+/* Copyright (c) 2020 Immunant, Inc. */
 #![allow(clippy::missing_safety_doc)]
 #![allow(dead_code)]
 #![allow(mutable_transmutes)]

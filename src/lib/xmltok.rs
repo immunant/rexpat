@@ -9,6 +9,7 @@
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -2251,38 +2252,6 @@ static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
 #[cfg(target_endian = "big")]
 static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
 
-/* This file is included!
-__  __            _
-___\ \/ /_ __   __ _| |_
-/ _ \\  /| '_ \ / _` | __|
-|  __//  \| |_) | (_| | |_
-\___/_/\_\ .__/ \__,_|\__|
-|_| XML parser
-
-Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-Copyright (c) 2000-2017 Expat development team
-Licensed under the MIT license:
-
-Permission is  hereby granted,  free of charge,  to any  person obtaining
-a  copy  of  this  software   and  associated  documentation  files  (the
-"Software"),  to  deal in  the  Software  without restriction,  including
-without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-distribute, sublicense, and/or sell copies of the Software, and to permit
-persons  to whom  the Software  is  furnished to  do so,  subject to  the
-following conditions:
-
-The above copyright  notice and this permission notice  shall be included
-in all copies or substantial portions of the Software.
-
-THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 pub fn XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() };
 }
@@ -2474,37 +2443,7 @@ must also be changed. */
 pub type C2RustUnnamed_8 = c_int;
 
 pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
-/*
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
 
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 /* memcpy */
 /* ndef _WIN32 */
 /* A 2 byte UTF-8 representation splits the characters 11 bits between
@@ -2546,35 +2485,6 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 
    Note: Use of these macros is based on judgement, not hard rules,
          and therefore subject to change.
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 /* Using __fastcall seems to have an unexpected negative effect under
    MS VC++, especially for function pointers, so we won't use it for

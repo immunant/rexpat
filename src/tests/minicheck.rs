@@ -1,5 +1,40 @@
 // =============== BEGIN minicheck_h ================
+/* Miniature re-implementation of the "check" library.
 
+   This is intended to support just enough of check to run the Expat
+   tests.  This interface is based entirely on the portion of the
+   check library being used.
+                            __  __            _
+                         ___\ \/ /_ __   __ _| |_
+                        / _ \\  /| '_ \ / _` | __|
+                       |  __//  \| |_) | (_| | |_
+                        \___/_/\_\ .__/ \__,_|\__|
+                                 |_| XML parser
+
+   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+   Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
+   Licensed under the MIT license:
+
+   Permission is  hereby granted,  free of charge,  to any  person obtaining
+   a  copy  of  this  software   and  associated  documentation  files  (the
+   "Software"),  to  deal in  the  Software  without restriction,  including
+   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+   distribute, sublicense, and/or sell copies of the Software, and to permit
+   persons  to whom  the Software  is  furnished to  do so,  subject to  the
+   following conditions:
+
+   The above copyright  notice and this permission notice  shall be included
+   in all copies or substantial portions of the Software.
+
+   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
 use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
@@ -45,43 +80,8 @@ pub use crate::stdlib::{
     __off_t, __sigset_t, _setjmp, jmp_buf, longjmp, FILE, _IO_FILE,
 };
 use ::libc;
-/* Miniature re-implementation of the "check" library.
 
-   This is intended to support just enough of check to run the Expat
-   tests.  This interface is based entirely on the portion of the
-   check library being used.
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 #[no_mangle]
-
 pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
     let mut suite: *mut Suite = calloc(1, ::std::mem::size_of::<Suite>() as c_ulong) as *mut Suite;
     if !suite.is_null() {
@@ -90,7 +90,6 @@ pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
     return suite;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
     let mut tc: *mut TCase = calloc(1, ::std::mem::size_of::<TCase>() as c_ulong) as *mut TCase;
     if !tc.is_null() {
@@ -99,7 +98,6 @@ pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
     return tc;
 }
 #[no_mangle]
-
 pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCase) {
     if !suite.is_null() {
     } else {
