@@ -92,10 +92,11 @@ extern "C" {
 }
 
 // We never touch the fields using these types, and they're all hidden behind pointers.
-// So we're using void to avoid using the extern_types nightly feature.
-type _IO_marker = libc::c_void;
-type _IO_codecvt = libc::c_void;
-type _IO_wide_data = libc::c_void;
+// So we're using our own opaque struct (in the manner recommended by the nomicon) to
+// avoid using the extern_types nightly feature.
+#[repr(C)] pub struct _IO_marker { _private: [u8; 0] }
+#[repr(C)] pub struct _IO_codecvt { _private: [u8; 0] }
+#[repr(C)] pub struct _IO_wide_data { _private: [u8; 0] }
 
 pub const __ASSERT_FUNCTION: [c_char; 46] = unsafe {
     *::std::mem::transmute::<&[u8; 46], &[c_char; 46]>(
