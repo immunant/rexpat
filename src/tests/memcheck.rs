@@ -12,6 +12,7 @@ use libc::{c_char, c_int, c_ulong, c_void};
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -63,6 +64,7 @@ static mut alloc_tail: *mut AllocationEntry = NULL as *mut AllocationEntry;
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+  Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
