@@ -20,6 +20,9 @@ jobs:
         containerImage: immunant/rexpat:latest    
   container: $[ variables['containerImage'] ]
   steps:
+  - checkout:
+    submodules: true
+    fetchDepth: 1
   - script: |
       # rust was installed for the `docker` user, not the user azure creates
       # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
