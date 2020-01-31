@@ -2,9 +2,13 @@
 
 # Rexpat: a libexpat compatible Rust crate
 
+This project is a work-in-progress conversion from unsafe Rust transpiled directly from libexpat into safe, idiomatic Rust code. The initial transpilation and refactoring was done using [C2Rust](https://github.com/immunant/c2rust).
+
+Do **not** use this in production (yet!), but help refactoring and rewriting is always welcome.
+
 ## Building
 
-Requirements: Linux host with `rustup` installed. To run tests, you'll also need to install the requirements of libexpat (autoconf 2.58 or newer, make, and a recent C toolchain).
+Requirements: Linux host with [`rustup`](https://rustup.rs/) installed. To run tests, you'll also need to install the requirements of libexpat (autoconf 2.58 or newer, make, and a recent C toolchain).
 
     $ git clone --recurse-submodules https://github.com/immunant/rexpat
     $ cd rexpat && cargo build
@@ -20,7 +24,7 @@ Download the W2C XML test suite to `/tmp/libexpat/xml-test-suite` and run
 
 To perform additional testing. 
 
-## Bencmarking
+## Benchmarking
 
 *NOTE:* Requires that you build `$REXPAT_ROOT/upstream/expat/tests/benchmark/benchmark` first. See steps and requirements [here](https://github.com/libexpat/libexpat/). You must also have `python3` (Python 3.6 or later) in your path.
 

@@ -1,18 +1,4 @@
 // =============== BEGIN chardata_h ================
-
-use crate::minicheck::_fail_unless;
-use crate::stdlib::{__assert_fail, memcmp, memcpy};
-use ::libc::sprintf;
-use libc::{c_char, c_int, c_ulong, c_void};
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct CharData {
-    pub count: c_int,
-    pub data: [XML_Char; 2048],
-}
-
-pub use crate::expat_external_h::XML_Char;
-use ::libc;
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
@@ -45,6 +31,20 @@ use ::libc;
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+use crate::minicheck::_fail_unless;
+use crate::stdlib::{__assert_fail, memcmp, memcpy};
+use ::libc::sprintf;
+use libc::{c_char, c_int, c_ulong, c_void};
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct CharData {
+    pub count: c_int,
+    pub data: [XML_Char; 2048],
+}
+
+pub use crate::expat_external_h::XML_Char;
+use ::libc;
 
 unsafe extern "C" fn xmlstrlen(mut s: *const XML_Char) -> c_int {
     let mut len: c_int = 0;
@@ -142,37 +142,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     };
 }
 /* Interface to some helper routines used to accumulate and check text
-   and attribute content.
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Portions copyright (c) 2020 Immunant, Inc.
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
+   and attribute content.                         
 */
 /* # of chars, < 0 if not set */
 #[no_mangle]

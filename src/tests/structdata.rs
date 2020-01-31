@@ -1,29 +1,4 @@
 // =============== BEGIN structdata_h ================
-
-use crate::minicheck::_fail_unless;
-use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
-use ::libc::{free, sprintf, strcmp};
-use libc::{c_char, c_int, c_ulong, c_void};
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct StructDataEntry {
-    pub str_0: *const XML_Char,
-    pub data0: c_int,
-    pub data1: c_int,
-    pub data2: c_int,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct StructData {
-    pub count: c_int,
-    pub max_count: c_int,
-    pub entries: *mut StructDataEntry,
-}
-
-pub use crate::expat_external_h::XML_Char;
-pub use crate::stddef_h::{size_t, NULL};
-use ::libc;
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
@@ -56,6 +31,31 @@ use ::libc;
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+use crate::minicheck::_fail_unless;
+use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
+use ::libc::{free, sprintf, strcmp};
+use libc::{c_char, c_int, c_ulong, c_void};
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct StructDataEntry {
+    pub str_0: *const XML_Char,
+    pub data0: c_int,
+    pub data1: c_int,
+    pub data2: c_int,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct StructData {
+    pub count: c_int,
+    pub max_count: c_int,
+    pub entries: *mut StructDataEntry,
+}
+
+pub use crate::expat_external_h::XML_Char;
+pub use crate::stddef_h::{size_t, NULL};
+use ::libc;
 
 pub const STRUCT_EXTENSION_COUNT: c_int = 8;
 
