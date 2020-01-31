@@ -20,7 +20,7 @@ jobs:
         containerImage: immunant/rexpat:latest    
   container: $[ variables['containerImage'] ]
   steps:
-  - checkout:
+  - checkout: self
     submodules: true
     fetchDepth: 1
   - script: |
