@@ -30,9 +30,17 @@ jobs:
       export PATH="/home/docker/.cargo/bin:$PATH"
       export RUSTUP_HOME=/home/docker/.rustup
       export CARGO_HOME=$AGENT_TEMPDIRECTORY/.cargo
+      cargo build
+    displayName: 'Cargo build rexpat'
+  - script: |
+      # rust was installed for the `docker` user, not the user azure creates
+      # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
+      # NOTE: $HOME is not set correctly for the azure user; don't rely on it.
+      export PATH="/home/docker/.cargo/bin:$PATH"
+      export RUSTUP_HOME=/home/docker/.rustup
+      export CARGO_HOME=$AGENT_TEMPDIRECTORY/.cargo
       cargo test
-    displayName: 'Build and test rexpat'
-
+    displayName: 'Cargo test rexpat'
   - script: |
       # rust was installed for the `docker` user, not the user azure creates
       # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
