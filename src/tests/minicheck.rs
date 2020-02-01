@@ -41,7 +41,7 @@ pub struct TCase {
 
 pub use crate::stddef_h::{size_t, NULL};
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __jmp_buf, __jmp_buf_tag, __off64_t,
+    _IO_lock_t, __jmp_buf, __jmp_buf_tag, __off64_t,
     __off_t, __sigset_t, _setjmp, jmp_buf, longjmp, FILE, _IO_FILE,
 };
 use ::libc;
@@ -153,7 +153,7 @@ pub unsafe extern "C" fn tcase_add_checked_fixture(
     if !tc.is_null() {
     } else {
         __assert_fail(b"tc != NULL\x00".as_ptr() as *const c_char,
-                      
+
                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
                       77u32,
                       (*::std::mem::transmute::<&[u8; 87],

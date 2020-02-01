@@ -11,7 +11,7 @@ type -P docker >/dev/null || {
 docker --version | grep -q "Docker version 17" && { 
     echo "Docker version too old. Please upgrade."; exit 1; }
 
-REPO_NAME=immunant/libexpat-rs
+REPO_NAME=immunant/rexpat
 DATE_TAG=$(date +'%Y%m%d')
 SCRIPT_DIR="$(dirname "$0")"
 
