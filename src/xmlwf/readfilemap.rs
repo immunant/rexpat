@@ -1,5 +1,4 @@
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
-pub use crate::internal::__INT_MAX__;
 pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_lock_t, __blkcnt_t, __blksize_t, __dev_t, __gid_t,

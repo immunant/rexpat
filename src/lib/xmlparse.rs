@@ -77,7 +77,6 @@ pub use crate::expat_h::{
     XML_STATUS_OK, XML_STATUS_OK_0, XML_STATUS_SUSPENDED, XML_STATUS_SUSPENDED_0, XML_SUSPENDED,
     XML_TRUE,
 };
-pub use crate::internal::__INT_MAX__;
 pub use crate::siphash_h::{
     sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash, siphash24,
     sipkey,
