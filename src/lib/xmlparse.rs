@@ -9448,11 +9448,11 @@ impl STRING_POOL {
     unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
             if !self.appendChar(*s) {
-                return false;
+                return true;
             }
             s = s.offset(1)
         }
-        false
+        self.start.is_null()
     }
 
     unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
