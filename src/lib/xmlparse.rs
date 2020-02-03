@@ -4803,7 +4803,7 @@ impl XML_ParserStruct {
                     ];
 
                     *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                    if self.m_tempPool.appendString(xmlnsNamespace.as_ptr()).is_null() ||
+                    if self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
                         return XML_ERROR_NO_MEMORY;
@@ -4825,7 +4825,7 @@ impl XML_ParserStruct {
 
                         if self.m_ns_triplets != 0 { /* append namespace separator and prefix */
                             *self.m_tempPool.ptr.offset(-1) = self.m_namespaceSeparator;
-                            if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()).is_null() ||
+                            if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                                 !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                             {
                                 return XML_ERROR_NO_MEMORY;
@@ -4833,7 +4833,7 @@ impl XML_ParserStruct {
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()).is_null() ||
+                        if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                             !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                         {
                             return XML_ERROR_NO_MEMORY;
@@ -6330,7 +6330,7 @@ impl XML_ParserStruct {
                                 enumValueStart.as_ptr()
                             }
                         }
-                        if self.m_tempPool.appendString(prefix).is_null() {
+                        if self.m_tempPool.appendString(prefix) {
                             return XML_ERROR_NO_MEMORY;
                         }
                         if self.m_tempPool.append(enc, s, next).is_null() {
@@ -9445,22 +9445,14 @@ impl STRING_POOL {
         return s;
     }
 
-    unsafe fn appendString(&mut self, mut s: *const XML_Char) -> *const XML_Char {
+    unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
-            if if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
-                0
-            } else {
-                let fresh80 = self.ptr;
-                self.ptr = self.ptr.offset(1);
-                *fresh80 = *s;
-                1
-            } == 0
-            {
-                return NULL as *const XML_Char;
+            if !self.appendChar(*s) {
+                return false;
             }
             s = s.offset(1)
         }
-        self.start
+        false
     }
 
     unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
