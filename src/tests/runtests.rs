@@ -678,6 +678,9 @@ unsafe impl GlobalAlloc for Allocator {
                 crate::memcheck::tracking_malloc(layout.size() as size_t) as *mut u8
             }
         };
+        // Check Rust's alignment requirements,
+        // and abort the allocation if they can't be met
+        // Alternatively, we could panic instead
         if ptr.align_offset(layout.align()) == 0 {
             ptr
         } else {
