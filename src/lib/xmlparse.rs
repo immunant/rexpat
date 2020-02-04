@@ -115,18 +115,18 @@ pub use crate::stdlib::{
     __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
-use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read, realloc};
-use ::libc::{self, __errno_location, close, free, getenv, getpid, open, strcmp};
+use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset, read};
+use ::libc::{self, __errno_location, close, getenv, getpid, open, strcmp};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
-use alloc_wg::alloc::{AllocRef, BuildAllocRef, DeallocRef, NonZeroLayout, ReallocRef};
-use alloc_wg::boxed::Box;
+use fallible_collections::FallibleBox;
 
-use std::collections::{hash_map, HashMap};
-use std::ptr::{self, NonNull};
+use std::alloc::{self, Layout};
+use std::collections::HashMap;
+use std::ptr;
 
 impl STRING_POOL {
     #[inline]
@@ -258,8 +258,8 @@ pub enum EncodingType {
 
 pub enum OldEncoding {
     Global(&'static dyn XmlEncoding),
-    Init(ExpatBox<InitEncoding>),
-    Unknown(ExpatBox<UnknownEncoding>),
+    Init(Box<InitEncoding>),
+    Unknown(Box<UnknownEncoding>),
     Internal(&'static dyn XmlEncoding),
 }
 
@@ -647,7 +647,6 @@ pub struct XML_ParserStruct {
     macro works. */
     pub m_userData: *mut c_void,
     pub m_buffer: *mut c_char,
-    pub m_mem: XML_Memory_Handling_Suite,
     /* first character to be parsed */
     pub m_bufferPtr: *const c_char,
     /* past last character to be parsed */
@@ -667,7 +666,7 @@ pub struct XML_ParserStruct {
     pub m_protocolEncodingName: *const XML_Char,
     pub m_ns: XML_Bool,
     pub m_ns_triplets: XML_Bool,
-    pub m_unknownEncoding: Option<ExpatBox<UnknownEncoding>>,
+    pub m_unknownEncoding: Option<Box<UnknownEncoding>>,
     pub m_unknownEncodingData: *mut c_void,
     pub m_unknownEncodingRelease: Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
     pub m_prologState: super::xmlrole::PROLOG_STATE,
@@ -738,7 +737,6 @@ pub struct STRING_POOL {
     pub end: *const XML_Char,
     pub ptr: *mut XML_Char,
     pub start: *mut XML_Char,
-    pub mem: *const XML_Memory_Handling_Suite,
 }
 
 impl STRING_POOL {
@@ -749,7 +747,6 @@ impl STRING_POOL {
             end: ptr::null(),
             ptr: ptr::null_mut(),
             start: ptr::null_mut(),
-            mem: ptr::null(),
         }
     }
 }
@@ -853,19 +850,19 @@ impl HashKey {
 }
 
 macro_rules! hash_insert {
-    ($parser:expr, $map:expr, $key:expr, $et:ident) => {{
+    ($map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
-        match $map.entry(HashKey::from(__key)) {
-            hash_map::Entry::Occupied(e) => e.into_mut().as_mut(),
-            hash_map::Entry::Vacant(e) => {
+        let __hk = HashKey::from(__key);
+        if !$map.contains_key(&__hk) {
+            if $map.try_reserve(1).is_ok() {
                 let v = $et { name: __key, ..std::mem::zeroed() };
-                let b = ExpatBox::try_new_in(v, (*$parser).m_mem);
-                match b {
-                    Ok(b) => e.insert(b).as_mut(),
-                    Err(_) => std::ptr::null_mut()
+                if let Ok(b) = Box::try_new(v) {
+                    $map.insert(__hk.clone(), b);
                 }
             }
         }
+        $map.get_mut(&__hk)
+            .map_or_else(std::ptr::null_mut, |x| x.as_mut())
     }};
 }
 
@@ -879,10 +876,10 @@ macro_rules! hash_lookup {
 #[repr(C)]
 #[derive(Clone)]
 pub struct DTD {
-    pub generalEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
-    pub elementTypes: HashMap<HashKey, ExpatBox<ELEMENT_TYPE>>,
-    pub attributeIds: HashMap<HashKey, ExpatBox<ATTRIBUTE_ID>>,
-    pub prefixes: HashMap<HashKey, ExpatBox<PREFIX>>,
+    pub generalEntities: HashMap<HashKey, Box<ENTITY>>,
+    pub elementTypes: HashMap<HashKey, Box<ELEMENT_TYPE>>,
+    pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
+    pub prefixes: HashMap<HashKey, Box<PREFIX>>,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
     pub keepProcessing: XML_Bool,
@@ -890,8 +887,8 @@ pub struct DTD {
     pub standalone: XML_Bool,
     pub paramEntityRead: XML_Bool,
     // `test_alloc_nested_entities` counts the allocations,
-    // so we need to use `ExpatBox` here to pass that test
-    pub paramEntities: HashMap<HashKey, ExpatBox<ENTITY>>,
+    // so we need to use `Box` here to pass that test
+    pub paramEntities: HashMap<HashKey, Box<ENTITY>>,
     pub defaultPrefix: PREFIX,
     pub in_eldecl: XML_Bool,
     pub scaffold: *mut CONTENT_SCAFFOLD,
@@ -1078,86 +1075,32 @@ pub const EXPAND_SPARE: c_int = 24;
 
 pub const INIT_SCAFFOLD_ELEMENTS: c_int = 32;
 
+fn malloc_layout(size: usize) -> Layout {
+    Layout::from_size_align(size, 1)
+        .expect("failed to create Layout")
+}
+
+fn malloc_array_layout<T>(n: usize) -> Layout {
+    Layout::array::<T>(n as usize)
+        .expect("failed to create array Layout")
+}
+
 macro_rules! MALLOC {
-    ($parser:expr, $size:expr $(,)?) => {
-        (*$parser)
-            .m_mem
-            .malloc_fcn
-            .expect("non-null function pointer")($size)
+    ($size:expr $(,)?) => {
+        alloc::alloc(malloc_layout($size as usize)) as *mut c_void
     };
 }
 macro_rules! REALLOC {
-    ($parser:path, $ptr:expr, $size:expr $(,)?) => {
-        (*$parser)
-            .m_mem
-            .realloc_fcn
-            .expect("non-null function pointer")($ptr, $size)
+    ($ptr:expr, $size:expr $(,)?) => {
+        alloc::realloc($ptr as *mut u8, malloc_layout($size as usize), $size as usize) as *mut c_void
     };
 }
 macro_rules! FREE {
-    ($parser:expr, $ptr:expr $(,)?) => {
-        (*$parser)
-            .m_mem
-            .free_fcn
-            .expect("non-null function pointer")($ptr)
+    ($ptr:expr $(,)?) => {
+        // FIXME: get the actual layout somehow
+        alloc::dealloc($ptr as *mut u8, Layout::new::<u8>())
     };
 }
-
-impl AllocRef for XML_Memory_Handling_Suite {
-    type Error = ();
-
-    fn alloc(&mut self, layout: NonZeroLayout) -> Result<NonNull<u8>, Self::Error> {
-        let size = layout.size().get() as u64;
-        let ptr = unsafe {
-            self.malloc_fcn
-                .expect("non-null function pointer")(size)
-        };
-        NonNull::new(ptr as *mut u8).ok_or(())
-    }
-}
-
-impl ReallocRef for XML_Memory_Handling_Suite {
-    unsafe fn realloc(
-        &mut self,
-        ptr: NonNull<u8>,
-        _old_layout: NonZeroLayout,
-        new_layout: NonZeroLayout
-    ) -> Result<NonNull<u8>, Self::Error> {
-        let size = new_layout.size().get() as u64;
-        let new_ptr = self
-            .realloc_fcn
-            .expect("non-null function pointer")(ptr.as_ptr() as *mut _, size);
-        NonNull::new(new_ptr as *mut u8).ok_or(())
-    }
-}
-
-impl DeallocRef for XML_Memory_Handling_Suite {
-    type BuildAlloc = Self;
-
-    fn get_build_alloc(&mut self) -> Self::BuildAlloc {
-        self.clone()
-    }
-
-    unsafe fn dealloc(&mut self, ptr: NonNull<u8>, _layout: NonZeroLayout) {
-        self
-            .free_fcn
-            .expect("non-null function pointer")(ptr.as_ptr() as *mut _);
-    }
-}
-
-impl BuildAllocRef for XML_Memory_Handling_Suite {
-    type Ref = Self;
-
-    unsafe fn build_alloc_ref(
-        &mut self,
-        _ptr: NonNull<u8>,
-        _layout: Option<NonZeroLayout>,
-    ) -> Self::Ref {
-        self.clone()
-    }
-}
-
-pub type ExpatBox<T> = Box<T, XML_Memory_Handling_Suite>;
 
 /* Constructs a new parser; encoding is the encoding specified by the
    external protocol or NULL if there is none specified.
@@ -1432,7 +1375,9 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
 ) -> XML_Parser {
-    XML_ParserStruct::create(encodingName, memsuite, nameSep, NULL as *mut DTD)
+    // FIXME
+    assert!(memsuite.is_none());
+    XML_ParserStruct::create(encodingName, nameSep, NULL as *mut DTD)
 }
 
 impl XML_ParserStruct {
@@ -1440,7 +1385,6 @@ impl XML_ParserStruct {
         Self {
             m_userData: ptr::null_mut(),
             m_buffer: ptr::null_mut(),
-            m_mem: XML_Memory_Handling_Suite::default(),
             /* first character to be parsed */
             m_bufferPtr: ptr::null(),
             /* past last character to be parsed */
@@ -1531,29 +1475,15 @@ impl XML_ParserStruct {
 
     unsafe fn create(
         mut encodingName: *const XML_Char,
-        mut memsuite: Option<&XML_Memory_Handling_Suite>,
         mut nameSep: *const XML_Char,
         mut dtd: *mut DTD,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
         let mut parser = XML_ParserStruct::new(use_namespaces);
 
-        let memsuite = match memsuite {
-            Some(m) => *m,
-            None => XML_Memory_Handling_Suite {
-                malloc_fcn: Some(malloc),
-                realloc_fcn: Some(realloc),
-                free_fcn: Some(free),
-            },
-        };
-
-        // NOTE: Parser must have memsuite assigned beforehand or else it cannot deallocate
-        // objects when ExpatBox::try_new_in fails
-        parser.m_mem = memsuite;
-
-        let mut parser = match ExpatBox::try_new_in(parser, memsuite) {
+        let mut parser = match Box::try_new(parser) {
             Ok(p) => p,
-            Err(()) => return ptr::null_mut(),
+            Err(_) => return ptr::null_mut(),
         };
 
         // TODO: Move initialization into XML_ParserStruct::new
@@ -1561,7 +1491,6 @@ impl XML_ParserStruct {
         parser.m_bufferLim = NULL as *const c_char;
         parser.m_attsSize = INIT_ATTS_SIZE;
         parser.m_atts = MALLOC!(
-            parser,
             (parser.m_attsSize as c_ulong)
                 .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
         ) as *mut super::xmltok::ATTRIBUTE;
@@ -1569,7 +1498,6 @@ impl XML_ParserStruct {
             return ptr::null_mut();
         }
         parser.m_dataBuf = MALLOC!(
-            parser,
             1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
         ) as *mut XML_Char;
         if parser.m_dataBuf.is_null() {
@@ -1579,7 +1507,7 @@ impl XML_ParserStruct {
         if !dtd.is_null() {
             parser.m_dtd = dtd
         } else {
-            parser.m_dtd = dtdCreate(&parser.m_mem);
+            parser.m_dtd = dtdCreate();
             if parser.m_dtd.is_null() {
                 return ptr::null_mut();
             }
@@ -1599,9 +1527,9 @@ impl XML_ParserStruct {
         parser.m_nsAttsPower = 0;
         parser.m_protocolEncodingName = NULL as *const XML_Char;
 
-        if let XML_ParserStruct {ref m_mem, ref mut m_tempPool, ref mut m_temp2Pool, ..} = &mut *parser {
-            m_tempPool.init(m_mem);
-            m_temp2Pool.init(m_mem);
+        if let XML_ParserStruct {ref mut m_tempPool, ref mut m_temp2Pool, ..} = &mut *parser {
+            m_tempPool.init();
+            m_temp2Pool.init();
         };
 
         parser.init(encodingName);
@@ -1617,14 +1545,14 @@ impl XML_ParserStruct {
         {
             parser.m_mismatch = NULL as *const XML_Char;
         }
-        ExpatBox::into_raw(parser)
+        Box::into_raw(parser)
     }
 
     unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
         self.m_processor = Some(prologInitProcessor as Processor);
         super::xmlrole::XmlPrologStateInit(&mut self.m_prologState as *mut _);
         if !encodingName.is_null() {
-            self.m_protocolEncodingName = copyString(encodingName, &self.m_mem)
+            self.m_protocolEncodingName = copyString(encodingName)
         }
         self.m_curBase = NULL as *const XML_Char;
         self.m_initEncoding = InitEncoding::new(&mut self.m_encoding, ptr::null());
@@ -1729,10 +1657,10 @@ impl XML_ParserStruct {
         }
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
-        FREE!(self, self.m_protocolEncodingName as *mut c_void);
+        FREE!(self.m_protocolEncodingName as *mut c_void);
         self.m_protocolEncodingName = NULL as *const XML_Char;
         self.init(encodingName);
-        dtdReset(self.m_dtd, &self.m_mem);
+        dtdReset(self.m_dtd);
         XML_TRUE
     }
 }
@@ -1765,13 +1693,13 @@ impl XML_ParserStruct {
         }
 
         /* Get rid of any previous encoding name */
-        FREE!(self, self.m_protocolEncodingName as *mut c_void);
+        FREE!(self.m_protocolEncodingName as *mut c_void);
         if encodingName.is_null() {
             /* No new encoding name */
             self.m_protocolEncodingName = NULL as *const XML_Char
         } else {
             /* Copy the new encoding name into allocated memory */
-            self.m_protocolEncodingName = copyString(encodingName, &self.m_mem);
+            self.m_protocolEncodingName = copyString(encodingName);
             if self.m_protocolEncodingName.is_null() {
                 return XML_STATUS_ERROR_0 as XML_Status;
             }
@@ -1903,11 +1831,10 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if (*parser).m_ns != 0 {
         let mut tmp: [XML_Char; 2] = [0; 2];
         *tmp.as_mut_ptr() = (*parser).m_namespaceSeparator;
-        parser = XML_ParserStruct::create(encodingName, Some(&(*parser).m_mem), tmp.as_mut_ptr(), newDtd)
+        parser = XML_ParserStruct::create(encodingName, tmp.as_mut_ptr(), newDtd)
     } else {
         parser = XML_ParserStruct::create(
             encodingName,
-            Some(&(*parser).m_mem),
             NULL as *const XML_Char,
             newDtd,
         )
@@ -1953,7 +1880,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     (*parser).m_prologState.inEntityValue = oldInEntityValue;
     if !context.is_null() {
         /* XML_DTD */
-        if dtdCopy(oldParser, (*parser).m_dtd, oldDtd, &(*parser).m_mem) == 0
+        if dtdCopy((*parser).m_dtd, oldDtd) == 0
             || (*parser).setContext(context) == 0
         {
             XML_ParserFree(parser);
@@ -1976,15 +1903,15 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     parser
 }
 
-unsafe fn destroyBindings(mut bindings: *mut BINDING, mut parser: XML_Parser) {
+unsafe fn destroyBindings(mut bindings: *mut BINDING) {
     loop {
         let mut b: *mut BINDING = bindings;
         if b.is_null() {
             break;
         }
         bindings = (*b).nextTagBinding;
-        FREE!(parser, (*b).uri as *mut c_void);
-        FREE!(parser, b as *mut c_void);
+        FREE!((*b).uri as *mut c_void);
+        FREE!(b as *mut c_void);
     }
 }
 
@@ -2007,8 +1934,8 @@ impl Drop for XML_ParserStruct {
                 }
                 p = tagList;
                 tagList = (*tagList).parent;
-                FREE!(self, (*p).buf as *mut c_void);
-                destroyBindings((*p).bindings, self);
+                FREE!((*p).buf as *mut c_void);
+                destroyBindings((*p).bindings);
             }
             /* free m_openInternalEntities and m_freeInternalEntities */
             entityList = self.m_openInternalEntities;
@@ -2023,13 +1950,13 @@ impl Drop for XML_ParserStruct {
                 }
                 openEntity = entityList;
                 entityList = (*entityList).next;
-                FREE!(self, openEntity as *mut c_void);
+                FREE!(openEntity as *mut c_void);
             }
-            destroyBindings(self.m_freeBindingList, self);
-            destroyBindings(self.m_inheritedBindings, self);
+            destroyBindings(self.m_freeBindingList);
+            destroyBindings(self.m_inheritedBindings);
             self.m_tempPool.destroy();
             self.m_temp2Pool.destroy();
-            FREE!(self, self.m_protocolEncodingName as *mut c_void);
+            FREE!(self.m_protocolEncodingName as *mut c_void);
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
             */
@@ -2038,14 +1965,13 @@ impl Drop for XML_ParserStruct {
                 dtdDestroy(
                     self.m_dtd,
                     self.m_parentParser.is_null() as XML_Bool,
-                    &self.m_mem,
                 );
             }
-            FREE!(self, self.m_atts as *mut c_void);
-            FREE!(self, self.m_groupConnector as *mut c_void);
-            FREE!(self, self.m_buffer as *mut c_void);
-            FREE!(self, self.m_dataBuf as *mut c_void);
-            FREE!(self, self.m_nsAtts as *mut c_void);
+            FREE!(self.m_atts as *mut c_void);
+            FREE!(self.m_groupConnector as *mut c_void);
+            FREE!(self.m_buffer as *mut c_void);
+            FREE!(self.m_dataBuf as *mut c_void);
+            FREE!(self.m_nsAtts as *mut c_void);
             if self.m_unknownEncodingRelease.is_some() {
                 self.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_unknownEncodingData);
@@ -2059,7 +1985,7 @@ pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
-    let _ = ExpatBox::from_raw_in(parser, (*parser).m_mem);
+    let _ = Box::from_raw(parser);
 }
 /* If this function is called, then the parser will be passed as the
    first argument to callbacks instead of userData.  The userData will
@@ -2862,7 +2788,7 @@ impl XML_ParserStruct {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
                     return NULL as *mut c_void;
                 }
-                newBuf = MALLOC!(&self, bufferSize as size_t) as *mut c_char;
+                newBuf = MALLOC!(bufferSize as size_t) as *mut c_char;
                 if newBuf.is_null() {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
                     return NULL as *mut c_void;
@@ -2881,7 +2807,7 @@ impl XML_ParserStruct {
                             0
                         }) + keep as c_long) as c_ulong,
                     );
-                    FREE!(self, self.m_buffer as *mut c_void);
+                    FREE!(self.m_buffer as *mut c_void);
                     self.m_buffer = newBuf;
                     self.m_bufferEnd = self
                         .m_buffer
@@ -3213,7 +3139,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
 #[no_mangle]
 pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
     if !parser.is_null() {
-        FREE!(parser, model as *mut c_void);
+        FREE!(model as *mut c_void);
     };
 }
 /* Exposing the memory handling functions used in Expat */
@@ -3222,7 +3148,7 @@ pub unsafe extern "C" fn XML_MemMalloc(mut parser: XML_Parser, mut size: size_t)
     if parser.is_null() {
         return NULL as *mut c_void;
     }
-    return MALLOC!(parser, size);
+    return MALLOC!(size);
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_MemRealloc(
@@ -3233,12 +3159,12 @@ pub unsafe extern "C" fn XML_MemRealloc(
     if parser.is_null() {
         return NULL as *mut c_void;
     }
-    return REALLOC!(parser, ptr, size);
+    return REALLOC!(ptr, size);
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
     if !parser.is_null() {
-        FREE!(parser, ptr);
+        FREE!(ptr);
     };
 }
 /* This can be called within a handler for a start element, end
@@ -3462,7 +3388,7 @@ impl XML_ParserStruct {
             ) as c_int;
             if bufSize as c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_long {
                 let mut temp: *mut c_char =
-                    REALLOC!(self, (*tag).buf as *mut c_void, bufSize as size_t) as *mut c_char;
+                    REALLOC!((*tag).buf as *mut c_void, bufSize as size_t) as *mut c_char;
                 if temp.is_null() {
                     return XML_FALSE;
                 }
@@ -3846,13 +3772,13 @@ impl XML_ParserStruct {
                         tag = self.m_freeTagList;
                         self.m_freeTagList = (*self.m_freeTagList).parent
                     } else {
-                        tag = MALLOC!(self, ::std::mem::size_of::<TAG>() as c_ulong) as *mut TAG;
+                        tag = MALLOC!(::std::mem::size_of::<TAG>() as c_ulong) as *mut TAG;
                         if tag.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        (*tag).buf = MALLOC!(self, 32u64) as *mut c_char;
+                        (*tag).buf = MALLOC!(32u64) as *mut c_char;
                         if (*tag).buf.is_null() {
-                            FREE!(self, tag as *mut c_void);
+                            FREE!(tag as *mut c_void);
                             return XML_ERROR_NO_MEMORY;
                         }
                         (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
@@ -3888,7 +3814,7 @@ impl XML_ParserStruct {
                         } else {
                             bufSize = ((*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_int) << 1;
                             let mut temp: *mut c_char =
-                                REALLOC!(self, (*tag).buf as *mut c_void, bufSize as size_t)
+                                REALLOC!((*tag).buf as *mut c_void, bufSize as size_t)
                                     as *mut c_char;
                             if temp.is_null() {
                                 return XML_ERROR_NO_MEMORY;
@@ -4321,7 +4247,6 @@ impl XML_ParserStruct {
                 return XML_ERROR_NO_MEMORY;
             }
             let elementType = hash_insert!(
-                self,
                 &mut (*dtd).elementTypes,
                 name,
                 ELEMENT_TYPE
@@ -4342,7 +4267,6 @@ impl XML_ParserStruct {
             let mut temp: *mut super::xmltok::ATTRIBUTE = 0 as *mut super::xmltok::ATTRIBUTE;
             self.m_attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
             temp = REALLOC!(
-                self,
                 self.m_atts as *mut c_void,
                 (self.m_attsSize as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
@@ -4563,7 +4487,6 @@ impl XML_ParserStruct {
                     }
                     nsAttsSize = (1) << self.m_nsAttsPower as c_int;
                     temp_0 = REALLOC!(
-                        self,
                         self.m_nsAtts as *mut c_void,
                         (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
                     ) as *mut NS_ATT;
@@ -4917,7 +4840,6 @@ impl XML_ParserStruct {
         if n > (*binding).uriAlloc {
             let mut p: *mut TAG = 0 as *mut TAG;
             uri = MALLOC!(
-                self,
                 ((n + 24) as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
             ) as *mut XML_Char;
             if uri.is_null() {
@@ -4937,7 +4859,7 @@ impl XML_ParserStruct {
                 }
                 p = (*p).parent
             }
-            FREE!(self, (*binding).uri as *mut c_void);
+            FREE!((*binding).uri as *mut c_void);
             (*binding).uri = uri
         }
         /* if m_namespaceSeparator != '\0' then uri includes it already */
@@ -5109,7 +5031,6 @@ unsafe extern "C" fn addBinding(
         b = (*parser).m_freeBindingList;
         if len > (*b).uriAlloc {
             let mut temp: *mut XML_Char = REALLOC!(
-                parser,
                 (*b).uri as *mut c_void,
                 (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
             ) as *mut XML_Char;
@@ -5121,16 +5042,15 @@ unsafe extern "C" fn addBinding(
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
-        b = MALLOC!(parser, ::std::mem::size_of::<BINDING>() as c_ulong) as *mut BINDING;
+        b = MALLOC!(::std::mem::size_of::<BINDING>() as c_ulong) as *mut BINDING;
         if b.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
         (*b).uri = MALLOC!(
-            parser,
             (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
         ) as *mut XML_Char;
         if (*b).uri.is_null() {
-            FREE!(parser, b as *mut c_void);
+            FREE!(b as *mut c_void);
             return XML_ERROR_NO_MEMORY;
         }
         (*b).uriAlloc = len + EXPAND_SPARE
@@ -5657,7 +5577,7 @@ impl XML_ParserStruct {
                     self.m_ns != 0
                 );
                 if initialized {
-                    match ExpatBox::try_new_in(unknown_enc, self.m_mem) {
+                    match Box::try_new(unknown_enc) {
                         Err(_) => {
                             if info.release.is_some() {
                                 info.release.expect("non-null function pointer")(info.data);
@@ -6112,7 +6032,6 @@ impl XML_ParserStruct {
                     /* XML_DTD */
                     self.m_useForeignDTD = XML_FALSE;
                     self.m_declEntity = hash_insert!(
-                        self,
                         &mut (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
                         ENTITY
@@ -6173,7 +6092,6 @@ impl XML_ParserStruct {
                             && self.m_handlers.hasExternalEntityRef()
                         {
                             let mut entity = hash_insert!(
-                                self,
                                 &mut (*dtd).paramEntities,
                                 externalSubsetName.as_ptr(),
                                 ENTITY
@@ -6231,7 +6149,6 @@ impl XML_ParserStruct {
                         (*dtd).hasParamEntityRefs = XML_TRUE;
                         if self.m_paramEntityParsing != 0 && self.m_handlers.hasExternalEntityRef() {
                             let mut entity_0 = hash_insert!(
-                                self,
                                 &mut (*dtd).paramEntities,
                                 externalSubsetName.as_ptr(),
                                 ENTITY
@@ -6349,7 +6266,6 @@ impl XML_ParserStruct {
                             self.m_declAttributeIsCdata,
                             self.m_declAttributeIsId,
                             0 as *const XML_Char,
-                            self,
                         ) == 0
                         {
                             return XML_ERROR_NO_MEMORY;
@@ -6427,7 +6343,6 @@ impl XML_ParserStruct {
                             self.m_declAttributeIsCdata,
                             XML_FALSE,
                             attVal,
-                            self,
                         ) == 0
                         {
                             return XML_ERROR_NO_MEMORY;
@@ -6551,7 +6466,6 @@ impl XML_ParserStruct {
                     /* XML_DTD */
                     if self.m_declEntity.is_null() {
                         self.m_declEntity = hash_insert!(
-                            self,
                             &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
                             ENTITY
@@ -6630,7 +6544,6 @@ impl XML_ParserStruct {
                             return XML_ERROR_NO_MEMORY;
                         }
                         self.m_declEntity = hash_insert!(
-                            self,
                             &mut (*dtd).generalEntities,
                             name,
                             ENTITY
@@ -6671,7 +6584,6 @@ impl XML_ParserStruct {
                             return XML_ERROR_NO_MEMORY;
                         }
                         self.m_declEntity = hash_insert!(
-                            self,
                             &mut (*dtd).paramEntities,
                             name_0,
                             ENTITY
@@ -6812,7 +6724,6 @@ impl XML_ParserStruct {
                         if self.m_groupSize != 0 {
                             self.m_groupSize = self.m_groupSize.wrapping_mul(2u32);
                             let new_connector: *mut c_char = REALLOC!(
-                                self,
                                 self.m_groupConnector as *mut c_void,
                                 self.m_groupSize as size_t
                             ) as *mut c_char;
@@ -6823,7 +6734,6 @@ impl XML_ParserStruct {
                             self.m_groupConnector = new_connector;
                             if !(*dtd).scaffIndex.is_null() {
                                 let new_scaff_index: *mut c_int = REALLOC!(
-                                    self,
                                     (*dtd).scaffIndex as *mut c_void,
                                     (self.m_groupSize as c_ulong)
                                         .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
@@ -6837,7 +6747,7 @@ impl XML_ParserStruct {
                         } else {
                             self.m_groupSize = 32u32;
                             self.m_groupConnector =
-                                MALLOC!(self, self.m_groupSize as size_t) as *mut c_char;
+                                MALLOC!(self.m_groupSize as size_t) as *mut c_char;
                             if self.m_groupConnector.is_null() {
                                 self.m_groupSize = 0u32;
                                 return XML_ERROR_NO_MEMORY;
@@ -7071,7 +6981,7 @@ impl XML_ParserStruct {
                     if (*dtd).in_eldecl != 0 {
                         if self.m_handlers.hasElementDecl() {
                             let mut content: *mut XML_Content =
-                                MALLOC!(self, ::std::mem::size_of::<XML_Content>() as c_ulong)
+                                MALLOC!(::std::mem::size_of::<XML_Content>() as c_ulong)
                                     as *mut XML_Content;
                             if content.is_null() {
                                 return XML_ERROR_NO_MEMORY;
@@ -7440,7 +7350,6 @@ impl XML_ParserStruct {
             self.m_freeInternalEntities = (*openEntity).next
         } else {
             openEntity = MALLOC!(
-                self,
                 ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong
             ) as *mut OPEN_INTERNAL_ENTITY;
             if openEntity.is_null() {
@@ -8309,7 +8218,6 @@ unsafe extern "C" fn defineAttribute(
     mut isCdata: XML_Bool,
     mut isId: XML_Bool,
     mut value: *const XML_Char,
-    mut parser: XML_Parser,
 ) -> c_int {
     let mut att: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
     if !value.is_null() || isId as c_int != 0 {
@@ -8331,7 +8239,6 @@ unsafe extern "C" fn defineAttribute(
         if (*type_0).allocDefaultAtts == 0 {
             (*type_0).allocDefaultAtts = 8;
             (*type_0).defaultAtts = MALLOC!(
-                parser,
                 ((*type_0).allocDefaultAtts as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
             ) as *mut DEFAULT_ATTRIBUTE;
@@ -8343,7 +8250,6 @@ unsafe extern "C" fn defineAttribute(
             let mut temp: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
             let mut count: c_int = (*type_0).allocDefaultAtts * 2;
             temp = REALLOC!(
-                parser,
                 (*type_0).defaultAtts as *mut c_void,
                 (count as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
@@ -8410,7 +8316,6 @@ impl XML_ParserStruct {
                     return 0i32;
                 }
                 let prefix = hash_insert!(
-                    self,
                     &mut (*dtd).prefixes,
                     (*dtd).pool.start as KEY,
                     PREFIX
@@ -8459,7 +8364,6 @@ impl XML_ParserStruct {
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
         name = name.offset(1);
         let id = hash_insert!(
-            self,
             &mut (*dtd).attributeIds,
             name as *mut XML_Char,
             ATTRIBUTE_ID
@@ -8484,7 +8388,6 @@ impl XML_ParserStruct {
                         (*id).prefix = &mut (*dtd).defaultPrefix
                     } else {
                         (*id).prefix = hash_insert!(
-                            self,
                             &mut (*dtd).prefixes,
                             name.offset(6),
                             PREFIX
@@ -8529,7 +8432,6 @@ impl XML_ParserStruct {
                                 return NULL as *mut ATTRIBUTE_ID;
                             }
                             (*id).prefix = hash_insert!(
-                                self,
                                 &mut (*dtd).prefixes,
                                 (*dtd).pool.start as KEY,
                                 PREFIX
@@ -8817,7 +8719,6 @@ impl XML_ParserStruct {
                             return XML_FALSE;
                         }
                         prefix = hash_insert!(
-                            self,
                             &mut (*dtd).prefixes,
                             prefix_name as KEY,
                             PREFIX
@@ -8921,15 +8822,13 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
     *p = '\u{0}' as XML_Char;
 }
 
-unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut DTD {
-    let mut p: *mut DTD = (*ms).malloc_fcn.expect("non-null function pointer")(
-        ::std::mem::size_of::<DTD>() as c_ulong,
-    ) as *mut DTD;
+unsafe extern "C" fn dtdCreate() -> *mut DTD {
+    let mut p: *mut DTD = alloc::alloc(Layout::new::<DTD>()) as *mut DTD;
     if p.is_null() {
         return p;
     }
-    (*p).pool.init(ms);
-    (*p).entityValuePool.init(ms);
+    (*p).pool.init();
+    (*p).entityValuePool.init();
     // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
@@ -8954,10 +8853,10 @@ unsafe extern "C" fn dtdCreate(mut ms: *const XML_Memory_Handling_Suite) -> *mut
 }
 /* do not call if m_parentParser != NULL */
 
-unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handling_Suite) {
+unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
     for e in (*p).elementTypes.values_mut() {
         if (*e).allocDefaultAtts != 0 {
-            (*ms).free_fcn.expect("non-null function pointer")((*e).defaultAtts as *mut c_void);
+            FREE!((*e).defaultAtts);
         }
     }
     (*p).generalEntities.clear();
@@ -8972,9 +8871,9 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handlin
     (*p).defaultPrefix.name = NULL as *const XML_Char;
     (*p).defaultPrefix.binding = NULL as *mut BINDING;
     (*p).in_eldecl = XML_FALSE;
-    (*ms).free_fcn.expect("non-null function pointer")((*p).scaffIndex as *mut c_void);
+    FREE!((*p).scaffIndex);
     (*p).scaffIndex = NULL as *mut c_int;
-    (*ms).free_fcn.expect("non-null function pointer")((*p).scaffold as *mut c_void);
+    FREE!((*p).scaffold);
     (*p).scaffold = NULL as *mut CONTENT_SCAFFOLD;
     (*p).scaffLevel = 0;
     (*p).scaffSize = 0u32;
@@ -8988,11 +8887,10 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD, mut ms: *const XML_Memory_Handlin
 unsafe extern "C" fn dtdDestroy(
     mut p: *mut DTD,
     mut isDocEntity: XML_Bool,
-    mut ms: *const XML_Memory_Handling_Suite,
 ) {
     for e in (*p).elementTypes.values_mut() {
         if (*e).allocDefaultAtts != 0 {
-            (*ms).free_fcn.expect("non-null function pointer")((*e).defaultAtts as *mut c_void);
+            FREE!((*e).defaultAtts);
         }
     }
     std::ptr::drop_in_place(&mut (*p).generalEntities);
@@ -9004,20 +8902,18 @@ unsafe extern "C" fn dtdDestroy(
     (*p).pool.destroy();
     (*p).entityValuePool.destroy();
     if isDocEntity != 0 {
-        (*ms).free_fcn.expect("non-null function pointer")((*p).scaffIndex as *mut c_void);
-        (*ms).free_fcn.expect("non-null function pointer")((*p).scaffold as *mut c_void);
+        FREE!((*p).scaffIndex);
+        FREE!((*p).scaffold);
     }
-    (*ms).free_fcn.expect("non-null function pointer")(p as *mut c_void);
+    alloc::dealloc(p as *mut u8, Layout::new::<DTD>());
 }
 /* Do a deep copy of the DTD. Return 0 for out of memory, non-zero otherwise.
    The new DTD has already been initialized.
 */
 
 unsafe extern "C" fn dtdCopy(
-    mut oldParser: XML_Parser,
     mut newDtd: *mut DTD,
     mut oldDtd: *const DTD,
-    mut ms: *const XML_Memory_Handling_Suite,
 ) -> c_int {
     /* Copy the prefix table. */
     for oldP in (*oldDtd).prefixes.values() {
@@ -9027,7 +8923,6 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         if hash_insert!(
-            oldParser,
             &mut (*newDtd).prefixes,
             name,
             PREFIX
@@ -9061,7 +8956,6 @@ unsafe extern "C" fn dtdCopy(
         }
         name_0 = name_0.offset(1);
         let newA = hash_insert!(
-            oldParser,
             &mut (*newDtd).attributeIds,
             name_0 as *mut XML_Char,
             ATTRIBUTE_ID
@@ -9091,7 +8985,6 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         let newE = hash_insert!(
-            oldParser,
             &mut (*newDtd).elementTypes,
             name_1,
             ELEMENT_TYPE
@@ -9100,10 +8993,8 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         if (*oldE).nDefaultAtts != 0 {
-            (*newE).defaultAtts = (*ms).malloc_fcn.expect("non-null function pointer")(
-                ((*oldE).nDefaultAtts as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong),
-            ) as *mut DEFAULT_ATTRIBUTE;
+            (*newE).defaultAtts = alloc::alloc(malloc_array_layout::<DEFAULT_ATTRIBUTE>(
+                    (*oldE).nDefaultAtts as usize)) as *mut DEFAULT_ATTRIBUTE;
             if (*newE).defaultAtts.is_null() {
                 return 0i32;
             }
@@ -9148,7 +9039,6 @@ unsafe extern "C" fn dtdCopy(
     }
     /* Copy the entity tables. */
     if copyEntityTable(
-        oldParser,
         &mut (*newDtd).generalEntities,
         &mut (*newDtd).pool,
         &(*oldDtd).generalEntities,
@@ -9157,7 +9047,6 @@ unsafe extern "C" fn dtdCopy(
         return 0i32;
     }
     if copyEntityTable(
-        oldParser,
         &mut (*newDtd).paramEntities,
         &mut (*newDtd).pool,
         &(*oldDtd).paramEntities,
@@ -9182,10 +9071,9 @@ unsafe extern "C" fn dtdCopy(
 /* End dtdCopy */
 
 unsafe extern "C" fn copyEntityTable(
-    mut oldParser: XML_Parser,
-    mut newTable: &mut HashMap<HashKey, ExpatBox<ENTITY>>,
+    mut newTable: &mut HashMap<HashKey, Box<ENTITY>>,
     mut newPool: *mut STRING_POOL,
-    mut oldTable: &HashMap<HashKey, ExpatBox<ENTITY>>,
+    mut oldTable: &HashMap<HashKey, Box<ENTITY>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = NULL as *const XML_Char;
     let mut cachedNewBase: *const XML_Char = NULL as *const XML_Char;
@@ -9196,7 +9084,6 @@ unsafe extern "C" fn copyEntityTable(
             return 0i32;
         }
         let newE = hash_insert!(
-            oldParser,
             &mut newTable,
             name,
             ENTITY
@@ -9306,14 +9193,12 @@ impl XML_ParserStruct {
 impl STRING_POOL {
     unsafe fn init(
         &mut self,
-        mut ms: *const XML_Memory_Handling_Suite,
     ) {
         self.blocks = NULL as *mut BLOCK;
         self.freeBlocks = NULL as *mut BLOCK;
         self.start = NULL as *mut XML_Char;
         self.ptr = NULL as *mut XML_Char;
         self.end = NULL as *const XML_Char;
-        self.mem = ms;
     }
 
     unsafe fn clear(&mut self) {
@@ -9338,13 +9223,13 @@ impl STRING_POOL {
         let mut p: *mut BLOCK = self.blocks;
         while !p.is_null() {
             let mut tem: *mut BLOCK = (*p).next;
-            (*self.mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
+            FREE!(p);
             p = tem
         }
         p = self.freeBlocks;
         while !p.is_null() {
             let mut tem_0: *mut BLOCK = (*p).next;
-            (*self.mem).free_fcn.expect("non-null function pointer")(p as *mut c_void);
+            FREE!(p);
             p = tem_0
         }
     }
@@ -9550,12 +9435,7 @@ impl STRING_POOL {
             if bytesToAllocate == 0 {
                 return XML_FALSE;
             }
-            temp = (*self.mem)
-                .realloc_fcn
-                .expect("non-null function pointer")(
-                self.blocks as *mut c_void,
-                bytesToAllocate as c_uint as size_t,
-            ) as *mut BLOCK;
+            temp = REALLOC!(self.blocks, bytesToAllocate as usize) as *mut BLOCK;
             if temp.is_null() {
                 return XML_FALSE;
             }
@@ -9597,9 +9477,7 @@ impl STRING_POOL {
             if bytesToAllocate_0 == 0 {
                 return XML_FALSE;
             } /* save one level of indirection */
-            tem_0 = (*self.mem)
-                .malloc_fcn
-                .expect("non-null function pointer")(bytesToAllocate_0) as *mut BLOCK;
+            tem_0 = MALLOC!(bytesToAllocate_0) as *mut BLOCK;
             if tem_0.is_null() {
                 return XML_FALSE;
             }
@@ -9632,7 +9510,6 @@ impl XML_ParserStruct {
         let mut next: c_int = 0;
         if (*dtd).scaffIndex.is_null() {
             (*dtd).scaffIndex = MALLOC!(
-                self,
                 (self.m_groupSize as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
             ) as *mut c_int;
@@ -9645,7 +9522,6 @@ impl XML_ParserStruct {
             let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
             if !(*dtd).scaffold.is_null() {
                 temp = REALLOC!(
-                    self,
                     (*dtd).scaffold as *mut c_void,
                     ((*dtd).scaffSize.wrapping_mul(2u32) as c_ulong)
                         .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
@@ -9656,7 +9532,6 @@ impl XML_ParserStruct {
                 (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
             } else {
                 temp = MALLOC!(
-                    self,
                     32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
                 ) as *mut CONTENT_SCAFFOLD;
                 if temp.is_null() {
@@ -9749,7 +9624,7 @@ impl XML_ParserStruct {
                 ((*dtd).contentStringLen as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
             ) as c_int;
-        ret = MALLOC!(self, allocsize as size_t) as *mut XML_Content;
+        ret = MALLOC!(allocsize as size_t) as *mut XML_Content;
         if ret.is_null() {
             return NULL as *mut XML_Content;
         }
@@ -9772,7 +9647,6 @@ impl XML_ParserStruct {
             return NULL as *mut ELEMENT_TYPE;
         }
         let ret = hash_insert!(
-            self,
             &mut (*dtd).elementTypes,
             name,
             ELEMENT_TYPE
@@ -9794,7 +9668,6 @@ impl XML_ParserStruct {
 
 unsafe extern "C" fn copyString(
     mut s: *const XML_Char,
-    mut memsuite: *const XML_Memory_Handling_Suite,
 ) -> *mut XML_Char {
     let mut charsRequired: c_int = 0;
     let mut result: *mut XML_Char = 0 as *mut XML_Char;
@@ -9805,9 +9678,8 @@ unsafe extern "C" fn copyString(
     /* Include the terminator */
     charsRequired += 1;
     /* Now allocate space for the copy */
-    result = (*memsuite).malloc_fcn.expect("non-null function pointer")(
-        (charsRequired as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-    ) as *mut XML_Char;
+    result = alloc::alloc(malloc_array_layout::<XML_Char>(charsRequired as usize))
+        as *mut XML_Char;
     if result.is_null() {
         return NULL as *mut XML_Char;
     }
