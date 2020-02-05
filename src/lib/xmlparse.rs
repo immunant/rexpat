@@ -8794,7 +8794,7 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 }
 
 unsafe extern "C" fn dtdCreate() -> *mut DTD {
-    let mut p: *mut DTD = alloc::alloc(Layout::new::<DTD>()) as *mut DTD;
+    let mut p: *mut DTD = MALLOC!(@DTD);
     if p.is_null() {
         return p;
     }
@@ -8876,7 +8876,7 @@ unsafe extern "C" fn dtdDestroy(
         FREE!((*p).scaffIndex);
         FREE!((*p).scaffold);
     }
-    alloc::dealloc(p as *mut u8, Layout::new::<DTD>());
+    FREE!(p);
 }
 /* Do a deep copy of the DTD. Return 0 for out of memory, non-zero otherwise.
    The new DTD has already been initialized.
