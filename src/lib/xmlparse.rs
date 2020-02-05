@@ -1081,11 +1081,16 @@ macro_rules! MALLOC {
             .expect("failed to create Layout");
         alloc::alloc(layout) as *mut c_void
     }};
+    // FIXME: we need the @ to disambiguate from the previous form
+    (@$ty:ty) => {{
+        let layout = Layout::new::<$ty>();
+        alloc::alloc(layout) as *mut $ty
+    }};
     [$ty:ty; $n:expr] => {{
         let layout = Layout::array::<$ty>($n as usize)
             .expect("failed to create array Layout");
         alloc::alloc(layout) as *mut $ty
-    }}
+    }};
 }
 macro_rules! REALLOC {
     ($ptr:expr, $size:expr $(,)?) => {{
@@ -3766,7 +3771,7 @@ impl XML_ParserStruct {
                         tag = self.m_freeTagList;
                         self.m_freeTagList = (*self.m_freeTagList).parent
                     } else {
-                        tag = MALLOC!(::std::mem::size_of::<TAG>() as c_ulong) as *mut TAG;
+                        tag = MALLOC!(@TAG);
                         if tag.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
@@ -5034,7 +5039,7 @@ unsafe extern "C" fn addBinding(
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
-        b = MALLOC!(::std::mem::size_of::<BINDING>() as c_ulong) as *mut BINDING;
+        b = MALLOC!(@BINDING);
         if b.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
@@ -6970,9 +6975,7 @@ impl XML_ParserStruct {
                 41 | 42 => {
                     if (*dtd).in_eldecl != 0 {
                         if self.m_handlers.hasElementDecl() {
-                            let mut content: *mut XML_Content =
-                                MALLOC!(::std::mem::size_of::<XML_Content>() as c_ulong)
-                                    as *mut XML_Content;
+                            let mut content: *mut XML_Content = MALLOC!(@XML_Content);
                             if content.is_null() {
                                 return XML_ERROR_NO_MEMORY;
                             }
@@ -7339,9 +7342,7 @@ impl XML_ParserStruct {
             openEntity = self.m_freeInternalEntities;
             self.m_freeInternalEntities = (*openEntity).next
         } else {
-            openEntity = MALLOC!(
-                ::std::mem::size_of::<OPEN_INTERNAL_ENTITY>() as c_ulong
-            ) as *mut OPEN_INTERNAL_ENTITY;
+            openEntity = MALLOC!(@OPEN_INTERNAL_ENTITY);
             if openEntity.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
