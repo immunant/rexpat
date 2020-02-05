@@ -1657,7 +1657,7 @@ impl XML_ParserStruct {
         }
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
-        FREE!(self.m_protocolEncodingName as *mut c_void);
+        FREE!(self.m_protocolEncodingName);
         self.m_protocolEncodingName = NULL as *const XML_Char;
         self.init(encodingName);
         dtdReset(self.m_dtd);
@@ -1693,7 +1693,7 @@ impl XML_ParserStruct {
         }
 
         /* Get rid of any previous encoding name */
-        FREE!(self.m_protocolEncodingName as *mut c_void);
+        FREE!(self.m_protocolEncodingName);
         if encodingName.is_null() {
             /* No new encoding name */
             self.m_protocolEncodingName = NULL as *const XML_Char
@@ -1910,8 +1910,8 @@ unsafe fn destroyBindings(mut bindings: *mut BINDING) {
             break;
         }
         bindings = (*b).nextTagBinding;
-        FREE!((*b).uri as *mut c_void);
-        FREE!(b as *mut c_void);
+        FREE!((*b).uri);
+        FREE!(b);
     }
 }
 
@@ -1934,7 +1934,7 @@ impl Drop for XML_ParserStruct {
                 }
                 p = tagList;
                 tagList = (*tagList).parent;
-                FREE!((*p).buf as *mut c_void);
+                FREE!((*p).buf);
                 destroyBindings((*p).bindings);
             }
             /* free m_openInternalEntities and m_freeInternalEntities */
@@ -1950,13 +1950,13 @@ impl Drop for XML_ParserStruct {
                 }
                 openEntity = entityList;
                 entityList = (*entityList).next;
-                FREE!(openEntity as *mut c_void);
+                FREE!(openEntity);
             }
             destroyBindings(self.m_freeBindingList);
             destroyBindings(self.m_inheritedBindings);
             self.m_tempPool.destroy();
             self.m_temp2Pool.destroy();
-            FREE!(self.m_protocolEncodingName as *mut c_void);
+            FREE!(self.m_protocolEncodingName);
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
             */
@@ -1967,11 +1967,11 @@ impl Drop for XML_ParserStruct {
                     self.m_parentParser.is_null() as XML_Bool,
                 );
             }
-            FREE!(self.m_atts as *mut c_void);
-            FREE!(self.m_groupConnector as *mut c_void);
-            FREE!(self.m_buffer as *mut c_void);
-            FREE!(self.m_dataBuf as *mut c_void);
-            FREE!(self.m_nsAtts as *mut c_void);
+            FREE!(self.m_atts);
+            FREE!(self.m_groupConnector);
+            FREE!(self.m_buffer);
+            FREE!(self.m_dataBuf);
+            FREE!(self.m_nsAtts);
             if self.m_unknownEncodingRelease.is_some() {
                 self.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_unknownEncodingData);
@@ -2807,7 +2807,7 @@ impl XML_ParserStruct {
                             0
                         }) + keep as c_long) as c_ulong,
                     );
-                    FREE!(self.m_buffer as *mut c_void);
+                    FREE!(self.m_buffer);
                     self.m_buffer = newBuf;
                     self.m_bufferEnd = self
                         .m_buffer
@@ -3139,7 +3139,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
 #[no_mangle]
 pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
     if !parser.is_null() {
-        FREE!(model as *mut c_void);
+        FREE!(model);
     };
 }
 /* Exposing the memory handling functions used in Expat */
@@ -3778,7 +3778,7 @@ impl XML_ParserStruct {
                         }
                         (*tag).buf = MALLOC!(32u64) as *mut c_char;
                         if (*tag).buf.is_null() {
-                            FREE!(tag as *mut c_void);
+                            FREE!(tag);
                             return XML_ERROR_NO_MEMORY;
                         }
                         (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
@@ -4859,7 +4859,7 @@ impl XML_ParserStruct {
                 }
                 p = (*p).parent
             }
-            FREE!((*binding).uri as *mut c_void);
+            FREE!((*binding).uri);
             (*binding).uri = uri
         }
         /* if m_namespaceSeparator != '\0' then uri includes it already */
@@ -5050,7 +5050,7 @@ unsafe extern "C" fn addBinding(
             (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
         ) as *mut XML_Char;
         if (*b).uri.is_null() {
-            FREE!(b as *mut c_void);
+            FREE!(b);
             return XML_ERROR_NO_MEMORY;
         }
         (*b).uriAlloc = len + EXPAND_SPARE
