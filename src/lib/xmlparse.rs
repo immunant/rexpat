@@ -1098,6 +1098,13 @@ macro_rules! REALLOC {
             .expect("failed to create Layout");
         alloc::realloc($ptr as *mut u8, layout, $size as usize) as *mut c_void
     }};
+    ($ptr:expr => [$ty:ty; $n:expr]) => {{
+        // FIXME: we should pass the old `Layout` to `realloc`,
+        // but we don't have it
+        let layout = Layout::array::<$ty>($n as usize)
+            .expect("failed to create array Layout");
+        alloc::realloc($ptr as *mut u8, layout, layout.size()) as *mut $ty
+    }};
 }
 macro_rules! FREE {
     ($ptr:expr $(,)?) => {
@@ -3386,8 +3393,7 @@ impl XML_ParserStruct {
                     & !(::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_sub(1u64),
             ) as c_int;
             if bufSize as c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_long {
-                let mut temp: *mut c_char =
-                    REALLOC!((*tag).buf as *mut c_void, bufSize as size_t) as *mut c_char;
+                let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
                 if temp.is_null() {
                     return XML_FALSE;
                 }
@@ -3812,9 +3818,7 @@ impl XML_ParserStruct {
                             break;
                         } else {
                             bufSize = ((*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_int) << 1;
-                            let mut temp: *mut c_char =
-                                REALLOC!((*tag).buf as *mut c_void, bufSize as size_t)
-                                    as *mut c_char;
+                            let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
                             if temp.is_null() {
                                 return XML_ERROR_NO_MEMORY;
                             }
@@ -4265,11 +4269,7 @@ impl XML_ParserStruct {
             let mut oldAttsSize: c_int = self.m_attsSize;
             let mut temp: *mut super::xmltok::ATTRIBUTE = 0 as *mut super::xmltok::ATTRIBUTE;
             self.m_attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
-            temp = REALLOC!(
-                self.m_atts as *mut c_void,
-                (self.m_attsSize as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
-            ) as *mut super::xmltok::ATTRIBUTE;
+            temp = REALLOC!(self.m_atts => [super::xmltok::ATTRIBUTE; self.m_attsSize]);
             if temp.is_null() {
                 self.m_attsSize = oldAttsSize;
                 return XML_ERROR_NO_MEMORY;
@@ -4485,10 +4485,7 @@ impl XML_ParserStruct {
                         self.m_nsAttsPower = 3u8
                     }
                     nsAttsSize = (1) << self.m_nsAttsPower as c_int;
-                    temp_0 = REALLOC!(
-                        self.m_nsAtts as *mut c_void,
-                        (nsAttsSize as c_ulong).wrapping_mul(::std::mem::size_of::<NS_ATT>() as c_ulong)
-                    ) as *mut NS_ATT;
+                    temp_0 = REALLOC!(self.m_nsAtts => [NS_ATT; nsAttsSize]);
                     if temp_0.is_null() {
                         /* Restore actual size of memory in m_nsAtts */
                         self.m_nsAttsPower = oldNsAttsPower;
@@ -5027,10 +5024,7 @@ unsafe extern "C" fn addBinding(
     if !(*parser).m_freeBindingList.is_null() {
         b = (*parser).m_freeBindingList;
         if len > (*b).uriAlloc {
-            let mut temp: *mut XML_Char = REALLOC!(
-                (*b).uri as *mut c_void,
-                (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
-            ) as *mut XML_Char;
+            let mut temp: *mut XML_Char = REALLOC!((*b).uri => [XML_Char; len + 24]);
             if temp.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
@@ -6718,10 +6712,8 @@ impl XML_ParserStruct {
                     if self.m_prologState.level >= self.m_groupSize {
                         if self.m_groupSize != 0 {
                             self.m_groupSize = self.m_groupSize.wrapping_mul(2u32);
-                            let new_connector: *mut c_char = REALLOC!(
-                                self.m_groupConnector as *mut c_void,
-                                self.m_groupSize as size_t
-                            ) as *mut c_char;
+                            let new_connector = REALLOC!(
+                                self.m_groupConnector => [c_char; self.m_groupSize]);
                             if new_connector.is_null() {
                                 self.m_groupSize = self.m_groupSize.wrapping_div(2u32);
                                 return XML_ERROR_NO_MEMORY;
@@ -6729,11 +6721,7 @@ impl XML_ParserStruct {
                             self.m_groupConnector = new_connector;
                             if !(*dtd).scaffIndex.is_null() {
                                 let new_scaff_index: *mut c_int = REALLOC!(
-                                    (*dtd).scaffIndex as *mut c_void,
-                                    (self.m_groupSize as c_ulong)
-                                        .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
-                                )
-                                    as *mut c_int;
+                                    (*dtd).scaffIndex => [c_int; self.m_groupSize]);
                                 if new_scaff_index.is_null() {
                                     return XML_ERROR_NO_MEMORY;
                                 }
@@ -8236,11 +8224,7 @@ unsafe extern "C" fn defineAttribute(
         } else {
             let mut temp: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
             let mut count: c_int = (*type_0).allocDefaultAtts * 2;
-            temp = REALLOC!(
-                (*type_0).defaultAtts as *mut c_void,
-                (count as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
-            ) as *mut DEFAULT_ATTRIBUTE;
+            temp = REALLOC!((*type_0).defaultAtts => [DEFAULT_ATTRIBUTE; count]);
             if temp.is_null() {
                 return 0i32;
             }
@@ -9421,7 +9405,7 @@ impl STRING_POOL {
             if bytesToAllocate == 0 {
                 return XML_FALSE;
             }
-            temp = REALLOC!(self.blocks, bytesToAllocate as usize) as *mut BLOCK;
+            temp = REALLOC!(self.blocks, bytesToAllocate) as *mut BLOCK;
             if temp.is_null() {
                 return XML_FALSE;
             }
@@ -9504,11 +9488,7 @@ impl XML_ParserStruct {
         if (*dtd).scaffCount >= (*dtd).scaffSize {
             let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
             if !(*dtd).scaffold.is_null() {
-                temp = REALLOC!(
-                    (*dtd).scaffold as *mut c_void,
-                    ((*dtd).scaffSize.wrapping_mul(2u32) as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
-                ) as *mut CONTENT_SCAFFOLD;
+                temp = REALLOC!((*dtd).scaffold => [CONTENT_SCAFFOLD; (*dtd).scaffSize.wrapping_mul(2u32)]);
                 if temp.is_null() {
                     return -(1i32);
                 }
