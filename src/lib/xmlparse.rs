@@ -2787,7 +2787,7 @@ impl XML_ParserStruct {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
                     return NULL as *mut c_void;
                 }
-                newBuf = MALLOC!(bufferSize as size_t) as *mut c_char;
+                newBuf = MALLOC![c_char; bufferSize];
                 if newBuf.is_null() {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
                     return NULL as *mut c_void;
@@ -3775,7 +3775,7 @@ impl XML_ParserStruct {
                         if tag.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        (*tag).buf = MALLOC!(32u64) as *mut c_char;
+                        (*tag).buf = MALLOC![c_char; 32];
                         if (*tag).buf.is_null() {
                             FREE!(tag);
                             return XML_ERROR_NO_MEMORY;
@@ -6741,8 +6741,7 @@ impl XML_ParserStruct {
                             }
                         } else {
                             self.m_groupSize = 32u32;
-                            self.m_groupConnector =
-                                MALLOC!(self.m_groupSize as size_t) as *mut c_char;
+                            self.m_groupConnector = MALLOC![c_char; self.m_groupSize];
                             if self.m_groupConnector.is_null() {
                                 self.m_groupSize = 0u32;
                                 return XML_ERROR_NO_MEMORY;
