@@ -1075,25 +1075,24 @@ pub const EXPAND_SPARE: c_int = 24;
 
 pub const INIT_SCAFFOLD_ELEMENTS: c_int = 32;
 
-fn malloc_layout(size: usize) -> Layout {
-    Layout::from_size_align(size, 1)
-        .expect("failed to create Layout")
-}
-
-fn malloc_array_layout<T>(n: usize) -> Layout {
-    Layout::array::<T>(n as usize)
-        .expect("failed to create array Layout")
-}
-
 macro_rules! MALLOC {
-    ($size:expr $(,)?) => {
-        alloc::alloc(malloc_layout($size as usize)) as *mut c_void
-    };
+    ($size:expr $(,)?) => {{
+        let layout = Layout::from_size_align($size as usize, 1)
+            .expect("failed to create Layout");
+        alloc::alloc(layout) as *mut c_void
+    }};
+    [$ty:ty; $n:expr] => {{
+        let layout = Layout::array::<$ty>($n as usize)
+            .expect("failed to create array Layout");
+        alloc::alloc(layout) as *mut $ty
+    }}
 }
 macro_rules! REALLOC {
-    ($ptr:expr, $size:expr $(,)?) => {
-        alloc::realloc($ptr as *mut u8, malloc_layout($size as usize), $size as usize) as *mut c_void
-    };
+    ($ptr:expr, $size:expr $(,)?) => {{
+        let layout = Layout::from_size_align($size as usize, 1)
+            .expect("failed to create Layout");
+        alloc::realloc($ptr as *mut u8, layout, $size as usize) as *mut c_void
+    }};
 }
 macro_rules! FREE {
     ($ptr:expr $(,)?) => {
@@ -1490,16 +1489,11 @@ impl XML_ParserStruct {
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
         parser.m_attsSize = INIT_ATTS_SIZE;
-        parser.m_atts = MALLOC!(
-            (parser.m_attsSize as c_ulong)
-                .wrapping_mul(::std::mem::size_of::<super::xmltok::ATTRIBUTE>() as c_ulong)
-        ) as *mut super::xmltok::ATTRIBUTE;
+        parser.m_atts = MALLOC![super::xmltok::ATTRIBUTE; parser.m_attsSize];
         if parser.m_atts.is_null() {
             return ptr::null_mut();
         }
-        parser.m_dataBuf = MALLOC!(
-            1024u64.wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
-        ) as *mut XML_Char;
+        parser.m_dataBuf = MALLOC![XML_Char; 1024];
         if parser.m_dataBuf.is_null() {
             return ptr::null_mut();
         }
@@ -4839,9 +4833,7 @@ impl XML_ParserStruct {
         n = i + (*binding).uriLen + prefixLen;
         if n > (*binding).uriAlloc {
             let mut p: *mut TAG = 0 as *mut TAG;
-            uri = MALLOC!(
-                ((n + 24) as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong)
-            ) as *mut XML_Char;
+            uri = MALLOC![XML_Char; n + 24];
             if uri.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
@@ -5046,9 +5038,7 @@ unsafe extern "C" fn addBinding(
         if b.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        (*b).uri = MALLOC!(
-            (::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_mul((len + 24) as c_ulong)
-        ) as *mut XML_Char;
+        (*b).uri = MALLOC![XML_Char; len + 24];
         if (*b).uri.is_null() {
             FREE!(b);
             return XML_ERROR_NO_MEMORY;
@@ -8238,10 +8228,7 @@ unsafe extern "C" fn defineAttribute(
     if (*type_0).nDefaultAtts == (*type_0).allocDefaultAtts {
         if (*type_0).allocDefaultAtts == 0 {
             (*type_0).allocDefaultAtts = 8;
-            (*type_0).defaultAtts = MALLOC!(
-                ((*type_0).allocDefaultAtts as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<DEFAULT_ATTRIBUTE>() as c_ulong)
-            ) as *mut DEFAULT_ATTRIBUTE;
+            (*type_0).defaultAtts = MALLOC![DEFAULT_ATTRIBUTE; (*type_0).allocDefaultAtts];
             if (*type_0).defaultAtts.is_null() {
                 (*type_0).allocDefaultAtts = 0;
                 return 0i32;
@@ -8993,8 +8980,7 @@ unsafe extern "C" fn dtdCopy(
             return 0i32;
         }
         if (*oldE).nDefaultAtts != 0 {
-            (*newE).defaultAtts = alloc::alloc(malloc_array_layout::<DEFAULT_ATTRIBUTE>(
-                    (*oldE).nDefaultAtts as usize)) as *mut DEFAULT_ATTRIBUTE;
+            (*newE).defaultAtts = MALLOC![DEFAULT_ATTRIBUTE; (*oldE).nDefaultAtts];
             if (*newE).defaultAtts.is_null() {
                 return 0i32;
             }
@@ -9509,10 +9495,7 @@ impl XML_ParserStruct {
         let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
         let mut next: c_int = 0;
         if (*dtd).scaffIndex.is_null() {
-            (*dtd).scaffIndex = MALLOC!(
-                (self.m_groupSize as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<c_int>() as c_ulong)
-            ) as *mut c_int;
+            (*dtd).scaffIndex = MALLOC![c_int; self.m_groupSize];
             if (*dtd).scaffIndex.is_null() {
                 return -(1i32);
             }
@@ -9531,9 +9514,7 @@ impl XML_ParserStruct {
                 }
                 (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
             } else {
-                temp = MALLOC!(
-                    32u64.wrapping_mul(::std::mem::size_of::<CONTENT_SCAFFOLD>() as c_ulong)
-                ) as *mut CONTENT_SCAFFOLD;
+                temp = MALLOC![CONTENT_SCAFFOLD; 32];
                 if temp.is_null() {
                     return -(1i32);
                 }
@@ -9678,8 +9659,7 @@ unsafe extern "C" fn copyString(
     /* Include the terminator */
     charsRequired += 1;
     /* Now allocate space for the copy */
-    result = alloc::alloc(malloc_array_layout::<XML_Char>(charsRequired as usize))
-        as *mut XML_Char;
+    result = MALLOC![XML_Char; charsRequired];
     if result.is_null() {
         return NULL as *mut XML_Char;
     }
