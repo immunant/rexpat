@@ -46,8 +46,7 @@
     label_break_value,
     main,
     ptr_wrapping_offset_from,
-    register_tool,
-    allocator_api
+    register_tool
 )]
 
 #[cfg(all(feature = "unicode", not(feature = "unicode_wchar_t")))]
