@@ -52,7 +52,7 @@ impl RawBumpVec {
     }
 }
 
-struct StringPool {
+pub(crate) struct StringPool {
     bump: Bump,
     currentBumpVec: Cell<RawBumpVec>,
 }
@@ -63,6 +63,12 @@ impl StringPool {
             bump: Bump::new(),
             currentBumpVec: Cell::new(RawBumpVec::new()),
         }
+    }
+
+    pub(crate) fn is_full(&self) -> bool {
+        let RawBumpVec { cap, len, .. } = self.currentBumpVec.get();
+
+        cap == len
     }
 
     #[cfg(test)]
@@ -93,11 +99,11 @@ impl StringPool {
     }
 
     pub(crate) fn appendChar(&mut self, c: XML_Char) -> bool {
-        let mut buf = self.getBumpVec();
-
-        if buf.len() == buf.capacity() && !self.grow() {
+        if self.is_full() && !self.grow() {
             false
         } else {
+            let mut buf = self.getBumpVec();
+
             buf.push(c);
 
             self.updateRaw(&mut buf);
@@ -130,26 +136,15 @@ impl StringPool {
     }
 
     // TODO: Wrap Vec so it cannot grow
-    unsafe fn storeString(
+    pub(crate) unsafe fn storeString(
         &mut self,
         enc: &ENCODING,
-        ptr: *const c_char,
-        end: *const c_char,
+        buf: ExpatBufRef,
     ) -> Option<BumpVec<XML_Char>> {
-        dbg!("Pre-append");
-        if !self.append(enc, ptr, end) {
-            dbg!("Post-append Ret");
+        if !self.append(enc, buf) {
             return None;
         }
-        dbg!("Post-append");
-
-        let mut buf = self.getBumpVec();
-        let len = buf.len();
-        let cap = buf.capacity();
-
-        drop(buf);
-
-        if len == cap && !self.grow() {
+        if self.is_full() && !self.grow() {
             return None;
         }
 
@@ -165,11 +160,11 @@ impl StringPool {
     pub(crate) unsafe fn append(
         &mut self,
         enc: &ENCODING,
-        mut ptr: *const c_char,
-        end: *const c_char,
+        mut readBuf: ExpatBufRef,
     ) -> bool {
         let RawBumpVec { mut start, .. } = self.currentBumpVec.get();
 
+        // REVIEW: Can this be replaced with self.is_full() &&?
         if start.is_null() && !self.grow() {
             return false;
         }
@@ -184,8 +179,6 @@ impl StringPool {
         loop {
             start2 = start.add(len);
             end2 = start.add(cap) as *mut ICHAR;
-
-            let mut readBuf = ExpatBufRef::new(ptr, end);
 
             // Vec[init len, uninit cap - len]
             // FIXME: Writing to slice of uninit memory (UB most likely)
@@ -412,9 +405,11 @@ fn test_store_string() {
 
     let mut pool = StringPool::new();
     let enc = XmlGetInternalEncoding();
-
+    let read_buf = unsafe {
+        ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
+    };
     let string = unsafe {
-        pool.storeString(enc, S.as_ptr(), S.as_ptr().add(3))
+        pool.storeString(enc, read_buf)
     };
 
     assert_eq!(&*string.unwrap(), &[C, D, D, NULL]);
