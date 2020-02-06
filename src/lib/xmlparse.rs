@@ -2983,9 +2983,9 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_ErrorCode {
-    XML_GetError(parser).code() 
+    XML_GetError(parser).code()
 }
-pub unsafe fn XML_GetError(mut parser: XML_Parser) -> XML_Error { 
+pub unsafe fn XML_GetError(mut parser: XML_Parser) -> XML_Error {
     if let Some(parser) = parser.as_ref() {
         parser.m_errorCode
     } else { XML_Error::INVALID_ARGUMENT }
