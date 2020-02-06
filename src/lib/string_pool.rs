@@ -1,6 +1,6 @@
 use crate::expat_external_h::XML_Char;
 use crate::expat_h::{XML_Memory_Handling_Suite};
-use crate::lib::xmlparse::{ICHAR, INIT_BLOCK_SIZE, XmlConvert};
+use crate::lib::xmlparse::{ICHAR, INIT_BLOCK_SIZE, ExpatBufRef, ExpatBufRefMut, XmlConvert};
 use crate::lib::xmltok::{ENCODING, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_COMPLETED};
 use crate::stddef_h::size_t;
 
@@ -174,30 +174,32 @@ impl StringPool {
             return false;
         }
 
-        let RawBumpVec { mut start, cap, .. } = self.currentBumpVec.get();
+        let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
 
-        let mut ptr = &mut ptr as *mut _;
         let mut end2;
         let mut start2;
         let mut remaining_cap = 0;
 
+        // TODO: Test looping w/ new cap/len.
         loop {
+            start2 = start.add(len);
             end2 = start.add(cap) as *mut ICHAR;
-            start2 = &mut start as *mut *mut _ as *mut *mut ICHAR;
+
+            let mut readBuf = ExpatBufRef::new(ptr, end);
+
+            // Vec[init len, uninit cap - len]
+            // FIXME: Writing to slice of uninit memory (UB most likely)
+            // XmlConvert should probably take a &mut [MaybeUninit<XML_Char>] instead
+            let mut writeBuf = ExpatBufRefMut::new(start2, end2);
 
             let convert_res = XmlConvert!(
                 enc,
-                ptr,
-                end,
-                start2,
-                end2,
+                &mut readBuf,
+                &mut writeBuf,
             );
 
-            remaining_cap = (end2).wrapping_offset_from(*start2);
+            remaining_cap = writeBuf.len();
 
-            debug_assert!(remaining_cap >= 0);
-
-            // RMME: 2 == 0 || 2 == 1
             if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
                 break;
             }
@@ -207,8 +209,8 @@ impl StringPool {
             }
         }
 
-        let mut buf = self.getBumpVec();
         let newly_written = cap - remaining_cap as usize;
+        let mut buf = self.getBumpVec();
 
         buf.set_len(buf.len() + newly_written);
 
