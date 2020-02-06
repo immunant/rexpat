@@ -33,6 +33,7 @@ pub mod xmltok_impl_h;
 
 pub mod lib {
     pub mod nametab;
+    pub mod string_pool;
     pub mod xmlparse;
     pub mod xmlrole;
     pub mod xmltok;
