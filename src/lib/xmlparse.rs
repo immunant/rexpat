@@ -79,7 +79,7 @@ use std::ptr;
 
 pub const XML_CONTEXT_BYTES: c_int = 1024;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ExpatBufRef<'a, T = c_char>(&'a [T]);
 impl<'a, T> ExpatBufRef<'a, T> {
     pub fn new<'new>(start: *const T, end: *const T) -> ExpatBufRef<'new, T> {
@@ -155,6 +155,7 @@ impl<'a> From<ExpatBufRef<'a, c_char>> for ExpatBufRef<'a, c_ushort> {
     }
 }
 
+#[derive(Debug)]
 pub struct ExpatBufRefMut<'a, T = c_char>(&'a mut [T]);
 impl<'a, T> ExpatBufRefMut<'a, T> {
     pub fn new<'new>(start: *mut T, end: *mut T) -> ExpatBufRefMut<'new, T> {
