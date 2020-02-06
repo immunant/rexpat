@@ -1,5 +1,4 @@
 use crate::xmltok_impl_h::C2RustUnnamed_2;
-pub const other: C2RustUnnamed_2 = 0;
 pub const other_0: C2RustUnnamed_2 = 0;
 pub const other_1: C2RustUnnamed_2 = 0;
 pub const inName: C2RustUnnamed_2 = 1;

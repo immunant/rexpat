@@ -8,7 +8,6 @@ use crate::xmltok_h::*;
 use crate::xmltok_impl_h::*;
 use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 
-pub const other: C2RustUnnamed_2 = 0;
 pub const other_0: C2RustUnnamed_2 = 0;
 pub const other_1: C2RustUnnamed_2 = 0;
 pub const inName: C2RustUnnamed_2 = 1;

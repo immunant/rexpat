@@ -127,6 +127,7 @@ use alloc_wg::boxed::Box;
 
 use std::collections::{hash_map, HashMap};
 use std::convert::TryInto;
+use std::mem;
 use std::ops;
 use std::ptr::{self, NonNull};
 
@@ -988,6 +989,22 @@ pub struct TAG_NAME {
     pub strLen: c_int,
     pub uriLen: c_int,
     pub prefixLen: c_int,
+}
+
+
+/// Round up n to be a multiple of sz, where sz is a power of 2.
+#[inline]
+fn round_up(n: usize, sz: usize) -> usize {
+    (n + (sz-1)) & !(sz-1)
+}
+
+#[inline]
+fn safe_ptr_diff<T>(p: *const T, q: *const T) -> isize {
+    if p.is_null() || q.is_null() {
+        0
+    } else {
+        p.wrapping_offset_from(q)
+    }
 }
 
 // FIXME: add a proper lifetime
@@ -2920,63 +2937,31 @@ impl XML_ParserStruct {
             _ => {}
         }
         if len as c_long
-            > (if !self.m_bufferLim.is_null() && !self.m_bufferEnd.is_null() {
-                self.m_bufferLim
-                    .wrapping_offset_from(self.m_bufferEnd) as c_long
-            } else {
-                0
-            })
+            > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) as c_long
         {
             let mut keep: c_int = 0;
             /* defined XML_CONTEXT_BYTES */
             /* Do not invoke signed arithmetic overflow: */
             let mut neededSize: c_int = (len as c_uint).wrapping_add(
-                (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                    self.m_bufferEnd
-                        .wrapping_offset_from(self.m_bufferPtr) as c_long
-                } else {
-                    0
-                }) as c_uint,
+                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_uint,
             ) as c_int;
             if neededSize < 0 {
                 self.m_errorCode = XML_ERROR_NO_MEMORY;
                 return NULL as *mut c_void;
             }
-            keep = if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
-                self.m_bufferPtr
-                    .wrapping_offset_from(self.m_buffer) as c_long
-            } else {
-                0
-            } as c_int;
+            keep = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int;
             if keep > XML_CONTEXT_BYTES {
                 keep = XML_CONTEXT_BYTES
             }
             neededSize += keep;
             /* defined XML_CONTEXT_BYTES */
             if neededSize as c_long
-                <= (if !self.m_bufferLim.is_null() && !self.m_buffer.is_null() {
-                    self.m_bufferLim
-                        .wrapping_offset_from(self.m_buffer) as c_long
-                } else {
-                    0
-                })
+                <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) as c_long
             {
                 if (keep as c_long)
-                    < (if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
-                        self.m_bufferPtr
-                            .wrapping_offset_from(self.m_buffer) as c_long
-                    } else {
-                        0
-                    })
+                    < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_long
                 {
-                    let mut offset: c_int = (if !self.m_bufferPtr.is_null()
-                        && !self.m_buffer.is_null()
-                    {
-                        self.m_bufferPtr
-                            .wrapping_offset_from(self.m_buffer) as c_long
-                    } else {
-                        0
-                    }) as c_int
+                    let mut offset: c_int = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int
                         - keep;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
@@ -2996,12 +2981,7 @@ impl XML_ParserStruct {
             } else {
                 let mut newBuf: *mut c_char = 0 as *mut c_char;
                 let mut bufferSize: c_int =
-                    if !self.m_bufferLim.is_null() && !self.m_bufferPtr.is_null() {
-                        self.m_bufferLim
-                            .wrapping_offset_from(self.m_bufferPtr) as c_long
-                    } else {
-                        0
-                    } as c_int;
+                    safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) as c_int;
                 if bufferSize == 0 {
                     bufferSize = INIT_BUFFER_SIZE
                 }
@@ -3028,27 +3008,13 @@ impl XML_ParserStruct {
                         newBuf as *mut c_void,
                         &*self.m_bufferPtr.offset(-keep as isize) as *const c_char
                             as *const c_void,
-                        ((if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                            self.m_bufferEnd
-                                .wrapping_offset_from(self.m_bufferPtr)
-                                as c_long
-                        } else {
-                            0
-                        }) + keep as c_long) as c_ulong,
+                        (safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_long + keep as c_long) as c_ulong,
                     );
                     FREE!(self, self.m_buffer as *mut c_void);
                     self.m_buffer = newBuf;
                     self.m_bufferEnd = self
                         .m_buffer
-                        .offset(
-                            (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                                self.m_bufferEnd
-                                    .wrapping_offset_from(self.m_bufferPtr)
-                                    as c_long
-                            } else {
-                                0
-                            }) as isize,
-                        )
+                        .offset(safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr))
                         .offset(keep as isize);
                     self.m_bufferPtr = self.m_buffer.offset(keep as isize)
                 } else {
@@ -3623,9 +3589,7 @@ impl XML_ParserStruct {
             size of tag->buf is a multiple of sizeof(XML_Char).
             */
             bufSize = (nameLen as c_ulong).wrapping_add(
-                ((*tag).rawNameLength as c_ulong)
-                    .wrapping_add((::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_sub(1u64))
-                    & !(::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_sub(1u64),
+                round_up((*tag).rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
             ) as c_int;
             if bufSize as c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_long {
                 let mut temp: *mut c_char =
