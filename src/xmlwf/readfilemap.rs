@@ -1,8 +1,7 @@
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
-pub use crate::internal::__INT_MAX__;
 pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
+    _IO_lock_t, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
     __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
     __uid_t, ssize_t, stat, FILE, _IO_FILE, __S_IFMT,
 };
@@ -21,6 +20,7 @@ use libc::{c_char, c_int, c_long, c_uint, c_void};
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining

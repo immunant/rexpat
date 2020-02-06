@@ -1,43 +1,3 @@
-#![allow(
-    dead_code,
-    mutable_transmutes,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    unused_assignments,
-    unused_mut
-)]
-#![register_tool(c2rust)]
-#![feature(
-    const_raw_ptr_to_usize_cast,
-    extern_types,
-    main,
-    ptr_wrapping_offset_from,
-    register_tool
-)]
-
-use std::mem;
-use libc::{exit, free, printf};
-use rexpat::expat_h::XML_ParserStruct;
-use rexpat::lib::xmlparse::{
-    XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
-    XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
-};
-use rexpat::stdlib::{fclose, fopen, fprintf, fread, malloc, _IO_FILE};
-use std::ffi::CString;
-use std::ptr::null_mut;
-use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void};
-
-pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
-pub use rexpat::stddef_h::{size_t, NULL};
-pub use rexpat::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __blkcnt_t, __blksize_t, __clock_t,
-    __dev_t, __gid_t, __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __syscall_slong_t,
-    __time_t, __uid_t, __xstat, clock_t, CLOCKS_PER_SEC, FILE, _STAT_VER, _STAT_VER_LINUX,
-};
-use rexpat::stdlib::{clock, stderr};
-pub use libc::{atoi, stat};
 /*
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
@@ -48,6 +8,7 @@ pub use libc::{atoi, stat};
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -69,6 +30,45 @@ pub use libc::{atoi, stat};
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+#![allow(
+    dead_code,
+    mutable_transmutes,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unused_assignments,
+    unused_mut
+)]
+#![register_tool(c2rust)]
+#![feature(
+    const_raw_ptr_to_usize_cast,
+    main,
+    ptr_wrapping_offset_from,
+    register_tool
+)]
+
+use std::mem;
+use libc::{exit, free, printf};
+use rexpat::expat_h::XML_ParserStruct;
+use rexpat::lib::xmlparse::{
+    XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
+    XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
+};
+use rexpat::stdlib::{fclose, fopen, fprintf, fread, malloc, _IO_FILE};
+use std::ffi::CString;
+use std::ptr::null_mut;
+use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void};
+
+pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
+pub use rexpat::stddef_h::{size_t, NULL};
+pub use rexpat::stdlib::{
+    _IO_lock_t, __blkcnt_t, __blksize_t, __clock_t,
+    __dev_t, __gid_t, __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __syscall_slong_t,
+    __time_t, __uid_t, __xstat, clock_t, CLOCKS_PER_SEC, FILE, _STAT_VER, _STAT_VER_LINUX,
+};
+use rexpat::stdlib::{clock, stderr};
+pub use libc::{atoi, stat};
 
 unsafe extern "C" fn usage(mut prog: *const c_char, mut rc: c_int) {
     fprintf(
@@ -204,9 +204,11 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     return 0 as c_int;
 }
 #[main]
-pub fn main() {
+pub fn orig_main() {
     let mut args: Vec<*mut c_char> = Vec::new();
     for arg in std::env::args() {
+        // skip extra arguments added by `cargo bench`
+        if arg == "--bench" { break; }
         args.push(
             CString::new(arg)
                 .expect("Failed to convert argument into CString.")
@@ -221,3 +223,14 @@ pub fn main() {
         ) as i32)
     }
 }
+
+#[macro_use]
+extern crate bencher;
+use bencher::Bencher;
+
+fn benchmark(b: &mut Bencher) {
+    b.iter(|| crate::orig_main());
+}
+
+benchmark_group!(benches, benchmark);
+benchmark_main!(benches); // emits a main function

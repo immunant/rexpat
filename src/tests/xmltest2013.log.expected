@@ -1,0 +1,68 @@
+Output differs: ibm/valid/P02/ibm02v01.xml
+ibm49i02.dtd: No such file or directory
+Output differs: ibm/xml-1.1/valid/P03/ibm03v01.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v02.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v03.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v04.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v05.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v06.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v07.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v08.xml
+Output differs: ibm/xml-1.1/valid/P03/ibm03v09.xml
+Expected not well-formed: ibm/not-wf/misc/432gewf.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n13.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n32.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n33.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n34.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n35.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n36.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n37.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n38.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n39.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n40.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n41.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n42.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n43.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n44.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n45.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n46.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n47.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n48.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n49.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n50.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n51.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n52.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n53.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n54.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n55.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n56.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n57.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n59.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n60.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n61.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n62.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P02/ibm02n63.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n01.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n02.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n03.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n04.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n05.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n06.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n07.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n08.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n09.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n10.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n11.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n12.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n13.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n15.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n19.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n20.xml
+Expected not well-formed: ibm/xml-1.1/not-wf/P77/ibm77n21.xml
+Expected not well-formed: xmltest/not-wf/not-sa/005.xml
+Expected not well-formed: sun/not-wf/uri01.xml
+Expected not well-formed: oasis/p06fail1.xml
+Expected not well-formed: oasis/p08fail1.xml
+Expected not well-formed: oasis/p08fail2.xml
+Passed: 1930
+Failed: 89

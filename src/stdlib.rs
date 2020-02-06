@@ -76,11 +76,6 @@ extern "C" {
 
     #[no_mangle]
     pub fn strlen(_: *const c_char) -> c_ulong;
-    pub type _IO_marker;
-
-    pub type _IO_codecvt;
-
-    pub type _IO_wide_data;
     #[no_mangle]
     pub fn fstat(__fd: c_int, __buf: *mut stat) -> c_int;
     #[no_mangle]
@@ -95,6 +90,14 @@ extern "C" {
         __stat_buf: *mut stat,
     );
 }
+
+// We never touch the fields using these types, and they're all hidden behind pointers.
+// So we're using our own opaque struct (in the manner recommended by the nomicon) to
+// avoid using the extern_types nightly feature.
+#[repr(C)] pub struct _IO_marker { _private: [u8; 0] }
+#[repr(C)] pub struct _IO_codecvt { _private: [u8; 0] }
+#[repr(C)] pub struct _IO_wide_data { _private: [u8; 0] }
+
 pub const __ASSERT_FUNCTION: [c_char; 46] = unsafe {
     *::std::mem::transmute::<&[u8; 46], &[c_char; 46]>(
         b"void attributeValue(FILE *, const XML_Char *)\x00",

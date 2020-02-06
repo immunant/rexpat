@@ -1,8 +1,3 @@
-use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use crate::lib::xmlparse::XML_ParserStruct;
-use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
-use crate::stddef_h::size_t;
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
 /*
                         __  __            _
                      ___\ \/ /_ __   __ _| |_
@@ -13,6 +8,7 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -34,6 +30,12 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use crate::lib::xmlparse::XML_ParserStruct;
+use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
+use crate::stddef_h::size_t;
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
+
 pub type XML_Parser = *mut XML_ParserStruct;
 pub type XML_Bool = c_uchar;
 pub const XML_TRUE: XML_Bool = 1;

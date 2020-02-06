@@ -33,7 +33,7 @@ pub use crate::lib::xmlparse::{
 };
 pub use crate::stddef_h::{size_t, NULL};
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __ssize_t, fprintf,
+    _IO_lock_t, __off64_t, __off_t, __ssize_t, fprintf,
     ssize_t, stderr, stdout, FILE, _IO_FILE,
 };
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
@@ -56,6 +56,7 @@ pub struct PROCESS_ARGS {
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining

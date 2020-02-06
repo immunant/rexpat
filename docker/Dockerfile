@@ -44,12 +44,18 @@ RUN echo "source ~/.cargo/env" >> .bashrc
 
 ENV TMP=/tmp
 ENV XML_TEST_TMP=${TMP}/libexpat
-ENV XML_TEST_SUITE=${TMP}/libexpat/xml-test-suite
 ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20020606.tar
 RUN mkdir -p "${XML_TEST_TMP}" && \
     curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "${XML_ARCHIVE}" && \
     tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
     rm "${XML_ARCHIVE}"
+
+ENV XML_TEST_TMP=${TMP}/libexpat/xml-test-suite-2013
+ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20130923.tar.gz
+RUN mkdir -p "${XML_TEST_TMP}" && \
+    curl https://www.w3.org/XML/Test/xmlts20130923.tar.gz --silent --output "${XML_ARCHIVE}" && \
+    tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
+    rm "${XML_ARCHIVE}"    
 
 ENV PYTHON381_TMP=${TMP}/Python-3.8.1
 ENV PYTHON381_URL=https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
@@ -85,3 +91,5 @@ ENV RUSTUP_HOME="/home/${USER}/.rustup"
 
 # Need to switch back to root for Teamcity and Azure DevOps compatibility
 USER root
+
+RUN chmod -R 777 /tmp

@@ -8,7 +8,7 @@
     unused_mut
 )]
 #![register_tool(c2rust)]
-#![feature(const_raw_ptr_to_usize_cast, extern_types, main, register_tool)]
+#![feature(const_raw_ptr_to_usize_cast, main, register_tool)]
 
 use ::rexpat::expat_h::{XML_Bool, XML_STATUS_ERROR_0};
 use ::rexpat::lib::xmlparse::{
@@ -39,11 +39,6 @@ pub mod stdlib {
 
         #[no_mangle]
         pub fn ferror(__stream: *mut FILE) -> c_int;
-        pub type _IO_marker;
-
-        pub type _IO_codecvt;
-
-        pub type _IO_wide_data;
     }
     pub type FILE = _IO_FILE;
     pub type _IO_lock_t = ();
@@ -58,7 +53,7 @@ pub use ::rexpat::expat_h::{
 };
 pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, FILE,
+    _IO_lock_t, __off64_t, __off_t, FILE,
 };
 
 /* Read an XML document from standard input and print an element
@@ -73,6 +68,7 @@ pub use ::rexpat::stdlib::{
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining

@@ -1,3 +1,4 @@
+/* Copyright (c) 2020 Immunant, Inc. */
 #![allow(clippy::missing_safety_doc)]
 #![allow(dead_code)]
 #![allow(mutable_transmutes)]
@@ -8,7 +9,6 @@
 #![allow(unused_mut)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(const_transmute)]
-#![feature(extern_types)]
 #![feature(label_break_value)]
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]
@@ -24,7 +24,6 @@ pub mod expat_config_h;
 pub mod expat_external_h;
 pub mod expat_h;
 pub mod filemap_h;
-pub mod internal;
 pub mod siphash_h;
 pub mod stdbool_h;
 pub mod stddef_h;

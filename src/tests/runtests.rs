@@ -1,3 +1,35 @@
+/* Run the Expat test suite
+                            __  __            _
+                         ___\ \/ /_ __   __ _| |_
+                        / _ \\  /| '_ \ / _` | __|
+                       |  __//  \| |_) | (_| | |_
+                        \___/_/\_\ .__/ \__,_|\__|
+                                 |_| XML parser
+
+   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+   Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
+   Licensed under the MIT license:
+
+   Permission is  hereby granted,  free of charge,  to any  person obtaining
+   a  copy  of  this  software   and  associated  documentation  files  (the
+   "Software"),  to  deal in  the  Software  without restriction,  including
+   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+   distribute, sublicense, and/or sell copies of the Software, and to permit
+   persons  to whom  the Software  is  furnished to  do so,  subject to  the
+   following conditions:
+
+   The above copyright  notice and this permission notice  shall be included
+   in all copies or substantial portions of the Software.
+
+   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 #![allow(
     dead_code,
     mutable_transmutes,
@@ -11,7 +43,6 @@
 #![feature(
     const_raw_ptr_to_usize_cast,
     const_transmute,
-    extern_types,
     label_break_value,
     main,
     ptr_wrapping_offset_from,
@@ -465,7 +496,7 @@ pub use crate::siphash_h::{
 };
 pub use crate::stddef_h::{ptrdiff_t, size_t};
 pub use crate::stdlib::{
-    _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __off64_t, __off_t, __uint64_t, intptr_t,
+    _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
     uint64_t, FILE,
 };
 
@@ -615,37 +646,6 @@ pub struct DataIssue240 {
     pub parser: XML_Parser,
     pub deep: c_int,
 }
-/* Run the Expat test suite
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 /* ptrdiff_t */
 /* intptr_t uint64_t */
 /* XML_UNICODE */
@@ -23456,47 +23456,6 @@ unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
     return s;
 }
 
-unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
-    let mut i: c_int = 0;
-    let mut nf: c_int = 0;
-    let mut verbosity: c_int = CK_NORMAL;
-    let mut s: *mut crate::minicheck::Suite = make_suite();
-    let mut sr: *mut crate::minicheck::SRunner = crate::minicheck::srunner_create(s);
-    /* run the tests for internal helper functions */
-    testhelper_is_whitespace_normalized();
-    i = 1;
-    while i < argc {
-        let mut opt: *mut c_char = *argv.offset(i as isize);
-        if strcmp(opt, b"-v\x00".as_ptr() as *const c_char) == 0
-            || strcmp(opt, b"--verbose\x00".as_ptr() as *const c_char) == 0
-        {
-            verbosity = crate::minicheck::CK_VERBOSE
-        } else if strcmp(opt, b"-q\x00".as_ptr() as *const c_char) == 0
-            || strcmp(opt, b"--quiet\x00".as_ptr() as *const c_char) == 0
-        {
-            verbosity = CK_SILENT
-        } else {
-            fprintf(
-                stderr,
-                b"runtests: unknown option \'%s\'\n\x00".as_ptr() as *const c_char,
-                opt,
-            );
-            return 2i32;
-        }
-        i += 1
-    }
-    if verbosity != CK_SILENT {
-        printf(
-            b"Expat version: %s\n\x00".as_ptr() as *const c_char,
-            XML_ExpatVersion(),
-        );
-    }
-    crate::minicheck::srunner_run_all(sr, verbosity);
-    nf = crate::minicheck::srunner_ntests_failed(sr);
-    crate::minicheck::srunner_free(sr);
-    return if nf == 0 { EXIT_SUCCESS } else { EXIT_FAILURE };
-}
-#[main]
 pub fn main() {
     let mut args: Vec<*mut libc::c_char> = Vec::new();
     for arg in ::std::env::args() {
@@ -23507,5 +23466,53 @@ pub fn main() {
         );
     }
     args.push(::std::ptr::null_mut());
-    unsafe { ::std::process::exit(main_0((args.len() - 1) as libc::c_int, args.as_mut_ptr())) }
+    let argc: c_int = (args.len() - 1) as c_int; 
+    let mut argv: *mut *mut c_char = args.as_mut_ptr();
+
+    unsafe {
+        let mut i: c_int = 1;
+        let mut verbosity: c_int = CK_NORMAL;
+        let mut s: *mut crate::minicheck::Suite = make_suite();
+        let mut sr: *mut crate::minicheck::SRunner = crate::minicheck::srunner_create(s);
+        /* run the tests for internal helper functions */
+        testhelper_is_whitespace_normalized();
+        while i < argc {
+            let mut opt: *mut c_char = *argv.offset(i as isize);
+            if strcmp(opt, b"-v\x00".as_ptr() as *const c_char) == 0
+                || strcmp(opt, b"--verbose\x00".as_ptr() as *const c_char) == 0
+            {
+                verbosity = crate::minicheck::CK_VERBOSE
+            } else if strcmp(opt, b"-q\x00".as_ptr() as *const c_char) == 0
+                || strcmp(opt, b"--quiet\x00".as_ptr() as *const c_char) == 0
+            {
+                verbosity = CK_SILENT
+            } else {
+                fprintf(
+                    stderr,
+                    b"runtests: unknown option \'%s\'\n\x00".as_ptr() as *const c_char,
+                    opt,
+                );
+                ::std::process::exit(2);
+            }
+            i += 1
+        }
+        if verbosity != CK_SILENT {
+            printf(
+                b"Expat version: %s\n\x00".as_ptr() as *const c_char,
+                XML_ExpatVersion(),
+            );
+        }
+        crate::minicheck::srunner_run_all(sr, verbosity);
+        let nf = crate::minicheck::srunner_ntests_failed(sr);
+        crate::minicheck::srunner_free(sr);
+        ::std::process::exit(if nf == 0 { EXIT_SUCCESS } else { EXIT_FAILURE });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn runtests() {
+        crate::main();
+    }
 }

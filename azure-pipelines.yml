@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+    - master
+    - feature/ci-dev
+  paths:
+    exclude:
+    - examples/*
+    - docker/*
+
+
+jobs:
+- job: Linux
+  timeoutInMinutes: 120
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  strategy:
+    matrix:
+      arch:
+        containerImage: immunant/rexpat:latest    
+  container: $[ variables['containerImage'] ]
+  steps:
+  - checkout: self
+    submodules: true
+    fetchDepth: 1
+  - script: |
+      # rust was installed for the `docker` user, not the user azure creates
+      # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
+      # NOTE: $HOME is not set correctly for the azure user; don't rely on it.
+      export PATH="/home/docker/.cargo/bin:$PATH"
+      export RUSTUP_HOME=/home/docker/.rustup
+      export CARGO_HOME=$AGENT_TEMPDIRECTORY/.cargo
+      cargo build
+    displayName: 'Cargo build rexpat'
+  - script: |
+      # rust was installed for the `docker` user, not the user azure creates
+      # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
+      # NOTE: $HOME is not set correctly for the azure user; don't rely on it.
+      export PATH="/home/docker/.cargo/bin:$PATH"
+      export RUSTUP_HOME=/home/docker/.rustup
+      export CARGO_HOME=$AGENT_TEMPDIRECTORY/.cargo
+      cargo test
+    displayName: 'Cargo test rexpat'
+  - script: |
+      # rust was installed for the `docker` user, not the user azure creates
+      # but cargo and rustup can be controlled via $CARGO_HOME and $RUSTUP_HOME.
+      # NOTE: $HOME is not set correctly for the azure user; don't rely on it.
+      export PATH="/home/docker/.cargo/bin:$PATH"
+      export RUSTUP_HOME=/home/docker/.rustup
+      export CARGO_HOME=$AGENT_TEMPDIRECTORY/.cargo
+      ./test_w3c.sh
+    displayName: 'Run W3C XML test suite'
