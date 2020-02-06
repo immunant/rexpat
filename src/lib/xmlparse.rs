@@ -1523,8 +1523,9 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
 ) -> XML_Parser {
-    // FIXME
-    assert!(memsuite.is_none());
+    if memsuite.is_some() {
+        unimplemented!("custom memory allocators are not supported");
+    }
     XML_ParserStruct::create(encodingName, nameSep, NULL as *mut DTD)
 }
 
