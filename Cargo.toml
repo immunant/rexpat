@@ -1,5 +1,5 @@
 [package]
-name = "libexpat-rs"
+name = "rexpat"
 authors = ["C2Rust"]
 version = "0.0.0"
 publish = false
@@ -7,16 +7,8 @@ edition = "2018"
 autobins = false
 
 [lib]
-name = "expat_rs"
+name = "rexpat"
 crate-type = ["staticlib", "rlib", "cdylib"]
-
-[[bin]]
-path = "src/examples/outline.rs"
-name = "outline"
-
-[[bin]]
-path = "src/examples/elements.rs"
-name = "elements"
 
 [[bin]]
 path = "src/xmlwf/xmlwf.rs"

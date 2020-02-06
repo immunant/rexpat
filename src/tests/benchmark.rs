@@ -18,25 +18,25 @@
 
 use std::mem;
 use libc::{exit, free, printf};
-use expat_rs::expat_h::XML_ParserStruct;
-use expat_rs::lib::xmlparse::{
+use rexpat::expat_h::XML_ParserStruct;
+use rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
     XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
 };
-use expat_rs::stdlib::{fclose, fopen, fprintf, fread, malloc, _IO_FILE};
+use rexpat::stdlib::{fclose, fopen, fprintf, fread, malloc, _IO_FILE};
 use std::ffi::CString;
 use std::ptr::null_mut;
 use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void};
 
-pub use expat_rs::expat_external_h::{XML_Char, XML_LChar, XML_Size};
-pub use expat_rs::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
-pub use expat_rs::stddef_h::{size_t, NULL};
-pub use expat_rs::stdlib::{
+pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
+pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
+pub use rexpat::stddef_h::{size_t, NULL};
+pub use rexpat::stdlib::{
     _IO_codecvt, _IO_lock_t, _IO_marker, _IO_wide_data, __blkcnt_t, __blksize_t, __clock_t,
     __dev_t, __gid_t, __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __syscall_slong_t,
     __time_t, __uid_t, __xstat, clock_t, CLOCKS_PER_SEC, FILE, _STAT_VER, _STAT_VER_LINUX,
 };
-use expat_rs::stdlib::{clock, stderr};
+use rexpat::stdlib::{clock, stderr};
 pub use libc::{atoi, stat};
 /*
                             __  __            _

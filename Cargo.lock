@@ -13,15 +13,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
 
 [[package]]
-name = "libexpat-rs"
-version = "0.0.0"
-dependencies = [
- "alloc-wg",
- "libc",
- "wchar",
-]
-
-[[package]]
 name = "proc-macro-hack"
 version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -48,6 +39,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "053a8c8bcc71fcce321828dc897a98ab9760bef03a4fc36693c231e5b3216cfe"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "rexpat"
+version = "0.0.0"
+dependencies = [
+ "alloc-wg",
+ "libc",
+ "wchar",
 ]
 
 [[package]]

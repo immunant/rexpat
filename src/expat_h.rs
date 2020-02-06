@@ -425,6 +425,7 @@ pub struct XML_Expat_Version {
     pub minor: c_int,
     pub micro: c_int,
 }
+
 /* Added in Expat 1.95.5. */
 pub type XML_FeatureEnum = c_uint;
 pub const XML_FEATURE_END: XML_FeatureEnum = 0;
@@ -447,9 +448,3 @@ pub struct XML_Feature {
 }
 /* Additional features must be added to the end of this enum. */
 
-/* Expat follows the semantic versioning convention.
-   See http://semver.org.
-*/
-pub const XML_MAJOR_VERSION: c_int = 2;
-pub const XML_MINOR_VERSION: c_int = 2;
-pub const XML_MICRO_VERSION: c_int = 9;
