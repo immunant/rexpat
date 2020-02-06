@@ -392,7 +392,7 @@ fn test_copy_string() {
         pool.copyString(S.as_ptr())
     };
 
-    assert_eq!(new_string.unwrap(), &[A, C, D, D, C, NULL]);
+    assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
     assert!(pool.appendChar(B));
     assert_eq!(pool.getBumpVec().as_slice(), [B]);
 
@@ -400,7 +400,7 @@ fn test_copy_string() {
         pool.copyStringN(S.as_ptr(), 4)
     };
 
-    assert_eq!(new_string2.unwrap(), &[B, C, D, D, C]);
+    assert_eq!(new_string2.unwrap(), [B, C, D, D, C]);
 }
 
 #[test]
@@ -416,4 +416,6 @@ fn test_store_string() {
     };
 
     assert_eq!(&*string.unwrap(), &[C, D, D, NULL]);
+    assert!(pool.appendChar(A));
+    assert_eq!(pool.getBumpVec().as_slice(), [A]);
 }
