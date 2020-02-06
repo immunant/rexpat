@@ -4725,7 +4725,7 @@ impl XML_ParserStruct {
                     ];
 
                     *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
-                    if self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
+                    if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
                         return XML_ERROR_NO_MEMORY;
@@ -4747,7 +4747,7 @@ impl XML_ParserStruct {
 
                         if self.m_ns_triplets != 0 { /* append namespace separator and prefix */
                             *self.m_tempPool.ptr.offset(-1) = self.m_namespaceSeparator;
-                            if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
+                            if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                                 !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                             {
                                 return XML_ERROR_NO_MEMORY;
@@ -4755,7 +4755,7 @@ impl XML_ParserStruct {
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
+                        if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                             !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                         {
                             return XML_ERROR_NO_MEMORY;
@@ -6239,10 +6239,10 @@ impl XML_ParserStruct {
                                 enumValueStart.as_ptr()
                             }
                         }
-                        if self.m_tempPool.appendString(prefix) {
+                        if !self.m_tempPool.appendString(prefix) {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        if self.m_tempPool.append(enc, s, next).is_null() {
+                        if !self.m_tempPool.append(enc, s, next) {
                             return XML_ERROR_NO_MEMORY;
                         }
                         self.m_declAttributeType = self.m_tempPool.start;
@@ -7623,7 +7623,7 @@ unsafe extern "C" fn appendAttributeValue(
                 }
             }
             super::xmltok::XML_TOK_DATA_CHARS => {
-                if (*pool).append(enc, ptr, next).is_null() {
+                if !(*pool).append(enc, ptr, next) {
                     return XML_ERROR_NO_MEMORY;
                 }
                 current_block_62 = 11796148217846552555;
@@ -7920,7 +7920,7 @@ unsafe extern "C" fn storeEntityValue(
                 break;
             }
             super::xmltok::XML_TOK_ENTITY_REF | super::xmltok::XML_TOK_DATA_CHARS => {
-                if (*pool).append(enc, entityTextPtr, next).is_null() {
+                if !(*pool).append(enc, entityTextPtr, next) {
                     result = XML_ERROR_NO_MEMORY;
                     break;
                 } else {
@@ -9212,9 +9212,9 @@ impl STRING_POOL {
         enc: &ENCODING,
         mut ptr: *const c_char,
         end: *const c_char,
-    ) -> *mut XML_Char {
+    ) -> bool {
         if self.ptr.is_null() && self.grow() == 0 {
-            return NULL as *mut XML_Char;
+            return false;
         }
         loop {
             let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
@@ -9230,10 +9230,10 @@ impl STRING_POOL {
                 break;
             }
             if self.grow() == 0 {
-                return NULL as *mut XML_Char;
+                return false;
             }
         }
-        self.start
+        !self.start.is_null()
     }
 
     unsafe fn copyString(
@@ -9306,15 +9306,15 @@ impl STRING_POOL {
     unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
             if !self.appendChar(*s) {
-                return true;
+                return false;
             }
             s = s.offset(1)
         }
-        self.start.is_null()
+        !self.start.is_null()
     }
 
     unsafe fn storeString(&mut self, enc: &ENCODING, ptr: *const c_char, end: *const c_char) -> *mut XML_Char {
-        if self.append(enc, ptr, end).is_null() {
+        if !self.append(enc, ptr, end) {
             return NULL as *mut XML_Char;
         }
         if self.ptr == self.end as *mut XML_Char && self.grow() == 0 {
