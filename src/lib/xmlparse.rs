@@ -2955,7 +2955,7 @@ impl XML_ParserStruct {
             }
             neededSize += keep;
             /* defined XML_CONTEXT_BYTES */
-            if neededSize as c_long
+            if (neededSize as c_long)
                 <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) as c_long
             {
                 if (keep as c_long)
