@@ -1535,12 +1535,8 @@ impl XML_ParserStruct {
         parser.m_nsAttsVersion = 0;
         parser.m_nsAttsPower = 0;
         parser.m_protocolEncodingName = NULL as *const XML_Char;
-
-        if let XML_ParserStruct {ref mut m_tempPool, ref mut m_temp2Pool, ..} = &mut *parser {
-            m_tempPool.init();
-            m_temp2Pool.init();
-        };
-
+        parser.m_tempPool.init();
+        parser.m_temp2Pool.init();
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
             return ptr::null_mut();
