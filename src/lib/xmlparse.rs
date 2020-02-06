@@ -988,16 +988,20 @@ macro_rules! hash_insert {
     ($map:expr, $key:expr, $et:ident) => {{
         let __key = $key;
         let __hk = HashKey::from(__key);
-        if !$map.contains_key(&__hk) {
-            if $map.try_reserve(1).is_ok() {
+        $map.get_mut(&__hk)
+            .map(|x| x.as_mut() as *mut $et)
+            .unwrap_or_else(|| {
+                if $map.try_reserve(1).is_err() {
+                    return ptr::null_mut();
+                }
+
                 let v = $et { name: __key, ..std::mem::zeroed() };
                 if let Ok(b) = Box::try_new(v) {
-                    $map.insert(__hk.clone(), b);
+                    $map.entry(__hk).or_insert(b).as_mut() as *mut $et
+                } else {
+                    ptr::null_mut()
                 }
-            }
-        }
-        $map.get_mut(&__hk)
-            .map_or_else(std::ptr::null_mut, |x| x.as_mut())
+            })
     }};
 }
 
