@@ -277,6 +277,13 @@ impl<'a, T> ops::DerefMut for ExpatBufRefMut<'a, T> {
     }
 }
 
+/// Create a null-terminated XML_Char array from ASCII_ literals
+macro_rules! XML_STR {
+    [$($char:ident),* $(,)*] => {
+        [$( $char as XML_Char, )* 0,]
+    };
+}
+
 impl STRING_POOL {
     #[inline]
     unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
@@ -1359,48 +1366,12 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
     )
 }
 
-const implicitContext: [XML_Char; 41] = [
-    ASCII_x as XML_Char,
-    ASCII_m as XML_Char,
-    ASCII_l as XML_Char,
-    ASCII_EQUALS as XML_Char,
-    ASCII_h as XML_Char,
-    ASCII_t as XML_Char,
-    ASCII_t as XML_Char,
-    ASCII_p as XML_Char,
-    ASCII_COLON as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_PERIOD as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_3 as XML_Char,
-    ASCII_PERIOD as XML_Char,
-    ASCII_o as XML_Char,
-    ASCII_r as XML_Char,
-    ASCII_g as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_X as XML_Char,
-    ASCII_M as XML_Char,
-    ASCII_L as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_1 as XML_Char,
-    ASCII_9 as XML_Char,
-    ASCII_9 as XML_Char,
-    ASCII_8 as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_n as XML_Char,
-    ASCII_a as XML_Char,
-    ASCII_m as XML_Char,
-    ASCII_e as XML_Char,
-    ASCII_s as XML_Char,
-    ASCII_p as XML_Char,
-    ASCII_a as XML_Char,
-    ASCII_c as XML_Char,
-    ASCII_e as XML_Char,
-    '\u{0}' as XML_Char,
+const implicitContext: [XML_Char; 41] = XML_STR![
+    ASCII_x, ASCII_m, ASCII_l, ASCII_EQUALS, ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON,
+    ASCII_SLASH, ASCII_SLASH, ASCII_w, ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3,
+    ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g, ASCII_SLASH, ASCII_X, ASCII_M, ASCII_L, ASCII_SLASH,
+    ASCII_1, ASCII_9, ASCII_9, ASCII_8, ASCII_SLASH, ASCII_n, ASCII_a, ASCII_m, ASCII_e, ASCII_s,
+    ASCII_p, ASCII_a, ASCII_c, ASCII_e,
 ];
 
 /* To avoid warnings about unused functions: */
@@ -5104,76 +5075,18 @@ unsafe extern "C" fn addBinding(
     mut uri: *const XML_Char,
     mut bindingsPtr: *mut *mut BINDING,
 ) -> XML_Error {
-    static mut xmlNamespace: [XML_Char; 37] = [
-        ASCII_h as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_COLON as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_3 as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_o as XML_Char,
-        ASCII_r as XML_Char,
-        ASCII_g as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_X as XML_Char,
-        ASCII_M as XML_Char,
-        ASCII_L as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_1 as XML_Char,
-        ASCII_9 as XML_Char,
-        ASCII_9 as XML_Char,
-        ASCII_8 as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_n as XML_Char,
-        ASCII_a as XML_Char,
-        ASCII_m as XML_Char,
-        ASCII_e as XML_Char,
-        ASCII_s as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_a as XML_Char,
-        ASCII_c as XML_Char,
-        ASCII_e as XML_Char,
-        '\u{0}' as XML_Char,
+    const xmlNamespace: [XML_Char; 37] = XML_STR![
+        ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON, ASCII_SLASH, ASCII_SLASH, ASCII_w,
+        ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3, ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g,
+        ASCII_SLASH, ASCII_X, ASCII_M, ASCII_L, ASCII_SLASH, ASCII_1, ASCII_9, ASCII_9, ASCII_8,
+        ASCII_SLASH, ASCII_n, ASCII_a, ASCII_m, ASCII_e, ASCII_s, ASCII_p, ASCII_a, ASCII_c,
+        ASCII_e,
     ];
-    static mut xmlnsNamespace: [XML_Char; 30] = [
-        ASCII_h as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_COLON as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_3 as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_o as XML_Char,
-        ASCII_r as XML_Char,
-        ASCII_g as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_2 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_x as XML_Char,
-        ASCII_m as XML_Char,
-        ASCII_l as XML_Char,
-        ASCII_n as XML_Char,
-        ASCII_s as XML_Char,
-        ASCII_SLASH as XML_Char,
-        '\u{0}' as XML_Char,
+    const xmlnsNamespace: [XML_Char; 30] = XML_STR![
+        ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON, ASCII_SLASH, ASCII_SLASH, ASCII_w,
+        ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3, ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g,
+        ASCII_SLASH, ASCII_2, ASCII_0, ASCII_0, ASCII_0, ASCII_SLASH, ASCII_x, ASCII_m, ASCII_l,
+        ASCII_n, ASCII_s, ASCII_SLASH,
     ];
     let mut mustBeXML: XML_Bool = XML_FALSE;
     let mut isXML: XML_Bool = XML_TRUE;
@@ -6009,93 +5922,25 @@ impl XML_ParserStruct {
         mut allowClosingDoctype: XML_Bool,
     ) -> XML_Error {
         let mut current_block: u64;
-        static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH as XML_Char, '\u{0}' as XML_Char];
-        /* XML_DTD */
-        static mut atypeCDATA: [XML_Char; 6] = [
-            ASCII_C as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_A as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_A as XML_Char,
-            '\u{0}' as XML_Char,
+        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH];
+        const atypeCDATA: [XML_Char; 6] = XML_STR![ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A];
+        const atypeID: [XML_Char; 3] = XML_STR![ASCII_I, ASCII_D];
+        const atypeIDREF: [XML_Char; 6] = XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F];
+        const atypeIDREFS: [XML_Char; 7] =
+            XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F, ASCII_S];
+        const atypeENTITY: [XML_Char; 7] =
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_Y];
+        const atypeENTITIES: [XML_Char; 9] =
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_I, ASCII_E, ASCII_S];
+        const atypeNMTOKEN: [XML_Char; 8] =
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N];
+        const atypeNMTOKENS: [XML_Char; 9] =
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N, ASCII_S];
+        const notationPrefix: [XML_Char; 10] = XML_STR![
+            ASCII_N, ASCII_O, ASCII_T, ASCII_A, ASCII_T, ASCII_I, ASCII_O, ASCII_N, ASCII_LPAREN
         ];
-        static mut atypeID: [XML_Char; 3] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeIDREF: [XML_Char; 6] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_R as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_F as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeIDREFS: [XML_Char; 7] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_R as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_F as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeENTITY: [XML_Char; 7] = [
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_Y as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeENTITIES: [XML_Char; 9] = [
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeNMTOKEN: [XML_Char; 8] = [
-            ASCII_N as XML_Char,
-            ASCII_M as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_K as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeNMTOKENS: [XML_Char; 9] = [
-            ASCII_N as XML_Char,
-            ASCII_M as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_K as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut notationPrefix: [XML_Char; 10] = [
-            ASCII_N as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_A as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_LPAREN as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE as XML_Char, '\u{0}' as XML_Char];
-        static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN as XML_Char, '\u{0}' as XML_Char];
+        const enumValueSep: [XML_Char; 2] = XML_STR![ASCII_PIPE];
+        const enumValueStart: [XML_Char; 2] = XML_STR![ASCII_LPAREN];
         /* save one level of indirection */
         let dtd: *mut DTD = self.m_dtd;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;

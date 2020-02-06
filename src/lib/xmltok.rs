@@ -3068,49 +3068,22 @@ unsafe extern "C" fn parsePseudoAttribute<'a>(
     return 1;
 }
 
-static mut KW_version: [c_char; 8] = [
-    ASCII_v,
-    ASCII_e,
-    ASCII_r,
-    ASCII_s,
-    ASCII_i,
-    ASCII_o,
-    ASCII_n,
-    '\u{0}' as c_char,
+const KW_version: [c_char; 8] =
+    [ASCII_v, ASCII_e, ASCII_r, ASCII_s, ASCII_i, ASCII_o, ASCII_n, 0];
+
+const KW_encoding: [c_char; 9] =
+    [ASCII_e, ASCII_n, ASCII_c, ASCII_o, ASCII_d, ASCII_i, ASCII_n, ASCII_g, 0];
+
+const KW_standalone: [c_char; 11] = [
+    ASCII_s, ASCII_t, ASCII_a, ASCII_n, ASCII_d, ASCII_a, ASCII_l, ASCII_o, ASCII_n, ASCII_e, 0
 ];
 
-static mut KW_encoding: [c_char; 9] = [
-    ASCII_e,
-    ASCII_n,
-    ASCII_c,
-    ASCII_o,
-    ASCII_d,
-    ASCII_i,
-    ASCII_n,
-    ASCII_g,
-    '\u{0}' as c_char,
-];
+const KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, 0];
 
-static mut KW_standalone: [c_char; 11] = [
-    ASCII_s,
-    ASCII_t,
-    ASCII_a,
-    ASCII_n,
-    ASCII_d,
-    ASCII_a,
-    ASCII_l,
-    ASCII_o,
-    ASCII_n,
-    ASCII_e,
-    '\u{0}' as c_char,
-];
-
-static mut KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, '\u{0}' as c_char];
-
-static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
+const KW_no: [c_char; 3] = [ASCII_n, ASCII_o, 0];
 
 #[cfg(feature = "mozilla")]
-static mut KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, '\u{0}' as c_char];
+const KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, 0];
 
 unsafe extern "C" fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
@@ -3403,86 +3376,35 @@ pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
 //     };
 // }
 
-static mut KW_ISO_8859_1: [c_char; 11] = [
-    ASCII_I,
-    ASCII_S,
-    ASCII_O,
-    ASCII_MINUS,
-    ASCII_8,
-    ASCII_8,
-    ASCII_5,
-    ASCII_9,
-    ASCII_MINUS,
-    ASCII_1,
-    '\u{0}' as c_char,
+const KW_ISO_8859_1: [c_char; 11] = [
+    ASCII_I, ASCII_S, ASCII_O, ASCII_MINUS, ASCII_8, ASCII_8, ASCII_5, ASCII_9, ASCII_MINUS,
+    ASCII_1, 0,
 ];
 
-static mut KW_US_ASCII: [c_char; 9] = [
-    ASCII_U,
-    ASCII_S,
-    ASCII_MINUS,
-    ASCII_A,
-    ASCII_S,
-    ASCII_C,
-    ASCII_I,
-    ASCII_I,
-    '\u{0}' as c_char,
-];
+const KW_US_ASCII: [c_char; 9] =
+    [ASCII_U, ASCII_S, ASCII_MINUS, ASCII_A, ASCII_S, ASCII_C, ASCII_I, ASCII_I, 0];
 
-static mut KW_UTF_8: [c_char; 6] = [
-    ASCII_U,
-    ASCII_T,
-    ASCII_F,
-    ASCII_MINUS,
-    ASCII_8,
-    '\u{0}' as c_char,
-];
+const KW_UTF_8: [c_char; 6] =
+    [ASCII_U, ASCII_T, ASCII_F, ASCII_MINUS, ASCII_8, 0];
 
-static mut KW_UTF_16: [c_char; 7] = [
-    ASCII_U,
-    ASCII_T,
-    ASCII_F,
-    ASCII_MINUS,
-    ASCII_1,
-    ASCII_6,
-    '\u{0}' as c_char,
-];
+const KW_UTF_16: [c_char; 7] =
+    [ASCII_U, ASCII_T, ASCII_F, ASCII_MINUS, ASCII_1, ASCII_6, 0];
 
-static mut KW_UTF_16BE: [c_char; 9] = [
-    ASCII_U,
-    ASCII_T,
-    ASCII_F,
-    ASCII_MINUS,
-    ASCII_1,
-    ASCII_6,
-    ASCII_B,
-    ASCII_E,
-    '\u{0}' as c_char,
-];
+const KW_UTF_16BE: [c_char; 9] =
+    [ASCII_U, ASCII_T, ASCII_F, ASCII_MINUS, ASCII_1, ASCII_6, ASCII_B, ASCII_E, 0];
 
-static mut KW_UTF_16LE: [c_char; 9] = [
-    ASCII_U,
-    ASCII_T,
-    ASCII_F,
-    ASCII_MINUS,
-    ASCII_1,
-    ASCII_6,
-    ASCII_L,
-    ASCII_E,
-    '\u{0}' as c_char,
-];
+const KW_UTF_16LE: [c_char; 9] =
+    [ASCII_U, ASCII_T, ASCII_F, ASCII_MINUS, ASCII_1, ASCII_6, ASCII_L, ASCII_E, 0];
 
 unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
-    static mut encodingNames: [*const c_char; 6] = unsafe {
-        [
-            KW_ISO_8859_1.as_ptr(),
-            KW_US_ASCII.as_ptr(),
-            KW_UTF_8.as_ptr(),
-            KW_UTF_16.as_ptr(),
-            KW_UTF_16BE.as_ptr(),
-            KW_UTF_16LE.as_ptr(),
-        ]
-    };
+    const encodingNames: [*const c_char; 6] = [
+        KW_ISO_8859_1.as_ptr(),
+        KW_US_ASCII.as_ptr(),
+        KW_UTF_8.as_ptr(),
+        KW_UTF_16.as_ptr(),
+        KW_UTF_16BE.as_ptr(),
+        KW_UTF_16LE.as_ptr(),
+    ];
     let mut i: c_int = 0;
     if name.is_null() {
         return NO_ENC;
