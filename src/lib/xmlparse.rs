@@ -398,13 +398,6 @@ pub enum EncodingType {
     Internal,
 }
 
-pub enum OldEncoding {
-    Global(&'static dyn XmlEncoding),
-    Init(Box<InitEncoding>),
-    Unknown(Box<UnknownEncoding>),
-    Internal(&'static dyn XmlEncoding),
-}
-
 impl EncodingType {
     fn is_internal(&self) -> bool {
         match self {
