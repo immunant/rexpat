@@ -876,6 +876,9 @@ macro_rules! hash_lookup {
 #[repr(C)]
 #[derive(Clone)]
 pub struct DTD {
+    // TODO: get rid of the `Box`es to eliminate the extra indirection;
+    // for now, we can keep them since they're equivalent to the C code's
+    // structure anyway
     pub generalEntities: HashMap<HashKey, Box<ENTITY>>,
     pub elementTypes: HashMap<HashKey, Box<ELEMENT_TYPE>>,
     pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
