@@ -27,8 +27,9 @@ RUN apt-get update -qq && \
     git                   \
     python3.7-minimal     \
     libcap-dev            \
-    libtool-bin
-RUN apt-get build-dep -qq squid git    
+    libtool-bin           \
+    libsqlite3-dev
+RUN apt-get build-dep -qq squid php
 # Ubuntu 18.04 ships with Python3.6 by default which triggers a UnicodeException
 # in the W3C testsuite so we update the default python3 to Python3.7.
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100
@@ -44,16 +45,18 @@ RUN echo "source ~/.cargo/env" >> .bashrc
 
 ENV TMP=/tmp
 ENV XML_TEST_TMP=${TMP}/libexpat
+ENV XML_TEST_URL=http://www.w3.org/XML/Test/xmlts20020606.tar
 ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20020606.tar
 RUN mkdir -p "${XML_TEST_TMP}" && \
-    curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "${XML_ARCHIVE}" && \
+    curl "${XML_TEST_URL}" --silent --output "${XML_ARCHIVE}" && \
     tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
     rm "${XML_ARCHIVE}"
 
 ENV XML_TEST_TMP=${TMP}/libexpat/xml-test-suite-2013
+ENV XML_TEST_URL=https://www.w3.org/XML/Test/xmlts20130923.tar.gz
 ENV XML_ARCHIVE=${XML_TEST_TMP}/xmlts20130923.tar.gz
 RUN mkdir -p "${XML_TEST_TMP}" && \
-    curl https://www.w3.org/XML/Test/xmlts20130923.tar.gz --silent --output "${XML_ARCHIVE}" && \
+    curl "${XML_TEST_URL}" --silent --output "${XML_ARCHIVE}" && \
     tar -C "${XML_TEST_TMP}"  -xf "${XML_ARCHIVE}" && \
     rm "${XML_ARCHIVE}"    
 
@@ -75,6 +78,7 @@ RUN curl -L ${SQUID_URL} --silent --output "${SQUID_ARCHIVE}" && \
 RUN cd ${SQUID_TMP} && ./configure --quiet --enable-esi --with-expat 
 # &&   make -j`nproc --all` check 1> build.stdout.log 2> build.stderr.log
 
+# only one binary seems to actually use libexpat, so we skip git
 # ENV GIT_TMP=${TMP}/git-2.25.0  
 # ENV GIT_URL=https://github.com/git/git/archive/v2.25.0.tar.gz
 # ENV GIT_ARCHIVE=${TMP}/git-2.25.0.tar.gz
@@ -84,6 +88,14 @@ RUN cd ${SQUID_TMP} && ./configure --quiet --enable-esi --with-expat
 # RUN cd ${GIT_TMP} && autoconf && ./configure --quiet && \
 #    make -j`nproc --all` 1> build.stdout.log 2> build.stderr.log
 
+ENV PHP_TMP=${TMP}/php-7.4.2
+ENV PHP_URL=https://www.php.net/distributions/php-7.4.2.tar.bz2
+ENV PHP_ARCHIVE=${TMP}/php-7.4.2.tar.bz2
+RUN curl -L ${PHP_URL} --silent --output "${PHP_ARCHIVE}" && \
+    tar -C /tmp -xf "${PHP_ARCHIVE}" && \
+    rm "${PHP_ARCHIVE}"
+RUN cd ${PHP_TMP} && ./configure --quiet --with-expat && \ 
+    make -j`nproc --all` 1> build.stdout.log 2> build.stderr.log
 
 ENV PATH="/home/${USER}/.cargo/bin:${PATH}"
 ENV CARGO_HOME="/tmp/.cargo"

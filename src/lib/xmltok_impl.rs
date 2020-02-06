@@ -211,33 +211,31 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             }
         }
         while HAS_CHAR!(buf, self) {
-            's_151: {
-                match self.byte_type(buf.as_ptr()) {
-                    BT_PERCNT => {
-                        REQUIRE_CHARS!(buf, 2, self);
-                        /* don't allow <!ENTITY% foo "whatever"> */
-                        match self.byte_type(buf.as_ptr().offset(self.MINBPC())) {
-                            BT_S | BT_CR | BT_LF | BT_PERCNT => {
-                                *nextTokPtr = buf.as_ptr();
-                                return XML_TOK_INVALID;
-                            }
-                            _ => {}
+            match self.byte_type(buf.as_ptr()) {
+                BT_PERCNT => {
+                    REQUIRE_CHARS!(buf, 2, self);
+                    /* don't allow <!ENTITY% foo "whatever"> */
+                    match self.byte_type(buf.as_ptr().offset(self.MINBPC())) {
+                        BT_S | BT_CR | BT_LF | BT_PERCNT => {
+                            *nextTokPtr = buf.as_ptr();
+                            return XML_TOK_INVALID;
                         }
-                    }
-                    BT_S | BT_CR | BT_LF => {}
-                    BT_NMSTRT | BT_HEX => {
-                        buf = buf.inc_start((self.MINBPC()) as isize);
-                        break 's_151;
-                    }
-                    _ => {
-                        *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID;
+                        _ => {}
                     }
                 }
-                /* fall through */
-                *nextTokPtr = buf.as_ptr();
-                return XML_TOK_DECL_OPEN;
+                BT_S | BT_CR | BT_LF => {}
+                BT_NMSTRT | BT_HEX => {
+                    buf = buf.inc_start((self.MINBPC()) as isize);
+                    continue;
+                }
+                _ => {
+                    *nextTokPtr = buf.as_ptr();
+                    return XML_TOK_INVALID;
+                }
             }
+            /* fall through */
+            *nextTokPtr = buf.as_ptr();
+            return XML_TOK_DECL_OPEN;
         }
         return XML_TOK_PARTIAL;
     }

@@ -18,9 +18,9 @@ TEST_TMP=/tmp/libexpat
 TEST_SUITE=/tmp/libexpat/xml-test-suite-2013
 ARCHIVE="$TEST_TMP/xmlts20130923.tar.gz" 
 if [ ! -d "$TEST_SUITE" ]; then
-    mkdir -p "$TEST_TMP"
+    mkdir -p "$TEST_SUITE"
     curl https://www.w3.org/XML/Test/xmlts20130923.tar.gz --silent --output "$ARCHIVE"
-    tar -C "$TEST_TMP"  -xf "$ARCHIVE"
+    tar -C "$TEST_SUITE"  -xf "$ARCHIVE"
 fi
 
 # run xmltest.sh and check against expected output
