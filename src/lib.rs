@@ -9,7 +9,6 @@
 #![allow(unused_mut)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(const_transmute)]
-#![feature(label_break_value)]
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]
 #![feature(ptr_wrapping_offset_from)]
