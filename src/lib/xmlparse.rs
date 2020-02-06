@@ -118,7 +118,7 @@ pub use crate::stdlib::{
 use crate::stdlib::{__assert_fail, malloc, memcmp, memcpy, memmove, memset, read, realloc};
 use ::libc::{self, __errno_location, close, free, getenv, getpid, open, strcmp};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
@@ -197,6 +197,12 @@ impl<'a, T> ops::Deref for ExpatBufRef<'a, T> {
 impl<'a, T> From<&'a [T]> for ExpatBufRef<'a, T> {
     fn from(s: &'a [T]) -> ExpatBufRef<'a, T> {
         ExpatBufRef(s)
+    }
+}
+
+impl<'a> From<ExpatBufRef<'a, c_char>> for ExpatBufRef<'a, c_ushort> {
+    fn from(s: ExpatBufRef<'a, c_char>) -> ExpatBufRef<'a, c_ushort> {
+        ExpatBufRef::new(s.as_ptr() as *const c_ushort, s.end() as *const c_ushort)
     }
 }
 
@@ -308,7 +314,7 @@ trait XmlHandlers {
     unsafe fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn characterData(&self, _: &[XML_Char]) -> bool;
     unsafe fn comment(&self, b: *const XML_Char) -> bool;
-    unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
+    unsafe fn default(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
     unsafe fn endCDataSection(&self) -> bool;
     unsafe fn endDoctypeDecl(&self) -> bool;
@@ -690,7 +696,7 @@ impl XmlHandlers for CXmlHandlers {
             .unwrap_or(Err(()))
     }
 
-    unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
+    unsafe fn default(&self, s: *const XML_Char, next: c_int) -> bool {
         self.m_defaultHandler.map(|handler| {
             handler(self.m_handlerArg, s, next);
 
@@ -3995,7 +4001,7 @@ impl XML_ParserStruct {
                     /* fall through */
                     let mut tag: *mut TAG = 0 as *mut TAG;
                     let mut result_0: XML_Error = XML_ERROR_NONE;
-                    let mut to_buf: ExpatBufRefMut;
+                    let mut to_buf: ExpatBufRefMut<XML_Char>;
                     if !self.m_freeTagList.is_null() {
                         tag = self.m_freeTagList;
                         self.m_freeTagList = (*self.m_freeTagList).parent
@@ -4024,7 +4030,7 @@ impl XML_ParserStruct {
                     // let mut rawNameEnd: *const c_char =
                     //     (*tag).rawName.offset((*tag).rawNameLength as isize);
                     to_buf = ExpatBufRefMut::new(
-                        (*tag).buf as *mut XML_Char,
+                        (*tag).buf as *mut ICHAR,
                         ((*tag).bufEnd as *mut ICHAR).offset(-1),
                     );
                     loop {
@@ -4035,7 +4041,7 @@ impl XML_ParserStruct {
                             &mut fromBuf,
                             &mut to_buf,
                         );
-                        convLen = to_buf.as_ptr().wrapping_offset_from((*tag).buf).try_into().unwrap();
+                        convLen = to_buf.as_ptr().wrapping_offset_from((*tag).buf as *mut XML_Char).try_into().unwrap();
                         if fromBuf.is_empty() || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
                         {
                             (*tag).name.strLen = convLen;
@@ -4052,7 +4058,7 @@ impl XML_ParserStruct {
                             (*tag).bufEnd = temp.offset(bufSize as isize);
                             to_buf = ExpatBufRefMut::new(
                                 (temp).offset(convLen as isize) as *mut XML_Char,
-                                (*tag).bufEnd,
+                                (*tag).bufEnd as *mut XML_Char,
                             );
                         }
                     }
@@ -4310,7 +4316,7 @@ impl XML_ParserStruct {
                         return XML_ERROR_NONE;
                     }
                     if self.m_handlers.hasCharacterData() {
-                        if MUST_CONVERT!(enc, s) {
+                        if MUST_CONVERT!(enc, buf.as_ptr()) {
                             let mut dataPtr = ExpatBufRefMut::new(
                                 self.m_dataBuf as *mut ICHAR,
                                 self.m_dataBufEnd as *mut ICHAR,
@@ -4323,7 +4329,7 @@ impl XML_ParserStruct {
                                 ),
                             );
                         } else {
-                            self.m_handlers.characterData(&buf);
+                            self.m_handlers.characterData(&ExpatBufRef::<XML_Char>::from(buf));
                         }
                     } else if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf);
@@ -4345,7 +4351,7 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK_DATA_CHARS => {
                     let mut handlers = self.m_handlers;
                     if handlers.hasCharacterData() {
-                        if MUST_CONVERT!(enc, s) {
+                        if MUST_CONVERT!(enc, buf.as_ptr()) {
                             loop {
                                 let mut from_buf = buf.with_end(next);
                                 let mut to_buf = ExpatBufRefMut::new(
@@ -4369,7 +4375,7 @@ impl XML_ParserStruct {
                                 *eventPP = buf.as_ptr()
                             }
                         } else {
-                            let data_buf = buf.with_end(next);
+                            let data_buf: ExpatBufRef<XML_Char> = buf.with_end(next).into();
                             handlers.characterData(&data_buf);
                         }
                     } else if self.m_handlers.hasDefault() {
@@ -5419,7 +5425,7 @@ unsafe extern "C" fn doCdataSection(
             super::xmltok::XML_TOK_DATA_CHARS => {
                 let mut handlers = (*parser).m_handlers;
                 if handlers.hasCharacterData() {
-                    if MUST_CONVERT!(enc, s) {
+                    if MUST_CONVERT!(enc, buf.as_ptr()) {
                         loop {
                             let mut from_buf = buf.with_end(next);
                             let mut to_buf = ExpatBufRefMut::new(
@@ -5447,7 +5453,7 @@ unsafe extern "C" fn doCdataSection(
                             *eventPP = buf.as_ptr()
                         }
                     } else {
-                        handlers.characterData(&buf.with_end(next));
+                        handlers.characterData(&ExpatBufRef::<XML_Char>::from(buf.with_end(next)));
                     }
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc_type, buf.with_end(next));
@@ -6028,7 +6034,7 @@ unsafe extern "C" fn prologProcessor(
 }
 
 impl XML_ParserStruct {
-    unsafe fn doProlog<'a>(
+    unsafe fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
@@ -8002,8 +8008,8 @@ unsafe extern "C" fn appendAttributeValue(
                                     EncodingType::Internal,
                                     isCdata,
                                     ExpatBufRef::new(
-                                        (*entity).textPtr,
-                                        textEnd as *mut c_char,
+                                        (*entity).textPtr as *const c_char,
+                                        textEnd as *const c_char,
                                     ),
                                     pool,
                                 );
@@ -8386,7 +8392,7 @@ unsafe extern "C" fn reportDefault(
     mut buf: ExpatBufRef,
 ) {
     let enc = (*parser).encoding(enc_type);
-    if MUST_CONVERT!(enc, s) {
+    if MUST_CONVERT!(enc, buf.as_ptr()) {
         let mut convert_res: super::xmltok::XML_Convert_Result =
             super::xmltok::XML_CONVERT_COMPLETED;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
@@ -8441,6 +8447,7 @@ unsafe extern "C" fn reportDefault(
             }
         }
     } else {
+        let buf: ExpatBufRef<XML_Char> = buf.into();
         let defaultRan = (*parser).m_handlers.default(buf.as_ptr(), buf.len().try_into().unwrap());
 
         // Previously unwrapped an Option
