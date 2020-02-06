@@ -1508,7 +1508,7 @@ impl XML_ParserStruct {
         if parser.m_atts.is_null() {
             return ptr::null_mut();
         }
-        parser.m_dataBuf = MALLOC![XML_Char; 1024];
+        parser.m_dataBuf = MALLOC![XML_Char; INIT_DATA_BUF_SIZE];
         if parser.m_dataBuf.is_null() {
             return ptr::null_mut();
         }
