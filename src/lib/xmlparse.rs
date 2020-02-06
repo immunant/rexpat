@@ -3784,7 +3784,7 @@ impl XML_ParserStruct {
                         if tag.is_null() {
                             return XML_ERROR_NO_MEMORY;
                         }
-                        (*tag).buf = MALLOC![c_char; 32];
+                        (*tag).buf = MALLOC![c_char; INIT_TAG_BUF_SIZE];
                         if (*tag).buf.is_null() {
                             FREE!(tag);
                             return XML_ERROR_NO_MEMORY;
@@ -4838,7 +4838,7 @@ impl XML_ParserStruct {
         n = i + (*binding).uriLen + prefixLen;
         if n > (*binding).uriAlloc {
             let mut p: *mut TAG = 0 as *mut TAG;
-            uri = MALLOC![XML_Char; n + 24];
+            uri = MALLOC![XML_Char; n + EXPAND_SPARE];
             if uri.is_null() {
                 return XML_ERROR_NO_MEMORY;
             }
@@ -5040,7 +5040,7 @@ unsafe extern "C" fn addBinding(
         if b.is_null() {
             return XML_ERROR_NO_MEMORY;
         }
-        (*b).uri = MALLOC![XML_Char; len + 24];
+        (*b).uri = MALLOC![XML_Char; len + EXPAND_SPARE];
         if (*b).uri.is_null() {
             FREE!(b);
             return XML_ERROR_NO_MEMORY;
@@ -9497,7 +9497,7 @@ impl XML_ParserStruct {
                 }
                 (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2u32)
             } else {
-                temp = MALLOC![CONTENT_SCAFFOLD; 32];
+                temp = MALLOC![CONTENT_SCAFFOLD; INIT_SCAFFOLD_ELEMENTS];
                 if temp.is_null() {
                     return -(1i32);
                 }
