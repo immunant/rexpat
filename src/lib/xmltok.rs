@@ -34,8 +34,10 @@
 
 /* The following token may be returned by XmlContentTok */
 
-use crate::stdlib::memcpy;
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
+use std::convert::TryInto;
+use std::ptr;
 
 #[cfg(feature = "mozilla")]
 pub mod moz_extensions;
@@ -156,15 +158,15 @@ pub const XML_CONVERT_OUTPUT_EXHAUSTED: XML_Convert_Result = 2; /* and therefore
 
 #[macro_export]
 macro_rules! XmlUtf8Convert {
-    ($enc:path, $fromP:expr, $fromLim:expr, $toP:expr, $toLim:expr $(,)?) => {
-        (*$enc).utf8Convert($fromP, $fromLim, $toP, $toLim)
+    ($enc:path, $from:expr, $to:expr $(,)?) => {
+        (*$enc).utf8Convert($from, $to)
     };
 }
 
 #[macro_export]
 macro_rules! XmlUtf16Convert {
-    ($enc:path, $fromP:expr, $fromLim:expr, $toP:expr, $toLim:expr $(,)?) => {
-        (*$enc).utf16Convert($fromP, $fromLim, $toP, $toLim)
+    ($enc:path, $from:expr, $to:expr $(,)?) => {
+        (*$enc).utf16Convert($from, $to)
     };
 }
 
@@ -177,47 +179,40 @@ pub trait XmlEncoding {
     // scanners[4]
     unsafe extern "C" fn prologTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
     unsafe extern "C" fn contentTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
     unsafe extern "C" fn cdataSectionTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
     unsafe extern "C" fn ignoreSectionTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
     // literalScanners[2]
     unsafe extern "C" fn attributeValueTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
     unsafe extern "C" fn entityValueTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
     unsafe extern "C" fn nameMatchesAscii(
         &self,
-        ptr1: *const libc::c_char,
-        end1: *const libc::c_char,
+        buf: ExpatBufRef,
         ptr2: *const libc::c_char,
     ) -> libc::c_int;
 
@@ -227,47 +222,40 @@ pub trait XmlEncoding {
 
     unsafe extern "C" fn getAtts(
         &self,
-        ptr: *const libc::c_char,
+        buf: ExpatBufRef,
         attsMax: libc::c_int,
         atts: *mut ATTRIBUTE,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn charRefNumber(&self, ptr: *const libc::c_char) -> libc::c_int;
+    unsafe extern "C" fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
 
     unsafe extern "C" fn predefinedEntityName(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
     ) -> libc::c_int;
 
     unsafe extern "C" fn updatePosition(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         pos: *mut POSITION,
     );
 
     unsafe extern "C" fn isPublicId(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         badPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'b, 'a: 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &'b mut ExpatBufRef<'a>,
+        to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result;
 
     fn minBytesPerChar(&self) -> c_int;
@@ -279,15 +267,14 @@ pub trait XmlEncoding {
     unsafe fn xmlTok(
         &self,
         state: c_int,
-        ptr: *const c_char,
-        end: *const c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const c_char,
     ) -> c_int {
         match state {
-            XML_PROLOG_STATE => self.prologTok(ptr, end, nextTokPtr),
-            XML_CONTENT_STATE => self.contentTok(ptr, end, nextTokPtr),
-            XML_CDATA_SECTION_STATE => self.cdataSectionTok(ptr, end, nextTokPtr),
-            XML_IGNORE_SECTION_STATE => self.ignoreSectionTok(ptr, end, nextTokPtr),
+            XML_PROLOG_STATE => self.prologTok(buf, nextTokPtr),
+            XML_CONTENT_STATE => self.contentTok(buf, nextTokPtr),
+            XML_CDATA_SECTION_STATE => self.cdataSectionTok(buf, nextTokPtr),
+            XML_IGNORE_SECTION_STATE => self.ignoreSectionTok(buf, nextTokPtr),
             _ => panic!("Unexpected state {}", state),
         }
     }
@@ -296,13 +283,12 @@ pub trait XmlEncoding {
     unsafe fn xmlLiteralTok(
         &self,
         literal_type: c_int,
-        ptr: *const c_char,
-        end: *const c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const c_char,
     ) -> c_int {
         match literal_type {
-            XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(ptr, end, nextTokPtr),
-            XML_ENTITY_VALUE_LITERAL => self.entityValueTok(ptr, end, nextTokPtr),
+            XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(buf, nextTokPtr),
+            XML_ENTITY_VALUE_LITERAL => self.entityValueTok(buf, nextTokPtr),
             _ => panic!("Unexpected literal type {}", literal_type),
         }
     }
@@ -322,20 +308,16 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &'b mut ExpatBufRef<'a>,
+        to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result;
 }
 
@@ -521,25 +503,21 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut,
     ) -> XML_Convert_Result {
-        utf8_toUtf8(fromP, fromLim, toP, toLim)
+        utf8_toUtf8(from_buf, to_buf)
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        utf8_toUtf16::<T>(fromP, fromLim, toP, toLim)
+        utf8_toUtf16::<T>(from_buf, to_buf)
     }
 }
 
@@ -601,25 +579,21 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut,
     ) -> XML_Convert_Result {
-        latin1_toUtf8(fromP, fromLim, toP, toLim)
+        latin1_toUtf8(from_buf, to_buf)
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        latin1_toUtf16(fromP, fromLim, toP, toLim)
+        latin1_toUtf16(from_buf, to_buf)
     }
 }
 
@@ -681,25 +655,21 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut,
     ) -> XML_Convert_Result {
-        ascii_toUtf8(fromP, fromLim, toP, toLim)
+        ascii_toUtf8(from_buf, to_buf)
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        latin1_toUtf16(fromP, fromLim, toP, toLim)
+        latin1_toUtf16(from_buf, to_buf)
     }
 }
 
@@ -777,25 +747,21 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut,
     ) -> XML_Convert_Result {
-        little2_toUtf8(fromP, fromLim, toP, toLim)
+        little2_toUtf8(from_buf, to_buf)
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        little2_toUtf16(fromP, fromLim, toP, toLim)
+        little2_toUtf16(from_buf, to_buf)
     }
 }
 
@@ -872,25 +838,21 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut,
     ) -> XML_Convert_Result {
-        big2_toUtf8(fromP, fromLim, toP, toLim)
+        big2_toUtf8(from_buf, to_buf)
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        big2_toUtf16(fromP, fromLim, toP, toLim)
+        big2_toUtf16(from_buf, to_buf)
     }
 }
 
@@ -1685,14 +1647,13 @@ impl InitEncoding {
     unsafe fn initScan(
         &self,
         mut state: c_int,
-        mut ptr: *const c_char,
-        mut end: *const c_char,
+        buf: ExpatBufRef,
         mut nextTokPtr: *mut *const c_char,
     ) -> c_int {
-        if ptr >= end {
+        if buf.is_empty() {
             return crate::xmltok_h::XML_TOK_NONE;
         }
-        if ptr.offset(1) == end {
+        if buf.len() == 1 {
             /* only a single byte available for auto-detection */
             /* FIXME */
             /* so we're parsing an external text entity... */
@@ -1702,7 +1663,7 @@ impl InitEncoding {
                 _ => {}
             }
             let mut current_block_5: u64;
-            match *ptr as c_uchar as c_int {
+            match buf[0] as c_uchar as c_int {
                 254 | 255 | 239 => {
                     /* possibly first byte of UTF-8 BOM */
                     if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
@@ -1728,11 +1689,11 @@ impl InitEncoding {
             }
         } else {
             let mut current_block_26: u64;
-            match (*ptr.offset(0) as c_uchar as c_int) << 8 | *ptr.offset(1) as c_uchar as c_int {
+            match (buf[0] as c_uchar as c_int) << 8 | buf[1] as c_uchar as c_int {
                 65279 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
                     {
-                        *nextTokPtr = ptr.offset(2);
+                        *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
                         return crate::xmltok_h::XML_TOK_BOM;
                     }
@@ -1744,13 +1705,13 @@ impl InitEncoding {
                          && state == XML_CONTENT_STATE)
                     {
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
-                        return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                        return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                     }
                 }
                 65534 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
                     {
-                        *nextTokPtr = ptr.offset(2);
+                        *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
                         return crate::xmltok_h::XML_TOK_BOM;
                     }
@@ -1780,11 +1741,11 @@ impl InitEncoding {
                     match current_block_26 {
                         10758786907990354186 => {}
                         _ => {
-                            if ptr.offset(2) == end {
+                            if buf.len() == 2 {
                                 return crate::xmltok_h::XML_TOK_PARTIAL;
                             }
-                            if *ptr.offset(2) as c_uchar as c_int == 0xbf {
-                                *nextTokPtr = ptr.offset(3);
+                            if buf[2] as c_uchar as c_int == 0xbf {
+                                *nextTokPtr = buf.as_ptr().offset(3);
                                 *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize];
                                 return crate::xmltok_h::XML_TOK_BOM;
                             }
@@ -1792,7 +1753,7 @@ impl InitEncoding {
                     }
                 }
                 _ => {
-                    if *ptr.offset(0) as c_int == '\u{0}' as i32 {
+                    if buf[0] as c_int == '\u{0}' as i32 {
                         /* 0 isn't a legal data character. Furthermore a document
                         entity can only start with ASCII characters.  So the only
                         way this can fail to be big-endian UTF-16 if it it's an
@@ -1803,9 +1764,9 @@ impl InitEncoding {
                              && self.encoding_index as c_int == UTF_16LE_ENC)
                         {
                             *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
-                            return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                            return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                         }
-                    } else if *ptr.offset(1) as c_int == '\u{0}' as i32 {
+                    } else if buf[1] as c_int == '\u{0}' as i32 {
                         /* We could recover here in the case:
                         - parsing an external entity
                         - second byte is 0
@@ -1817,14 +1778,14 @@ impl InitEncoding {
                          */
                         if !(state == XML_CONTENT_STATE) {
                             *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
-                            return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+                            return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                         }
                     }
                 }
             }
         }
         *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
-        return (**self.encPtr).xmlTok(state, ptr, end, nextTokPtr);
+        return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
     }
 
 }
@@ -1833,42 +1794,36 @@ impl XmlEncoding for InitEncoding {
     // scanners[4]
     unsafe extern "C" fn prologTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         self.initScan(
             XML_PROLOG_STATE,
-            ptr,
-            end,
+            buf,
             nextTokPtr,
         )
     }
     unsafe extern "C" fn contentTok(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         self.initScan(
             XML_CONTENT_STATE,
-            ptr,
-            end,
+            buf,
             nextTokPtr,
         )
     }
     unsafe extern "C" fn cdataSectionTok(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
     unsafe extern "C" fn ignoreSectionTok(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
@@ -1877,16 +1832,14 @@ impl XmlEncoding for InitEncoding {
     // literalScanners[2]
     unsafe extern "C" fn attributeValueTok(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
     unsafe extern "C" fn entityValueTok(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
@@ -1894,8 +1847,7 @@ impl XmlEncoding for InitEncoding {
 
     unsafe extern "C" fn nameMatchesAscii(
         &self,
-        _ptr1: *const libc::c_char,
-        _end1: *const libc::c_char,
+        _buf: ExpatBufRef,
         _ptr2: *const libc::c_char,
     ) -> libc::c_int {
         0
@@ -1911,62 +1863,55 @@ impl XmlEncoding for InitEncoding {
 
     unsafe extern "C" fn getAtts(
         &self,
-        _ptr: *const libc::c_char,
+        _buf: ExpatBufRef,
         _attsMax: libc::c_int,
         _atts: *mut ATTRIBUTE,
     ) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn charRefNumber(&self, _ptr: *const libc::c_char) -> libc::c_int {
+    unsafe extern "C" fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
         0
     }
 
     unsafe extern "C" fn predefinedEntityName(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
     ) -> libc::c_int {
         0
     }
 
     unsafe extern "C" fn updatePosition(
         &self,
-        ptr: *const libc::c_char,
-        end: *const libc::c_char,
+        buf: ExpatBufRef,
         pos: *mut POSITION,
     ) {
         utf8_encoding
             .as_ref()
             .unwrap()
-            .updatePosition(ptr, end, pos);
+            .updatePosition(buf, pos);
     }
 
     unsafe extern "C" fn isPublicId(
         &self,
-        _ptr: *const libc::c_char,
-        _end: *const libc::c_char,
+        _buf: ExpatBufRef,
         _badPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'b, 'a: 'b>(
         &self,
-        _fromP: *mut *const c_char,
-        _fromLim: *const c_char,
-        _toP: *mut *mut c_char,
-        _toLim: *const c_char,
+        _from_buf: &mut ExpatBufRef<'a>,
+        _to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result {
         0
     }
 
     unsafe extern "C" fn utf16Convert(
         &self,
-        _fromP: *mut *const c_char,
-        _fromLim: *const c_char,
-        _toP: *mut *mut c_ushort,
-        _toLim: *const c_ushort,
+        _from_buf: &mut ExpatBufRef,
+        _to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
         0
     }
@@ -2156,72 +2101,63 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert(
+    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_char,
-        toLim: *const c_char,
+        from_buf: &'b mut ExpatBufRef<'a>,
+        to: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result {
         let mut buf: [c_char; 4] = [0; 4];
         loop {
-            let mut utf8: *const c_char = 0 as *const c_char;
             let mut n: c_int = 0;
-            if *fromP == fromLim {
+            if from_buf.is_empty() {
                 return XML_CONVERT_COMPLETED;
             }
-            utf8 = self.utf8[**fromP as c_uchar as usize].as_ptr();
-            let fresh60 = utf8;
-            utf8 = utf8.offset(1);
-            n = *fresh60 as c_int;
+            let mut utf8: ExpatBufRef = self.utf8[from_buf[0] as c_uchar as usize][..].into();
+            n = utf8[0] as c_int;
+            utf8 = utf8.inc_start(1);
             if n == 0 {
                 let mut c: c_int =
-                    self.convert.expect("non-null function pointer")(self.userData, *fromP);
+                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
                 n = XmlUtf8Encode(c, buf.as_mut_ptr());
-                if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
+                if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                utf8 = buf.as_mut_ptr();
-                *fromP = (*fromP).offset(
-                    (self.types[**fromP as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as isize,
-                )
+                utf8 = buf[..].into();
+                *from_buf = from_buf.inc_start(
+                    (self.types[from_buf[0] as c_uchar as usize] as c_int
+                     - (BT_LEAD2 as c_int - 2)) as isize);
             } else {
-                if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
+                if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                *fromP = (*fromP).offset(1)
+                *from_buf = from_buf.inc_start(1);
             }
-            memcpy(*toP as *mut c_void, utf8 as *const c_void, n as c_ulong);
-            *toP = (*toP).offset(n as isize)
+            to[..n as usize].copy_from_slice(&utf8[..n as usize]);
+            to.inc_start(n as usize);
         }
     }
 
     #[inline]
     unsafe extern "C" fn utf16Convert(
         &self,
-        fromP: *mut *const c_char,
-        fromLim: *const c_char,
-        toP: *mut *mut c_ushort,
-        toLim: *const c_ushort,
+        from_buf: &mut ExpatBufRef,
+        to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        while *fromP < fromLim && *toP < toLim as *mut c_ushort {
-            let mut c: c_ushort = self.utf16[**fromP as c_uchar as usize];
+        while !from_buf.is_empty() && !to.is_empty() {
+            let mut c: c_ushort = self.utf16[from_buf[0] as c_uchar as usize];
             if c as c_int == 0 {
-                c = self.convert.expect("non-null function pointer")(self.userData, *fromP)
+                c = self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
                     as c_ushort;
-                *fromP = (*fromP).offset(
-                    (self.types[**fromP as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as isize,
-                )
+                *from_buf = (*from_buf).inc_start(
+                    (self.types[from_buf[0] as c_uchar as usize] as c_int
+                     - (BT_LEAD2 as c_int - 2)) as isize);
             } else {
-                *fromP = (*fromP).offset(1)
+                *from_buf = (*from_buf).inc_start(1)
             }
-            let fresh61 = *toP;
-            *toP = (*toP).offset(1);
-            *fresh61 = c
+            to[0] = c;
+            to.inc_start(1);
         }
-        if *toP == toLim as *mut c_ushort && *fromP < fromLim {
+        if to.is_empty() && !from_buf.is_empty() {
             return XML_CONVERT_OUTPUT_EXHAUSTED;
         } else {
             return XML_CONVERT_COMPLETED;
@@ -2292,21 +2228,23 @@ pub static mut encodings: Option<[&'static ENCODING; 7]> = None;
 
 pub unsafe extern "C" fn findEncoding(
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
-    let mut buf: [c_char; 128] = [0; 128];
-    let mut p: *mut c_char = buf.as_mut_ptr();
+    let mut out_buf: [c_char; 128] = [0; 128];
+    let mut p = ExpatBufRefMut::new(
+        out_buf.as_mut_ptr(),
+        &mut out_buf[127],
+    );
     let mut i: c_int = 0;
-    (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
-    if ptr != end {
+    (*enc).utf8Convert(&mut buf, &mut p);
+    if !buf.is_empty() {
         return None;
     }
-    *p = 0;
-    if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+    *p.as_mut_ptr() = 0;
+    if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
         return Some(enc.clone());
     }
-    i = getEncodingIndex(buf.as_mut_ptr());
+    i = getEncodingIndex(out_buf.as_ptr());
     if i == UNKNOWN_ENC {
         return None;
     }
@@ -2315,21 +2253,23 @@ pub unsafe extern "C" fn findEncoding(
 
 pub unsafe extern "C" fn findEncodingNS(
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
-    let mut buf: [c_char; 128] = [0; 128];
-    let mut p: *mut c_char = buf.as_mut_ptr();
+    let mut out_buf: [c_char; 128] = [0; 128];
+    let mut p = ExpatBufRefMut::new(
+        out_buf.as_mut_ptr(),
+        &mut out_buf[127],
+    );
     let mut i: c_int = 0;
-    (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(128).offset(-(1)));
-    if ptr != end {
+    (*enc).utf8Convert(&mut buf, &mut p);
+    if !buf.is_empty() {
         return None;
     }
-    *p = 0;
-    if streqci(buf.as_mut_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+    *p.as_mut_ptr() = 0;
+    if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
         return Some(enc.clone());
     }
-    i = getEncodingIndex(buf.as_mut_ptr());
+    i = getEncodingIndex(out_buf.as_ptr());
     if i == UNKNOWN_ENC {
         return None;
     }
@@ -2337,14 +2277,12 @@ pub unsafe extern "C" fn findEncodingNS(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlParseXmlDeclNS(
+pub unsafe extern "C" fn XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef<'a>,
     mut badPtr: *mut *const c_char,
-    mut versionPtr: *mut *const c_char,
-    mut versionEndPtr: *mut *const c_char,
+    mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: *mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: *mut c_int,
@@ -2353,11 +2291,9 @@ pub unsafe extern "C" fn XmlParseXmlDeclNS(
         Some(findEncodingNS),
         isGeneralTextEntity,
         enc,
-        ptr,
-        end,
+        buf,
         badPtr,
-        versionPtr,
-        versionEndPtr,
+        versionBuf,
         encodingName,
         encoding,
         standalone,
@@ -2365,14 +2301,12 @@ pub unsafe extern "C" fn XmlParseXmlDeclNS(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlParseXmlDecl(
+pub unsafe extern "C" fn XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef<'a>,
     mut badPtr: *mut *const c_char,
-    mut versionPtr: *mut *const c_char,
-    mut versionEndPtr: *mut *const c_char,
+    mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: *mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: *mut c_int,
@@ -2381,11 +2315,9 @@ pub unsafe extern "C" fn XmlParseXmlDecl(
         Some(findEncoding),
         isGeneralTextEntity,
         enc,
-        ptr,
-        end,
+        buf,
         badPtr,
-        versionPtr,
-        versionEndPtr,
+        versionBuf,
         encodingName,
         encoding,
         standalone,
@@ -2499,17 +2431,16 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 #[no_mangle]
 
 pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
-    mut from: *const c_char,
-    mut fromLimRef: *mut *const c_char,
+    from_buf: &mut ExpatBufRef,
 ) {
-    let mut fromLim: *const c_char = *fromLimRef;
+    let mut i = from_buf.len();
     let mut walked: size_t = 0;
-    while fromLim > from {
-        let prev: c_uchar = *fromLim.offset(-1) as c_uchar;
+    while i > 0 && i <= from_buf.len() {
+        let prev: c_uchar = from_buf[i-1] as c_uchar;
         if prev as c_uint & 0xf8 == 0xf0 {
             /* 4-byte character, lead by 0b11110xxx byte */
             if walked.wrapping_add(1u64) >= 4u64 {
-                fromLim = fromLim.offset((4i32 - 1) as isize);
+                i += 4 - 1;
                 break;
             } else {
                 walked = 0
@@ -2517,7 +2448,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
         } else if prev as c_uint & 0xf0 == 0xe0 {
             /* 3-byte character, lead by 0b1110xxxx byte */
             if walked.wrapping_add(1u64) >= 3u64 {
-                fromLim = fromLim.offset((3i32 - 1) as isize);
+                i += 3 - 1;
                 break;
             } else {
                 walked = 0
@@ -2525,7 +2456,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
         } else if prev as c_uint & 0xe0 == 0xc0 {
             /* 2-byte character, lead by 0b110xxxxx byte */
             if walked.wrapping_add(1u64) >= 2u64 {
-                fromLim = fromLim.offset((2i32 - 1) as isize);
+                i += 2 - 1;
                 break;
             } else {
                 walked = 0
@@ -2533,41 +2464,35 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
         } else if prev as c_uint & 0x80 == 0 {
             break;
         }
-        fromLim = fromLim.offset(-1);
+        i -= 1;
         walked = walked.wrapping_add(1)
     }
-    *fromLimRef = fromLim;
+    *from_buf = from_buf.with_len(i);
 }
 
 unsafe extern "C" fn utf8_toUtf8(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_char,
-    mut toLim: *const c_char,
+    fromP: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
+    let mut from = fromP.clone();
     let mut input_incomplete: bool = false_0 != 0;
     let mut output_exhausted: bool = false_0 != 0;
     /* Avoid copying partial characters (due to limited space). */
-    let bytesAvailable: ptrdiff_t = fromLim.wrapping_offset_from(*fromP) as c_long;
-    let bytesStorable: ptrdiff_t = toLim.wrapping_offset_from(*toP) as c_long;
+    let bytesAvailable = from.len();
+    let bytesStorable = to.len();
     if bytesAvailable > bytesStorable {
-        fromLim = (*fromP).offset(bytesStorable as isize);
+        from = from.with_len(bytesStorable);
         output_exhausted = true_0 != 0
     }
     /* Avoid copying partial characters (from incomplete input). */
-    let fromLimBefore: *const c_char = fromLim;
-    _INTERNAL_trim_to_complete_utf8_characters(*fromP, &mut fromLim);
-    if fromLim < fromLimBefore {
+    let len_before = from.len();
+    _INTERNAL_trim_to_complete_utf8_characters(&mut from);
+    if from.len() < len_before {
         input_incomplete = true_0 != 0
     }
-    let bytesToCopy: ptrdiff_t = fromLim.wrapping_offset_from(*fromP) as c_long;
-    memcpy(
-        *toP as *mut c_void,
-        *fromP as *const c_void,
-        bytesToCopy as c_ulong,
-    );
-    *fromP = (*fromP).offset(bytesToCopy as isize);
-    *toP = (*toP).offset(bytesToCopy as isize);
+    to[..from.len()].copy_from_slice(&from);
+    to.inc_start(from.len());
+    *fromP = fromP.inc_start(from.len().try_into().unwrap());
     if output_exhausted {
         /* needs to go first */
         return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -2579,144 +2504,126 @@ unsafe extern "C" fn utf8_toUtf8(
 }
 
 unsafe extern "C" fn utf8_toUtf16<E: NormalEncodingTable>(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_ushort,
-    mut toLim: *const c_ushort,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
     let mut current_block: u64;
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
-    let mut to: *mut c_ushort = *toP;
-    let mut from: *const c_char = *fromP;
+    // let mut to: *mut c_ushort = *toP;
+    // let mut from: *const c_char = *fromP;
     loop {
-        if !(from < fromLim && to < toLim as *mut c_ushort) {
+        if from.is_empty() || to.is_empty() {
             current_block = 1608152415753874203;
             break;
         }
-        match E::types[*from as c_uchar as usize] as c_int {
+        match E::types[from[0] as c_uchar as usize] as c_int {
             5 => {
-                if (fromLim.wrapping_offset_from(from) as c_long) < 2 {
+                if (from.len() as c_long) < 2 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
-                    let fresh24 = to;
-                    to = to.offset(1);
-                    *fresh24 = ((*from.offset(0) as c_int & 0x1f) << 6
-                        | *from.offset(1) as c_int & 0x3f)
+                    to[0] = ((from[0] as c_int & 0x1f) << 6
+                                 | from[1] as c_int & 0x3f)
                         as c_ushort;
-                    from = from.offset(2)
+                    to.inc_start(1);
+                    from.inc_start(2);
                 }
             }
             6 => {
-                if (fromLim.wrapping_offset_from(from) as c_long) < 3 {
+                if (from.len() as c_long) < 3 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
-                    let fresh25 = to;
-                    to = to.offset(1);
-                    *fresh25 = ((*from.offset(0) as c_int & 0xf) << 12
-                        | (*from.offset(1) as c_int & 0x3f) << 6
-                        | *from.offset(2) as c_int & 0x3f)
+                    to[0] = ((from[0] as c_int & 0xf) << 12
+                                 | (from[1] as c_int & 0x3f) << 6
+                                 | from[2] as c_int & 0x3f)
                         as c_ushort;
-                    from = from.offset(3)
+                    to.inc_start(1);
+                    from.inc_start(3);
                 }
             }
             7 => {
                 let mut n: c_ulong = 0;
-                if (toLim.wrapping_offset_from(to) as c_long) < 2 {
+                if (to.len() as c_long) < 2 {
                     res = XML_CONVERT_OUTPUT_EXHAUSTED;
                     current_block = 10086016483950629671;
                     break;
-                } else if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
+                } else if (from.len() as c_long) < 4 {
                     res = XML_CONVERT_INPUT_INCOMPLETE;
                     current_block = 10086016483950629671;
                     break;
                 } else {
-                    n = ((*from.offset(0) as c_int & 0x7) << 18
-                        | (*from.offset(1) as c_int & 0x3f) << 12
-                        | (*from.offset(2) as c_int & 0x3f) << 6
-                        | *from.offset(3) as c_int & 0x3f) as c_ulong;
+                    n = ((from[0] as c_int & 0x7) << 18
+                        | (from[1] as c_int & 0x3f) << 12
+                        | (from[2] as c_int & 0x3f) << 6
+                        | from[3] as c_int & 0x3f) as c_ulong;
                     n = n.wrapping_sub(0x10000u64);
-                    *to.offset(0) = (n >> 10 | 0xd800) as c_ushort;
-                    *to.offset(1) = (n & 0x3ff | 0xdc00) as c_ushort;
-                    to = to.offset(2);
-                    from = from.offset(4)
+                    to[0] = (n >> 10 | 0xd800) as c_ushort;
+                    to[1] = (n & 0x3ff | 0xdc00) as c_ushort;
+                    to.inc_start(2);
+                    *from = from.inc_start(4)
                 }
             }
             _ => {
-                let fresh26 = from;
-                from = from.offset(1);
-                let fresh27 = to;
-                to = to.offset(1);
-                *fresh27 = *fresh26 as c_ushort
+                to[0] = from[0] as u16;
+                *from = from.inc_start(1);
+                to.inc_start(1);
             }
         }
     }
     match current_block {
         1608152415753874203 => {
-            if from < fromLim {
+            if !from.is_empty() {
                 res = XML_CONVERT_OUTPUT_EXHAUSTED
             }
         }
         _ => {}
     }
-    *fromP = from;
-    *toP = to;
     return res;
 }
 
 unsafe extern "C" fn latin1_toUtf8(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_char,
-    mut toLim: *const c_char,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
     loop {
         let mut c: c_uchar = 0;
-        if *fromP == fromLim {
+        if from.is_empty() {
             return XML_CONVERT_COMPLETED;
         }
-        c = **fromP as c_uchar;
+        c = from[0] as c_uchar;
         if c as c_int & 0x80 != 0 {
-            if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
+            if (to.len() as c_long) < 2 {
                 return XML_CONVERT_OUTPUT_EXHAUSTED;
             }
-            let fresh28 = *toP;
-            *toP = (*toP).offset(1);
-            *fresh28 = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
-            let fresh29 = *toP;
-            *toP = (*toP).offset(1);
-            *fresh29 = (c as c_int & 0x3f | 0x80) as c_char;
-            *fromP = (*fromP).offset(1)
+            to[0] = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
+            to.inc_start(1);
+            to[0] = (c as c_int & 0x3f | 0x80) as c_char;
+            to.inc_start(1);
+            *from = from.inc_start(1);
         } else {
-            if *toP == toLim as *mut c_char {
+            if to.is_empty() {
                 return XML_CONVERT_OUTPUT_EXHAUSTED;
             }
-            let fresh30 = *fromP;
-            *fromP = (*fromP).offset(1);
-            let fresh31 = *toP;
-            *toP = (*toP).offset(1);
-            *fresh31 = *fresh30
+            to[0] = from[0];
+            to.inc_start(1);
+            *from = from.inc_start(1);
         }
     }
 }
 
 unsafe extern "C" fn latin1_toUtf16(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_ushort,
-    mut toLim: *const c_ushort,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
-    while *fromP < fromLim && *toP < toLim as *mut c_ushort {
-        let fresh32 = *fromP;
-        *fromP = (*fromP).offset(1);
-        let fresh33 = *toP;
-        *toP = (*toP).offset(1);
-        *fresh33 = *fresh32 as c_uchar as c_ushort
+    while !from.is_empty() && to.is_empty() {
+        to[0] = from[0] as u16;
+        to.inc_start(1);
+        *from = from.inc_start(1);
     }
-    if *toP == toLim as *mut c_ushort && *fromP < fromLim {
+    if to.is_empty() && !from.is_empty() {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
     } else {
         return XML_CONVERT_COMPLETED;
@@ -2724,19 +2631,15 @@ unsafe extern "C" fn latin1_toUtf16(
 }
 
 unsafe extern "C" fn ascii_toUtf8(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_char,
-    mut toLim: *const c_char,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
-    while *fromP < fromLim && *toP < toLim as *mut c_char {
-        let fresh34 = *fromP;
-        *fromP = (*fromP).offset(1);
-        let fresh35 = *toP;
-        *toP = (*toP).offset(1);
-        *fresh35 = *fresh34
+    while !from.is_empty() && !to.is_empty() {
+        to[0] = from[0];
+        to.inc_start(1);
+        *from = from.inc_start(1);
     }
-    if *toP == toLim as *mut c_char && *fromP < fromLim {
+    if to.is_empty() && !from.is_empty() {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
     } else {
         return XML_CONVERT_COMPLETED;
@@ -2774,29 +2677,26 @@ unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2Rust
 /* Avoid copying first half only of surrogate */
 
 unsafe extern "C" fn little2_toUtf8(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_char,
-    mut toLim: *const c_char,
+    mut fromP: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
-    let mut from: *const c_char = *fromP;
-    fromLim = from.offset(((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize);
-    while from < fromLim {
+    let mut from = *fromP;
+    from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+    while !from.is_empty() {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
-        let mut lo: c_uchar = *from.offset(0) as c_uchar;
-        let mut hi: c_uchar = *from.offset(1) as c_uchar;
+        let mut lo: c_uchar = from[0] as c_uchar;
+        let mut hi: c_uchar = from[1] as c_uchar;
         let mut current_block_34: u64;
         match hi as c_int {
             0 => {
                 if (lo as c_int) < 0x80 {
-                    if *toP == toLim as *mut c_char {
+                    if to.is_empty() {
                         *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
                     }
-                    let fresh36 = *toP;
-                    *toP = (*toP).offset(1);
-                    *fresh36 = lo as c_char;
+                    to[0] = lo as c_char;
+                    to.inc_start(1);
                     current_block_34 = 18435049525520518667;
                 } else {
                     current_block_34 = 11412679543673842523;
@@ -2806,70 +2706,61 @@ unsafe extern "C" fn little2_toUtf8(
                 current_block_34 = 11412679543673842523;
             }
             216 | 217 | 218 | 219 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 4 {
+                if (to.len() as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
+                if (from.len() as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
                 plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
-                let fresh42 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh42 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
-                let fresh43 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh43 = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
-                from = from.offset(2);
-                lo2 = *from.offset(0) as c_uchar;
-                let fresh44 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh44 = ((lo as c_int & 0x3) << 4
-                    | (*from.offset(1) as c_uchar as c_int & 0x3) << 2
+                to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
+                to.inc_start(1);
+                from = from.inc_start(2);
+                lo2 = from[0] as c_uchar;
+                to[0] = ((lo as c_int & 0x3) << 4
+                    | (from[1] as c_uchar as c_int & 0x3) << 2
                     | lo2 as c_int >> 6
                     | 0x80) as c_char;
-                let fresh45 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh45 = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
+                to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
                 current_block_34 = 18435049525520518667;
             }
             _ => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 3 {
+                if (to.len() as c_long) < 3 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                let fresh39 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh39 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
-                let fresh40 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh40 = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
-                let fresh41 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh41 = (lo as c_int & 0x3f | 0x80) as c_char;
+                to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
                 current_block_34 = 18435049525520518667;
             }
         }
         match current_block_34 {
             11412679543673842523 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
+                if (to.len() as c_long) < 2 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                let fresh37 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh37 = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                let fresh38 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh38 = (lo as c_int & 0x3f | 0x80) as c_char
+                to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
             }
             _ => {}
         }
-        from = from.offset(2)
+        from = from.inc_start(2)
     }
     *fromP = from;
-    if from < fromLim {
+    if !from.is_empty() {
         return XML_CONVERT_INPUT_INCOMPLETE;
     } else {
         return XML_CONVERT_COMPLETED;
@@ -2877,29 +2768,24 @@ unsafe extern "C" fn little2_toUtf8(
 }
 
 unsafe extern "C" fn little2_toUtf16(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_ushort,
-    mut toLim: *const c_ushort,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
-    fromLim =
-        (*fromP).offset(((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize);
-    if fromLim.wrapping_offset_from(*fromP) as c_long
-        > (toLim.wrapping_offset_from(*toP) as c_long) << 1
-        && *fromLim.offset(-(2)).offset(1) as c_uchar as c_int & 0xf8 == 0xd8
+    *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+    if from.len() as c_long > ((to.len() as c_long) << 1)
+        && from[from.len()-1] as c_uchar as c_int & 0xf8 == 0xd8
     {
-        fromLim = fromLim.offset(-(2));
+        *from = from.dec_end(2);
         res = XML_CONVERT_INPUT_INCOMPLETE
     }
-    while *fromP < fromLim && *toP < toLim as *mut c_ushort {
-        let fresh46 = *toP;
-        *toP = (*toP).offset(1);
-        *fresh46 = ((*(*fromP).offset(1) as c_uchar as c_int) << 8
-            | *(*fromP).offset(0) as c_uchar as c_int) as c_ushort;
-        *fromP = (*fromP).offset(2)
+    while !from.is_empty() && !to.is_empty() {
+        to[0] = ((from[1] as c_uchar as c_int) << 8
+                 | from[0] as c_uchar as c_int) as c_ushort;
+        to.inc_start(1);
+        *from = from.inc_start(2);
     }
-    if *toP == toLim as *mut c_ushort && *fromP < fromLim {
+    if to.is_empty() && !from.is_empty() {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
     } else {
         return res;
@@ -2907,102 +2793,90 @@ unsafe extern "C" fn little2_toUtf16(
 }
 
 unsafe extern "C" fn big2_toUtf8(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_char,
-    mut toLim: *const c_char,
+    mut fromP: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut,
 ) -> XML_Convert_Result {
-    let mut from: *const c_char = *fromP;
-    fromLim = from.offset(((fromLim.wrapping_offset_from(from) as c_long >> 1) << 1) as isize);
-    while from < fromLim {
+    let mut from = *fromP;
+    from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+    while !from.is_empty() {
         let mut plane: c_int = 0;
         let mut lo2: c_uchar = 0;
-        let mut lo: c_uchar = *from.offset(1) as c_uchar;
-        let mut hi: c_uchar = *from.offset(0) as c_uchar;
+        let mut lo: c_uchar = from[1] as c_uchar;
+        let mut hi: c_uchar = from[0] as c_uchar;
         let mut current_block_34: u64;
         match hi as c_int {
             0 => {
                 if (lo as c_int) < 0x80 {
-                    if *toP == toLim as *mut c_char {
+                    if to.is_empty() {
                         *fromP = from;
                         return XML_CONVERT_OUTPUT_EXHAUSTED;
                     }
-                    let fresh47 = *toP;
-                    *toP = (*toP).offset(1);
-                    *fresh47 = lo as c_char;
+                    to[0] = lo as c_char;
+                    to.inc_start(1);
                     current_block_34 = 18435049525520518667;
                 } else {
-                    current_block_34 = 6790550795307076813;
+                    current_block_34 = 11412679543673842523;
                 }
             }
             1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                current_block_34 = 6790550795307076813;
+                current_block_34 = 11412679543673842523;
             }
             216 | 217 | 218 | 219 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 4 {
+                if (to.len() as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                if (fromLim.wrapping_offset_from(from) as c_long) < 4 {
+                if (from.len() as c_long) < 4 {
                     *fromP = from;
                     return XML_CONVERT_INPUT_INCOMPLETE;
                 }
                 plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
-                let fresh53 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh53 = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
-                let fresh54 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh54 = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
-                from = from.offset(2);
-                lo2 = *from.offset(1) as c_uchar;
-                let fresh55 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh55 = ((lo as c_int & 0x3) << 4
-                    | (*from.offset(0) as c_uchar as c_int & 0x3) << 2
+                to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
+                to.inc_start(1);
+                from = from.inc_start(2);
+                lo2 = from[1] as c_uchar;
+                to[0] = ((lo as c_int & 0x3) << 4
+                    | (from[0] as c_uchar as c_int & 0x3) << 2
                     | lo2 as c_int >> 6
                     | 0x80) as c_char;
-                let fresh56 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh56 = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
+                to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
                 current_block_34 = 18435049525520518667;
             }
             _ => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 3 {
+                if (to.len() as c_long) < 3 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                let fresh50 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh50 = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
-                let fresh51 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh51 = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
-                let fresh52 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh52 = (lo as c_int & 0x3f | 0x80) as c_char;
+                to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
                 current_block_34 = 18435049525520518667;
             }
         }
         match current_block_34 {
-            6790550795307076813 => {
-                if (toLim.wrapping_offset_from(*toP) as c_long) < 2 {
+            11412679543673842523 => {
+                if (to.len() as c_long) < 2 {
                     *fromP = from;
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
-                let fresh48 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh48 = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                let fresh49 = *toP;
-                *toP = (*toP).offset(1);
-                *fresh49 = (lo as c_int & 0x3f | 0x80) as c_char
+                to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                to.inc_start(1);
+                to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                to.inc_start(1);
             }
             _ => {}
         }
-        from = from.offset(2)
+        from = from.inc_start(2)
     }
     *fromP = from;
-    if from < fromLim {
+    if !from.is_empty() {
         return XML_CONVERT_INPUT_INCOMPLETE;
     } else {
         return XML_CONVERT_COMPLETED;
@@ -3010,29 +2884,24 @@ unsafe extern "C" fn big2_toUtf8(
 }
 
 unsafe extern "C" fn big2_toUtf16(
-    mut fromP: *mut *const c_char,
-    mut fromLim: *const c_char,
-    mut toP: *mut *mut c_ushort,
-    mut toLim: *const c_ushort,
+    mut from: &mut ExpatBufRef,
+    to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
     let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
-    fromLim =
-        (*fromP).offset(((fromLim.wrapping_offset_from(*fromP) as c_long >> 1) << 1) as isize);
-    if fromLim.wrapping_offset_from(*fromP) as c_long
-        > (toLim.wrapping_offset_from(*toP) as c_long) << 1
-        && *fromLim.offset(-(2)).offset(0) as c_uchar as c_int & 0xf8 == 0xd8
+    *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+    if from.len() as c_long > ((to.len() as c_long) << 1)
+        && from[from.len()-2] as c_uchar as c_int & 0xf8 == 0xd8
     {
-        fromLim = fromLim.offset(-(2));
+        *from = from.dec_end(2);
         res = XML_CONVERT_INPUT_INCOMPLETE
     }
-    while *fromP < fromLim && *toP < toLim as *mut c_ushort {
-        let fresh57 = *toP;
-        *toP = (*toP).offset(1);
-        *fresh57 = ((*(*fromP).offset(0) as c_uchar as c_int) << 8
-            | *(*fromP).offset(1) as c_uchar as c_int) as c_ushort;
-        *fromP = (*fromP).offset(2)
+    while !from.is_empty() && !to.is_empty() {
+        to[0] = ((from[0] as c_uchar as c_int) << 8
+                 | from[1] as c_uchar as c_int) as c_ushort;
+        to.inc_start(1);
+        *from = from.inc_start(2);
     }
-    if *toP == toLim as *mut c_ushort && *fromP < fromLim {
+    if to.is_empty() && !from.is_empty() {
         return XML_CONVERT_OUTPUT_EXHAUSTED;
     } else {
         return res;
@@ -3069,28 +2938,29 @@ unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_
 
 unsafe extern "C" fn initUpdatePosition(
     mut _enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut pos: *mut POSITION,
 ) {
     utf8_encoding
         .as_ref()
         .unwrap()
-        .updatePosition(ptr, end, pos);
+        .updatePosition(buf, pos);
 }
 
 unsafe extern "C" fn toAscii(
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
 ) -> c_int {
-    let mut buf: [c_char; 1] = [0; 1];
-    let mut p: *mut c_char = buf.as_mut_ptr();
-    (*enc).utf8Convert(&mut ptr, end, &mut p, p.offset(1));
-    if p == buf.as_mut_ptr() {
+    let mut out_buf: [c_char; 1] = [0; 1];
+    let mut p = ExpatBufRefMut::new(
+        &mut out_buf[0],
+        out_buf.as_mut_ptr().offset(1),
+    );
+    (*enc).utf8Convert(&mut buf, &mut p);
+    if p.as_ptr() == out_buf.as_ptr() {
         return -1;
     } else {
-        return buf[0usize] as c_int;
+        return out_buf[0] as c_int;
     };
 }
 
@@ -3105,82 +2975,80 @@ unsafe extern "C" fn isSpace(mut c: c_int) -> c_int {
    followed by name=val.
 */
 
-unsafe extern "C" fn parsePseudoAttribute(
+unsafe extern "C" fn parsePseudoAttribute<'a>(
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
-    mut namePtr: *mut *const c_char,
-    mut nameEndPtr: *mut *const c_char,
-    mut valPtr: *mut *const c_char,
+    mut buf: ExpatBufRef<'a>,
+    mut name: &mut Option<ExpatBufRef<'a>>,
+    mut val: *mut Option<ExpatBufRef<'a>>,
     mut nextTokPtr: *mut *const c_char,
 ) -> c_int {
     let mut c: c_int = 0;
     let mut open: c_char = 0;
-    if ptr == end {
-        *namePtr = NULL as *const c_char;
+    if buf.is_empty() {
+        *name = None;
         return 1i32;
     }
-    if isSpace(toAscii(enc, ptr, end)) == 0 {
-        *nextTokPtr = ptr;
+    if isSpace(toAscii(enc, buf)) == 0 {
+        *nextTokPtr = buf.as_ptr();
         return 0i32;
     }
     loop {
-        ptr = ptr.offset((*enc).minBytesPerChar() as isize);
-        if !(isSpace(toAscii(enc, ptr, end)) != 0) {
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        if !(isSpace(toAscii(enc, buf)) != 0) {
             break;
         }
     }
-    if ptr == end {
-        *namePtr = NULL as *const c_char;
+    if buf.is_empty() {
+        *name = None;
         return 1i32;
     }
-    *namePtr = ptr;
+    *name = Some(buf.clone());
     loop {
-        c = toAscii(enc, ptr, end);
+        c = toAscii(enc, buf);
         if c == -1 {
-            *nextTokPtr = ptr;
+            *nextTokPtr = buf.as_ptr();
             return 0i32;
         }
         if c == ASCII_EQUALS as c_int {
-            *nameEndPtr = ptr;
+            *name = name.map(|name| name.with_end(buf.as_ptr()));
             break;
         } else if isSpace(c) != 0 {
-            *nameEndPtr = ptr;
+            *name = name.map(|name| name.with_end(buf.as_ptr()));
             loop {
-                ptr = ptr.offset((*enc).minBytesPerChar() as isize);
-                c = toAscii(enc, ptr, end);
+                buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+                c = toAscii(enc, buf);
                 if !(isSpace(c) != 0) {
                     break;
                 }
             }
             if c != ASCII_EQUALS as c_int {
-                *nextTokPtr = ptr;
+                *nextTokPtr = buf.as_ptr();
                 return 0i32;
             }
             break;
         } else {
-            ptr = ptr.offset((*enc).minBytesPerChar() as isize)
+            buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
         }
     }
-    if ptr == *namePtr {
-        *nextTokPtr = ptr;
+    if buf.as_ptr() == name.unwrap().as_ptr() {
+        *nextTokPtr = buf.as_ptr();
         return 0i32;
     }
-    ptr = ptr.offset((*enc).minBytesPerChar() as isize);
-    c = toAscii(enc, ptr, end);
+    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+    c = toAscii(enc, buf);
     while isSpace(c) != 0 {
-        ptr = ptr.offset((*enc).minBytesPerChar() as isize);
-        c = toAscii(enc, ptr, end)
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        c = toAscii(enc, buf)
     }
     if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
-        *nextTokPtr = ptr;
+        *nextTokPtr = buf.as_ptr();
         return 0i32;
     }
     open = c as c_char;
-    ptr = ptr.offset((*enc).minBytesPerChar() as isize);
-    *valPtr = ptr;
+    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+    *val = Some(buf.clone());
     loop {
-        c = toAscii(enc, ptr, end);
+        c = toAscii(enc, buf);
         if c == open as c_int {
             break;
         }
@@ -3191,12 +3059,12 @@ unsafe extern "C" fn parsePseudoAttribute(
             && c != ASCII_MINUS as c_int
             && c != ASCII_UNDERSCORE as c_int
         {
-            *nextTokPtr = ptr;
+            *nextTokPtr = buf.as_ptr();
             return 0i32;
         }
-        ptr = ptr.offset((*enc).minBytesPerChar() as isize)
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
-    *nextTokPtr = ptr.offset((*enc).minBytesPerChar() as isize);
+    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar() as isize).as_ptr();
     return 1;
 }
 
@@ -3244,48 +3112,42 @@ static mut KW_no: [c_char; 3] = [ASCII_n, ASCII_o, '\u{0}' as c_char];
 #[cfg(feature = "mozilla")]
 static mut KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, '\u{0}' as c_char];
 
-unsafe extern "C" fn doParseXmlDecl(
+unsafe extern "C" fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
         unsafe extern "C" fn(
             _: &ENCODING,
-            _: *const c_char,
-            _: *const c_char,
+            _: ExpatBufRef,
         ) -> Option<*const ENCODING>,
     >,
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef<'a>,
     mut badPtr: *mut *const c_char,
-    mut versionPtr: *mut *const c_char,
-    mut versionEndPtr: *mut *const c_char,
+    mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: *mut *const c_char,
     mut encoding: *mut Option<*const ENCODING>,
     mut standalone: *mut c_int,
 ) -> c_int {
-    let mut val: *const c_char = NULL as *const c_char;
-    let mut name: *const c_char = NULL as *const c_char;
-    let mut nameEnd: *const c_char = NULL as *const c_char;
-    ptr = ptr.offset((5i32 * (*enc).minBytesPerChar()) as isize);
-    end = end.offset(-((2i32 * (*enc).minBytesPerChar()) as isize));
-    if parsePseudoAttribute(enc, ptr, end, &mut name, &mut nameEnd, &mut val, &mut ptr) == 0
-        || name.is_null()
+    let mut val_buf = None;
+    let mut name = None;
+    buf = buf
+        .inc_start((5i32 * (*enc).minBytesPerChar()) as isize)
+        .dec_end((2i32 * (*enc).minBytesPerChar()) as usize);
+    let mut pseudo_ptr = buf.as_ptr();
+    if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
+        || name.is_none()
     {
-        *badPtr = ptr;
+        *badPtr = pseudo_ptr;
         return 0i32;
     }
-    if (*enc).nameMatchesAscii(name, nameEnd, KW_version.as_ptr()) == 0 {
+    buf = buf.with_start(pseudo_ptr);
+    if (*enc).nameMatchesAscii(name.unwrap(), KW_version.as_ptr()) == 0 {
         if isGeneralTextEntity == 0 {
-            *badPtr = name;
+            *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
             return 0i32;
         }
     } else {
-        if !versionPtr.is_null() {
-            *versionPtr = val
-        }
-        if !versionEndPtr.is_null() {
-            *versionEndPtr = ptr
-        }
+        *versionBuf = val_buf;
         #[cfg(feature = "mozilla")]
         {
             if (*enc).nameMatchesAscii(
@@ -3296,54 +3158,62 @@ unsafe extern "C" fn doParseXmlDecl(
                 return 0i32;
             }
         }
-        if parsePseudoAttribute(enc, ptr, end, &mut name, &mut nameEnd, &mut val, &mut ptr) == 0 {
-            *badPtr = ptr;
+        let mut pseudo_ptr = buf.as_ptr();
+        if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
+            *badPtr = pseudo_ptr;
             return 0i32;
         }
-        if name.is_null() {
+        buf = buf.with_start(pseudo_ptr);
+        if name.is_none() {
             if isGeneralTextEntity != 0 {
                 /* a TextDecl must have an EncodingDecl */
-                *badPtr = ptr;
+                *badPtr = buf.as_ptr();
                 return 0i32;
             }
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name, nameEnd, KW_encoding.as_ptr()) != 0 {
-        let mut c: c_int = toAscii(enc, val, end);
+    if (*enc).nameMatchesAscii(name.unwrap(), KW_encoding.as_ptr()) != 0 {
+        let mut c: c_int = toAscii(enc, val_buf.unwrap());
         if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
         {
-            *badPtr = val;
+            *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
             return 0i32;
         }
         if !encodingName.is_null() {
-            *encodingName = val
+            *encodingName = val_buf.unwrap().as_ptr();
         }
         if !encoding.is_null() {
             *encoding = encodingFinder.expect("non-null function pointer")(
                 enc,
-                val,
-                ptr.offset(-((*enc).minBytesPerChar() as isize)),
+                val_buf
+                    .unwrap()
+                    .with_end(buf.as_ptr())
+                    .dec_end(((*enc).minBytesPerChar()) as usize),
             )
         }
-        if parsePseudoAttribute(enc, ptr, end, &mut name, &mut nameEnd, &mut val, &mut ptr) == 0 {
-            *badPtr = ptr;
+        let mut pseudo_ptr = buf.as_ptr();
+        if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
+            *badPtr = buf.as_ptr();
             return 0i32;
         }
-        if name.is_null() {
+        buf = buf.with_start(pseudo_ptr);
+        if name.is_none() {
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name, nameEnd, KW_standalone.as_ptr()) == 0
+    if (*enc).nameMatchesAscii(name.unwrap(), KW_standalone.as_ptr()) == 0
         || isGeneralTextEntity != 0
     {
-        *badPtr = name;
+        *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
         return 0i32;
     }
     if (*enc).nameMatchesAscii(
-        val,
-        ptr.offset(-((*enc).minBytesPerChar() as isize)),
+        val_buf
+            .unwrap()
+            .with_end(buf.as_ptr())
+            .dec_end(((*enc).minBytesPerChar()) as usize),
         KW_yes.as_ptr(),
     ) != 0
     {
@@ -3351,8 +3221,10 @@ unsafe extern "C" fn doParseXmlDecl(
             *standalone = 1
         }
     } else if (*enc).nameMatchesAscii(
-        val,
-        ptr.offset(-((*enc).minBytesPerChar() as isize)),
+        val_buf
+            .unwrap()
+            .with_end(buf.as_ptr())
+            .dec_end(((*enc).minBytesPerChar()) as usize),
         KW_no.as_ptr(),
     ) != 0
     {
@@ -3360,14 +3232,15 @@ unsafe extern "C" fn doParseXmlDecl(
             *standalone = 0
         }
     } else {
-        *badPtr = val;
+        *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
         return 0i32;
     }
-    while isSpace(toAscii(enc, ptr, end)) != 0 {
-        ptr = ptr.offset((*enc).minBytesPerChar() as isize)
+    // TODO(SJC): make toAscii take a buf
+    while isSpace(toAscii(enc, buf)) != 0 {
+        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
-    if ptr != end {
-        *badPtr = ptr;
+    if !buf.is_empty() {
+        *badPtr = buf.as_ptr();
         return 0i32;
     }
     return 1;
