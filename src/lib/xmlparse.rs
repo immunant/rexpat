@@ -770,13 +770,11 @@ pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
     pub m_userData: *mut c_void,
-    pub m_buffer: *mut c_char,
-    /* first character to be parsed */
-    pub m_bufferPtr: *const c_char,
-    /* past last character to be parsed */
-    pub m_bufferEnd: *mut c_char,
-    /* allocated end of m_buffer */
-    pub m_bufferLim: *const c_char,
+    m_buffer: Vec<c_char>,
+    // index of first character to be parsed
+    m_bufferStart: usize,
+    // index after last character to be parsed
+    m_bufferEnd: usize,
     pub m_parseEndByteIndex: XML_Index,
     pub m_parseEndPtr: *const c_char,
     pub m_dataBuf: *mut XML_Char, // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
@@ -795,7 +793,7 @@ pub struct XML_ParserStruct {
     pub m_errorCode: XML_Error,
     pub m_eventPtr: *const c_char,
     pub m_eventEndPtr: *const c_char,
-    pub m_positionPtr: *const c_char,
+    pub m_positionIdx: usize,
     pub m_openInternalEntities: *mut OpenInternalEntity,
     pub m_freeInternalEntities: *mut OpenInternalEntity,
     pub m_defaultExpandInternalEntities: XML_Bool,
@@ -1625,13 +1623,11 @@ impl XML_ParserStruct {
     fn try_new(use_namespaces: bool, dtd: Rc<DTD>) -> Result<Self, ()> {
         Ok(Self {
             m_userData: ptr::null_mut(),
-            m_buffer: ptr::null_mut(),
-            /* first character to be parsed */
-            m_bufferPtr: ptr::null(),
-            /* past last character to be parsed */
-            m_bufferEnd: ptr::null_mut(),
-            /* allocated end of m_buffer */
-            m_bufferLim: ptr::null(),
+            m_buffer: Vec::new(),
+            // index of first character to be parsed
+            m_bufferStart: 0,
+            // index after last character to be parsed
+            m_bufferEnd: 0,
             m_parseEndByteIndex: 0,
             m_parseEndPtr: ptr::null(),
             m_dataBuf: ptr::null_mut(), // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
@@ -1664,7 +1660,7 @@ impl XML_ParserStruct {
             m_errorCode: XML_Error::NONE,
             m_eventPtr: ptr::null(),
             m_eventEndPtr: ptr::null(),
-            m_positionPtr: ptr::null(),
+            m_positionIdx: 0,
             m_openInternalEntities: ptr::null_mut(),
             m_freeInternalEntities: ptr::null_mut(),
             m_defaultExpandInternalEntities: false,
@@ -1714,19 +1710,12 @@ impl XML_ParserStruct {
         mut dtd: Rc<DTD>,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
-        let mut parser = match XML_ParserStruct::try_new(use_namespaces, dtd) {
-            Ok(parser) => parser,
-            Err(()) => return ptr::null_mut(),
-        };
-
         let mut parser = match Box::try_new(parser) {
             Ok(p) => p,
             Err(_) => return ptr::null_mut(),
         };
 
-        // TODO: Move initialization into XML_ParserStruct::try_new
-        parser.m_buffer = ptr::null_mut();
-        parser.m_bufferLim = ptr::null();
+        // TODO: Move initialization into XML_ParserStruct::new
         if parser.m_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
             return ptr::null_mut();
         }
@@ -1777,9 +1766,9 @@ impl XML_ParserStruct {
         self.m_userData = ptr::null_mut();
         self.m_handlers = Default::default();
         self.m_handlers.m_externalEntityRefHandlerArg = self as XML_Parser;
-        self.m_bufferPtr = self.m_buffer;
-        self.m_bufferEnd = self.m_buffer;
-        self.m_parseEndByteIndex = 0;
+        self.m_bufferStart = 0;
+        self.m_bufferEnd = 0;
+        self.m_parseEndByteIndex = 0i64;
         self.m_parseEndPtr = ptr::null();
         self.m_declElementType = ptr::null_mut();
         self.m_declAttributeId = ptr::null_mut();
@@ -1800,7 +1789,7 @@ impl XML_ParserStruct {
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = ptr::null();
         self.m_eventEndPtr = ptr::null();
-        self.m_positionPtr = ptr::null();
+        self.m_positionIdx = 0;
         self.m_openInternalEntities = ptr::null_mut();
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
@@ -2083,7 +2072,6 @@ impl Drop for XML_ParserStruct {
             parser->m_dtd with the root parser, so we must not destroy it
             */
             FREE!(self.m_groupConnector);
-            FREE!(self.m_buffer);
             FREE!(self.m_dataBuf);
             if self.m_handlers.m_unknownEncodingRelease.is_some() {
                 self.m_handlers.m_unknownEncodingRelease
@@ -2621,20 +2609,19 @@ impl XML_ParserStruct {
             if isFinal == 0 {
                 return XML_Status::OK;
             }
-            self.m_positionPtr = self.m_bufferPtr;
-            self.m_parseEndPtr = self.m_bufferEnd;
+            self.m_positionIdx = self.m_bufferStart;
+            self.m_parseEndPtr = self.m_buffer.as_ptr().add(self.m_bufferEnd);
             /* If data are left over from last buffer, and we now know that these
             data are the final chunk of input, then we have to check them again
             to detect errors based on that fact.
-            */
+             */
+            let mut start_ptr = self.m_buffer.as_ptr().add(self.m_bufferStart);
             self.m_errorCode = self.m_processor.expect("non-null function pointer")(
                 self,
-                ExpatBufRef::new(
-                    self.m_bufferPtr,
-                    self.m_parseEndPtr,
-                ),
-                &mut self.m_bufferPtr,
+                self.m_buffer[self.m_bufferStart..self.m_bufferEnd].into(),
+                &mut start_ptr,
             );
+            self.m_bufferStart = start_ptr.wrapping_offset_from(self.m_buffer.as_ptr()) as usize;
             if self.m_errorCode == XML_Error::NONE {
                 match self.m_parsingStatus.parsing {
                     XML_Parsing::SUSPENDED => {
@@ -2651,13 +2638,10 @@ impl XML_ParserStruct {
                         * LCOV_EXCL_START
                         */
                         (*self.m_encoding).updatePosition(
-                            ExpatBufRef::new(
-                                self.m_positionPtr,
-                                self.m_bufferPtr,
-                            ),
+                            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
                             &mut self.m_position,
                         );
-                        self.m_positionPtr = self.m_bufferPtr;
+                        self.m_positionIdx = self.m_bufferStart;
                         return XML_Status::SUSPENDED;
                     }
                     XML_Parsing::INITIALIZED | XML_Parsing::PARSING => {
@@ -2674,12 +2658,11 @@ impl XML_ParserStruct {
             XML_Status::ERROR
         } else {
             /* not defined XML_CONTEXT_BYTES */
-            let mut buff: *mut c_void = self.getBuffer(len);
-            if buff.is_null() {
-                XML_Status::ERROR as XML_Status
+            if let Some(buff) = self.getBuffer(len) {
+                buff[..len as usize].copy_from_slice(std::slice::from_raw_parts(s, len as usize));
+                XML_ParseBuffer(self, len, isFinal)
             } else {
-                memcpy(buff, s as *const c_void, len as usize);
-                self.parseBuffer(len, isFinal)
+                XML_Status::ERROR
             }
         }
     }
@@ -2724,21 +2707,24 @@ impl XML_ParserStruct {
         }
         /* fall through */
         self.m_parsingStatus.parsing = XML_Parsing::PARSING;
-        start = self.m_bufferPtr;
-        self.m_positionPtr = start;
-        self.m_bufferEnd = self.m_bufferEnd.offset(len as isize);
-        self.m_parseEndPtr = self.m_bufferEnd;
+        // TODO(SJC): is signed overflow an issue here?
+        start = self.m_buffer.as_ptr().add(self.m_bufferStart);
+        self.m_positionIdx = self.m_bufferStart;
+        self.m_bufferEnd += len as usize;
+        // TODO(SJC): is signed overflow an issue here?
+        self.m_parseEndPtr = self.m_buffer.as_ptr().add(self.m_bufferEnd);
         self.m_parseEndByteIndex += len as c_long;
         self.m_parsingStatus.finalBuffer = isFinal != 0;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
             self,
-            ExpatBufRef::new(
-                start,
-                self.m_parseEndPtr,
-            ),
-            &mut self.m_bufferPtr,
+            self.m_buffer[self.m_bufferStart..self.m_bufferEnd].into(),
+            &mut start,
         );
+<<<<<<< HEAD
 
+=======
+        self.m_bufferStart = start.wrapping_offset_from(self.m_buffer.as_ptr()) as usize;
+>>>>>>> Convert parser m_buffer field to a Rust managed Vec
         if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
@@ -2759,14 +2745,10 @@ impl XML_ParserStruct {
             }
         }
         (*self.m_encoding).updatePosition(
-            ExpatBufRef::new(
-                self.m_positionPtr,
-                self.m_bufferPtr,
-            ),
+            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
             &mut self.m_position,
         );
-        self.m_positionPtr = self.m_bufferPtr;
-
+        self.m_positionIdx = self.m_bufferStart;
         result
     }
 }
@@ -2784,102 +2766,85 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     (*parser).parseBuffer(len, isFinal)
 }
 
+<<<<<<< HEAD
 impl XML_ParserStruct {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
+=======
+impl <'scf> XML_ParserStruct<'scf> {
+    pub unsafe fn getBuffer(&mut self, len: c_int) -> Option<&mut [c_char]> {
+>>>>>>> Convert parser m_buffer field to a Rust managed Vec
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
-            return ptr::null_mut();
+            return None;
         }
         match self.m_parsingStatus.parsing {
             XML_Parsing::SUSPENDED => {
                 self.m_errorCode = XML_Error::SUSPENDED;
-                return ptr::null_mut();
+                return None;
             }
             XML_Parsing::FINISHED => {
                 self.m_errorCode = XML_Error::FINISHED;
-                return ptr::null_mut();
+                return None;
             }
             _ => {}
         }
-        if len as isize > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) {
-            let maybe_needed_size = len.checked_add(
-                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_int
-            );
+        if len as usize > self.m_buffer.len() - self.m_bufferEnd {
+            let maybe_needed_size = len.checked_add((self.m_bufferEnd - self.m_bufferStart).try_into().unwrap());
             let mut neededSize = match maybe_needed_size {
                 None => {
                     self.m_errorCode = XML_Error::NO_MEMORY;
-                    return ptr::null_mut();
+                    return None;
                 }
-                Some(s) => s,
+                Some(s) => s as usize,
             };
             let keep = cmp::min(
-                XML_CONTEXT_BYTES,
-                safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int,
+                XML_CONTEXT_BYTES as usize,
+                self.m_bufferStart,
             );
             neededSize += keep;
-            if (neededSize as isize) <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) {
-                if (keep as isize) < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) {
-                    let offset = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) - keep as isize;
+            if (neededSize as usize) <= self.m_buffer.len() {
+                if (keep as usize) < self.m_bufferStart {
+                    let offset = self.m_bufferStart - keep as usize;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
-                    memmove(
-                        self.m_buffer as *mut c_void,
-                        &mut *self.m_buffer.offset(offset as isize) as *mut c_char
-                            as *const c_void,
-                        (self
-                            .m_bufferEnd
-                            .wrapping_offset_from(self.m_bufferPtr)
-                            + keep as isize).try_into().unwrap(),
-                    );
-                    self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
-                    self.m_bufferPtr = self.m_bufferPtr.offset(-offset);
+                    self.m_buffer.copy_within(offset..self.m_bufferEnd, 0);
+                    self.m_bufferEnd -= offset;
+                    self.m_bufferStart -= offset;
                 }
             } else {
-                let mut bufferSize: c_int = match safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) {
+                let mut bufferSize: c_int = match self.m_buffer.len() - self.m_bufferStart {
                     0 => INIT_BUFFER_SIZE,
                     size => size.try_into().unwrap(),
                 };
-                while bufferSize < neededSize {
+                while (bufferSize as usize) < neededSize {
                     bufferSize = match 2i32.checked_mul(bufferSize) {
                         Some(s) => s,
                         None => {
                             self.m_errorCode = XML_Error::NO_MEMORY;
-                            return ptr::null_mut();
+                            return None;
                         }
                     }
                 }
-                let newBuf = MALLOC![c_char; bufferSize];
-                if newBuf.is_null() {
+                if self.m_buffer.try_reserve(bufferSize as usize).is_err() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
-                    return ptr::null_mut();
+                    return None;
                 }
-                self.m_bufferLim = newBuf.offset(bufferSize as isize);
-                if !self.m_bufferPtr.is_null() {
-                    memcpy(
-                        newBuf as *mut c_void,
-                        &*self.m_bufferPtr.offset(-keep as isize) as *const c_char
-                            as *const c_void,
-                        safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as usize + keep as usize,
-                    );
-                    FREE!(self.m_buffer);
-                    self.m_buffer = newBuf;
-                    self.m_bufferEnd = self
-                        .m_buffer
-                        .offset(safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr))
-                        .offset(keep as isize);
-                    self.m_bufferPtr = self.m_buffer.offset(keep as isize)
+                self.m_buffer.resize(bufferSize as usize, 0);
+                if self.m_bufferStart < self.m_bufferEnd {
+                    self.m_buffer.copy_within(self.m_bufferStart-keep..self.m_bufferEnd, 0);
+                    self.m_bufferEnd = self.m_bufferEnd - self.m_bufferStart + keep;
+                    self.m_bufferStart = keep;
                 } else {
                     /* This must be a brand new buffer with no data in it yet */
-                    self.m_bufferEnd = newBuf;
-                    self.m_buffer = newBuf;
-                    self.m_bufferPtr = self.m_buffer
+                    self.m_bufferStart = 0;
+                    self.m_bufferEnd = 0;
                 }
             }
             self.m_eventEndPtr = ptr::null();
             self.m_eventPtr = ptr::null();
-            self.m_positionPtr = ptr::null();
+            self.m_positionIdx = 0;
         }
-        self.m_bufferEnd as *mut c_void
+        Some(&mut self.m_buffer[self.m_bufferEnd..])
     }
 }
 
@@ -2889,7 +2854,11 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
         return ptr::null_mut();
     }
 
-    (*parser).getBuffer(len)
+    if let Some(buf) = (*parser).getBuffer(len) {
+        buf.as_mut_ptr() as *mut c_void
+    } else {
+        ptr::null_mut()
+    }
 }
 /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
    Must be called from within a call-back handler, except when aborting
@@ -2983,10 +2952,10 @@ impl XML_ParserStruct {
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
             self,
             ExpatBufRef::new(
-                self.m_bufferPtr,
+                &self.m_buffer[self.m_bufferStart],
                 self.m_parseEndPtr,
             ),
-            &mut self.m_bufferPtr,
+            &mut (&self.m_buffer[self.m_bufferStart] as *const _),
         );
         if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
@@ -3005,18 +2974,15 @@ impl XML_ParserStruct {
             }
         }
         (*self.m_encoding).updatePosition(
-            ExpatBufRef::new(
-                self.m_positionPtr,
-                self.m_bufferPtr,
-            ),
+            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
             &mut self.m_position,
         );
-        self.m_positionPtr = self.m_bufferPtr;
+        self.m_positionIdx = self.m_bufferStart;
 
         #[cfg(feature = "mozilla")]
         {
-            self.m_eventPtr = self.m_bufferPtr;
-            self.m_eventEndPtr = self.m_bufferPtr;
+            self.m_eventPtr = &self.m_buffer[self.m_bufferStart];
+            self.m_eventEndPtr = &self.m_buffer[self.m_bufferStart];
         }
 
         result
@@ -3109,18 +3075,16 @@ pub unsafe extern "C" fn XML_GetInputContext(
     if parser.is_null() {
         return ptr::null();
     }
-    if !(*parser).m_eventPtr.is_null() && !(*parser).m_buffer.is_null() {
+    if !(*parser).m_eventPtr.is_null() {
         if !offset.is_null() {
             *offset = (*parser)
                 .m_eventPtr
-                .wrapping_offset_from((*parser).m_buffer) as c_int
+                .wrapping_offset_from((*parser).m_buffer.as_ptr()) as c_int
         }
         if !size.is_null() {
-            *size = (*parser)
-                .m_bufferEnd
-                .wrapping_offset_from((*parser).m_buffer) as c_int
+            *size = (*parser).m_bufferEnd.try_into().unwrap();
         }
-        return (*parser).m_buffer;
+        return (*parser).m_buffer.as_ptr();
     }
     /* defined XML_CONTEXT_BYTES */
     ptr::null()
@@ -3150,15 +3114,16 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
     if parser.is_null() {
         return 0;
     }
-    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
+    let positionPtr = &(*parser).m_buffer[(*parser).m_positionIdx];
+    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
-                (*parser).m_positionPtr,
+                positionPtr,
                 (*parser).m_eventPtr,
             ),
             &mut (*parser).m_position,
         );
-        (*parser).m_positionPtr = (*parser).m_eventPtr
+        (*parser).m_positionIdx = (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize;
     }
     (*parser).m_position.lineNumber.wrapping_add(1)
 }
@@ -3167,15 +3132,16 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
     if parser.is_null() {
         return 0;
     }
-    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= (*parser).m_positionPtr {
+    let positionPtr = &(*parser).m_buffer[(*parser).m_positionIdx];
+    if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
-                (*parser).m_positionPtr,
+                positionPtr,
                 (*parser).m_eventPtr,
             ),
             &mut (*parser).m_position,
         );
-        (*parser).m_positionPtr = (*parser).m_eventPtr
+        (*parser).m_positionIdx = (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize;
     }
     (*parser).m_position.columnNumber
 }
