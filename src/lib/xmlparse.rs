@@ -4370,8 +4370,8 @@ impl XML_ParserStruct {
         if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
             let mut j_0: c_int = 0;
             if nPrefixes != 0 { // MOZILLA CHANGE
-                /* size of hash table must be at least 2 * (# of prefixed attributes) */
                 self.m_nsAtts.clear();
+                /* size of hash table must be at least 2 * (# of prefixed attributes) */
                 if self.m_nsAtts.try_reserve((nPrefixes as usize) << 1).is_err() {
                     return XML_ERROR_NO_MEMORY;
                 }
