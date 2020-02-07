@@ -4458,9 +4458,9 @@ impl XML_ParserStruct {
                     /* Check hash table for duplicate of expanded name (uriName).
                     Derived from code in lookup(parser, HASH_TABLE *table, ...).
                     */
-					let hk = HashKey::from(self.m_tempPool.start as KEY);
-					if !self.m_nsAtts.insert(hk) {
-						return XML_ERROR_DUPLICATE_ATTRIBUTE;
+                    let hk = HashKey::from(self.m_tempPool.start as KEY);
+                    if !self.m_nsAtts.insert(hk) {
+                        return XML_ERROR_DUPLICATE_ATTRIBUTE;
                     }
                     if self.m_ns_triplets != 0 {
                         /* append namespace separator and prefix */
