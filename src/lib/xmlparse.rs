@@ -338,7 +338,7 @@ trait XmlHandlers {
     unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn startCDataSection(&self) -> bool;
     unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
-    unsafe fn startElement(&self, _: *const XML_Char, _: *mut *const XML_Char) -> bool;
+    unsafe fn startElement(&self, _: *const XML_Char, _: &mut [[*const XML_Char; 2]]) -> bool;
     unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
     unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
     unsafe fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
@@ -513,9 +513,9 @@ impl CXmlHandlers {
 }
 
 impl XmlHandlers for CXmlHandlers {
-    unsafe fn startElement(&self, a: *const XML_Char, b: *mut *const XML_Char) -> bool {
+    unsafe fn startElement(&self, a: *const XML_Char, b: &mut [[*const XML_Char; 2]]) -> bool {
         self.m_startElementHandler.map(|handler| {
-            handler(self.m_handlerArg, a, b);
+            handler(self.m_handlerArg, a, b.as_ptr() as *mut *const XML_Char);
 
             true
         }).unwrap_or(false)
@@ -3913,8 +3913,7 @@ impl XML_ParserStruct {
                     }
 
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement((*tag).name.str_0,
-                                                        self.m_atts.as_mut_ptr() as *mut _);
+                    let started = handlers.startElement((*tag).name.str_0, &mut self.m_atts[..]);
 
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -3951,8 +3950,7 @@ impl XML_ParserStruct {
                     }
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement(name_0.str_0,
-                                                        self.m_atts.as_mut_ptr() as *mut _);
+                    let started = handlers.startElement(name_0.str_0, &mut self.m_atts[..]);
                     if started {
                         noElmHandlers = XML_FALSE
                     }
