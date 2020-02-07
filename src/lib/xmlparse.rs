@@ -4414,16 +4414,14 @@ impl XML_ParserStruct {
                     if result_0 as u64 != 0 {
                         return result_0;
                     }
-                    #[cfg(not(feature = "mozilla"))]
-                    {
-                        self.m_atts.pop();
-                    }
-                    #[cfg(feature = "mozilla")]
-                    {
-                        // Mozilla code replaces `--attIndex` with `attIndex++`,
-                        // which is a shift by 2 positions
+                    if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
                         *(*attId).name.offset(-1) = 3;
+                    } else {
+                        // Mozilla code replaces `--attIndex` with `attIndex++`,
+                        // the former being equivalent to popping the last
+                        // attribute from m_atts
+                        self.m_atts.pop();
                     }
                 } else {
                     /* deal with other prefixed names later */
