@@ -1,39 +1,45 @@
 use libc::c_uint;
+use num_derive::{ToPrimitive, FromPrimitive};
+
 pub type C2RustUnnamed_2 = c_uint;
-pub const BT_NONXML: C2RustUnnamed_2 = 0;
-pub const BT_MALFORM: C2RustUnnamed_2 = 1;
-pub const BT_LT: C2RustUnnamed_2 = 2;
-pub const BT_AMP: C2RustUnnamed_2 = 3;
-pub const BT_RSQB: C2RustUnnamed_2 = 4;
-pub const BT_LEAD2: C2RustUnnamed_2 = 5;
-pub const BT_LEAD3: C2RustUnnamed_2 = 6;
-pub const BT_LEAD4: C2RustUnnamed_2 = 7;
-pub const BT_TRAIL: C2RustUnnamed_2 = 8;
-pub const BT_CR: C2RustUnnamed_2 = 9;
-pub const BT_LF: C2RustUnnamed_2 = 10;
-pub const BT_GT: C2RustUnnamed_2 = 11;
-pub const BT_QUOT: C2RustUnnamed_2 = 12;
-pub const BT_APOS: C2RustUnnamed_2 = 13;
-pub const BT_EQUALS: C2RustUnnamed_2 = 14;
-pub const BT_QUEST: C2RustUnnamed_2 = 15;
-pub const BT_EXCL: C2RustUnnamed_2 = 16;
-pub const BT_SOL: C2RustUnnamed_2 = 17;
-pub const BT_SEMI: C2RustUnnamed_2 = 18;
-pub const BT_NUM: C2RustUnnamed_2 = 19;
-pub const BT_LSQB: C2RustUnnamed_2 = 20;
-pub const BT_S: C2RustUnnamed_2 = 21;
-pub const BT_NMSTRT: C2RustUnnamed_2 = 22;
-pub const BT_COLON: C2RustUnnamed_2 = 23;
-pub const BT_HEX: C2RustUnnamed_2 = 24;
-pub const BT_DIGIT: C2RustUnnamed_2 = 25;
-pub const BT_NAME: C2RustUnnamed_2 = 26;
-pub const BT_MINUS: C2RustUnnamed_2 = 27;
-pub const BT_OTHER: C2RustUnnamed_2 = 28;
-pub const BT_NONASCII: C2RustUnnamed_2 = 29;
-pub const BT_PERCNT: C2RustUnnamed_2 = 30;
-pub const BT_LPAR: C2RustUnnamed_2 = 31;
-pub const BT_RPAR: C2RustUnnamed_2 = 32;
-pub const BT_AST: C2RustUnnamed_2 = 33;
-pub const BT_PLUS: C2RustUnnamed_2 = 34;
-pub const BT_COMMA: C2RustUnnamed_2 = 35;
-pub const BT_VERBAR: C2RustUnnamed_2 = 36;
+
+#[derive(Clone, Copy, PartialEq, ToPrimitive, FromPrimitive)]
+pub enum ByteType {
+  NONXML,   /* e.g. noncharacter-FFFF */
+  MALFORM,  /* illegal, with regard to encoding */
+  LT,       /* less than = "<" */
+  AMP,      /* ampersand = "&" */
+  RSQB,     /* right square bracket = "[" */
+  LEAD2,    /* lead byte of a 2-byte UTF-8 character */
+  LEAD3,    /* lead byte of a 3-byte UTF-8 character */
+  LEAD4,    /* lead byte of a 4-byte UTF-8 character */
+  TRAIL,    /* trailing unit, e.g. second 16-bit unit of a 4-byte char. */
+  CR,       /* carriage return = "\r" */
+  LF,       /* line feed = "\n" */
+  GT,       /* greater than = ">" */
+  QUOT,     /* quotation character = "\"" */
+  APOS,     /* aposthrophe = "'" */
+  EQUALS,   /* equal sign = "=" */
+  QUEST,    /* question mark = "?" */
+  EXCL,     /* exclamation mark = "!" */
+  SOL,      /* solidus, slash = "/" */
+  SEMI,     /* semicolon = ";" */
+  NUM,      /* number sign = "#" */
+  LSQB,     /* left square bracket = "[" */
+  S,        /* white space, e.g. "\t", " "[, "\r"] */
+  NMSTRT,   /* non-hex name start letter = "G".."Z" + "g".."z" + "_" */
+  COLON,    /* colon = ":" */
+  HEX,      /* hex letter = "A".."F" + "a".."f" */
+  DIGIT,    /* digit = "0".."9" */
+  NAME,     /* dot and middle dot = "." + chr(0xb7) */
+  MINUS,    /* minus = "-" */
+  OTHER,    /* known not to be a name or name start character */
+  NONASCII, /* might be a name or name start character */
+  PERCNT,   /* percent sign = "%" */
+  LPAR,     /* left parenthesis = "(" */
+  RPAR,     /* right parenthesis = "(" */
+  AST,      /* asterisk = "*" */
+  PLUS,     /* plus sign = "+" */
+  COMMA,    /* comma = "," */
+  VERBAR    /* vertical bar = "|" */
+}
