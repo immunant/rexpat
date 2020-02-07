@@ -114,8 +114,6 @@ pub use crate::stdlib::{
 use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{self, c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
-#[cfg(feature = "getrandom_syscall")]
-use libc::{SYS_getrandom, syscall};
 
 use fallible_collections::FallibleBox;
 
