@@ -125,6 +125,7 @@ use libc::{SYS_getrandom, syscall};
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
+use std::cmp;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::mem;
@@ -2823,46 +2824,38 @@ impl XML_ParserStruct {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
             self.m_errorCode = XML_ERROR_NO_MEMORY;
-            return NULL as *mut c_void;
+            return ptr::null_mut();
         }
         match self.m_parsingStatus.parsing {
             3 => {
                 self.m_errorCode = XML_ERROR_SUSPENDED;
-                return NULL as *mut c_void;
+                return ptr::null_mut();
             }
             2 => {
                 self.m_errorCode = XML_ERROR_FINISHED;
-                return NULL as *mut c_void;
+                return ptr::null_mut();
             }
             _ => {}
         }
-        if len as c_long
-            > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) as c_long
-        {
-            let mut keep: c_int = 0;
-            /* defined XML_CONTEXT_BYTES */
-            /* Do not invoke signed arithmetic overflow: */
-            let mut neededSize: c_int = (len as c_uint).wrapping_add(
-                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_uint,
-            ) as c_int;
-            if neededSize < 0 {
-                self.m_errorCode = XML_ERROR_NO_MEMORY;
-                return NULL as *mut c_void;
-            }
-            keep = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int;
-            if keep > XML_CONTEXT_BYTES {
-                keep = XML_CONTEXT_BYTES
-            }
+        if len as isize > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) {
+            let maybe_needed_size = len.checked_add(
+                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_int
+            );
+            let mut neededSize = match maybe_needed_size {
+                None => {
+                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    return ptr::null_mut();
+                }
+                Some(s) => s,
+            };
+            let keep = cmp::min(
+                XML_CONTEXT_BYTES,
+                safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int,
+            );
             neededSize += keep;
-            /* defined XML_CONTEXT_BYTES */
-            if (neededSize as c_long)
-                <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) as c_long
-            {
-                if (keep as c_long)
-                    < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_long
-                {
-                    let mut offset: c_int = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int
-                        - keep;
+            if (neededSize as isize) <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) {
+                if (keep as isize) < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) {
+                    let offset = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) - keep as isize;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
                     memmove(
@@ -2874,33 +2867,27 @@ impl XML_ParserStruct {
                             .wrapping_offset_from(self.m_bufferPtr) as c_long
                             + keep as c_long) as c_ulong,
                     );
-                    self.m_bufferEnd = self.m_bufferEnd.offset(-(offset as isize));
-                    self.m_bufferPtr = self.m_bufferPtr.offset(-(offset as isize))
+                    self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
+                    self.m_bufferPtr = self.m_bufferPtr.offset(-offset);
                 }
-            /* not defined XML_CONTEXT_BYTES */
             } else {
-                let mut newBuf: *mut c_char = 0 as *mut c_char;
-                let mut bufferSize: c_int =
-                    safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) as c_int;
-                if bufferSize == 0 {
-                    bufferSize = INIT_BUFFER_SIZE
-                }
-                loop {
-                    /* not defined XML_CONTEXT_BYTES */
-                    /* Do not invoke signed arithmetic overflow: */
-                    bufferSize = (2u32).wrapping_mul(bufferSize as c_uint) as c_int;
-                    if !(bufferSize < neededSize && bufferSize > 0) {
-                        break;
+                let mut bufferSize: c_int = match safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) {
+                    0 => INIT_BUFFER_SIZE,
+                    size => size.try_into().unwrap(),
+                };
+                while bufferSize < neededSize {
+                    bufferSize = match 2i32.checked_mul(bufferSize) {
+                        Some(s) => s,
+                        None => {
+                            self.m_errorCode = XML_ERROR_NO_MEMORY;
+                            return ptr::null_mut();
+                        }
                     }
                 }
-                if bufferSize <= 0 {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return NULL as *mut c_void;
-                }
-                newBuf = MALLOC![c_char; bufferSize];
+                let newBuf = MALLOC![c_char; bufferSize];
                 if newBuf.is_null() {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return NULL as *mut c_void;
+                    return ptr::null_mut();
                 }
                 self.m_bufferLim = newBuf.offset(bufferSize as isize);
                 if !self.m_bufferPtr.is_null() {
@@ -2924,9 +2911,9 @@ impl XML_ParserStruct {
                     self.m_bufferPtr = self.m_buffer
                 }
             }
-            self.m_eventEndPtr = NULL as *const c_char;
-            self.m_eventPtr = self.m_eventEndPtr;
-            self.m_positionPtr = NULL as *const c_char
+            self.m_eventEndPtr = ptr::null();
+            self.m_eventPtr = ptr::null();
+            self.m_positionPtr = ptr::null();
         }
         self.m_bufferEnd as *mut c_void
     }
