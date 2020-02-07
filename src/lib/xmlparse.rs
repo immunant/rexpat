@@ -3913,7 +3913,7 @@ impl XML_ParserStruct {
                     }
 
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement((*tag).name.str_0, &mut self.m_atts[..]);
+                    let started = handlers.startElement((*tag).name.str_0, &mut self.m_atts);
 
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -3950,7 +3950,7 @@ impl XML_ParserStruct {
                     }
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement(name_0.str_0, &mut self.m_atts[..]);
+                    let started = handlers.startElement(name_0.str_0, &mut self.m_atts);
                     if started {
                         noElmHandlers = XML_FALSE
                     }
