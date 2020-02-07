@@ -771,11 +771,14 @@ pub struct XML_ParserStruct {
     macro works. */
     pub m_userData: *mut c_void,
     m_buffer: Vec<c_char>,
-    // index of first character to be parsed
+    // index in m_buffer of first character to be parsed
     m_bufferStart: usize,
-    // index after last character to be parsed
+    // index in m_buffer after last character to be parsed
     m_bufferEnd: usize,
+    // Absolute index after last character that has been parsed (in the overall
+    // input stream)
     m_parseEndByteIndex: usize,
+    // Index in m_buffer after last character that has been parsed
     m_parseEndIdx: usize,
     pub m_dataBuf: *mut XML_Char, // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
     pub m_dataBufEnd: *mut XML_Char,
