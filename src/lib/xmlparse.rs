@@ -66,6 +66,7 @@ pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
 
+use std::collections::TryReserveError;
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
@@ -780,8 +781,8 @@ pub struct XML_ParserStruct {
     m_parseEndByteIndex: usize,
     // Index in m_buffer after last character that has been parsed
     m_parseEndIdx: usize,
-    pub m_dataBuf: *mut XML_Char, // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
-    pub m_dataBufEnd: *mut XML_Char,
+    // Temporary scratch buffer
+    m_dataBuf: Box<[XML_Char; INIT_DATA_BUF_SIZE as usize]>,
 
     // Handlers should be trait, with native C callback instance
     m_handlers: CXmlHandlers,
@@ -1633,8 +1634,14 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     XML_ParserStruct::create(encodingName, nameSep, dtd)
 }
 
+<<<<<<< HEAD
 impl XML_ParserStruct {
     fn try_new(use_namespaces: bool, dtd: Rc<DTD>) -> Result<Self, ()> {
+=======
+impl<'scf> XML_ParserStruct<'scf> {
+    fn new(use_namespaces: bool) -> Result<Self, TryReserveError> {
+        let m_dataBuf = Box::try_new([0; INIT_DATA_BUF_SIZE as usize])?;
+>>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
         Ok(Self {
             m_userData: ptr::null_mut(),
             m_buffer: Vec::new(),
@@ -1644,8 +1651,7 @@ impl XML_ParserStruct {
             m_bufferEnd: 0,
             m_parseEndByteIndex: 0,
             m_parseEndIdx: 0,
-            m_dataBuf: ptr::null_mut(), // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
-            m_dataBufEnd: ptr::null_mut(),
+            m_dataBuf,
 
             m_handlers: Default::default(),
 
@@ -1724,7 +1730,12 @@ impl XML_ParserStruct {
         mut dtd: Rc<DTD>,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
+<<<<<<< HEAD
         let mut parser = match Box::try_new(parser) {
+=======
+
+        let mut parser = match XML_ParserStruct::new(use_namespaces).and_then(Box::try_new) {
+>>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
             Ok(p) => p,
             Err(_) => return ptr::null_mut(),
         };
@@ -2086,10 +2097,16 @@ impl Drop for XML_ParserStruct {
             parser->m_dtd with the root parser, so we must not destroy it
             */
             FREE!(self.m_groupConnector);
+<<<<<<< HEAD
             FREE!(self.m_dataBuf);
             if self.m_handlers.m_unknownEncodingRelease.is_some() {
                 self.m_handlers.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
+=======
+            if self.m_unknownEncodingRelease.is_some() {
+                self.m_unknownEncodingRelease
+                    .expect("non-null function pointer")(self.m_unknownEncodingData);
+>>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
             }
         }
     }
@@ -2733,11 +2750,8 @@ impl XML_ParserStruct {
             self.m_buffer[self.m_bufferStart..self.m_bufferEnd].into(),
             &mut start,
         );
-<<<<<<< HEAD
 
-=======
         self.m_bufferStart = start.wrapping_offset_from(self.m_buffer.as_ptr()) as usize;
->>>>>>> Convert parser m_buffer field to a Rust managed Vec
         if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
@@ -2779,13 +2793,9 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     (*parser).parseBuffer(len, isFinal)
 }
 
-<<<<<<< HEAD
-impl XML_ParserStruct {
-    pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
-=======
+
 impl <'scf> XML_ParserStruct<'scf> {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> Option<&mut [c_char]> {
->>>>>>> Convert parser m_buffer field to a Rust managed Vec
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
             return None;
@@ -3595,12 +3605,13 @@ unsafe extern "C" fn externalEntityContentProcessor(
     result
 }
 
-impl XML_ParserStruct {
-    unsafe fn doContent(
-        &mut self,
+
+impl<'scf> XML_ParserStruct<'scf> {
+    unsafe fn doContent<'a, 'b: 'a>(
+        &'b mut self,
         startTagLevel: c_int,
         enc_type: EncodingType,
-        mut buf: ExpatBufRef,
+        mut buf: ExpatBufRef<'a>,
         nextPtr: *mut *const c_char,
         haveMore: XML_Bool,
     ) -> XML_Error {
@@ -4123,14 +4134,12 @@ impl XML_ParserStruct {
                     }
                     if self.m_handlers.hasCharacterData() {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
-                            let mut dataPtr = ExpatBufRefMut::new(
-                                self.m_dataBuf as *mut ICHAR,
-                                self.m_dataBufEnd as *mut ICHAR,
-                            );
+                            let dataStart = self.m_dataBuf.as_ptr();
+                            let mut dataPtr = (&mut self.m_dataBuf[..]).into();
                             XmlConvert!(enc, &mut buf, &mut dataPtr);
                             self.m_handlers.characterData(
                                 &ExpatBufRef::new(
-                                    self.m_dataBuf,
+                                    dataStart,
                                     dataPtr.as_ptr(),
                                 ),
                             );
@@ -4160,10 +4169,8 @@ impl XML_ParserStruct {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
                             loop {
                                 let mut from_buf = buf.with_end(next);
-                                let mut to_buf = ExpatBufRefMut::new(
-                                    self.m_dataBuf as *mut ICHAR,
-                                    self.m_dataBufEnd as *mut ICHAR,
-                                );
+                                let dataStart = self.m_dataBuf.as_ptr();
+                                let mut to_buf = (&mut self.m_dataBuf[..]).into();
                                 let convert_res_0: super::xmltok::XML_Convert_Result = XmlConvert!(
                                     enc,
                                     &mut from_buf,
@@ -4171,7 +4178,10 @@ impl XML_ParserStruct {
                                 );
                                 buf = buf.with_start(from_buf.as_ptr());
                                 *eventEndPP = buf.as_ptr();
-                                let data_buf = ExpatBufRef::new(self.m_dataBuf, to_buf.as_ptr());
+                                let data_buf = ExpatBufRef::new(
+                                    dataStart,
+                                    to_buf.as_ptr(),
+                                );
                                 handlers.characterData(&data_buf);
                                 if convert_res_0 == super::xmltok::XML_Convert_Result::COMPLETED
                                     || convert_res_0 == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
@@ -4997,10 +5007,7 @@ unsafe extern "C" fn doCdataSection(
                     if MUST_CONVERT!(enc, buf.as_ptr()) {
                         loop {
                             let mut from_buf = buf.with_end(next);
-                            let mut to_buf = ExpatBufRefMut::new(
-                                (*parser).m_dataBuf as *mut ICHAR,
-                                (*parser).m_dataBufEnd as *mut ICHAR,
-                            );
+                            let mut to_buf = (&mut (*parser).m_dataBuf[..]).into();
                             let convert_res: super::xmltok::XML_Convert_Result = XmlConvert!(
                                 enc,
                                 &mut from_buf,
@@ -5010,7 +5017,7 @@ unsafe extern "C" fn doCdataSection(
                             *eventEndPP = next;
                             handlers.characterData(
                                 &ExpatBufRef::new(
-                                    (*parser).m_dataBuf,
+                                    (*parser).m_dataBuf.as_ptr(),
                                     to_buf.as_ptr(),
                                 ),
                             );
@@ -7731,16 +7738,13 @@ unsafe extern "C" fn reportDefault(
             eventEndPP = &mut (*parser).m_eventEndPtr
         }
         loop {
-            let mut data_buf = ExpatBufRefMut::new(
-                (*parser).m_dataBuf as *mut ICHAR,
-                (*parser).m_dataBufEnd as *mut ICHAR,
-            );
+            let mut data_buf = (&mut (*parser).m_dataBuf[..]).into();
             convert_res = XmlConvert!(enc, &mut buf, &mut data_buf);
             *eventEndPP = buf.as_ptr();
 
             let defaultRan = (*parser).m_handlers.default(
-                (*parser).m_dataBuf,
-                data_buf.as_ptr().wrapping_offset_from((*parser).m_dataBuf).try_into().unwrap(),
+                (*parser).m_dataBuf.as_ptr(),
+                data_buf.as_ptr().wrapping_offset_from((*parser).m_dataBuf.as_ptr()).try_into().unwrap(),
             );
 
             // Previously unwrapped an Option
