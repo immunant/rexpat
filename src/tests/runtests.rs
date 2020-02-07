@@ -20625,9 +20625,10 @@ unsafe extern "C" fn test_nsalloc_realloc_attributes() {
     let max_realloc_count: c_int = 10;
     i = 0;
     while i < max_realloc_count {
-        reallocation_count = i as intptr_t;
-        // FIXME: `HashSet` doesn't use `realloc`
+        // FIXME: `HashSet` doesn't use `realloc`, so we need
+        // to count the allocations instead
         allocation_count = 3 * i as intptr_t;
+        reallocation_count = i as intptr_t;
         if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
             != XML_STATUS_ERROR_0 as c_uint
         {
