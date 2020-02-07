@@ -224,7 +224,7 @@ pub trait XmlEncoding {
     unsafe fn getAtts(
         &self,
         buf: ExpatBufRef,
-        atts: &mut Vec<ATTRIBUTE>,
+        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
     ) -> XML_Error;
 
     unsafe fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
@@ -2217,7 +2217,7 @@ impl XmlEncoding for InitEncoding {
     unsafe fn getAtts(
         &self,
         _buf: ExpatBufRef,
-        _atts: &mut Vec<ATTRIBUTE>,
+        _f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
     ) -> XML_Error {
         XML_ERROR_NONE
     }

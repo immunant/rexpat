@@ -3,7 +3,7 @@ use libc::{c_char, c_int, c_long, size_t};
 use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
 use crate::ascii_h::*;
-use crate::expat_h::{XML_Error, XML_ERROR_NONE, XML_ERROR_NO_MEMORY};
+use crate::expat_h::{XML_Error, XML_ERROR_NONE};
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_h::*;
 use crate::xmltok_impl_h::*;
@@ -1568,7 +1568,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     unsafe fn getAtts(
         &self,
         mut buf: ExpatBufRef,
-        atts: &mut Vec<ATTRIBUTE>,
+        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
     ) -> XML_Error {
         #[derive(PartialEq)]
         enum State {
@@ -1577,34 +1577,17 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             InValue,
         };
         let mut state = State::InName;
-        let mut nAtts: usize = 0;
-        atts.clear();
+        let mut att: ATTRIBUTE = std::mem::zeroed();
 
         /* defined when state == inValue;
         initialization just to shut up compilers */
         let mut open: C2RustUnnamed_2 = 0 as C2RustUnnamed_2;
 
-        // TODO: this is only used to retrieve [nAtts],
-        // so refactor for that; we could even use `push`
-        macro_rules! ATT {
-            [$idx:expr] => {{
-                let idx = $idx as usize;
-                if idx >= atts.len() {
-                    let delta = idx + 1 - atts.len();
-                    if atts.try_reserve(delta).is_err() {
-                        return XML_ERROR_NO_MEMORY;
-                    }
-                    atts.resize_with(idx + 1, || std::mem::zeroed());
-                }
-                &mut atts[$idx]
-            }}
-        }
-
         macro_rules! START_NAME {
             () => {
                 if state == State::Other {
-                    ATT![nAtts].name = buf.as_ptr();
-                    ATT![nAtts].normalized = 1;
+                    att.name = buf.as_ptr();
+                    att.normalized = 1;
                     state = State::InName;
                 }
             };
@@ -1623,40 +1606,48 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                    }
                    BT_QUOT => {
                        if state != State::InValue {
-                           ATT![nAtts].valuePtr = buf.as_ptr().offset(self.MINBPC());
+                           att.valuePtr = buf.as_ptr().offset(self.MINBPC());
                            state = State::InValue;
                            open = BT_QUOT
                        } else if open == BT_QUOT {
                            state = State::Other;
-                           ATT![nAtts].valueEnd = buf.as_ptr();
-                           nAtts += 1
+                           att.valueEnd = buf.as_ptr();
+
+                           let res = f(att);
+                           if res != XML_ERROR_NONE {
+                               return res;
+                           }
                        }
                    }
                    BT_APOS => {
                        if state != State::InValue {
-                           ATT![nAtts].valuePtr = buf.as_ptr().offset(self.MINBPC());
+                           att.valuePtr = buf.as_ptr().offset(self.MINBPC());
                            state = State::InValue;
                            open = BT_APOS
                        } else if open == BT_APOS {
                            state = State::Other;
-                           ATT![nAtts].valueEnd = buf.as_ptr();
-                           nAtts += 1
+                           att.valueEnd = buf.as_ptr();
+
+                           let res = f(att);
+                           if res != XML_ERROR_NONE {
+                               return res;
+                           }
                        }
                    }
                    BT_AMP => {
-                       ATT![nAtts].normalized = 0;
+                       att.normalized = 0;
                    }
                    BT_S => {
                        if state == State::InName {
                            state = State::Other;
                        } else if state == State::InValue
-                           && ATT![nAtts].normalized != 0
-                           && (buf.as_ptr() == ATT![nAtts].valuePtr
+                           && att.normalized != 0
+                           && (buf.as_ptr() == att.valuePtr
                                || self.byte_to_ascii(buf.as_ptr()) != ASCII_SPACE
                                || self.byte_to_ascii(buf.as_ptr().offset(self.MINBPC())) == ASCII_SPACE
                                || self.byte_type(buf.as_ptr().offset(self.MINBPC())) == open)
                        {
-                           ATT![nAtts].normalized = 0;
+                           att.normalized = 0;
                        }
                    }
                    BT_CR | BT_LF => {
@@ -1665,12 +1656,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        if state == State::InName {
                            state = State::Other;
                        } else if state == State::InValue {
-                           ATT![nAtts].normalized = 0;
+                           att.normalized = 0;
                        }
                    }
                    BT_GT | BT_SOL => {
                        if state != State::InValue {
-                           assert!(nAtts == atts.len());
                            return XML_ERROR_NONE
                        }
                    }
