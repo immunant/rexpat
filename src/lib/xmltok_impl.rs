@@ -5,7 +5,6 @@ use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
 use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_h::*;
-use crate::xmltok_impl_h::*;
 use crate::xmltok_impl_h::ByteType;
 use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 
@@ -204,7 +203,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         while HAS_CHAR!(buf, self) {
             match self.byte_type(buf.as_ptr()) {
-                BT_PERCNT => {
+                ByteType::PERCNT => {
                     REQUIRE_CHARS!(buf, 2, self);
                     /* don't allow <!ENTITY% foo "whatever"> */
                     match self.byte_type(buf.as_ptr().offset(self.MINBPC())) {
