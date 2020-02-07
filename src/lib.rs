@@ -9,10 +9,11 @@
 #![allow(unused_mut)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(const_transmute)]
-#![feature(label_break_value)]
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]
 #![feature(ptr_wrapping_offset_from)]
+#![feature(try_reserve)]
+#![feature(alloc_layout_extra)]
 
 #[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
@@ -30,7 +31,6 @@ pub mod stddef_h;
 pub mod stdlib;
 pub mod xmltchar_h;
 pub mod xmltok_h;
-pub mod xmltok_impl_c;
 pub mod xmltok_impl_h;
 
 pub mod lib {
