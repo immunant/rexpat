@@ -4374,7 +4374,9 @@ impl XML_ParserStruct {
             if nPrefixes != 0 { // MOZILLA CHANGE
                 /* size of hash table must be at least 2 * (# of prefixed attributes) */
                 self.m_nsAtts.clear();
-                self.m_nsAtts.reserve((nPrefixes as usize) << 1);
+                if self.m_nsAtts.try_reserve((nPrefixes as usize) << 1).is_err() {
+                    return XML_ERROR_NO_MEMORY;
+                }
             } // MOZILLA CHANGE
             /* expand prefixed names and check for duplicates */
             while i < attIndex {
