@@ -66,7 +66,6 @@ pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
 
-use std::collections::TryReserveError;
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
@@ -1634,15 +1633,22 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     XML_ParserStruct::create(encodingName, nameSep, dtd)
 }
 
-<<<<<<< HEAD
-impl XML_ParserStruct {
-    fn try_new(use_namespaces: bool, dtd: Rc<DTD>) -> Result<Self, ()> {
-=======
+    // fn try_new(use_namespaces: bool, dtd: Rc<DTD>) -> Result<Self, ()> {
+    // fn new(use_namespaces: bool) -> Result<Self, TryReserveError> {
 impl<'scf> XML_ParserStruct<'scf> {
-    fn new(use_namespaces: bool) -> Result<Self, TryReserveError> {
-        let m_dataBuf = Box::try_new([0; INIT_DATA_BUF_SIZE as usize])?;
->>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
-        Ok(Self {
+    unsafe fn create(
+        mut encodingName: *const XML_Char,
+        mut nameSep: *const XML_Char,
+        mut dtd: *mut DTD<'scf>,
+    ) -> XML_Parser {
+        let use_namespaces = !nameSep.is_null();
+
+        let m_dataBuf = match Box::try_new([0; INIT_DATA_BUF_SIZE as usize]) {
+            Ok(b) => b,
+            Err(_) => return ptr::null_mut(),
+        };
+
+        let parser = Self {
             m_userData: ptr::null_mut(),
             m_buffer: Vec::new(),
             // index of first character to be parsed
@@ -1712,8 +1718,9 @@ impl<'scf> XML_ParserStruct<'scf> {
             m_temp2Pool: StringPool::try_new()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
-            m_namespaceSeparator: 0,
-            is_child_parser: false,
+            // is_child_parser: false,
+            m_namespaceSeparator: ASCII_EXCL as XML_Char,
+            // m_parentParser: ptr::null_mut(),
             m_parsingStatus: XML_ParsingStatus::default(),
             m_isParamEntity: false,
             m_useForeignDTD: false,
@@ -1721,21 +1728,9 @@ impl<'scf> XML_ParserStruct<'scf> {
 
             #[cfg(feature = "mozilla")]
             m_mismatch: ptr::null(),
-        })
-    }
+        };
 
-    unsafe fn create(
-        mut encodingName: *const XML_Char,
-        mut nameSep: *const XML_Char,
-        mut dtd: Rc<DTD>,
-    ) -> XML_Parser {
-        let use_namespaces = !nameSep.is_null();
-<<<<<<< HEAD
         let mut parser = match Box::try_new(parser) {
-=======
-
-        let mut parser = match XML_ParserStruct::new(use_namespaces).and_then(Box::try_new) {
->>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
             Ok(p) => p,
             Err(_) => return ptr::null_mut(),
         };
@@ -1747,22 +1742,13 @@ impl<'scf> XML_ParserStruct<'scf> {
         if parser.typed_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
             return ptr::null_mut();
         }
-        parser.m_dataBuf = MALLOC![XML_Char; INIT_DATA_BUF_SIZE];
-        if parser.m_dataBuf.is_null() {
+
+        parser.m_dtd = if !dtd.is_null() { dtd } else { dtdCreate() };
+        if parser.m_dtd.is_null() {
             return ptr::null_mut();
         }
-        parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
-        parser.m_freeBindingList = ptr::null_mut();
-        parser.m_freeTagList = None;
-        parser.m_freeInternalEntities = ptr::null_mut();
-        parser.m_groupSize = 0;
-        parser.m_groupConnector = ptr::null_mut();
-        parser.m_initEncoding = None;
-        parser.m_handlers.m_unknownEncoding = None;
-        parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
-        parser.m_ns = false;
-        parser.m_ns_triplets = false;
-        parser.m_protocolEncodingName = ptr::null();
+        parser.m_tempPool.init();
+        parser.m_temp2Pool.init();
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
             return ptr::null_mut();
@@ -1776,6 +1762,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         {
             parser.m_mismatch = ptr::null();
         }
+
         Box::into_raw(parser)
     }
 
@@ -2097,16 +2084,9 @@ impl Drop for XML_ParserStruct {
             parser->m_dtd with the root parser, so we must not destroy it
             */
             FREE!(self.m_groupConnector);
-<<<<<<< HEAD
-            FREE!(self.m_dataBuf);
             if self.m_handlers.m_unknownEncodingRelease.is_some() {
                 self.m_handlers.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
-=======
-            if self.m_unknownEncodingRelease.is_some() {
-                self.m_unknownEncodingRelease
-                    .expect("non-null function pointer")(self.m_unknownEncodingData);
->>>>>>> Make m_dataBuf an owned Box instead of a raw pointer
             }
         }
     }
