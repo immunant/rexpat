@@ -3,10 +3,7 @@ use num_derive::{ToPrimitive, FromPrimitive};
 
 pub type C2RustUnnamed_2 = c_uint;
 
-#[derive(Clone, Copy)]
-#[derive(PartialEq)]
-#[derive(ToPrimitive)]
-#[derive(FromPrimitive)]
+#[derive(Clone, Copy, PartialEq, ToPrimitive, FromPrimitive)]
 pub enum ByteType {
   NONXML,   /* e.g. noncharacter-FFFF */
   MALFORM,  /* illegal, with regard to encoding */
