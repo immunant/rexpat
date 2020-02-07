@@ -108,7 +108,7 @@ pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
     _IO_lock_t, __off64_t, __off_t, __pid_t, __ssize_t,
-    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
+    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
 use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset};

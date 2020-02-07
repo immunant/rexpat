@@ -36,5 +36,4 @@ bencher = "0.1"
 [features]
 unicode = []
 unicode_wchar_t = ["wchar"]
-getrandom_syscall = []
 mozilla = ["unicode"]
