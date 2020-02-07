@@ -515,7 +515,7 @@ impl CXmlHandlers {
 impl XmlHandlers for CXmlHandlers {
     unsafe fn startElement(&self, a: *const XML_Char, b: &mut [[*const XML_Char; 2]]) -> bool {
         self.m_startElementHandler.map(|handler| {
-            handler(self.m_handlerArg, a, b.as_ptr() as *mut *const XML_Char);
+            handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
 
             true
         }).unwrap_or(false)
