@@ -848,7 +848,7 @@ pub struct XML_ParserStruct {
     pub m_freeBindingList: *mut BINDING,
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
-    pub m_atts: Vec<*const XML_Char>,
+    pub m_atts: Vec<[*const XML_Char; 2]>,
     pub m_nsAtts: *mut NS_ATT,
     pub m_nsAttsVersion: c_ulong,
     pub m_nsAttsPower: c_uchar,
@@ -3914,7 +3914,7 @@ impl XML_ParserStruct {
 
                     let handlers = self.m_handlers;
                     let started = handlers.startElement((*tag).name.str_0,
-                                                        self.m_atts.as_mut_ptr());
+                                                        self.m_atts.as_mut_ptr() as *mut _);
 
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -3952,7 +3952,7 @@ impl XML_ParserStruct {
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     let handlers = self.m_handlers;
                     let started = handlers.startElement(name_0.str_0,
-                                                        self.m_atts.as_mut_ptr());
+                                                        self.m_atts.as_mut_ptr() as *mut _);
                     if started {
                         noElmHandlers = XML_FALSE
                     }
@@ -4335,7 +4335,7 @@ impl XML_ParserStruct {
         self.m_atts.clear();
         /* get the attributes from the tokenizer */
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
-            if self.m_atts.try_reserve(2).is_err() {
+            if self.m_atts.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
             }
 
@@ -4363,7 +4363,6 @@ impl XML_ParserStruct {
                 return XML_ERROR_DUPLICATE_ATTRIBUTE;
             }
             *(*attId).name.offset(-1) = 1;
-            self.m_atts.push((*attId).name);
             if currAtt.normalized == 0 {
                 let mut result: XML_Error = XML_ERROR_NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
@@ -4393,7 +4392,7 @@ impl XML_ParserStruct {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(self.m_tempPool.start);
+                self.m_atts.push([(*attId).name, self.m_tempPool.start]);
                 self.m_tempPool.start = self.m_tempPool.ptr
             } else {
                 /* the value did not need normalizing */
@@ -4404,7 +4403,7 @@ impl XML_ParserStruct {
                 if fresh10.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
-                self.m_atts.push(fresh10);
+                self.m_atts.push([(*attId).name, fresh10]);
                 self.m_tempPool.start = self.m_tempPool.ptr
             }
             /* handle prefixed attribute names */
@@ -4415,7 +4414,7 @@ impl XML_ParserStruct {
                         self,
                         (*attId).prefix,
                         attId,
-                        *self.m_atts.last().unwrap(),
+                        self.m_atts.last().unwrap()[1],
                         bindingsPtr,
                     );
                     if result_0 as u64 != 0 {
@@ -4423,7 +4422,6 @@ impl XML_ParserStruct {
                     }
                     #[cfg(not(feature = "mozilla"))]
                     {
-                        self.m_atts.pop();
                         self.m_atts.pop();
                     }
                     #[cfg(feature = "mozilla")]
@@ -4446,27 +4444,24 @@ impl XML_ParserStruct {
             return res;
         }
 
-        if self.m_atts.try_reserve((nDefaultAtts + INIT_ATTS_SIZE) as usize).is_err() {
-            return XML_ERROR_NO_MEMORY;
-        }
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
-        self.m_nSpecifiedAtts = self.m_atts.len() as c_int;
+        self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         if !(*elementType).idAtt.is_null() && *(*(*elementType).idAtt).name.offset(-1) as c_int != 0 {
-            let mut i = 0;
-            while i < self.m_atts.len() {
-                if self.m_atts[i] == (*(*elementType).idAtt).name as *const XML_Char {
-                    self.m_idAttIndex = i as c_int;
+            for i in 0..self.m_atts.len() {
+                if self.m_atts[i][0] == (*(*elementType).idAtt).name as *const XML_Char {
+                    self.m_idAttIndex = 2 * i as c_int;
                     break;
-                } else {
-                    i += 2
                 }
             }
         } else {
             self.m_idAttIndex = -1
         }
+
         /* do attribute defaulting */
-        let mut i: c_int = 0;
-        while i < nDefaultAtts {
+        if self.m_atts.try_reserve(nDefaultAtts as usize).is_err() {
+            return XML_ERROR_NO_MEMORY;
+        }
+        for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
             if *(*(*da).id).name.offset(-1) == 0 && !(*da).value.is_null() {
                 if !(*(*da).id).prefix.is_null() {
@@ -4485,23 +4480,20 @@ impl XML_ParserStruct {
                         {
                             *(*(*da).id).name.offset(-1) = 3;
                             nXMLNSDeclarations += 1;
-                            self.m_atts.push((*(*da).id).name);
-                            self.m_atts.push((*da).value);
+                            self.m_atts.push([(*(*da).id).name, (*da).value]);
                         }
                     } else {
                         *(*(*da).id).name.offset(-1) = 2;
                         nPrefixes += 1;
-                        self.m_atts.push((*(*da).id).name);
-                        self.m_atts.push((*da).value);
+                        self.m_atts.push([(*(*da).id).name, (*da).value]);
                     }
                 } else {
                     *(*(*da).id).name.offset(-1) = 1;
-                    self.m_atts.push((*(*da).id).name);
-                    self.m_atts.push((*da).value);
+                    self.m_atts.push([(*(*da).id).name, (*da).value]);
                 }
             }
-            i += 1
         }
+
         /* expand prefixed attribute names, check for duplicates,
         and clear flags that say whether attributes were specified */
         let mut i = 0; /* hash table index */
@@ -4552,7 +4544,7 @@ impl XML_ParserStruct {
             } // MOZILLA CHANGE
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
-                let mut s: *const XML_Char = self.m_atts[i];
+                let mut s: *const XML_Char = self.m_atts[i][0];
                 if *s.offset(-1) as c_int == 2 {
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
@@ -4714,7 +4706,7 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i] = s;
+                    self.m_atts[i][0] = s;
                     /* fill empty slot with new version, uriName and hash value */
                     (*self.m_nsAtts.offset(j_0 as isize)).version = version;
                     (*self.m_nsAtts.offset(j_0 as isize)).hash = uriHash;
@@ -4722,7 +4714,7 @@ impl XML_ParserStruct {
                     *fresh28 = s;
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
-                        i += 2;
+                        i += 1;
                         break;
                     }
                 } else if cfg!(feature = "mozilla") && *s.offset(-1) as c_int == 3 {
@@ -4804,27 +4796,27 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i] = s;
+                    self.m_atts[i][0] = s;
 
                     nXMLNSDeclarations -= 1;
                     if nXMLNSDeclarations == 0 && nPrefixes == 0 {
-                        i += 2;
+                        i += 1;
                         break;
                     }
                 } else {
                     *(s as *mut XML_Char).offset(-1) = 0
                 }
-                i += 2
+                i += 1
             }
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            *(self.m_atts[i] as *mut XML_Char).offset(-1) = 0;
-            i += 2
+            *(self.m_atts[i][0] as *mut XML_Char).offset(-1) = 0;
+            i += 1
         }
 
         // REXPAT: append a NULL pointer as the stop marker
-        self.m_atts.push(ptr::null());
+        self.m_atts.push([ptr::null(); 2]);
 
         binding = *bindingsPtr;
         while !binding.is_null() {
