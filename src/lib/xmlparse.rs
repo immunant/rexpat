@@ -3114,7 +3114,7 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
     if parser.is_null() {
         return 0;
     }
-    let positionPtr = &(*parser).m_buffer[(*parser).m_positionIdx];
+    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx);
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
@@ -3132,7 +3132,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
     if parser.is_null() {
         return 0;
     }
-    let positionPtr = &(*parser).m_buffer[(*parser).m_positionIdx];
+    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx);
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
