@@ -9,15 +9,7 @@ use crate::lib::xmltok::{
     XML_TOK_ENTITY_REF,
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
-use crate::xmltok_impl_h::{
-    BT_COLON,
-    BT_DIGIT,
-    BT_HEX,
-    BT_MINUS,
-    BT_NAME,
-    BT_NMSTRT,
-    BT_NONASCII,
-};
+use crate::xmltok_impl_h::ByteType;
 
 #[cfg(target_endian = "little")]
 use crate::lib::xmltok::internal_little2_encoding_ns as encoding;
@@ -62,7 +54,7 @@ pub unsafe extern "C" fn MOZ_XMLCheckQName(
     }
     while ptr != end {
         match BYTE_TYPE!(ptr) {
-            BT_COLON => {
+            ByteType::COLON => {
                 /* We're namespace-aware and either first or last character is a colon
                    or we've already seen a colon. */
                 if ns_aware != 0 &&
@@ -73,7 +65,7 @@ pub unsafe extern "C" fn MOZ_XMLCheckQName(
                 *colon = ptr;
                 nmstrt = ns_aware != 0; /* e.g. "a:0" should be valid if !ns_aware */
             }
-            BT_NONASCII => {
+            ByteType::NONASCII => {
                 if !IS_NAME_CHAR_MINBPC!(ptr) ||
                     (nmstrt && (*colon).is_null() && !IS_NMSTRT_CHAR_MINBPC!(ptr))
                 {
@@ -86,8 +78,8 @@ pub unsafe extern "C" fn MOZ_XMLCheckQName(
                 }
                 nmstrt = false;
             }
-            BT_NMSTRT | BT_HEX => nmstrt = false,
-            BT_DIGIT | BT_NAME | BT_MINUS => {
+            ByteType::NMSTRT | ByteType::HEX => nmstrt = false,
+            ByteType::DIGIT | ByteType::NAME | ByteType::MINUS => {
                 if nmstrt {
                     return MOZ_EXPAT_INVALID_CHARACTER;
                 }
@@ -102,8 +94,8 @@ pub unsafe extern "C" fn MOZ_XMLCheckQName(
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XMLIsLetter(ptr: *const c_char) -> c_int {
     match BYTE_TYPE!(ptr) {
-        BT_NONASCII if !IS_NMSTRT_CHAR_MINBPC!(ptr) => 0,
-        BT_NONASCII | BT_NMSTRT | BT_HEX  => 1,
+        ByteType::NONASCII if !IS_NMSTRT_CHAR_MINBPC!(ptr) => 0,
+        ByteType::NONASCII | ByteType::NMSTRT | ByteType::HEX  => 1,
         _ => 0
     }
 }
@@ -111,8 +103,8 @@ pub unsafe extern "C" fn MOZ_XMLIsLetter(ptr: *const c_char) -> c_int {
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XMLIsNCNameChar(ptr: *const c_char) -> c_int {
     match BYTE_TYPE!(ptr) {
-        BT_NONASCII if !IS_NAME_CHAR_MINBPC!(ptr) => 0,
-        BT_NONASCII | BT_NMSTRT | BT_HEX | BT_DIGIT | BT_NAME | BT_MINUS => 1,
+        ByteType::NONASCII if !IS_NAME_CHAR_MINBPC!(ptr) => 0,
+        ByteType::NONASCII | ByteType::NMSTRT | ByteType::HEX | ByteType::DIGIT | ByteType::NAME | ByteType::MINUS => 1,
         _ => 0
     }
 }

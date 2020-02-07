@@ -32,6 +32,8 @@ libc = "0.2"
 fallible_collections = "0.1.0"
 wchar = { path = "deps/wchar", optional = true }
 bencher = "0.1"
+num-traits = "0.2"
+num-derive = "0.2"
 
 [features]
 unicode = []
