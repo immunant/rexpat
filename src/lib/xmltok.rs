@@ -2550,25 +2550,21 @@ pub fn XmlGetUtf8InternalEncoding() -> &'static ENCODING {
 }
 
 #[cfg(target_endian = "little")]
-#[no_mangle]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
     return unsafe { &**internal_little2_encoding.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "big")]
-#[no_mangle]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
     return unsafe { &**internal_big2_encoding.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "little")]
-#[no_mangle]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "big")]
-#[no_mangle]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() };
 }
@@ -2628,7 +2624,6 @@ pub unsafe fn findEncodingNS(
     }
     return Some(encodingsNS.unwrap()[i as usize]);
 }
-#[no_mangle]
 
 pub unsafe fn XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
@@ -2652,7 +2647,6 @@ pub unsafe fn XmlParseXmlDeclNS<'a>(
         standalone,
     );
 }
-#[no_mangle]
 
 pub unsafe fn XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
@@ -3176,7 +3170,6 @@ pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     } /* LCOV_EXCL_LINE: this case is always eliminated beforehand */
     return result;
 }
-#[no_mangle]
 
 pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
     if c < 0 {
@@ -3207,7 +3200,6 @@ pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
     return 0;
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
 }
-#[no_mangle]
 
 pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
     if charNum < 0 {
@@ -3226,7 +3218,6 @@ pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_in
     return 0;
 }
 
-#[no_mangle]
 pub unsafe fn XmlSizeOfUnknownEncoding() -> c_int {
     return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
