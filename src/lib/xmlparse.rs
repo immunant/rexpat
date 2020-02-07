@@ -4368,16 +4368,12 @@ impl XML_ParserStruct {
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */
                 if (*attId).maybeTokenized != 0 {
-                    let mut j: c_int = 0;
-                    j = 0;
-                    while j < nDefaultAtts {
+                    for j in 0..nDefaultAtts {
                         if attId
                             == (*(*elementType).defaultAtts.offset(j as isize)).id as *mut ATTRIBUTE_ID
                         {
                             isCdata = (*(*elementType).defaultAtts.offset(j as isize)).isCdata;
                             break;
-                        } else {
-                            j += 1
                         }
                     }
                 }
