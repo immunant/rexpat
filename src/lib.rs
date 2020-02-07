@@ -12,6 +12,8 @@
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]
 #![feature(ptr_wrapping_offset_from)]
+#![feature(try_reserve)]
+#![feature(alloc_layout_extra)]
 
 #[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
