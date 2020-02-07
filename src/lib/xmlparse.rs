@@ -775,8 +775,8 @@ pub struct XML_ParserStruct {
     m_bufferStart: usize,
     // index after last character to be parsed
     m_bufferEnd: usize,
-    pub m_parseEndByteIndex: XML_Index,
-    pub m_parseEndPtr: *const c_char,
+    m_parseEndByteIndex: usize,
+    m_parseEndIdx: usize,
     pub m_dataBuf: *mut XML_Char, // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
     pub m_dataBufEnd: *mut XML_Char,
 
@@ -841,6 +841,17 @@ impl XML_ParserStruct {
         match enc_type {
             EncodingType::Normal => unsafe { &*self.m_encoding },
             EncodingType::Internal => self.m_internalEncoding,
+        }
+    }
+
+    // TODO(SJC): add a better err type
+    fn buffer_index(&self, p: *const c_char) -> Result<usize, ()> {
+        if p < self.m_buffer.as_ptr()
+            || p >= self.m_buffer.as_ptr().wrapping_add(self.m_buffer.len())
+        {
+            Err(())
+        } else {
+            Ok(p.wrapping_offset_from(self.m_buffer.as_ptr()) as usize)
         }
     }
 }
@@ -1629,7 +1640,7 @@ impl XML_ParserStruct {
             // index after last character to be parsed
             m_bufferEnd: 0,
             m_parseEndByteIndex: 0,
-            m_parseEndPtr: ptr::null(),
+            m_parseEndIdx: 0,
             m_dataBuf: ptr::null_mut(), // Box<[XML_Char; INIT_DATA_BUF_SIZE]>
             m_dataBufEnd: ptr::null_mut(),
 
@@ -1768,8 +1779,8 @@ impl XML_ParserStruct {
         self.m_handlers.m_externalEntityRefHandlerArg = self as XML_Parser;
         self.m_bufferStart = 0;
         self.m_bufferEnd = 0;
-        self.m_parseEndByteIndex = 0i64;
-        self.m_parseEndPtr = ptr::null();
+        self.m_parseEndByteIndex = 0;
+        self.m_parseEndIdx = 0;
         self.m_declElementType = ptr::null_mut();
         self.m_declAttributeId = ptr::null_mut();
         self.m_declEntity = ptr::null_mut();
@@ -2610,7 +2621,7 @@ impl XML_ParserStruct {
                 return XML_Status::OK;
             }
             self.m_positionIdx = self.m_bufferStart;
-            self.m_parseEndPtr = self.m_buffer.as_ptr().add(self.m_bufferEnd);
+            self.m_parseEndIdx = self.m_bufferEnd;
             /* If data are left over from last buffer, and we now know that these
             data are the final chunk of input, then we have to check them again
             to detect errors based on that fact.
@@ -2711,9 +2722,8 @@ impl XML_ParserStruct {
         start = self.m_buffer.as_ptr().add(self.m_bufferStart);
         self.m_positionIdx = self.m_bufferStart;
         self.m_bufferEnd += len as usize;
-        // TODO(SJC): is signed overflow an issue here?
-        self.m_parseEndPtr = self.m_buffer.as_ptr().add(self.m_bufferEnd);
-        self.m_parseEndByteIndex += len as c_long;
+        self.m_parseEndIdx = self.m_bufferEnd;
+        self.m_parseEndByteIndex += len as usize;
         self.m_parsingStatus.finalBuffer = isFinal != 0;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
             self,
@@ -2951,10 +2961,7 @@ impl XML_ParserStruct {
         self.m_parsingStatus.parsing = XML_Parsing::PARSING;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
             self,
-            ExpatBufRef::new(
-                &self.m_buffer[self.m_bufferStart],
-                self.m_parseEndPtr,
-            ),
+            self.m_buffer[self.m_bufferStart..self.m_parseEndIdx].into(),
             &mut (&self.m_buffer[self.m_bufferStart] as *const _),
         );
         if self.m_errorCode != XML_Error::NONE {
@@ -3031,13 +3038,10 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_
         return -1;
     }
     if !(*parser).m_eventPtr.is_null() {
-        return (*parser).m_parseEndByteIndex
-            - (*parser)
-                .m_parseEndPtr
-                .wrapping_offset_from((*parser).m_eventPtr) as c_long;
+        return ((*parser).m_parseEndByteIndex - ((*parser).m_parseEndIdx - (*parser).buffer_index((*parser).m_eventPtr).unwrap())) as XML_Index;
     }
     if cfg!(feature = "mozilla") {
-        return (*parser).m_parseEndByteIndex;
+        return (*parser).m_parseEndByteIndex as XML_Index;
     }
     -1
 }
