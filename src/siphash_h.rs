@@ -1,23 +1,3 @@
-use crate::stddef_h::size_t;
-use crate::stdlib::uint64_t;
-use libc::{c_char, c_int, c_uchar, c_ulong, c_void};
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct siphash {
-    pub v0: uint64_t,
-    pub v1: uint64_t,
-    pub v2: uint64_t,
-    pub v3: uint64_t,
-    pub buf: [c_uchar; 8],
-    pub p: *mut c_uchar,
-    pub c: uint64_t,
-}
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct sipkey {
-    pub k: [uint64_t; 2],
-}
-
 /* ==========================================================================
  * siphash.h - SipHash-2-4 in a single header file
  * --------------------------------------------------------------------------
@@ -112,6 +92,27 @@ pub struct sipkey {
  *   macros should not exhibit any such side effects.
  * ==========================================================================
  */
+use crate::stddef_h::size_t;
+use crate::stdlib::uint64_t;
+use libc::{c_char, c_int, c_uchar, c_ulong, c_void};
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct siphash {
+    pub v0: uint64_t,
+    pub v1: uint64_t,
+    pub v2: uint64_t,
+    pub v3: uint64_t,
+    pub buf: [c_uchar; 8],
+    pub p: *mut c_uchar,
+    pub c: uint64_t,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct sipkey {
+    pub k: [uint64_t; 2],
+}
+
+
 /* size_t */
 /* uint64_t uint32_t uint8_t */
 /*

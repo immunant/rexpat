@@ -16,3 +16,4 @@ docker run -it --user $USER \
     --workdir "/home/$USER/rexpat" \
     -v "$REXPAT_ROOT":"/home/$USER/rexpat" \
     immunant/rexpat:latest
+

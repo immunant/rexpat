@@ -29,7 +29,7 @@ harness = false
 
 [dependencies]
 libc = "0.2"
-alloc-wg = "0.7"
+fallible_collections = "0.1.0"
 wchar = { path = "deps/wchar", optional = true }
 bencher = "0.1"
 

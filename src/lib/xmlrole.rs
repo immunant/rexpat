@@ -10,6 +10,7 @@
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -33,6 +34,7 @@
 */
 
 use libc::{c_char, c_int, c_uint, c_ulong};
+use super::xmlparse::ExpatBufRef;
 pub type C2RustUnnamed_0 = c_int;
 
 pub const XML_ROLE_ERROR: C2RustUnnamed_0 = -1;
@@ -110,8 +112,7 @@ pub struct prolog_state {
         unsafe extern "C" fn(
             _: *mut prolog_state,
             _: c_int,
-            _: *const c_char,
-            _: *const c_char,
+            _: ExpatBufRef,
             _: *const super::xmltok::ENCODING,
         ) -> c_int,
     >,
@@ -146,41 +147,9 @@ use ::libc;
 pub type PROLOG_HANDLER = unsafe extern "C" fn(
     _: *mut PROLOG_STATE,
     _: c_int,
-    _: *const c_char,
-    _: *const c_char,
+    _: ExpatBufRef,
     _: *const super::xmltok::ENCODING,
 ) -> c_int;
-/*
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 /* ndef _WIN32 */
 /* Doesn't check:
 
@@ -415,8 +384,7 @@ static mut KW_SYSTEM: [c_char; 7] = [
 unsafe extern "C" fn prolog0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -439,8 +407,7 @@ unsafe extern "C" fn prolog0(
         super::xmltok::XML_TOK_BOM => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
             {
@@ -460,8 +427,7 @@ unsafe extern "C" fn prolog0(
 unsafe extern "C" fn prolog1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -480,8 +446,7 @@ unsafe extern "C" fn prolog1(
         }
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !((*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_DOCTYPE.as_ptr(),
             ) == 0)
             {
@@ -501,8 +466,7 @@ unsafe extern "C" fn prolog1(
 unsafe extern "C" fn prolog2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -521,8 +485,7 @@ unsafe extern "C" fn prolog2(
 unsafe extern "C" fn doctype0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -539,8 +502,7 @@ unsafe extern "C" fn doctype0(
 unsafe extern "C" fn doctype1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    mut buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -554,11 +516,11 @@ unsafe extern "C" fn doctype1(
             return XML_ROLE_DOCTYPE_CLOSE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(doctype3 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(doctype2 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
@@ -571,8 +533,7 @@ unsafe extern "C" fn doctype1(
 unsafe extern "C" fn doctype2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -589,8 +550,7 @@ unsafe extern "C" fn doctype2(
 unsafe extern "C" fn doctype3(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -607,8 +567,7 @@ unsafe extern "C" fn doctype3(
 unsafe extern "C" fn doctype4(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -629,8 +588,7 @@ unsafe extern "C" fn doctype4(
 unsafe extern "C" fn doctype5(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -647,16 +605,14 @@ unsafe extern "C" fn doctype5(
 unsafe extern "C" fn internalSubset(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if (*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ENTITY.as_ptr(),
             ) != 0
             {
@@ -664,8 +620,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ENTITY_NONE;
             }
             if (*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ATTLIST.as_ptr(),
             ) != 0
             {
@@ -673,8 +628,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ATTLIST_NONE;
             }
             if (*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_ELEMENT.as_ptr(),
             ) != 0
             {
@@ -682,8 +636,7 @@ unsafe extern "C" fn internalSubset(
                 return XML_ROLE_ELEMENT_NONE;
             }
             if (*enc).nameMatchesAscii(
-                ptr.offset((2i32 * (*enc).minBytesPerChar()) as isize),
-                end,
+                buf.inc_start((2i32 * (*enc).minBytesPerChar()) as isize),
                 KW_NOTATION.as_ptr(),
             ) != 0
             {
@@ -707,22 +660,20 @@ unsafe extern "C" fn internalSubset(
 unsafe extern "C" fn externalSubset0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     (*state).handler = Some(externalSubset1 as PROLOG_HANDLER);
     if tok == super::xmltok::XML_TOK_XML_DECL {
         return XML_ROLE_TEXT_DECL;
     }
-    return externalSubset1(state, tok, ptr, end, enc);
+    return externalSubset1(state, tok, buf, enc);
 }
 
 unsafe extern "C" fn externalSubset1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -743,7 +694,7 @@ unsafe extern "C" fn externalSubset1(
                 return XML_ROLE_NONE;
             }
         }
-        _ => return internalSubset(state, tok, ptr, end, enc),
+        _ => return internalSubset(state, tok, buf, enc),
     }
     return common(state, tok);
 }
@@ -752,8 +703,7 @@ unsafe extern "C" fn externalSubset1(
 unsafe extern "C" fn entity0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -774,8 +724,7 @@ unsafe extern "C" fn entity0(
 unsafe extern "C" fn entity1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -792,18 +741,17 @@ unsafe extern "C" fn entity1(
 unsafe extern "C" fn entity2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(entity4 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(entity3 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -821,8 +769,7 @@ unsafe extern "C" fn entity2(
 unsafe extern "C" fn entity3(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -839,8 +786,7 @@ unsafe extern "C" fn entity3(
 unsafe extern "C" fn entity4(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -857,8 +803,7 @@ unsafe extern "C" fn entity4(
 unsafe extern "C" fn entity5(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -872,7 +817,7 @@ unsafe extern "C" fn entity5(
             return XML_ROLE_ENTITY_COMPLETE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_NDATA.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_NDATA.as_ptr()) != 0 {
                 (*state).handler = Some(entity6 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -885,8 +830,7 @@ unsafe extern "C" fn entity5(
 unsafe extern "C" fn entity6(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -904,18 +848,17 @@ unsafe extern "C" fn entity6(
 unsafe extern "C" fn entity7(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(entity9 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(entity8 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -933,8 +876,7 @@ unsafe extern "C" fn entity7(
 unsafe extern "C" fn entity8(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -951,8 +893,7 @@ unsafe extern "C" fn entity8(
 unsafe extern "C" fn entity9(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -969,8 +910,7 @@ unsafe extern "C" fn entity9(
 unsafe extern "C" fn entity10(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -991,8 +931,7 @@ unsafe extern "C" fn entity10(
 unsafe extern "C" fn notation0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1009,18 +948,17 @@ unsafe extern "C" fn notation0(
 unsafe extern "C" fn notation1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_SYSTEM.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
                 (*state).handler = Some(notation3 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_PUBLIC.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
                 (*state).handler = Some(notation2 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
@@ -1033,8 +971,7 @@ unsafe extern "C" fn notation1(
 unsafe extern "C" fn notation2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1051,8 +988,7 @@ unsafe extern "C" fn notation2(
 unsafe extern "C" fn notation3(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1070,8 +1006,7 @@ unsafe extern "C" fn notation3(
 unsafe extern "C" fn notation4(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1097,8 +1032,7 @@ unsafe extern "C" fn notation4(
 unsafe extern "C" fn attlist0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1115,8 +1049,7 @@ unsafe extern "C" fn attlist0(
 unsafe extern "C" fn attlist1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1141,8 +1074,7 @@ unsafe extern "C" fn attlist1(
 unsafe extern "C" fn attlist2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1167,13 +1099,13 @@ unsafe extern "C" fn attlist2(
                     .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong)
                     as c_int
             {
-                if (*enc).nameMatchesAscii(ptr, end, types[i as usize]) != 0 {
+                if (*enc).nameMatchesAscii(buf, types[i as usize]) != 0 {
                     (*state).handler = Some(attlist8 as PROLOG_HANDLER);
                     return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i;
                 }
                 i += 1
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_NOTATION.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_NOTATION.as_ptr()) != 0 {
                 (*state).handler = Some(attlist5 as PROLOG_HANDLER);
                 return XML_ROLE_ATTLIST_NONE;
             }
@@ -1190,8 +1122,7 @@ unsafe extern "C" fn attlist2(
 unsafe extern "C" fn attlist3(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1210,8 +1141,7 @@ unsafe extern "C" fn attlist3(
 unsafe extern "C" fn attlist4(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1232,8 +1162,7 @@ unsafe extern "C" fn attlist4(
 unsafe extern "C" fn attlist5(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1250,8 +1179,7 @@ unsafe extern "C" fn attlist5(
 unsafe extern "C" fn attlist6(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1268,8 +1196,7 @@ unsafe extern "C" fn attlist6(
 unsafe extern "C" fn attlist7(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1291,16 +1218,14 @@ unsafe extern "C" fn attlist7(
 unsafe extern "C" fn attlist8(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii(
-                ptr.offset((*enc).minBytesPerChar() as isize),
-                end,
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_IMPLIED.as_ptr(),
             ) != 0
             {
@@ -1308,8 +1233,7 @@ unsafe extern "C" fn attlist8(
                 return XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii(
-                ptr.offset((*enc).minBytesPerChar() as isize),
-                end,
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_REQUIRED.as_ptr(),
             ) != 0
             {
@@ -1317,8 +1241,7 @@ unsafe extern "C" fn attlist8(
                 return XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
             }
             if (*enc).nameMatchesAscii(
-                ptr.offset((*enc).minBytesPerChar() as isize),
-                end,
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_FIXED.as_ptr(),
             ) != 0
             {
@@ -1338,8 +1261,7 @@ unsafe extern "C" fn attlist8(
 unsafe extern "C" fn attlist9(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1356,8 +1278,7 @@ unsafe extern "C" fn attlist9(
 unsafe extern "C" fn element0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1374,19 +1295,18 @@ unsafe extern "C" fn element0(
 unsafe extern "C" fn element1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_EMPTY.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_EMPTY.as_ptr()) != 0 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
                 (*state).role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_EMPTY;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_ANY.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_ANY.as_ptr()) != 0 {
                 (*state).handler = Some(declClose as PROLOG_HANDLER);
                 (*state).role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_ANY;
@@ -1405,16 +1325,14 @@ unsafe extern "C" fn element1(
 unsafe extern "C" fn element2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_POUND_NAME => {
             if (*enc).nameMatchesAscii(
-                ptr.offset((*enc).minBytesPerChar() as isize),
-                end,
+                buf.inc_start(((*enc).minBytesPerChar()) as isize),
                 KW_PCDATA.as_ptr(),
             ) != 0
             {
@@ -1451,8 +1369,7 @@ unsafe extern "C" fn element2(
 unsafe extern "C" fn element3(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1479,8 +1396,7 @@ unsafe extern "C" fn element3(
 unsafe extern "C" fn element4(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1497,8 +1413,7 @@ unsafe extern "C" fn element4(
 unsafe extern "C" fn element5(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1520,8 +1435,7 @@ unsafe extern "C" fn element5(
 unsafe extern "C" fn element6(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1554,8 +1468,7 @@ unsafe extern "C" fn element6(
 unsafe extern "C" fn element7(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1608,18 +1521,17 @@ unsafe extern "C" fn element7(
 unsafe extern "C" fn condSect0(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut ptr: *const c_char,
-    mut end: *const c_char,
+    buf: ExpatBufRef,
     mut enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if (*enc).nameMatchesAscii(ptr, end, KW_INCLUDE.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_INCLUDE.as_ptr()) != 0 {
                 (*state).handler = Some(condSect1 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }
-            if (*enc).nameMatchesAscii(ptr, end, KW_IGNORE.as_ptr()) != 0 {
+            if (*enc).nameMatchesAscii(buf, KW_IGNORE.as_ptr()) != 0 {
                 (*state).handler = Some(condSect2 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }
@@ -1632,8 +1544,7 @@ unsafe extern "C" fn condSect0(
 unsafe extern "C" fn condSect1(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1651,8 +1562,7 @@ unsafe extern "C" fn condSect1(
 unsafe extern "C" fn condSect2(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1670,8 +1580,7 @@ unsafe extern "C" fn condSect2(
 unsafe extern "C" fn declClose(
     mut state: *mut PROLOG_STATE,
     mut tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     match tok {
@@ -1712,8 +1621,7 @@ unsafe extern "C" fn declClose(
 unsafe extern "C" fn error(
     mut _state: *mut PROLOG_STATE,
     mut _tok: c_int,
-    mut _ptr: *const c_char,
-    mut _end: *const c_char,
+    mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
     return XML_ROLE_NONE;

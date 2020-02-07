@@ -1,3 +1,35 @@
+/* Run the Expat test suite
+                            __  __            _
+                         ___\ \/ /_ __   __ _| |_
+                        / _ \\  /| '_ \ / _` | __|
+                       |  __//  \| |_) | (_| | |_
+                        \___/_/\_\ .__/ \__,_|\__|
+                                 |_| XML parser
+
+   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+   Copyright (c) 2000-2017 Expat development team
+   Portions copyright (c) 2020 Immunant, Inc.
+   Licensed under the MIT license:
+
+   Permission is  hereby granted,  free of charge,  to any  person obtaining
+   a  copy  of  this  software   and  associated  documentation  files  (the
+   "Software"),  to  deal in  the  Software  without restriction,  including
+   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
+   distribute, sublicense, and/or sell copies of the Software, and to permit
+   persons  to whom  the Software  is  furnished to  do so,  subject to  the
+   following conditions:
+
+   The above copyright  notice and this permission notice  shall be included
+   in all copies or substantial portions of the Software.
+
+   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
+   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 #![allow(
     dead_code,
     mutable_transmutes,
@@ -23,7 +55,7 @@ compile_error!("Tests are not compatible with feature \"unicode\" without 16-bit
 use crate::stdlib::{stderr, strncmp};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
-    XML_Encoding, XML_Expat_Version, XML_Feature, XML_Memory_Handling_Suite, XML_ParserStruct,
+    XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
     XML_ParsingStatus, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY, XML_ERROR_BAD_CHAR_REF,
     XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
     XML_ERROR_EXTERNAL_ENTITY_HANDLING, XML_ERROR_FINISHED, XML_ERROR_INCORRECT_ENCODING,
@@ -66,8 +98,10 @@ use ::rexpat::stdbool_h::{false_0, true_0};
 use ::rexpat::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::rexpat::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
+use ::rexpat::lib::xmlparse::ExpatBufRef;
 
-use ::std::mem::transmute;
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::mem::transmute;
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
@@ -613,45 +647,94 @@ pub struct DataIssue240 {
     pub parser: XML_Parser,
     pub deep: c_int,
 }
-/* Run the Expat test suite
-                            __  __            _
-                         ___\ \/ /_ __   __ _| |_
-                        / _ \\  /| '_ \ / _` | __|
-                       |  __//  \| |_) | (_| | |_
-                        \___/_/\_\ .__/ \__,_|\__|
-                                 |_| XML parser
-
-   Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
-   Copyright (c) 2000-2017 Expat development team
-   Licensed under the MIT license:
-
-   Permission is  hereby granted,  free of charge,  to any  person obtaining
-   a  copy  of  this  software   and  associated  documentation  files  (the
-   "Software"),  to  deal in  the  Software  without restriction,  including
-   without  limitation the  rights  to use,  copy,  modify, merge,  publish,
-   distribute, sublicense, and/or sell copies of the Software, and to permit
-   persons  to whom  the Software  is  furnished to  do so,  subject to  the
-   following conditions:
-
-   The above copyright  notice and this permission notice  shall be included
-   in all copies or substantial portions of the Software.
-
-   THE  SOFTWARE  IS  PROVIDED  "AS  IS",  WITHOUT  WARRANTY  OF  ANY  KIND,
-   EXPRESS  OR IMPLIED,  INCLUDING  BUT  NOT LIMITED  TO  THE WARRANTIES  OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-   NO EVENT SHALL THE AUTHORS OR  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-   DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
-   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-   USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 /* ptrdiff_t */
 /* intptr_t uint64_t */
 /* XML_UNICODE */
 /* XML_UNICODE_WCHAR_T */
 
+struct Allocator;
+
+enum AllocatorMode {
+    System,
+    Duff,
+    Tracking,
+}
+
+#[global_allocator]
+static ALLOCATOR: Allocator = Allocator;
+static SYSTEM_ALLOCATOR: System = System;
+static mut ALLOCATOR_MODE: AllocatorMode = AllocatorMode::System;
+
+unsafe impl GlobalAlloc for Allocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let ptr = match ALLOCATOR_MODE {
+            AllocatorMode::System => {
+                return SYSTEM_ALLOCATOR.alloc(layout);
+            }
+            AllocatorMode::Duff => {
+                duff_allocator(layout.size() as size_t) as *mut u8
+            }
+            AllocatorMode::Tracking => {
+                crate::memcheck::tracking_malloc(layout.size() as size_t) as *mut u8
+            }
+        };
+        // Check Rust's alignment requirements,
+        // and abort the allocation if they can't be met
+        // Alternatively, we could panic instead
+        if ptr.align_offset(layout.align()) == 0 {
+            ptr
+        } else {
+            self.dealloc(ptr, layout);
+            std::ptr::null_mut()
+        }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        match ALLOCATOR_MODE {
+            AllocatorMode::System => {
+                SYSTEM_ALLOCATOR.dealloc(ptr, layout);
+            }
+            AllocatorMode::Duff => {
+                free(ptr as *mut _);
+            }
+            AllocatorMode::Tracking => {
+                crate::memcheck::tracking_free(ptr as *mut _);
+            }
+        }
+    }
+
+    unsafe fn realloc(
+        &self,
+        ptr: *mut u8,
+        layout: Layout,
+        new_size: usize
+    ) -> *mut u8 {
+        let ptr = match ALLOCATOR_MODE {
+            AllocatorMode::System => {
+                return SYSTEM_ALLOCATOR.realloc(ptr, layout, new_size);
+            }
+            AllocatorMode::Duff => {
+                duff_reallocator(ptr as *mut _,
+                                 new_size as size_t) as *mut u8
+            }
+            AllocatorMode::Tracking => {
+                crate::memcheck::tracking_realloc(ptr as *mut _,
+                                                  new_size as size_t) as *mut u8
+            }
+        };
+        if ptr.align_offset(layout.align()) == 0 {
+            ptr
+        } else {
+            self.dealloc(ptr, layout);
+            std::ptr::null_mut()
+        }
+    }
+}
+
 static mut g_parser: XML_Parser = ::rexpat::stddef_h::NULL as XML_Parser;
 
 unsafe extern "C" fn basic_setup() {
+    ALLOCATOR_MODE = AllocatorMode::System;
     g_parser = XML_ParserCreate(::rexpat::stddef_h::NULL as *const XML_Char);
     if g_parser.is_null() {
         crate::minicheck::_fail_unless(
@@ -667,6 +750,9 @@ unsafe extern "C" fn basic_setup() {
 unsafe extern "C" fn basic_teardown() {
     if !g_parser.is_null() {
         XML_ParserFree(g_parser);
+        // Switch to system allocator to prevent the tests' own allocations
+        // from going to the Duff or tracking allocators
+        ALLOCATOR_MODE = AllocatorMode::System;
         g_parser = ::rexpat::stddef_h::NULL as XML_Parser
     };
 }
@@ -1696,7 +1782,9 @@ unsafe extern "C" fn test_utf8_auto_align() {
             .offset(strlen(cases[i as usize].input) as isize);
         let fromLimInitially: *const c_char = fromLim;
         let mut actualMovementInChars: ptrdiff_t = 0;
-        _INTERNAL_trim_to_complete_utf8_characters(cases[i as usize].input, &mut fromLim);
+        let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
+        _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
+        fromLim = buf.end();
         actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially) as c_long;
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
@@ -16134,16 +16222,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
             as *const c_char,
         7205,
     );
-    let mut memsuite: XML_Memory_Handling_Suite = {
-        let mut init = XML_Memory_Handling_Suite {
-            malloc_fcn: Some(duff_allocator as unsafe extern "C" fn(_: size_t) -> *mut c_void),
-            realloc_fcn: Some(
-                realloc as unsafe extern "C" fn(_: *mut c_void, _: c_ulong) -> *mut c_void,
-            ),
-            free_fcn: Some(free as unsafe extern "C" fn(_: *mut c_void) -> ()),
-        };
-        init
-    };
+    ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
     let max_alloc_count: c_uint = 10;
     /* Something this simple shouldn't need more than 10 allocations */
@@ -16152,7 +16231,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
             ::rexpat::stddef_h::NULL as *const XML_Char,
-            Some(&memsuite),
+            None,
             ::rexpat::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
@@ -16190,16 +16269,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
             as *const c_char,
         7225,
     );
-    let mut memsuite: XML_Memory_Handling_Suite = {
-        let mut init = XML_Memory_Handling_Suite {
-            malloc_fcn: Some(duff_allocator as unsafe extern "C" fn(_: size_t) -> *mut c_void),
-            realloc_fcn: Some(
-                realloc as unsafe extern "C" fn(_: *mut c_void, _: c_ulong) -> *mut c_void,
-            ),
-            free_fcn: Some(free as unsafe extern "C" fn(_: *mut c_void) -> ()),
-        };
-        init
-    };
+    ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
     let max_alloc_count: c_uint = 10;
     /* Try several levels of allocation */
@@ -16208,7 +16278,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
         allocation_count = i as intptr_t;
         g_parser = XML_ParserCreate_MM(
             b"us-ascii\x00".as_ptr() as *const c_char,
-            Some(&memsuite),
+            None,
             ::rexpat::stddef_h::NULL as *const XML_Char,
         );
         if !g_parser.is_null() {
@@ -16483,24 +16553,10 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     );
     let mut text: *const c_char =
         b"<D xmlns:L=\"D\" l:a=\'\' L:a=\'\'/>\x00".as_ptr() as *const c_char;
-    let mut memsuite: XML_Memory_Handling_Suite = {
-        let mut init = XML_Memory_Handling_Suite {
-            malloc_fcn: Some(
-                crate::memcheck::tracking_malloc as unsafe extern "C" fn(_: size_t) -> *mut c_void,
-            ),
-            realloc_fcn: Some(
-                crate::memcheck::tracking_realloc
-                    as unsafe extern "C" fn(_: *mut c_void, _: size_t) -> *mut c_void,
-            ),
-            free_fcn: Some(
-                crate::memcheck::tracking_free as unsafe extern "C" fn(_: *mut c_void) -> (),
-            ),
-        };
-        init
-    };
+    ALLOCATOR_MODE = AllocatorMode::Tracking;
     g_parser = XML_ParserCreate_MM(
         b"UTF-8\x00".as_ptr() as *const c_char,
-        Some(&memsuite),
+        None,
         b"\n\x00".as_ptr() as *const c_char,
     );
     _expect_failure(
@@ -16784,22 +16840,13 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
 }
 
 unsafe extern "C" fn alloc_setup() {
-    let mut memsuite: XML_Memory_Handling_Suite = {
-        let mut init = XML_Memory_Handling_Suite {
-            malloc_fcn: Some(duff_allocator as unsafe extern "C" fn(_: size_t) -> *mut c_void),
-            realloc_fcn: Some(
-                duff_reallocator as unsafe extern "C" fn(_: *mut c_void, _: size_t) -> *mut c_void,
-            ),
-            free_fcn: Some(free as unsafe extern "C" fn(_: *mut c_void) -> ()),
-        };
-        init
-    };
+    ALLOCATOR_MODE = AllocatorMode::Duff;
     /* Ensure the parser creation will go through */
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
         ::rexpat::stddef_h::NULL as *const XML_Char,
-        Some(&memsuite),
+        None,
         ::rexpat::stddef_h::NULL as *const XML_Char,
     );
     if g_parser.is_null() {
@@ -20518,23 +20565,14 @@ unsafe extern "C" fn test_alloc_long_notation() {
 }
 
 unsafe extern "C" fn nsalloc_setup() {
-    let mut memsuite: XML_Memory_Handling_Suite = {
-        let mut init = XML_Memory_Handling_Suite {
-            malloc_fcn: Some(duff_allocator as unsafe extern "C" fn(_: size_t) -> *mut c_void),
-            realloc_fcn: Some(
-                duff_reallocator as unsafe extern "C" fn(_: *mut c_void, _: size_t) -> *mut c_void,
-            ),
-            free_fcn: Some(free as unsafe extern "C" fn(_: *mut c_void) -> ()),
-        };
-        init
-    };
+    ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut ns_sep: [XML_Char; 2] = [' ' as XML_Char, '\u{0}' as XML_Char];
     /* Ensure the parser creation will go through */
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
     reallocation_count = REALLOC_ALWAYS_SUCCEED as intptr_t;
     g_parser = XML_ParserCreate_MM(
         ::rexpat::stddef_h::NULL as *const XML_Char,
-        Some(&memsuite),
+        None,
         ns_sep.as_mut_ptr(),
     );
     if g_parser.is_null() {

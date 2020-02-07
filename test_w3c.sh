@@ -15,16 +15,20 @@ XMLWF="$SCRIPT_DIR/target/debug/xmlwf"
 
 # download W3C test suite
 TEST_TMP=/tmp/libexpat
-TEST_SUITE=/tmp/libexpat/xml-test-suite
-ARCHIVE="$TEST_TMP/xmlts20020606.tar" 
+TEST_SUITE=/tmp/libexpat/xml-test-suite-2013
+ARCHIVE="$TEST_TMP/xmlts20130923.tar.gz" 
 if [ ! -d "$TEST_SUITE" ]; then
-    mkdir -p "$TEST_TMP"
-    curl http://www.w3.org/XML/Test/xmlts20020606.tar --silent --output "$ARCHIVE"
-    tar -C "$TEST_TMP"  -xf "$ARCHIVE"
+    mkdir -p "$TEST_SUITE"
+    curl https://www.w3.org/XML/Test/xmlts20130923.tar.gz --silent --output "$ARCHIVE"
+    tar -C "$TEST_SUITE"  -xf "$ARCHIVE"
 fi
 
 # run xmltest.sh and check against expected output
-"$PWD/src/tests/xmltest.sh" > "$TEST_TMP/xmltest.log" 2>&1
-diff "$TEST_TMP/xmltest.log" "$PWD/upstream/expat/tests/xmltest.log.expected" && echo "PASS"
+# "$PWD/src/tests/xmltest.sh" > "$TEST_TMP/xmltest.log" 2>&1
+# diff "$TEST_TMP/xmltest.log" "$PWD/upstream/expat/tests/xmltest.log.expected" && echo "PASS"
+
+# run xmltest2013.sh and check against expected output
+"$PWD/src/tests/xmltest2013.sh" > "$TEST_TMP/xmltest2013.log" 2>&1
+diff "$TEST_TMP/xmltest2013.log" "$PWD/src/tests/xmltest2013.log.expected" && echo "PASS"
 
 
