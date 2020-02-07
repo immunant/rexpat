@@ -2676,9 +2676,6 @@ pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::stdbool_h::{false_0, true_0};
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-pub use crate::xmltok_impl_c::{
-    inName, inName_0, inName_1, inValue, inValue_0, inValue_1, other_0, other_1,
-};
 pub use crate::xmltok_impl_h::*;
 
 pub type normal_encoding = Box<dyn XmlEncoding>;

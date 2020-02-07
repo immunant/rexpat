@@ -29,7 +29,6 @@ pub mod stddef_h;
 pub mod stdlib;
 pub mod xmltchar_h;
 pub mod xmltok_h;
-pub mod xmltok_impl_c;
 pub mod xmltok_impl_h;
 
 pub mod lib {

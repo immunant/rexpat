@@ -8,15 +8,6 @@ use crate::xmltok_h::*;
 use crate::xmltok_impl_h::*;
 use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 
-pub const other_0: C2RustUnnamed_2 = 0;
-pub const other_1: C2RustUnnamed_2 = 0;
-pub const inName: C2RustUnnamed_2 = 1;
-pub const inName_0: C2RustUnnamed_2 = 1;
-pub const inName_1: C2RustUnnamed_2 = 1;
-pub const inValue: C2RustUnnamed_2 = 2;
-pub const inValue_0: C2RustUnnamed_2 = 2;
-pub const inValue_1: C2RustUnnamed_2 = 2;
-
 macro_rules! MATCH_LEAD_CASES {
     {$e:expr, LEAD_CASE($n:ident) => $case:block $($tail:tt)*} => {
         match $e {
