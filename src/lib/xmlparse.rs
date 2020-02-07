@@ -4464,6 +4464,8 @@ impl XML_ParserStruct {
                     */
                     let hk = HashKey::from(self.m_tempPool.start as KEY);
                     if !self.m_nsAtts.insert(hk) {
+                        // FIXME: the original code checks here without inserting,
+                        // then does the actual insertion below (see comment)
                         return XML_ERROR_DUPLICATE_ATTRIBUTE;
                     }
                     if self.m_ns_triplets != 0 {
@@ -4496,6 +4498,8 @@ impl XML_ParserStruct {
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     let ref mut fresh27 = *appAtts.offset(i as isize);
                     *fresh27 = s;
+                    // FIXME: perform the hash table insertion here,
+                    // to match the original C code's semantics???
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
                         i += 2;
