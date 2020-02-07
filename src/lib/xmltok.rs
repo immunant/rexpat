@@ -38,6 +38,8 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
 use std::ptr;
+use crate::xmltok_impl_h::ByteType;
+use num_traits::{ToPrimitive, FromPrimitive};
 
 #[cfg(feature = "mozilla")]
 pub mod moz_extensions;
@@ -299,7 +301,7 @@ pub trait XmlEncodingImpl {
     fn isUtf8(&self) -> bool;
     fn isUtf16(&self) -> bool;
 
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2;
+    fn byte_type(&self, p: *const c_char) -> ByteType;
     fn byte_to_ascii(&self, p: *const c_char) -> c_char;
     fn is_name_char(&self, p: *const c_char, n: isize) -> bool;
     fn is_nmstrt_char(&self, p: *const c_char, n: isize) -> bool;
@@ -326,7 +328,7 @@ struct NormalEncoding<T: NormalEncodingTable> {
 }
 
 trait NormalEncodingTable {
-    const types: [C2RustUnnamed_2; 256];
+    const types: [ByteType; 256];
 }
 
 macro_rules! UCS2_GET_NAMING {
@@ -355,7 +357,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
@@ -539,7 +541,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
@@ -615,7 +617,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let idx = unsafe { *(p as *const u8) } as usize;
         T::types[idx]
     }
@@ -698,7 +700,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     fn MINBPC(&self) -> isize { 2 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.1 == 0 {
             T::types[bytes.0 as u8 as usize]
@@ -789,7 +791,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     fn isUtf16(&self) -> bool { false }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let bytes = unsafe { (*p, *p.offset(1)) };
         if bytes.0 == 0 {
             T::types[bytes.1 as usize]
@@ -859,742 +861,742 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
 struct Utf8EncodingTable;
 
 impl NormalEncodingTable for Utf8EncodingTable {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::NMSTRT, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // utf8tab.h
-        /* 0x80 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x84 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x88 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x8C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x90 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x94 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x98 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x9C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xAC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xBC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xC0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xCC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xDC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xE0 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE4 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE8 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xEC */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xF0 */ BT_LEAD4, BT_LEAD4, BT_LEAD4, BT_LEAD4,
-        /* 0xF4 */ BT_LEAD4, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_MALFORM, BT_MALFORM,
+        /* 0x80 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x84 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x88 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x8C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x90 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x94 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x98 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x9C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xAC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xBC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xC0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xCC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xDC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xE0 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE4 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE8 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xEC */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xF0 */ ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4,
+        /* 0xF4 */ ByteType::LEAD4, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::MALFORM, ByteType::MALFORM,
     ];
 }
 
 struct Utf8EncodingTableNS;
 
 impl NormalEncodingTable for Utf8EncodingTableNS {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::COLON, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // utf8tab.h
-        /* 0x80 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x84 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x88 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x8C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x90 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x94 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x98 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x9C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xAC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xBC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xC0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xCC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xDC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xE0 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE4 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE8 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xEC */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xF0 */ BT_LEAD4, BT_LEAD4, BT_LEAD4, BT_LEAD4,
-        /* 0xF4 */ BT_LEAD4, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_MALFORM, BT_MALFORM,
+        /* 0x80 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x84 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x88 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x8C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x90 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x94 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x98 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x9C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xAC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xBC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xC0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xCC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xDC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xE0 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE4 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE8 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xEC */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xF0 */ ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4,
+        /* 0xF4 */ ByteType::LEAD4, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::MALFORM, ByteType::MALFORM,
     ];
 }
 
 struct InternalUtf8EncodingTable;
 
 impl NormalEncodingTable for InternalUtf8EncodingTable {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // iasciitab.h
-        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* Like asciitab.h, except that 0xD has code ByteType::S rather than ByteType::CR */
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::S, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::NMSTRT, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // utf8tab.h
-        /* 0x80 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x84 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x88 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x8C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x90 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x94 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x98 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x9C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xAC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xBC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xC0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xCC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xDC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xE0 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE4 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE8 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xEC */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xF0 */ BT_LEAD4, BT_LEAD4, BT_LEAD4, BT_LEAD4,
-        /* 0xF4 */ BT_LEAD4, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_MALFORM, BT_MALFORM,
+        /* 0x80 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x84 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x88 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x8C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x90 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x94 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x98 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x9C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xAC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xBC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xC0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xCC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xDC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xE0 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE4 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE8 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xEC */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xF0 */ ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4,
+        /* 0xF4 */ ByteType::LEAD4, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::MALFORM, ByteType::MALFORM,
     ];
 }
 
 struct InternalUtf8EncodingTableNS;
 
 impl NormalEncodingTable for InternalUtf8EncodingTableNS {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // iasciitab.h
-        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* Like asciitab.h, except that 0xD has code ByteType::S rather than ByteType::CR */
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::S, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::COLON, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // utf8tab.h
-        /* 0x80 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x84 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x88 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x8C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x90 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x94 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x98 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0x9C */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xA8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xAC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB0 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB4 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xB8 */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xBC */ BT_TRAIL, BT_TRAIL, BT_TRAIL, BT_TRAIL,
-        /* 0xC0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xC8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xCC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD0 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD4 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xD8 */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xDC */ BT_LEAD2, BT_LEAD2, BT_LEAD2, BT_LEAD2,
-        /* 0xE0 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE4 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xE8 */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xEC */ BT_LEAD3, BT_LEAD3, BT_LEAD3, BT_LEAD3,
-        /* 0xF0 */ BT_LEAD4, BT_LEAD4, BT_LEAD4, BT_LEAD4,
-        /* 0xF4 */ BT_LEAD4, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_MALFORM, BT_MALFORM,
+        /* 0x80 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x84 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x88 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x8C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x90 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x94 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x98 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0x9C */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xA8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xAC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB0 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB4 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xB8 */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xBC */ ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL, ByteType::TRAIL,
+        /* 0xC0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xC8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xCC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD0 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD4 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xD8 */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xDC */ ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2, ByteType::LEAD2,
+        /* 0xE0 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE4 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xE8 */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xEC */ ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3, ByteType::LEAD3,
+        /* 0xF0 */ ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4, ByteType::LEAD4,
+        /* 0xF4 */ ByteType::LEAD4, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::MALFORM, ByteType::MALFORM,
     ];
 }
 
 struct Latin1EncodingTable;
 
 impl NormalEncodingTable for Latin1EncodingTable {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::NMSTRT, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // latin1tab.h
-        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
-        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x80 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x84 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x88 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x8C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x90 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x94 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x98 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x9C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA4 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xAC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB4 */ ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER, ByteType::NAME,
+        /* 0xB8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xBC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xC0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xCC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xD8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xDC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xEC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xF8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xFC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
     ];
 }
 
 struct Latin1EncodingTableNS;
 
 impl NormalEncodingTable for Latin1EncodingTableNS {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::COLON, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // latin1tab.h
-        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
-        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x80 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x84 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x88 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x8C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x90 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x94 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x98 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x9C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA4 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xAC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB4 */ ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER, ByteType::NAME,
+        /* 0xB8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xBC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xC0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xCC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xD8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xDC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xEC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xF8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xFC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
     ];
 }
 
 struct InternalLatin1EncodingTable;
 
 impl NormalEncodingTable for InternalLatin1EncodingTable {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // iasciitab.h
-        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* Like asciitab.h, except that 0xD has code ByteType::S rather than ByteType::CR */
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::S, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::NMSTRT, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // latin1tab.h
-        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
-        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x80 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x84 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x88 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x8C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x90 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x94 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x98 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x9C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA4 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xAC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB4 */ ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER, ByteType::NAME,
+        /* 0xB8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xBC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xC0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xCC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xD8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xDC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xEC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xF8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xFC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
     ];
 }
 
 struct InternalLatin1EncodingTableNS;
 
 impl NormalEncodingTable for InternalLatin1EncodingTableNS {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // iasciitab.h
-        /* Like asciitab.h, except that 0xD has code BT_S rather than BT_CR */
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_S, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* Like asciitab.h, except that 0xD has code ByteType::S rather than ByteType::CR */
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::S, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::COLON, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
         // latin1tab.h
-        /* 0x80 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x84 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x88 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x8C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x90 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x94 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x98 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0x9C */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA4 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xA8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xAC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB0 */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xB4 */ BT_OTHER, BT_NMSTRT, BT_OTHER, BT_NAME,
-        /* 0xB8 */ BT_OTHER, BT_OTHER, BT_NMSTRT, BT_OTHER,
-        /* 0xBC */ BT_OTHER, BT_OTHER, BT_OTHER, BT_OTHER,
-        /* 0xC0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xC8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xCC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xD4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xD8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xDC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xE8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xEC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF0 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xF4 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0xF8 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0xFC */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
+        /* 0x80 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x84 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x88 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x8C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x90 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x94 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x98 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0x9C */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA4 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xA8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xAC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB0 */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xB4 */ ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER, ByteType::NAME,
+        /* 0xB8 */ ByteType::OTHER, ByteType::OTHER, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xBC */ ByteType::OTHER, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
+        /* 0xC0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xC8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xCC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xD4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xD8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xDC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xE8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xEC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF0 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xF4 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0xF8 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0xFC */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
     ];
 }
 
 struct AsciiEncodingTable;
 
 impl NormalEncodingTable for AsciiEncodingTable {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_NMSTRT, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::NMSTRT, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
-        /* 0x80 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x84 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x88 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x8C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x90 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x94 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x98 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x9C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xAC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xBC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xCC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xDC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xEC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x80 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x84 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x88 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x8C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x90 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x94 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x98 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x9C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xAC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xBC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xCC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xDC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xEC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
     ];
 }
 
 struct AsciiEncodingTableNS;
 
 impl NormalEncodingTable for AsciiEncodingTableNS {
-    const types: [C2RustUnnamed_2; 256] = [
+    const types: [ByteType; 256] = [
         // asciitab.h
-        /* 0x00 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x04 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x08 */ BT_NONXML, BT_S, BT_LF, BT_NONXML,
-        /* 0x0C */ BT_NONXML, BT_CR, BT_NONXML, BT_NONXML,
-        /* 0x10 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x14 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x18 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x1C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x20 */ BT_S, BT_EXCL, BT_QUOT, BT_NUM,
-        /* 0x24 */ BT_OTHER, BT_PERCNT, BT_AMP, BT_APOS,
-        /* 0x28 */ BT_LPAR, BT_RPAR, BT_AST, BT_PLUS,
-        /* 0x2C */ BT_COMMA, BT_MINUS, BT_NAME, BT_SOL,
-        /* 0x30 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x34 */ BT_DIGIT, BT_DIGIT, BT_DIGIT, BT_DIGIT,
-        /* 0x38 */ BT_DIGIT, BT_DIGIT, BT_COLON, BT_SEMI,
-        /* 0x3C */ BT_LT, BT_EQUALS, BT_GT, BT_QUEST,
-        /* 0x40 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x44 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x48 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x4C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x50 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x54 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x58 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_LSQB,
-        /* 0x5C */ BT_OTHER, BT_RSQB, BT_OTHER, BT_NMSTRT,
-        /* 0x60 */ BT_OTHER, BT_HEX, BT_HEX, BT_HEX,
-        /* 0x64 */ BT_HEX, BT_HEX, BT_HEX, BT_NMSTRT,
-        /* 0x68 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x6C */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x70 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x74 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_NMSTRT,
-        /* 0x78 */ BT_NMSTRT, BT_NMSTRT, BT_NMSTRT, BT_OTHER,
-        /* 0x7C */ BT_VERBAR, BT_OTHER, BT_OTHER, BT_OTHER,
+        /* 0x00 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x04 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x08 */ ByteType::NONXML, ByteType::S, ByteType::LF, ByteType::NONXML,
+        /* 0x0C */ ByteType::NONXML, ByteType::CR, ByteType::NONXML, ByteType::NONXML,
+        /* 0x10 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x14 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x18 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x1C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x20 */ ByteType::S, ByteType::EXCL, ByteType::QUOT, ByteType::NUM,
+        /* 0x24 */ ByteType::OTHER, ByteType::PERCNT, ByteType::AMP, ByteType::APOS,
+        /* 0x28 */ ByteType::LPAR, ByteType::RPAR, ByteType::AST, ByteType::PLUS,
+        /* 0x2C */ ByteType::COMMA, ByteType::MINUS, ByteType::NAME, ByteType::SOL,
+        /* 0x30 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x34 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT, ByteType::DIGIT,
+        /* 0x38 */ ByteType::DIGIT, ByteType::DIGIT, ByteType::COLON, ByteType::SEMI,
+        /* 0x3C */ ByteType::LT, ByteType::EQUALS, ByteType::GT, ByteType::QUEST,
+        /* 0x40 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x44 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x48 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x4C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x50 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x54 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x58 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::LSQB,
+        /* 0x5C */ ByteType::OTHER, ByteType::RSQB, ByteType::OTHER, ByteType::NMSTRT,
+        /* 0x60 */ ByteType::OTHER, ByteType::HEX, ByteType::HEX, ByteType::HEX,
+        /* 0x64 */ ByteType::HEX, ByteType::HEX, ByteType::HEX, ByteType::NMSTRT,
+        /* 0x68 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x6C */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x70 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x74 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT,
+        /* 0x78 */ ByteType::NMSTRT, ByteType::NMSTRT, ByteType::NMSTRT, ByteType::OTHER,
+        /* 0x7C */ ByteType::VERBAR, ByteType::OTHER, ByteType::OTHER, ByteType::OTHER,
 
-        /* 0x80 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x84 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x88 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x8C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x90 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x94 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x98 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0x9C */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xA8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xAC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xB8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xBC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xC8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xCC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xD8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xDC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xE8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xEC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF0 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF4 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xF8 */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
-        /* 0xFC */ BT_NONXML, BT_NONXML, BT_NONXML, BT_NONXML,
+        /* 0x80 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x84 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x88 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x8C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x90 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x94 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x98 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0x9C */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xA8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xAC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xB8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xBC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xC8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xCC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xD8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xDC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xE8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xEC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF0 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF4 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xF8 */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
+        /* 0xFC */ ByteType::NONXML, ByteType::NONXML, ByteType::NONXML, ByteType::NONXML,
     ];
 }
 
@@ -1929,7 +1931,7 @@ impl XmlEncoding for InitEncoding {
 
 #[derive(Clone)]
 pub struct UnknownEncoding {
-    types: [C2RustUnnamed_2; 256],
+    types: [ByteType; 256],
     convert: CONVERTER,
     userData: *mut c_void,
     utf16: [c_ushort; 256],
@@ -1955,8 +1957,8 @@ impl UnknownEncoding {
         is_ns: bool,
     ) -> bool {
         for i in 0..128 {
-            if Latin1EncodingTable::types[i] != BT_OTHER
-                && Latin1EncodingTable::types[i] != BT_NONXML
+            if Latin1EncodingTable::types[i] != ByteType::OTHER
+                && Latin1EncodingTable::types[i] != ByteType::NONXML
                 && unsafe { *table.offset(i as isize) } != i as c_int
             {
                 return false;
@@ -1965,7 +1967,7 @@ impl UnknownEncoding {
         for i in 0..256 {
             let mut c: c_int = unsafe { *table.offset(i as isize) };
             if c == -1 {
-                self.types[i] = BT_MALFORM;
+                self.types[i] = ByteType::MALFORM;
                 /* This shouldn't really get used. */
                 self.utf16[i] = 0xffff;
                 self.utf8[i][0] = 1;
@@ -1978,12 +1980,13 @@ impl UnknownEncoding {
                 if convert.is_none() {
                     return false;
                 }
-                self.types[i] = (BT_LEAD2 as c_int - (c + 2)) as C2RustUnnamed_2;
+                let p: c_int = ByteType::LEAD2.to_i32().unwrap() - (c + 2);
+                self.types[i] = ByteType::from_i32(p).unwrap();
                 self.utf8[i][0] = 0;
                 self.utf16[i] = 0
             } else if c < 0x80 {
-                if Latin1EncodingTable::types[c as usize] != BT_OTHER
-                    && Latin1EncodingTable::types[c as usize] != BT_NONXML
+                if Latin1EncodingTable::types[c as usize] != ByteType::OTHER
+                    && Latin1EncodingTable::types[c as usize] != ByteType::NONXML
                     && c != i as c_int
                 {
                     return false;
@@ -1993,7 +1996,7 @@ impl UnknownEncoding {
                 self.utf8[i][1] = c as c_char;
                 self.utf16[i] = if c == 0 { 0xffff } else { c } as c_ushort
             } else if checkCharRefNumber(c) < 0 {
-                self.types[i] = BT_NONXML;
+                self.types[i] = ByteType::NONXML;
                 /* This shouldn't really get used. */
                 self.utf16[i] = 0xffff;
                 self.utf8[i][0] = 1;
@@ -2007,15 +2010,15 @@ impl UnknownEncoding {
                     & (1) << (c & 0xff & 0x1f)
                     != 0
                 {
-                    self.types[i] = BT_NMSTRT;
+                    self.types[i] = ByteType::NMSTRT;
                 } else if namingBitmap
                     [(((namePages[(c >> 8) as usize] as c_int) << 3) + ((c & 0xff) >> 5)) as usize]
                     & (1) << (c & 0xff & 0x1f)
                     != 0
                 {
-                    self.types[i] = BT_NAME;
+                    self.types[i] = ByteType::NAME;
                 } else {
-                    self.types[i] = BT_OTHER;
+                    self.types[i] = ByteType::OTHER;
                 }
                 self.utf8[i][0] =
                     unsafe { XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
@@ -2026,7 +2029,7 @@ impl UnknownEncoding {
         self.convert = convert;
 
         if is_ns {
-            self.types[ASCII_COLON as usize] = BT_COLON;
+            self.types[ASCII_COLON as usize] = ByteType::COLON;
         }
 
         true
@@ -2040,7 +2043,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     fn MINBPC(&self) -> isize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> C2RustUnnamed_2 {
+    fn byte_type(&self, p: *const c_char) -> ByteType {
         let idx = unsafe { *(p as *const u8) } as usize;
         self.types[idx]
     }
@@ -2125,7 +2128,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                 utf8 = buf[..].into();
                 *from_buf = from_buf.inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as isize);
+                     - (ByteType::LEAD2 as c_int - 2)) as isize);
             } else {
                 if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
@@ -2150,7 +2153,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                     as c_ushort;
                 *from_buf = (*from_buf).inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (BT_LEAD2 as c_int - 2)) as isize);
+                     - (ByteType::LEAD2 as c_int - 2)) as isize);
             } else {
                 *from_buf = (*from_buf).inc_start(1)
             }
@@ -2646,29 +2649,29 @@ unsafe extern "C" fn ascii_toUtf8(
     };
 }
 
-unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2RustUnnamed_2 {
+unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> ByteType {
     match hi as c_uchar as c_int {
         216 | 217 | 218 | 219 => {
             /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
-            return BT_LEAD4;
+            return ByteType::LEAD4;
         }
         220 | 221 | 222 | 223 => {
             /* 0xDC00–0xDFFF second 16-bit code unit or low surrogate (W2) */
-            return BT_TRAIL;
+            return ByteType::TRAIL;
         }
         255 => {
             match lo as c_uchar as c_int {
                 255 | 254 => {
                     /* noncharacter-FFFF */
                     /* noncharacter-FFFE */
-                    return BT_NONXML;
+                    return ByteType::NONXML;
                 }
                 _ => {}
             }
         }
         _ => {}
     }
-    return BT_NONASCII;
+    return ByteType::NONASCII;
 }
 /* shrink to even */
 /* fall through */
@@ -3260,7 +3263,7 @@ pub extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
         216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
         0 => {
-            if Latin1EncodingTable::types[result as usize] as c_int == BT_NONXML as c_int {
+            if Latin1EncodingTable::types[result as usize] as c_int == ByteType::NONXML as c_int {
                 return -1;
             }
         }
@@ -3359,7 +3362,7 @@ pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
 //             utf8 = buf.as_mut_ptr();
 //             *fromP = (*fromP).offset(
 //                 ((*(enc as *const normal_encoding)).type_0[**fromP as c_uchar as usize] as c_int
-//                     - (BT_LEAD2 as c_int - 2)) as isize,
+//                     - (ByteType::LEAD2 as c_int - 2)) as isize,
 //             )
 //         } else {
 //             if n as c_long > toLim.wrapping_offset_from(*toP) as c_long {
@@ -3387,7 +3390,7 @@ pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
 //                 as c_ushort;
 //             *fromP = (*fromP).offset(
 //                 ((*(enc as *const normal_encoding)).type_0[**fromP as c_uchar as usize] as c_int
-//                     - (BT_LEAD2 as c_int - 2)) as isize,
+//                     - (ByteType::LEAD2 as c_int - 2)) as isize,
 //             )
 //         } else {
 //             *fromP = (*fromP).offset(1)
