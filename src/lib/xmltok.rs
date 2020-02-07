@@ -177,82 +177,82 @@ pub type CONVERTER = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_cha
 // Replaces ENCODING
 pub trait XmlEncoding {
     // scanners[4]
-    unsafe extern "C" fn prologTok(
+    unsafe fn prologTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
-    unsafe extern "C" fn contentTok(
+    unsafe fn contentTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
-    unsafe extern "C" fn cdataSectionTok(
+    unsafe fn cdataSectionTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
-    unsafe extern "C" fn ignoreSectionTok(
+    unsafe fn ignoreSectionTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
     // literalScanners[2]
-    unsafe extern "C" fn attributeValueTok(
+    unsafe fn attributeValueTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
-    unsafe extern "C" fn entityValueTok(
+    unsafe fn entityValueTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn nameMatchesAscii(
+    unsafe fn nameMatchesAscii(
         &self,
         buf: ExpatBufRef,
         ptr2: *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
+    unsafe fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
 
-    unsafe extern "C" fn skipS(&self, ptr: *const libc::c_char) -> *const libc::c_char;
+    unsafe fn skipS(&self, ptr: *const libc::c_char) -> *const libc::c_char;
 
-    unsafe extern "C" fn getAtts(
+    unsafe fn getAtts(
         &self,
         buf: ExpatBufRef,
         attsMax: libc::c_int,
         atts: *mut ATTRIBUTE,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
+    unsafe fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
 
-    unsafe extern "C" fn predefinedEntityName(
+    unsafe fn predefinedEntityName(
         &self,
         buf: ExpatBufRef,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn updatePosition(
+    unsafe fn updatePosition(
         &self,
         buf: ExpatBufRef,
         pos: *mut POSITION,
     );
 
-    unsafe extern "C" fn isPublicId(
+    unsafe fn isPublicId(
         &self,
         buf: ExpatBufRef,
         badPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe extern "C" fn utf8Convert<'b, 'a: 'b>(
+    unsafe fn utf8Convert<'b, 'a: 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -308,13 +308,13 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -503,7 +503,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -538,7 +538,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
@@ -679,7 +679,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -711,7 +711,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -778,7 +778,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -796,7 +796,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -879,7 +879,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -972,7 +972,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
@@ -1072,7 +1072,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -1165,7 +1165,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
@@ -1935,7 +1935,7 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
 }
 
 // Shared between Latin1Encoding and AsciiEncoding
-unsafe extern "C" fn latin1_toUtf16(
+unsafe fn latin1_toUtf16(
     mut from: &mut ExpatBufRef,
     to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
@@ -2145,7 +2145,7 @@ impl InitEncoding {
 
 impl XmlEncoding for InitEncoding {
     // scanners[4]
-    unsafe extern "C" fn prologTok(
+    unsafe fn prologTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
@@ -2156,7 +2156,7 @@ impl XmlEncoding for InitEncoding {
             nextTokPtr,
         )
     }
-    unsafe extern "C" fn contentTok(
+    unsafe fn contentTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
@@ -2167,14 +2167,14 @@ impl XmlEncoding for InitEncoding {
             nextTokPtr,
         )
     }
-    unsafe extern "C" fn cdataSectionTok(
+    unsafe fn cdataSectionTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
-    unsafe extern "C" fn ignoreSectionTok(
+    unsafe fn ignoreSectionTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
@@ -2183,14 +2183,14 @@ impl XmlEncoding for InitEncoding {
     }
 
     // literalScanners[2]
-    unsafe extern "C" fn attributeValueTok(
+    unsafe fn attributeValueTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
-    unsafe extern "C" fn entityValueTok(
+    unsafe fn entityValueTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
@@ -2198,7 +2198,7 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe extern "C" fn nameMatchesAscii(
+    unsafe fn nameMatchesAscii(
         &self,
         _buf: ExpatBufRef,
         _ptr2: *const libc::c_char,
@@ -2206,15 +2206,15 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe extern "C" fn nameLength(&self, _ptr: *const libc::c_char) -> libc::c_int {
+    unsafe fn nameLength(&self, _ptr: *const libc::c_char) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn skipS(&self, _ptr: *const libc::c_char) -> *const libc::c_char {
+    unsafe fn skipS(&self, _ptr: *const libc::c_char) -> *const libc::c_char {
         std::ptr::null()
     }
 
-    unsafe extern "C" fn getAtts(
+    unsafe fn getAtts(
         &self,
         _buf: ExpatBufRef,
         _attsMax: libc::c_int,
@@ -2223,18 +2223,18 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe extern "C" fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
+    unsafe fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn predefinedEntityName(
+    unsafe fn predefinedEntityName(
         &self,
         _buf: ExpatBufRef,
     ) -> libc::c_int {
         0
     }
 
-    unsafe extern "C" fn updatePosition(
+    unsafe fn updatePosition(
         &self,
         buf: ExpatBufRef,
         pos: *mut POSITION,
@@ -2245,7 +2245,7 @@ impl XmlEncoding for InitEncoding {
             .updatePosition(buf, pos);
     }
 
-    unsafe extern "C" fn isPublicId(
+    unsafe fn isPublicId(
         &self,
         _buf: ExpatBufRef,
         _badPtr: *mut *const libc::c_char,
@@ -2253,7 +2253,7 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe extern "C" fn utf8Convert<'b, 'a: 'b>(
+    unsafe fn utf8Convert<'b, 'a: 'b>(
         &self,
         _from_buf: &mut ExpatBufRef<'a>,
         _to_buf: &'b mut ExpatBufRefMut<'a>,
@@ -2261,7 +2261,7 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         _from_buf: &mut ExpatBufRef,
         _to_buf: &mut ExpatBufRefMut<u16>,
@@ -2454,7 +2454,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    unsafe extern "C" fn utf8Convert<'a: 'b, 'b>(
+    unsafe fn utf8Convert<'a: 'b, 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to: &'b mut ExpatBufRefMut<'a>,
@@ -2491,7 +2491,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
@@ -2579,7 +2579,7 @@ pub static mut encodingsNS: Option<[&'static ENCODING; 7]> = None;
 // Initialized in run_static_initializers
 pub static mut encodings: Option<[&'static ENCODING; 7]> = None;
 
-pub unsafe extern "C" fn findEncoding(
+pub unsafe fn findEncoding(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
@@ -2604,7 +2604,7 @@ pub unsafe extern "C" fn findEncoding(
     return Some(encodings.unwrap()[i as usize]);
 }
 
-pub unsafe extern "C" fn findEncodingNS(
+pub unsafe fn findEncodingNS(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
@@ -2630,7 +2630,7 @@ pub unsafe extern "C" fn findEncodingNS(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlParseXmlDeclNS<'a>(
+pub unsafe fn XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
@@ -2654,7 +2654,7 @@ pub unsafe extern "C" fn XmlParseXmlDeclNS<'a>(
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlParseXmlDecl<'a>(
+pub unsafe fn XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
@@ -2772,8 +2772,7 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 /* Make sure all of these are defined if they aren't already. */
 /* __GNUC__ */
 /* XML_MIN_SIZE */
-#[no_mangle]
-pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
+pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
     from_buf: &mut ExpatBufRef,
 ) {
     let mut i = from_buf.len();
@@ -2814,7 +2813,7 @@ pub unsafe extern "C" fn _INTERNAL_trim_to_complete_utf8_characters(
 }
 
 // Shared between Big2 and Little2 encodings
-unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2RustUnnamed_2 {
+unsafe fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2RustUnnamed_2 {
     match hi as c_uchar as c_int {
         216 | 217 | 218 | 219 => {
             /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
@@ -2839,7 +2838,7 @@ unsafe extern "C" fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> C2Rust
     return BT_NONASCII;
 }
 
-unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
+unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
     loop {
         let fresh58 = s1;
         s1 = s1.offset(1);
@@ -2867,7 +2866,7 @@ unsafe extern "C" fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_
     return 1;
 }
 
-unsafe extern "C" fn initUpdatePosition(
+unsafe fn initUpdatePosition(
     mut _enc: &ENCODING,
     buf: ExpatBufRef,
     mut pos: *mut POSITION,
@@ -2878,7 +2877,7 @@ unsafe extern "C" fn initUpdatePosition(
         .updatePosition(buf, pos);
 }
 
-unsafe extern "C" fn toAscii(
+unsafe fn toAscii(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> c_int {
@@ -2895,7 +2894,7 @@ unsafe extern "C" fn toAscii(
     };
 }
 
-unsafe extern "C" fn isSpace(mut c: c_int) -> c_int {
+unsafe fn isSpace(mut c: c_int) -> c_int {
     match c {
         32 | 13 | 10 | 9 => return 1,
         _ => {}
@@ -2906,7 +2905,7 @@ unsafe extern "C" fn isSpace(mut c: c_int) -> c_int {
    followed by name=val.
 */
 
-unsafe extern "C" fn parsePseudoAttribute<'a>(
+unsafe fn parsePseudoAttribute<'a>(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
     mut name: &mut Option<ExpatBufRef<'a>>,
@@ -3016,9 +3015,9 @@ const KW_no: [c_char; 3] = [ASCII_n, ASCII_o, 0];
 #[cfg(feature = "mozilla")]
 const KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, 0];
 
-unsafe extern "C" fn doParseXmlDecl<'a>(
+unsafe fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
-        unsafe extern "C" fn(
+        unsafe fn(
             _: &ENCODING,
             _: ExpatBufRef,
         ) -> Option<*const ENCODING>,
@@ -3160,7 +3159,7 @@ unsafe extern "C" fn doParseXmlDecl<'a>(
 /* isInvalid3 */
 /* isInvalid4 */
 
-pub extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
+pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
         216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
         0 => {
@@ -3179,7 +3178,7 @@ pub extern "C" fn checkCharRefNumber(mut result: c_int) -> c_int {
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
+pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
     if c < 0 {
         return 0i32;
     }
@@ -3210,7 +3209,7 @@ pub unsafe extern "C" fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
+pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
     if charNum < 0 {
         return 0i32;
     }
@@ -3228,7 +3227,7 @@ pub unsafe extern "C" fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_usho
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XmlSizeOfUnknownEncoding() -> c_int {
+pub unsafe fn XmlSizeOfUnknownEncoding() -> c_int {
     return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
 
@@ -3252,7 +3251,7 @@ const KW_UTF_16BE: [c_char; 9] =
 const KW_UTF_16LE: [c_char; 9] =
     [ASCII_U, ASCII_T, ASCII_F, ASCII_MINUS, ASCII_1, ASCII_6, ASCII_L, ASCII_E, 0];
 
-unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
+unsafe fn getEncodingIndex(mut name: *const c_char) -> c_int {
     const encodingNames: [*const c_char; 6] = [
         KW_ISO_8859_1.as_ptr(),
         KW_US_ASCII.as_ptr(),
@@ -3278,7 +3277,7 @@ unsafe extern "C" fn getEncodingIndex(mut name: *const c_char) -> c_int {
     return UNKNOWN_ENC;
 }
 
-unsafe extern "C" fn run_static_initializers() {
+unsafe fn run_static_initializers() {
     latin1_encoding = Some(Box::new(Latin1Encoding::new()));
     latin1_encoding_ns = Some(Box::new(Latin1EncodingNS::new()));
     utf8_encoding = Some(Box::new(Utf8Encoding::new()));
@@ -3324,5 +3323,5 @@ unsafe extern "C" fn run_static_initializers() {
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]
 #[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
 #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 // XML_NS

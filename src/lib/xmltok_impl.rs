@@ -154,7 +154,7 @@ macro_rules! REQUIRE_CHAR {
 
 pub trait XmlTokImpl: XmlEncodingImpl {
     /* ptr points to character following "<!-" */
-    unsafe extern "C" fn scanComment(
+    unsafe fn scanComment(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -191,7 +191,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "<!" */
-    unsafe extern "C" fn scanDecl(
+    unsafe fn scanDecl(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -238,7 +238,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
-    unsafe extern "C" fn checkPiTarget(
+    unsafe fn checkPiTarget(
         &self,
         mut buf: ExpatBufRef,
         mut tokPtr: *mut libc::c_int,
@@ -273,7 +273,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "<?" */
-    unsafe extern "C" fn scanPi(
+    unsafe fn scanPi(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -338,7 +338,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
-    unsafe extern "C" fn scanCdataSection(
+    unsafe fn scanCdataSection(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -368,7 +368,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "</" */
-    unsafe extern "C" fn scanEndTag(
+    unsafe fn scanEndTag(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -415,7 +415,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "&#X" */
-    unsafe extern "C" fn scanHexCharRef(
+    unsafe fn scanHexCharRef(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -448,7 +448,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "&#" */
-    unsafe extern "C" fn scanCharRef(
+    unsafe fn scanCharRef(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -484,7 +484,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "&" */
-    unsafe extern "C" fn scanRef(
+    unsafe fn scanRef(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -516,7 +516,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following first character of attribute name */
-    unsafe extern "C" fn scanAtts(
+    unsafe fn scanAtts(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -686,7 +686,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "<" */
-    unsafe extern "C" fn scanLt(
+    unsafe fn scanLt(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -802,7 +802,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     }
 
     /* ptr points to character following "%" */
-    unsafe extern "C" fn scanPercent(
+    unsafe fn scanPercent(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -827,7 +827,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return XML_TOK_PARTIAL;
     }
-    unsafe extern "C" fn scanPoundName(
+    unsafe fn scanPoundName(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -851,7 +851,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         }
         return -XML_TOK_POUND_NAME;
     }
-    unsafe extern "C" fn scanLit(
+    unsafe fn scanLit(
         &self,
         mut open: C2RustUnnamed_2,
 
@@ -888,7 +888,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
 impl<T: XmlEncodingImpl> XmlTokImpl for T { }
 
 impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
-    unsafe extern "C" fn cdataSectionTok(
+    unsafe fn cdataSectionTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -959,7 +959,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         *nextTokPtr = buf.as_ptr();
         return XML_TOK_DATA_CHARS;
     }
-    unsafe extern "C" fn contentTok(
+    unsafe fn contentTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1067,7 +1067,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         *nextTokPtr = buf.as_ptr();
         return XML_TOK_DATA_CHARS;
     }
-    unsafe extern "C" fn prologTok(
+    unsafe fn prologTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1336,7 +1336,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return -tok;
     }
-    unsafe extern "C" fn attributeValueTok(
+    unsafe fn attributeValueTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1411,7 +1411,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         *nextTokPtr = buf.as_ptr();
         return XML_TOK_DATA_CHARS;
     }
-    unsafe extern "C" fn entityValueTok(
+    unsafe fn entityValueTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1485,7 +1485,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         *nextTokPtr = buf.as_ptr();
         return XML_TOK_DATA_CHARS;
     }
-    unsafe extern "C" fn ignoreSectionTok(
+    unsafe fn ignoreSectionTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
@@ -1535,7 +1535,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return XML_TOK_PARTIAL;
     }
-    unsafe extern "C" fn isPublicId(
+    unsafe fn isPublicId(
         &self,
         mut buf: ExpatBufRef,
         mut badPtr: *mut *const libc::c_char,
@@ -1573,7 +1573,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     element tag.  Returns the number of attributes.  Pointers to the
     first attsMax attributes are stored in atts.
      */
-    unsafe extern "C" fn getAtts(
+    unsafe fn getAtts(
         &self,
         mut buf: ExpatBufRef,
         mut attsMax: libc::c_int,
@@ -1695,7 +1695,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         /* not reached */
     }
-    unsafe extern "C" fn charRefNumber(&self, mut buf: ExpatBufRef) -> libc::c_int {
+    unsafe fn charRefNumber(&self, mut buf: ExpatBufRef) -> libc::c_int {
         let mut result: libc::c_int = 0 as libc::c_int;
         buf = buf.inc_start((2 * self.MINBPC()) as isize);
         if self.char_matches(buf.as_ptr(), ASCII_x) {
@@ -1736,7 +1736,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return checkCharRefNumber(result);
     }
-    unsafe extern "C" fn predefinedEntityName(
+    unsafe fn predefinedEntityName(
         &self,
         mut buf: ExpatBufRef,
     ) -> libc::c_int {
@@ -1792,7 +1792,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return 0 as libc::c_int;
     }
-    unsafe extern "C" fn nameMatchesAscii(
+    unsafe fn nameMatchesAscii(
         &self,
         mut buf: ExpatBufRef,
         mut ptr2: *const libc::c_char,
@@ -1814,7 +1814,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return (buf.is_empty()) as libc::c_int;
     }
-    unsafe extern "C" fn nameLength(&self, mut ptr: *const libc::c_char) -> libc::c_int {
+    unsafe fn nameLength(&self, mut ptr: *const libc::c_char) -> libc::c_int {
         let mut start: *const libc::c_char = ptr;
         loop {
             MATCH_LEAD_CASES! {
@@ -1832,7 +1832,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
     }
-    unsafe extern "C" fn skipS(&self, mut ptr: *const libc::c_char) -> *const libc::c_char {
+    unsafe fn skipS(&self, mut ptr: *const libc::c_char) -> *const libc::c_char {
         loop {
             match self.byte_type(ptr) {
                 BT_LF | BT_CR | BT_S => ptr = ptr.offset(self.MINBPC()),
@@ -1840,7 +1840,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
     }
-    unsafe extern "C" fn updatePosition(
+    unsafe fn updatePosition(
         &self,
         mut buf: ExpatBufRef,
         mut pos: *mut POSITION,
@@ -1871,7 +1871,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
     }
 
-    unsafe extern "C" fn utf8Convert<'b, 'a: 'b>(
+    unsafe fn utf8Convert<'b, 'a: 'b>(
         &self,
         from_buf: &mut ExpatBufRef<'a>,
         to_buf: &'b mut ExpatBufRefMut<'a>,
@@ -1879,7 +1879,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         self.utf8Convert(from_buf, to_buf)
     }
 
-    unsafe extern "C" fn utf16Convert(
+    unsafe fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
