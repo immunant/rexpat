@@ -118,7 +118,7 @@ pub use crate::stdlib::{
 use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset, read};
 use ::libc::{self, __errno_location, close, getenv, getpid, open, strcmp};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, intptr_t};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
 
@@ -127,6 +127,7 @@ use fallible_collections::FallibleBox;
 use std::alloc::{self, Layout};
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::mem;
 use std::ops;
 use std::ptr;
 
@@ -200,6 +201,12 @@ impl<'a, T> From<&'a [T]> for ExpatBufRef<'a, T> {
     }
 }
 
+impl<'a> From<ExpatBufRef<'a, c_char>> for ExpatBufRef<'a, c_ushort> {
+    fn from(s: ExpatBufRef<'a, c_char>) -> ExpatBufRef<'a, c_ushort> {
+        ExpatBufRef::new(s.as_ptr() as *const c_ushort, s.end() as *const c_ushort)
+    }
+}
+
 pub struct ExpatBufRefMut<'a, T = c_char>(&'a mut [T]);
 impl<'a, T> ExpatBufRefMut<'a, T> {
     pub fn new<'new>(start: *mut T, end: *mut T) -> ExpatBufRefMut<'new, T> {
@@ -270,6 +277,13 @@ impl<'a, T> ops::DerefMut for ExpatBufRefMut<'a, T> {
     }
 }
 
+/// Create a null-terminated XML_Char array from ASCII_ literals
+macro_rules! XML_STR {
+    [$($char:ident),* $(,)*] => {
+        [$( $char as XML_Char, )* 0,]
+    };
+}
+
 impl STRING_POOL {
     #[inline]
     unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
@@ -308,7 +322,7 @@ trait XmlHandlers {
     unsafe fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn characterData(&self, _: &[XML_Char]) -> bool;
     unsafe fn comment(&self, b: *const XML_Char) -> bool;
-    unsafe fn default(&self, _: *const c_char, _: c_int) -> bool;
+    unsafe fn default(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
     unsafe fn endCDataSection(&self) -> bool;
     unsafe fn endDoctypeDecl(&self) -> bool;
@@ -683,7 +697,7 @@ impl XmlHandlers for CXmlHandlers {
             .unwrap_or(Err(()))
     }
 
-    unsafe fn default(&self, s: *const c_char, next: c_int) -> bool {
+    unsafe fn default(&self, s: *const XML_Char, next: c_int) -> bool {
         self.m_defaultHandler.map(|handler| {
             handler(self.m_handlerArg, s, next);
 
@@ -972,6 +986,22 @@ pub struct TAG_NAME {
     pub strLen: c_int,
     pub uriLen: c_int,
     pub prefixLen: c_int,
+}
+
+
+/// Round up n to be a multiple of sz, where sz is a power of 2.
+#[inline]
+fn round_up(n: usize, sz: usize) -> usize {
+    (n + (sz-1)) & !(sz-1)
+}
+
+#[inline]
+fn safe_ptr_diff<T>(p: *const T, q: *const T) -> isize {
+    if p.is_null() || q.is_null() {
+        0
+    } else {
+        p.wrapping_offset_from(q)
+    }
 }
 
 // FIXME: add a proper lifetime
@@ -1290,48 +1320,12 @@ pub unsafe extern "C" fn XML_ParserCreateNS(
     )
 }
 
-const implicitContext: [XML_Char; 41] = [
-    ASCII_x as XML_Char,
-    ASCII_m as XML_Char,
-    ASCII_l as XML_Char,
-    ASCII_EQUALS as XML_Char,
-    ASCII_h as XML_Char,
-    ASCII_t as XML_Char,
-    ASCII_t as XML_Char,
-    ASCII_p as XML_Char,
-    ASCII_COLON as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_PERIOD as XML_Char,
-    ASCII_w as XML_Char,
-    ASCII_3 as XML_Char,
-    ASCII_PERIOD as XML_Char,
-    ASCII_o as XML_Char,
-    ASCII_r as XML_Char,
-    ASCII_g as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_X as XML_Char,
-    ASCII_M as XML_Char,
-    ASCII_L as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_1 as XML_Char,
-    ASCII_9 as XML_Char,
-    ASCII_9 as XML_Char,
-    ASCII_8 as XML_Char,
-    ASCII_SLASH as XML_Char,
-    ASCII_n as XML_Char,
-    ASCII_a as XML_Char,
-    ASCII_m as XML_Char,
-    ASCII_e as XML_Char,
-    ASCII_s as XML_Char,
-    ASCII_p as XML_Char,
-    ASCII_a as XML_Char,
-    ASCII_c as XML_Char,
-    ASCII_e as XML_Char,
-    '\u{0}' as XML_Char,
+const implicitContext: [XML_Char; 41] = XML_STR![
+    ASCII_x, ASCII_m, ASCII_l, ASCII_EQUALS, ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON,
+    ASCII_SLASH, ASCII_SLASH, ASCII_w, ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3,
+    ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g, ASCII_SLASH, ASCII_X, ASCII_M, ASCII_L, ASCII_SLASH,
+    ASCII_1, ASCII_9, ASCII_9, ASCII_8, ASCII_SLASH, ASCII_n, ASCII_a, ASCII_m, ASCII_e, ASCII_s,
+    ASCII_p, ASCII_a, ASCII_c, ASCII_e,
 ];
 
 /* To avoid warnings about unused functions: */
@@ -2843,63 +2837,31 @@ impl XML_ParserStruct {
             _ => {}
         }
         if len as c_long
-            > (if !self.m_bufferLim.is_null() && !self.m_bufferEnd.is_null() {
-                self.m_bufferLim
-                    .wrapping_offset_from(self.m_bufferEnd) as c_long
-            } else {
-                0
-            })
+            > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) as c_long
         {
             let mut keep: c_int = 0;
             /* defined XML_CONTEXT_BYTES */
             /* Do not invoke signed arithmetic overflow: */
             let mut neededSize: c_int = (len as c_uint).wrapping_add(
-                (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                    self.m_bufferEnd
-                        .wrapping_offset_from(self.m_bufferPtr) as c_long
-                } else {
-                    0
-                }) as c_uint,
+                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_uint,
             ) as c_int;
             if neededSize < 0 {
                 self.m_errorCode = XML_ERROR_NO_MEMORY;
                 return NULL as *mut c_void;
             }
-            keep = if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
-                self.m_bufferPtr
-                    .wrapping_offset_from(self.m_buffer) as c_long
-            } else {
-                0
-            } as c_int;
+            keep = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int;
             if keep > XML_CONTEXT_BYTES {
                 keep = XML_CONTEXT_BYTES
             }
             neededSize += keep;
             /* defined XML_CONTEXT_BYTES */
-            if neededSize as c_long
-                <= (if !self.m_bufferLim.is_null() && !self.m_buffer.is_null() {
-                    self.m_bufferLim
-                        .wrapping_offset_from(self.m_buffer) as c_long
-                } else {
-                    0
-                })
+            if (neededSize as c_long)
+                <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) as c_long
             {
                 if (keep as c_long)
-                    < (if !self.m_bufferPtr.is_null() && !self.m_buffer.is_null() {
-                        self.m_bufferPtr
-                            .wrapping_offset_from(self.m_buffer) as c_long
-                    } else {
-                        0
-                    })
+                    < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_long
                 {
-                    let mut offset: c_int = (if !self.m_bufferPtr.is_null()
-                        && !self.m_buffer.is_null()
-                    {
-                        self.m_bufferPtr
-                            .wrapping_offset_from(self.m_buffer) as c_long
-                    } else {
-                        0
-                    }) as c_int
+                    let mut offset: c_int = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int
                         - keep;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
@@ -2919,12 +2881,7 @@ impl XML_ParserStruct {
             } else {
                 let mut newBuf: *mut c_char = 0 as *mut c_char;
                 let mut bufferSize: c_int =
-                    if !self.m_bufferLim.is_null() && !self.m_bufferPtr.is_null() {
-                        self.m_bufferLim
-                            .wrapping_offset_from(self.m_bufferPtr) as c_long
-                    } else {
-                        0
-                    } as c_int;
+                    safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) as c_int;
                 if bufferSize == 0 {
                     bufferSize = INIT_BUFFER_SIZE
                 }
@@ -2951,27 +2908,13 @@ impl XML_ParserStruct {
                         newBuf as *mut c_void,
                         &*self.m_bufferPtr.offset(-keep as isize) as *const c_char
                             as *const c_void,
-                        ((if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                            self.m_bufferEnd
-                                .wrapping_offset_from(self.m_bufferPtr)
-                                as c_long
-                        } else {
-                            0
-                        }) + keep as c_long) as c_ulong,
+                        (safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_long + keep as c_long) as c_ulong,
                     );
                     FREE!(self.m_buffer);
                     self.m_buffer = newBuf;
                     self.m_bufferEnd = self
                         .m_buffer
-                        .offset(
-                            (if !self.m_bufferEnd.is_null() && !self.m_bufferPtr.is_null() {
-                                self.m_bufferEnd
-                                    .wrapping_offset_from(self.m_bufferPtr)
-                                    as c_long
-                            } else {
-                                0
-                            }) as isize,
-                        )
+                        .offset(safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr))
                         .offset(keep as isize);
                     self.m_bufferPtr = self.m_buffer.offset(keep as isize)
                 } else {
@@ -3546,9 +3489,7 @@ impl XML_ParserStruct {
             size of tag->buf is a multiple of sizeof(XML_Char).
             */
             bufSize = (nameLen as c_ulong).wrapping_add(
-                ((*tag).rawNameLength as c_ulong)
-                    .wrapping_add((::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_sub(1u64))
-                    & !(::std::mem::size_of::<XML_Char>() as c_ulong).wrapping_sub(1u64),
+                round_up((*tag).rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
             ) as c_int;
             if bufSize as c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_long {
                 let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
@@ -3923,7 +3864,7 @@ impl XML_ParserStruct {
                     /* fall through */
                     let mut tag: *mut TAG = 0 as *mut TAG;
                     let mut result_0: XML_Error = XML_ERROR_NONE;
-                    let mut to_buf: ExpatBufRefMut;
+                    let mut to_buf: ExpatBufRefMut<XML_Char>;
                     if !self.m_freeTagList.is_null() {
                         tag = self.m_freeTagList;
                         self.m_freeTagList = (*self.m_freeTagList).parent
@@ -3952,7 +3893,7 @@ impl XML_ParserStruct {
                     // let mut rawNameEnd: *const c_char =
                     //     (*tag).rawName.offset((*tag).rawNameLength as isize);
                     to_buf = ExpatBufRefMut::new(
-                        (*tag).buf as *mut XML_Char,
+                        (*tag).buf as *mut ICHAR,
                         ((*tag).bufEnd as *mut ICHAR).offset(-1),
                     );
                     loop {
@@ -3963,7 +3904,7 @@ impl XML_ParserStruct {
                             &mut fromBuf,
                             &mut to_buf,
                         );
-                        convLen = to_buf.as_ptr().wrapping_offset_from((*tag).buf).try_into().unwrap();
+                        convLen = to_buf.as_ptr().wrapping_offset_from((*tag).buf as *mut XML_Char).try_into().unwrap();
                         if fromBuf.is_empty() || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
                         {
                             (*tag).name.strLen = convLen;
@@ -3978,7 +3919,7 @@ impl XML_ParserStruct {
                             (*tag).bufEnd = temp.offset(bufSize as isize);
                             to_buf = ExpatBufRefMut::new(
                                 (temp).offset(convLen as isize) as *mut XML_Char,
-                                (*tag).bufEnd,
+                                (*tag).bufEnd as *mut XML_Char,
                             );
                         }
                     }
@@ -4236,7 +4177,7 @@ impl XML_ParserStruct {
                         return XML_ERROR_NONE;
                     }
                     if self.m_handlers.hasCharacterData() {
-                        if MUST_CONVERT!(enc, s) {
+                        if MUST_CONVERT!(enc, buf.as_ptr()) {
                             let mut dataPtr = ExpatBufRefMut::new(
                                 self.m_dataBuf as *mut ICHAR,
                                 self.m_dataBufEnd as *mut ICHAR,
@@ -4249,7 +4190,7 @@ impl XML_ParserStruct {
                                 ),
                             );
                         } else {
-                            self.m_handlers.characterData(&buf);
+                            self.m_handlers.characterData(&ExpatBufRef::<XML_Char>::from(buf));
                         }
                     } else if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf);
@@ -4271,7 +4212,7 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK_DATA_CHARS => {
                     let mut handlers = self.m_handlers;
                     if handlers.hasCharacterData() {
-                        if MUST_CONVERT!(enc, s) {
+                        if MUST_CONVERT!(enc, buf.as_ptr()) {
                             loop {
                                 let mut from_buf = buf.with_end(next);
                                 let mut to_buf = ExpatBufRefMut::new(
@@ -4295,7 +4236,7 @@ impl XML_ParserStruct {
                                 *eventPP = buf.as_ptr()
                             }
                         } else {
-                            let data_buf = buf.with_end(next);
+                            let data_buf: ExpatBufRef<XML_Char> = buf.with_end(next).into();
                             handlers.characterData(&data_buf);
                         }
                     } else if self.m_handlers.hasDefault() {
@@ -5047,76 +4988,18 @@ unsafe extern "C" fn addBinding(
     mut uri: *const XML_Char,
     mut bindingsPtr: *mut *mut BINDING,
 ) -> XML_Error {
-    static mut xmlNamespace: [XML_Char; 37] = [
-        ASCII_h as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_COLON as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_3 as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_o as XML_Char,
-        ASCII_r as XML_Char,
-        ASCII_g as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_X as XML_Char,
-        ASCII_M as XML_Char,
-        ASCII_L as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_1 as XML_Char,
-        ASCII_9 as XML_Char,
-        ASCII_9 as XML_Char,
-        ASCII_8 as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_n as XML_Char,
-        ASCII_a as XML_Char,
-        ASCII_m as XML_Char,
-        ASCII_e as XML_Char,
-        ASCII_s as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_a as XML_Char,
-        ASCII_c as XML_Char,
-        ASCII_e as XML_Char,
-        '\u{0}' as XML_Char,
+    const xmlNamespace: [XML_Char; 37] = XML_STR![
+        ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON, ASCII_SLASH, ASCII_SLASH, ASCII_w,
+        ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3, ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g,
+        ASCII_SLASH, ASCII_X, ASCII_M, ASCII_L, ASCII_SLASH, ASCII_1, ASCII_9, ASCII_9, ASCII_8,
+        ASCII_SLASH, ASCII_n, ASCII_a, ASCII_m, ASCII_e, ASCII_s, ASCII_p, ASCII_a, ASCII_c,
+        ASCII_e,
     ];
-    static mut xmlnsNamespace: [XML_Char; 30] = [
-        ASCII_h as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_t as XML_Char,
-        ASCII_p as XML_Char,
-        ASCII_COLON as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_w as XML_Char,
-        ASCII_3 as XML_Char,
-        ASCII_PERIOD as XML_Char,
-        ASCII_o as XML_Char,
-        ASCII_r as XML_Char,
-        ASCII_g as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_2 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_0 as XML_Char,
-        ASCII_SLASH as XML_Char,
-        ASCII_x as XML_Char,
-        ASCII_m as XML_Char,
-        ASCII_l as XML_Char,
-        ASCII_n as XML_Char,
-        ASCII_s as XML_Char,
-        ASCII_SLASH as XML_Char,
-        '\u{0}' as XML_Char,
+    const xmlnsNamespace: [XML_Char; 30] = XML_STR![
+        ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON, ASCII_SLASH, ASCII_SLASH, ASCII_w,
+        ASCII_w, ASCII_w, ASCII_PERIOD, ASCII_w, ASCII_3, ASCII_PERIOD, ASCII_o, ASCII_r, ASCII_g,
+        ASCII_SLASH, ASCII_2, ASCII_0, ASCII_0, ASCII_0, ASCII_SLASH, ASCII_x, ASCII_m, ASCII_l,
+        ASCII_n, ASCII_s, ASCII_SLASH,
     ];
     let mut mustBeXML: XML_Bool = XML_FALSE;
     let mut isXML: XML_Bool = XML_TRUE;
@@ -5325,7 +5208,7 @@ unsafe extern "C" fn doCdataSection(
             super::xmltok::XML_TOK_DATA_CHARS => {
                 let mut handlers = (*parser).m_handlers;
                 if handlers.hasCharacterData() {
-                    if MUST_CONVERT!(enc, s) {
+                    if MUST_CONVERT!(enc, buf.as_ptr()) {
                         loop {
                             let mut from_buf = buf.with_end(next);
                             let mut to_buf = ExpatBufRefMut::new(
@@ -5353,7 +5236,7 @@ unsafe extern "C" fn doCdataSection(
                             *eventPP = buf.as_ptr()
                         }
                     } else {
-                        handlers.characterData(&buf.with_end(next));
+                        handlers.characterData(&ExpatBufRef::<XML_Char>::from(buf.with_end(next)));
                     }
                 } else if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, enc_type, buf.with_end(next));
@@ -5934,7 +5817,7 @@ unsafe extern "C" fn prologProcessor(
 }
 
 impl XML_ParserStruct {
-    unsafe fn doProlog<'a>(
+    unsafe fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
@@ -5945,93 +5828,25 @@ impl XML_ParserStruct {
         mut allowClosingDoctype: XML_Bool,
     ) -> XML_Error {
         let mut current_block: u64;
-        static mut externalSubsetName: [XML_Char; 2] = [ASCII_HASH as XML_Char, '\u{0}' as XML_Char];
-        /* XML_DTD */
-        static mut atypeCDATA: [XML_Char; 6] = [
-            ASCII_C as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_A as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_A as XML_Char,
-            '\u{0}' as XML_Char,
+        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH];
+        const atypeCDATA: [XML_Char; 6] = XML_STR![ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A];
+        const atypeID: [XML_Char; 3] = XML_STR![ASCII_I, ASCII_D];
+        const atypeIDREF: [XML_Char; 6] = XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F];
+        const atypeIDREFS: [XML_Char; 7] =
+            XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F, ASCII_S];
+        const atypeENTITY: [XML_Char; 7] =
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_Y];
+        const atypeENTITIES: [XML_Char; 9] =
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_I, ASCII_E, ASCII_S];
+        const atypeNMTOKEN: [XML_Char; 8] =
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N];
+        const atypeNMTOKENS: [XML_Char; 9] =
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N, ASCII_S];
+        const notationPrefix: [XML_Char; 10] = XML_STR![
+            ASCII_N, ASCII_O, ASCII_T, ASCII_A, ASCII_T, ASCII_I, ASCII_O, ASCII_N, ASCII_LPAREN
         ];
-        static mut atypeID: [XML_Char; 3] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeIDREF: [XML_Char; 6] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_R as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_F as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeIDREFS: [XML_Char; 7] = [
-            ASCII_I as XML_Char,
-            ASCII_D as XML_Char,
-            ASCII_R as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_F as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeENTITY: [XML_Char; 7] = [
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_Y as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeENTITIES: [XML_Char; 9] = [
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeNMTOKEN: [XML_Char; 8] = [
-            ASCII_N as XML_Char,
-            ASCII_M as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_K as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut atypeNMTOKENS: [XML_Char; 9] = [
-            ASCII_N as XML_Char,
-            ASCII_M as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_K as XML_Char,
-            ASCII_E as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_S as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut notationPrefix: [XML_Char; 10] = [
-            ASCII_N as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_A as XML_Char,
-            ASCII_T as XML_Char,
-            ASCII_I as XML_Char,
-            ASCII_O as XML_Char,
-            ASCII_N as XML_Char,
-            ASCII_LPAREN as XML_Char,
-            '\u{0}' as XML_Char,
-        ];
-        static mut enumValueSep: [XML_Char; 2] = [ASCII_PIPE as XML_Char, '\u{0}' as XML_Char];
-        static mut enumValueStart: [XML_Char; 2] = [ASCII_LPAREN as XML_Char, '\u{0}' as XML_Char];
+        const enumValueSep: [XML_Char; 2] = XML_STR![ASCII_PIPE];
+        const enumValueStart: [XML_Char; 2] = XML_STR![ASCII_LPAREN];
         /* save one level of indirection */
         let dtd: *mut DTD = self.m_dtd;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
@@ -7886,8 +7701,8 @@ unsafe extern "C" fn appendAttributeValue(
                                     EncodingType::Internal,
                                     isCdata,
                                     ExpatBufRef::new(
-                                        (*entity).textPtr,
-                                        textEnd as *mut c_char,
+                                        (*entity).textPtr as *const c_char,
+                                        textEnd as *const c_char,
                                     ),
                                     pool,
                                 );
@@ -8270,7 +8085,7 @@ unsafe extern "C" fn reportDefault(
     mut buf: ExpatBufRef,
 ) {
     let enc = (*parser).encoding(enc_type);
-    if MUST_CONVERT!(enc, s) {
+    if MUST_CONVERT!(enc, buf.as_ptr()) {
         let mut convert_res: super::xmltok::XML_Convert_Result =
             super::xmltok::XML_CONVERT_COMPLETED;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
@@ -8325,6 +8140,7 @@ unsafe extern "C" fn reportDefault(
             }
         }
     } else {
+        let buf: ExpatBufRef<XML_Char> = buf.into();
         let defaultRan = (*parser).m_handlers.default(buf.as_ptr(), buf.len().try_into().unwrap());
 
         // Previously unwrapped an Option
