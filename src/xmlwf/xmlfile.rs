@@ -23,8 +23,7 @@ pub use crate::expat_h::{
     XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
     XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
     XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNEXPECTED_STATE,
-    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
-    XML_STATUS_OK, XML_STATUS_SUSPENDED,
+    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL
 };
 pub use crate::lib::xmlparse::{
     XML_ErrorString, XML_ExternalEntityParserCreate, XML_GetBuffer, XML_GetCurrentColumnNumber,
@@ -115,7 +114,7 @@ unsafe extern "C" fn processFile(
 ) {
     let mut parser: XML_Parser = (*(args as *mut PROCESS_ARGS)).parser;
     let mut retPtr: *mut c_int = (*(args as *mut PROCESS_ARGS)).retPtr;
-    if XML_Parse(parser, data as *const c_char, size as c_int, 1) == XML_STATUS_ERROR_0 as c_uint {
+    if XML_Parse(parser, data as *const c_char, size as c_int, 1) == XML_Status::ERROR {
         reportError(parser, filename);
         *retPtr = 0
     } else {
@@ -244,7 +243,7 @@ unsafe extern "C" fn processStream(mut filename: *const XML_Char, mut parser: XM
             }
             return 0i32;
         }
-        if XML_ParseBuffer(parser, nread, (nread == 0) as c_int) == XML_STATUS_ERROR_0 as c_uint {
+        if XML_ParseBuffer(parser, nread, (nread == 0) as c_int) == XML_Status::ERROR {
             reportError(
                 parser,
                 if !filename.is_null() {

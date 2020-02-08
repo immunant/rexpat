@@ -73,8 +73,7 @@ pub use crate::expat_h::{
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
     XML_INITIALIZED,
     XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
-    XML_STATUS_OK, XML_STATUS_OK_0, XML_STATUS_SUSPENDED, XML_STATUS_SUSPENDED_0, XML_SUSPENDED,
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_SUSPENDED,
     XML_TRUE,
 };
 pub use crate::siphash_h::{
@@ -1816,19 +1815,19 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
    XML_ParserCreate. On success XML_SetEncoding returns non-zero,
    zero otherwise.
    Note: Calling XML_SetEncoding after XML_Parse or XML_ParseBuffer
-     has no effect and returns XML_STATUS_ERROR.
+     has no effect and returns XML_Status::ERROR.
 */
 
 impl XML_ParserStruct {
     pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
         /* Block after XML_Parse()/XML_ParseBuffer() has been called.
         XXX There's no way for the caller to determine which of the
-        XXX possible error cases caused the XML_STATUS_ERROR return.
+        XXX possible error cases caused the XML_Status::ERROR return.
         */
         if self.m_parsingStatus.parsing == XML_PARSING
             || self.m_parsingStatus.parsing == XML_SUSPENDED
         {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         }
 
         /* Get rid of any previous encoding name */
@@ -1840,10 +1839,10 @@ impl XML_ParserStruct {
             /* Copy the new encoding name into allocated memory */
             self.m_protocolEncodingName = copyString(encodingName);
             if self.m_protocolEncodingName.is_null() {
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR;
             }
         }
-        XML_STATUS_OK_0 as XML_Status
+        XML_Status::OK
     }
 }
 
@@ -1853,7 +1852,7 @@ pub unsafe extern "C" fn XML_SetEncoding(
     mut encodingName: *const XML_Char,
 ) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
 
     (*parser).setEncoding(encodingName)
@@ -2216,24 +2215,24 @@ pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_v
    left to the application: this value will be passed through as the
    base argument to the XML_ExternalEntityRefHandler,
    XML_NotationDeclHandler and XML_UnparsedEntityDeclHandler. The base
-   argument will be copied.  Returns XML_STATUS_ERROR if out of memory,
-   XML_STATUS_OK otherwise.
+   argument will be copied.  Returns XML_Status::ERROR if out of memory,
+   XML_Status::OK otherwise.
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     if !p.is_null() {
         p = (*(*parser).m_dtd).pool.copyString(p);
         if p.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         }
         (*parser).m_curBase = p
     } else {
         (*parser).m_curBase = NULL as *const XML_Char
     }
-    XML_STATUS_OK_0 as XML_Status
+    XML_Status::OK
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
@@ -2620,7 +2619,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
     (*parser).m_hash_secret_salt = hash_salt;
     1
 }
-/* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
+/* Parses some input. Returns XML_Status::ERROR if a fatal error is
    detected.  The last call to XML_Parse must have isFinal true; len
    may be zero for this call (or any other).
 
@@ -2633,21 +2632,21 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
 impl XML_ParserStruct {
     pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR as XML_Status;
         }
         match self.m_parsingStatus.parsing {
             3 => {
                 self.m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR as XML_Status;
             }
             2 => {
                 self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR;
             }
             0 => {
                 if self.m_parentParser.is_null() && self.startParsing() == 0 {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    return XML_Status::ERROR;
                 }
             }
             _ => {}
@@ -2657,7 +2656,7 @@ impl XML_ParserStruct {
         if len == 0 {
             self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
             if isFinal == 0 {
-                return XML_STATUS_OK_0 as XML_Status;
+                return XML_Status::OK;
             }
             self.m_positionPtr = self.m_bufferPtr;
             self.m_parseEndPtr = self.m_bufferEnd;
@@ -2696,7 +2695,7 @@ impl XML_ParserStruct {
                             &mut self.m_position,
                         );
                         self.m_positionPtr = self.m_bufferPtr;
-                        return XML_STATUS_SUSPENDED_0 as XML_Status;
+                        return XML_Status::SUSPENDED;
                     }
                     0 | 1 => {
                         /* LCOV_EXCL_STOP */
@@ -2705,16 +2704,16 @@ impl XML_ParserStruct {
                     _ => {}
                 }
                 /* fall through */
-                return XML_STATUS_OK_0 as XML_Status;
+                return XML_Status::OK;
             }
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            XML_STATUS_ERROR_0 as XML_Status
+            XML_Status::ERROR
         } else {
             /* not defined XML_CONTEXT_BYTES */
             let mut buff: *mut c_void = self.getBuffer(len);
             if buff.is_null() {
-                XML_STATUS_ERROR_0 as XML_Status
+                XML_Status::ERROR as XML_Status
             } else {
                 memcpy(buff, s as *const c_void, len as c_ulong);
                 XML_ParseBuffer(self, len, isFinal)
@@ -2734,7 +2733,7 @@ pub unsafe extern "C" fn XML_Parse(
         if !parser.is_null() {
             (*parser).m_errorCode = XML_ERROR_INVALID_ARGUMENT
         }
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     (*parser).parse(s, len, isFinal)
 }
@@ -2742,20 +2741,20 @@ pub unsafe extern "C" fn XML_Parse(
 impl XML_ParserStruct {
     pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
         let mut start: *const c_char = 0 as *const c_char;
-        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        let mut result: XML_Status = XML_Status::OK;
         match self.m_parsingStatus.parsing {
             3 => {
                 self.m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR as XML_Status;
             }
             2 => {
                 self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR as XML_Status;
             }
             0 => {
                 if self.m_parentParser.is_null() && self.startParsing() == 0 {
                     self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    return XML_Status::ERROR;
                 }
             }
             _ => {}
@@ -2779,11 +2778,11 @@ impl XML_ParserStruct {
         if self.m_errorCode != XML_ERROR_NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR as XML_Status;
         } else {
             match self.m_parsingStatus.parsing {
                 3 => {
-                    result = XML_STATUS_SUSPENDED_0 as XML_Status
+                    result = XML_Status::SUSPENDED;
                     /* should not happen */
                 }
                 0 | 1 => {
@@ -2814,7 +2813,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     mut isFinal: c_int,
 ) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
 
     (*parser).parseBuffer(len, isFinal)
@@ -2938,7 +2937,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
 
    Can be called from most handlers, including DTD related call-backs,
    except when parsing an external parameter entity and resumable != 0.
-   Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
+   Returns XML_Status::OK when successful, XML_Status::ERROR otherwise.
    Possible error codes:
    - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
    - XML_ERROR_FINISHED: when the parser has already finished.
@@ -2947,7 +2946,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
    When resumable != 0 (true) then parsing is suspended, that is,
    XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
    Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
-   return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
+   return XML_Status::ERROR with error code XML_ERROR_ABORTED.
 
    *Note*:
    This will be applied to the current parser instance only, that is, if
@@ -2965,19 +2964,19 @@ impl XML_ParserStruct {
             3 => {
                 if resumable != 0 {
                     self.m_errorCode = XML_ERROR_SUSPENDED;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    return XML_Status::ERROR;
                 }
                 self.m_parsingStatus.parsing = XML_FINISHED
             }
             2 => {
                 self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR;
             }
             _ => {
                 if resumable != 0 {
                     if self.m_isParamEntity != 0 {
                         self.m_errorCode = XML_ERROR_SUSPEND_PE;
-                        return XML_STATUS_ERROR_0 as XML_Status;
+                        return XML_Status::ERROR;
                     }
                     self.m_parsingStatus.parsing = XML_SUSPENDED
                 } else {
@@ -2985,14 +2984,14 @@ impl XML_ParserStruct {
                 }
             }
         }
-        XML_STATUS_OK_0 as XML_Status
+        XML_Status::OK
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     (*parser).stopParser(resumable)
 }
@@ -3010,10 +3009,10 @@ pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool)
 */
 impl XML_ParserStruct {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
-        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        let mut result: XML_Status = XML_Status::OK;
         if self.m_parsingStatus.parsing != XML_SUSPENDED {
             self.m_errorCode = XML_ERROR_NOT_SUSPENDED;
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         }
         self.m_parsingStatus.parsing = XML_PARSING;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
@@ -3027,10 +3026,10 @@ impl XML_ParserStruct {
         if self.m_errorCode != XML_ERROR_NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         } else {
             match self.m_parsingStatus.parsing {
-                3 => result = XML_STATUS_SUSPENDED_0 as XML_Status,
+                3 => result = XML_Status::SUSPENDED,
                 0 | 1 => {
                     if self.m_parsingStatus.finalBuffer != 0 {
                         self.m_parsingStatus.parsing = XML_FINISHED;
@@ -3061,7 +3060,7 @@ impl XML_ParserStruct {
 #[no_mangle]
 pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR as XML_Status;
     }
 
     (*parser).resumeParser()
@@ -3094,7 +3093,7 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
     }
     *status = (*parser).m_parsingStatus;
 }
-/* If XML_Parse or XML_ParseBuffer have returned XML_STATUS_ERROR, then
+/* If XML_Parse or XML_ParseBuffer have returned XML_Status::ERROR, then
    XML_GetErrorCode returns information about the error.
 */
 #[no_mangle]
@@ -3181,7 +3180,7 @@ pub unsafe extern "C" fn XML_GetInputContext(
    event (regardless of whether there was an associated callback).
 
    They may also be called after returning from a call to XML_Parse
-   or XML_ParseBuffer.  If the return value is XML_STATUS_ERROR then
+   or XML_ParseBuffer.  If the return value is XML_Status::ERROR then
    the location is the location of the character at which the error
    was detected; otherwise the location is the location of the last
    parse event, as described above.

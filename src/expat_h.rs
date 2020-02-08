@@ -35,6 +35,7 @@ pub use crate::lib::xmlparse::XML_ParserStruct;
 use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
 use crate::stddef_h::size_t;
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
+use num_derive::ToPrimitive;
 
 pub type XML_Parser = *mut XML_ParserStruct;
 pub type XML_Bool = c_uchar;
@@ -53,13 +54,15 @@ pub const XML_FALSE: XML_Bool = 0;
    Otherwise, the #define hackery is quite ugly and would have been
    dropped.
 */
-pub type XML_Status = c_uint;
-pub const XML_STATUS_ERROR: XML_Status = 0;
-pub const XML_STATUS_ERROR_0: c_int = XML_STATUS_ERROR as c_int;
-pub const XML_STATUS_OK: XML_Status = 1;
-pub const XML_STATUS_OK_0: c_int = XML_STATUS_OK as c_int;
-pub const XML_STATUS_SUSPENDED: XML_Status = 2;
-pub const XML_STATUS_SUSPENDED_0: c_int = XML_STATUS_SUSPENDED as c_int;
+
+#[repr(i32)]
+#[derive(PartialEq, ToPrimitive)]
+pub enum XML_Status {
+    ERROR,
+    OK,
+    SUSPENDED,
+}
+
 pub type XML_Error = c_uint;
 pub const XML_ERROR_NONE: XML_Error = 0;
 pub const XML_ERROR_NO_MEMORY: XML_Error = 1;
@@ -313,7 +316,7 @@ pub type XML_EndNamespaceDeclHandler =
     Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()>;
 /* This is called if the document is not standalone, that is, it has an
    external subset or a reference to a parameter entity, but does not
-   have standalone="yes". If this handler returns XML_STATUS_ERROR,
+   have standalone="yes". If this handler returns XML_Status::ERROR,
    then processing will not continue, and the parser will return a
    XML_ERROR_NOT_STANDALONE error.
    If parameter entity parsing is enabled, then in addition to the
@@ -347,7 +350,7 @@ pub type XML_NotStandaloneHandler = Option<unsafe extern "C" fn(_: *mut c_void) 
    referenced entity is to be parsed later, it must be copied.
    context is NULL only when the entity is a parameter entity.
 
-   The handler should return XML_STATUS_ERROR if processing should not
+   The handler should return XML_Status::ERROR if processing should not
    continue because of a fatal error in the handling of the external
    entity.  In this case the calling parser will return an
    XML_ERROR_EXTERNAL_ENTITY_HANDLING error.
@@ -393,8 +396,8 @@ pub struct XML_Encoding {
    the encoding declaration.
 
    If the callback can provide information about the encoding, it must
-   fill in the XML_Encoding structure, and return XML_STATUS_OK.
-   Otherwise it must return XML_STATUS_ERROR.
+   fill in the XML_Encoding structure, and return XML_Status::OK.
+   Otherwise it must return XML_Status::ERROR.
 
    If info does not describe a suitable encoding, then the parser will
    return an XML_UNKNOWN_ENCODING error.
