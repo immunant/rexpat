@@ -338,7 +338,7 @@ trait XmlHandlers {
     unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn startCDataSection(&self) -> bool;
     unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
-    unsafe fn startElement(&self, _: *const XML_Char, _: &mut [[*const XML_Char; 2]]) -> bool;
+    unsafe fn startElement(&self, _: *const XML_Char, _: &mut [Attribute]) -> bool;
     unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
     unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
     unsafe fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
@@ -513,7 +513,7 @@ impl CXmlHandlers {
 }
 
 impl XmlHandlers for CXmlHandlers {
-    unsafe fn startElement(&self, a: *const XML_Char, b: &mut [[*const XML_Char; 2]]) -> bool {
+    unsafe fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
         self.m_startElementHandler.map(|handler| {
             handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
 
@@ -792,6 +792,25 @@ impl XmlHandlers for CXmlHandlers {
 }
 
 #[repr(C)]
+pub struct Attribute {
+    name: *const XML_Char,
+    value: *const XML_Char,
+}
+
+impl Attribute {
+    fn new(name: *const XML_Char, value: *const XML_Char) -> Self {
+        Attribute { name, value }
+    }
+
+    unsafe fn from_default(da: *const DEFAULT_ATTRIBUTE) -> Self {
+        Attribute {
+            name: (*(*da).id).name,
+            value: (*da).value,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
@@ -848,7 +867,7 @@ pub struct XML_ParserStruct {
     pub m_freeBindingList: *mut BINDING,
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
-    pub m_atts: Vec<[*const XML_Char; 2]>,
+    pub m_atts: Vec<Attribute>,
     pub m_nsAtts: *mut NS_ATT,
     pub m_nsAttsVersion: c_ulong,
     pub m_nsAttsPower: c_uchar,
@@ -4386,7 +4405,7 @@ impl XML_ParserStruct {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push([(*attId).name, self.m_tempPool.start]);
+                self.m_atts.push(Attribute::new((*attId).name, self.m_tempPool.start));
                 self.m_tempPool.start = self.m_tempPool.ptr
             } else {
                 /* the value did not need normalizing */
@@ -4397,7 +4416,7 @@ impl XML_ParserStruct {
                 if fresh10.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
-                self.m_atts.push([(*attId).name, fresh10]);
+                self.m_atts.push(Attribute::new((*attId).name, fresh10));
                 self.m_tempPool.start = self.m_tempPool.ptr
             }
             /* handle prefixed attribute names */
@@ -4408,7 +4427,7 @@ impl XML_ParserStruct {
                         self,
                         (*attId).prefix,
                         attId,
-                        self.m_atts.last().unwrap()[1],
+                        self.m_atts.last().unwrap().value,
                         bindingsPtr,
                     );
                     if result_0 as u64 != 0 {
@@ -4440,7 +4459,7 @@ impl XML_ParserStruct {
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         if !(*elementType).idAtt.is_null() && *(*(*elementType).idAtt).name.offset(-1) as c_int != 0 {
             for i in 0..self.m_atts.len() {
-                if self.m_atts[i][0] == (*(*elementType).idAtt).name as *const XML_Char {
+                if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
                     self.m_idAttIndex = 2 * i as c_int;
                     break;
                 }
@@ -4472,16 +4491,16 @@ impl XML_ParserStruct {
                         {
                             *(*(*da).id).name.offset(-1) = 3;
                             nXMLNSDeclarations += 1;
-                            self.m_atts.push([(*(*da).id).name, (*da).value]);
+                            self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
                         *(*(*da).id).name.offset(-1) = 2;
                         nPrefixes += 1;
-                        self.m_atts.push([(*(*da).id).name, (*da).value]);
+                        self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
                     *(*(*da).id).name.offset(-1) = 1;
-                    self.m_atts.push([(*(*da).id).name, (*da).value]);
+                    self.m_atts.push(Attribute::from_default(da));
                 }
             }
         }
@@ -4536,7 +4555,7 @@ impl XML_ParserStruct {
             } // MOZILLA CHANGE
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
-                let mut s: *const XML_Char = self.m_atts[i][0];
+                let mut s: *const XML_Char = self.m_atts[i].name;
                 if *s.offset(-1) as c_int == 2 {
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
@@ -4698,7 +4717,7 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i][0] = s;
+                    self.m_atts[i].name = s;
                     /* fill empty slot with new version, uriName and hash value */
                     (*self.m_nsAtts.offset(j_0 as isize)).version = version;
                     (*self.m_nsAtts.offset(j_0 as isize)).hash = uriHash;
@@ -4788,7 +4807,7 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i][0] = s;
+                    self.m_atts[i].name = s;
 
                     nXMLNSDeclarations -= 1;
                     if nXMLNSDeclarations == 0 && nPrefixes == 0 {
@@ -4803,12 +4822,12 @@ impl XML_ParserStruct {
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            *(self.m_atts[i][0] as *mut XML_Char).offset(-1) = 0;
+            *(self.m_atts[i].name as *mut XML_Char).offset(-1) = 0;
             i += 1
         }
 
         // REXPAT: append a NULL pointer as the stop marker
-        self.m_atts.push([ptr::null(); 2]);
+        self.m_atts.push(Attribute::new(ptr::null(), ptr::null()));
 
         binding = *bindingsPtr;
         while !binding.is_null() {
