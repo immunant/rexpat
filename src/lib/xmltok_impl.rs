@@ -1575,7 +1575,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             InValue,
         };
         let mut state = State::InName;
-        let mut att: ATTRIBUTE = std::mem::zeroed();
+        let mut att = ATTRIBUTE {
+            name: std::ptr::null(),
+            valuePtr: std::ptr::null(),
+            valueEnd: std::ptr::null(),
+            normalized: false,
+        };
 
         /* defined when state == inValue;
         initialization just to shut up compilers */
@@ -1585,7 +1590,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             () => {
                 if state == State::Other {
                     att.name = buf.as_ptr();
-                    att.normalized = 1;
+                    att.normalized = true;
                     state = State::InName;
                 }
             };
@@ -1633,19 +1638,19 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        }
                    }
                    ByteType::AMP => {
-                       att.normalized = 0;
+                       att.normalized = false;
                    }
                    ByteType::S => {
                        if state == State::InName {
                            state = State::Other;
                        } else if state == State::InValue
-                           && att.normalized != 0
+                           && att.normalized
                            && (buf.as_ptr() == att.valuePtr
                                || self.byte_to_ascii(buf.as_ptr()) != ASCII_SPACE
                                || self.byte_to_ascii(buf.as_ptr().offset(self.MINBPC())) == ASCII_SPACE
                                || self.byte_type(buf.as_ptr().offset(self.MINBPC())) == open)
                        {
-                           att.normalized = 0;
+                           att.normalized = false;
                        }
                    }
                    ByteType::CR | ByteType::LF => {
@@ -1654,7 +1659,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        if state == State::InName {
                            state = State::Other;
                        } else if state == State::InValue {
-                           att.normalized = 0;
+                           att.normalized = false;
                        }
                    }
                    ByteType::GT | ByteType::SOL => {

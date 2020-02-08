@@ -4361,7 +4361,7 @@ impl XML_ParserStruct {
                 return XML_ERROR_DUPLICATE_ATTRIBUTE;
             }
             *(*attId).name.offset(-1) = 1;
-            if currAtt.normalized == 0 {
+            if !currAtt.normalized {
                 let mut result: XML_Error = XML_ERROR_NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */

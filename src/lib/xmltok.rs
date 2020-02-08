@@ -149,7 +149,7 @@ pub struct ATTRIBUTE {
     pub name: *const c_char,
     pub valuePtr: *const c_char,
     pub valueEnd: *const c_char,
-    pub normalized: c_char,
+    pub normalized: bool,
 }
 
 pub type ENCODING = dyn XmlEncoding;
