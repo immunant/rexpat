@@ -331,7 +331,7 @@ trait XmlHandlers {
     unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
     unsafe fn startCDataSection(&self) -> bool;
     unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
-    unsafe fn startElement(&self, _: *const XML_Char, _: *mut ATTRIBUTE) -> bool;
+    unsafe fn startElement(&self, _: *const XML_Char, _: &mut [Attribute]) -> bool;
     unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
     unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
     unsafe fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
@@ -506,9 +506,9 @@ impl CXmlHandlers {
 }
 
 impl XmlHandlers for CXmlHandlers {
-    unsafe fn startElement(&self, a: *const XML_Char, b: *mut ATTRIBUTE) -> bool {
+    unsafe fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
         self.m_startElementHandler.map(|handler| {
-            handler(self.m_handlerArg, a, b as *mut *const XML_Char);
+            handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
 
             true
         }).unwrap_or(false)
@@ -785,6 +785,32 @@ impl XmlHandlers for CXmlHandlers {
 }
 
 #[repr(C)]
+pub struct Attribute {
+    name: *const XML_Char,
+    value: *const XML_Char,
+}
+
+impl Attribute {
+    fn new(name: *const XML_Char, value: *const XML_Char) -> Self {
+        Attribute { name, value }
+    }
+
+    fn new_null() -> Self {
+        Attribute {
+            name: ptr::null(),
+            value: ptr::null(),
+        }
+    }
+
+    unsafe fn from_default(da: *const DEFAULT_ATTRIBUTE) -> Self {
+        Attribute {
+            name: (*(*da).id).name,
+            value: (*da).value,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct XML_ParserStruct {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
@@ -839,10 +865,9 @@ pub struct XML_ParserStruct {
     pub m_freeTagList: *mut TAG,
     pub m_inheritedBindings: *mut BINDING,
     pub m_freeBindingList: *mut BINDING,
-    pub m_attsSize: c_int,
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
-    pub m_atts: *mut super::xmltok::ATTRIBUTE,
+    pub m_atts: Vec<Attribute>,
     pub m_nsAtts: HashSet<HashKey>,
     pub m_position: super::xmltok::POSITION,
     pub m_tempPool: STRING_POOL,
@@ -1416,10 +1441,9 @@ impl XML_ParserStruct {
             m_freeTagList: ptr::null_mut(),
             m_inheritedBindings: ptr::null_mut(),
             m_freeBindingList: ptr::null_mut(),
-            m_attsSize: 0,
             m_nSpecifiedAtts: 0,
             m_idAttIndex: 0,
-            m_atts: ptr::null_mut(),
+            m_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
             m_tempPool: STRING_POOL::new(),
@@ -1454,9 +1478,7 @@ impl XML_ParserStruct {
         // TODO: Move initialization into XML_ParserStruct::new
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
-        parser.m_attsSize = INIT_ATTS_SIZE;
-        parser.m_atts = MALLOC![super::xmltok::ATTRIBUTE; parser.m_attsSize];
-        if parser.m_atts.is_null() {
+        if parser.m_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
             return ptr::null_mut();
         }
         parser.m_dataBuf = MALLOC![XML_Char; INIT_DATA_BUF_SIZE];
@@ -1916,7 +1938,6 @@ impl Drop for XML_ParserStruct {
                     self.m_parentParser.is_null() as XML_Bool,
                 );
             }
-            FREE!(self.m_atts);
             FREE!(self.m_groupConnector);
             FREE!(self.m_buffer);
             FREE!(self.m_dataBuf);
@@ -3728,7 +3749,7 @@ impl XML_ParserStruct {
                     }
 
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement((*tag).name.str_0, self.m_atts);
+                    let started = handlers.startElement((*tag).name.str_0, &mut self.m_atts);
 
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -3765,7 +3786,7 @@ impl XML_ParserStruct {
                     }
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement(name_0.str_0, self.m_atts);
+                    let started = handlers.startElement(name_0.str_0, &mut self.m_atts);
                     if started {
                         noElmHandlers = XML_FALSE
                     }
@@ -4116,11 +4137,7 @@ impl XML_ParserStruct {
     ) -> XML_Error {
         let dtd: *mut DTD = self.m_dtd; /* save one level of indirection */
         let mut nDefaultAtts: c_int = 0;
-        let mut appAtts: *mut *const XML_Char = 0 as *mut *const XML_Char;
-        let mut attIndex: c_int = 0;
         let mut prefixLen: c_int = 0;
-        let mut i: c_int = 0;
-        let mut n: c_int = 0;
         let mut uri: *mut XML_Char = 0 as *mut XML_Char;
         let mut nPrefixes: c_int = 0;
         let mut nXMLNSDeclarations: c_int = 0;
@@ -4149,35 +4166,21 @@ impl XML_ParserStruct {
             elementType
         };
         nDefaultAtts = (*elementType).nDefaultAtts;
+        self.m_atts.clear();
         /* get the attributes from the tokenizer */
-        n = (*enc).getAtts(attStr, self.m_attsSize, self.m_atts);
-        if n + nDefaultAtts > self.m_attsSize {
-            let mut oldAttsSize: c_int = self.m_attsSize;
-            let mut temp: *mut super::xmltok::ATTRIBUTE = 0 as *mut super::xmltok::ATTRIBUTE;
-            self.m_attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
-            temp = REALLOC!(self.m_atts => [super::xmltok::ATTRIBUTE; self.m_attsSize]);
-            if temp.is_null() {
-                self.m_attsSize = oldAttsSize;
+        let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
+            if self.m_atts.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
             }
-            self.m_atts = temp;
-            if n > oldAttsSize {
-                (*enc).getAtts(attStr, n, self.m_atts);
-            }
-        }
-        appAtts = self.m_atts as *mut *const XML_Char;
-        i = 0;
-        while i < n {
-            let mut currAtt: *mut super::xmltok::ATTRIBUTE =
-                &mut *self.m_atts.offset(i as isize) as *mut super::xmltok::ATTRIBUTE;
+
             /* add the name and value to the attribute list */
             let mut attId: *mut ATTRIBUTE_ID = self.getAttributeId(
                 enc_type,
                 ExpatBufRef::new(
-                    (*currAtt).name,
-                    (*currAtt)
+                    currAtt.name,
+                    currAtt
                         .name
-                        .offset((*enc).nameLength((*currAtt).name) as isize),
+                        .offset((*enc).nameLength(currAtt.name) as isize),
                 ),
             );
             if attId.is_null() {
@@ -4189,30 +4192,22 @@ impl XML_ParserStruct {
             */
             if *(*attId).name.offset(-1) != 0 {
                 if !enc_type.is_internal() {
-                    self.m_eventPtr = (*self.m_atts.offset(i as isize)).name
+                    self.m_eventPtr = currAtt.name
                 }
                 return XML_ERROR_DUPLICATE_ATTRIBUTE;
             }
             *(*attId).name.offset(-1) = 1;
-            let fresh7 = attIndex;
-            attIndex = attIndex + 1;
-            let ref mut fresh8 = *appAtts.offset(fresh7 as isize);
-            *fresh8 = (*attId).name;
-            if (*self.m_atts.offset(i as isize)).normalized == 0 {
+            if !currAtt.normalized {
                 let mut result: XML_Error = XML_ERROR_NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */
                 if (*attId).maybeTokenized != 0 {
-                    let mut j: c_int = 0;
-                    j = 0;
-                    while j < nDefaultAtts {
+                    for j in 0..nDefaultAtts {
                         if attId
                             == (*(*elementType).defaultAtts.offset(j as isize)).id as *mut ATTRIBUTE_ID
                         {
                             isCdata = (*(*elementType).defaultAtts.offset(j as isize)).isCdata;
                             break;
-                        } else {
-                            j += 1
                         }
                     }
                 }
@@ -4221,31 +4216,24 @@ impl XML_ParserStruct {
                     self,
                     enc_type,
                     isCdata,
-                    ExpatBufRef::new(
-                        (*self.m_atts.offset(i as isize)).valuePtr,
-                        (*self.m_atts.offset(i as isize)).valueEnd,
-                    ),
+                    ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd),
                     &mut self.m_tempPool,
                 );
                 if result as u64 != 0 {
                     return result;
                 }
-                let ref mut fresh9 = *appAtts.offset(attIndex as isize);
-                *fresh9 = self.m_tempPool.start;
+                self.m_atts.push(Attribute::new((*attId).name, self.m_tempPool.start));
                 self.m_tempPool.start = self.m_tempPool.ptr
             } else {
                 /* the value did not need normalizing */
-                let ref mut fresh10 = *appAtts.offset(attIndex as isize);
-                *fresh10 = self.m_tempPool.storeString(
+                let fresh10 = self.m_tempPool.storeString(
                     enc,
-                    ExpatBufRef::new(
-                        (*self.m_atts.offset(i as isize)).valuePtr,
-                        (*self.m_atts.offset(i as isize)).valueEnd,
-                    ),
+                    ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)
                 );
-                if (*appAtts.offset(attIndex as isize)).is_null() {
+                if fresh10.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
+                self.m_atts.push(Attribute::new((*attId).name, fresh10));
                 self.m_tempPool.start = self.m_tempPool.ptr
             }
             /* handle prefixed attribute names */
@@ -4256,50 +4244,52 @@ impl XML_ParserStruct {
                         self,
                         (*attId).prefix,
                         attId,
-                        *appAtts.offset(attIndex as isize),
+                        self.m_atts.last().unwrap().value,
                         bindingsPtr,
                     );
                     if result_0 as u64 != 0 {
                         return result_0;
                     }
-                    attIndex -= 1;
-                    #[cfg(feature = "mozilla")]
-                    {
-                        // Mozilla code replaces `--attIndex` with `attIndex++`,
-                        // which is a shift by 2 positions
-                        attIndex += 2;
+                    if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
                         *(*attId).name.offset(-1) = 3;
+                    } else {
+                        // Mozilla code replaces `--attIndex` with `attIndex++`,
+                        // the former being equivalent to popping the last
+                        // attribute from m_atts
+                        self.m_atts.pop();
                     }
                 } else {
                     /* deal with other prefixed names later */
-                    attIndex += 1;
                     nPrefixes += 1;
                     *(*attId).name.offset(-1) = 2
                 }
-            } else {
-                attIndex += 1
             }
-            i += 1
+
+            XML_ERROR_NONE
+        });
+        if res != XML_ERROR_NONE {
+            return res;
         }
+
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
-        self.m_nSpecifiedAtts = attIndex;
+        self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         if !(*elementType).idAtt.is_null() && *(*(*elementType).idAtt).name.offset(-1) as c_int != 0 {
-            i = 0;
-            while i < attIndex {
-                if *appAtts.offset(i as isize) == (*(*elementType).idAtt).name as *const XML_Char {
-                    self.m_idAttIndex = i;
+            for i in 0..self.m_atts.len() {
+                if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
+                    self.m_idAttIndex = 2 * i as c_int;
                     break;
-                } else {
-                    i += 2
                 }
             }
         } else {
-            self.m_idAttIndex = -(1)
+            self.m_idAttIndex = -1
         }
+
         /* do attribute defaulting */
-        i = 0;
-        while i < nDefaultAtts {
+        if self.m_atts.try_reserve(nDefaultAtts as usize).is_err() {
+            return XML_ERROR_NO_MEMORY;
+        }
+        for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
             if *(*(*da).id).name.offset(-1) == 0 && !(*da).value.is_null() {
                 if !(*(*da).id).prefix.is_null() {
@@ -4318,42 +4308,23 @@ impl XML_ParserStruct {
                         {
                             *(*(*da).id).name.offset(-1) = 3;
                             nXMLNSDeclarations += 1;
-                            *appAtts.offset(attIndex as isize) = (*(*da).id).name;
-                            attIndex += 1;
-                            *appAtts.offset(attIndex as isize) = (*da).value;
-                            attIndex += 1;
+                            self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
                         *(*(*da).id).name.offset(-1) = 2;
                         nPrefixes += 1;
-                        let fresh11 = attIndex;
-                        attIndex = attIndex + 1;
-                        let ref mut fresh12 = *appAtts.offset(fresh11 as isize);
-                        *fresh12 = (*(*da).id).name;
-                        let fresh13 = attIndex;
-                        attIndex = attIndex + 1;
-                        let ref mut fresh14 = *appAtts.offset(fresh13 as isize);
-                        *fresh14 = (*da).value
+                        self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
                     *(*(*da).id).name.offset(-1) = 1;
-                    let fresh15 = attIndex;
-                    attIndex = attIndex + 1;
-                    let ref mut fresh16 = *appAtts.offset(fresh15 as isize);
-                    *fresh16 = (*(*da).id).name;
-                    let fresh17 = attIndex;
-                    attIndex = attIndex + 1;
-                    let ref mut fresh18 = *appAtts.offset(fresh17 as isize);
-                    *fresh18 = (*da).value
+                    self.m_atts.push(Attribute::from_default(da));
                 }
             }
-            i += 1
         }
-        let ref mut fresh19 = *appAtts.offset(attIndex as isize);
-        *fresh19 = 0 as *const XML_Char;
+
         /* expand prefixed attribute names, check for duplicates,
         and clear flags that say whether attributes were specified */
-        i = 0; /* hash table index */
+        let mut i = 0; /* hash table index */
         if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
             let mut j_0: c_int = 0;
             if nPrefixes != 0 { // MOZILLA CHANGE
@@ -4364,8 +4335,8 @@ impl XML_ParserStruct {
                 }
             } // MOZILLA CHANGE
             /* expand prefixed names and check for duplicates */
-            while i < attIndex {
-                let mut s: *const XML_Char = *appAtts.offset(i as isize);
+            while i < self.m_atts.len() {
+                let mut s: *const XML_Char = self.m_atts[i].name;
                 if *s.offset(-1) as c_int == 2 {
                     let mut b: *const BINDING = 0 as *const BINDING;
                     /* clear flag */
@@ -4479,13 +4450,12 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    let ref mut fresh27 = *appAtts.offset(i as isize);
-                    *fresh27 = s;
+                    self.m_atts[i].name = s;
                     // FIXME: perform the hash table insertion here,
                     // to match the original C code's semantics???
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
-                        i += 2;
+                        i += 1;
                         break;
                     }
                 } else if cfg!(feature = "mozilla") && *s.offset(-1) as c_int == 3 {
@@ -4567,25 +4537,31 @@ impl XML_ParserStruct {
                     /* store expanded name in attribute list */
                     s = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    let ref mut fresh27 = *appAtts.offset(i as isize);
-                    *fresh27 = s;
+                    self.m_atts[i].name = s;
 
                     nXMLNSDeclarations -= 1;
                     if nXMLNSDeclarations == 0 && nPrefixes == 0 {
-                        i += 2;
+                        i += 1;
                         break;
                     }
                 } else {
                     *(s as *mut XML_Char).offset(-1) = 0
                 }
-                i += 2
+                i += 1
             }
         }
         /* clear flags for the remaining attributes */
-        while i < attIndex {
-            *(*appAtts.offset(i as isize) as *mut XML_Char).offset(-1) = 0;
-            i += 2
+        while i < self.m_atts.len() {
+            *(self.m_atts[i].name as *mut XML_Char).offset(-1) = 0;
+            i += 1
         }
+
+        // REXPAT: append a NULL pointer as the stop marker
+        if self.m_atts.try_reserve(1).is_err() {
+            return XML_ERROR_NO_MEMORY;
+        }
+        self.m_atts.push(Attribute::new_null());
+
         binding = *bindingsPtr;
         while !binding.is_null() {
             *(*(*binding).attId).name.offset(-1) = 0;
@@ -4629,7 +4605,7 @@ impl XML_ParserStruct {
         (*tagNamePtr).uriLen = (*binding).uriLen;
         (*tagNamePtr).prefix = (*(*binding).prefix).name;
         (*tagNamePtr).prefixLen = prefixLen;
-        i = 0;
+        let mut i = 0;
         loop {
             let fresh31 = i;
             i = i + 1;
@@ -4637,7 +4613,7 @@ impl XML_ParserStruct {
                 break;
             }
         }
-        n = i + (*binding).uriLen + prefixLen;
+        let n = i + (*binding).uriLen + prefixLen;
         if n > (*binding).uriAlloc {
             let mut p: *mut TAG = 0 as *mut TAG;
             uri = MALLOC![XML_Char; n + EXPAND_SPARE];
