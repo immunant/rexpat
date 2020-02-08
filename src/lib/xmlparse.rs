@@ -802,6 +802,13 @@ impl Attribute {
         Attribute { name, value }
     }
 
+    fn new_null() -> Self {
+        Attribute {
+            name: ptr::null(),
+            value: ptr::null(),
+        }
+    }
+
     unsafe fn from_default(da: *const DEFAULT_ATTRIBUTE) -> Self {
         Attribute {
             name: (*(*da).id).name,
@@ -4827,7 +4834,10 @@ impl XML_ParserStruct {
         }
 
         // REXPAT: append a NULL pointer as the stop marker
-        self.m_atts.push(Attribute::new(ptr::null(), ptr::null()));
+        if self.m_atts.try_reserve(1).is_err() {
+            return XML_ERROR_NO_MEMORY;
+        }
+        self.m_atts.push(Attribute::new_null());
 
         binding = *bindingsPtr;
         while !binding.is_null() {
