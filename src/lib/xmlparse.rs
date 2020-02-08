@@ -809,10 +809,10 @@ impl Attribute {
         }
     }
 
-    unsafe fn from_default(da: *const DEFAULT_ATTRIBUTE) -> Self {
+    unsafe fn from_default(da: &DEFAULT_ATTRIBUTE) -> Self {
         Attribute {
-            name: (*(*da).id).name,
-            value: (*da).value,
+            name: (*da.id).name,
+            value: da.value,
         }
     }
 }
@@ -1041,7 +1041,7 @@ impl HashKey {
 }
 
 macro_rules! hash_insert {
-    ($map:expr, $key:expr, $et:ident) => {{
+    ($map:expr, $key:expr, $et:ident, $new_fn:expr) => {{
         let __key = $key;
         let __hk = HashKey::from(__key);
         $map.get_mut(&__hk)
@@ -1051,7 +1051,7 @@ macro_rules! hash_insert {
                     return ptr::null_mut();
                 }
 
-                let v = $et { name: __key, ..std::mem::zeroed() };
+                let v = $et { name: __key, ..$new_fn() };
                 if let Ok(b) = Box::try_new(v) {
                     $map.entry(__hk).or_insert(b).as_mut() as *mut $et
                 } else {
@@ -1059,6 +1059,9 @@ macro_rules! hash_insert {
                 }
             })
     }};
+    ($map:expr, $key:expr, $et:ident) => {
+        hash_insert!($map, $key, $et, std::mem::zeroed)
+    };
 }
 
 macro_rules! hash_lookup {
@@ -1129,14 +1132,23 @@ an attribute has been specified. */
 pub type ATTRIBUTE_ID = attribute_id;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct ELEMENT_TYPE {
     pub name: *const XML_Char,
     pub prefix: *mut PREFIX,
     pub idAtt: *const ATTRIBUTE_ID,
-    pub nDefaultAtts: c_int,
-    pub allocDefaultAtts: c_int,
-    pub defaultAtts: *mut DEFAULT_ATTRIBUTE,
+    pub defaultAtts: Vec<DEFAULT_ATTRIBUTE>,
+}
+
+impl ELEMENT_TYPE {
+    fn new() -> Self {
+        ELEMENT_TYPE {
+            name: ptr::null(),
+            prefix: ptr::null_mut(),
+            idAtt: ptr::null(),
+            defaultAtts: Vec::new(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -4326,7 +4338,6 @@ impl XML_ParserStruct {
         bindingsPtr: *mut *mut BINDING,
     ) -> XML_Error {
         let dtd: *mut DTD = self.m_dtd; /* save one level of indirection */
-        let mut nDefaultAtts: c_int = 0;
         let mut prefixLen: c_int = 0;
         let mut uri: *mut XML_Char = 0 as *mut XML_Char;
         let mut nPrefixes: c_int = 0;
@@ -4345,7 +4356,8 @@ impl XML_ParserStruct {
             let elementType = hash_insert!(
                 &mut (*dtd).elementTypes,
                 name,
-                ELEMENT_TYPE
+                ELEMENT_TYPE,
+                ELEMENT_TYPE::new
             );
             if elementType.is_null() {
                 return XML_ERROR_NO_MEMORY;
@@ -4355,7 +4367,6 @@ impl XML_ParserStruct {
             }
             elementType
         };
-        nDefaultAtts = (*elementType).nDefaultAtts;
         self.m_atts.clear();
         /* get the attributes from the tokenizer */
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
@@ -4392,11 +4403,9 @@ impl XML_ParserStruct {
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */
                 if (*attId).maybeTokenized != 0 {
-                    for j in 0..nDefaultAtts {
-                        if attId
-                            == (*(*elementType).defaultAtts.offset(j as isize)).id as *mut ATTRIBUTE_ID
-                        {
-                            isCdata = (*(*elementType).defaultAtts.offset(j as isize)).isCdata;
+                    for da in &(*elementType).defaultAtts {
+                        if attId == da.id as *mut ATTRIBUTE_ID {
+                            isCdata = da.isCdata;
                             break;
                         }
                     }
@@ -4476,14 +4485,13 @@ impl XML_ParserStruct {
         }
 
         /* do attribute defaulting */
-        if self.m_atts.try_reserve(nDefaultAtts as usize).is_err() {
+        if self.m_atts.try_reserve((*elementType).defaultAtts.len()).is_err() {
             return XML_ERROR_NO_MEMORY;
         }
-        for i in 0..nDefaultAtts {
-            let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
-            if *(*(*da).id).name.offset(-1) == 0 && !(*da).value.is_null() {
-                if !(*(*da).id).prefix.is_null() {
-                    if (*(*da).id).xmlns != 0 {
+        for da in &(*elementType).defaultAtts {
+            if *(*da.id).name.offset(-1) == 0 && !da.value.is_null() {
+                if !(*da.id).prefix.is_null() {
+                    if (*da.id).xmlns != 0 {
                         let mut result_1: XML_Error = addBinding(
                             self,
                             (*(*da).id).prefix,
@@ -4496,17 +4504,17 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            *(*(*da).id).name.offset(-1) = 3;
+                            *(*da.id).name.offset(-1) = 3;
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        *(*(*da).id).name.offset(-1) = 2;
+                        *(*da.id).name.offset(-1) = 2;
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
-                    *(*(*da).id).name.offset(-1) = 1;
+                    *(*da.id).name.offset(-1) = 1;
                     self.m_atts.push(Attribute::from_default(da));
                 }
             }
@@ -8120,52 +8128,30 @@ unsafe extern "C" fn defineAttribute(
     mut isId: XML_Bool,
     mut value: *const XML_Char,
 ) -> c_int {
-    let mut att: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
     if !value.is_null() || isId as c_int != 0 {
         /* The handling of default attributes gets messed up if we have
         a default which duplicates a non-default. */
-        let mut i: c_int = 0; /* save one level of indirection */
-        i = 0; /* save one level of indirection */
-        while i < (*type_0).nDefaultAtts {
-            if attId == (*(*type_0).defaultAtts.offset(i as isize)).id as *mut ATTRIBUTE_ID {
-                return 1i32;
-            }
-            i += 1
+        /* save one level of indirection */
+
+        if (*type_0).defaultAtts.iter().any(|da| attId == da.id as *mut _) {
+            return 1i32;
         }
         if isId as c_int != 0 && (*type_0).idAtt.is_null() && (*attId).xmlns == 0 {
             (*type_0).idAtt = attId
         }
     }
-    if (*type_0).nDefaultAtts == (*type_0).allocDefaultAtts {
-        if (*type_0).allocDefaultAtts == 0 {
-            (*type_0).allocDefaultAtts = 8;
-            (*type_0).defaultAtts = MALLOC![DEFAULT_ATTRIBUTE; (*type_0).allocDefaultAtts];
-            if (*type_0).defaultAtts.is_null() {
-                (*type_0).allocDefaultAtts = 0;
-                return 0i32;
-            }
-        } else {
-            let mut temp: *mut DEFAULT_ATTRIBUTE = 0 as *mut DEFAULT_ATTRIBUTE;
-            let mut count: c_int = (*type_0).allocDefaultAtts * 2;
-            temp = REALLOC!((*type_0).defaultAtts => [DEFAULT_ATTRIBUTE; count]);
-            if temp.is_null() {
-                return 0i32;
-            }
-            (*type_0).allocDefaultAtts = count;
-            (*type_0).defaultAtts = temp
+
+    if (*type_0).defaultAtts.try_reserve(1).is_ok() {
+        if isCdata == 0 {
+            (*attId).maybeTokenized = XML_TRUE
         }
+
+        let att = DEFAULT_ATTRIBUTE { id: attId, isCdata, value };
+        (*type_0).defaultAtts.push(att);
+        1
+    } else {
+        0
     }
-    att = (*type_0)
-        .defaultAtts
-        .offset((*type_0).nDefaultAtts as isize);
-    (*att).id = attId;
-    (*att).value = value;
-    (*att).isCdata = isCdata;
-    if isCdata == 0 {
-        (*attId).maybeTokenized = XML_TRUE
-    }
-    (*type_0).nDefaultAtts += 1;
-    return 1;
 }
 
 impl XML_ParserStruct {
@@ -8745,11 +8731,6 @@ unsafe extern "C" fn dtdCreate() -> *mut DTD {
 /* do not call if m_parentParser != NULL */
 
 unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
-    for e in (*p).elementTypes.values_mut() {
-        if (*e).allocDefaultAtts != 0 {
-            FREE!((*e).defaultAtts);
-        }
-    }
     (*p).generalEntities.clear();
     (*p).paramEntityRead = XML_FALSE;
     (*p).paramEntities.clear();
@@ -8779,11 +8760,6 @@ unsafe extern "C" fn dtdDestroy(
     mut p: *mut DTD,
     mut isDocEntity: XML_Bool,
 ) {
-    for e in (*p).elementTypes.values_mut() {
-        if (*e).allocDefaultAtts != 0 {
-            FREE!((*e).defaultAtts);
-        }
-    }
     std::ptr::drop_in_place(&mut (*p).generalEntities);
     std::ptr::drop_in_place(&mut (*p).paramEntities);
     /* XML_DTD */
@@ -8869,7 +8845,6 @@ unsafe extern "C" fn dtdCopy(
     }
     /* Copy the element type table. */
     for oldE in (*oldDtd).elementTypes.values() {
-        let mut i: c_int = 0;
         let mut name_1: *const XML_Char = 0 as *const XML_Char;
         name_1 = (*newDtd).pool.copyString((*oldE).name);
         if name_1.is_null() {
@@ -8878,16 +8853,11 @@ unsafe extern "C" fn dtdCopy(
         let newE = hash_insert!(
             &mut (*newDtd).elementTypes,
             name_1,
-            ELEMENT_TYPE
+            ELEMENT_TYPE,
+            ELEMENT_TYPE::new
         );
         if newE.is_null() {
             return 0i32;
-        }
-        if (*oldE).nDefaultAtts != 0 {
-            (*newE).defaultAtts = MALLOC![DEFAULT_ATTRIBUTE; (*oldE).nDefaultAtts];
-            if (*newE).defaultAtts.is_null() {
-                return 0i32;
-            }
         }
         if !(*oldE).idAtt.is_null() {
             (*newE).idAtt = hash_lookup!(
@@ -8895,36 +8865,31 @@ unsafe extern "C" fn dtdCopy(
                 (*(*oldE).idAtt).name as KEY
             );
         }
-        (*newE).nDefaultAtts = (*oldE).nDefaultAtts;
-        (*newE).allocDefaultAtts = (*newE).nDefaultAtts;
         if !(*oldE).prefix.is_null() {
             (*newE).prefix = hash_lookup!(
                 (*newDtd).prefixes,
                 (*(*oldE).prefix).name
             );
         }
-        i = 0;
-        while i < (*newE).nDefaultAtts {
-            let ref mut fresh69 = (*(*newE).defaultAtts.offset(i as isize)).id;
-            *fresh69 = hash_lookup!(
-                (*newDtd).attributeIds,
-                (*(*(*oldE).defaultAtts.offset(i as isize)).id).name as KEY
-            );
-            (*(*newE).defaultAtts.offset(i as isize)).isCdata =
-                (*(*oldE).defaultAtts.offset(i as isize)).isCdata;
-            if !(*(*oldE).defaultAtts.offset(i as isize)).value.is_null() {
-                let ref mut fresh70 = (*(*newE).defaultAtts.offset(i as isize)).value;
-                *fresh70 = (*newDtd).pool.copyString(
-                    (*(*oldE).defaultAtts.offset(i as isize)).value,
-                );
-                if (*(*newE).defaultAtts.offset(i as isize)).value.is_null() {
+
+        std::ptr::write(&mut (*newE).defaultAtts, Vec::new());
+        if (*newE).defaultAtts.try_reserve((*oldE).defaultAtts.len()).is_err() {
+            return 0;
+        }
+        for oldAtt in &(*oldE).defaultAtts {
+            let id = hash_lookup!((*newDtd).attributeIds, (*oldAtt.id).name as KEY);
+            let isCdata = oldAtt.isCdata;
+            let value = if !oldAtt.value.is_null() {
+                let value = (*newDtd).pool.copyString(oldAtt.value);
+                if value.is_null() {
                     return 0i32;
                 }
+                value
             } else {
-                let ref mut fresh71 = (*(*newE).defaultAtts.offset(i as isize)).value;
-                *fresh71 = NULL as *const XML_Char
-            }
-            i += 1
+                ptr::null()
+            };
+            let newAtt = DEFAULT_ATTRIBUTE { id, isCdata, value };
+            (*newE).defaultAtts.push(newAtt);
         }
     }
     /* Copy the entity tables. */
@@ -9531,7 +9496,8 @@ impl XML_ParserStruct {
         let ret = hash_insert!(
             &mut (*dtd).elementTypes,
             name,
-            ELEMENT_TYPE
+            ELEMENT_TYPE,
+            ELEMENT_TYPE::new
         );
         if ret.is_null() {
             return NULL as *mut ELEMENT_TYPE;
