@@ -4448,9 +4448,8 @@ impl XML_ParserStruct {
                         }
                     }
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.start;
+                    self.m_atts[i].name = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i].name = s;
                     // FIXME: perform the hash table insertion here,
                     // to match the original C code's semantics???
                     nPrefixes -= 1;
