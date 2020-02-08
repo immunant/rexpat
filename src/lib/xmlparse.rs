@@ -8872,7 +8872,6 @@ unsafe extern "C" fn dtdCopy(
             );
         }
 
-        std::ptr::write(&mut (*newE).defaultAtts, Vec::new());
         if (*newE).defaultAtts.try_reserve((*oldE).defaultAtts.len()).is_err() {
             return 0;
         }
