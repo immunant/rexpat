@@ -102,7 +102,7 @@ impl StringPool {
 
     // TODO: Use finish_current instead?
     #[cfg(test)]
-    fn resetCurrentBumpVec(&mut self) {
+    fn resetCurrentBumpVec(&self) {
         self.currentBumpVec.set(RawBumpVec::new())
     }
 
@@ -133,7 +133,7 @@ impl StringPool {
         });
     }
 
-    pub(crate) fn appendChar(&mut self, c: XML_Char) -> bool {
+    pub(crate) fn appendChar(&self, c: XML_Char) -> bool {
         if self.is_full() && !self.grow() {
             false
         } else {
@@ -149,7 +149,7 @@ impl StringPool {
 
     /// Note that this will panic if empty and that this is not an insert
     /// operation as it does not shift bytes afterwards.
-    pub(crate) fn prepend_char(&mut self, c: XML_Char) {
+    pub(crate) fn prepend_char(&self, c: XML_Char) {
         let mut buf = self.get_bump_vec();
         let len = buf.len();
 
@@ -172,7 +172,7 @@ impl StringPool {
         buf[buf.len() - 1]
     }
 
-    pub(crate) unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
+    pub(crate) unsafe fn appendString(&self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
             if !self.appendChar(*s) {
                 return false;
@@ -197,7 +197,7 @@ impl StringPool {
 
     // TODO: Fix ret so it cannot grow: ExpatBufRefMut or &mut [XML_Char]
     pub(crate) unsafe fn storeString(
-        &mut self,
+        &self,
         enc: &ENCODING,
         buf: ExpatBufRef,
     ) -> Option<&mut [XML_Char]> {
@@ -219,7 +219,7 @@ impl StringPool {
     }
 
     pub(crate) unsafe fn append(
-        &mut self,
+        &self,
         enc: &ENCODING,
         mut readBuf: ExpatBufRef,
     ) -> bool {
@@ -274,7 +274,7 @@ impl StringPool {
     }
 
     pub(crate) unsafe fn copyString(
-        &mut self,
+        &self,
         mut s: *const XML_Char,
     ) -> Option<&mut [XML_Char]> {
         // self.appendString(s);?
@@ -297,7 +297,7 @@ impl StringPool {
     }
 
     pub(crate) unsafe fn copyStringN(
-        &mut self,
+        &self,
         mut s: *const XML_Char,
         mut n: c_int,
     ) -> Option<&[XML_Char]> {
