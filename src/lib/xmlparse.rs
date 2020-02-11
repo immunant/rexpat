@@ -967,6 +967,48 @@ pub struct attribute_id {
     pub xmlns: XML_Bool,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum AttributeType {
+    Unset,
+    Normal,
+    Prefix,
+    Namespace,
+}
+
+impl AttributeType {
+    fn is_set(&self) -> bool {
+        match self {
+            AttributeType::Unset => false,
+            _ => true
+        }
+    }
+}
+
+impl From<XML_Char> for AttributeType {
+    fn from(c: XML_Char) -> Self {
+        use AttributeType::*;
+        match c {
+            0 => Unset,
+            1 => Normal,
+            2 => Prefix,
+            3 => Namespace,
+            _ => panic!("invalid attribute type byte: {}", c)
+        }
+    }
+}
+
+impl From<AttributeType> for XML_Char {
+    fn from(at: AttributeType) -> Self {
+        use AttributeType::*;
+        match at {
+            Unset => 0,
+            Normal => 1,
+            Prefix => 2,
+            Namespace => 3,
+        }
+    }
+}
+
 pub type PREFIX = prefix;
 
 #[repr(C)]
@@ -4386,7 +4428,7 @@ impl XML_ParserStruct {
                 }
                 return XML_ERROR_DUPLICATE_ATTRIBUTE;
             }
-            *(*attId).name = 1;
+            *(*attId).name = AttributeType::Normal.into();
             if !currAtt.normalized {
                 let mut result: XML_Error = XML_ERROR_NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
@@ -4442,7 +4484,7 @@ impl XML_ParserStruct {
                     }
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
-                        *(*attId).name = 3;
+                        *(*attId).name = AttributeType::Namespace.into();
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
                         // the former being equivalent to popping the last
@@ -4452,7 +4494,7 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    *(*attId).name = 2
+                    *(*attId).name = AttributeType::Prefix.into();
                 }
             }
 
@@ -4464,7 +4506,7 @@ impl XML_ParserStruct {
 
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
-        if !(*elementType).idAtt.is_null() && *(*(*elementType).idAtt).name as c_int != 0 {
+        if !(*elementType).idAtt.is_null() && AttributeType::from(*(*(*elementType).idAtt).name).is_set() {
             for i in 0..self.m_atts.len() {
                 if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
                     self.m_idAttIndex = 2 * i as c_int;
@@ -4481,7 +4523,7 @@ impl XML_ParserStruct {
         }
         for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
-            if *(*(*da).id).name == 0 && !(*da).value.is_null() {
+            if !AttributeType::from(*(*(*da).id).name).is_set() && !(*da).value.is_null() {
                 if !(*(*da).id).prefix.is_null() {
                     if (*(*da).id).xmlns != 0 {
                         let mut result_1: XML_Error = addBinding(
@@ -4496,17 +4538,17 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            *(*(*da).id).name = 3;
+                            *(*(*da).id).name = AttributeType::Namespace.into();
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        *(*(*da).id).name = 2;
+                        *(*(*da).id).name = AttributeType::Prefix.into();
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
-                    *(*(*da).id).name = 1;
+                    *(*(*da).id).name = AttributeType::Normal.into();
                     self.m_atts.push(Attribute::from_default(da));
                 }
             }
@@ -4563,7 +4605,8 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                if *s as c_int == 2 {
+                let at: AttributeType = (*s).into();
+                if at == AttributeType::Prefix { // TODO: this could be a match instead
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
                     let mut sip_state: siphash = siphash {
@@ -4581,7 +4624,7 @@ impl XML_ParserStruct {
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    *(s as *mut XML_Char) = 0; /* clear flag */
+                    *(s as *mut XML_Char) = AttributeType::Unset.into(); /* clear flag */
                     let id = (*dtd).attributeIds.get(&HashKey::from(s.offset(1)));
                     if id.is_none() || id.unwrap().prefix.is_null() {
                         /* This code is walking through the appAtts array, dealing
@@ -4735,7 +4778,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && *s as c_int == 3 {
+                } else if cfg!(feature = "mozilla") && at == AttributeType::Namespace {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
@@ -4773,7 +4816,7 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                     ];
 
-                    *(s as *mut XML_Char) = 0; /* clear flag */
+                    *(s as *mut XML_Char) = AttributeType::Unset.into(); /* clear flag */
                     if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
@@ -4822,7 +4865,7 @@ impl XML_ParserStruct {
                         break;
                     }
                 } else {
-                    *(s as *mut XML_Char) = 0;
+                    *(s as *mut XML_Char) = AttributeType::Unset.into();
                     // REXPAT: advance the name past the flag byte
                     self.m_atts[i].name = s.offset(1);
                 }
@@ -4831,7 +4874,7 @@ impl XML_ParserStruct {
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            *(self.m_atts[i].name as *mut XML_Char) = 0;
+            *(self.m_atts[i].name as *mut XML_Char) = AttributeType::Unset.into();
             // REXPAT: advance the name past the flag byte
             self.m_atts[i].name = self.m_atts[i].name.offset(1);
             i += 1
@@ -4845,7 +4888,7 @@ impl XML_ParserStruct {
 
         binding = *bindingsPtr;
         while !binding.is_null() {
-            *(*(*binding).attId).name = 0;
+            *(*(*binding).attId).name = AttributeType::Unset.into();
             binding = (*binding).nextTagBinding
         }
         if self.m_ns == 0 {
@@ -8247,7 +8290,7 @@ impl XML_ParserStruct {
         } else {
             let fresh49 = (*dtd).pool.ptr;
             (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-            *fresh49 = '\u{0}' as XML_Char;
+            *fresh49 = AttributeType::Unset.into();
             1
         } == 0
         {
@@ -8843,7 +8886,7 @@ unsafe extern "C" fn dtdCopy(
         } else {
             let fresh68 = (*newDtd).pool.ptr;
             (*newDtd).pool.ptr = (*newDtd).pool.ptr.offset(1);
-            *fresh68 = '\u{0}' as XML_Char;
+            *fresh68 = AttributeType::Unset.into();
             1
         } == 0
         {
