@@ -126,7 +126,7 @@ use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
 use std::cmp;
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map};
 use std::convert::TryInto;
 use std::mem;
 use std::ops;
@@ -4358,6 +4358,7 @@ impl XML_ParserStruct {
         nDefaultAtts = (*elementType).nDefaultAtts;
         self.m_atts.clear();
         /* get the attributes from the tokenizer */
+        let mut attr_types = HashMap::new();
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
             if self.m_atts.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
@@ -4380,13 +4381,18 @@ impl XML_ParserStruct {
             namespace processing is turned on and different prefixes for the same
             namespace are used. For this case we have a check further down.
             */
-            if *(*attId).name.offset(-1) != 0 {
-                if !enc_type.is_internal() {
-                    self.m_eventPtr = currAtt.name
-                }
-                return XML_ERROR_DUPLICATE_ATTRIBUTE;
+            if attr_types.try_reserve(1).is_err() {
+                return XML_ERROR_NO_MEMORY;
             }
-            *(*attId).name.offset(-1) = 1;
+            let attr_type = match attr_types.entry(HashKey::from((*attId).name)) {
+                hash_map::Entry::Occupied(_) => {
+                    if !enc_type.is_internal() {
+                        self.m_eventPtr = currAtt.name
+                    }
+                    return XML_ERROR_DUPLICATE_ATTRIBUTE;
+                }
+                hash_map::Entry::Vacant(v) => v.insert(1),
+            };
             if !currAtt.normalized {
                 let mut result: XML_Error = XML_ERROR_NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
@@ -4442,7 +4448,7 @@ impl XML_ParserStruct {
                     }
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
-                        *(*attId).name.offset(-1) = 3;
+                        *attr_type = 3;
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
                         // the former being equivalent to popping the last
@@ -4452,7 +4458,7 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    *(*attId).name.offset(-1) = 2
+                    *attr_type = 2;
                 }
             }
 
@@ -4464,7 +4470,7 @@ impl XML_ParserStruct {
 
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
-        if !(*elementType).idAtt.is_null() && *(*(*elementType).idAtt).name.offset(-1) as c_int != 0 {
+        if !(*elementType).idAtt.is_null() && attr_types.contains_key(&HashKey::from((*(*elementType).idAtt).name)) {
             for i in 0..self.m_atts.len() {
                 if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
                     self.m_idAttIndex = 2 * i as c_int;
@@ -4481,7 +4487,11 @@ impl XML_ParserStruct {
         }
         for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
-            if *(*(*da).id).name.offset(-1) == 0 && !(*da).value.is_null() {
+            let hk = HashKey::from((*(*da).id).name);
+            if !attr_types.contains_key(&hk) && !(*da).value.is_null() {
+                if attr_types.try_reserve(1).is_err() {
+                    return XML_ERROR_NO_MEMORY;
+                }
                 if !(*(*da).id).prefix.is_null() {
                     if (*(*da).id).xmlns != 0 {
                         let mut result_1: XML_Error = addBinding(
@@ -4496,17 +4506,17 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            *(*(*da).id).name.offset(-1) = 3;
+                            attr_types.insert(hk, 3);
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        *(*(*da).id).name.offset(-1) = 2;
+                        attr_types.insert(hk, 2);
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
-                    *(*(*da).id).name.offset(-1) = 1;
+                    attr_types.insert(hk, 1);
                     self.m_atts.push(Attribute::from_default(da));
                 }
             }
@@ -4563,7 +4573,10 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                if *s.offset(-1) as c_int == 2 {
+                let hk = HashKey::from(s);
+                // REXPAT FIXME: if this is too slow, we could move
+                // the attribute types into an array
+                if attr_types.get(&hk) == Some(&2) {
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
                     let mut sip_state: siphash = siphash {
@@ -4581,7 +4594,6 @@ impl XML_ParserStruct {
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
                     let id = (*dtd).attributeIds.get(&HashKey::from(s));
                     if id.is_none() || id.unwrap().prefix.is_null() {
                         /* This code is walking through the appAtts array, dealing
@@ -4735,7 +4747,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && *s.offset(-1) as c_int == 3 {
+                } else if cfg!(feature = "mozilla") && attr_types.get(&hk) == Some(&3) {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
@@ -4773,7 +4785,6 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                     ];
 
-                    *(s as *mut XML_Char).offset(-1) = 0; /* clear flag */
                     if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
@@ -4821,16 +4832,9 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else {
-                    *(s as *mut XML_Char).offset(-1) = 0
                 }
                 i += 1
             }
-        }
-        /* clear flags for the remaining attributes */
-        while i < self.m_atts.len() {
-            *(self.m_atts[i].name as *mut XML_Char).offset(-1) = 0;
-            i += 1
         }
 
         // REXPAT: append a NULL pointer as the stop marker
@@ -4841,7 +4845,6 @@ impl XML_ParserStruct {
 
         binding = *bindingsPtr;
         while !binding.is_null() {
-            *(*(*binding).attId).name.offset(-1) = 0;
             binding = (*binding).nextTagBinding
         }
         if self.m_ns == 0 {
@@ -8238,24 +8241,11 @@ impl XML_ParserStruct {
     ) -> *mut ATTRIBUTE_ID {
         let dtd: *mut DTD = self.m_dtd;
         let mut name: *const XML_Char = 0 as *const XML_Char;
-        if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && (*dtd).pool.grow() == 0 {
-            0
-        } else {
-            let fresh49 = (*dtd).pool.ptr;
-            (*dtd).pool.ptr = (*dtd).pool.ptr.offset(1);
-            *fresh49 = '\u{0}' as XML_Char;
-            1
-        } == 0
-        {
-            return NULL as *mut ATTRIBUTE_ID;
-        }
         let enc = self.encoding(enc_type);
         name = (*dtd).pool.storeString(enc, buf);
         if name.is_null() {
             return NULL as *mut ATTRIBUTE_ID;
         }
-        /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        name = name.offset(1);
         let id = hash_insert!(
             &mut (*dtd).attributeIds,
             name as *mut XML_Char,
@@ -8827,25 +8817,10 @@ unsafe extern "C" fn dtdCopy(
     /* Copy the attribute id table. */
     {
         let mut name_0: *const XML_Char = 0 as *const XML_Char;
-        /* Remember to allocate the scratch byte before the name. */
-        if if (*newDtd).pool.ptr == (*newDtd).pool.end as *mut XML_Char
-            && (*newDtd).pool.grow() == 0
-        {
-            0
-        } else {
-            let fresh68 = (*newDtd).pool.ptr;
-            (*newDtd).pool.ptr = (*newDtd).pool.ptr.offset(1);
-            *fresh68 = '\u{0}' as XML_Char;
-            1
-        } == 0
-        {
-            return 0i32;
-        }
         name_0 = (*newDtd).pool.copyString((*oldA).name);
         if name_0.is_null() {
             return 0i32;
         }
-        name_0 = name_0.offset(1);
         let newA = hash_insert!(
             &mut (*newDtd).attributeIds,
             name_0 as *mut XML_Char,
