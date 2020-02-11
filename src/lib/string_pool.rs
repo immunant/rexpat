@@ -221,12 +221,7 @@ impl StringPool {
 
         self.appendChar('\0' as XML_Char);
 
-        let slice = self.get_bump_vec().into_bump_slice_mut();
-
-        // Ensure a new vec gets created next time
-        self.currentBumpVec.set(RawBumpVec::new());
-
-        Some(slice)
+        Some(self.consume_current_vec())
     }
 
     pub(crate) unsafe fn append(
