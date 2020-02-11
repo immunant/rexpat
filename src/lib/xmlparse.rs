@@ -976,6 +976,7 @@ enum AttributeType {
 }
 
 impl AttributeType {
+    #[inline]
     fn is_set(&self) -> bool {
         match self {
             AttributeType::Unset => false,
@@ -985,6 +986,7 @@ impl AttributeType {
 }
 
 impl From<XML_Char> for AttributeType {
+    #[inline]
     fn from(c: XML_Char) -> Self {
         use AttributeType::*;
         match c {
@@ -998,6 +1000,7 @@ impl From<XML_Char> for AttributeType {
 }
 
 impl From<AttributeType> for XML_Char {
+    #[inline]
     fn from(at: AttributeType) -> Self {
         use AttributeType::*;
         match at {
