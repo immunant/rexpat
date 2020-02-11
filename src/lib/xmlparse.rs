@@ -875,6 +875,7 @@ pub struct XML_ParserStruct {
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
+    attr_types: HashMap<*mut XML_Char, usize>,
     pub m_nsAtts: *mut NS_ATT,
     pub m_nsAttsVersion: c_ulong,
     pub m_nsAttsPower: c_uchar,
@@ -1624,6 +1625,7 @@ impl XML_ParserStruct {
             m_nSpecifiedAtts: 0,
             m_idAttIndex: 0,
             m_atts: Vec::new(),
+            attr_types: HashMap::new(),
             m_nsAtts: ptr::null_mut(),
             m_nsAttsVersion: 0,
             m_nsAttsPower: 0,
@@ -4357,8 +4359,8 @@ impl XML_ParserStruct {
         };
         nDefaultAtts = (*elementType).nDefaultAtts;
         self.m_atts.clear();
+        self.attr_types.clear();
         /* get the attributes from the tokenizer */
-        let mut attr_types = HashMap::new();
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
             if self.m_atts.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
@@ -4381,10 +4383,10 @@ impl XML_ParserStruct {
             namespace processing is turned on and different prefixes for the same
             namespace are used. For this case we have a check further down.
             */
-            if attr_types.try_reserve(1).is_err() {
+            if self.attr_types.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
             }
-            let attr_type = match attr_types.entry((*attId).name) {
+            match self.attr_types.entry((*attId).name) {
                 hash_map::Entry::Occupied(_) => {
                     if !enc_type.is_internal() {
                         self.m_eventPtr = currAtt.name
@@ -4448,7 +4450,7 @@ impl XML_ParserStruct {
                     }
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
-                        *attr_type = 3;
+                        self.attr_types.insert((*attId).name, 3);
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
                         // the former being equivalent to popping the last
@@ -4458,7 +4460,7 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    *attr_type = 2;
+                    self.attr_types.insert((*attId).name, 2);
                 }
             }
 
@@ -4470,7 +4472,7 @@ impl XML_ParserStruct {
 
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
-        if !(*elementType).idAtt.is_null() && attr_types.contains_key(&(*(*elementType).idAtt).name) {
+        if !(*elementType).idAtt.is_null() && self.attr_types.contains_key(&(*(*elementType).idAtt).name) {
             for i in 0..self.m_atts.len() {
                 if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
                     self.m_idAttIndex = 2 * i as c_int;
@@ -4487,8 +4489,8 @@ impl XML_ParserStruct {
         }
         for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
-            if !attr_types.contains_key(&(*(*da).id).name) && !(*da).value.is_null() {
-                if attr_types.try_reserve(1).is_err() {
+            if !self.attr_types.contains_key(&(*(*da).id).name) && !(*da).value.is_null() {
+                if self.attr_types.try_reserve(1).is_err() {
                     return XML_ERROR_NO_MEMORY;
                 }
                 if !(*(*da).id).prefix.is_null() {
@@ -4505,17 +4507,17 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            attr_types.insert((*(*da).id).name, 3);
+                            self.attr_types.insert((*(*da).id).name, 3);
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        attr_types.insert((*(*da).id).name, 2);
+                        self.attr_types.insert((*(*da).id).name, 2);
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
-                    attr_types.insert((*(*da).id).name, 1);
+                    self.attr_types.insert((*(*da).id).name, 1);
                     self.m_atts.push(Attribute::from_default(da));
                 }
             }
@@ -4572,7 +4574,7 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                let attr_type = attr_types.get(&(s as *mut XML_Char));
+                let attr_type = self.attr_types.get(&(s as *mut XML_Char));
                 // REXPAT FIXME: if this is too slow, we could move
                 // the attribute types into an array
                 if attr_type == Some(&2) {
