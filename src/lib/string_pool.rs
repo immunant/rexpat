@@ -77,6 +77,17 @@ impl StringPool {
         cap == len
     }
 
+    /// Gets the current vec, converts it into a slice, and resets
+    /// bookkeeping so that it will create a new vec next time get_bump_vec
+    /// is called.
+    fn consume_current_vec(&self) -> &mut [XML_Char] {
+        let slice = self.get_bump_vec().into_bump_slice_mut();
+
+        self.currentBumpVec.set(RawBumpVec::new());
+
+        slice
+    }
+
     /// Resets the current bump vec to the beginning
     pub(crate) fn clear_current(&self) {
         let RawBumpVec { start, cap, .. } = self.currentBumpVec.get();
@@ -87,13 +98,14 @@ impl StringPool {
     /// Moves the start pointer to the current length so that a new bump vec region begins
     /// REVIEW: Maybe shouldn't be necessary or just force a new vec creation..?
     pub(crate) fn finish_current(&self) {
-        let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
+        // let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
 
-        unsafe {
-            start = start.add(len);
-        }
+        // unsafe {
+        //     start = start.add(len);
+        // }
 
-        self.currentBumpVec.set(RawBumpVec { start, cap: cap - len, len: 0 });
+        // self.currentBumpVec.set(RawBumpVec { start, cap: cap - len, len: 0 });
+        self.resetCurrentBumpVec()
     }
 
     pub(crate) fn len(&self) -> usize {
@@ -101,7 +113,7 @@ impl StringPool {
     }
 
     // TODO: Use finish_current instead?
-    #[cfg(test)]
+    // #[cfg(test)]
     fn resetCurrentBumpVec(&self) {
         self.currentBumpVec.set(RawBumpVec::new())
     }
@@ -195,7 +207,6 @@ impl StringPool {
 
     }
 
-    // TODO: Fix ret so it cannot grow: ExpatBufRefMut or &mut [XML_Char]
     pub(crate) unsafe fn storeString(
         &self,
         enc: &ENCODING,
@@ -289,11 +300,7 @@ impl StringPool {
             }
         }
 
-        let slice = self.get_bump_vec().into_bump_slice_mut();
-
-        self.currentBumpVec.set(RawBumpVec::new());
-
-        Some(slice)
+        Some(self.consume_current_vec())
     }
 
     pub(crate) unsafe fn copyStringN(
@@ -301,14 +308,9 @@ impl StringPool {
         mut s: *const XML_Char,
         mut n: c_int,
     ) -> Option<&[XML_Char]> {
-        let vec = self.get_bump_vec();
-        let is_empty = vec.is_empty();
-
-        drop(vec);
-
         // REVIEW: Is this correct:
         // if self.ptr.is_null() && !self.grow() {
-        if is_empty && !self.grow() {
+        if self.is_empty() && !self.grow() {
             /* The following line is unreachable given the current usage of
             * poolCopyStringN().  Currently it is called from exactly one
             * place to copy the text of a simple general entity.  By that
@@ -330,11 +332,7 @@ impl StringPool {
             s = s.offset(1)
         }
 
-        let slice = self.get_bump_vec().into_bump_slice();
-
-        self.currentBumpVec.set(RawBumpVec::new());
-
-        Some(slice)
+        Some(&*self.consume_current_vec())
     }
 
     /// There's currently no try_push in Bumpalo, so can't determine if
@@ -375,7 +373,9 @@ impl StringPool {
         // what's already allocated?
         buf.reserve_exact(bytesToAllocate_0 as usize);
 
-        dbg!((buf.as_ptr(), buf.len(), buf.capacity()));
+        // if let Err(_) = buf.try_reserve_exact(bytesToAllocate_0 as usize) {
+        //     return false;
+        // };
 
         self.update_raw(&mut buf);
 
