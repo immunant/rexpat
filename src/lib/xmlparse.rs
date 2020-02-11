@@ -4384,7 +4384,7 @@ impl XML_ParserStruct {
             if attr_types.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
             }
-            let attr_type = match attr_types.entry(HashKey::from((*attId).name)) {
+            let attr_type = match attr_types.entry((*attId).name) {
                 hash_map::Entry::Occupied(_) => {
                     if !enc_type.is_internal() {
                         self.m_eventPtr = currAtt.name
@@ -4470,7 +4470,7 @@ impl XML_ParserStruct {
 
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
-        if !(*elementType).idAtt.is_null() && attr_types.contains_key(&HashKey::from((*(*elementType).idAtt).name)) {
+        if !(*elementType).idAtt.is_null() && attr_types.contains_key(&(*(*elementType).idAtt).name) {
             for i in 0..self.m_atts.len() {
                 if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
                     self.m_idAttIndex = 2 * i as c_int;
@@ -4487,8 +4487,7 @@ impl XML_ParserStruct {
         }
         for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
-            let hk = HashKey::from((*(*da).id).name);
-            if !attr_types.contains_key(&hk) && !(*da).value.is_null() {
+            if !attr_types.contains_key(&(*(*da).id).name) && !(*da).value.is_null() {
                 if attr_types.try_reserve(1).is_err() {
                     return XML_ERROR_NO_MEMORY;
                 }
@@ -4506,17 +4505,17 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            attr_types.insert(hk, 3);
+                            attr_types.insert((*(*da).id).name, 3);
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        attr_types.insert(hk, 2);
+                        attr_types.insert((*(*da).id).name, 2);
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
                 } else {
-                    attr_types.insert(hk, 1);
+                    attr_types.insert((*(*da).id).name, 1);
                     self.m_atts.push(Attribute::from_default(da));
                 }
             }
@@ -4573,8 +4572,7 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                let hk = HashKey::from(s);
-                let attr_type = attr_types.get(&hk);
+                let attr_type = attr_types.get(&(s as *mut XML_Char));
                 // REXPAT FIXME: if this is too slow, we could move
                 // the attribute types into an array
                 if attr_type == Some(&2) {
@@ -4595,7 +4593,7 @@ impl XML_ParserStruct {
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    let id = (*dtd).attributeIds.get(&hk);
+                    let id = (*dtd).attributeIds.get(&HashKey::from(s));
                     if id.is_none() || id.unwrap().prefix.is_null() {
                         /* This code is walking through the appAtts array, dealing
                         * with (in this case) a prefixed attribute name.  To be in
