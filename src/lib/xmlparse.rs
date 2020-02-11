@@ -4574,9 +4574,10 @@ impl XML_ParserStruct {
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
                 let hk = HashKey::from(s);
+                let attr_type = attr_types.get(&hk);
                 // REXPAT FIXME: if this is too slow, we could move
                 // the attribute types into an array
-                if attr_types.get(&hk) == Some(&2) {
+                if attr_type == Some(&2) {
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
                     let mut sip_state: siphash = siphash {
@@ -4594,7 +4595,7 @@ impl XML_ParserStruct {
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    let id = (*dtd).attributeIds.get(&HashKey::from(s));
+                    let id = (*dtd).attributeIds.get(&hk);
                     if id.is_none() || id.unwrap().prefix.is_null() {
                         /* This code is walking through the appAtts array, dealing
                         * with (in this case) a prefixed attribute name.  To be in
@@ -4747,7 +4748,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && attr_types.get(&hk) == Some(&3) {
+                } else if cfg!(feature = "mozilla") && attr_type == Some(&3) {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
