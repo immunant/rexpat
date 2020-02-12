@@ -4548,6 +4548,7 @@ impl XML_ParserStruct {
         if res != XML_ERROR_NONE {
             return res;
         }
+        assert!(self.m_atts.len() == self.typed_atts.len());
 
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
@@ -4604,6 +4605,7 @@ impl XML_ParserStruct {
                 }
             }
         }
+        assert!(self.m_atts.len() == self.typed_atts.len());
 
         /* expand prefixed attribute names, check for duplicates,
         and clear flags that say whether attributes were specified */
