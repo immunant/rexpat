@@ -953,7 +953,7 @@ pub struct binding {
     pub prefix: *mut prefix,
     pub nextTagBinding: *mut binding,
     pub prevPrefixBinding: *mut binding,
-    pub attId: *const attribute_id,
+    pub attId: *mut attribute_id,
     pub uri: *mut XML_Char,
     pub uriLen: c_int,
     pub uriAlloc: c_int,
@@ -978,7 +978,7 @@ impl TypedAttributeName {
     }
 
     #[inline]
-    fn set_type(&self, at: AttributeType) {
+    fn set_type(&mut self, at: AttributeType) {
         unsafe { (*self.0) = at.into(); }
     }
 
@@ -5037,7 +5037,7 @@ static mut xmlnsLen: c_int = 0;
 unsafe extern "C" fn addBinding(
     mut parser: XML_Parser,
     mut prefix: *mut PREFIX,
-    mut attId: *const ATTRIBUTE_ID,
+    mut attId: *mut ATTRIBUTE_ID,
     mut uri: *const XML_Char,
     mut bindingsPtr: *mut *mut BINDING,
 ) -> XML_Error {
@@ -8744,7 +8744,7 @@ impl XML_ParserStruct {
                 if addBinding(
                     self,
                     prefix,
-                    NULL as *const ATTRIBUTE_ID,
+                    ptr::null_mut(),
                     self.m_tempPool.start,
                     &mut self.m_inheritedBindings,
                 ) != XML_ERROR_NONE
