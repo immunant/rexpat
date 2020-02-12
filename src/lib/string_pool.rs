@@ -58,11 +58,11 @@ pub(crate) struct StringPool {
 }
 
 impl StringPool {
-    pub(crate) fn new() -> Self {
-        StringPool {
-            bump: Bump::new(),
+    pub(crate) fn new() -> Result<Self, ()> {
+        Ok(StringPool {
+            bump: Bump::new()?,
             currentBumpVec: Cell::new(RawBumpVec::new()),
-        }
+        })
     }
 
     pub(crate) fn is_empty(&self) -> bool {
@@ -194,12 +194,8 @@ impl StringPool {
         !self.currentBumpVec.get().start.is_null() // TODO: Just return true?
     }
 
-    pub(crate) fn init(&mut self) {
-        *self = Self::new();
-    }
-
     pub(crate) fn clear(&mut self) {
-        *self = Self::new();
+        *self = Self::new().expect("FIXME"); // TODO: self.clear()
     }
 
     /// Replaced by drop?
@@ -366,11 +362,11 @@ impl StringPool {
 
         // REVIEW: Should this be additional bytes or bytes including
         // what's already allocated?
-        buf.reserve_exact(bytesToAllocate_0 as usize);
+        // buf.reserve_exact(bytesToAllocate_0 as usize);
 
-        // if let Err(_) = buf.try_reserve_exact(bytesToAllocate_0 as usize) {
-        //     return false;
-        // };
+        if buf.try_reserve_exact(bytesToAllocate_0 as usize).is_err() {
+            return false;
+        };
 
         self.update_raw(&mut buf);
 
@@ -395,7 +391,7 @@ fn test_append_char() {
     use consts::*;
     // use std::mem::size_of;
 
-    let mut pool = StringPool::new();
+    let mut pool = StringPool::new().unwrap();
 
     assert!(pool.appendChar(A));
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
@@ -420,7 +416,7 @@ fn test_append_char() {
 fn test_append_string() {
     use consts::*;
 
-    let mut pool = StringPool::new();
+    let mut pool = StringPool::new().unwrap();
     let mut string = [A, B, C, NULL];
 
     unsafe {
@@ -434,7 +430,7 @@ fn test_append_string() {
 fn test_copy_string() {
     use consts::*;
 
-    let mut pool = StringPool::new();
+    let mut pool = StringPool::new().unwrap();
 
     assert!(pool.appendChar(A));
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
@@ -459,7 +455,7 @@ fn test_store_string() {
     use consts::*;
     use crate::lib::xmlparse::XmlGetInternalEncoding;
 
-    let mut pool = StringPool::new();
+    let mut pool = StringPool::new().unwrap();
     let enc = XmlGetInternalEncoding();
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
