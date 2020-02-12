@@ -35,6 +35,7 @@
 /* The following token may be returned by XmlContentTok */
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
 use std::ptr;
@@ -148,7 +149,7 @@ pub struct ATTRIBUTE {
     pub name: *const c_char,
     pub valuePtr: *const c_char,
     pub valueEnd: *const c_char,
-    pub normalized: c_char,
+    pub normalized: bool,
 }
 
 pub type ENCODING = dyn XmlEncoding;
@@ -225,9 +226,8 @@ pub trait XmlEncoding {
     unsafe fn getAtts(
         &self,
         buf: ExpatBufRef,
-        attsMax: libc::c_int,
-        atts: *mut ATTRIBUTE,
-    ) -> libc::c_int;
+        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+    ) -> XML_Error;
 
     unsafe fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
 
@@ -2219,10 +2219,9 @@ impl XmlEncoding for InitEncoding {
     unsafe fn getAtts(
         &self,
         _buf: ExpatBufRef,
-        _attsMax: libc::c_int,
-        _atts: *mut ATTRIBUTE,
-    ) -> libc::c_int {
-        0
+        _f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+    ) -> XML_Error {
+        XML_Error::NONE
     }
 
     unsafe fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {

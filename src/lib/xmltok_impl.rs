@@ -3,6 +3,7 @@ use libc::{c_char, c_int, c_long, size_t};
 use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
 use crate::ascii_h::*;
+use crate::expat_h::{XML_Error};
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_h::*;
 use crate::xmltok_impl_h::ByteType;
@@ -1565,9 +1566,8 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     unsafe fn getAtts(
         &self,
         mut buf: ExpatBufRef,
-        mut attsMax: libc::c_int,
-        mut atts: *mut ATTRIBUTE,
-    ) -> libc::c_int {
+        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+    ) -> XML_Error {
         #[derive(PartialEq)]
         enum State {
             Other,
@@ -1575,7 +1575,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             InValue,
         };
         let mut state = State::InName;
-        let mut nAtts: libc::c_int = 0 as libc::c_int;
+        let mut att = ATTRIBUTE {
+            name: std::ptr::null(),
+            valuePtr: std::ptr::null(),
+            valueEnd: std::ptr::null(),
+            normalized: false,
+        };
 
         /* defined when state == inValue;
         initialization just to shut up compilers */
@@ -1584,11 +1589,8 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         macro_rules! START_NAME {
             () => {
                 if state == State::Other {
-                    if nAtts < attsMax {
-                        let ref mut fresh120 = (*atts.offset(nAtts as isize)).name;
-                        *fresh120 = buf.as_ptr();
-                        (*atts.offset(nAtts as isize)).normalized = 1 as libc::c_int as libc::c_char
-                    }
+                    att.name = buf.as_ptr();
+                    att.normalized = true;
                     state = State::InName;
                 }
             };
@@ -1607,60 +1609,48 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                    }
                    ByteType::QUOT => {
                        if state != State::InValue {
-                           if nAtts < attsMax {
-                               let ref mut fresh127 =
-                                   (*atts.offset(nAtts as isize)).valuePtr;
-                               *fresh127 = buf.as_ptr().offset(self.MINBPC())
-                           }
+                           att.valuePtr = buf.as_ptr().offset(self.MINBPC());
                            state = State::InValue;
                            open = ByteType::QUOT
                        } else if open == ByteType::QUOT {
                            state = State::Other;
-                           if nAtts < attsMax {
-                               let ref mut fresh128 =
-                                   (*atts.offset(nAtts as isize)).valueEnd;
-                               *fresh128 = buf.as_ptr()
+                           att.valueEnd = buf.as_ptr();
+
+                           let res = f(att);
+                           if res != XML_Error::NONE {
+                               return res;
                            }
-                           nAtts += 1
                        }
                    }
                    ByteType::APOS => {
                        if state != State::InValue {
-                           if nAtts < attsMax {
-                               let ref mut fresh129 =
-                                   (*atts.offset(nAtts as isize)).valuePtr;
-                               *fresh129 = buf.as_ptr().offset(self.MINBPC())
-                           }
+                           att.valuePtr = buf.as_ptr().offset(self.MINBPC());
                            state = State::InValue;
                            open = ByteType::APOS
                        } else if open == ByteType::APOS {
                            state = State::Other;
-                           if nAtts < attsMax {
-                               let ref mut fresh130 =
-                                   (*atts.offset(nAtts as isize)).valueEnd;
-                               *fresh130 = buf.as_ptr()
+                           att.valueEnd = buf.as_ptr();
+
+                           let res = f(att);
+                           if res != XML_Error::NONE {
+                               return res;
                            }
-                           nAtts += 1
                        }
                    }
                    ByteType::AMP => {
-                       if nAtts < attsMax {
-                           (*atts.offset(nAtts as isize)).normalized =
-                               0 as libc::c_int as libc::c_char
-                       }
+                       att.normalized = false;
                    }
                    ByteType::S => {
                        if state == State::InName {
                            state = State::Other;
-                       } else if state == State::InValue && nAtts < attsMax
-                           && (*atts.offset(nAtts as isize)).normalized as libc::c_int != 0
-                           && (buf.as_ptr() == (*atts.offset(nAtts as isize)).valuePtr
+                       } else if state == State::InValue
+                           && att.normalized
+                           && (buf.as_ptr() == att.valuePtr
                                || self.byte_to_ascii(buf.as_ptr()) != ASCII_SPACE
                                || self.byte_to_ascii(buf.as_ptr().offset(self.MINBPC())) == ASCII_SPACE
                                || self.byte_type(buf.as_ptr().offset(self.MINBPC())) == open)
                        {
-                           (*atts.offset(nAtts as isize)).normalized =
-                               0 as libc::c_int as libc::c_char
+                           att.normalized = false;
                        }
                    }
                    ByteType::CR | ByteType::LF => {
@@ -1668,14 +1658,13 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                        Apart from that we could just change state on the quote. */
                        if state == State::InName {
                            state = State::Other;
-                       } else if state == State::InValue && nAtts < attsMax {
-                           (*atts.offset(nAtts as isize)).normalized =
-                               0 as libc::c_int as libc::c_char
+                       } else if state == State::InValue {
+                           att.normalized = false;
                        }
                    }
                    ByteType::GT | ByteType::SOL => {
                        if state != State::InValue {
-                           return nAtts
+                           return XML_Error::NONE
                        }
                    }
                    _ => { }
