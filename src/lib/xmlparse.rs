@@ -4566,6 +4566,9 @@ impl XML_ParserStruct {
         if self.m_atts.try_reserve(nDefaultAtts as usize).is_err() {
             return XML_ERROR_NO_MEMORY;
         }
+        if self.typed_atts.try_reserve(nDefaultAtts as usize).is_err() {
+            return XML_ERROR_NO_MEMORY;
+        }
         for i in 0..nDefaultAtts {
             let mut da: *const DEFAULT_ATTRIBUTE = (*elementType).defaultAtts.offset(i as isize);
             if !(*(*da).id).name.get_type().is_set() && !(*da).value.is_null() {
