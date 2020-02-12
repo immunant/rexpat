@@ -1475,8 +1475,8 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    fn new(use_namespaces: bool) -> Self {
-        Self {
+    fn new(use_namespaces: bool) -> Result<Self, ()> {
+        Ok(Self {
             m_userData: ptr::null_mut(),
             m_buffer: ptr::null_mut(),
             /* first character to be parsed */
@@ -1548,8 +1548,8 @@ impl<'scf> XML_ParserStruct<'scf> {
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
-            m_tempPool: StringPool::new(),
-            m_temp2Pool: StringPool::new(),
+            m_tempPool: StringPool::new()?,
+            m_temp2Pool: StringPool::new()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
             m_namespaceSeparator: 0,
@@ -1561,7 +1561,7 @@ impl<'scf> XML_ParserStruct<'scf> {
 
             #[cfg(feature = "mozilla")]
             m_mismatch: ptr::null(),
-        }
+        })
     }
 
     unsafe fn create(
@@ -1570,7 +1570,10 @@ impl<'scf> XML_ParserStruct<'scf> {
         mut dtd: *mut DTD,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
-        let mut parser = XML_ParserStruct::new(use_namespaces);
+        let mut parser = match XML_ParserStruct::new(use_namespaces) {
+            Ok(parser) => parser,
+            Err(()) => return ptr::null_mut(),
+        };
 
         let mut parser = match Box::try_new(parser) {
             Ok(p) => p,
@@ -1610,8 +1613,6 @@ impl<'scf> XML_ParserStruct<'scf> {
         parser.m_ns = false;
         parser.m_ns_triplets = false;
         parser.m_protocolEncodingName = NULL as *const XML_Char;
-        parser.m_tempPool.init();
-        parser.m_temp2Pool.init();
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
             return ptr::null_mut();
@@ -8410,9 +8411,9 @@ unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     if p.is_null() {
         return p;
     }
-    (*p).pool.init();
-    (*p).entityValuePool.init();
     // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
+    std::ptr::write(&mut (*p).pool, StringPool::new().unwrap());
+    std::ptr::write(&mut (*p).entityValuePool, StringPool::new().unwrap());
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
     std::ptr::write(&mut (*p).attributeIds, Default::default());
