@@ -56,17 +56,8 @@ use crate::stdlib::{stderr, strncmp};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
-    XML_ParsingStatus, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY, XML_ERROR_BAD_CHAR_REF,
-    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
-    XML_ERROR_EXTERNAL_ENTITY_HANDLING, XML_ERROR_FINISHED, XML_ERROR_INCORRECT_ENCODING,
-    XML_ERROR_INVALID_TOKEN, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE, XML_ERROR_NOT_STANDALONE,
-    XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY, XML_ERROR_PARTIAL_CHAR,
-    XML_ERROR_PUBLICID, XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
-    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
-    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
-    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
-    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNKNOWN_ENCODING,
-    XML_ERROR_XML_DECL, XML_FALSE, XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
+    XML_ParsingStatus, 
+    XML_FALSE, XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
     XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_TRUE, XML_SUSPENDED
 };
@@ -75,7 +66,7 @@ use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
     XML_ExternalEntityParserCreate, XML_FreeContentModel, XML_GetBase, XML_GetBuffer,
     XML_GetCurrentByteCount, XML_GetCurrentByteIndex, XML_GetCurrentColumnNumber,
-    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetFeatureList, XML_GetIdAttributeIndex,
+    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetError, XML_GetFeatureList, XML_GetIdAttributeIndex,
     XML_GetInputContext, XML_GetParsingStatus, XML_GetSpecifiedAttributeCount, XML_MemFree,
     XML_MemMalloc, XML_MemRealloc, XML_Parse, XML_ParseBuffer, XML_ParserCreate,
     XML_ParserCreateNS, XML_ParserCreate_MM, XML_ParserFree, XML_ParserReset, XML_ResumeParser,
@@ -481,7 +472,7 @@ pub use crate::expat_h::{
     XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
     XML_Content_Quant, XML_Content_Type, XML_DefaultHandler, XML_ElementDeclHandler,
     XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
-    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ExternalEntityRefHandler,
+    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ErrorCode, XML_ExternalEntityRefHandler,
     XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing,
     XML_Parser, XML_Parsing, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
@@ -766,7 +757,7 @@ unsafe extern "C" fn _xml_failure(
     mut line: c_int,
 ) {
     let mut buffer: [c_char; 1024] = [0; 1024]; /* to help out-of-bounds detection */
-    let mut err: XML_Error = XML_GetErrorCode(parser);
+    let mut err: u32 = XML_GetErrorCode(parser);
     sprintf(
         buffer.as_mut_ptr(),
         b"    %d: %s (line %lu, offset %lu)\n    reported from %s, line %d\n\x00".as_ptr()
@@ -823,7 +814,7 @@ unsafe extern "C" fn _expect_failure(
         the right filename and line number. */
         crate::minicheck::_fail_unless(0i32, file, lineno, errorMessage);
     }
-    if XML_GetErrorCode(g_parser) != errorCode {
+    if XML_GetErrorCode(g_parser) != errorCode.code() {
         _xml_failure(g_parser, file, lineno);
     };
 }
@@ -1147,7 +1138,7 @@ unsafe extern "C" fn test_nul_byte() {
             b"Parser did not report error on NUL-byte.\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
+    if XML_GetErrorCode(g_parser) != XML_Error::INVALID_TOKEN.code() {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -1167,7 +1158,7 @@ unsafe extern "C" fn test_u0000_char() {
     /* test that a NUL byte (in US-ASCII data) is an error */
     _expect_failure(
         b"<doc>&#0;</doc>\x00".as_ptr() as *const c_char,
-        XML_ERROR_BAD_CHAR_REF,
+        XML_Error::BAD_CHAR_REF,
         b"Parser did not report error on NUL-byte.\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -1652,7 +1643,7 @@ unsafe extern "C" fn test_illegal_utf8() {
                 756i32,
                 text.as_mut_ptr(),
             );
-        } else if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
+        } else if XML_GetErrorCode(g_parser) != XML_Error::INVALID_TOKEN.code() {
             _xml_failure(
                 g_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -1946,7 +1937,7 @@ unsafe extern "C" fn test_not_utf16() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INCORRECT_ENCODING,
+        XML_Error::INCORRECT_ENCODING,
         b"UTF-16 declared in UTF-8 not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -1974,7 +1965,7 @@ unsafe extern "C" fn test_bad_encoding() {
     }
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -2059,7 +2050,7 @@ unsafe extern "C" fn test_long_utf8_character() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"4-byte UTF-8 character in element name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3002,7 +2993,7 @@ unsafe extern "C" fn test_xmldecl_misplaced() {
     );
     _expect_failure(
         b"\n<?xml version=\'1.0\'?>\n<a/>\x00".as_ptr() as *const c_char,
-        XML_ERROR_MISPLACED_XML_PI,
+        XML_Error::MISPLACED_XML_PI,
         b"failed to report misplaced XML declaration\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3019,7 +3010,7 @@ unsafe extern "C" fn test_xmldecl_invalid() {
     );
     _expect_failure(
         b"<?xml version=\'1.0\' \xc3\xa7?>\n<doc/>\x00".as_ptr() as *const c_char,
-        XML_ERROR_XML_DECL,
+        XML_Error::XML_DECL,
         b"Failed to report invalid XML declaration\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3037,7 +3028,7 @@ unsafe extern "C" fn test_xmldecl_missing_attr() {
     );
     _expect_failure(
         b"<?xml =\'1.0\'?>\n<doc/>\n\x00".as_ptr() as *const c_char,
-        XML_ERROR_XML_DECL,
+        XML_Error::XML_DECL,
         b"Failed to report missing XML declaration attribute\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3056,7 +3047,7 @@ unsafe extern "C" fn test_xmldecl_missing_value() {
     _expect_failure(
         b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone?>\n<doc/>\x00".as_ptr()
             as *const c_char,
-        XML_ERROR_XML_DECL,
+        XML_Error::XML_DECL,
         b"Failed to report missing attribute value\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3406,7 +3397,7 @@ unsafe extern "C" fn external_entity_faulter(
             (*fault).fail_text,
         );
     }
-    if XML_GetErrorCode(ext_parser) != (*fault).error {
+    if XML_GetError(ext_parser) != (*fault).error {
         _xml_failure(
             ext_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -3434,7 +3425,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding() {
             parse_text: b"<?xml encoding=\'iso-8859-3\'?>u\x00".as_ptr() as *const c_char,
             fail_text: b"Unsupported encoding not faulted\x00".as_ptr() as *const c_char,
             encoding: b"unknown\x00".as_ptr() as *const c_char,
-            error: XML_ERROR_UNKNOWN_ENCODING,
+            error: XML_Error::UNKNOWN_ENCODING,
         };
         init
     };
@@ -3454,7 +3445,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding() {
     XML_SetUserData(g_parser, &mut fault as *mut ExtFaults as *mut c_void);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Bad encoding should not have been accepted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3479,7 +3470,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
             parse_text: b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char,
             fail_text: b"Unknown encoding not faulted\x00".as_ptr() as *const c_char,
             encoding: b"unknown-encoding\x00".as_ptr() as *const c_char,
-            error: XML_ERROR_UNKNOWN_ENCODING,
+            error: XML_Error::UNKNOWN_ENCODING,
         };
         init
     };
@@ -3500,7 +3491,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
     XML_SetUserData(g_parser, &mut fault as *mut ExtFaults as *mut c_void);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Bad encoding not faulted in external entity handler\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3550,7 +3541,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_no_external_subset() {
     );
     _expect_failure(
         b"<doc>&entity;</doc>\x00".as_ptr() as *const c_char,
-        XML_ERROR_UNDEFINED_ENTITY,
+        XML_Error::UNDEFINED_ENTITY,
         b"Parser did not report undefined entity w/out a DTD.\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3576,7 +3567,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_standalone() {
         b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNDEFINED_ENTITY,
+        XML_Error::UNDEFINED_ENTITY,
         b"Parser did not report undefined entity (standalone).\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3625,7 +3616,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
     );
     _expect_failure(
         text,
-        XML_ERROR_UNDEFINED_ENTITY,
+        XML_Error::UNDEFINED_ENTITY,
         b"Parser did not report undefined entity (external DTD).\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3674,7 +3665,7 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNDEFINED_ENTITY,
+        XML_Error::UNDEFINED_ENTITY,
         b"Parser did not report undefined entity\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3777,7 +3768,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
     );
     _expect_failure(
         text,
-        XML_ERROR_NOT_STANDALONE,
+        XML_Error::NOT_STANDALONE,
         b"NotStandalone handler failed to reject\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3791,7 +3782,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
     );
     _expect_failure(
         text,
-        XML_ERROR_NOT_STANDALONE,
+        XML_Error::NOT_STANDALONE,
         b"NotStandalone handler failed to reject\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3881,7 +3872,7 @@ unsafe extern "C" fn test_wfc_no_recursive_entity_refs() {
             .as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_RECURSIVE_ENTITY_REF,
+        XML_Error::RECURSIVE_ENTITY_REF,
         b"Parser did not report recursive entity reference.\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -3908,7 +3899,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 fail_text: b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_UNCLOSED_TOKEN,
+                error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -3917,7 +3908,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 parse_text: b"<\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -3927,7 +3918,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 fail_text: b"Incomplete character in CDATA not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -3936,7 +3927,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
                 parse_text: ::rexpat::stddef_h::NULL as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -3960,7 +3951,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
         XML_SetUserData(g_parser, fault as *mut c_void);
         _expect_failure(
             text,
-            XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+            XML_Error::EXTERNAL_ENTITY_HANDLING,
             b"Parser did not report external entity error\x00".as_ptr() as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
@@ -4398,7 +4389,7 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
             2007i32,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_ABORTED {
+    if XML_GetError(g_parser) != XML_Error::ABORTED {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -4445,7 +4436,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
             2028i32,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
+    if XML_GetError(g_parser) != XML_Error::NONE {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -4465,7 +4456,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
             b"Attempt to continue parse while suspended not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
+    if XML_GetError(g_parser) != XML_Error::SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -4501,7 +4492,7 @@ unsafe extern "C" fn parser_stop_character_handler(
                 b"Aborting aborted parser not faulted\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(g_parser) != XML_ERROR_FINISHED {
+        if XML_GetError(g_parser) != XML_Error::FINISHED {
             _xml_failure(
                 g_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -4530,7 +4521,7 @@ unsafe extern "C" fn parser_stop_character_handler(
                 b"Suspending suspended parser not faulted\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
+        if XML_GetError(g_parser) != XML_Error::SUSPENDED {
             _xml_failure(
                 g_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -4974,7 +4965,7 @@ unsafe extern "C" fn test_utf16_bad_surrogate_pair() {
             b"Reversed UTF-16 surrogate pair not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
+    if XML_GetError(g_parser) != XML_Error::INVALID_TOKEN {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -4995,147 +4986,147 @@ unsafe extern "C" fn test_bad_cdata() {
         {
             let mut init = CaseData {
                 text: b"<a><\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><!\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![C\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CD\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDA\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDAT\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[]\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[]]\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><!<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_INVALID_TOKEN,
+                expectedError: XML_Error::INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![C<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_TOKEN,
+                expectedError: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CD<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_INVALID_TOKEN,
+                expectedError: XML_Error::INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDA<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_INVALID_TOKEN,
+                expectedError: XML_Error::INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDAT<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_INVALID_TOKEN,
+                expectedError: XML_Error::INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_INVALID_TOKEN,
+                expectedError: XML_Error::INVALID_TOKEN,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[]<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
         {
             let mut init = CaseData {
                 text: b"<a><![CDATA[]]<a/>\x00".as_ptr() as *const c_char,
-                expectedError: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expectedError: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5151,7 +5142,7 @@ unsafe extern "C" fn test_bad_cdata() {
             strlen(cases[i as usize].text) as c_int,
             XML_TRUE,
         );
-        let actualError: XML_Error = XML_GetErrorCode(g_parser);
+        let actualError: XML_Error = XML_GetError(g_parser);
         if actualStatus == XML_Status::ERROR {
         } else {
             __assert_fail(
@@ -5205,7 +5196,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 1u64,
                 text: b"\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5213,7 +5204,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 2u64,
                 text: b"\x00<\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5221,7 +5212,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 3u64,
                 text: b"\x00<\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5229,7 +5220,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 4u64,
                 text: b"\x00<\x00!\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5237,7 +5228,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 5u64,
                 text: b"\x00<\x00!\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5245,7 +5236,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 6u64,
                 text: b"\x00<\x00!\x00[\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5253,7 +5244,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 7u64,
                 text: b"\x00<\x00!\x00[\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5261,7 +5252,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 8u64,
                 text: b"\x00<\x00!\x00[\x00C\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5269,7 +5260,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 9u64,
                 text: b"\x00<\x00!\x00[\x00C\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5277,7 +5268,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 10u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5285,7 +5276,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 11u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5293,7 +5284,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 12u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5301,7 +5292,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 13u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5309,7 +5300,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 14u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5317,7 +5308,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 15u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5325,7 +5316,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 16u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5333,7 +5324,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             let mut init = CaseData_0 {
                 text_bytes: 17u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00\x00".as_ptr() as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_TOKEN,
+                expected_error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -5342,7 +5333,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 18u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5351,7 +5342,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 19u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5360,7 +5351,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 20u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5369,7 +5360,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 21u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd8\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5378,7 +5369,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 22u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_PARTIAL_CHAR,
+                expected_error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -5387,7 +5378,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 23u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_PARTIAL_CHAR,
+                expected_error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -5396,7 +5387,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 text_bytes: 24u64,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd^\x00".as_ptr()
                     as *const c_char,
-                expected_error: XML_ERROR_UNCLOSED_CDATA_SECTION,
+                expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
             };
             init
         },
@@ -5408,7 +5399,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             .wrapping_div(::std::mem::size_of::<CaseData_0>() as c_ulong)
     {
         let mut actual_status: XML_Status = XML_Status::ERROR;
-        let mut actual_error: XML_Error = XML_ERROR_NONE;
+        let mut actual_error: XML_Error = XML_Error::NONE;
         if _XML_Parse_SINGLE_BYTES(
             g_parser,
             prolog.as_ptr(),
@@ -5442,16 +5433,16 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 .as_ptr(),
             );
         }
-        actual_error = XML_GetErrorCode(g_parser);
+        actual_error = XML_GetError(g_parser);
         if actual_error != cases[i as usize].expected_error {
             let mut message: [c_char; 1024] = [0; 1024];
             sprintf(
                 message.as_mut_ptr(),
                 b"Expected error %d (%s), got %d (%s) for case %lu\n\x00".as_ptr() as *const c_char,
                 cases[i as usize].expected_error,
-                XML_ErrorString(cases[i as usize].expected_error),
+                XML_ErrorString(cases[i as usize].expected_error.code()),
                 actual_error,
-                XML_ErrorString(actual_error),
+                XML_ErrorString(actual_error.code()),
                 i.wrapping_add(1u64),
             );
             crate::minicheck::_fail_unless(
@@ -5493,7 +5484,7 @@ unsafe extern "C" fn test_stop_parser_between_cdata_calls() {
     resumable = XML_FALSE;
     _expect_failure(
         text,
-        XML_ERROR_ABORTED,
+        XML_Error::ABORTED,
         b"Parse not aborted in CDATA handler\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -5540,7 +5531,7 @@ unsafe extern "C" fn test_suspend_parser_between_cdata_calls() {
             b"Parse not suspended in CDATA handler\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
+    if XML_GetError(g_parser) != XML_Error::NONE {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5994,7 +5985,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
+    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6016,7 +6007,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     /* Ensure that trying to set the DTD after parsing has started
      * is faulted, even if it's the same setting.
      */
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING {
+    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6089,7 +6080,7 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
         g_parser,
         Some(reject_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
+    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6100,7 +6091,7 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
     }
     _expect_failure(
         text,
-        XML_ERROR_NOT_STANDALONE,
+        XML_Error::NOT_STANDALONE,
         b"NotStandalonehandler failed to reject\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -6125,7 +6116,7 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
             parse_text: b"$\x00".as_ptr() as *const c_char,
             fail_text: b"Dollar not faulted\x00".as_ptr() as *const c_char,
             encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-            error: XML_ERROR_INVALID_TOKEN,
+            error: XML_Error::INVALID_TOKEN,
         };
         init
     };
@@ -6147,7 +6138,7 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
     XML_UseForeignDTD(g_parser, XML_TRUE);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Bad DTD should not have been accepted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -6201,7 +6192,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
+    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6223,7 +6214,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     /* Ensure that trying to set the DTD after parsing has started
      * is faulted, even if it's the same setting.
      */
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING {
+    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6334,7 +6325,7 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
     XML_UseForeignDTD(g_parser, XML_TRUE);
     _expect_failure(
         text,
-        XML_ERROR_UNDEFINED_ENTITY,
+        XML_Error::UNDEFINED_ENTITY,
         b"Undefined entity not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -6698,7 +6689,7 @@ unsafe extern "C" fn test_resume_invalid_parse() {
             b"Resumed invalid parse not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_UNCLOSED_TOKEN {
+    if XML_GetError(g_parser) != XML_Error::UNCLOSED_TOKEN {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6879,7 +6870,7 @@ unsafe extern "C" fn external_entity_resetter(
             b"Parsing when finished not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(ext_parser) != XML_ERROR_FINISHED {
+    if XML_GetError(ext_parser) != XML_Error::FINISHED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6957,7 +6948,7 @@ unsafe extern "C" fn entity_suspending_decl_handler(
             b"Attempting to suspend a subordinate parser not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(ext_parser) != XML_ERROR_SUSPEND_PE {
+    if XML_GetError(ext_parser) != XML_Error::SUSPEND_PE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7152,7 +7143,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
                 b"Ext parsing not aborted\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(ext_parser) != XML_ERROR_ABORTED {
+        if XML_GetError(ext_parser) != XML_Error::ABORTED {
             _xml_failure(
                 ext_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -7343,7 +7334,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
             (*fault).fail_text,
         );
     }
-    if XML_GetErrorCode(ext_parser) != (*fault).error {
+    if XML_GetError(ext_parser) != (*fault).error {
         _xml_failure(
             ext_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7376,7 +7367,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                 fail_text: b"Incomplete element declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_UNCLOSED_TOKEN,
+                error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -7386,7 +7377,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                     as *const c_char,
                 fail_text: b"Incomplete character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -7395,7 +7386,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
                 parse_text: ::rexpat::stddef_h::NULL as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -7420,7 +7411,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
         XML_SetUserData(g_parser, fault as *mut c_void);
         _expect_failure(
             text,
-            XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+            XML_Error::EXTERNAL_ENTITY_HANDLING,
             b"Parser did not report external entity error\x00".as_ptr() as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
@@ -7685,7 +7676,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
             b"Async entity error not caught\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(ext_parser) != XML_ERROR_ASYNC_ENTITY {
+    if XML_GetError(ext_parser) != XML_Error::ASYNC_ENTITY {
         _xml_failure(
             ext_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7949,7 +7940,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
             b"Async entity error not caught\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(ext_parser) != XML_ERROR_ASYNC_ENTITY {
+    if XML_GetError(ext_parser) != XML_Error::ASYNC_ENTITY {
         _xml_failure(
             ext_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -8522,7 +8513,7 @@ unsafe extern "C" fn test_empty_parse() {
             b"Parsing final empty string not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NO_ELEMENTS {
+    if XML_GetError(g_parser) != XML_Error::NO_ELEMENTS {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -9096,7 +9087,7 @@ unsafe extern "C" fn external_entity_param(
                 b"Inner DTD with invalid tag not rejected\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(ext_parser) != XML_ERROR_EXTERNAL_ENTITY_HANDLING {
+        if XML_GetError(ext_parser) != XML_Error::EXTERNAL_ENTITY_HANDLING {
             _xml_failure(
                 ext_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -9116,7 +9107,7 @@ unsafe extern "C" fn external_entity_param(
                 b"Invalid tag in external param not rejected\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(ext_parser) != XML_ERROR_SYNTAX {
+        if XML_GetError(ext_parser) != XML_Error::SYNTAX {
             _xml_failure(
                 ext_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -9163,7 +9154,7 @@ unsafe extern "C" fn test_invalid_tag_in_dtd() {
     );
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Invalid tag IN DTD external param not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -9191,7 +9182,7 @@ unsafe extern "C" fn test_not_predefined_entities() {
     while !text[i as usize].is_null() {
         _expect_failure(
             text[i as usize],
-            XML_ERROR_UNDEFINED_ENTITY,
+            XML_Error::UNDEFINED_ENTITY,
             b"Undefined entity not rejected\x00".as_ptr() as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
@@ -9647,7 +9638,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
                 parse_text: b"<![IGNORE[<!ELEM\x00".as_ptr() as *const c_char,
                 fail_text: b"Broken-off declaration not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_SYNTAX,
+                error: XML_Error::SYNTAX,
             };
             init
         },
@@ -9656,7 +9647,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
                 parse_text: b"<![IGNORE[\x01]]>\x00".as_ptr() as *const c_char,
                 fail_text: b"Invalid XML character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_INVALID_TOKEN,
+                error: XML_Error::INVALID_TOKEN,
             };
             init
         },
@@ -9665,7 +9656,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
                 parse_text: b"<![IGNORE[\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Partial XML character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -9674,7 +9665,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
                 parse_text: ::rexpat::stddef_h::NULL as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -9699,7 +9690,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
         XML_SetUserData(g_parser, fault as *mut c_void);
         _expect_failure(
             text,
-            XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+            XML_Error::EXTERNAL_ENTITY_HANDLING,
             b"Incomplete IGNORE section not failed\x00".as_ptr() as *const c_char,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
@@ -9753,14 +9744,14 @@ unsafe extern "C" fn external_entity_valuer(
     } else if strcmp(systemId, b"004-2.ent\x00".as_ptr() as *const c_char) == 0 {
         let mut fault: *mut ExtFaults = *(parser as *mut *mut c_void) as *mut ExtFaults;
         let mut status: XML_Status = XML_Status::ERROR;
-        let mut error: XML_Error = XML_ERROR_NONE;
+        let mut error: XML_Error = XML_Error::NONE;
         status = _XML_Parse_SINGLE_BYTES(
             ext_parser,
             (*fault).parse_text,
             strlen((*fault).parse_text) as c_int,
             XML_TRUE,
         );
-        if (*fault).error == XML_ERROR_NONE {
+        if (*fault).error == XML_Error::NONE {
             if status == XML_Status::ERROR {
                 _xml_failure(
                     ext_parser,
@@ -9779,9 +9770,9 @@ unsafe extern "C" fn external_entity_valuer(
                     (*fault).fail_text,
                 );
             }
-            error = XML_GetErrorCode(ext_parser);
+            error = XML_GetError(ext_parser);
             if error != (*fault).error
-                && ((*fault).error != XML_ERROR_XML_DECL || error != XML_ERROR_TEXT_DECL)
+                && ((*fault).error != XML_Error::XML_DECL || error != XML_Error::TEXT_DECL)
             {
                 _xml_failure(
                     ext_parser,
@@ -9812,7 +9803,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"<!ATTLIST doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -9821,7 +9812,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"<!ATTLIST $doc a1 CDATA \'value\'>\x00".as_ptr() as *const c_char,
                 fail_text: b"Invalid token not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_INVALID_TOKEN,
+                error: XML_Error::INVALID_TOKEN,
             };
             init
         },
@@ -9830,7 +9821,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"\'wombat\x00".as_ptr() as *const c_char,
                 fail_text: b"Unterminated string not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_UNCLOSED_TOKEN,
+                error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -9839,7 +9830,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"\xe2\x82\x00".as_ptr() as *const c_char,
                 fail_text: b"Partial UTF-8 character not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -9849,7 +9840,7 @@ unsafe extern "C" fn test_external_entity_values() {
                     as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -9858,7 +9849,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"<?xml?>\x00".as_ptr() as *const c_char,
                 fail_text: b"Malformed XML declaration not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_XML_DECL,
+                error: XML_Error::XML_DECL,
             };
             init
         },
@@ -9868,7 +9859,7 @@ unsafe extern "C" fn test_external_entity_values() {
                     as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -9879,7 +9870,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 fail_text: b"Invalid token after text declaration not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_INVALID_TOKEN,
+                error: XML_Error::INVALID_TOKEN,
             };
             init
         },
@@ -9890,7 +9881,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 fail_text: b"Unterminated string after text decl not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_UNCLOSED_TOKEN,
+                error: XML_Error::UNCLOSED_TOKEN,
             };
             init
         },
@@ -9901,7 +9892,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 fail_text: b"Partial UTF-8 character after text decl not faulted\x00".as_ptr()
                     as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_PARTIAL_CHAR,
+                error: XML_Error::PARTIAL_CHAR,
             };
             init
         },
@@ -9910,7 +9901,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: b"%e1;\x00".as_ptr() as *const c_char,
                 fail_text: b"Recursive parameter entity not faulted\x00".as_ptr() as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_RECURSIVE_ENTITY_REF,
+                error: XML_Error::RECURSIVE_ENTITY_REF,
             };
             init
         },
@@ -9919,7 +9910,7 @@ unsafe extern "C" fn test_external_entity_values() {
                 parse_text: ::rexpat::stddef_h::NULL as *const c_char,
                 fail_text: ::rexpat::stddef_h::NULL as *const c_char,
                 encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                error: XML_ERROR_NONE,
+                error: XML_Error::NONE,
             };
             init
         },
@@ -10007,7 +9998,7 @@ unsafe extern "C" fn external_entity_not_standalone(
                 b"Expected not standalone rejection\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(ext_parser) != XML_ERROR_NOT_STANDALONE {
+        if XML_GetError(ext_parser) != XML_Error::NOT_STANDALONE {
             _xml_failure(
                 ext_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -10067,7 +10058,7 @@ unsafe extern "C" fn test_ext_entity_not_standalone() {
     );
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Standalone rejection not caught\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -10142,7 +10133,7 @@ unsafe extern "C" fn external_entity_value_aborter(
                 b"Aborted parse not faulted\x00".as_ptr() as *const c_char,
             );
         }
-        if XML_GetErrorCode(ext_parser) != XML_ERROR_ABORTED {
+        if XML_GetError(ext_parser) != XML_Error::ABORTED {
             _xml_failure(
                 ext_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -10220,7 +10211,7 @@ unsafe extern "C" fn test_bad_public_doctype() {
     );
     _expect_failure(
         text,
-        XML_ERROR_PUBLICID,
+        XML_Error::PUBLICID,
         b"Bad Public ID not failed\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -10719,7 +10710,7 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
             fail_text: b"Recursive external parameter entity not faulted\x00".as_ptr()
                 as *const c_char,
             encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-            error: XML_ERROR_RECURSIVE_ENTITY_REF,
+            error: XML_Error::RECURSIVE_ENTITY_REF,
         };
         init
     };
@@ -10740,7 +10731,7 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Recursive external parameter not spotted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -10923,7 +10914,7 @@ unsafe extern "C" fn test_suspend_xdecl() {
             4713i32,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
+    if XML_GetError(g_parser) != XML_Error::NONE {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -10943,7 +10934,7 @@ unsafe extern "C" fn test_suspend_xdecl() {
             b"Attempt to parse while suspended not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
+    if XML_GetError(g_parser) != XML_Error::SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11004,7 +10995,7 @@ unsafe extern "C" fn test_abort_epilog() {
             b"Abort not triggered\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_ABORTED {
+    if XML_GetError(g_parser) != XML_Error::ABORTED {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11036,7 +11027,7 @@ unsafe extern "C" fn test_abort_epilog_2() {
     resumable = XML_FALSE;
     _expect_failure(
         text,
-        XML_ERROR_ABORTED,
+        XML_Error::ABORTED,
         b"Abort not triggered\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11145,7 +11136,7 @@ unsafe extern "C" fn test_unfinished_epilog() {
     let mut text: *const c_char = b"<doc></doc><\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNCLOSED_TOKEN,
+        XML_Error::UNCLOSED_TOKEN,
         b"Incomplete epilog entry not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11183,7 +11174,7 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
             b"Partial character in epilog not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_PARTIAL_CHAR {
+    if XML_GetError(g_parser) != XML_Error::PARTIAL_CHAR {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11358,7 +11349,7 @@ unsafe extern "C" fn test_resume_entity_with_syntax_error() {
             b"Syntax error in entity not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_TAG_MISMATCH {
+    if XML_GetError(g_parser) != XML_Error::TAG_MISMATCH {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11465,7 +11456,7 @@ unsafe extern "C" fn test_restart_on_error() {
             b"Invalid tag name not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
+    if XML_GetError(g_parser) != XML_Error::INVALID_TOKEN {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11488,7 +11479,7 @@ unsafe extern "C" fn test_restart_on_error() {
             b"Restarting invalid parse not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_INVALID_TOKEN {
+    if XML_GetError(g_parser) != XML_Error::INVALID_TOKEN {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11514,7 +11505,7 @@ unsafe extern "C" fn test_reject_lt_in_attribute_value() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Bad attribute default not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11537,7 +11528,7 @@ unsafe extern "C" fn test_reject_unfinished_param_in_att_value() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Bad attribute default not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11898,7 +11889,7 @@ unsafe extern "C" fn test_invalid_character_entity() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_BAD_CHAR_REF,
+        XML_Error::BAD_CHAR_REF,
         b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11921,7 +11912,7 @@ unsafe extern "C" fn test_invalid_character_entity_2() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -11957,7 +11948,7 @@ unsafe extern "C" fn test_invalid_character_entity_3() {
             b"Invalid start of entity name not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_UNDEFINED_ENTITY {
+    if XML_GetError(g_parser) != XML_Error::UNDEFINED_ENTITY {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -11982,7 +11973,7 @@ unsafe extern "C" fn test_invalid_character_entity_4() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_BAD_CHAR_REF,
+        XML_Error::BAD_CHAR_REF,
         b"Out of range character reference not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12523,7 +12514,7 @@ unsafe extern "C" fn test_missing_encoding_conversion_fn() {
      */
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Encoding with missing convert() not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12563,7 +12554,7 @@ unsafe extern "C" fn test_failing_encoding_conversion_fn() {
      */
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Encoding with failing convert() not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12630,7 +12621,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_name() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Bad name start in unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12666,7 +12657,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_name_2() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Bad name in unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12825,7 +12816,7 @@ unsafe extern "C" fn test_invalid_unknown_encoding() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12892,7 +12883,7 @@ unsafe extern "C" fn test_unknown_ascii_encoding_fail() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid character not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12927,7 +12918,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_length() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12962,7 +12953,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_topbit() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -12997,7 +12988,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_surrogate() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -13032,7 +13023,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_high() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNKNOWN_ENCODING,
+        XML_Error::UNKNOWN_ENCODING,
         b"Invalid unknown encoding not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -13067,7 +13058,7 @@ unsafe extern "C" fn test_unknown_encoding_invalid_attr_value() {
     );
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid attribute valid not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -13593,7 +13584,7 @@ unsafe extern "C" fn external_entity_faulter2(
             (*test_data).fail_text,
         );
     }
-    if XML_GetErrorCode(extparser) != (*test_data).error {
+    if XML_GetError(extparser) != (*test_data).error {
         _xml_failure(
             extparser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -13622,7 +13613,7 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
             parse_len: 6,
             fail_text: b"Invalid character in entity not faulted\x00".as_ptr() as *const c_char,
             encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-            error: XML_ERROR_INVALID_TOKEN,
+            error: XML_Error::INVALID_TOKEN,
         };
         init
     };
@@ -13642,7 +13633,7 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
     XML_SetUserData(g_parser, &mut test_data as *mut ExtFaults2 as *mut c_void);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Invalid character should not have been accepted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -13926,7 +13917,7 @@ unsafe extern "C" fn test_attr_after_solidus() {
     let mut text: *const c_char = b"<doc attr1=\'a\' / attr2=\'b\'>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Misplaced / not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14030,7 +14021,7 @@ unsafe extern "C" fn test_bad_attr_desc_keyword() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Bad keyword !IMPLIED not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14077,7 +14068,7 @@ unsafe extern "C" fn test_bad_attr_desc_keyword_utf16() {
             b"Invalid UTF16 attribute keyword not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_SYNTAX {
+    if XML_GetError(g_parser) != XML_Error::SYNTAX {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -14114,7 +14105,7 @@ unsafe extern "C" fn test_bad_doctype() {
     );
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"Invalid bytes in DOCTYPE not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14148,7 +14139,7 @@ unsafe extern "C" fn test_bad_doctype_utf16() {
             b"Invalid bytes in DOCTYPE not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_SYNTAX {
+    if XML_GetError(g_parser) != XML_Error::SYNTAX {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -14169,7 +14160,7 @@ unsafe extern "C" fn test_bad_doctype_plus() {
         b"<!DOCTYPE 1+ [ <!ENTITY foo \'bar\'> ]>\n<1+>&foo;</1+>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"\'+\' in document name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14188,7 +14179,7 @@ unsafe extern "C" fn test_bad_doctype_star() {
         b"<!DOCTYPE 1* [ <!ENTITY foo \'bar\'> ]>\n<1*>&foo;</1*>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"\'*\' in document name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14208,7 +14199,7 @@ unsafe extern "C" fn test_bad_doctype_query() {
         b"<!DOCTYPE 1? [ <!ENTITY foo \'bar\'> ]>\n<1?>&foo;</1?>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"\'?\' in document name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14234,7 +14225,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
             parse_text: b"<![IGNORE[<!ELEMENT \xffG (#PCDATA)*>]]>\x00".as_ptr() as *const c_char,
             fail_text: b"Invalid character not faulted\x00".as_ptr() as *const c_char,
             encoding: b"prefix-conv\x00".as_ptr() as *const c_char,
-            error: XML_ERROR_INVALID_TOKEN,
+            error: XML_Error::INVALID_TOKEN,
         };
         init
     };
@@ -14267,7 +14258,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
     XML_SetUserData(g_parser, &mut fault as *mut ExtFaults as *mut c_void);
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Bad IGNORE section with unknown encoding not failed\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14522,7 +14513,7 @@ unsafe extern "C" fn test_short_doctype() {
     let mut text: *const c_char = b"<!DOCTYPE doc></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"DOCTYPE without subset not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14540,7 +14531,7 @@ unsafe extern "C" fn test_short_doctype_2() {
     let mut text: *const c_char = b"<!DOCTYPE doc PUBLIC></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"DOCTYPE without Public ID not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14558,7 +14549,7 @@ unsafe extern "C" fn test_short_doctype_3() {
     let mut text: *const c_char = b"<!DOCTYPE doc SYSTEM></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"DOCTYPE without System ID not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14577,7 +14568,7 @@ unsafe extern "C" fn test_long_doctype() {
         b"<!DOCTYPE doc PUBLIC \'foo\' \'bar\' \'baz\'></doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"DOCTYPE with extra ID not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14596,7 +14587,7 @@ unsafe extern "C" fn test_bad_entity() {
         b"<!DOCTYPE doc [\n  <!ENTITY foo PUBLIC>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14616,7 +14607,7 @@ unsafe extern "C" fn test_bad_entity_2() {
         b"<!DOCTYPE doc [\n  <!ENTITY % foo bar>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14635,7 +14626,7 @@ unsafe extern "C" fn test_bad_entity_3() {
         b"<!DOCTYPE doc [\n  <!ENTITY % foo PUBLIC>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"Parameter ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14654,7 +14645,7 @@ unsafe extern "C" fn test_bad_entity_4() {
         b"<!DOCTYPE doc [\n  <!ENTITY % foo SYSTEM>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"Parameter ENTITY without Public ID is not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -14673,7 +14664,7 @@ unsafe extern "C" fn test_bad_notation() {
         b"<!DOCTYPE doc [\n  <!NOTATION n SYSTEM>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"Notation without System ID is not rejected\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15321,7 +15312,7 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_1() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNDECLARING_PREFIX,
+        XML_Error::UNDECLARING_PREFIX,
         b"Did not report re-setting namespace URI with prefix to \'\'.\x00".as_ptr()
             as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15345,7 +15336,7 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_2() {
         b"<?xml version=\'1.0\'?>\n<docelem xmlns:pre=\'\'/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNDECLARING_PREFIX,
+        XML_Error::UNDECLARING_PREFIX,
         b"Did not report setting namespace URI with prefix to \'\'.\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15369,7 +15360,7 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_3() {
         b"<!DOCTYPE doc [\n  <!ELEMENT doc EMPTY>\n  <!ATTLIST doc\n    xmlns:prefix CDATA \'\'>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNDECLARING_PREFIX,
+        XML_Error::UNDECLARING_PREFIX,
         b"Didn\'t report attr default setting NS w/ prefix to \'\'.\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15437,7 +15428,7 @@ unsafe extern "C" fn test_ns_unbound_prefix() {
             b"Unbound prefix incorrectly passed\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_UNBOUND_PREFIX {
+    if XML_GetError(g_parser) != XML_Error::UNBOUND_PREFIX {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15505,7 +15496,7 @@ unsafe extern "C" fn test_ns_duplicate_attrs_diff_prefixes() {
         b"<doc xmlns:a=\'http://example.org/a\'\n     xmlns:b=\'http://example.org/a\'\n     a:a=\'v\' b:a=\'v\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_DUPLICATE_ATTRIBUTE,
+        XML_Error::DUPLICATE_ATTRIBUTE,
         b"did not report multiple attributes with same URI+name\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15566,7 +15557,7 @@ unsafe extern "C" fn test_ns_unbound_prefix_on_attribute() {
     let mut text: *const c_char = b"<doc a:attr=\'\'/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNBOUND_PREFIX,
+        XML_Error::UNBOUND_PREFIX,
         b"did not report unbound prefix on attribute\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15588,7 +15579,7 @@ unsafe extern "C" fn test_ns_unbound_prefix_on_element() {
     let mut text: *const c_char = b"<a:doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_UNBOUND_PREFIX,
+        XML_Error::UNBOUND_PREFIX,
         b"did not report unbound prefix on element\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15757,7 +15748,7 @@ unsafe extern "C" fn test_ns_reserved_attributes() {
             as *const c_char;
     _expect_failure(
         text1,
-        XML_ERROR_RESERVED_PREFIX_XMLNS,
+        XML_Error::RESERVED_PREFIX_XMLNS,
         b"xmlns not rejected as an attribute\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15795,7 +15786,7 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
         b"<foo:e xmlns:foo=\'http://www.w3.org/2000/xmlns/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text1,
-        XML_ERROR_RESERVED_PREFIX_XML,
+        XML_Error::RESERVED_PREFIX_XML,
         b"xml not rejected as an attribute\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15804,7 +15795,7 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     _expect_failure(
         text2,
-        XML_ERROR_RESERVED_NAMESPACE_URI,
+        XML_Error::RESERVED_NAMESPACE_URI,
         b"Use of w3.org URL not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15813,7 +15804,7 @@ unsafe extern "C" fn test_ns_reserved_attributes_2() {
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     _expect_failure(
         text3,
-        XML_ERROR_RESERVED_NAMESPACE_URI,
+        XML_Error::RESERVED_NAMESPACE_URI,
         b"Use of w3.org xmlns URL not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15910,7 +15901,7 @@ unsafe extern "C" fn test_ns_double_colon() {
         .as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Double colon in attribute name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15930,7 +15921,7 @@ unsafe extern "C" fn test_ns_double_colon_element() {
         b"<foo:bar:e xmlns:foo=\'http://example.org/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Double colon in element name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15951,7 +15942,7 @@ unsafe extern "C" fn test_ns_bad_attr_leafname() {
         .as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid character in leafname not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -15971,7 +15962,7 @@ unsafe extern "C" fn test_ns_bad_element_leafname() {
         b"<foo:?oc xmlns:foo=\'http://example.org/\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid character in element leafname not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -16151,7 +16142,7 @@ unsafe extern "C" fn test_ns_invalid_doctype() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_INVALID_TOKEN,
+        XML_Error::INVALID_TOKEN,
         b"Invalid character in document local name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -16172,7 +16163,7 @@ unsafe extern "C" fn test_ns_double_colon_doctype() {
             as *const c_char;
     _expect_failure(
         text,
-        XML_ERROR_SYNTAX,
+        XML_Error::SYNTAX,
         b"Double colon in document name not faulted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -16560,7 +16551,7 @@ unsafe extern "C" fn test_misc_attribute_leak() {
     );
     _expect_failure(
         text,
-        XML_ERROR_UNBOUND_PREFIX,
+        XML_Error::UNBOUND_PREFIX,
         b"Unbound prefixes not found\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -16802,13 +16793,13 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
                 );
             }
         }
-        if XML_GetErrorCode(parser) != XML_ERROR_INVALID_TOKEN {
+        if XML_GetError(parser) != XML_Error::INVALID_TOKEN {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
                     .as_ptr() as *const c_char,
                 7530i32,
-                b"Error code does not match XML_ERROR_INVALID_TOKEN\x00".as_ptr() as *const c_char,
+                b"Error code does not match XML_Error::INVALID_TOKEN\x00".as_ptr() as *const c_char,
             );
         }
         lineNumber = XML_GetCurrentLineNumber(parser);
@@ -18752,7 +18743,7 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
                     ) -> c_int,
             ),
         );
-        if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_ERROR_NONE {
+        if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -20036,7 +20027,7 @@ unsafe extern "C" fn test_alloc_nested_entities() {
                                b"Memory Fail not faulted\x00".as_ptr() as
                                    *const c_char,
                            encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
-                           error: XML_ERROR_NO_MEMORY,};
+                           error: XML_Error::NO_MEMORY,};
         init
     };
     /* Causes an allocation error in a nested storeEntityValue() */
@@ -20058,7 +20049,7 @@ unsafe extern "C" fn test_alloc_nested_entities() {
     );
     _expect_failure(
         text,
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING,
+        XML_Error::EXTERNAL_ENTITY_HANDLING,
         b"Entity allocation failure not noted\x00".as_ptr() as *const c_char,
         b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
             as *const c_char,
@@ -20671,7 +20662,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Pre-init XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NO_MEMORY {
+    if XML_GetError(g_parser) != XML_Error::NO_MEMORY {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20700,7 +20691,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Resuming unsuspended parser not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NOT_SUSPENDED {
+    if XML_GetError(g_parser) != XML_Error::NOT_SUSPENDED {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20751,7 +20742,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             9847i32,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_NONE {
+    if XML_GetError(g_parser) != XML_Error::NONE {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20770,7 +20761,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Suspended XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_SUSPENDED {
+    if XML_GetError(g_parser) != XML_Error::SUSPENDED {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20813,7 +20804,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Post-finishing XML_ParseBuffer not faulted\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetErrorCode(g_parser) != XML_ERROR_FINISHED {
+    if XML_GetError(g_parser) != XML_Error::FINISHED {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()

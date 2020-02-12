@@ -9,25 +9,11 @@ pub const XML_EXTERNAL_ENTITIES: c_int = 0o2;
 pub use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::expat_h::{
     XML_Error, XML_ExternalEntityRefHandler, XML_GetErrorColumnNumber, XML_GetErrorLineNumber,
-    XML_Parser, XML_ParserStruct, XML_Status, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY,
-    XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF, XML_ERROR_BAD_CHAR_REF, XML_ERROR_BINARY_ENTITY_REF,
-    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
-    XML_ERROR_ENTITY_DECLARED_IN_PE, XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-    XML_ERROR_FEATURE_REQUIRES_XML_DTD, XML_ERROR_FINISHED, XML_ERROR_INCOMPLETE_PE,
-    XML_ERROR_INCORRECT_ENCODING, XML_ERROR_INVALID_ARGUMENT, XML_ERROR_INVALID_TOKEN,
-    XML_ERROR_JUNK_AFTER_DOC_ELEMENT, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE,
-    XML_ERROR_NOT_STANDALONE, XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY,
-    XML_ERROR_PARAM_ENTITY_REF, XML_ERROR_PARTIAL_CHAR, XML_ERROR_PUBLICID,
-    XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
-    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
-    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
-    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
-    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNEXPECTED_STATE,
-    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL
+    XML_Parser, XML_ParserStruct, XML_Status,
 };
 pub use crate::lib::xmlparse::{
     XML_ErrorString, XML_ExternalEntityParserCreate, XML_GetBuffer, XML_GetCurrentColumnNumber,
-    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParseBuffer, XML_ParserFree,
+    XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetError, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
 pub use crate::stddef_h::{size_t, NULL};
@@ -84,8 +70,8 @@ pub const O_BINARY: c_int = 0;
 pub const READ_SIZE: c_int = 1024 * 8;
 
 unsafe extern "C" fn reportError(mut parser: XML_Parser, mut filename: *const XML_Char) {
-    let mut code: XML_Error = XML_GetErrorCode(parser);
-    let mut message: *const XML_Char = XML_ErrorString(code);
+    let mut code: XML_Error = XML_GetError(parser);
+    let mut message: *const XML_Char = XML_ErrorString(code.code());
     if !message.is_null() {
         fprintf(
             stdout,

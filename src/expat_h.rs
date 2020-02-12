@@ -35,7 +35,9 @@ pub use crate::lib::xmlparse::XML_ParserStruct;
 use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
 use crate::stddef_h::size_t;
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
+use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
+use num_traits::ToPrimitive;
 
 pub type XML_Parser = *mut XML_ParserStruct;
 pub type XML_Bool = c_uchar;
@@ -56,60 +58,71 @@ pub const XML_FALSE: XML_Bool = 0;
 */
 
 #[repr(i32)]
-#[derive(PartialEq, ToPrimitive)]
+#[derive(PartialEq)]
 pub enum XML_Status {
     ERROR,
     OK,
     SUSPENDED,
 }
 
-pub type XML_Error = c_uint;
-pub const XML_ERROR_NONE: XML_Error = 0;
-pub const XML_ERROR_NO_MEMORY: XML_Error = 1;
-pub const XML_ERROR_SYNTAX: XML_Error = 2;
-pub const XML_ERROR_NO_ELEMENTS: XML_Error = 3;
-pub const XML_ERROR_INVALID_TOKEN: XML_Error = 4;
-pub const XML_ERROR_UNCLOSED_TOKEN: XML_Error = 5;
-pub const XML_ERROR_PARTIAL_CHAR: XML_Error = 6;
-pub const XML_ERROR_TAG_MISMATCH: XML_Error = 7;
-pub const XML_ERROR_DUPLICATE_ATTRIBUTE: XML_Error = 8;
-pub const XML_ERROR_JUNK_AFTER_DOC_ELEMENT: XML_Error = 9;
-pub const XML_ERROR_PARAM_ENTITY_REF: XML_Error = 10;
-pub const XML_ERROR_UNDEFINED_ENTITY: XML_Error = 11;
-pub const XML_ERROR_RECURSIVE_ENTITY_REF: XML_Error = 12;
-pub const XML_ERROR_ASYNC_ENTITY: XML_Error = 13;
-pub const XML_ERROR_BAD_CHAR_REF: XML_Error = 14;
-pub const XML_ERROR_BINARY_ENTITY_REF: XML_Error = 15;
-pub const XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF: XML_Error = 16;
-pub const XML_ERROR_MISPLACED_XML_PI: XML_Error = 17;
-pub const XML_ERROR_UNKNOWN_ENCODING: XML_Error = 18;
-pub const XML_ERROR_INCORRECT_ENCODING: XML_Error = 19;
-pub const XML_ERROR_UNCLOSED_CDATA_SECTION: XML_Error = 20;
-pub const XML_ERROR_EXTERNAL_ENTITY_HANDLING: XML_Error = 21;
-pub const XML_ERROR_NOT_STANDALONE: XML_Error = 22;
-pub const XML_ERROR_UNEXPECTED_STATE: XML_Error = 23;
-pub const XML_ERROR_ENTITY_DECLARED_IN_PE: XML_Error = 24;
-pub const XML_ERROR_FEATURE_REQUIRES_XML_DTD: XML_Error = 25;
-pub const XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING: XML_Error = 26;
-/* Added in 1.95.7. */
-pub const XML_ERROR_UNBOUND_PREFIX: XML_Error = 27;
-/* Added in 1.95.8. */
-pub const XML_ERROR_UNDECLARING_PREFIX: XML_Error = 28;
-pub const XML_ERROR_INCOMPLETE_PE: XML_Error = 29;
-pub const XML_ERROR_XML_DECL: XML_Error = 30;
-pub const XML_ERROR_TEXT_DECL: XML_Error = 31;
-pub const XML_ERROR_PUBLICID: XML_Error = 32;
-pub const XML_ERROR_SUSPENDED: XML_Error = 33;
-pub const XML_ERROR_NOT_SUSPENDED: XML_Error = 34;
-pub const XML_ERROR_ABORTED: XML_Error = 35;
-pub const XML_ERROR_FINISHED: XML_Error = 36;
-pub const XML_ERROR_SUSPEND_PE: XML_Error = 37;
-/* Added in 2.0. */
-pub const XML_ERROR_RESERVED_PREFIX_XML: XML_Error = 38;
-pub const XML_ERROR_RESERVED_PREFIX_XMLNS: XML_Error = 39;
-pub const XML_ERROR_RESERVED_NAMESPACE_URI: XML_Error = 40;
-/* Added in 2.2.1. */
-pub const XML_ERROR_INVALID_ARGUMENT: XML_Error = 41;
+#[repr(u32)]
+#[derive(PartialEq, Clone, Copy, FromPrimitive, ToPrimitive)]
+pub enum XML_Error {
+    NONE,
+    NO_MEMORY,
+    SYNTAX,
+    NO_ELEMENTS,
+    INVALID_TOKEN,
+    UNCLOSED_TOKEN,
+    PARTIAL_CHAR,
+    TAG_MISMATCH,
+    DUPLICATE_ATTRIBUTE,
+    JUNK_AFTER_DOC_ELEMENT,
+    PARAM_ENTITY_REF,
+    UNDEFINED_ENTITY,
+    RECURSIVE_ENTITY_REF,
+    ASYNC_ENTITY,
+    BAD_CHAR_REF,
+    BINARY_ENTITY_REF,
+    ATTRIBUTE_EXTERNAL_ENTITY_REF,
+    MISPLACED_XML_PI,
+    UNKNOWN_ENCODING,
+    INCORRECT_ENCODING,
+    UNCLOSED_CDATA_SECTION,
+    EXTERNAL_ENTITY_HANDLING,
+    NOT_STANDALONE,
+    UNEXPECTED_STATE,
+    ENTITY_DECLARED_IN_PE,
+    FEATURE_REQUIRES_XML_DTD,
+    CANT_CHANGE_FEATURE_ONCE_PARSING,
+    /* Added in 1.95.7. */
+    UNBOUND_PREFIX,
+    /* Added in 1.95.8. */
+    UNDECLARING_PREFIX,
+    INCOMPLETE_PE,
+    XML_DECL,
+    TEXT_DECL,
+    PUBLICID,
+    SUSPENDED,
+    NOT_SUSPENDED,
+    ABORTED,
+    FINISHED,
+    SUSPEND_PE,
+    /* Added in 2.0. */
+    RESERVED_PREFIX_XML,
+    RESERVED_PREFIX_XMLNS,
+    RESERVED_NAMESPACE_URI,
+    /* Added in 2.2.1. */
+    INVALID_ARGUMENT
+}
+pub type XML_ErrorCode = u32;
+
+impl XML_Error {
+    pub fn code(&self) -> XML_ErrorCode { 
+        ToPrimitive::to_u32(self).unwrap()
+    }
+}
+
 pub type XML_Content_Type = c_uint;
 pub const XML_CTYPE_EMPTY: XML_Content_Type = 1;
 pub const XML_CTYPE_ANY: XML_Content_Type = 2;
@@ -318,7 +331,7 @@ pub type XML_EndNamespaceDeclHandler =
    external subset or a reference to a parameter entity, but does not
    have standalone="yes". If this handler returns XML_Status::ERROR,
    then processing will not continue, and the parser will return a
-   XML_ERROR_NOT_STANDALONE error.
+   XML_Error::NOT_STANDALONE error.
    If parameter entity parsing is enabled, then in addition to the
    conditions above this handler will only be called if the referenced
    entity was actually read.
@@ -353,7 +366,7 @@ pub type XML_NotStandaloneHandler = Option<unsafe extern "C" fn(_: *mut c_void) 
    The handler should return XML_Status::ERROR if processing should not
    continue because of a fatal error in the handling of the external
    entity.  In this case the calling parser will return an
-   XML_ERROR_EXTERNAL_ENTITY_HANDLING error.
+   XML_Error::EXTERNAL_ENTITY_HANDLING error.
 
    Note that unlike other handlers the first argument is the parser,
    not userData.
