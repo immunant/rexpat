@@ -811,7 +811,7 @@ impl Attribute {
 
     unsafe fn from_default(da: *const DEFAULT_ATTRIBUTE) -> Self {
         Attribute {
-            name: (*(*da).id).name,
+            name: (*(*da).id).name.offset(1),
             value: (*da).value,
         }
     }
@@ -875,6 +875,7 @@ pub struct XML_ParserStruct {
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
+    attr_types: Vec<*mut XML_Char>,
     pub m_nsAtts: *mut NS_ATT,
     pub m_nsAttsVersion: c_ulong,
     pub m_nsAttsPower: c_uchar,
@@ -1669,6 +1670,7 @@ impl XML_ParserStruct {
             m_nSpecifiedAtts: 0,
             m_idAttIndex: 0,
             m_atts: Vec::new(),
+            attr_types: Vec::new(),
             m_nsAtts: ptr::null_mut(),
             m_nsAttsVersion: 0,
             m_nsAttsPower: 0,
@@ -1707,6 +1709,9 @@ impl XML_ParserStruct {
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
         if parser.m_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
+            return ptr::null_mut();
+        }
+        if parser.attr_types.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
             return ptr::null_mut();
         }
         parser.m_dataBuf = MALLOC![XML_Char; INIT_DATA_BUF_SIZE];
@@ -4402,9 +4407,13 @@ impl XML_ParserStruct {
         };
         nDefaultAtts = (*elementType).nDefaultAtts;
         self.m_atts.clear();
+        self.attr_types.clear();
         /* get the attributes from the tokenizer */
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
             if self.m_atts.try_reserve(1).is_err() {
+                return XML_ERROR_NO_MEMORY;
+            }
+            if self.attr_types.try_reserve(1).is_err() {
                 return XML_ERROR_NO_MEMORY;
             }
 
@@ -4457,7 +4466,7 @@ impl XML_ParserStruct {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(Attribute::new((*attId).name, self.m_tempPool.start));
+                self.m_atts.push(Attribute::new((*attId).name.offset(1), self.m_tempPool.start));
                 self.m_tempPool.start = self.m_tempPool.ptr
             } else {
                 /* the value did not need normalizing */
@@ -4468,7 +4477,7 @@ impl XML_ParserStruct {
                 if fresh10.is_null() {
                     return XML_ERROR_NO_MEMORY;
                 }
-                self.m_atts.push(Attribute::new((*attId).name, fresh10));
+                self.m_atts.push(Attribute::new((*attId).name.offset(1), fresh10));
                 self.m_tempPool.start = self.m_tempPool.ptr
             }
             /* handle prefixed attribute names */
@@ -4488,6 +4497,7 @@ impl XML_ParserStruct {
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
                         *(*attId).name = AttributeType::Namespace.into();
+                        self.attr_types.push((*attId).name);
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
                         // the former being equivalent to popping the last
@@ -4498,7 +4508,10 @@ impl XML_ParserStruct {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
                     *(*attId).name = AttributeType::Prefixed.into();
+                    self.attr_types.push((*attId).name);
                 }
+            } else {
+                self.attr_types.push((*attId).name);
             }
 
             XML_ERROR_NONE
@@ -4510,8 +4523,8 @@ impl XML_ParserStruct {
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         if !(*elementType).idAtt.is_null() && AttributeType::from(*(*(*elementType).idAtt).name).is_set() {
-            for i in 0..self.m_atts.len() {
-                if self.m_atts[i].name == (*(*elementType).idAtt).name as *const XML_Char {
+            for i in 0..self.attr_types.len() {
+                if self.attr_types[i] == (*(*elementType).idAtt).name {
                     self.m_idAttIndex = 2 * i as c_int;
                     break;
                 }
@@ -4544,15 +4557,18 @@ impl XML_ParserStruct {
                             *(*(*da).id).name = AttributeType::Namespace.into();
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
+                            self.attr_types.push((*(*da).id).name);
                         }
                     } else {
                         *(*(*da).id).name = AttributeType::Prefixed.into();
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
+                        self.attr_types.push((*(*da).id).name);
                     }
                 } else {
                     *(*(*da).id).name = AttributeType::Normal.into();
                     self.m_atts.push(Attribute::from_default(da));
+                    self.attr_types.push((*(*da).id).name);
                 }
             }
         }
@@ -4608,8 +4624,7 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                let at: AttributeType = (*s).into();
-                if at == AttributeType::Prefixed { // TODO: this could be a match instead
+                if *self.attr_types[i] == AttributeType::Prefixed.into() { // TODO: this could be a match instead
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
                     let mut sip_state: siphash = siphash {
@@ -4627,8 +4642,8 @@ impl XML_ParserStruct {
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    *(s as *mut XML_Char) = AttributeType::Unset.into(); /* clear flag */
-                    let id = (*dtd).attributeIds.get(&HashKey::from(s.offset(1)));
+                    *self.attr_types[i] = AttributeType::Unset.into(); /* clear flag */
+                    let id = (*dtd).attributeIds.get(&HashKey::from(s));
                     if id.is_none() || id.unwrap().prefix.is_null() {
                         /* This code is walking through the appAtts array, dealing
                         * with (in this case) a prefixed attribute name.  To be in
@@ -4781,7 +4796,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && at == AttributeType::Namespace {
+                } else if cfg!(feature = "mozilla") && *self.attr_types[i] == AttributeType::Namespace.into() {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
@@ -4819,14 +4834,14 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                     ];
 
-                    *(s as *mut XML_Char) = AttributeType::Unset.into(); /* clear flag */
+                    *self.attr_types[i] = AttributeType::Unset.into(); /* clear flag */
                     if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
                         return XML_ERROR_NO_MEMORY;
                     }
 
-                    s = s.offset(xmlnsPrefix.len() as isize);
+                    s = s.offset(xmlnsPrefix.len() as isize - 1);
                     if *s == ':' as XML_Char {
                         s = s.offset(1);
                         loop { /* copies null terminator */
@@ -4868,18 +4883,14 @@ impl XML_ParserStruct {
                         break;
                     }
                 } else {
-                    *(s as *mut XML_Char) = AttributeType::Unset.into();
-                    // REXPAT: advance the name past the flag byte
-                    self.m_atts[i].name = s.offset(1);
+                    *self.attr_types[i] = AttributeType::Unset.into();
                 }
                 i += 1
             }
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            *(self.m_atts[i].name as *mut XML_Char) = AttributeType::Unset.into();
-            // REXPAT: advance the name past the flag byte
-            self.m_atts[i].name = self.m_atts[i].name.offset(1);
+            *self.attr_types[i] = AttributeType::Unset.into();
             i += 1
         }
 
