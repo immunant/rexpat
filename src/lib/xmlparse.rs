@@ -4403,12 +4403,12 @@ impl XML_ParserStruct {
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */
                 if (*attId).maybeTokenized != 0 {
-                    for da in &(*elementType).defaultAtts {
-                        if attId == da.id as *mut ATTRIBUTE_ID {
-                            isCdata = da.isCdata;
-                            break;
-                        }
-                    }
+                    isCdata = (*elementType)
+                        .defaultAtts
+                        .iter()
+                        .find(|da| attId == da.id as *mut _)
+                        .map(|da| da.isCdata)
+                        .unwrap_or(isCdata);
                 }
                 /* normalize the attribute value */
                 result = storeAttributeValue(
