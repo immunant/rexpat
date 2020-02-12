@@ -8316,7 +8316,7 @@ impl XML_ParserStruct {
             return NULL as *mut ATTRIBUTE_ID;
         }
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        let flag_name = name as *mut XML_Char;
+        let type_and_name = name as *mut XML_Char;
         name = name.offset(1);
         let id = hash_insert!(
             &mut (*dtd).attributeIds,
@@ -8330,7 +8330,7 @@ impl XML_ParserStruct {
             (*dtd).pool.ptr = (*dtd).pool.start;
         } else {
             // REXPAT: include the flag byte in `name`
-            (*id).name = flag_name;
+            (*id).name = type_and_name;
 
             (*dtd).pool.start = (*dtd).pool.ptr;
             if !(self.m_ns == 0) {
@@ -8910,7 +8910,7 @@ unsafe extern "C" fn dtdCopy(
         if name_0.is_null() {
             return 0i32;
         }
-        let flag_name = name_0 as *mut XML_Char;
+        let type_and_name = name_0 as *mut XML_Char;
         name_0 = name_0.offset(1);
         let newA = hash_insert!(
             &mut (*newDtd).attributeIds,
@@ -8920,7 +8920,7 @@ unsafe extern "C" fn dtdCopy(
         if newA.is_null() {
             return 0i32;
         }
-        (*newA).name = flag_name;
+        (*newA).name = type_and_name;
         (*newA).maybeTokenized = (*oldA).maybeTokenized;
         if !(*oldA).prefix.is_null() {
             (*newA).xmlns = (*oldA).xmlns;
