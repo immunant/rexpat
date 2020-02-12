@@ -990,8 +990,8 @@ impl TypedAttributeName {
 
 impl From<TypedAttributeName> for HashKey {
     #[inline]
-    fn from(tan: TypedAttributeName) -> Self {
-        HashKey::from(tan.name())
+    fn from(typed_name: TypedAttributeName) -> Self {
+        HashKey::from(typed_name.name())
     }
 }
 
