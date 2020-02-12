@@ -971,7 +971,7 @@ pub struct attribute_id {
 enum AttributeType {
     Unset,
     Normal,
-    Prefix,
+    Prefixed,
     Namespace,
 }
 
@@ -992,7 +992,7 @@ impl From<XML_Char> for AttributeType {
         match c {
             0 => Unset,
             1 => Normal,
-            2 => Prefix,
+            2 => Prefixed,
             3 => Namespace,
             _ => panic!("invalid attribute type byte: {}", c)
         }
@@ -1006,7 +1006,7 @@ impl From<AttributeType> for XML_Char {
         match at {
             Unset => 0,
             Normal => 1,
-            Prefix => 2,
+            Prefixed => 2,
             Namespace => 3,
         }
     }
@@ -4497,7 +4497,7 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    *(*attId).name = AttributeType::Prefix.into();
+                    *(*attId).name = AttributeType::Prefixed.into();
                 }
             }
 
@@ -4546,7 +4546,7 @@ impl XML_ParserStruct {
                             self.m_atts.push(Attribute::from_default(da));
                         }
                     } else {
-                        *(*(*da).id).name = AttributeType::Prefix.into();
+                        *(*(*da).id).name = AttributeType::Prefixed.into();
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                     }
@@ -4609,7 +4609,7 @@ impl XML_ParserStruct {
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
                 let at: AttributeType = (*s).into();
-                if at == AttributeType::Prefix { // TODO: this could be a match instead
+                if at == AttributeType::Prefixed { // TODO: this could be a match instead
                     let mut b: *const BINDING = 0 as *const BINDING;
                     let mut uriHash: c_ulong = 0;
                     let mut sip_state: siphash = siphash {
