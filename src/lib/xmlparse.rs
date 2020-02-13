@@ -8407,13 +8407,23 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 }
 
 unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
+    // Fail if pools fail to allocate
+    let pool1 = match StringPool::new() {
+        Ok(pool) => pool,
+        Err(()) => return ptr::null_mut(),
+    };
+    let pool2 = match StringPool::new() {
+        Ok(pool) => pool,
+        Err(()) => return ptr::null_mut(),
+    };
+
     let mut p: *mut DTD = MALLOC!(@DTD);
     if p.is_null() {
         return p;
     }
     // FIXME: we're writing over uninitialized memory, use `MaybeUninit`???
-    std::ptr::write(&mut (*p).pool, StringPool::new().unwrap());
-    std::ptr::write(&mut (*p).entityValuePool, StringPool::new().unwrap());
+    std::ptr::write(&mut (*p).pool, pool1);
+    std::ptr::write(&mut (*p).entityValuePool, pool2);
     std::ptr::write(&mut (*p).generalEntities, Default::default());
     std::ptr::write(&mut (*p).elementTypes, Default::default());
     std::ptr::write(&mut (*p).attributeIds, Default::default());
