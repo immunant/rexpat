@@ -150,7 +150,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(end as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut done: XML_Bool = 0;
+        let mut done: XML_Bool = false;
         let mut len: c_int = 0;
         len = crate::stdlib::fread(
             Buff.as_mut_ptr() as *mut c_void,
@@ -165,7 +165,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             );
             exit(-(1i32));
         }
-        done = crate::stdlib::feof(crate::stdlib::stdin) as XML_Bool;
+        done = crate::stdlib::feof(crate::stdlib::stdin) != 0;
         if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_Status::ERROR {
             fprintf(
                 crate::stdlib::stderr,
@@ -175,7 +175,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             );
             exit(-(1i32));
         }
-        if done != 0 {
+        if done {
             break;
         }
     }

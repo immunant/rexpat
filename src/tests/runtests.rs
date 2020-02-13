@@ -784,7 +784,7 @@ unsafe extern "C" fn _XML_Parse_SINGLE_BYTES(
         return XML_Parse(parser, s, len, isFinal as c_int);
     }
     while offset < len {
-        let innerIsFinal: c_int = (offset == len - 1 && isFinal != 0) as c_int;
+        let innerIsFinal: c_int = (offset == len - 1 && isFinal) as c_int;
         let c: c_char = *s.offset(offset as isize);
         res = XML_Parse(
             parser,
@@ -4481,7 +4481,7 @@ unsafe extern "C" fn parser_stop_character_handler(
             ::rexpat::stddef_h::NULL as libc::intptr_t,
         ),
     );
-    if resumable == 0 {
+    if !resumable {
         /* Check that aborting an aborted parser is faulted */
         if XML_StopParser(g_parser, XML_FALSE) != XML_Status::ERROR {
             crate::minicheck::_fail_unless(
@@ -4500,7 +4500,7 @@ unsafe extern "C" fn parser_stop_character_handler(
                 2054i32,
             );
         }
-    } else if abortable != 0 {
+    } else if abortable {
         /* Check that aborting a suspended parser works */
         if XML_StopParser(g_parser, XML_FALSE) == XML_Status::ERROR {
             _xml_failure(
@@ -6609,7 +6609,7 @@ unsafe extern "C" fn test_reset_in_entity() {
         b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     resumable = XML_TRUE;
     XML_SetCharacterDataHandler(
@@ -6809,7 +6809,7 @@ unsafe extern "C" fn external_entity_resetter(
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -7083,7 +7083,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     let mut rc: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
@@ -7115,7 +7115,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     XML_SetUserData(ext_parser, ext_parser as *mut c_void);
     rc = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE);
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if resumable != 0 {
+    if resumable {
         if rc == XML_Status::ERROR {
             _xml_failure(
                 ext_parser,
@@ -10854,7 +10854,7 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
                 ) -> c_int,
         ),
     );
-    XML_SetUserData(g_parser, XML_TRUE as *mut c_void);
+    XML_SetUserData(g_parser, 1 as *mut c_void);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
         == XML_Status::ERROR
     {
@@ -11068,7 +11068,7 @@ unsafe extern "C" fn test_suspend_epilog() {
 }
 
 unsafe extern "C" fn suspending_end_handler(mut userData: *mut c_void, mut _s: *const XML_Char) {
-    XML_StopParser(userData as XML_Parser, 1);
+    XML_StopParser(userData as XML_Parser, true);
 }
 
 unsafe extern "C" fn test_suspend_in_sole_empty_tag() {
@@ -14774,7 +14774,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
     }
     i = 0;
     while !test_data[i as usize].expected.is_null() {
-        if test_data[i as usize].seen == 0 {
+        if !test_data[i as usize].seen {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -14972,7 +14972,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
             6529i32,
         );
     }
-    if triplet_start_flag == 0 {
+    if !triplet_start_flag {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -14993,7 +14993,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
             6536i32,
         );
     }
-    if triplet_end_flag == 0 {
+    if !triplet_end_flag {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15600,7 +15600,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     );
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
     if status.parsing != XML_INITIALIZED {
@@ -16447,7 +16447,7 @@ unsafe extern "C" fn test_misc_version() {
             .as_ptr(),
         );
     }
-    if parse_version(version_text, &mut parsed_version) == 0 {
+    if !parse_version(version_text, &mut parsed_version) {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -16639,7 +16639,7 @@ unsafe extern "C" fn end_element_issue_240(mut userData: *mut c_void, mut _name:
     let mut mydata: *mut DataIssue240 = userData as *mut DataIssue240;
     (*mydata).deep -= 1;
     if (*mydata).deep == 0 {
-        XML_StopParser((*mydata).parser, 0u8);
+        XML_StopParser((*mydata).parser, false);
     };
 }
 
