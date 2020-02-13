@@ -115,10 +115,10 @@ pub enum XML_Error {
     /* Added in 2.2.1. */
     INVALID_ARGUMENT
 }
-pub type XML_ErrorCode = u32;
-
+pub type XML_ErrorCode = libc::c_uint;
 impl XML_Error {
     pub fn code(&self) -> XML_ErrorCode { 
+        // libc::c_uint is always u32 as of 0.2.66
         ToPrimitive::to_u32(self).unwrap()
     }
 }
