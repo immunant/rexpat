@@ -10,6 +10,7 @@ use crate::lib::xmltok::{
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
 use crate::xmltok_impl_h::ByteType;
+use crate::lib::xmlparse::ExpatBufRef;
 
 #[cfg(target_endian = "little")]
 use crate::lib::xmltok::internal_little2_encoding_ns as encoding;
@@ -118,11 +119,11 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
 ) -> c_int {
     // Can we assert here somehow?
     // MOZ_ASSERT(*ptr == '&');
-
     let enc = MOZ_XmlGetUtf16InternalEncodingNS();
     let enc_mbpc = (*enc).minBytesPerChar() as isize;
     /* scanRef expects to be pointed to the char after the '&'. */
-    let tok = encoding.as_ref().unwrap().scanRef(ptr.offset(enc_mbpc), end, next);
+    let buf = ExpatBufRef::new(ptr, end);
+    let tok = encoding.as_ref().unwrap().scanRef(buf.inc_start(enc_mbpc), next);
     if tok <= XML_TOK_INVALID {
         return 0;
     }
