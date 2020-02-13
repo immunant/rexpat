@@ -8,6 +8,7 @@ use bumpalo::collections::vec::Vec as BumpVec;
 use libc::{INT_MAX, c_int, c_uint, c_ulong};
 
 use std::cell::Cell;
+use std::convert::TryInto;
 use std::ptr;
 
 fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
@@ -138,6 +139,8 @@ impl StringPool {
 
     /// Updates bookeeping so that the current bump vec can be regenerated
     fn update_raw(&self, buf: &mut BumpVec<XML_Char>) {
+        debug_assert!(buf.len() <= buf.capacity());
+
         self.currentBumpVec.set(RawBumpVec {
             start: buf.as_mut_ptr(),
             len: buf.len(),
@@ -195,7 +198,7 @@ impl StringPool {
     }
 
     pub(crate) fn clear(&mut self) {
-        *self = Self::new().expect("FIXME"); // TODO: self.clear()
+        self.bump.reset()
     }
 
     /// Replaced by drop?
@@ -220,6 +223,16 @@ impl StringPool {
         Some(self.consume_current_vec())
     }
 
+    unsafe fn set_len(&self, len: usize) {
+        let mut buf = self.get_bump_vec();
+
+        debug_assert!(len <= buf.capacity());
+
+        buf.set_len(len);
+
+        self.update_raw(&mut buf);
+    }
+
     pub(crate) unsafe fn append(
         &self,
         enc: &ENCODING,
@@ -233,19 +246,19 @@ impl StringPool {
         }
 
         let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
-
         let mut end2;
         let mut start2;
-        let mut remaining_cap = 0;
 
         // TODO: Test looping w/ new cap/len.
         loop {
+            debug_assert!(len <= cap);
+
             start2 = start.add(len);
             end2 = start.add(cap) as *mut ICHAR;
 
             // Vec[init len, uninit cap - len]
             // FIXME: Writing to slice of uninit memory (UB most likely)
-            // XmlConvert should probably take a &mut [MaybeUninit<XML_Char>] instead
+            // XmlConvert should probably take a &mut ExpatBufRefMut<T = MaybeUninit<XML_Char>> instead
             let mut writeBuf = ExpatBufRefMut::new(start2, end2);
 
             let convert_res = XmlConvert!(
@@ -254,7 +267,10 @@ impl StringPool {
                 &mut writeBuf,
             );
 
-            remaining_cap = writeBuf.len();
+            // TODO: How to not need wrapping_offset_from here? Cast to u/isize first?
+            let len = writeBuf.as_ptr().wrapping_offset_from(start).try_into().unwrap();
+
+            self.set_len(len);
 
             if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
                 break;
@@ -264,13 +280,6 @@ impl StringPool {
                 return false;
             }
         }
-
-        let newly_written = cap - remaining_cap as usize;
-        let mut buf = self.get_bump_vec();
-
-        buf.set_len(buf.len() + newly_written);
-
-        self.update_raw(&mut buf);
 
         !self.currentBumpVec.get().start.is_null() // TODO: Just return true?
     }
