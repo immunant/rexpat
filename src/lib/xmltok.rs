@@ -3046,7 +3046,11 @@ unsafe fn doParseXmlDecl<'a>(
         *versionBuf = val_buf;
         #[cfg(feature = "mozilla")]
         {
-            if (*enc).nameMatchesAscii(val_buf.unwrap(), KW_XML_1_0.as_ptr()) == 0
+            if (*enc).nameMatchesAscii(val_buf
+                                       .unwrap()
+                                       .with_end(pseudo_ptr)
+                                       .dec_end((*enc).minBytesPerChar() as usize),
+                                       KW_XML_1_0.as_ptr()) == 0
             {
                 *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
                 return 0i32;

@@ -131,7 +131,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     match tok {
         XML_TOK_CHAR_REF => {
             /* XmlCharRefNumber expects to be pointed to the '&'. */
-            let n = (*enc).charRefNumber(ptr);
+            let n = (*enc).charRefNumber(buf);
 
             /* We could get away with just < 0, but better safe than sorry. */
             if n <= 0 {
@@ -146,7 +146,10 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
             
 	     *next points to after the semicolon, so the entity ends at
 	     *next - enc->minBytesPerChar. */
-            let ch = (*enc).predefinedEntityName(ptr.offset(enc_mbpc), *next.offset(-enc_mbpc)) as XML_Char;
+            let ch = (*enc).predefinedEntityName(
+                buf.inc_start(enc_mbpc)
+                   .with_end(*next)
+                   .dec_end(enc_mbpc as usize)) as XML_Char;
             if ch == 0 {
                 0
             } else {
