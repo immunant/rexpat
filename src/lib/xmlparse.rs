@@ -52,8 +52,7 @@ pub use crate::expat_h::{
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
     XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_CQUANT_NONE, XML_CQUANT_OPT,
-    XML_CQUANT_PLUS, XML_CQUANT_REP, XML_CTYPE_ANY, XML_CTYPE_CHOICE, XML_CTYPE_EMPTY,
-    XML_CTYPE_MIXED, XML_CTYPE_NAME, XML_CTYPE_SEQ, XML_FALSE, XML_FEATURE_ATTR_INFO,
+    XML_CQUANT_PLUS, XML_CQUANT_REP, XML_FALSE, XML_FEATURE_ATTR_INFO,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
@@ -6682,7 +6681,7 @@ impl XML_ParserStruct {
                         }
                         *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
                         (*dtd).scaffLevel += 1;
-                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_CTYPE_SEQ;
+                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_Content_Type::SEQ;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -6722,12 +6721,12 @@ impl XML_ParserStruct {
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
                         .type_0
-                        != XML_CTYPE_MIXED
+                        != XML_Content_Type::MIXED
                     {
                         (*(*dtd).scaffold.offset(
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
-                            .type_0 = XML_CTYPE_CHOICE;
+                            .type_0 = XML_Content_Type::CHOICE;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -6900,10 +6899,10 @@ impl XML_ParserStruct {
                             (*content).numchildren = 0;
                             (*content).children = NULL as *mut XML_Content;
                             (*content).type_0 = if role == super::xmlrole::XML_ROLE_CONTENT_ANY {
-                                XML_CTYPE_ANY as c_int
+                                XML_Content_Type::ANY
                             } else {
-                                XML_CTYPE_EMPTY as c_int
-                            } as XML_Content_Type;
+                                XML_Content_Type::EMPTY
+                            };
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.elementDecl((*self.m_declElementType).name, content);
                             handleDefault = XML_FALSE
@@ -6917,7 +6916,7 @@ impl XML_ParserStruct {
                         (*(*dtd).scaffold.offset(
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
-                            .type_0 = XML_CTYPE_MIXED;
+                            .type_0 = XML_Content_Type::MIXED;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -7069,7 +7068,7 @@ impl XML_ParserStruct {
                         if myindex_0 < 0 {
                             return XML_Error::NO_MEMORY;
                         }
-                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
+                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_Content_Type::NAME;
                         (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
                         el = self.getElementType(enc_type, buf.with_end(nxt));
                         if el.is_null() {
@@ -9457,7 +9456,7 @@ impl XML_ParserStruct {
         let dtd: *mut DTD = self.m_dtd;
         (*dest).type_0 = (*(*dtd).scaffold.offset(src_node as isize)).type_0;
         (*dest).quant = (*(*dtd).scaffold.offset(src_node as isize)).quant;
-        if (*dest).type_0 == XML_CTYPE_NAME {
+        if (*dest).type_0 == XML_Content_Type::NAME {
             let mut src: *const XML_Char = 0 as *const XML_Char;
             (*dest).name = *strpos;
             src = (*(*dtd).scaffold.offset(src_node as isize)).name;

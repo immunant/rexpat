@@ -123,26 +123,37 @@ impl XML_Error {
     }
 }
 
-pub type XML_Content_Type = c_uint;
-pub const XML_CTYPE_EMPTY: XML_Content_Type = 1;
-pub const XML_CTYPE_ANY: XML_Content_Type = 2;
-pub const XML_CTYPE_MIXED: XML_Content_Type = 3;
-pub const XML_CTYPE_NAME: XML_Content_Type = 4;
-pub const XML_CTYPE_CHOICE: XML_Content_Type = 5;
-pub const XML_CTYPE_SEQ: XML_Content_Type = 6;
+// pub type XML_Content_Type = c_uint;
+// pub const XML_Content_Type::EMPTY: XML_Content_Type = 1;
+// pub const XML_Content_Type::ANY: XML_Content_Type = 2;
+// pub const XML_Content_Type::MIXED: XML_Content_Type = 3;
+// pub const XML_Content_Type::NAME: XML_Content_Type = 4;
+// pub const XML_Content_Type::CHOICE: XML_Content_Type = 5;
+// pub const XML_Content_Type::SEQ: XML_Content_Type = 6;
+#[repr(u32)]
+#[derive(PartialEq, Clone, Copy)]
+pub enum XML_Content_Type {
+    EMPTY = 1,
+    ANY = 2,
+    MIXED = 3,
+    NAME = 4,
+    CHOICE = 5,
+    SEQ = 6
+}
+
 pub type XML_Content_Quant = c_uint;
 pub const XML_CQUANT_NONE: XML_Content_Quant = 0;
 pub const XML_CQUANT_OPT: XML_Content_Quant = 1;
 pub const XML_CQUANT_REP: XML_Content_Quant = 2;
 pub const XML_CQUANT_PLUS: XML_Content_Quant = 3;
-/* If type == XML_CTYPE_EMPTY or XML_CTYPE_ANY, then quant will be
+/* If type == XML_Content_Type::EMPTY or XML_Content_Type::ANY, then quant will be
    XML_CQUANT_NONE, and the other fields will be zero or NULL.
-   If type == XML_CTYPE_MIXED, then quant will be NONE or REP and
+   If type == XML_Content_Type::MIXED, then quant will be NONE or REP and
    numchildren will contain number of elements that may be mixed in
    and children point to an array of XML_Content cells that will be
-   all of XML_CTYPE_NAME type with no quantification.
+   all of XML_Content_Type::NAME type with no quantification.
 
-   If type == XML_CTYPE_NAME, then the name points to the name, and
+   If type == XML_Content_Type::NAME, then the name points to the name, and
    the numchildren field will be zero and children will be NULL. The
    quant fields indicates any quantifiers placed on the name.
 
