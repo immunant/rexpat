@@ -51,8 +51,7 @@ pub use crate::expat_h::{
     XML_Parsing, XML_ParsingStatus, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
-    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_CQUANT_NONE, XML_CQUANT_OPT,
-    XML_CQUANT_PLUS, XML_CQUANT_REP, XML_FALSE, XML_FEATURE_ATTR_INFO,
+    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_FALSE, XML_FEATURE_ATTR_INFO,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
@@ -5811,7 +5810,7 @@ impl XML_ParserStruct {
         let dtd: *mut DTD = self.m_dtd;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
         let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-        let mut quant: XML_Content_Quant = XML_CQUANT_NONE;
+        let mut quant: XML_Content_Quant = XML_Content_Quant::NONE;
         if enc_type.is_internal() {
             eventPP = &mut (*self.m_openInternalEntities).internalEventPtr;
             eventEndPP = &mut (*self.m_openInternalEntities).internalEventEndPtr
@@ -6894,7 +6893,7 @@ impl XML_ParserStruct {
                             if content.is_null() {
                                 return XML_Error::NO_MEMORY;
                             }
-                            (*content).quant = XML_CQUANT_NONE;
+                            (*content).quant = XML_Content_Quant::NONE;
                             (*content).name = NULL as *mut XML_Char;
                             (*content).numchildren = 0;
                             (*content).children = NULL as *mut XML_Content;
@@ -6924,35 +6923,35 @@ impl XML_ParserStruct {
                     current_block = 1553878188884632965;
                 }
                 51 => {
-                    quant = XML_CQUANT_NONE;
+                    quant = XML_Content_Quant::NONE;
                     current_block = 4542134034984465527;
                 }
                 53 => {
-                    quant = XML_CQUANT_OPT;
+                    quant = XML_Content_Quant::OPT;
                     current_block = 4542134034984465527;
                 }
                 52 => {
-                    quant = XML_CQUANT_REP;
+                    quant = XML_Content_Quant::REP;
                     current_block = 4542134034984465527;
                 }
                 54 => {
-                    quant = XML_CQUANT_PLUS;
+                    quant = XML_Content_Quant::PLUS;
                     current_block = 4542134034984465527;
                 }
                 45 => {
-                    quant = XML_CQUANT_NONE;
+                    quant = XML_Content_Quant::NONE;
                     current_block = 7739131043814808354;
                 }
                 47 => {
-                    quant = XML_CQUANT_OPT;
+                    quant = XML_Content_Quant::OPT;
                     current_block = 7739131043814808354;
                 }
                 46 => {
-                    quant = XML_CQUANT_REP;
+                    quant = XML_Content_Quant::REP;
                     current_block = 7739131043814808354;
                 }
                 48 => {
-                    quant = XML_CQUANT_PLUS;
+                    quant = XML_Content_Quant::PLUS;
                     current_block = 7739131043814808354;
                 }
                 55 => {
@@ -7059,7 +7058,7 @@ impl XML_ParserStruct {
                         let mut el: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
                         let mut name_2: *const XML_Char = 0 as *const XML_Char;
                         let mut nameLen: c_int = 0;
-                        let mut nxt: *const c_char = if quant == XML_CQUANT_NONE {
+                        let mut nxt: *const c_char = if quant == XML_Content_Quant::NONE {
                             next
                         } else {
                             next.offset(-((*enc).minBytesPerChar() as isize))

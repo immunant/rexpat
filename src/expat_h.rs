@@ -57,7 +57,7 @@ pub const XML_FALSE: XML_Bool = 0;
    dropped.
 */
 
-#[repr(i32)]
+#[repr(u32)]
 #[derive(PartialEq)]
 pub enum XML_Status {
     ERROR,
@@ -123,13 +123,6 @@ impl XML_Error {
     }
 }
 
-// pub type XML_Content_Type = c_uint;
-// pub const XML_Content_Type::EMPTY: XML_Content_Type = 1;
-// pub const XML_Content_Type::ANY: XML_Content_Type = 2;
-// pub const XML_Content_Type::MIXED: XML_Content_Type = 3;
-// pub const XML_Content_Type::NAME: XML_Content_Type = 4;
-// pub const XML_Content_Type::CHOICE: XML_Content_Type = 5;
-// pub const XML_Content_Type::SEQ: XML_Content_Type = 6;
 #[repr(u32)]
 #[derive(PartialEq, Clone, Copy)]
 pub enum XML_Content_Type {
@@ -138,16 +131,26 @@ pub enum XML_Content_Type {
     MIXED = 3,
     NAME = 4,
     CHOICE = 5,
-    SEQ = 6
+    SEQ = 6,
 }
 
-pub type XML_Content_Quant = c_uint;
-pub const XML_CQUANT_NONE: XML_Content_Quant = 0;
-pub const XML_CQUANT_OPT: XML_Content_Quant = 1;
-pub const XML_CQUANT_REP: XML_Content_Quant = 2;
-pub const XML_CQUANT_PLUS: XML_Content_Quant = 3;
+// pub type XML_Content_Quant = c_uint;
+// pub const XML_Content_Quant::NONE: XML_Content_Quant = 0;
+// pub const XML_Content_Quant::OPT: XML_Content_Quant = 1;
+// pub const XML_Content_Quant::REP: XML_Content_Quant = 2;
+// pub const XML_Content_Quant::PLUS: XML_Content_Quant = 3;
+
+#[repr(u32)]
+#[derive(PartialEq, Clone, Copy)]
+pub enum XML_Content_Quant {
+    NONE, 
+    OPT,
+    REP,
+    PLUS
+}
+
 /* If type == XML_Content_Type::EMPTY or XML_Content_Type::ANY, then quant will be
-   XML_CQUANT_NONE, and the other fields will be zero or NULL.
+   XML_Content_Quant::NONE, and the other fields will be zero or NULL.
    If type == XML_Content_Type::MIXED, then quant will be NONE or REP and
    numchildren will contain number of elements that may be mixed in
    and children point to an array of XML_Content cells that will be
