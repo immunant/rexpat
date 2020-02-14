@@ -60,33 +60,60 @@ pub use crate::expat_h::{
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_SUSPENDED,
     XML_TRUE, 
 };
-pub use crate::lib::xmlrole::{
-    prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
-    PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME, XML_ROLE_ATTLIST_NONE,
-    XML_ROLE_ATTRIBUTE_ENUM_VALUE, XML_ROLE_ATTRIBUTE_NAME, XML_ROLE_ATTRIBUTE_NOTATION_VALUE,
-    XML_ROLE_ATTRIBUTE_TYPE_CDATA, XML_ROLE_ATTRIBUTE_TYPE_ENTITIES,
-    XML_ROLE_ATTRIBUTE_TYPE_ENTITY, XML_ROLE_ATTRIBUTE_TYPE_ID, XML_ROLE_ATTRIBUTE_TYPE_IDREF,
-    XML_ROLE_ATTRIBUTE_TYPE_IDREFS, XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN,
-    XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS, XML_ROLE_COMMENT, XML_ROLE_CONTENT_ANY,
-    XML_ROLE_CONTENT_ELEMENT, XML_ROLE_CONTENT_ELEMENT_OPT, XML_ROLE_CONTENT_ELEMENT_PLUS,
-    XML_ROLE_CONTENT_ELEMENT_REP, XML_ROLE_CONTENT_EMPTY, XML_ROLE_CONTENT_PCDATA,
-    XML_ROLE_DEFAULT_ATTRIBUTE_VALUE, XML_ROLE_DOCTYPE_CLOSE, XML_ROLE_DOCTYPE_INTERNAL_SUBSET,
-    XML_ROLE_DOCTYPE_NAME, XML_ROLE_DOCTYPE_NONE, XML_ROLE_DOCTYPE_PUBLIC_ID,
-    XML_ROLE_DOCTYPE_SYSTEM_ID, XML_ROLE_ELEMENT_NAME, XML_ROLE_ELEMENT_NONE,
-    XML_ROLE_ENTITY_COMPLETE, XML_ROLE_ENTITY_NONE, XML_ROLE_ENTITY_NOTATION_NAME,
-    XML_ROLE_ENTITY_PUBLIC_ID, XML_ROLE_ENTITY_SYSTEM_ID, XML_ROLE_ENTITY_VALUE, XML_ROLE_ERROR,
-    XML_ROLE_FIXED_ATTRIBUTE_VALUE, XML_ROLE_GENERAL_ENTITY_NAME, XML_ROLE_GROUP_CHOICE,
-    XML_ROLE_GROUP_CLOSE, XML_ROLE_GROUP_CLOSE_OPT, XML_ROLE_GROUP_CLOSE_PLUS,
-    XML_ROLE_GROUP_CLOSE_REP, XML_ROLE_GROUP_OPEN, XML_ROLE_GROUP_SEQUENCE, XML_ROLE_IGNORE_SECT,
-    XML_ROLE_IMPLIED_ATTRIBUTE_VALUE, XML_ROLE_INNER_PARAM_ENTITY_REF, XML_ROLE_INSTANCE_START,
-    XML_ROLE_NONE, XML_ROLE_NOTATION_NAME, XML_ROLE_NOTATION_NONE, XML_ROLE_NOTATION_NO_SYSTEM_ID,
-    XML_ROLE_NOTATION_PUBLIC_ID, XML_ROLE_NOTATION_SYSTEM_ID, XML_ROLE_PARAM_ENTITY_NAME,
-    XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI, XML_ROLE_REQUIRED_ATTRIBUTE_VALUE, XML_ROLE_TEXT_DECL,
-    XML_ROLE_XML_DECL,
-};
-pub use crate::lib::xmltok::{
-    XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
-};
+pub use crate::lib::xmlrole::{prolog_state, C2RustUnnamed_0,
+                              MOZ_XmlPrologStateInit,
+                              MOZ_XmlPrologStateInitExternalEntity,
+                              PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME,
+                              XML_ROLE_ATTLIST_NONE,
+                              XML_ROLE_ATTRIBUTE_ENUM_VALUE,
+                              XML_ROLE_ATTRIBUTE_NAME,
+                              XML_ROLE_ATTRIBUTE_NOTATION_VALUE,
+                              XML_ROLE_ATTRIBUTE_TYPE_CDATA,
+                              XML_ROLE_ATTRIBUTE_TYPE_ENTITIES,
+                              XML_ROLE_ATTRIBUTE_TYPE_ENTITY,
+                              XML_ROLE_ATTRIBUTE_TYPE_ID,
+                              XML_ROLE_ATTRIBUTE_TYPE_IDREF,
+                              XML_ROLE_ATTRIBUTE_TYPE_IDREFS,
+                              XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN,
+                              XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS,
+                              XML_ROLE_COMMENT, XML_ROLE_CONTENT_ANY,
+                              XML_ROLE_CONTENT_ELEMENT,
+                              XML_ROLE_CONTENT_ELEMENT_OPT,
+                              XML_ROLE_CONTENT_ELEMENT_PLUS,
+                              XML_ROLE_CONTENT_ELEMENT_REP,
+                              XML_ROLE_CONTENT_EMPTY, XML_ROLE_CONTENT_PCDATA,
+                              XML_ROLE_DEFAULT_ATTRIBUTE_VALUE,
+                              XML_ROLE_DOCTYPE_CLOSE,
+                              XML_ROLE_DOCTYPE_INTERNAL_SUBSET,
+                              XML_ROLE_DOCTYPE_NAME, XML_ROLE_DOCTYPE_NONE,
+                              XML_ROLE_DOCTYPE_PUBLIC_ID,
+                              XML_ROLE_DOCTYPE_SYSTEM_ID,
+                              XML_ROLE_ELEMENT_NAME, XML_ROLE_ELEMENT_NONE,
+                              XML_ROLE_ENTITY_COMPLETE, XML_ROLE_ENTITY_NONE,
+                              XML_ROLE_ENTITY_NOTATION_NAME,
+                              XML_ROLE_ENTITY_PUBLIC_ID,
+                              XML_ROLE_ENTITY_SYSTEM_ID,
+                              XML_ROLE_ENTITY_VALUE, XML_ROLE_ERROR,
+                              XML_ROLE_FIXED_ATTRIBUTE_VALUE,
+                              XML_ROLE_GENERAL_ENTITY_NAME,
+                              XML_ROLE_GROUP_CHOICE, XML_ROLE_GROUP_CLOSE,
+                              XML_ROLE_GROUP_CLOSE_OPT,
+                              XML_ROLE_GROUP_CLOSE_PLUS,
+                              XML_ROLE_GROUP_CLOSE_REP, XML_ROLE_GROUP_OPEN,
+                              XML_ROLE_GROUP_SEQUENCE, XML_ROLE_IGNORE_SECT,
+                              XML_ROLE_IMPLIED_ATTRIBUTE_VALUE,
+                              XML_ROLE_INNER_PARAM_ENTITY_REF,
+                              XML_ROLE_INSTANCE_START, XML_ROLE_NONE,
+                              XML_ROLE_NOTATION_NAME, XML_ROLE_NOTATION_NONE,
+                              XML_ROLE_NOTATION_NO_SYSTEM_ID,
+                              XML_ROLE_NOTATION_PUBLIC_ID,
+                              XML_ROLE_NOTATION_SYSTEM_ID,
+                              XML_ROLE_PARAM_ENTITY_NAME,
+                              XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI,
+                              XML_ROLE_REQUIRED_ATTRIBUTE_VALUE,
+                              XML_ROLE_TEXT_DECL, XML_ROLE_XML_DECL};
+pub use crate::lib::xmltok::{MOZ_XmlParseXmlDecl, MOZ_XmlParseXmlDeclNS,
+                             UnknownEncoding};
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
@@ -1239,9 +1266,11 @@ pub type Processor = unsafe extern "C" fn(
 #[macro_use]
 mod unicode_defines {
     pub const XML_ENCODE_MAX: usize = crate::lib::xmltok::XML_UTF16_ENCODE_MAX as usize;
-    pub use crate::lib::xmltok::XmlGetUtf16InternalEncoding as XmlGetInternalEncoding;
-    pub use crate::lib::xmltok::XmlGetUtf16InternalEncodingNS as XmlGetInternalEncodingNS;
-    pub use crate::lib::xmltok::XmlUtf16Encode as XmlEncode;
+    pub use crate::lib::xmltok::MOZ_XmlGetUtf16InternalEncoding as
+        XmlGetInternalEncoding;
+    pub use crate::lib::xmltok::MOZ_XmlGetUtf16InternalEncodingNS as
+        XmlGetInternalEncodingNS;
+    pub use crate::lib::xmltok::MOZ_XmlUtf16Encode as XmlEncode;
     pub use crate::XmlUtf16Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {
@@ -1273,9 +1302,11 @@ mod unicode_defines {
 #[macro_use]
 mod unicode_defines {
     pub const XML_ENCODE_MAX: usize = crate::lib::xmltok::XML_UTF8_ENCODE_MAX as usize;
-    pub use crate::lib::xmltok::XmlGetUtf8InternalEncoding as XmlGetInternalEncoding;
-    pub use crate::lib::xmltok::XmlGetUtf8InternalEncodingNS as XmlGetInternalEncodingNS;
-    pub use crate::lib::xmltok::XmlUtf8Encode as XmlEncode;
+    pub use crate::lib::xmltok::MOZ_XmlGetUtf8InternalEncoding as
+        XmlGetInternalEncoding;
+    pub use crate::lib::xmltok::MOZ_XmlGetUtf8InternalEncodingNS as
+        XmlGetInternalEncodingNS;
+    pub use crate::lib::xmltok::MOZ_XmlUtf8Encode as XmlEncode;
     pub use crate::XmlUtf8Convert as XmlConvert;
 
     macro_rules! MUST_CONVERT {
@@ -1367,8 +1398,8 @@ macro_rules! FREE {
    external protocol or NULL if there is none specified.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> XML_Parser {
-    XML_ParserCreate_MM(
+pub unsafe extern "C" fn MOZ_XML_ParserCreate(mut encodingName: *const XML_Char) -> XML_Parser {
+    MOZ_XML_ParserCreate_MM(
         encodingName,
         None,
         NULL as *const XML_Char,
@@ -1386,13 +1417,13 @@ pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> 
    triplets (see XML_SetReturnNSTriplet).
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreateNS(
+pub unsafe extern "C" fn MOZ_XML_ParserCreateNS(
     mut encodingName: *const XML_Char,
     mut nsSep: XML_Char,
 ) -> XML_Parser {
     let mut tmp: [XML_Char; 2] = [0; 2];
     tmp[0] = nsSep;
-    XML_ParserCreate_MM(
+    MOZ_XML_ParserCreate_MM(
         encodingName,
         None,
         tmp.as_mut_ptr(),
@@ -1433,7 +1464,7 @@ impl XML_ParserStruct {
    the given suite.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreate_MM(
+pub unsafe extern "C" fn MOZ_XML_ParserCreate_MM(
     mut encodingName: *const XML_Char,
     mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
@@ -1600,7 +1631,7 @@ impl XML_ParserStruct {
 
     unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
         self.m_processor = Some(prologInitProcessor as Processor);
-        super::xmlrole::XmlPrologStateInit(&mut self.m_prologState as *mut _);
+        super::xmlrole::MOZ_XmlPrologStateInit(&mut self.m_prologState as *mut _);
         if !encodingName.is_null() {
             self.m_protocolEncodingName = copyString(encodingName)
         }
@@ -1715,7 +1746,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *const XML_Char) -> XML_Bool {
+pub unsafe extern "C" fn MOZ_XML_ParserReset(parser: XML_Parser, encodingName: *const XML_Char) -> XML_Bool {
     if parser.is_null() {
         return XML_FALSE;
     }
@@ -1758,7 +1789,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEncoding(
+pub unsafe extern "C" fn MOZ_XML_SetEncoding(
     mut parser: XML_Parser,
     mut encodingName: *const XML_Char,
 ) -> XML_Status {
@@ -1785,7 +1816,7 @@ pub unsafe extern "C" fn XML_SetEncoding(
    Otherwise returns a new XML_Parser object.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
+pub unsafe extern "C" fn MOZ_XML_ExternalEntityParserCreate(
     mut oldParser: XML_Parser,
     mut context: *const XML_Char,
     mut encodingName: *const XML_Char,
@@ -1929,7 +1960,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
         if dtdCopy((*parser).m_dtd, oldDtd) == 0
             || (*parser).setContext(context) == 0
         {
-            XML_ParserFree(parser);
+            MOZ_XML_ParserFree(parser);
             return NULL as XML_Parser;
         }
         (*parser).m_processor = Some(externalEntityInitProcessor as Processor)
@@ -1942,7 +1973,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
            PE parser. This would leave those prefixes with dangling pointers.
         */
         (*parser).m_isParamEntity = XML_TRUE;
-        super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
+        super::xmlrole::MOZ_XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
         (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
     }
     /* XML_DTD */
@@ -2025,7 +2056,7 @@ impl Drop for XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
+pub unsafe extern "C" fn MOZ_XML_ParserFree(parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
@@ -2036,7 +2067,7 @@ pub unsafe extern "C" fn XML_ParserFree(parser: XML_Parser) {
    still be accessible using XML_GetUserData.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
+pub unsafe extern "C" fn MOZ_XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
     if !parser.is_null() {
         (*parser).m_handlers.m_handlerArg = parser as *mut c_void
     };
@@ -2061,7 +2092,7 @@ pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
    Note: If parser == NULL, returns XML_Error::INVALID_ARGUMENT.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_UseForeignDTD(
+pub unsafe extern "C" fn MOZ_XML_UseForeignDTD(
     mut parser: XML_Parser,
     mut useDTD: XML_Bool,
 ) -> XML_Error {
@@ -2091,7 +2122,7 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
      XML_ParseBuffer has no effect.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: XML_Bool) {
+pub unsafe extern "C" fn MOZ_XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_nst: XML_Bool) {
     if parser.is_null() {
         return;
     }
@@ -2105,7 +2136,7 @@ pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_n
 }
 /* This value is passed as the userData argument to callbacks. */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_void) {
+pub unsafe extern "C" fn MOZ_XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_void) {
     if parser.is_null() {
         return;
     }
@@ -2125,7 +2156,7 @@ pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_v
    XML_Status::OK otherwise.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
+pub unsafe extern "C" fn MOZ_XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
     if parser.is_null() {
         return XML_Status::ERROR;
     }
@@ -2141,7 +2172,7 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
     XML_Status::OK
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
+pub unsafe extern "C" fn MOZ_XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
     if parser.is_null() {
         return NULL as *const XML_Char;
     }
@@ -2154,7 +2185,7 @@ pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char 
    XML_StartElementHandler.  Returns -1 if parser == NULL.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) -> c_int {
+pub unsafe extern "C" fn MOZ_XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) -> c_int {
     if parser.is_null() {
         return -(1i32);
     }
@@ -2167,14 +2198,14 @@ pub unsafe extern "C" fn XML_GetSpecifiedAttributeCount(mut parser: XML_Parser) 
    XML_StartElementHandler.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetIdAttributeIndex(mut parser: XML_Parser) -> c_int {
+pub unsafe extern "C" fn MOZ_XML_GetIdAttributeIndex(mut parser: XML_Parser) -> c_int {
     if parser.is_null() {
         return -(1i32);
     }
     (*parser).m_idAttIndex
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetElementHandler(
+pub unsafe extern "C" fn MOZ_XML_SetElementHandler(
     mut parser: XML_Parser,
     mut start: XML_StartElementHandler,
     mut end: XML_EndElementHandler,
@@ -2186,7 +2217,7 @@ pub unsafe extern "C" fn XML_SetElementHandler(
     (*parser).m_handlers.setEndElement(end);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetStartElementHandler(
+pub unsafe extern "C" fn MOZ_XML_SetStartElementHandler(
     mut parser: XML_Parser,
     mut start: XML_StartElementHandler,
 ) {
@@ -2195,7 +2226,7 @@ pub unsafe extern "C" fn XML_SetStartElementHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEndElementHandler(
+pub unsafe extern "C" fn MOZ_XML_SetEndElementHandler(
     mut parser: XML_Parser,
     mut end: XML_EndElementHandler,
 ) {
@@ -2204,7 +2235,7 @@ pub unsafe extern "C" fn XML_SetEndElementHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetCharacterDataHandler(
+pub unsafe extern "C" fn MOZ_XML_SetCharacterDataHandler(
     mut parser: XML_Parser,
     mut handler: XML_CharacterDataHandler,
 ) {
@@ -2213,7 +2244,7 @@ pub unsafe extern "C" fn XML_SetCharacterDataHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
+pub unsafe extern "C" fn MOZ_XML_SetProcessingInstructionHandler(
     mut parser: XML_Parser,
     mut handler: XML_ProcessingInstructionHandler,
 ) {
@@ -2222,7 +2253,7 @@ pub unsafe extern "C" fn XML_SetProcessingInstructionHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetCommentHandler(
+pub unsafe extern "C" fn MOZ_XML_SetCommentHandler(
     mut parser: XML_Parser,
     mut handler: XML_CommentHandler,
 ) {
@@ -2231,7 +2262,7 @@ pub unsafe extern "C" fn XML_SetCommentHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetCdataSectionHandler(
+pub unsafe extern "C" fn MOZ_XML_SetCdataSectionHandler(
     mut parser: XML_Parser,
     mut start: XML_StartCdataSectionHandler,
     mut end: XML_EndCdataSectionHandler,
@@ -2243,7 +2274,7 @@ pub unsafe extern "C" fn XML_SetCdataSectionHandler(
     (*parser).m_handlers.setEndCDataSection(end);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
+pub unsafe extern "C" fn MOZ_XML_SetStartCdataSectionHandler(
     mut parser: XML_Parser,
     mut start: XML_StartCdataSectionHandler,
 ) {
@@ -2252,7 +2283,7 @@ pub unsafe extern "C" fn XML_SetStartCdataSectionHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
+pub unsafe extern "C" fn MOZ_XML_SetEndCdataSectionHandler(
     mut parser: XML_Parser,
     mut end: XML_EndCdataSectionHandler,
 ) {
@@ -2265,7 +2296,7 @@ pub unsafe extern "C" fn XML_SetEndCdataSectionHandler(
    default handler, or to the skipped entity handler, if one is set.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetDefaultHandler(
+pub unsafe extern "C" fn MOZ_XML_SetDefaultHandler(
     mut parser: XML_Parser,
     mut handler: XML_DefaultHandler,
 ) {
@@ -2280,7 +2311,7 @@ pub unsafe extern "C" fn XML_SetDefaultHandler(
    default handler.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
+pub unsafe extern "C" fn MOZ_XML_SetDefaultHandlerExpand(
     mut parser: XML_Parser,
     mut handler: XML_DefaultHandler,
 ) {
@@ -2291,7 +2322,7 @@ pub unsafe extern "C" fn XML_SetDefaultHandlerExpand(
     (*parser).m_defaultExpandInternalEntities = XML_TRUE;
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetDoctypeDeclHandler(
     mut parser: XML_Parser,
     mut start: XML_StartDoctypeDeclHandler,
     mut end: XML_EndDoctypeDeclHandler,
@@ -2303,7 +2334,7 @@ pub unsafe extern "C" fn XML_SetDoctypeDeclHandler(
     (*parser).m_handlers.setEndDoctypeDecl(end);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetStartDoctypeDeclHandler(
     mut parser: XML_Parser,
     mut start: XML_StartDoctypeDeclHandler,
 ) {
@@ -2312,7 +2343,7 @@ pub unsafe extern "C" fn XML_SetStartDoctypeDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetEndDoctypeDeclHandler(
     mut parser: XML_Parser,
     mut end: XML_EndDoctypeDeclHandler,
 ) {
@@ -2321,7 +2352,7 @@ pub unsafe extern "C" fn XML_SetEndDoctypeDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetUnparsedEntityDeclHandler(
     mut parser: XML_Parser,
     mut handler: XML_UnparsedEntityDeclHandler,
 ) {
@@ -2330,7 +2361,7 @@ pub unsafe extern "C" fn XML_SetUnparsedEntityDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetNotationDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetNotationDeclHandler(
     mut parser: XML_Parser,
     mut handler: XML_NotationDeclHandler,
 ) {
@@ -2339,7 +2370,7 @@ pub unsafe extern "C" fn XML_SetNotationDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetNamespaceDeclHandler(
     mut parser: XML_Parser,
     mut start: XML_StartNamespaceDeclHandler,
     mut end: XML_EndNamespaceDeclHandler,
@@ -2351,7 +2382,7 @@ pub unsafe extern "C" fn XML_SetNamespaceDeclHandler(
     (*parser).m_handlers.setEndNamespaceDecl(end);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetStartNamespaceDeclHandler(
     mut parser: XML_Parser,
     mut start: XML_StartNamespaceDeclHandler,
 ) {
@@ -2360,7 +2391,7 @@ pub unsafe extern "C" fn XML_SetStartNamespaceDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetEndNamespaceDeclHandler(
     mut parser: XML_Parser,
     mut end: XML_EndNamespaceDeclHandler,
 ) {
@@ -2369,7 +2400,7 @@ pub unsafe extern "C" fn XML_SetEndNamespaceDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
+pub unsafe extern "C" fn MOZ_XML_SetNotStandaloneHandler(
     mut parser: XML_Parser,
     mut handler: XML_NotStandaloneHandler,
 ) {
@@ -2378,7 +2409,7 @@ pub unsafe extern "C" fn XML_SetNotStandaloneHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
+pub unsafe extern "C" fn MOZ_XML_SetExternalEntityRefHandler(
     mut parser: XML_Parser,
     mut handler: XML_ExternalEntityRefHandler,
 ) {
@@ -2391,7 +2422,7 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandler(
    instead of the parser object.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
+pub unsafe extern "C" fn MOZ_XML_SetExternalEntityRefHandlerArg(
     mut parser: XML_Parser,
     mut arg: *mut c_void,
 ) {
@@ -2405,7 +2436,7 @@ pub unsafe extern "C" fn XML_SetExternalEntityRefHandlerArg(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
+pub unsafe extern "C" fn MOZ_XML_SetSkippedEntityHandler(
     mut parser: XML_Parser,
     mut handler: XML_SkippedEntityHandler,
 ) {
@@ -2414,7 +2445,7 @@ pub unsafe extern "C" fn XML_SetSkippedEntityHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
+pub unsafe extern "C" fn MOZ_XML_SetUnknownEncodingHandler(
     mut parser: XML_Parser,
     mut handler: XML_UnknownEncodingHandler,
     mut data: *mut c_void,
@@ -2426,7 +2457,7 @@ pub unsafe extern "C" fn XML_SetUnknownEncodingHandler(
     (*parser).m_handlers.m_unknownEncodingHandlerData = data;
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetElementDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetElementDeclHandler(
     mut parser: XML_Parser,
     mut eldecl: XML_ElementDeclHandler,
 ) {
@@ -2435,7 +2466,7 @@ pub unsafe extern "C" fn XML_SetElementDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetAttlistDeclHandler(
     mut parser: XML_Parser,
     mut attdecl: XML_AttlistDeclHandler,
 ) {
@@ -2444,7 +2475,7 @@ pub unsafe extern "C" fn XML_SetAttlistDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetEntityDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetEntityDeclHandler(
     mut parser: XML_Parser,
     mut handler: XML_EntityDeclHandler,
 ) {
@@ -2453,7 +2484,7 @@ pub unsafe extern "C" fn XML_SetEntityDeclHandler(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetXmlDeclHandler(
+pub unsafe extern "C" fn MOZ_XML_SetXmlDeclHandler(
     mut parser: XML_Parser,
     mut handler: XML_XmlDeclHandler,
 ) {
@@ -2486,7 +2517,7 @@ pub unsafe extern "C" fn XML_SetXmlDeclHandler(
    Note: If parser == NULL, the function will do nothing and return 0.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_SetParamEntityParsing(
+pub unsafe extern "C" fn MOZ_XML_SetParamEntityParsing(
     mut parser: XML_Parser,
     mut peParsing: XML_ParamEntityParsing,
 ) -> c_int {
@@ -2623,14 +2654,14 @@ impl XML_ParserStruct {
                 XML_Status::ERROR as XML_Status
             } else {
                 memcpy(buff, s as *const c_void, len as c_ulong);
-                XML_ParseBuffer(self, len, isFinal)
+                MOZ_XML_ParseBuffer(self, len, isFinal)
             }
         }
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_Parse(
+pub unsafe extern "C" fn MOZ_XML_Parse(
     mut parser: XML_Parser,
     mut s: *const c_char,
     mut len: c_int,
@@ -2714,7 +2745,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParseBuffer(
+pub unsafe extern "C" fn MOZ_XML_ParseBuffer(
     mut parser: XML_Parser,
     mut len: c_int,
     mut isFinal: c_int,
@@ -2826,7 +2857,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
+pub unsafe extern "C" fn MOZ_XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
     if parser.is_null() {
         return NULL as *mut c_void;
     }
@@ -2896,7 +2927,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
+pub unsafe extern "C" fn MOZ_XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
     if parser.is_null() {
         return XML_Status::ERROR;
     }
@@ -2965,7 +2996,7 @@ impl XML_ParserStruct {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
+pub unsafe extern "C" fn MOZ_XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
     if parser.is_null() {
         return XML_Status::ERROR as XML_Status;
     }
@@ -2978,7 +3009,7 @@ pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status 
    XXX with XML_FINISHED_OK or XML_FINISHED_ERROR replacing XML_FINISHED
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetParsingStatus(
+pub unsafe extern "C" fn MOZ_XML_GetParsingStatus(
     mut parser: XML_Parser,
     mut status: *mut XML_ParsingStatus,
 ) {
@@ -3004,7 +3035,7 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
    XML_GetErrorCode returns information about the error.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_ErrorCode {
+pub unsafe extern "C" fn MOZ_XML_GetErrorCode(mut parser: XML_Parser) -> XML_ErrorCode {
     XML_GetError(parser).code() 
 }
 pub unsafe fn XML_GetError(mut parser: XML_Parser) -> XML_Error { 
@@ -3013,7 +3044,7 @@ pub unsafe fn XML_GetError(mut parser: XML_Parser) -> XML_Error {
     } else { XML_Error::INVALID_ARGUMENT }
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_Index {
+pub unsafe extern "C" fn MOZ_XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_Index {
     if parser.is_null() {
         return -1i64;
     }
@@ -3032,7 +3063,7 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_
    Returns 0 if the event is in an internal entity.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_int {
+pub unsafe extern "C" fn MOZ_XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_int {
     if parser.is_null() {
         return 0i32;
     }
@@ -3054,7 +3085,7 @@ pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_in
    the handler that makes the call.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetInputContext(
+pub unsafe extern "C" fn MOZ_XML_GetInputContext(
     mut parser: XML_Parser,
     mut offset: *mut c_int,
     mut size: *mut c_int,
@@ -3099,7 +3130,7 @@ pub unsafe extern "C" fn XML_GetInputContext(
    Note: XML_GetCurrentByteIndex returns -1 to indicate an error.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML_Size {
+pub unsafe extern "C" fn MOZ_XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML_Size {
     if parser.is_null() {
         return 0u64;
     }
@@ -3116,7 +3147,7 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
     return (*parser).m_position.lineNumber.wrapping_add(1u64);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> XML_Size {
+pub unsafe extern "C" fn MOZ_XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> XML_Size {
     if parser.is_null() {
         return 0u64;
     }
@@ -3135,21 +3166,21 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
 /* For backwards compatibility with previous versions. */
 /* Frees the content model passed to the element declaration handler */
 #[no_mangle]
-pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
+pub unsafe extern "C" fn MOZ_XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
     if !parser.is_null() {
         FREE!(model);
     };
 }
 /* Exposing the memory handling functions used in Expat */
 #[no_mangle]
-pub unsafe extern "C" fn XML_MemMalloc(mut parser: XML_Parser, mut size: size_t) -> *mut c_void {
+pub unsafe extern "C" fn MOZ_XML_MemMalloc(mut parser: XML_Parser, mut size: size_t) -> *mut c_void {
     if parser.is_null() {
         return NULL as *mut c_void;
     }
     return MALLOC!(size);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_MemRealloc(
+pub unsafe extern "C" fn MOZ_XML_MemRealloc(
     mut parser: XML_Parser,
     mut ptr: *mut c_void,
     mut size: size_t,
@@ -3160,7 +3191,7 @@ pub unsafe extern "C" fn XML_MemRealloc(
     return REALLOC!(ptr, size);
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
+pub unsafe extern "C" fn MOZ_XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
     if !parser.is_null() {
         FREE!(ptr);
     };
@@ -3170,7 +3201,7 @@ pub unsafe extern "C" fn XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_voi
    corresponding markup to be passed to the default handler.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
+pub unsafe extern "C" fn MOZ_XML_DefaultCurrent(mut parser: XML_Parser) {
     if parser.is_null() {
         return;
     }
@@ -3273,7 +3304,7 @@ impl XML_Error {
 
 /* Returns a string describing the error. */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ErrorString(mut code: u32) -> *const XML_LChar {
+pub unsafe extern "C" fn MOZ_XML_ErrorString(mut code: u32) -> *const XML_LChar {
     if let Some(code) = XML_Error::from_u32(code) {
             code.description()
     } else {
@@ -3282,7 +3313,7 @@ pub unsafe extern "C" fn XML_ErrorString(mut code: u32) -> *const XML_LChar {
 }
 /* Return a string containing the version number of this expat */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ExpatVersion() -> *const XML_LChar {
+pub unsafe extern "C" fn MOZ_XML_ExpatVersion() -> *const XML_LChar {
     /* V1 is used to string-ize the version number. However, it would
     string-ize the actual version macro *names* unless we get them
     substituted before being passed to V1. CPP is defined to expand
@@ -3300,7 +3331,7 @@ pub const XML_MAJOR_VERSION: c_int = 2;
 pub const XML_MINOR_VERSION: c_int = 2;
 pub const XML_MICRO_VERSION: c_int = 9;
 #[no_mangle]
-pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
+pub unsafe extern "C" fn MOZ_XML_ExpatVersionInfo() -> XML_Expat_Version {
     XML_Expat_Version {
         major: XML_MAJOR_VERSION,
         minor: XML_MINOR_VERSION,
@@ -3308,7 +3339,7 @@ pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
     }
 }
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
+pub unsafe extern "C" fn MOZ_XML_GetFeatureList() -> *const XML_Feature {
     const features: &[XML_Feature] = &[
         XML_Feature {
             feature: XML_FEATURE_SIZEOF_XML_CHAR,
@@ -5243,9 +5274,9 @@ impl XML_ParserStruct {
         let mut storedversion: *const XML_Char = NULL as *const XML_Char;
         let mut standalone: c_int = -(1);
         if if self.m_ns as c_int != 0 {
-            super::xmltok::XmlParseXmlDeclNS
+            super::xmltok::MOZ_XmlParseXmlDeclNS
         } else {
-            super::xmltok::XmlParseXmlDecl
+            super::xmltok::MOZ_XmlParseXmlDecl
         }(
             isGeneralTextEntity,
             &*self.m_encoding,

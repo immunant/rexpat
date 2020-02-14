@@ -32,7 +32,8 @@
 */
 use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::lib::xmlparse::XML_ParserStruct;
-use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
+use crate::lib::xmlparse::{MOZ_XML_GetCurrentColumnNumber,
+                           MOZ_XML_GetCurrentLineNumber};
 use crate::stddef_h::size_t;
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
 use num_derive::FromPrimitive;
@@ -447,9 +448,9 @@ pub const XML_PARAM_ENTITY_PARSING_NEVER: XML_ParamEntityParsing = 0;
 pub const XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: XML_ParamEntityParsing = 1;
 pub const XML_PARAM_ENTITY_PARSING_ALWAYS: XML_ParamEntityParsing = 2;
 pub const XML_GetErrorLineNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
-    XML_GetCurrentLineNumber;
+    MOZ_XML_GetCurrentLineNumber;
 pub const XML_GetErrorColumnNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
-    XML_GetCurrentColumnNumber;
+    MOZ_XML_GetCurrentColumnNumber;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Expat_Version {

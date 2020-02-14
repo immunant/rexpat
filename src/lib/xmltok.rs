@@ -2373,7 +2373,7 @@ impl UnknownEncoding {
                     self.types[i] = ByteType::OTHER;
                 }
                 self.utf8[i][0] =
-                    unsafe { XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
+                    unsafe { MOZ_XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
                 self.utf16[i] = c as c_ushort
             }
         }
@@ -2473,7 +2473,7 @@ impl XmlEncodingImpl for UnknownEncoding {
             if n == 0 {
                 let mut c: c_int =
                     self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
-                n = XmlUtf8Encode(c, buf.as_mut_ptr());
+                n = MOZ_XmlUtf8Encode(c, buf.as_mut_ptr());
                 if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
@@ -2543,31 +2543,31 @@ static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
 #[cfg(target_endian = "big")]
 static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
 
-pub fn XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() };
 }
 
-pub fn XmlGetUtf8InternalEncoding() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf8InternalEncoding() -> &'static ENCODING {
     return unsafe { &**internal_utf8_encoding.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "little")]
-pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf16InternalEncoding() -> &'static ENCODING {
     return unsafe { &**internal_little2_encoding.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "big")]
-pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf16InternalEncoding() -> &'static ENCODING {
     return unsafe { &**internal_big2_encoding.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "little")]
-pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() };
 }
 
 #[cfg(target_endian = "big")]
-pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
+pub fn MOZ_XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
     return unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() };
 }
 
@@ -2627,7 +2627,7 @@ pub unsafe fn findEncodingNS(
     return Some(encodingsNS.unwrap()[i as usize]);
 }
 
-pub unsafe fn XmlParseXmlDeclNS<'a>(
+pub unsafe fn MOZ_XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
@@ -2650,7 +2650,7 @@ pub unsafe fn XmlParseXmlDeclNS<'a>(
     );
 }
 
-pub unsafe fn XmlParseXmlDecl<'a>(
+pub unsafe fn MOZ_XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
@@ -3172,7 +3172,7 @@ pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     return result;
 }
 
-pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
+pub unsafe fn MOZ_XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
     if c < 0 {
         return 0i32;
     }
@@ -3202,7 +3202,7 @@ pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
 }
 
-pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
+pub unsafe fn MOZ_XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
     if charNum < 0 {
         return 0i32;
     }
@@ -3219,7 +3219,7 @@ pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_in
     return 0;
 }
 
-pub unsafe fn XmlSizeOfUnknownEncoding() -> c_int {
+pub unsafe fn MOZ_XmlSizeOfUnknownEncoding() -> c_int {
     return ::std::mem::size_of::<unknown_encoding>() as c_int;
 }
 

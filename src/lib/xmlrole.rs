@@ -1637,7 +1637,7 @@ unsafe extern "C" fn common(mut state: *mut PROLOG_STATE, mut tok: c_int) -> c_i
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlPrologStateInit(mut state: *mut PROLOG_STATE) {
+pub unsafe extern "C" fn MOZ_XmlPrologStateInit(mut state: *mut PROLOG_STATE) {
     (*state).handler = Some(prolog0 as PROLOG_HANDLER);
     (*state).documentEntity = 1;
     (*state).includeLevel = 0u32;
@@ -1646,7 +1646,7 @@ pub unsafe extern "C" fn XmlPrologStateInit(mut state: *mut PROLOG_STATE) {
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlPrologStateInitExternalEntity(mut state: *mut PROLOG_STATE) {
+pub unsafe extern "C" fn MOZ_XmlPrologStateInitExternalEntity(mut state: *mut PROLOG_STATE) {
     (*state).handler = Some(externalSubset0 as PROLOG_HANDLER);
     (*state).documentEntity = 0;
     (*state).includeLevel = 0u32;
