@@ -35,7 +35,7 @@
 /* The following token may be returned by XmlContentTok */
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
-use crate::expat_h::{XML_Error, XML_ERROR_NONE};
+use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
 use std::ptr;
@@ -2221,7 +2221,7 @@ impl XmlEncoding for InitEncoding {
         _buf: ExpatBufRef,
         _f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
     ) -> XML_Error {
-        XML_ERROR_NONE
+        XML_Error::NONE
     }
 
     unsafe fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
@@ -3046,11 +3046,13 @@ unsafe fn doParseXmlDecl<'a>(
         *versionBuf = val_buf;
         #[cfg(feature = "mozilla")]
         {
-            if (*enc).nameMatchesAscii(
-                val, ptr.offset(-((*enc).minBytesPerChar() as isize)),
-                KW_XML_1_0.as_ptr()) == 0
+            if (*enc).nameMatchesAscii(val_buf
+                                       .unwrap()
+                                       .with_end(pseudo_ptr)
+                                       .dec_end((*enc).minBytesPerChar() as usize),
+                                       KW_XML_1_0.as_ptr()) == 0
             {
-                *badPtr = val;
+                *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
                 return 0i32;
             }
         }
