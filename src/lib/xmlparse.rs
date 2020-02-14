@@ -272,7 +272,7 @@ macro_rules! XML_STR {
 impl STRING_POOL {
     #[inline]
     unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
-        if !(self.ptr == self.end as *mut XML_Char && self.grow()) {
+        if self.ptr == self.end as *mut XML_Char && !self.grow() {
             false
         } else {
             *self.ptr = c;
