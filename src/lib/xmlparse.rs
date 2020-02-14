@@ -60,10 +60,6 @@ pub use crate::expat_h::{
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_SUSPENDED,
     XML_TRUE, 
 };
-pub use crate::siphash_h::{
-    sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash, siphash24,
-    sipkey,
-};
 pub use crate::lib::xmlrole::{
     prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
     PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME, XML_ROLE_ATTLIST_NONE,
@@ -95,22 +91,19 @@ pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::stdlib::{
     _IO_lock_t, __off64_t, __off_t, __pid_t, __ssize_t,
-    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf, getrandom, gettimeofday,
+    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
-use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset, read};
-use ::libc::{self, __errno_location, close, getenv, getpid, open, strcmp};
+use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, intptr_t};
-#[cfg(feature = "getrandom_syscall")]
-use libc::{SYS_getrandom, syscall};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 use num_traits::FromPrimitive;
 
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
 use std::cmp;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::mem;
 use std::ops;
@@ -859,9 +852,7 @@ pub struct XML_ParserStruct {
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
-    pub m_nsAtts: *mut NS_ATT,
-    pub m_nsAttsVersion: c_ulong,
-    pub m_nsAttsPower: c_uchar,
+    pub m_nsAtts: HashSet<HashKey>,
     pub m_position: super::xmltok::POSITION,
     pub m_tempPool: STRING_POOL,
     pub m_temp2Pool: STRING_POOL,
@@ -873,7 +864,6 @@ pub struct XML_ParserStruct {
     pub m_isParamEntity: XML_Bool,
     pub m_useForeignDTD: XML_Bool,
     pub m_paramEntityParsing: XML_ParamEntityParsing,
-    pub m_hash_secret_salt: c_ulong,
 
     #[cfg(feature = "mozilla")]
     pub m_mismatch: *const XML_Char,
@@ -918,14 +908,6 @@ pub struct block {
     pub next: *mut block,
     pub size: c_int,
     pub s: [XML_Char; 1],
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct NS_ATT {
-    pub version: c_ulong,
-    pub hash: c_ulong,
-    pub uriName: *const XML_Char,
 }
 
 pub type BINDING = binding;
@@ -1352,172 +1334,10 @@ const implicitContext: [XML_Char; 41] = XML_STR![
 
 /* To avoid warnings about unused functions: */
 
-/* Obtain entropy on Linux 3.17+ */
-unsafe extern "C" fn writeRandomBytes_getrandom_nonblock(
-    mut target: *mut c_void,
-    mut count: size_t,
-) -> c_int {
-    let mut success: c_int = 0; /* full count bytes written? */
-    let mut bytesWrittenTotal: size_t = 0;
-    let getrandomFlags: c_uint = GRND_NONBLOCK as c_uint;
-    loop {
-        let currentTarget: *mut c_void =
-            (target as *mut c_char).offset(bytesWrittenTotal as isize) as *mut c_void;
-        let bytesToWrite: size_t = count.wrapping_sub(bytesWrittenTotal);
-
-        #[cfg(not(feature = "getrandom_syscall"))]
-        let bytesWrittenMore: c_int =
-            getrandom(currentTarget, bytesToWrite, getrandomFlags) as c_int;
-        #[cfg(feature = "getrandom_syscall")]
-        let bytesWrittenMore: c_int =
-            syscall(SYS_getrandom, currentTarget, bytesToWrite, getrandomFlags) as c_int;
-
-        if bytesWrittenMore > 0 {
-            bytesWrittenTotal = (bytesWrittenTotal).wrapping_add(bytesWrittenMore as c_ulong);
-            if bytesWrittenTotal >= count {
-                success = 1
-            }
-        }
-        if !(success == 0 && *__errno_location() == EINTR) {
-            break;
-        }
-    }
-    return success;
-}
-/* defined(HAVE_GETRANDOM) || defined(HAVE_SYSCALL_GETRANDOM) */
-
-/* Extract entropy from /dev/urandom */
-unsafe extern "C" fn writeRandomBytes_dev_urandom(
-    mut target: *mut c_void,
-    mut count: size_t,
-) -> c_int {
-    let mut success: c_int = 0; /* full count bytes written? */
-    let mut bytesWrittenTotal: size_t = 0;
-    let fd: c_int = open(b"/dev/urandom\x00".as_ptr() as *const c_char, O_RDONLY);
-    if fd < 0 {
-        return 0i32;
-    }
-    loop {
-        let currentTarget: *mut c_void =
-            (target as *mut c_char).offset(bytesWrittenTotal as isize) as *mut c_void;
-        let bytesToWrite: size_t = count.wrapping_sub(bytesWrittenTotal);
-        let bytesWrittenMore: ssize_t = read(fd, currentTarget, bytesToWrite);
-        if bytesWrittenMore > 0 {
-            bytesWrittenTotal = (bytesWrittenTotal).wrapping_add(bytesWrittenMore as c_ulong);
-            if bytesWrittenTotal >= count {
-                success = 1
-            }
-        }
-        if !(success == 0 && *__errno_location() == EINTR) {
-            break;
-        }
-    }
-    close(fd);
-    return success;
-}
-/* ! defined(_WIN32) && defined(XML_DEV_URANDOM) */
-/* ! defined(HAVE_ARC4RANDOM_BUF) && ! defined(HAVE_ARC4RANDOM) */
-/* defined(HAVE_ARC4RANDOM) && ! defined(HAVE_ARC4RANDOM_BUF) */
-/* _WIN32 */
-
-unsafe extern "C" fn gather_time_entropy() -> c_ulong {
-    let mut tv: timeval = timeval {
-        tv_sec: 0,
-        tv_usec: 0,
-    };
-    let mut gettimeofday_res: c_int = 0;
-    gettimeofday_res = gettimeofday(&mut tv, NULL as *mut timezone);
-    if gettimeofday_res == 0 {
-    } else {
-        __assert_fail(
-            b"gettimeofday_res == 0\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
-                as *const c_char,
-            782u32,
-            (*::std::mem::transmute::<&[u8; 40], &[c_char; 40]>(
-                b"unsigned long gather_time_entropy(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    /* defined(NDEBUG) */
-    /* Microseconds time is <20 bits entropy */
-    return tv.tv_usec as c_ulong;
-}
-/* ! defined(HAVE_ARC4RANDOM_BUF) && ! defined(HAVE_ARC4RANDOM) */
-
-unsafe extern "C" fn ENTROPY_DEBUG(mut label: *const c_char, mut entropy: c_ulong) -> c_ulong {
-    if cfg!(feature = "mozilla") {
-        return entropy;
-    }
-
-    let EXPAT_ENTROPY_DEBUG: *const c_char =
-        getenv(b"EXPAT_ENTROPY_DEBUG\x00".as_ptr() as *const c_char);
-    if !EXPAT_ENTROPY_DEBUG.is_null()
-        && strcmp(EXPAT_ENTROPY_DEBUG, b"1\x00".as_ptr() as *const c_char) == 0
-    {
-        fprintf(
-            stderr,
-            b"Entropy: %s --> 0x%0*lx (%lu bytes)\n\x00".as_ptr() as *const c_char,
-            label,
-            ::std::mem::size_of::<c_ulong>() as c_int * 2i32,
-            entropy,
-            ::std::mem::size_of::<c_ulong>() as c_ulong,
-        );
-    }
-    entropy
-}
-
-unsafe fn generate_hash_secret_salt() -> c_ulong {
-    let mut entropy: c_ulong = 0;
-    /* "Failproof" high quality providers: */
-    /* Try high quality providers first .. */
-    if writeRandomBytes_getrandom_nonblock(
-        &mut entropy as *mut c_ulong as *mut c_void,
-        ::std::mem::size_of::<c_ulong>() as c_ulong,
-    ) != 0
-    {
-        return ENTROPY_DEBUG(b"getrandom\x00".as_ptr() as *const c_char, entropy);
-    }
-    if writeRandomBytes_dev_urandom(
-        &mut entropy as *mut c_ulong as *mut c_void,
-        ::std::mem::size_of::<c_ulong>() as c_ulong,
-    ) != 0
-    {
-        return ENTROPY_DEBUG(b"/dev/urandom\x00".as_ptr() as *const c_char, entropy);
-    }
-    /* ! defined(_WIN32) && defined(XML_DEV_URANDOM) */
-    /* .. and self-made low quality for backup: */
-    /* Process ID is 0 bits entropy if attacker has local access */
-    entropy = gather_time_entropy() ^ getpid() as c_ulong;
-    /* Factors are 2^31-1 and 2^61-1 (Mersenne primes M31 and M61) */
-    if ::std::mem::size_of::<c_ulong>() as c_ulong == 4 {
-        ENTROPY_DEBUG(
-            b"fallback(4)\x00".as_ptr() as *const c_char,
-            entropy.wrapping_mul(2147483647u64),
-        )
-    } else {
-        ENTROPY_DEBUG(
-            b"fallback(8)\x00".as_ptr() as *const c_char,
-            entropy.wrapping_mul(2305843009213693951u64),
-        )
-    }
-}
-
 impl XML_ParserStruct {
-    unsafe fn get_hash_secret_salt(&mut self) -> c_ulong {
-        if !self.m_parentParser.is_null() {
-            return (*self.m_parentParser).get_hash_secret_salt();
-        }
-        self.m_hash_secret_salt
-    }
-
     /* only valid for root parser */
     unsafe fn startParsing(&mut self) -> XML_Bool {
         /* hash functions must be initialized before setContext() is called */
-        if self.m_hash_secret_salt == 0u64 {
-            self.m_hash_secret_salt = generate_hash_secret_salt()
-        }
         if self.m_ns != 0 {
             /* implicit context only set for root parser, since child
                parsers (i.e. external entity parsers) will inherit it
@@ -1620,9 +1440,7 @@ impl XML_ParserStruct {
             m_nSpecifiedAtts: 0,
             m_idAttIndex: 0,
             m_atts: Vec::new(),
-            m_nsAtts: ptr::null_mut(),
-            m_nsAttsVersion: 0,
-            m_nsAttsPower: 0,
+            m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
             m_tempPool: STRING_POOL::new(),
             m_temp2Pool: STRING_POOL::new(),
@@ -1634,7 +1452,6 @@ impl XML_ParserStruct {
             m_isParamEntity: 0,
             m_useForeignDTD: 0,
             m_paramEntityParsing: 0,
-            m_hash_secret_salt: 0,
 
             #[cfg(feature = "mozilla")]
             m_mismatch: ptr::null(),
@@ -1683,9 +1500,6 @@ impl XML_ParserStruct {
         parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
         parser.m_ns = XML_FALSE;
         parser.m_ns_triplets = XML_FALSE;
-        parser.m_nsAtts = NULL as *mut NS_ATT;
-        parser.m_nsAttsVersion = 0;
-        parser.m_nsAttsPower = 0;
         parser.m_protocolEncodingName = NULL as *const XML_Char;
         parser.m_tempPool.init();
         parser.m_temp2Pool.init();
@@ -1758,7 +1572,6 @@ impl XML_ParserStruct {
         self.m_isParamEntity = XML_FALSE;
         self.m_useForeignDTD = XML_FALSE;
         self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
-        self.m_hash_secret_salt = 0u64;
     }
 
     /* moves list of bindings to m_freeBindingList */
@@ -1934,7 +1747,6 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
        from hash tables associated with either parser without us having
        to worry which hash secrets each table has.
     */
-    let mut oldhash_secret_salt: c_ulong = 0;
     /* Validate the oldParser parameter before we pull everything out of it */
     if oldParser.is_null() {
         return NULL as XML_Parser;
@@ -1975,7 +1787,6 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
        from hash tables associated with either parser without us having
        to worry which hash secrets each table has.
     */
-    oldhash_secret_salt = (*parser).m_hash_secret_salt;
     if context.is_null() {
         newDtd = oldDtd
     }
@@ -2031,7 +1842,6 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     }
     (*parser).m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
     (*parser).m_ns_triplets = oldns_triplets;
-    (*parser).m_hash_secret_salt = oldhash_secret_salt;
     (*parser).m_parentParser = oldParser;
     (*parser).m_paramEntityParsing = oldParamEntityParsing;
     (*parser).m_prologState.inEntityValue = oldInEntityValue;
@@ -2127,7 +1937,6 @@ impl Drop for XML_ParserStruct {
             FREE!(self.m_groupConnector);
             FREE!(self.m_buffer);
             FREE!(self.m_dataBuf);
-            FREE!(self.m_nsAtts);
             if self.m_unknownEncodingRelease.is_some() {
                 self.m_unknownEncodingRelease
                     .expect("non-null function pointer")(self.m_unknownEncodingData);
@@ -2634,8 +2443,9 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
     {
         return 0i32;
     }
-    (*parser).m_hash_secret_salt = hash_salt;
-    1
+    // FIXME
+    //return 1;
+    0
 }
 /* Parses some input. Returns XML_Status::ERROR if a fatal error is
    detected.  The last call to XML_Parse must have isFinal true; len
@@ -4521,67 +4331,18 @@ impl XML_ParserStruct {
         let mut i = 0; /* hash table index */
         if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
             let mut j_0: c_int = 0;
-            let mut version: c_ulong = self.m_nsAttsVersion;
-            let mut nsAttsSize: c_int = (1) << self.m_nsAttsPower as c_int;
-            let mut oldNsAttsPower: c_uchar = self.m_nsAttsPower;
             if nPrefixes != 0 { // MOZILLA CHANGE
+                self.m_nsAtts.clear();
                 /* size of hash table must be at least 2 * (# of prefixed attributes) */
-                if nPrefixes << 1 >> self.m_nsAttsPower as c_int != 0 {
-                    /* true for m_nsAttsPower = 0 */
-                    let mut temp_0: *mut NS_ATT = 0 as *mut NS_ATT;
-                    loop
-                    /* hash table size must also be a power of 2 and >= 8 */
-                    {
-                        let fresh20 = self.m_nsAttsPower;
-                        self.m_nsAttsPower = self.m_nsAttsPower.wrapping_add(1);
-                        if !(nPrefixes >> fresh20 as c_int != 0) {
-                            break;
-                        }
-                    }
-                    if (self.m_nsAttsPower as c_int) < 3 {
-                        self.m_nsAttsPower = 3u8
-                    }
-                    nsAttsSize = (1) << self.m_nsAttsPower as c_int;
-                    temp_0 = REALLOC!(self.m_nsAtts => [NS_ATT; nsAttsSize]);
-                    if temp_0.is_null() {
-                        /* Restore actual size of memory in m_nsAtts */
-                        self.m_nsAttsPower = oldNsAttsPower;
-                        return XML_Error::NO_MEMORY;
-                    }
-                    self.m_nsAtts = temp_0;
-                    version = 0
+                if self.m_nsAtts.try_reserve((nPrefixes as usize) << 1).is_err() {
+                    return XML_Error::NO_MEMORY;
                 }
-                /* using a version flag saves us from initializing m_nsAtts every time */
-                if version == 0 {
-                    /* initialize version flags when version wraps around */
-                    version = INIT_ATTS_VERSION as c_ulong;
-                    j_0 = nsAttsSize;
-                    while j_0 != 0 {
-                        j_0 -= 1;
-                        (*self.m_nsAtts.offset(j_0 as isize)).version = version
-                    }
-                }
-                version = version.wrapping_sub(1);
-                self.m_nsAttsVersion = version;
             } // MOZILLA CHANGE
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
                 if *s.offset(-1) as c_int == 2 {
                     let mut b: *const BINDING = 0 as *const BINDING;
-                    let mut uriHash: c_ulong = 0;
-                    let mut sip_state: siphash = siphash {
-                        v0: 0,
-                        v1: 0,
-                        v2: 0,
-                        v3: 0,
-                        buf: [0; 8],
-                        p: 0 as *mut c_uchar,
-                        c: 0,
-                    };
-                    let mut sip_key: sipkey = sipkey { k: [0; 2] };
-                    self.copy_salt_to_sipkey(&mut sip_key);
-                    sip24_init(&mut sip_state, &mut sip_key);
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
@@ -4628,12 +4389,6 @@ impl XML_ParserStruct {
                         }
                         j_0 += 1
                     }
-                    sip24_update(
-                        &mut sip_state,
-                        (*b).uri as *const c_void,
-                        ((*b).uriLen as c_ulong)
-                            .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                    );
                     loop {
                         let fresh22 = s;
                         s = s.offset(1);
@@ -4641,11 +4396,6 @@ impl XML_ParserStruct {
                             break;
                         }
                     }
-                    sip24_update(
-                        &mut sip_state,
-                        s as *const c_void,
-                        keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-                    );
                     loop {
                         /* copies null terminator */
                         if if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
@@ -4667,38 +4417,14 @@ impl XML_ParserStruct {
                             break;
                         }
                     }
-                    uriHash = sip24_final(&mut sip_state);
                     /* Check hash table for duplicate of expanded name (uriName).
                     Derived from code in lookup(parser, HASH_TABLE *table, ...).
                     */
-                    let mut step: c_uchar = 0; /* index into hash table */
-                    let mut mask: c_ulong = (nsAttsSize - 1) as c_ulong;
-                    j_0 = (uriHash & mask) as c_int;
-                    while (*self.m_nsAtts.offset(j_0 as isize)).version == version {
-                        /* for speed we compare stored hash values first */
-                        if uriHash == (*self.m_nsAtts.offset(j_0 as isize)).hash {
-                            let mut s1: *const XML_Char = self.m_tempPool.start;
-                            let mut s2: *const XML_Char =
-                                (*self.m_nsAtts.offset(j_0 as isize)).uriName;
-                            /* s1 is null terminated, but not s2 */
-                            while *s1 as c_int == *s2 as c_int && *s1 as c_int != 0 {
-                                s1 = s1.offset(1);
-                                s2 = s2.offset(1)
-                            }
-                            if *s1 as c_int == 0 {
-                                return XML_Error::DUPLICATE_ATTRIBUTE;
-                            }
-                        }
-                        if step == 0 {
-                            step = ((uriHash & !mask) >> self.m_nsAttsPower as c_int - 1
-                                & mask >> 2
-                                | 1) as c_uchar
-                        }
-                        if j_0 < step as c_int {
-                            j_0 += nsAttsSize - step as c_int
-                        } else {
-                            j_0 -= step as c_int
-                        };
+                    let hk = HashKey::from(self.m_tempPool.start as KEY);
+                    if !self.m_nsAtts.insert(hk) {
+                        // FIXME: the original code checks here without inserting,
+                        // then does the actual insertion below (see comment)
+                        return XML_Error::DUPLICATE_ATTRIBUTE;
                     }
                     if self.m_ns_triplets != 0 {
                         /* append namespace separator and prefix */
@@ -4726,14 +4452,10 @@ impl XML_ParserStruct {
                         }
                     }
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.start;
+                    self.m_atts[i].name = self.m_tempPool.start;
                     self.m_tempPool.start = self.m_tempPool.ptr;
-                    self.m_atts[i].name = s;
-                    /* fill empty slot with new version, uriName and hash value */
-                    (*self.m_nsAtts.offset(j_0 as isize)).version = version;
-                    (*self.m_nsAtts.offset(j_0 as isize)).hash = uriHash;
-                    let ref mut fresh28 = (*self.m_nsAtts.offset(j_0 as isize)).uriName;
-                    *fresh28 = s;
+                    // FIXME: perform the hash table insertion here,
+                    // to match the original C code's semantics???
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
                         i += 1;
@@ -9009,34 +8731,6 @@ unsafe extern "C" fn keylen(mut s: KEY) -> size_t {
         len = len.wrapping_add(1)
     }
     len
-}
-
-impl XML_ParserStruct {
-    unsafe fn copy_salt_to_sipkey(&mut self, mut key: *mut sipkey) {
-        (*key).k[0] = 0u64;
-        (*key).k[1] = self.get_hash_secret_salt();
-    }
-
-    unsafe fn hash(&mut self, mut s: KEY) -> c_ulong {
-        let mut state: siphash = siphash {
-            v0: 0,
-            v1: 0,
-            v2: 0,
-            v3: 0,
-            buf: [0; 8],
-            p: 0 as *mut c_uchar,
-            c: 0,
-        };
-        let mut key: sipkey = sipkey { k: [0; 2] };
-        self.copy_salt_to_sipkey(&mut key);
-        sip24_init(&mut state, &mut key);
-        sip24_update(
-            &mut state,
-            s as *const c_void,
-            keylen(s).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-        );
-        return sip24_final(&mut state);
-    }
 }
 
 
