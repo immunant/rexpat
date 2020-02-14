@@ -3,7 +3,7 @@ use libc::{c_char, c_int, c_long, size_t};
 use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
 use crate::ascii_h::*;
-use crate::expat_h::{XML_Error, XML_ERROR_NONE};
+use crate::expat_h::{XML_Error};
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_h::*;
 use crate::xmltok_impl_h::ByteType;
@@ -1617,7 +1617,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                            att.valueEnd = buf.as_ptr();
 
                            let res = f(att);
-                           if res != XML_ERROR_NONE {
+                           if res != XML_Error::NONE {
                                return res;
                            }
                        }
@@ -1632,7 +1632,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                            att.valueEnd = buf.as_ptr();
 
                            let res = f(att);
-                           if res != XML_ERROR_NONE {
+                           if res != XML_Error::NONE {
                                return res;
                            }
                        }
@@ -1664,7 +1664,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                    }
                    ByteType::GT | ByteType::SOL => {
                        if state != State::InValue {
-                           return XML_ERROR_NONE
+                           return XML_Error::NONE
                        }
                    }
                    _ => { }

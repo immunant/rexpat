@@ -1,5 +1,5 @@
 use crate::stddef_h::size_t;
-use ::libc::{timespec, timeval};
+use ::libc::timespec;
 use libc::{c_char, c_int, c_long, c_schar, c_uint, c_ulong, c_ushort, c_void};
 extern "C" {
     #[no_mangle]
@@ -17,8 +17,6 @@ extern "C" {
 
     #[no_mangle]
     pub fn longjmp(_: *mut __jmp_buf_tag, _: c_int) -> !;
-    #[no_mangle]
-    pub fn getrandom(__buffer: *mut c_void, __length: size_t, __flags: c_uint) -> ssize_t;
 
     #[no_mangle]
     pub static mut stdout: *mut FILE;
@@ -78,8 +76,6 @@ extern "C" {
     pub fn strlen(_: *const c_char) -> c_ulong;
     #[no_mangle]
     pub fn fstat(__fd: c_int, __buf: *mut stat) -> c_int;
-    #[no_mangle]
-    pub fn gettimeofday(__tv: *mut timeval, __tz: __timezone_ptr_t) -> c_int;
     #[no_mangle]
     pub fn read(__fd: c_int, __buf: *mut c_void, __nbytes: size_t) -> ssize_t;
 

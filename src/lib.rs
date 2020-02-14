@@ -25,7 +25,6 @@ pub mod expat_config_h;
 pub mod expat_external_h;
 pub mod expat_h;
 pub mod filemap_h;
-pub mod siphash_h;
 pub mod stdbool_h;
 pub mod stddef_h;
 pub mod stdlib;
