@@ -45,37 +45,20 @@ pub use crate::expat_h::{
     XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
     XML_Content_Quant, XML_Content_Type, XML_DefaultHandler, XML_ElementDeclHandler, XML_Encoding,
     XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
-    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_Expat_Version,
+    XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ErrorCode, XML_Expat_Version,
     XML_ExternalEntityRefHandler, XML_Feature, XML_FeatureEnum, XML_Memory_Handling_Suite,
     XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing, XML_Parser,
     XML_Parsing, XML_ParsingStatus, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
-    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_CQUANT_NONE, XML_CQUANT_OPT,
-    XML_CQUANT_PLUS, XML_CQUANT_REP, XML_CTYPE_ANY, XML_CTYPE_CHOICE, XML_CTYPE_EMPTY,
-    XML_CTYPE_MIXED, XML_CTYPE_NAME, XML_CTYPE_SEQ, XML_ERROR_ABORTED, XML_ERROR_ASYNC_ENTITY,
-    XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF, XML_ERROR_BAD_CHAR_REF, XML_ERROR_BINARY_ENTITY_REF,
-    XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING, XML_ERROR_DUPLICATE_ATTRIBUTE,
-    XML_ERROR_ENTITY_DECLARED_IN_PE, XML_ERROR_EXTERNAL_ENTITY_HANDLING,
-    XML_ERROR_FEATURE_REQUIRES_XML_DTD, XML_ERROR_FINISHED, XML_ERROR_INCOMPLETE_PE,
-    XML_ERROR_INCORRECT_ENCODING, XML_ERROR_INVALID_ARGUMENT, XML_ERROR_INVALID_TOKEN,
-    XML_ERROR_JUNK_AFTER_DOC_ELEMENT, XML_ERROR_MISPLACED_XML_PI, XML_ERROR_NONE,
-    XML_ERROR_NOT_STANDALONE, XML_ERROR_NOT_SUSPENDED, XML_ERROR_NO_ELEMENTS, XML_ERROR_NO_MEMORY,
-    XML_ERROR_PARAM_ENTITY_REF, XML_ERROR_PARTIAL_CHAR, XML_ERROR_PUBLICID,
-    XML_ERROR_RECURSIVE_ENTITY_REF, XML_ERROR_RESERVED_NAMESPACE_URI,
-    XML_ERROR_RESERVED_PREFIX_XML, XML_ERROR_RESERVED_PREFIX_XMLNS, XML_ERROR_SUSPENDED,
-    XML_ERROR_SUSPEND_PE, XML_ERROR_SYNTAX, XML_ERROR_TAG_MISMATCH, XML_ERROR_TEXT_DECL,
-    XML_ERROR_UNBOUND_PREFIX, XML_ERROR_UNCLOSED_CDATA_SECTION, XML_ERROR_UNCLOSED_TOKEN,
-    XML_ERROR_UNDECLARING_PREFIX, XML_ERROR_UNDEFINED_ENTITY, XML_ERROR_UNEXPECTED_STATE,
-    XML_ERROR_UNKNOWN_ENCODING, XML_ERROR_XML_DECL, XML_FALSE, XML_FEATURE_ATTR_INFO,
+    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_FALSE, XML_FEATURE_ATTR_INFO,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
     XML_INITIALIZED,
     XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_STATUS_ERROR, XML_STATUS_ERROR_0,
-    XML_STATUS_OK, XML_STATUS_OK_0, XML_STATUS_SUSPENDED, XML_STATUS_SUSPENDED_0, XML_SUSPENDED,
-    XML_TRUE,
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_SUSPENDED,
+    XML_TRUE, 
 };
 pub use crate::siphash_h::{
     sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash, siphash24,
@@ -121,6 +104,7 @@ pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 #[cfg(feature = "getrandom_syscall")]
 use libc::{SYS_getrandom, syscall};
+use num_traits::FromPrimitive;
 
 use fallible_collections::FallibleBox;
 
@@ -1608,7 +1592,7 @@ impl XML_ParserStruct {
             m_unknownEncodingRelease: None,
             m_prologState: super::xmlrole::PROLOG_STATE::default(),
             m_processor: None,
-            m_errorCode: 0,
+            m_errorCode: XML_Error::NONE,
             m_eventPtr: ptr::null(),
             m_eventEndPtr: ptr::null(),
             m_positionPtr: ptr::null(),
@@ -1753,7 +1737,7 @@ impl XML_ParserStruct {
             0,
             ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
         );
-        self.m_errorCode = XML_ERROR_NONE;
+        self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = NULL as *const c_char;
         self.m_eventEndPtr = NULL as *const c_char;
         self.m_positionPtr = NULL as *const c_char;
@@ -1850,19 +1834,19 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
    XML_ParserCreate. On success XML_SetEncoding returns non-zero,
    zero otherwise.
    Note: Calling XML_SetEncoding after XML_Parse or XML_ParseBuffer
-     has no effect and returns XML_STATUS_ERROR.
+     has no effect and returns XML_Status::ERROR.
 */
 
 impl XML_ParserStruct {
     pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
         /* Block after XML_Parse()/XML_ParseBuffer() has been called.
         XXX There's no way for the caller to determine which of the
-        XXX possible error cases caused the XML_STATUS_ERROR return.
+        XXX possible error cases caused the XML_Status::ERROR return.
         */
         if self.m_parsingStatus.parsing == XML_PARSING
             || self.m_parsingStatus.parsing == XML_SUSPENDED
         {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         }
 
         /* Get rid of any previous encoding name */
@@ -1874,10 +1858,10 @@ impl XML_ParserStruct {
             /* Copy the new encoding name into allocated memory */
             self.m_protocolEncodingName = copyString(encodingName);
             if self.m_protocolEncodingName.is_null() {
-                return XML_STATUS_ERROR_0 as XML_Status;
+                return XML_Status::ERROR;
             }
         }
-        XML_STATUS_OK_0 as XML_Status
+        XML_Status::OK
     }
 }
 
@@ -1887,7 +1871,7 @@ pub unsafe extern "C" fn XML_SetEncoding(
     mut encodingName: *const XML_Char,
 ) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
 
     (*parser).setEncoding(encodingName)
@@ -2180,13 +2164,13 @@ pub unsafe extern "C" fn XML_UseParserAsHandlerArg(mut parser: XML_Parser) {
    Note: If this function is called, then this must be done before
      the first call to XML_Parse or XML_ParseBuffer, since it will
      have no effect after that.  Returns
-     XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING.
+     XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING.
    Note: If the document does not have a DOCTYPE declaration at all,
      then startDoctypeDeclHandler and endDoctypeDeclHandler will not
      be called, despite an external subset being parsed.
    Note: If XML_DTD is not defined when Expat is compiled, returns
-     XML_ERROR_FEATURE_REQUIRES_XML_DTD.
-   Note: If parser == NULL, returns XML_ERROR_INVALID_ARGUMENT.
+     XML_Error::FEATURE_REQUIRES_XML_DTD.
+   Note: If parser == NULL, returns XML_Error::INVALID_ARGUMENT.
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_UseForeignDTD(
@@ -2194,16 +2178,16 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
     mut useDTD: XML_Bool,
 ) -> XML_Error {
     if parser.is_null() {
-        return XML_ERROR_INVALID_ARGUMENT;
+        return XML_Error::INVALID_ARGUMENT;
     }
     /* block after XML_Parse()/XML_ParseBuffer() has been called */
     if (*parser).m_parsingStatus.parsing == XML_PARSING
         || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
     {
-        return XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING;
+        return XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING;
     }
     (*parser).m_useForeignDTD = useDTD;
-    XML_ERROR_NONE
+    XML_Error::NONE
 }
 /* If do_nst is non-zero, and namespace processing is in effect, and
    a name has a prefix (i.e. an explicit namespace qualifier) then
@@ -2249,24 +2233,24 @@ pub unsafe extern "C" fn XML_SetUserData(mut parser: XML_Parser, mut p: *mut c_v
    left to the application: this value will be passed through as the
    base argument to the XML_ExternalEntityRefHandler,
    XML_NotationDeclHandler and XML_UnparsedEntityDeclHandler. The base
-   argument will be copied.  Returns XML_STATUS_ERROR if out of memory,
-   XML_STATUS_OK otherwise.
+   argument will be copied.  Returns XML_Status::ERROR if out of memory,
+   XML_Status::OK otherwise.
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_Char) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     if !p.is_null() {
         p = (*(*parser).m_dtd).pool.copyString(p);
         if p.is_null() {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         }
         (*parser).m_curBase = p
     } else {
         (*parser).m_curBase = NULL as *const XML_Char
     }
-    XML_STATUS_OK_0 as XML_Status
+    XML_Status::OK
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetBase(mut parser: XML_Parser) -> *const XML_Char {
@@ -2653,7 +2637,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
     (*parser).m_hash_secret_salt = hash_salt;
     1
 }
-/* Parses some input. Returns XML_STATUS_ERROR if a fatal error is
+/* Parses some input. Returns XML_Status::ERROR if a fatal error is
    detected.  The last call to XML_Parse must have isFinal true; len
    may be zero for this call (or any other).
 
@@ -2666,21 +2650,21 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
 impl XML_ParserStruct {
     pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR as XML_Status;
         }
         match self.m_parsingStatus.parsing {
             3 => {
-                self.m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                self.m_errorCode = XML_Error::SUSPENDED;
+                return XML_Status::ERROR as XML_Status;
             }
             2 => {
-                self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                self.m_errorCode = XML_Error::FINISHED;
+                return XML_Status::ERROR;
             }
             0 => {
                 if self.m_parentParser.is_null() && self.startParsing() == 0 {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    self.m_errorCode = XML_Error::NO_MEMORY;
+                    return XML_Status::ERROR;
                 }
             }
             _ => {}
@@ -2690,7 +2674,7 @@ impl XML_ParserStruct {
         if len == 0 {
             self.m_parsingStatus.finalBuffer = isFinal as XML_Bool;
             if isFinal == 0 {
-                return XML_STATUS_OK_0 as XML_Status;
+                return XML_Status::OK;
             }
             self.m_positionPtr = self.m_bufferPtr;
             self.m_parseEndPtr = self.m_bufferEnd;
@@ -2706,7 +2690,7 @@ impl XML_ParserStruct {
                 ),
                 &mut self.m_bufferPtr,
             );
-            if self.m_errorCode == XML_ERROR_NONE {
+            if self.m_errorCode == XML_Error::NONE {
                 match self.m_parsingStatus.parsing {
                     3 => {
                         /* It is hard to be certain, but it seems that this case
@@ -2729,7 +2713,7 @@ impl XML_ParserStruct {
                             &mut self.m_position,
                         );
                         self.m_positionPtr = self.m_bufferPtr;
-                        return XML_STATUS_SUSPENDED_0 as XML_Status;
+                        return XML_Status::SUSPENDED;
                     }
                     0 | 1 => {
                         /* LCOV_EXCL_STOP */
@@ -2738,16 +2722,16 @@ impl XML_ParserStruct {
                     _ => {}
                 }
                 /* fall through */
-                return XML_STATUS_OK_0 as XML_Status;
+                return XML_Status::OK;
             }
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            XML_STATUS_ERROR_0 as XML_Status
+            XML_Status::ERROR
         } else {
             /* not defined XML_CONTEXT_BYTES */
             let mut buff: *mut c_void = self.getBuffer(len);
             if buff.is_null() {
-                XML_STATUS_ERROR_0 as XML_Status
+                XML_Status::ERROR as XML_Status
             } else {
                 memcpy(buff, s as *const c_void, len as c_ulong);
                 XML_ParseBuffer(self, len, isFinal)
@@ -2765,9 +2749,9 @@ pub unsafe extern "C" fn XML_Parse(
 ) -> XML_Status {
     if parser.is_null() || len < 0 || s.is_null() && len != 0 {
         if !parser.is_null() {
-            (*parser).m_errorCode = XML_ERROR_INVALID_ARGUMENT
+            (*parser).m_errorCode = XML_Error::INVALID_ARGUMENT
         }
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     (*parser).parse(s, len, isFinal)
 }
@@ -2775,20 +2759,20 @@ pub unsafe extern "C" fn XML_Parse(
 impl XML_ParserStruct {
     pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
         let mut start: *const c_char = 0 as *const c_char;
-        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        let mut result: XML_Status = XML_Status::OK;
         match self.m_parsingStatus.parsing {
             3 => {
-                self.m_errorCode = XML_ERROR_SUSPENDED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                self.m_errorCode = XML_Error::SUSPENDED;
+                return XML_Status::ERROR as XML_Status;
             }
             2 => {
-                self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                self.m_errorCode = XML_Error::FINISHED;
+                return XML_Status::ERROR as XML_Status;
             }
             0 => {
                 if self.m_parentParser.is_null() && self.startParsing() == 0 {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    self.m_errorCode = XML_Error::NO_MEMORY;
+                    return XML_Status::ERROR;
                 }
             }
             _ => {}
@@ -2809,14 +2793,14 @@ impl XML_ParserStruct {
             ),
             &mut self.m_bufferPtr,
         );
-        if self.m_errorCode != XML_ERROR_NONE {
+        if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR as XML_Status;
         } else {
             match self.m_parsingStatus.parsing {
                 3 => {
-                    result = XML_STATUS_SUSPENDED_0 as XML_Status
+                    result = XML_Status::SUSPENDED;
                     /* should not happen */
                 }
                 0 | 1 => {
@@ -2847,7 +2831,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     mut isFinal: c_int,
 ) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
 
     (*parser).parseBuffer(len, isFinal)
@@ -2856,16 +2840,16 @@ pub unsafe extern "C" fn XML_ParseBuffer(
 impl XML_ParserStruct {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
-            self.m_errorCode = XML_ERROR_NO_MEMORY;
+            self.m_errorCode = XML_Error::NO_MEMORY;
             return ptr::null_mut();
         }
         match self.m_parsingStatus.parsing {
             3 => {
-                self.m_errorCode = XML_ERROR_SUSPENDED;
+                self.m_errorCode = XML_Error::SUSPENDED;
                 return ptr::null_mut();
             }
             2 => {
-                self.m_errorCode = XML_ERROR_FINISHED;
+                self.m_errorCode = XML_Error::FINISHED;
                 return ptr::null_mut();
             }
             _ => {}
@@ -2876,7 +2860,7 @@ impl XML_ParserStruct {
             );
             let mut neededSize = match maybe_needed_size {
                 None => {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    self.m_errorCode = XML_Error::NO_MEMORY;
                     return ptr::null_mut();
                 }
                 Some(s) => s,
@@ -2912,14 +2896,14 @@ impl XML_ParserStruct {
                     bufferSize = match 2i32.checked_mul(bufferSize) {
                         Some(s) => s,
                         None => {
-                            self.m_errorCode = XML_ERROR_NO_MEMORY;
+                            self.m_errorCode = XML_Error::NO_MEMORY;
                             return ptr::null_mut();
                         }
                     }
                 }
                 let newBuf = MALLOC![c_char; bufferSize];
                 if newBuf.is_null() {
-                    self.m_errorCode = XML_ERROR_NO_MEMORY;
+                    self.m_errorCode = XML_Error::NO_MEMORY;
                     return ptr::null_mut();
                 }
                 self.m_bufferLim = newBuf.offset(bufferSize as isize);
@@ -2971,16 +2955,16 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
 
    Can be called from most handlers, including DTD related call-backs,
    except when parsing an external parameter entity and resumable != 0.
-   Returns XML_STATUS_OK when successful, XML_STATUS_ERROR otherwise.
+   Returns XML_Status::OK when successful, XML_Status::ERROR otherwise.
    Possible error codes:
-   - XML_ERROR_SUSPENDED: when suspending an already suspended parser.
-   - XML_ERROR_FINISHED: when the parser has already finished.
-   - XML_ERROR_SUSPEND_PE: when suspending while parsing an external PE.
+   - XML_Error::SUSPENDED: when suspending an already suspended parser.
+   - XML_Error::FINISHED: when the parser has already finished.
+   - XML_Error::SUSPEND_PE: when suspending while parsing an external PE.
 
    When resumable != 0 (true) then parsing is suspended, that is,
    XML_Parse() and XML_ParseBuffer() return XML_STATUS_SUSPENDED.
    Otherwise, parsing is aborted, that is, XML_Parse() and XML_ParseBuffer()
-   return XML_STATUS_ERROR with error code XML_ERROR_ABORTED.
+   return XML_Status::ERROR with error code XML_Error::ABORTED.
 
    *Note*:
    This will be applied to the current parser instance only, that is, if
@@ -2997,20 +2981,20 @@ impl XML_ParserStruct {
         match self.m_parsingStatus.parsing {
             3 => {
                 if resumable != 0 {
-                    self.m_errorCode = XML_ERROR_SUSPENDED;
-                    return XML_STATUS_ERROR_0 as XML_Status;
+                    self.m_errorCode = XML_Error::SUSPENDED;
+                    return XML_Status::ERROR;
                 }
                 self.m_parsingStatus.parsing = XML_FINISHED
             }
             2 => {
-                self.m_errorCode = XML_ERROR_FINISHED;
-                return XML_STATUS_ERROR_0 as XML_Status;
+                self.m_errorCode = XML_Error::FINISHED;
+                return XML_Status::ERROR;
             }
             _ => {
                 if resumable != 0 {
                     if self.m_isParamEntity != 0 {
-                        self.m_errorCode = XML_ERROR_SUSPEND_PE;
-                        return XML_STATUS_ERROR_0 as XML_Status;
+                        self.m_errorCode = XML_Error::SUSPEND_PE;
+                        return XML_Status::ERROR;
                     }
                     self.m_parsingStatus.parsing = XML_SUSPENDED
                 } else {
@@ -3018,21 +3002,21 @@ impl XML_ParserStruct {
                 }
             }
         }
-        XML_STATUS_OK_0 as XML_Status
+        XML_Status::OK
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR;
     }
     (*parser).stopParser(resumable)
 }
 /* Resumes parsing after it has been suspended with XML_StopParser().
    Must not be called from within a handler call-back. Returns same
    status codes as XML_Parse() or XML_ParseBuffer().
-   Additional error code XML_ERROR_NOT_SUSPENDED possible.
+   Additional error code XML_Error::NOT_SUSPENDED possible.
 
    *Note*:
    This must be called on the most deeply nested child parser instance
@@ -3043,10 +3027,10 @@ pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool)
 */
 impl XML_ParserStruct {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
-        let mut result: XML_Status = XML_STATUS_OK_0 as XML_Status;
+        let mut result: XML_Status = XML_Status::OK;
         if self.m_parsingStatus.parsing != XML_SUSPENDED {
-            self.m_errorCode = XML_ERROR_NOT_SUSPENDED;
-            return XML_STATUS_ERROR_0 as XML_Status;
+            self.m_errorCode = XML_Error::NOT_SUSPENDED;
+            return XML_Status::ERROR;
         }
         self.m_parsingStatus.parsing = XML_PARSING;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
@@ -3057,13 +3041,13 @@ impl XML_ParserStruct {
             ),
             &mut self.m_bufferPtr,
         );
-        if self.m_errorCode != XML_ERROR_NONE {
+        if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
-            return XML_STATUS_ERROR_0 as XML_Status;
+            return XML_Status::ERROR;
         } else {
             match self.m_parsingStatus.parsing {
-                3 => result = XML_STATUS_SUSPENDED_0 as XML_Status,
+                3 => result = XML_Status::SUSPENDED,
                 0 | 1 => {
                     if self.m_parsingStatus.finalBuffer != 0 {
                         self.m_parsingStatus.parsing = XML_FINISHED;
@@ -3094,7 +3078,7 @@ impl XML_ParserStruct {
 #[no_mangle]
 pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status {
     if parser.is_null() {
-        return XML_STATUS_ERROR_0 as XML_Status;
+        return XML_Status::ERROR as XML_Status;
     }
 
     (*parser).resumeParser()
@@ -3127,15 +3111,17 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
     }
     *status = (*parser).m_parsingStatus;
 }
-/* If XML_Parse or XML_ParseBuffer have returned XML_STATUS_ERROR, then
+/* If XML_Parse or XML_ParseBuffer have returned XML_Status::ERROR, then
    XML_GetErrorCode returns information about the error.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_Error {
-    if parser.is_null() {
-        return XML_ERROR_INVALID_ARGUMENT;
-    }
-    return (*parser).m_errorCode;
+pub unsafe extern "C" fn XML_GetErrorCode(mut parser: XML_Parser) -> XML_ErrorCode {
+    XML_GetError(parser).code() 
+}
+pub unsafe fn XML_GetError(mut parser: XML_Parser) -> XML_Error { 
+    if let Some(parser) = parser.as_ref() {
+        parser.m_errorCode
+    } else { XML_Error::INVALID_ARGUMENT }
 }
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_Index {
@@ -3214,7 +3200,7 @@ pub unsafe extern "C" fn XML_GetInputContext(
    event (regardless of whether there was an associated callback).
 
    They may also be called after returning from a call to XML_Parse
-   or XML_ParseBuffer.  If the return value is XML_STATUS_ERROR then
+   or XML_ParseBuffer.  If the return value is XML_Status::ERROR then
    the location is the location of the character at which the error
    was detected; otherwise the location is the location of the last
    parse event, as described above.
@@ -3321,78 +3307,88 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
         }
     };
 }
+
+impl XML_Error {
+    fn description(&self) -> *const XML_LChar {
+        match self {
+            XML_Error::NONE => NULL as *const XML_LChar,
+            XML_Error::NO_MEMORY => wch!("out of memory\x00"),
+            XML_Error::SYNTAX => wch!("syntax error\x00"),
+            XML_Error::NO_ELEMENTS => wch!("no element found\x00"),
+            XML_Error::INVALID_TOKEN => wch!("not well-formed (invalid token)\x00"),
+            XML_Error::UNCLOSED_TOKEN => wch!("unclosed token\x00"),
+            XML_Error::PARTIAL_CHAR => wch!("partial character\x00"),
+            XML_Error::TAG_MISMATCH => wch!("mismatched tag\x00"),
+            XML_Error::DUPLICATE_ATTRIBUTE => wch!("duplicate attribute\x00"),
+            XML_Error::JUNK_AFTER_DOC_ELEMENT => wch!("junk after document element\x00"),
+            XML_Error::PARAM_ENTITY_REF => wch!("illegal parameter entity reference\x00"),
+            XML_Error::UNDEFINED_ENTITY => wch!("undefined entity\x00"),
+            XML_Error::RECURSIVE_ENTITY_REF => wch!("recursive entity reference\x00"),
+            XML_Error::ASYNC_ENTITY => wch!("asynchronous entity\x00"),
+            XML_Error::BAD_CHAR_REF => wch!("reference to invalid character number\x00"),
+            XML_Error::BINARY_ENTITY_REF => wch!("reference to binary entity\x00"),
+            XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF => {
+                wch!("reference to external entity in attribute\x00")
+            }
+            XML_Error::MISPLACED_XML_PI => wch!("XML or text declaration not at start of entity\x00"),
+            XML_Error::UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
+            XML_Error::INCORRECT_ENCODING => {
+                wch!("encoding specified in XML declaration is incorrect\x00")
+            }
+            XML_Error::UNCLOSED_CDATA_SECTION => wch!("unclosed CDATA section\x00"),
+            XML_Error::EXTERNAL_ENTITY_HANDLING => {
+                wch!("error in processing external entity reference\x00")
+            }
+            XML_Error::NOT_STANDALONE => wch!("document is not standalone\x00"),
+            XML_Error::UNEXPECTED_STATE => {
+                wch!("unexpected parser state - please send a bug report\x00")
+            }
+            XML_Error::ENTITY_DECLARED_IN_PE => wch!("entity declared in parameter entity\x00"),
+            XML_Error::FEATURE_REQUIRES_XML_DTD => {
+                wch!("requested feature requires XML_DTD support in Expat\x00")
+            }
+            XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING => {
+                wch!("cannot change setting once parsing has begun\x00")
+            }
+            /* Added in 1.95.7. */
+            XML_Error::UNBOUND_PREFIX => wch!("unbound prefix\x00"),
+            /* Added in 1.95.8. */
+            XML_Error::UNDECLARING_PREFIX => wch!("must not undeclare prefix\x00"),
+            XML_Error::INCOMPLETE_PE => wch!("incomplete markup in parameter entity\x00"),
+            XML_Error::XML_DECL => wch!("XML declaration not well-formed\x00"),
+            XML_Error::TEXT_DECL => wch!("text declaration not well-formed\x00"),
+            XML_Error::PUBLICID => wch!("illegal character(s) in public id\x00"),
+            XML_Error::SUSPENDED => wch!("parser suspended\x00"),
+            XML_Error::NOT_SUSPENDED => wch!("parser not suspended\x00"),
+            XML_Error::ABORTED => wch!("parsing aborted\x00"),
+            XML_Error::FINISHED => wch!("parsing finished\x00"),
+            XML_Error::SUSPEND_PE => wch!("cannot suspend in external parameter entity\x00"),
+            XML_Error::RESERVED_PREFIX_XML => {
+                /* Added in 2.0.0. */
+                wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
+            }
+            XML_Error::RESERVED_PREFIX_XMLNS => {
+                wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
+            }
+            XML_Error::RESERVED_NAMESPACE_URI => {
+                wch!("prefix must not be bound to one of the reserved namespace names\x00")
+            }
+            /* Added in 2.2.5. */
+            XML_Error::INVALID_ARGUMENT => {
+                /* Constant added in 2.2.1, already */
+                wch!("invalid argument\x00")
+            }
+        }
+    }
+}
+
 /* Returns a string describing the error. */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ErrorString(mut code: XML_Error) -> *const XML_LChar {
-    match code {
-        XML_ERROR_NONE => NULL as *const XML_LChar,
-        XML_ERROR_NO_MEMORY => wch!("out of memory\x00"),
-        XML_ERROR_SYNTAX => wch!("syntax error\x00"),
-        XML_ERROR_NO_ELEMENTS => wch!("no element found\x00"),
-        XML_ERROR_INVALID_TOKEN => wch!("not well-formed (invalid token)\x00"),
-        XML_ERROR_UNCLOSED_TOKEN => wch!("unclosed token\x00"),
-        XML_ERROR_PARTIAL_CHAR => wch!("partial character\x00"),
-        XML_ERROR_TAG_MISMATCH => wch!("mismatched tag\x00"),
-        XML_ERROR_DUPLICATE_ATTRIBUTE => wch!("duplicate attribute\x00"),
-        XML_ERROR_JUNK_AFTER_DOC_ELEMENT => wch!("junk after document element\x00"),
-        XML_ERROR_PARAM_ENTITY_REF => wch!("illegal parameter entity reference\x00"),
-        XML_ERROR_UNDEFINED_ENTITY => wch!("undefined entity\x00"),
-        XML_ERROR_RECURSIVE_ENTITY_REF => wch!("recursive entity reference\x00"),
-        XML_ERROR_ASYNC_ENTITY => wch!("asynchronous entity\x00"),
-        XML_ERROR_BAD_CHAR_REF => wch!("reference to invalid character number\x00"),
-        XML_ERROR_BINARY_ENTITY_REF => wch!("reference to binary entity\x00"),
-        XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF => {
-            wch!("reference to external entity in attribute\x00")
-        }
-        XML_ERROR_MISPLACED_XML_PI => wch!("XML or text declaration not at start of entity\x00"),
-        XML_ERROR_UNKNOWN_ENCODING => wch!("unknown encoding\x00"),
-        XML_ERROR_INCORRECT_ENCODING => {
-            wch!("encoding specified in XML declaration is incorrect\x00")
-        }
-        XML_ERROR_UNCLOSED_CDATA_SECTION => wch!("unclosed CDATA section\x00"),
-        XML_ERROR_EXTERNAL_ENTITY_HANDLING => {
-            wch!("error in processing external entity reference\x00")
-        }
-        XML_ERROR_NOT_STANDALONE => wch!("document is not standalone\x00"),
-        XML_ERROR_UNEXPECTED_STATE => {
-            wch!("unexpected parser state - please send a bug report\x00")
-        }
-        XML_ERROR_ENTITY_DECLARED_IN_PE => wch!("entity declared in parameter entity\x00"),
-        XML_ERROR_FEATURE_REQUIRES_XML_DTD => {
-            wch!("requested feature requires XML_DTD support in Expat\x00")
-        }
-        XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING => {
-            wch!("cannot change setting once parsing has begun\x00")
-        }
-        /* Added in 1.95.7. */
-        XML_ERROR_UNBOUND_PREFIX => wch!("unbound prefix\x00"),
-        /* Added in 1.95.8. */
-        XML_ERROR_UNDECLARING_PREFIX => wch!("must not undeclare prefix\x00"),
-        XML_ERROR_INCOMPLETE_PE => wch!("incomplete markup in parameter entity\x00"),
-        XML_ERROR_XML_DECL => wch!("XML declaration not well-formed\x00"),
-        XML_ERROR_TEXT_DECL => wch!("text declaration not well-formed\x00"),
-        XML_ERROR_PUBLICID => wch!("illegal character(s) in public id\x00"),
-        XML_ERROR_SUSPENDED => wch!("parser suspended\x00"),
-        XML_ERROR_NOT_SUSPENDED => wch!("parser not suspended\x00"),
-        XML_ERROR_ABORTED => wch!("parsing aborted\x00"),
-        XML_ERROR_FINISHED => wch!("parsing finished\x00"),
-        XML_ERROR_SUSPEND_PE => wch!("cannot suspend in external parameter entity\x00"),
-        XML_ERROR_RESERVED_PREFIX_XML => {
-            /* Added in 2.0.0. */
-            wch!("reserved prefix (xml) must not be undeclared or bound to another namespace name\x00")
-        }
-        XML_ERROR_RESERVED_PREFIX_XMLNS => {
-            wch!("reserved prefix (xmlns) must not be declared or undeclared\x00")
-        }
-        XML_ERROR_RESERVED_NAMESPACE_URI => {
-            wch!("prefix must not be bound to one of the reserved namespace names\x00")
-        }
-        /* Added in 2.2.5. */
-        XML_ERROR_INVALID_ARGUMENT => {
-            /* Constant added in 2.2.1, already */
-            wch!("invalid argument\x00")
-        }
-        _ => NULL as *const XML_LChar,
+pub unsafe extern "C" fn XML_ErrorString(mut code: u32) -> *const XML_LChar {
+    if let Some(code) = XML_Error::from_u32(code) {
+            code.description()
+    } else {
+        NULL as *const XML_LChar
     }
 }
 /* Return a string containing the version number of this expat */
@@ -3561,9 +3557,9 @@ unsafe extern "C" fn contentProcessor(
         endPtr,
         ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
     );
-    if result == XML_ERROR_NONE {
+    if result == XML_Error::NONE {
         if (*parser).storeRawNames() == 0 {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
     }
     return result;
@@ -3575,7 +3571,7 @@ unsafe extern "C" fn externalEntityInitProcessor(
     mut endPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     }
     (*parser).m_processor = Some(externalEntityInitProcessor2 as Processor);
@@ -3594,29 +3590,29 @@ unsafe extern "C" fn externalEntityInitProcessor2(
             /* If we are at the end of the buffer, this would cause the next stage,
                i.e. externalEntityInitProcessor3, to pass control directly to
                doContent (by detecting XML_TOK_NONE) without processing any xml text
-               declaration - causing the error XML_ERROR_MISPLACED_XML_PI in doContent.
+               declaration - causing the error XML_Error::MISPLACED_XML_PI in doContent.
             */
             if next == buf.end() && (*parser).m_parsingStatus.finalBuffer == 0 {
                 *endPtr = next; /* XmlContentTok doesn't always set the last arg */
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             buf = buf.with_start(next);
         }
         super::xmltok::XML_TOK_PARTIAL => {
             if (*parser).m_parsingStatus.finalBuffer == 0 {
                 *endPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             (*parser).m_eventPtr = buf.as_ptr();
-            return XML_ERROR_UNCLOSED_TOKEN;
+            return XML_Error::UNCLOSED_TOKEN;
         }
         super::xmltok::XML_TOK_PARTIAL_CHAR => {
             if (*parser).m_parsingStatus.finalBuffer == 0 {
                 *endPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             (*parser).m_eventPtr = buf.as_ptr();
-            return XML_ERROR_PARTIAL_CHAR;
+            return XML_Error::PARTIAL_CHAR;
         }
         _ => {}
     }
@@ -3636,33 +3632,33 @@ unsafe extern "C" fn externalEntityInitProcessor3(
     (*parser).m_eventEndPtr = next;
     match tok {
         super::xmltok::XML_TOK_XML_DECL => {
-            let mut result: XML_Error = XML_ERROR_NONE;
+            let mut result: XML_Error = XML_Error::NONE;
             result = (*parser).processXmlDecl(1, buf.with_end(next));
-            if result != XML_ERROR_NONE {
+            if result != XML_Error::NONE {
                 return result;
             }
             match (*parser).m_parsingStatus.parsing {
                 3 => {
                     *endPtr = next;
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                2 => return XML_ERROR_ABORTED,
+                2 => return XML_Error::ABORTED,
                 _ => buf = buf.with_start(next),
             }
         }
         super::xmltok::XML_TOK_PARTIAL => {
             if (*parser).m_parsingStatus.finalBuffer == 0 {
                 *endPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            return XML_ERROR_UNCLOSED_TOKEN;
+            return XML_Error::UNCLOSED_TOKEN;
         }
         super::xmltok::XML_TOK_PARTIAL_CHAR => {
             if (*parser).m_parsingStatus.finalBuffer == 0 {
                 *endPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            return XML_ERROR_PARTIAL_CHAR;
+            return XML_Error::PARTIAL_CHAR;
         }
         _ => {}
     }
@@ -3683,9 +3679,9 @@ unsafe extern "C" fn externalEntityContentProcessor(
         endPtr,
         ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
     );
-    if result == XML_ERROR_NONE {
+    if result == XML_Error::NONE {
         if (*parser).storeRawNames() == 0 {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
     }
     return result;
@@ -3722,7 +3718,7 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK_TRAILING_CR => {
                     if haveMore != 0 {
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
                     *eventEndPP = buf.as_ptr().offset(buf.len().try_into().unwrap());
                     if self.m_handlers.hasCharacterData() {
@@ -3736,45 +3732,45 @@ impl XML_ParserStruct {
                        XML_SUSPENDED, XML_FINISHED?
                     */
                     if startTagLevel == 0 {
-                        return XML_ERROR_NO_ELEMENTS;
+                        return XML_Error::NO_ELEMENTS;
                     }
                     if self.m_tagLevel != startTagLevel {
-                        return XML_ERROR_ASYNC_ENTITY;
+                        return XML_Error::ASYNC_ENTITY;
                     }
                     *nextPtr = buf.end();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
                 super::xmltok::XML_TOK_NONE => {
                     if haveMore != 0 {
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
                     if startTagLevel > 0 {
                         if self.m_tagLevel != startTagLevel {
-                            return XML_ERROR_ASYNC_ENTITY;
+                            return XML_Error::ASYNC_ENTITY;
                         }
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
-                    return XML_ERROR_NO_ELEMENTS;
+                    return XML_Error::NO_ELEMENTS;
                 }
                 super::xmltok::XML_TOK_INVALID => {
                     *eventPP = next;
-                    return XML_ERROR_INVALID_TOKEN;
+                    return XML_Error::INVALID_TOKEN;
                 }
                 super::xmltok::XML_TOK_PARTIAL => {
                     if haveMore != 0 {
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
-                    return XML_ERROR_UNCLOSED_TOKEN;
+                    return XML_Error::UNCLOSED_TOKEN;
                 }
                 super::xmltok::XML_TOK_PARTIAL_CHAR => {
                     if haveMore != 0 {
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
-                    return XML_ERROR_PARTIAL_CHAR;
+                    return XML_Error::PARTIAL_CHAR;
                 }
                 super::xmltok::XML_TOK_ENTITY_REF => {
                     let mut name: *const XML_Char = 0 as *const XML_Char;
@@ -3799,7 +3795,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if name.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         let entity = hash_lookup!((*dtd).generalEntities, name);
                         (*dtd).pool.ptr = (*dtd).pool.start;
@@ -3809,10 +3805,10 @@ impl XML_ParserStruct {
                         */
                         if (*dtd).hasParamEntityRefs == 0 || (*dtd).standalone as c_int != 0 {
                             if entity.is_null() {
-                                return XML_ERROR_UNDEFINED_ENTITY;
+                                return XML_Error::UNDEFINED_ENTITY;
                             } else {
                                 if (*entity).is_internal == 0 {
-                                    return XML_ERROR_ENTITY_DECLARED_IN_PE;
+                                    return XML_Error::ENTITY_DECLARED_IN_PE;
                                 }
                             }
                             current_block_275 = 10067844863897285902;
@@ -3825,7 +3821,7 @@ impl XML_ParserStruct {
                                 }
                             }
                             if cfg!(feature = "mozilla") {
-                                return XML_ERROR_UNDEFINED_ENTITY;
+                                return XML_Error::UNDEFINED_ENTITY;
                             }
                             current_block_275 = 17939951368883298147;
                         } else {
@@ -3835,13 +3831,13 @@ impl XML_ParserStruct {
                             17939951368883298147 => {}
                             _ => {
                                 if (*entity).open != 0 {
-                                    return XML_ERROR_RECURSIVE_ENTITY_REF;
+                                    return XML_Error::RECURSIVE_ENTITY_REF;
                                 }
                                 if !(*entity).notation.is_null() {
-                                    return XML_ERROR_BINARY_ENTITY_REF;
+                                    return XML_Error::BINARY_ENTITY_REF;
                                 }
                                 if !(*entity).textPtr.is_null() {
-                                    let mut result: XML_Error = XML_ERROR_NONE;
+                                    let mut result: XML_Error = XML_Error::NONE;
                                     if self.m_defaultExpandInternalEntities == 0 {
                                         let skippedHandlerRan = self.m_handlers.skippedEntity((*entity).name, 0);
 
@@ -3850,7 +3846,7 @@ impl XML_ParserStruct {
                                         }
                                     } else {
                                         result = self.processInternalEntity(entity, XML_FALSE);
-                                        if result != XML_ERROR_NONE {
+                                        if result != XML_Error::NONE {
                                             return result;
                                         }
                                     }
@@ -3860,7 +3856,7 @@ impl XML_ParserStruct {
                                     context = self.getContext();
                                     (*entity).open = XML_FALSE;
                                     if context.is_null() {
-                                        return XML_ERROR_NO_MEMORY;
+                                        return XML_Error::NO_MEMORY;
                                     }
                                     if self.m_handlers.externalEntityRef(
                                         context,
@@ -3869,7 +3865,7 @@ impl XML_ParserStruct {
                                         (*entity).publicId,
                                     ) == Ok(0)
                                     {
-                                        return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                        return XML_Error::EXTERNAL_ENTITY_HANDLING;
                                     }
                                     self.m_tempPool.ptr = self.m_tempPool.start
                                 } else if self.m_handlers.hasDefault() {
@@ -3883,7 +3879,7 @@ impl XML_ParserStruct {
                 | super::xmltok::XML_TOK_START_TAG_WITH_ATTS => {
                     /* fall through */
                     let mut tag: *mut TAG = 0 as *mut TAG;
-                    let mut result_0: XML_Error = XML_ERROR_NONE;
+                    let mut result_0: XML_Error = XML_Error::NONE;
                     let mut to_buf: ExpatBufRefMut<XML_Char>;
                     if !self.m_freeTagList.is_null() {
                         tag = self.m_freeTagList;
@@ -3891,12 +3887,12 @@ impl XML_ParserStruct {
                     } else {
                         tag = MALLOC!(@TAG);
                         if tag.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*tag).buf = MALLOC![c_char; INIT_TAG_BUF_SIZE];
                         if (*tag).buf.is_null() {
                             FREE!(tag);
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
                     }
@@ -3933,7 +3929,7 @@ impl XML_ParserStruct {
                             bufSize = ((*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_int) << 1;
                             let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
                             if temp.is_null() {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                             (*tag).buf = temp;
                             (*tag).bufEnd = temp.offset(bufSize as isize);
@@ -3962,7 +3958,7 @@ impl XML_ParserStruct {
                 | super::xmltok::XML_TOK_EMPTY_ELEMENT_WITH_ATTS => {
                     /* fall through */
                     let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
-                    let mut result_1: XML_Error = XML_ERROR_NONE;
+                    let mut result_1: XML_Error = XML_Error::NONE;
                     let mut bindings: *mut BINDING = NULL as *mut BINDING;
                     let mut noElmHandlers: XML_Bool = XML_TRUE;
                     let mut name_0: TAG_NAME = TAG_NAME {
@@ -3978,11 +3974,11 @@ impl XML_ParserStruct {
                         rawName.with_len((*enc).nameLength(rawName.as_ptr()) as usize),
                     );
                     if name_0.str_0.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     self.m_tempPool.start = self.m_tempPool.ptr;
                     result_1 = self.storeAtts(enc_type, buf, &mut name_0, &mut bindings);
-                    if result_1 != XML_ERROR_NONE {
+                    if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
                         return result_1;
                     }
@@ -4016,7 +4012,7 @@ impl XML_ParserStruct {
                 }
                 super::xmltok::XML_TOK_END_TAG => {
                     if self.m_tagLevel == startTagLevel {
-                        return XML_ERROR_ASYNC_ENTITY;
+                        return XML_Error::ASYNC_ENTITY;
                     } else {
                         let mut len: c_int = 0;
                         let mut tag_0: *mut TAG = self.m_tagStack;
@@ -4072,7 +4068,7 @@ impl XML_ParserStruct {
                                 self.m_mismatch = (*tag_0).name.str_0;
                             }
                             *eventPP = rawName_0.as_ptr();
-                            return XML_ERROR_TAG_MISMATCH;
+                            return XML_Error::TAG_MISMATCH;
                         }
                         self.m_tagLevel -= 1;
                         if self.m_handlers.hasEndElement() {
@@ -4137,7 +4133,7 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK_CHAR_REF => {
                     let mut n: c_int = (*enc).charRefNumber(buf);
                     if n < 0 {
-                        return XML_ERROR_BAD_CHAR_REF;
+                        return XML_Error::BAD_CHAR_REF;
                     }
                     if self.m_handlers.hasCharacterData() {
                         let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
@@ -4147,7 +4143,7 @@ impl XML_ParserStruct {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
                 }
-                super::xmltok::XML_TOK_XML_DECL => return XML_ERROR_MISPLACED_XML_PI,
+                super::xmltok::XML_TOK_XML_DECL => return XML_Error::MISPLACED_XML_PI,
                 super::xmltok::XML_TOK_DATA_NEWLINE => {
                     if self.m_handlers.hasCharacterData() {
                         let mut c_0: XML_Char = 0xa;
@@ -4157,7 +4153,7 @@ impl XML_ParserStruct {
                     }
                 }
                 super::xmltok::XML_TOK_CDATA_SECT_OPEN => {
-                    let mut result_2: XML_Error = XML_ERROR_NONE;
+                    let mut result_2: XML_Error = XML_Error::NONE;
 
                     let startHandlerRan = self.m_handlers.startCDataSection();
 
@@ -4184,7 +4180,7 @@ impl XML_ParserStruct {
                     let mut new_buf = Some(buf.with_start(next));
                     result_2 = doCdataSection(self, enc_type, &mut new_buf, nextPtr, haveMore);
                     next = new_buf.map_or(ptr::null(), |x| x.as_ptr());
-                    if result_2 != XML_ERROR_NONE {
+                    if result_2 != XML_Error::NONE {
                         return result_2;
                     } else if next.is_null() {
                         self.m_processor = Some(cdataSectionProcessor as Processor);
@@ -4194,7 +4190,7 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK_TRAILING_RSQB => {
                     if haveMore != 0 {
                         *nextPtr = buf.as_ptr();
-                        return XML_ERROR_NONE;
+                        return XML_Error::NONE;
                     }
                     if self.m_handlers.hasCharacterData() {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
@@ -4220,14 +4216,14 @@ impl XML_ParserStruct {
                     */
                     if startTagLevel == 0 {
                         *eventPP = buf.end();
-                        return XML_ERROR_NO_ELEMENTS;
+                        return XML_Error::NO_ELEMENTS;
                     }
                     if self.m_tagLevel != startTagLevel {
                         *eventPP = buf.end();
-                        return XML_ERROR_ASYNC_ENTITY;
+                        return XML_Error::ASYNC_ENTITY;
                     }
                     *nextPtr = buf.end();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
                 super::xmltok::XML_TOK_DATA_CHARS => {
                     let mut handlers = self.m_handlers;
@@ -4265,12 +4261,12 @@ impl XML_ParserStruct {
                 }
                 super::xmltok::XML_TOK_PI => {
                     if reportProcessingInstruction(self, enc_type, buf.with_end(next)) == 0 {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                 }
                 super::xmltok::XML_TOK_COMMENT => {
                     if reportComment(self, enc_type, buf.with_end(next)) == 0 {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                 }
                 _ => {
@@ -4291,9 +4287,9 @@ impl XML_ParserStruct {
             match self.m_parsingStatus.parsing {
                 3 => {
                     *nextPtr = next;
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                2 => return XML_ERROR_ABORTED,
+                2 => return XML_Error::ABORTED,
                 _ => {}
             }
         }
@@ -4351,7 +4347,7 @@ impl XML_ParserStruct {
         } else {
             let mut name: *const XML_Char = (*dtd).pool.copyString((*tagNamePtr).str_0);
             if name.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             let elementType = hash_insert!(
                 &mut (*dtd).elementTypes,
@@ -4360,10 +4356,10 @@ impl XML_ParserStruct {
                 ELEMENT_TYPE::new
             );
             if elementType.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             if self.m_ns as c_int != 0 && self.setElementTypePrefix(elementType) == 0 {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             elementType
         };
@@ -4371,7 +4367,7 @@ impl XML_ParserStruct {
         /* get the attributes from the tokenizer */
         let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
             if self.m_atts.try_reserve(1).is_err() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
 
             /* add the name and value to the attribute list */
@@ -4385,7 +4381,7 @@ impl XML_ParserStruct {
                 ),
             );
             if attId.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             /* Detect duplicate attributes by their QNames. This does not work when
             namespace processing is turned on and different prefixes for the same
@@ -4395,11 +4391,11 @@ impl XML_ParserStruct {
                 if !enc_type.is_internal() {
                     self.m_eventPtr = currAtt.name
                 }
-                return XML_ERROR_DUPLICATE_ATTRIBUTE;
+                return XML_Error::DUPLICATE_ATTRIBUTE;
             }
             *(*attId).name.offset(-1) = 1;
             if !currAtt.normalized {
-                let mut result: XML_Error = XML_ERROR_NONE;
+                let mut result: XML_Error = XML_Error::NONE;
                 let mut isCdata: XML_Bool = XML_TRUE;
                 /* figure out whether declared as other than CDATA */
                 if (*attId).maybeTokenized != 0 {
@@ -4430,7 +4426,7 @@ impl XML_ParserStruct {
                     ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)
                 );
                 if fresh10.is_null() {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
                 self.m_atts.push(Attribute::new((*attId).name, fresh10));
                 self.m_tempPool.start = self.m_tempPool.ptr
@@ -4465,9 +4461,9 @@ impl XML_ParserStruct {
                 }
             }
 
-            XML_ERROR_NONE
+            XML_Error::NONE
         });
-        if res != XML_ERROR_NONE {
+        if res != XML_Error::NONE {
             return res;
         }
 
@@ -4486,7 +4482,7 @@ impl XML_ParserStruct {
 
         /* do attribute defaulting */
         if self.m_atts.try_reserve((*elementType).defaultAtts.len()).is_err() {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
         for da in &(*elementType).defaultAtts {
             if *(*da.id).name.offset(-1) == 0 && !da.value.is_null() {
@@ -4550,7 +4546,7 @@ impl XML_ParserStruct {
                     if temp_0.is_null() {
                         /* Restore actual size of memory in m_nsAtts */
                         self.m_nsAttsPower = oldNsAttsPower;
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     self.m_nsAtts = temp_0;
                     version = 0
@@ -4606,13 +4602,13 @@ impl XML_ParserStruct {
                         * analysis is complete, we retain the test and merely
                         * remove the code from coverage tests.
                         */
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                         /* LCOV_EXCL_LINE */
                     }
                     let id = id.unwrap();
                     b = (*(*id).prefix).binding;
                     if b.is_null() {
-                        return XML_ERROR_UNBOUND_PREFIX;
+                        return XML_Error::UNBOUND_PREFIX;
                     }
                     j_0 = 0;
                     while j_0 < (*b).uriLen {
@@ -4628,7 +4624,7 @@ impl XML_ParserStruct {
                             1
                         } == 0
                         {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         j_0 += 1
                     }
@@ -4663,7 +4659,7 @@ impl XML_ParserStruct {
                             1
                         } == 0
                         {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         let fresh24 = s;
                         s = s.offset(1);
@@ -4690,7 +4686,7 @@ impl XML_ParserStruct {
                                 s2 = s2.offset(1)
                             }
                             if *s1 as c_int == 0 {
-                                return XML_ERROR_DUPLICATE_ATTRIBUTE;
+                                return XML_Error::DUPLICATE_ATTRIBUTE;
                             }
                         }
                         if step == 0 {
@@ -4720,7 +4716,7 @@ impl XML_ParserStruct {
                                 1
                             } == 0
                             {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                             let fresh26 = s;
                             s = s.offset(1);
@@ -4785,7 +4781,7 @@ impl XML_ParserStruct {
                     if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.appendChar(self.m_namespaceSeparator)
                     {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
 
                     s = s.offset(xmlnsPrefix.len() as isize - 1);
@@ -4793,7 +4789,7 @@ impl XML_ParserStruct {
                         s = s.offset(1);
                         loop { /* copies null terminator */
                             if !self.m_tempPool.appendChar(*s) {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                             if *s == '\u{0}' as XML_Char {
                                 s = s.offset(1);
@@ -4807,7 +4803,7 @@ impl XML_ParserStruct {
                             if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                                 !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                             {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                         }
                     } else {
@@ -4815,7 +4811,7 @@ impl XML_ParserStruct {
                         if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
                             !self.m_tempPool.appendChar('\u{0}' as XML_Char)
                         {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                     }
 
@@ -4843,7 +4839,7 @@ impl XML_ParserStruct {
 
         // REXPAT: append a NULL pointer as the stop marker
         if self.m_atts.try_reserve(1).is_err() {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
         self.m_atts.push(Attribute::new_null());
 
@@ -4853,13 +4849,13 @@ impl XML_ParserStruct {
             binding = (*binding).nextTagBinding
         }
         if self.m_ns == 0 {
-            return XML_ERROR_NONE;
+            return XML_Error::NONE;
         }
         /* expand the element type name */
         if !(*elementType).prefix.is_null() {
             binding = (*(*elementType).prefix).binding;
             if binding.is_null() {
-                return XML_ERROR_UNBOUND_PREFIX;
+                return XML_Error::UNBOUND_PREFIX;
             }
             localPart = (*tagNamePtr).str_0;
             loop {
@@ -4873,7 +4869,7 @@ impl XML_ParserStruct {
             binding = (*dtd).defaultPrefix.binding;
             localPart = (*tagNamePtr).str_0
         } else {
-            return XML_ERROR_NONE;
+            return XML_Error::NONE;
         }
         prefixLen = 0;
         if self.m_ns_triplets as c_int != 0 && !(*(*binding).prefix).name.is_null() {
@@ -4903,7 +4899,7 @@ impl XML_ParserStruct {
             let mut p: *mut TAG = 0 as *mut TAG;
             uri = MALLOC![XML_Char; n + EXPAND_SPARE];
             if uri.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             (*binding).uriAlloc = n + EXPAND_SPARE;
             memcpy(
@@ -4940,7 +4936,7 @@ impl XML_ParserStruct {
             );
         }
         (*tagNamePtr).str_0 = (*binding).uri;
-        XML_ERROR_NONE
+        XML_Error::NONE
     }
 }
 
@@ -4979,7 +4975,7 @@ unsafe extern "C" fn addBinding(
     let mut len: c_int = 0;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
     if *uri as c_int == '\u{0}' as i32 && !(*prefix).name.is_null() {
-        return XML_ERROR_UNDECLARING_PREFIX;
+        return XML_Error::UNDECLARING_PREFIX;
     }
     if !(*prefix).name.is_null()
         && *(*prefix).name.offset(0) == ASCII_x as XML_Char
@@ -4991,7 +4987,7 @@ unsafe extern "C" fn addBinding(
             && *(*prefix).name.offset(4) == ASCII_s as XML_Char
             && *(*prefix).name.offset(5) == '\u{0}' as XML_Char
         {
-            return XML_ERROR_RESERVED_PREFIX_XMLNS;
+            return XML_Error::RESERVED_PREFIX_XMLNS;
         }
         if *(*prefix).name.offset(3) == '\u{0}' as XML_Char {
             mustBeXML = XML_TRUE
@@ -5018,13 +5014,13 @@ unsafe extern "C" fn addBinding(
     isXMLNS = (isXMLNS as c_int != 0 && len == xmlnsLen) as XML_Bool;
     if mustBeXML as c_int != isXML as c_int {
         return if mustBeXML as c_int != 0 {
-            XML_ERROR_RESERVED_PREFIX_XML as c_int
+            XML_Error::RESERVED_PREFIX_XML
         } else {
-            XML_ERROR_RESERVED_NAMESPACE_URI as c_int
+            XML_Error::RESERVED_NAMESPACE_URI
         } as XML_Error;
     }
     if isXMLNS != 0 {
-        return XML_ERROR_RESERVED_NAMESPACE_URI;
+        return XML_Error::RESERVED_NAMESPACE_URI;
     }
     if (*parser).m_namespaceSeparator != 0 {
         len += 1
@@ -5034,7 +5030,7 @@ unsafe extern "C" fn addBinding(
         if len > (*b).uriAlloc {
             let mut temp: *mut XML_Char = REALLOC!((*b).uri => [XML_Char; len + EXPAND_SPARE]);
             if temp.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
             (*b).uri = temp;
             (*b).uriAlloc = len + EXPAND_SPARE
@@ -5043,12 +5039,12 @@ unsafe extern "C" fn addBinding(
     } else {
         b = MALLOC!(@BINDING);
         if b.is_null() {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
         (*b).uri = MALLOC![XML_Char; len + EXPAND_SPARE];
         if (*b).uri.is_null() {
             FREE!(b);
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
         (*b).uriAlloc = len + EXPAND_SPARE
     }
@@ -5084,7 +5080,7 @@ unsafe extern "C" fn addBinding(
             },
         );
     }
-    return XML_ERROR_NONE;
+    return XML_Error::NONE;
 }
 /* The idea here is to avoid using stack for each CDATA section when
    the whole file is parsed with one call.
@@ -5103,7 +5099,7 @@ unsafe extern "C" fn cdataSectionProcessor(
         endPtr,
         ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
     );
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     }
     if let Some(buf) = opt_buf {
@@ -5159,9 +5155,9 @@ unsafe extern "C" fn doCdataSection(
                 *start_buf = Some(buf.with_start(next));
                 *nextPtr = next;
                 if (*parser).m_parsingStatus.parsing == XML_FINISHED {
-                    return XML_ERROR_ABORTED;
+                    return XML_Error::ABORTED;
                 } else {
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
                 /* BEGIN disabled code */
                 /* see comment under XML_TOK_CDATA_SECT_OPEN */
@@ -5215,21 +5211,21 @@ unsafe extern "C" fn doCdataSection(
             }
             super::xmltok::XML_TOK_INVALID => {
                 *eventPP = next;
-                return XML_ERROR_INVALID_TOKEN;
+                return XML_Error::INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_PARTIAL_CHAR => {
                 if haveMore != 0 {
                     *nextPtr = buf.as_ptr();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                return XML_ERROR_PARTIAL_CHAR;
+                return XML_Error::PARTIAL_CHAR;
             }
             super::xmltok::XML_TOK_PARTIAL | super::xmltok::XML_TOK_NONE => {
                 if haveMore != 0 {
                     *nextPtr = buf.as_ptr();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                return XML_ERROR_UNCLOSED_CDATA_SECTION;
+                return XML_Error::UNCLOSED_CDATA_SECTION;
             }
             _ => {
                 /* Every token returned by XmlCdataSectionTok() has its own
@@ -5240,7 +5236,7 @@ unsafe extern "C" fn doCdataSection(
                  * LCOV_EXCL_START
                  */
                 *eventPP = next;
-                return XML_ERROR_UNEXPECTED_STATE;
+                return XML_Error::UNEXPECTED_STATE;
             }
         }
         buf = buf.with_start(next);
@@ -5248,9 +5244,9 @@ unsafe extern "C" fn doCdataSection(
         match (*parser).m_parsingStatus.parsing {
             3 => {
                 *nextPtr = next;
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            2 => return XML_ERROR_ABORTED,
+            2 => return XML_Error::ABORTED,
             _ => {}
         }
     }
@@ -5273,7 +5269,7 @@ unsafe extern "C" fn ignoreSectionProcessor(
         endPtr,
         ((*parser).m_parsingStatus.finalBuffer == 0) as XML_Bool,
     );
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     }
     if let Some(buf) = opt_buf {
@@ -5331,29 +5327,29 @@ unsafe extern "C" fn doIgnoreSection(
             *start_buf = Some(buf.with_start(next));
             *nextPtr = next;
             if (*parser).m_parsingStatus.parsing == XML_FINISHED {
-                return XML_ERROR_ABORTED;
+                return XML_Error::ABORTED;
             } else {
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             /* LCOV_EXCL_STOP */
         }
         super::xmltok::XML_TOK_INVALID => {
             *eventPP = next; /* XML_ERROR_UNCLOSED_IGNORE_SECTION */
-            return XML_ERROR_INVALID_TOKEN;
+            return XML_Error::INVALID_TOKEN;
         }
         super::xmltok::XML_TOK_PARTIAL_CHAR => {
             if haveMore != 0 {
                 *nextPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            return XML_ERROR_PARTIAL_CHAR;
+            return XML_Error::PARTIAL_CHAR;
         }
         super::xmltok::XML_TOK_PARTIAL | super::xmltok::XML_TOK_NONE => {
             if haveMore != 0 {
                 *nextPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            return XML_ERROR_SYNTAX;
+            return XML_Error::SYNTAX;
         }
         _ => {
             /* All of the tokens that XmlIgnoreSectionTok() returns have
@@ -5364,7 +5360,7 @@ unsafe extern "C" fn doIgnoreSection(
              * LCOV_EXCL_START
              */
             *eventPP = next;
-            return XML_ERROR_UNEXPECTED_STATE;
+            return XML_Error::UNEXPECTED_STATE;
         }
     };
     /* not reached */
@@ -5412,7 +5408,7 @@ impl XML_ParserStruct {
         if enc.is_some() {
             self.m_initEncoding = enc;
             self.m_encoding = &*self.m_initEncoding.as_ref().unwrap();
-            return XML_ERROR_NONE;
+            return XML_Error::NONE;
         }
 
         return self.handleUnknownEncoding(self.m_protocolEncodingName);
@@ -5445,9 +5441,9 @@ impl XML_ParserStruct {
         ) == 0
         {
             if isGeneralTextEntity != 0 {
-                return XML_ERROR_TEXT_DECL;
+                return XML_Error::TEXT_DECL;
             } else {
-                return XML_ERROR_XML_DECL;
+                return XML_Error::XML_DECL;
             }
         }
         if isGeneralTextEntity == 0 && standalone == 1 {
@@ -5467,7 +5463,7 @@ impl XML_ParserStruct {
                     ),
                 );
                 if storedEncName.is_null() {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
                 self.m_temp2Pool.start = self.m_temp2Pool.ptr
             }
@@ -5477,7 +5473,7 @@ impl XML_ParserStruct {
                     version_buf,
                 );
                 if storedversion.is_null() {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
             }
             self.m_handlers.xmlDecl(
@@ -5499,11 +5495,11 @@ impl XML_ParserStruct {
                     || (*newEncoding).minBytesPerChar() == 2 && !ptr::eq(newEncoding, self.m_encoding)
                 {
                     self.m_eventPtr = encodingName;
-                    return XML_ERROR_INCORRECT_ENCODING;
+                    return XML_Error::INCORRECT_ENCODING;
                 }
                 self.m_encoding = newEncoding
             } else if !encodingName.is_null() {
-                let mut result: XML_Error = XML_ERROR_NONE;
+                let mut result: XML_Error = XML_Error::NONE;
                 if storedEncName.is_null() {
                     storedEncName = self.m_temp2Pool.storeString(
                         &*self.m_encoding,
@@ -5513,12 +5509,12 @@ impl XML_ParserStruct {
                         ),
                     );
                     if storedEncName.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                 }
                 result = self.handleUnknownEncoding(storedEncName);
                 self.m_temp2Pool.clear();
-                if result == XML_ERROR_UNKNOWN_ENCODING {
+                if result == XML_Error::UNKNOWN_ENCODING {
                     self.m_eventPtr = encodingName
                 }
                 return result;
@@ -5527,7 +5523,7 @@ impl XML_ParserStruct {
         if !storedEncName.is_null() || !storedversion.is_null() {
             self.m_temp2Pool.clear();
         }
-        XML_ERROR_NONE
+        XML_Error::NONE
     }
 
     unsafe fn handleUnknownEncoding(
@@ -5572,14 +5568,14 @@ impl XML_ParserStruct {
                             if info.release.is_some() {
                                 info.release.expect("non-null function pointer")(info.data);
                             }
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         Ok(unknown_enc) => {
                             self.m_encoding = &*unknown_enc;
                             self.m_unknownEncoding = Some(unknown_enc);
                             self.m_unknownEncodingData = info.data;
                             self.m_unknownEncodingRelease = info.release;
-                            return XML_ERROR_NONE;
+                            return XML_Error::NONE;
                         }
                     }
                 }
@@ -5588,7 +5584,7 @@ impl XML_ParserStruct {
                 info.release.expect("non-null function pointer")(info.data);
             }
         }
-        XML_ERROR_UNKNOWN_ENCODING
+        XML_Error::UNKNOWN_ENCODING
     }
 }
 
@@ -5598,7 +5594,7 @@ unsafe extern "C" fn prologInitProcessor(
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     }
     (*parser).m_processor = Some(prologProcessor as Processor);
@@ -5611,7 +5607,7 @@ unsafe extern "C" fn externalParEntInitProcessor(
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     }
     /* we know now that XML_Parse(Buffer) has been called,
@@ -5641,21 +5637,21 @@ unsafe extern "C" fn entityValueInitProcessor(
         if tok <= 0 {
             if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
                 *nextPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             match tok {
-                super::xmltok::XML_TOK_INVALID => return XML_ERROR_INVALID_TOKEN,
-                super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
-                super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
+                super::xmltok::XML_TOK_INVALID => return XML_Error::INVALID_TOKEN,
+                super::xmltok::XML_TOK_PARTIAL => return XML_Error::UNCLOSED_TOKEN,
+                super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_Error::PARTIAL_CHAR,
                 super::xmltok::XML_TOK_NONE | _ => {}
             }
             /* found end of entity value - can store it now */
             return storeEntityValue(parser, EncodingType::Normal, init_buf);
         } else {
             if tok == super::xmltok::XML_TOK_XML_DECL {
-                let mut result: XML_Error = XML_ERROR_NONE;
+                let mut result: XML_Error = XML_Error::NONE;
                 result = (*parser).processXmlDecl(0, buf.with_end(next));
-                if result != XML_ERROR_NONE {
+                if result != XML_Error::NONE {
                     return result;
                 }
                 /* At this point, m_parsingStatus.parsing cannot be XML_SUSPENDED.  For
@@ -5664,7 +5660,7 @@ unsafe extern "C" fn entityValueInitProcessor(
                  * be aborted, but can't be suspended.
                  */
                 if (*parser).m_parsingStatus.parsing == XML_FINISHED {
-                    return XML_ERROR_ABORTED;
+                    return XML_Error::ABORTED;
                 }
                 *nextPtr = next;
                 /* stop scanning for text declaration - we found one */
@@ -5683,7 +5679,7 @@ unsafe extern "C" fn entityValueInitProcessor(
                     && (*parser).m_parsingStatus.finalBuffer == 0
                 {
                     *nextPtr = next;
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 } else {
                     /* If we get this token, we have the start of what might be a
                        normal tag, but not a declaration (i.e. it doesn't begin with
@@ -5691,7 +5687,7 @@ unsafe extern "C" fn entityValueInitProcessor(
                     */
                     if tok == super::xmltok::XML_TOK_INSTANCE_START {
                         *nextPtr = next;
-                        return XML_ERROR_SYNTAX;
+                        return XML_Error::SYNTAX;
                     }
                 }
             }
@@ -5712,12 +5708,12 @@ unsafe extern "C" fn externalParEntProcessor(
     if tok <= 0 {
         if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
             *nextPtr = buf.as_ptr();
-            return XML_ERROR_NONE;
+            return XML_Error::NONE;
         }
         match tok {
-            super::xmltok::XML_TOK_INVALID => return XML_ERROR_INVALID_TOKEN,
-            super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
-            super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
+            super::xmltok::XML_TOK_INVALID => return XML_Error::INVALID_TOKEN,
+            super::xmltok::XML_TOK_PARTIAL => return XML_Error::UNCLOSED_TOKEN,
+            super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_Error::PARTIAL_CHAR,
             super::xmltok::XML_TOK_NONE | _ => {}
         }
     } else if tok == super::xmltok::XML_TOK_BOM {
@@ -5749,12 +5745,12 @@ unsafe extern "C" fn entityValueProcessor(
         if tok <= 0 {
             if (*parser).m_parsingStatus.finalBuffer == 0 && tok != super::xmltok::XML_TOK_INVALID {
                 *nextPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             match tok {
-                super::xmltok::XML_TOK_INVALID => return XML_ERROR_INVALID_TOKEN,
-                super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
-                super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
+                super::xmltok::XML_TOK_INVALID => return XML_Error::INVALID_TOKEN,
+                super::xmltok::XML_TOK_PARTIAL => return XML_Error::UNCLOSED_TOKEN,
+                super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_Error::PARTIAL_CHAR,
                 super::xmltok::XML_TOK_NONE | _ => {}
             }
             /* This would cause the next stage, i.e. doProlog to be passed XML_TOK_BOM.
@@ -5822,7 +5818,7 @@ impl XML_ParserStruct {
         let dtd: *mut DTD = self.m_dtd;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
         let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
-        let mut quant: XML_Content_Quant = XML_CQUANT_NONE;
+        let mut quant: XML_Content_Quant = XML_Content_Quant::NONE;
         if enc_type.is_internal() {
             eventPP = &mut (*self.m_openInternalEntities).internalEventPtr;
             eventEndPP = &mut (*self.m_openInternalEntities).internalEventEndPtr
@@ -5839,22 +5835,22 @@ impl XML_ParserStruct {
             if tok <= 0 {
                 if haveMore as c_int != 0 && tok != super::xmltok::XML_TOK_INVALID {
                     *nextPtr = buf.as_ptr();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
                 match tok {
                     super::xmltok::XML_TOK_INVALID => {
                         *eventPP = next;
-                        return XML_ERROR_INVALID_TOKEN;
+                        return XML_Error::INVALID_TOKEN;
                     }
-                    super::xmltok::XML_TOK_PARTIAL => return XML_ERROR_UNCLOSED_TOKEN,
-                    super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_ERROR_PARTIAL_CHAR,
+                    super::xmltok::XML_TOK_PARTIAL => return XML_Error::UNCLOSED_TOKEN,
+                    super::xmltok::XML_TOK_PARTIAL_CHAR => return XML_Error::PARTIAL_CHAR,
 
                     -15 => tok = -tok,
                     super::xmltok::XML_TOK_NONE => {
                         /* for internal PE NOT referenced between declarations */
                         if enc_type.is_internal() && (*self.m_openInternalEntities).betweenDecl == 0 {
                             *nextPtr = buf.as_ptr();
-                            return XML_ERROR_NONE;
+                            return XML_Error::NONE;
                         }
                         /* WFC: PE Between Declarations - must check that PE contains
                         complete markup, not only for external PEs, but also for
@@ -5872,13 +5868,13 @@ impl XML_ParserStruct {
                                     &*enc,
                                 ) == super::xmlrole::XML_ROLE_ERROR
                             {
-                                return XML_ERROR_INCOMPLETE_PE;
+                                return XML_Error::INCOMPLETE_PE;
                             }
                             *nextPtr = buf.as_ptr();
-                            return XML_ERROR_NONE;
+                            return XML_Error::NONE;
                         }
                         /* XML_DTD */
-                        return XML_ERROR_NO_ELEMENTS;
+                        return XML_Error::NO_ELEMENTS;
                     }
                     _ => {
                         tok = -tok; /* end of big switch */
@@ -5895,7 +5891,7 @@ impl XML_ParserStruct {
             match role {
                 1 => {
                     let mut result: XML_Error = self.processXmlDecl(0, buf.with_end(next));
-                    if result != XML_ERROR_NONE {
+                    if result != XML_Error::NONE {
                         return result;
                     }
                     enc = self.encoding(EncodingType::Normal);
@@ -5907,7 +5903,7 @@ impl XML_ParserStruct {
                         self.m_doctypeName =
                             self.m_tempPool.storeString(enc, buf.with_end(next));
                         if self.m_doctypeName.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_tempPool.start = self.m_tempPool.ptr;
                         self.m_doctypePubid = NULL as *const XML_Char;
@@ -5933,7 +5929,7 @@ impl XML_ParserStruct {
                 }
                 57 => {
                     let mut result_0: XML_Error = self.processXmlDecl(1, buf.with_end(next));
-                    if result_0 != XML_ERROR_NONE {
+                    if result_0 != XML_Error::NONE {
                         return result_0;
                     }
                     enc = self.encoding(EncodingType::Normal);
@@ -5949,14 +5945,14 @@ impl XML_ParserStruct {
                         ENTITY
                     );
                     if self.m_declEntity.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     /* XML_DTD */
                     (*dtd).hasParamEntityRefs = XML_TRUE;
                     if self.m_handlers.hasStartDoctypeDecl() {
                         let mut pubId: *mut XML_Char = 0 as *mut XML_Char;
                         if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
-                            return XML_ERROR_PUBLICID;
+                            return XML_Error::PUBLICID;
                         }
                         pubId = self.m_tempPool.storeString(
                             enc,
@@ -5966,7 +5962,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if pubId.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         normalizePublicId(pubId);
                         self.m_tempPool.start = self.m_tempPool.ptr;
@@ -5983,7 +5979,7 @@ impl XML_ParserStruct {
                 8 => {
                     if allowClosingDoctype != XML_TRUE {
                         /* Must not close doctype from within expanded parameter entities */
-                        return XML_ERROR_INVALID_TOKEN;
+                        return XML_Error::INVALID_TOKEN;
                     }
                     if !self.m_doctypeName.is_null() {
                         self.m_handlers.startDoctypeDecl(
@@ -6017,7 +6013,7 @@ impl XML_ParserStruct {
                                  * external entity parsing, so no allocation will happen
                                  * and lookup() cannot fail.
                                  */
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                                 /* LCOV_EXCL_LINE */
                             }
                             if self.m_useForeignDTD != 0 {
@@ -6031,11 +6027,11 @@ impl XML_ParserStruct {
                                 (*entity).publicId,
                             ) == Ok(0)
                             {
-                                return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                return XML_Error::EXTERNAL_ENTITY_HANDLING;
                             }
                             if (*dtd).paramEntityRead != 0 {
                                 if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
-                                    return XML_ERROR_NOT_STANDALONE;
+                                    return XML_Error::NOT_STANDALONE;
                                 }
                             } else if self.m_doctypeSysid.is_null() {
                                 (*dtd).hasParamEntityRefs = hadParamEntityRefs
@@ -6068,7 +6064,7 @@ impl XML_ParserStruct {
                                 ENTITY
                             );
                             if entity_0.is_null() {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                             (*entity_0).base = self.m_curBase;
                             (*dtd).paramEntityRead = XML_FALSE;
@@ -6079,11 +6075,11 @@ impl XML_ParserStruct {
                                 (*entity_0).publicId,
                             ) == Ok(0)
                             {
-                                return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                return XML_Error::EXTERNAL_ENTITY_HANDLING;
                             }
                             if (*dtd).paramEntityRead != 0 {
                                 if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
-                                    return XML_ERROR_NOT_STANDALONE;
+                                    return XML_Error::NOT_STANDALONE;
                                 }
                             } else {
                                 /* end of DTD - no need to update dtd->keepProcessing */
@@ -6101,14 +6097,14 @@ impl XML_ParserStruct {
                 34 => {
                     self.m_declElementType = self.getElementType(enc_type, buf.with_end(next));
                     if self.m_declElementType.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     current_block = 6455255476181645667;
                 }
                 22 => {
                     self.m_declAttributeId = self.getAttributeId(enc_type, buf.with_end(next));
                     if self.m_declAttributeId.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     self.m_declAttributeIsCdata = XML_FALSE;
                     self.m_declAttributeType = NULL as *const XML_Char;
@@ -6162,10 +6158,10 @@ impl XML_ParserStruct {
                             }
                         }
                         if !self.m_tempPool.appendString(prefix) {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if !self.m_tempPool.append(enc, buf.with_end(next)) {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_declAttributeType = self.m_tempPool.start;
                         handleDefault = XML_FALSE
@@ -6182,7 +6178,7 @@ impl XML_ParserStruct {
                             0 as *const XML_Char,
                         ) == 0
                         {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if self.m_handlers.hasAttlistDecl()
                             && !self.m_declAttributeType.is_null()
@@ -6215,7 +6211,7 @@ impl XML_ParserStruct {
                                             1
                                         }) == 0
                                 {
-                                    return XML_ERROR_NO_MEMORY;
+                                    return XML_Error::NO_MEMORY;
                                 }
                                 self.m_declAttributeType = self.m_tempPool.start;
                                 self.m_tempPool.start = self.m_tempPool.ptr
@@ -6261,7 +6257,7 @@ impl XML_ParserStruct {
                             attVal,
                         ) == 0
                         {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if self.m_handlers.hasAttlistDecl()
                             && !self.m_declAttributeType.is_null()
@@ -6294,7 +6290,7 @@ impl XML_ParserStruct {
                                             1
                                         }) == 0
                                 {
-                                    return XML_ERROR_NO_MEMORY;
+                                    return XML_Error::NO_MEMORY;
                                 }
                                 self.m_declAttributeType = self.m_tempPool.start;
                                 self.m_tempPool.start = self.m_tempPool.ptr
@@ -6348,7 +6344,7 @@ impl XML_ParserStruct {
                         } else {
                             (*dtd).entityValuePool.ptr = (*dtd).entityValuePool.start
                         }
-                        if result_2 != XML_ERROR_NONE {
+                        if result_2 != XML_Error::NONE {
                             return result_2;
                         }
                     }
@@ -6367,7 +6363,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if self.m_doctypeSysid.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_tempPool.start = self.m_tempPool.ptr;
                         handleDefault = XML_FALSE
@@ -6381,7 +6377,7 @@ impl XML_ParserStruct {
                         && self.m_paramEntityParsing as u64 == 0
                         && self.m_handlers.notStandalone() == Ok(0)
                     {
-                        return XML_ERROR_NOT_STANDALONE;
+                        return XML_Error::NOT_STANDALONE;
                     }
                     /* XML_DTD */
                     if self.m_declEntity.is_null() {
@@ -6391,7 +6387,7 @@ impl XML_ParserStruct {
                             ENTITY
                         );
                         if self.m_declEntity.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*self.m_declEntity).publicId = NULL as *const XML_Char
                     }
@@ -6425,7 +6421,7 @@ impl XML_ParserStruct {
                         (*self.m_declEntity).notation =
                             (*dtd).pool.storeString(enc, buf.with_end(next));
                         if (*self.m_declEntity).notation.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*dtd).pool.start = (*dtd).pool.ptr;
                         if self.m_handlers.hasUnparsedEntityDecl() {
@@ -6461,7 +6457,7 @@ impl XML_ParserStruct {
                     } else if (*dtd).keepProcessing != 0 {
                         let mut name: *const XML_Char = (*dtd).pool.storeString(enc, buf.with_end(next));
                         if name.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_declEntity = hash_insert!(
                             &mut (*dtd).generalEntities,
@@ -6470,7 +6466,7 @@ impl XML_ParserStruct {
                         );
                         if self.m_declEntity.is_null() {
                             // FIXME: this never happens in Rust, it just panics
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if (*self.m_declEntity).name != name {
                             (*dtd).pool.ptr = (*dtd).pool.start;
@@ -6501,7 +6497,7 @@ impl XML_ParserStruct {
                         let mut name_0: *const XML_Char =
                             (*dtd).pool.storeString(enc, buf.with_end(next));
                         if name_0.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_declEntity = hash_insert!(
                             &mut (*dtd).paramEntities,
@@ -6509,7 +6505,7 @@ impl XML_ParserStruct {
                             ENTITY
                         );
                         if self.m_declEntity.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if (*self.m_declEntity).name != name_0 {
                             (*dtd).pool.ptr = (*dtd).pool.start;
@@ -6542,7 +6538,7 @@ impl XML_ParserStruct {
                         self.m_declNotationName =
                             self.m_tempPool.storeString(enc, buf.with_end(next));
                         if self.m_declNotationName.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         self.m_tempPool.start = self.m_tempPool.ptr;
                         handleDefault = XML_FALSE
@@ -6551,7 +6547,7 @@ impl XML_ParserStruct {
                 }
                 21 => {
                     if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
-                        return XML_ERROR_PUBLICID;
+                        return XML_Error::PUBLICID;
                     }
                     if !self.m_declNotationName.is_null() {
                         /* means m_notationDeclHandler != NULL */
@@ -6563,7 +6559,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if tem_0.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         normalizePublicId(tem_0);
                         self.m_declNotationPublicId = tem_0;
@@ -6584,7 +6580,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if systemId.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         *eventEndPP = buf.as_ptr();
                         self.m_handlers.notationDecl(
@@ -6619,21 +6615,21 @@ impl XML_ParserStruct {
                         super::xmltok::XML_TOK_PARAM_ENTITY_REF => {
                             /* PE references in internal subset are
                             not allowed within declarations. */
-                            return XML_ERROR_PARAM_ENTITY_REF;
+                            return XML_Error::PARAM_ENTITY_REF;
                         }
-                        super::xmltok::XML_TOK_XML_DECL => return XML_ERROR_MISPLACED_XML_PI,
-                        _ => return XML_ERROR_SYNTAX,
+                        super::xmltok::XML_TOK_XML_DECL => return XML_Error::MISPLACED_XML_PI,
+                        _ => return XML_Error::SYNTAX,
                     }
                 }
                 58 => {
-                    let mut result_3: XML_Error = XML_ERROR_NONE;
+                    let mut result_3: XML_Error = XML_Error::NONE;
                     if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
                     handleDefault = XML_FALSE;
                     let mut ignore_buf = Some(buf.with_start(next));
                     result_3 = doIgnoreSection(self, enc_type, &mut ignore_buf, nextPtr, haveMore);
-                    if result_3 != XML_ERROR_NONE {
+                    if result_3 != XML_Error::NONE {
                         return result_3;
                     } else {
                         if ignore_buf.is_none() {
@@ -6653,14 +6649,14 @@ impl XML_ParserStruct {
                                 self.m_groupConnector => [c_char; self.m_groupSize]);
                             if new_connector.is_null() {
                                 self.m_groupSize = self.m_groupSize.wrapping_div(2u32);
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                             self.m_groupConnector = new_connector;
                             if !(*dtd).scaffIndex.is_null() {
                                 let new_scaff_index: *mut c_int = REALLOC!(
                                     (*dtd).scaffIndex => [c_int; self.m_groupSize]);
                                 if new_scaff_index.is_null() {
-                                    return XML_ERROR_NO_MEMORY;
+                                    return XML_Error::NO_MEMORY;
                                 }
                                 (*dtd).scaffIndex = new_scaff_index
                             }
@@ -6669,7 +6665,7 @@ impl XML_ParserStruct {
                             self.m_groupConnector = MALLOC![c_char; self.m_groupSize];
                             if self.m_groupConnector.is_null() {
                                 self.m_groupSize = 0u32;
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
                         }
                     }
@@ -6679,7 +6675,7 @@ impl XML_ParserStruct {
                     if (*dtd).in_eldecl != 0 {
                         let mut myindex: c_int = self.nextScaffoldPart();
                         if myindex < 0 {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         if !(*dtd).scaffIndex.is_null() {
                         } else {
@@ -6692,7 +6688,7 @@ impl XML_ParserStruct {
                         }
                         *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
                         (*dtd).scaffLevel += 1;
-                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_CTYPE_SEQ;
+                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_Content_Type::SEQ;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -6705,7 +6701,7 @@ impl XML_ParserStruct {
                         .offset(self.m_prologState.level as isize)
                         == ASCII_PIPE
                     {
-                        return XML_ERROR_SYNTAX;
+                        return XML_Error::SYNTAX;
                     }
                     *self
                         .m_groupConnector
@@ -6721,7 +6717,7 @@ impl XML_ParserStruct {
                         .offset(self.m_prologState.level as isize)
                         == ASCII_COMMA
                     {
-                        return XML_ERROR_SYNTAX;
+                        return XML_Error::SYNTAX;
                     }
                     if (*dtd).in_eldecl as c_int != 0
                         && *self
@@ -6732,12 +6728,12 @@ impl XML_ParserStruct {
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
                         .type_0
-                        != XML_CTYPE_MIXED
+                        != XML_Content_Type::MIXED
                     {
                         (*(*dtd).scaffold.offset(
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
-                            .type_0 = XML_CTYPE_CHOICE;
+                            .type_0 = XML_Content_Type::CHOICE;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -6763,7 +6759,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if name_1.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
                         (*dtd).pool.ptr = (*dtd).pool.start;
@@ -6779,7 +6775,7 @@ impl XML_ParserStruct {
                             }) != 0
                         {
                             if entity_1.is_null() {
-                                return XML_ERROR_UNDEFINED_ENTITY;
+                                return XML_Error::UNDEFINED_ENTITY;
                             } else {
                                 if (*entity_1).is_internal == 0 {
                                     /* It's hard to exhaustively search the code to be sure,
@@ -6802,7 +6798,7 @@ impl XML_ParserStruct {
                                      * being left in place and merely removed from the
                                      * coverage test statistics.
                                      */
-                                    return XML_ERROR_ENTITY_DECLARED_IN_PE;
+                                    return XML_Error::ENTITY_DECLARED_IN_PE;
                                     /* LCOV_EXCL_LINE */
                                 }
                             }
@@ -6824,10 +6820,10 @@ impl XML_ParserStruct {
                             1553878188884632965 => {}
                             _ => {
                                 if (*entity_1).open != 0 {
-                                    return XML_ERROR_RECURSIVE_ENTITY_REF;
+                                    return XML_Error::RECURSIVE_ENTITY_REF;
                                 }
                                 if !(*entity_1).textPtr.is_null() {
-                                    let mut result_4: XML_Error = XML_ERROR_NONE;
+                                    let mut result_4: XML_Error = XML_Error::NONE;
                                     let mut betweenDecl: XML_Bool =
                                         if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF {
                                             XML_TRUE
@@ -6835,7 +6831,7 @@ impl XML_ParserStruct {
                                             XML_FALSE
                                         };
                                     result_4 = self.processInternalEntity(entity_1, betweenDecl);
-                                    if result_4 != XML_ERROR_NONE {
+                                    if result_4 != XML_Error::NONE {
                                         return result_4;
                                     }
                                     handleDefault = XML_FALSE;
@@ -6856,7 +6852,7 @@ impl XML_ParserStruct {
                                     ) == Ok(0)
                                     {
                                         (*entity_1).open = XML_FALSE;
-                                        return XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                        return XML_Error::EXTERNAL_ENTITY_HANDLING;
                                     }
                                     (*entity_1).open = XML_FALSE;
                                     handleDefault = XML_FALSE;
@@ -6878,7 +6874,7 @@ impl XML_ParserStruct {
                         _ => {
                             /* XML_DTD */
                             if (*dtd).standalone == 0 && self.m_handlers.notStandalone() == Ok(0) {
-                                return XML_ERROR_NOT_STANDALONE;
+                                return XML_Error::NOT_STANDALONE;
                             }
                             current_block = 1553878188884632965;
                         }
@@ -6889,7 +6885,7 @@ impl XML_ParserStruct {
                     if self.m_handlers.hasElementDecl() {
                         self.m_declElementType = self.getElementType(enc_type, buf.with_end(next));
                         if self.m_declElementType.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*dtd).scaffLevel = 0;
                         (*dtd).scaffCount = 0;
@@ -6903,17 +6899,17 @@ impl XML_ParserStruct {
                         if self.m_handlers.hasElementDecl() {
                             let mut content: *mut XML_Content = MALLOC!(@XML_Content);
                             if content.is_null() {
-                                return XML_ERROR_NO_MEMORY;
+                                return XML_Error::NO_MEMORY;
                             }
-                            (*content).quant = XML_CQUANT_NONE;
+                            (*content).quant = XML_Content_Quant::NONE;
                             (*content).name = NULL as *mut XML_Char;
                             (*content).numchildren = 0;
                             (*content).children = NULL as *mut XML_Content;
                             (*content).type_0 = if role == super::xmlrole::XML_ROLE_CONTENT_ANY {
-                                XML_CTYPE_ANY as c_int
+                                XML_Content_Type::ANY
                             } else {
-                                XML_CTYPE_EMPTY as c_int
-                            } as XML_Content_Type;
+                                XML_Content_Type::EMPTY
+                            };
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.elementDecl((*self.m_declElementType).name, content);
                             handleDefault = XML_FALSE
@@ -6927,7 +6923,7 @@ impl XML_ParserStruct {
                         (*(*dtd).scaffold.offset(
                             *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
                         ))
-                            .type_0 = XML_CTYPE_MIXED;
+                            .type_0 = XML_Content_Type::MIXED;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = XML_FALSE
                         }
@@ -6935,48 +6931,48 @@ impl XML_ParserStruct {
                     current_block = 1553878188884632965;
                 }
                 51 => {
-                    quant = XML_CQUANT_NONE;
+                    quant = XML_Content_Quant::NONE;
                     current_block = 4542134034984465527;
                 }
                 53 => {
-                    quant = XML_CQUANT_OPT;
+                    quant = XML_Content_Quant::OPT;
                     current_block = 4542134034984465527;
                 }
                 52 => {
-                    quant = XML_CQUANT_REP;
+                    quant = XML_Content_Quant::REP;
                     current_block = 4542134034984465527;
                 }
                 54 => {
-                    quant = XML_CQUANT_PLUS;
+                    quant = XML_Content_Quant::PLUS;
                     current_block = 4542134034984465527;
                 }
                 45 => {
-                    quant = XML_CQUANT_NONE;
+                    quant = XML_Content_Quant::NONE;
                     current_block = 7739131043814808354;
                 }
                 47 => {
-                    quant = XML_CQUANT_OPT;
+                    quant = XML_Content_Quant::OPT;
                     current_block = 7739131043814808354;
                 }
                 46 => {
-                    quant = XML_CQUANT_REP;
+                    quant = XML_Content_Quant::REP;
                     current_block = 7739131043814808354;
                 }
                 48 => {
-                    quant = XML_CQUANT_PLUS;
+                    quant = XML_Content_Quant::PLUS;
                     current_block = 7739131043814808354;
                 }
                 55 => {
                     /* End element declaration stuff */
                     if reportProcessingInstruction(self, enc_type, buf.with_end(next)) == 0 {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     handleDefault = XML_FALSE;
                     current_block = 1553878188884632965;
                 }
                 56 => {
                     if reportComment(self, enc_type, buf.with_end(next)) == 0 {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     handleDefault = XML_FALSE;
                     current_block = 1553878188884632965;
@@ -7027,7 +7023,7 @@ impl XML_ParserStruct {
                 /* fall through */
                 {
                     if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
-                        return XML_ERROR_PUBLICID;
+                        return XML_Error::PUBLICID;
                     }
                     current_block = 9007411418488376351;
                 }
@@ -7044,7 +7040,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize),
                         );
                         if (*self.m_declEntity).systemId.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         (*self.m_declEntity).base = self.m_curBase;
                         (*dtd).pool.start = (*dtd).pool.ptr;
@@ -7070,20 +7066,20 @@ impl XML_ParserStruct {
                         let mut el: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
                         let mut name_2: *const XML_Char = 0 as *const XML_Char;
                         let mut nameLen: c_int = 0;
-                        let mut nxt: *const c_char = if quant == XML_CQUANT_NONE {
+                        let mut nxt: *const c_char = if quant == XML_Content_Quant::NONE {
                             next
                         } else {
                             next.offset(-((*enc).minBytesPerChar() as isize))
                         };
                         let mut myindex_0: c_int = self.nextScaffoldPart();
                         if myindex_0 < 0 {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
-                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_CTYPE_NAME;
+                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_Content_Type::NAME;
                         (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
                         el = self.getElementType(enc_type, buf.with_end(nxt));
                         if el.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         name_2 = (*el).name;
                         let ref mut fresh36 = (*(*dtd).scaffold.offset(myindex_0 as isize)).name;
@@ -7118,7 +7114,7 @@ impl XML_ParserStruct {
                             if handleDefault == 0 {
                                 let mut model: *mut XML_Content = self.build_model();
                                 if model.is_null() {
-                                    return XML_ERROR_NO_MEMORY;
+                                    return XML_Error::NO_MEMORY;
                                 }
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.elementDecl((*self.m_declElementType).name, model);
@@ -7142,7 +7138,7 @@ impl XML_ParserStruct {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if tem.is_null() {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         normalizePublicId(tem);
                         (*self.m_declEntity).publicId = tem;
@@ -7167,9 +7163,9 @@ impl XML_ParserStruct {
             match self.m_parsingStatus.parsing {
                 3 => {
                     *nextPtr = next;
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                2 => return XML_ERROR_ABORTED,
+                2 => return XML_Error::ABORTED,
                 _ => {
                     buf = buf.with_start(next);
                     tok = (*enc).xmlTok(XML_PROLOG_STATE, buf, &mut next)
@@ -7198,15 +7194,15 @@ unsafe extern "C" fn epilogProcessor(
                 if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, EncodingType::Normal, buf.with_end(next));
                     if (*parser).m_parsingStatus.parsing == XML_FINISHED {
-                        return XML_ERROR_ABORTED;
+                        return XML_Error::ABORTED;
                     }
                 }
                 *nextPtr = next;
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             super::xmltok::XML_TOK_NONE => {
                 *nextPtr = buf.as_ptr();
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
             super::xmltok::XML_TOK_PROLOG_S => {
                 if (*parser).m_handlers.hasDefault() {
@@ -7215,42 +7211,42 @@ unsafe extern "C" fn epilogProcessor(
             }
             super::xmltok::XML_TOK_PI => {
                 if reportProcessingInstruction(parser, EncodingType::Normal, buf.with_end(next)) == 0 {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
             }
             super::xmltok::XML_TOK_COMMENT => {
                 if reportComment(parser, EncodingType::Normal, buf.with_end(next)) == 0 {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
             }
             super::xmltok::XML_TOK_INVALID => {
                 (*parser).m_eventPtr = next;
-                return XML_ERROR_INVALID_TOKEN;
+                return XML_Error::INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_PARTIAL => {
                 if (*parser).m_parsingStatus.finalBuffer == 0 {
                     *nextPtr = buf.as_ptr();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                return XML_ERROR_UNCLOSED_TOKEN;
+                return XML_Error::UNCLOSED_TOKEN;
             }
             super::xmltok::XML_TOK_PARTIAL_CHAR => {
                 if (*parser).m_parsingStatus.finalBuffer == 0 {
                     *nextPtr = buf.as_ptr();
-                    return XML_ERROR_NONE;
+                    return XML_Error::NONE;
                 }
-                return XML_ERROR_PARTIAL_CHAR;
+                return XML_Error::PARTIAL_CHAR;
             }
-            _ => return XML_ERROR_JUNK_AFTER_DOC_ELEMENT,
+            _ => return XML_Error::JUNK_AFTER_DOC_ELEMENT,
         }
         buf = buf.with_start(next);
         (*parser).m_eventPtr = buf.as_ptr();
         match (*parser).m_parsingStatus.parsing {
             3 => {
                 *nextPtr = next;
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
             }
-            2 => return XML_ERROR_ABORTED,
+            2 => return XML_Error::ABORTED,
             _ => {}
         }
     }
@@ -7263,7 +7259,7 @@ impl XML_ParserStruct {
         mut betweenDecl: XML_Bool,
     ) -> XML_Error {
         let mut next: *const c_char = 0 as *const c_char;
-        let mut result: XML_Error = XML_ERROR_NONE;
+        let mut result: XML_Error = XML_Error::NONE;
         let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         if !self.m_freeInternalEntities.is_null() {
             openEntity = self.m_freeInternalEntities;
@@ -7271,7 +7267,7 @@ impl XML_ParserStruct {
         } else {
             openEntity = MALLOC!(@OPEN_INTERNAL_ENTITY);
             if openEntity.is_null() {
-                return XML_ERROR_NO_MEMORY;
+                return XML_Error::NO_MEMORY;
             }
         }
         (*entity).open = XML_TRUE;
@@ -7283,9 +7279,9 @@ impl XML_ParserStruct {
         (*openEntity).betweenDecl = betweenDecl;
         (*openEntity).internalEventPtr = NULL as *const c_char;
         (*openEntity).internalEventEndPtr = NULL as *const c_char;
-        let text_buf = ExpatBufRef::new_len(
+        let text_buf = ExpatBufRef::new(
             (*entity).textPtr as *mut c_char,
-            (*entity).textLen as usize,
+            (*entity).textPtr.add((*entity).textLen as usize) as *mut c_char,
         );
         /* Set a safe default value in case 'next' does not get set */
         next = text_buf.as_ptr();
@@ -7311,7 +7307,7 @@ impl XML_ParserStruct {
                 XML_FALSE,
             )
         }
-        if result == XML_ERROR_NONE {
+        if result == XML_Error::NONE {
             if text_buf.end() != next && self.m_parsingStatus.parsing == XML_SUSPENDED {
                 (*entity).processed = next.wrapping_offset_from(text_buf.as_ptr()) as i32;
                 self.m_processor = Some(internalEntityProcessor as Processor)
@@ -7357,10 +7353,10 @@ unsafe extern "C" fn internalEntityProcessor(
 ) -> XML_Error {
     let mut entity: *mut ENTITY = 0 as *mut ENTITY;
     let mut next: *const c_char = 0 as *const c_char;
-    let mut result: XML_Error = XML_ERROR_NONE;
+    let mut result: XML_Error = XML_Error::NONE;
     let mut openEntity: *mut OPEN_INTERNAL_ENTITY = (*parser).m_openInternalEntities;
     if openEntity.is_null() {
-        return XML_ERROR_UNEXPECTED_STATE;
+        return XML_Error::UNEXPECTED_STATE;
     }
     entity = (*openEntity).entity;
     let text_buf = ExpatBufRef::new(
@@ -7391,7 +7387,7 @@ unsafe extern "C" fn internalEntityProcessor(
             XML_FALSE,
         )
     }
-    if result != XML_ERROR_NONE {
+    if result != XML_Error::NONE {
         return result;
     } else {
         if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_SUSPENDED {
@@ -7471,9 +7467,9 @@ unsafe extern "C" fn storeAttributeValue(
         1
     } == 0
     {
-        return XML_ERROR_NO_MEMORY;
+        return XML_Error::NO_MEMORY;
     }
-    return XML_ERROR_NONE;
+    return XML_Error::NONE;
 }
 
 unsafe extern "C" fn appendAttributeValue(
@@ -7491,20 +7487,20 @@ unsafe extern "C" fn appendAttributeValue(
         let mut current_block_62: u64;
         match tok {
             super::xmltok::XML_TOK_NONE => {
-                return XML_ERROR_NONE;
+                return XML_Error::NONE;
                 /* LCOV_EXCL_STOP */
             }
             super::xmltok::XML_TOK_INVALID => {
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = next
                 }
-                return XML_ERROR_INVALID_TOKEN;
+                return XML_Error::INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_PARTIAL => {
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = buf.as_ptr();
                 }
-                return XML_ERROR_INVALID_TOKEN;
+                return XML_Error::INVALID_TOKEN;
             }
             super::xmltok::XML_TOK_CHAR_REF => {
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
@@ -7514,7 +7510,7 @@ unsafe extern "C" fn appendAttributeValue(
                     if !enc_type.is_internal() {
                         (*parser).m_eventPtr = buf.as_ptr();
                     }
-                    return XML_ERROR_BAD_CHAR_REF;
+                    return XML_Error::BAD_CHAR_REF;
                 }
                 if isCdata == 0
                     && n == 0x20
@@ -7536,7 +7532,7 @@ unsafe extern "C" fn appendAttributeValue(
                     i = 0;
                     while i < n {
                         if !(*pool).appendChar(out_buf[i as usize]) {
-                            return XML_ERROR_NO_MEMORY;
+                            return XML_Error::NO_MEMORY;
                         }
                         i += 1
                     }
@@ -7545,7 +7541,7 @@ unsafe extern "C" fn appendAttributeValue(
             }
             super::xmltok::XML_TOK_DATA_CHARS => {
                 if !(*pool).append(enc, buf.with_end(next)) {
-                    return XML_ERROR_NO_MEMORY;
+                    return XML_Error::NO_MEMORY;
                 }
                 current_block_62 = 11796148217846552555;
             }
@@ -7575,7 +7571,7 @@ unsafe extern "C" fn appendAttributeValue(
                         1
                     } == 0
                     {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                 } else {
                     name = (*parser).m_temp2Pool.storeString(
@@ -7586,7 +7582,7 @@ unsafe extern "C" fn appendAttributeValue(
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
                     if name.is_null() {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                     let entity = hash_lookup!((*dtd).generalEntities, name);
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
@@ -7609,16 +7605,16 @@ unsafe extern "C" fn appendAttributeValue(
                     }
                     if checkEntityDecl != 0 {
                         if entity.is_null() {
-                            return XML_ERROR_UNDEFINED_ENTITY;
+                            return XML_Error::UNDEFINED_ENTITY;
                         } else {
                             if (*entity).is_internal == 0 {
-                                return XML_ERROR_ENTITY_DECLARED_IN_PE;
+                                return XML_Error::ENTITY_DECLARED_IN_PE;
                             }
                         }
                         current_block_62 = 11777552016271000781;
                     } else if entity.is_null() {
                         if cfg!(feature = "mozilla") {
-                            return XML_ERROR_UNDEFINED_ENTITY;
+                            return XML_Error::UNDEFINED_ENTITY;
                         }
                         current_block_62 = 11796148217846552555;
                     } else {
@@ -7649,21 +7645,21 @@ unsafe extern "C" fn appendAttributeValue(
                                     (*parser).m_eventPtr = buf.as_ptr()
                                     /* LCOV_EXCL_LINE */
                                 }
-                                return XML_ERROR_RECURSIVE_ENTITY_REF;
+                                return XML_Error::RECURSIVE_ENTITY_REF;
                             }
                             if !(*entity).notation.is_null() {
                                 if !enc_type.is_internal() {
                                     (*parser).m_eventPtr = buf.as_ptr()
                                 }
-                                return XML_ERROR_BINARY_ENTITY_REF;
+                                return XML_Error::BINARY_ENTITY_REF;
                             }
                             if (*entity).textPtr.is_null() {
                                 if !enc_type.is_internal() {
                                     (*parser).m_eventPtr = buf.as_ptr()
                                 }
-                                return XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF;
+                                return XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF;
                             } else {
-                                let mut result: XML_Error = XML_ERROR_NONE;
+                                let mut result: XML_Error = XML_Error::NONE;
                                 let mut textEnd: *const XML_Char =
                                     (*entity).textPtr.offset((*entity).textLen as isize);
                                 (*entity).open = XML_TRUE;
@@ -7702,7 +7698,7 @@ unsafe extern "C" fn appendAttributeValue(
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = buf.as_ptr()
                 }
-                return XML_ERROR_UNEXPECTED_STATE;
+                return XML_Error::UNEXPECTED_STATE;
             }
         }
         match current_block_62 {
@@ -7722,7 +7718,7 @@ unsafe extern "C" fn appendAttributeValue(
                         1
                     } == 0
                     {
-                        return XML_ERROR_NO_MEMORY;
+                        return XML_Error::NO_MEMORY;
                     }
                 }
             }
@@ -7741,7 +7737,7 @@ unsafe extern "C" fn storeEntityValue(
     let mut current_block: u64; /* save one level of indirection */
     let dtd: *mut DTD = (*parser).m_dtd;
     let mut pool: *mut STRING_POOL = &mut (*dtd).entityValuePool;
-    let mut result: XML_Error = XML_ERROR_NONE;
+    let mut result: XML_Error = XML_Error::NONE;
     let mut oldInEntityValue: c_int = (*parser).m_prologState.inEntityValue;
     let enc = (*parser).encoding(enc_type);
     (*parser).m_prologState.inEntityValue = 1;
@@ -7751,7 +7747,7 @@ unsafe extern "C" fn storeEntityValue(
     have to make sure that entityValuePool.start is not null */
     if (*pool).blocks.is_null() {
         if (*pool).grow() == 0 {
-            return XML_ERROR_NO_MEMORY;
+            return XML_Error::NO_MEMORY;
         }
     }
     's_41: loop {
@@ -7774,7 +7770,7 @@ unsafe extern "C" fn storeEntityValue(
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
                     if name.is_null() {
-                        result = XML_ERROR_NO_MEMORY;
+                        result = XML_Error::NO_MEMORY;
                         break;
                     } else {
                         entity = hash_lookup!((*dtd).paramEntities, name);
@@ -7792,7 +7788,7 @@ unsafe extern "C" fn storeEntityValue(
                             if !enc_type.is_internal() {
                                 (*parser).m_eventPtr = entityTextBuf.as_ptr();
                             }
-                            result = XML_ERROR_RECURSIVE_ENTITY_REF;
+                            result = XML_Error::RECURSIVE_ENTITY_REF;
                             break;
                         } else if !(*entity).systemId.is_null() {
                             if (*parser).m_handlers.hasExternalEntityRef() {
@@ -7806,7 +7802,7 @@ unsafe extern "C" fn storeEntityValue(
                                 ) == Ok(0)
                                 {
                                     (*entity).open = XML_FALSE;
-                                    result = XML_ERROR_EXTERNAL_ENTITY_HANDLING;
+                                    result = XML_Error::EXTERNAL_ENTITY_HANDLING;
                                     break;
                                 } else {
                                     (*entity).open = XML_FALSE;
@@ -7838,19 +7834,19 @@ unsafe extern "C" fn storeEntityValue(
                     /* In the internal subset, PE references are not legal
                     within markup declarations, e.g entity values in this case. */
                     (*parser).m_eventPtr = entityTextBuf.as_ptr();
-                    result = XML_ERROR_PARAM_ENTITY_REF;
+                    result = XML_Error::PARAM_ENTITY_REF;
                     break;
                 }
                 current_block = 10007731352114176167;
                 /* LCOV_EXCL_STOP */
             }
             super::xmltok::XML_TOK_NONE => {
-                result = XML_ERROR_NONE;
+                result = XML_Error::NONE;
                 break;
             }
             super::xmltok::XML_TOK_ENTITY_REF | super::xmltok::XML_TOK_DATA_CHARS => {
                 if !(*pool).append(enc, entityTextBuf.with_end(next)) {
-                    result = XML_ERROR_NO_MEMORY;
+                    result = XML_Error::NO_MEMORY;
                     break;
                 } else {
                     current_block = 10007731352114176167;
@@ -7871,7 +7867,7 @@ unsafe extern "C" fn storeEntityValue(
                     if !enc_type.is_internal() {
                         (*parser).m_eventPtr = entityTextBuf.as_ptr();
                     }
-                    result = XML_ERROR_BAD_CHAR_REF;
+                    result = XML_Error::BAD_CHAR_REF;
                     break;
                 } else {
                     n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR);
@@ -7887,7 +7883,7 @@ unsafe extern "C" fn storeEntityValue(
                     i = 0;
                     while i < n {
                         if (*pool).end == (*pool).ptr as *const XML_Char && (*pool).grow() == 0 {
-                            result = XML_ERROR_NO_MEMORY;
+                            result = XML_Error::NO_MEMORY;
                             break 's_41;
                         } else {
                             let fresh43 = (*pool).ptr;
@@ -7903,14 +7899,14 @@ unsafe extern "C" fn storeEntityValue(
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = entityTextBuf.as_ptr();
                 }
-                result = XML_ERROR_INVALID_TOKEN;
+                result = XML_Error::INVALID_TOKEN;
                 break;
             }
             super::xmltok::XML_TOK_INVALID => {
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = next
                 }
-                result = XML_ERROR_INVALID_TOKEN;
+                result = XML_Error::INVALID_TOKEN;
                 break;
             }
             _ => {
@@ -7924,7 +7920,7 @@ unsafe extern "C" fn storeEntityValue(
                 if !enc_type.is_internal() {
                     (*parser).m_eventPtr = entityTextBuf.as_ptr();
                 }
-                result = XML_ERROR_UNEXPECTED_STATE;
+                result = XML_Error::UNEXPECTED_STATE;
                 break;
             }
         }
@@ -7933,7 +7929,7 @@ unsafe extern "C" fn storeEntityValue(
             /* fall through */
             {
                 if (*pool).end == (*pool).ptr as *const XML_Char && (*pool).grow() == 0 {
-                    result = XML_ERROR_NO_MEMORY;
+                    result = XML_Error::NO_MEMORY;
                     break;
                 } else {
                     let fresh42 = (*pool).ptr;
@@ -8642,7 +8638,7 @@ impl XML_ParserStruct {
                     NULL as *const ATTRIBUTE_ID,
                     self.m_tempPool.start,
                     &mut self.m_inheritedBindings,
-                ) != XML_ERROR_NONE
+                ) != XML_Error::NONE
                 {
                     return XML_FALSE;
                 }
@@ -9423,7 +9419,7 @@ impl XML_ParserStruct {
         let dtd: *mut DTD = self.m_dtd;
         (*dest).type_0 = (*(*dtd).scaffold.offset(src_node as isize)).type_0;
         (*dest).quant = (*(*dtd).scaffold.offset(src_node as isize)).quant;
-        if (*dest).type_0 == XML_CTYPE_NAME {
+        if (*dest).type_0 == XML_Content_Type::NAME {
             let mut src: *const XML_Char = 0 as *const XML_Char;
             (*dest).name = *strpos;
             src = (*(*dtd).scaffold.offset(src_node as isize)).name;
