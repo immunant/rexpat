@@ -7271,9 +7271,9 @@ impl XML_ParserStruct {
         (*openEntity).betweenDecl = betweenDecl;
         (*openEntity).internalEventPtr = NULL as *const c_char;
         (*openEntity).internalEventEndPtr = NULL as *const c_char;
-        let text_buf = ExpatBufRef::new_len(
+        let text_buf = ExpatBufRef::new(
             (*entity).textPtr as *mut c_char,
-            (*entity).textLen as usize,
+            (*entity).textPtr.add((*entity).textLen as usize) as *mut c_char,
         );
         /* Set a safe default value in case 'next' does not get set */
         next = text_buf.as_ptr();
