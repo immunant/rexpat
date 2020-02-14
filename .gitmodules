@@ -1,6 +1,3 @@
-[submodule "upstream"]
-	path = upstream
-	url = https://github.com/libexpat/libexpat
 [submodule "deps/wchar"]
 	path = deps/wchar
 	url = https://github.com/immunant/wchar-rs
