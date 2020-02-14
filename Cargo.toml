@@ -5,6 +5,9 @@ version = "0.0.0"
 publish = false
 edition = "2018"
 autobins = false
+license = "MIT"
+repository = "https://github.com/immunant/rexpat"
+description = "A libexpat compatible Rust crate"
 
 [lib]
 name = "rexpat"
