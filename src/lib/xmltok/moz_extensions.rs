@@ -1,8 +1,8 @@
 use libc::{c_char, c_ushort, c_int};
 use crate::expat_external_h::XML_Char;
 use crate::lib::xmltok::{
-    MOZ_XmlGetUtf16InternalEncodingNS,
     MOZ_XmlUtf16Encode,
+    XmlEncoding,
     XmlEncodingImpl,
     XML_TOK_INVALID,
     XML_TOK_CHAR_REF,
@@ -119,8 +119,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
 ) -> c_int {
     // Can we assert here somehow?
     // MOZ_ASSERT(*ptr == '&');
-    let enc = MOZ_XmlGetUtf16InternalEncodingNS();
-    let enc_mbpc = (*enc).minBytesPerChar() as isize;
+    let enc_mbpc = encoding.as_ref().unwrap().MINBPC();
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
     let tok = encoding.as_ref().unwrap().scanRef(buf.inc_start(enc_mbpc), next);
@@ -131,7 +130,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     match tok {
         XML_TOK_CHAR_REF => {
             /* XmlCharRefNumber expects to be pointed to the '&'. */
-            let n = (*enc).charRefNumber(buf);
+            let n = encoding.as_ref().unwrap().charRefNumber(buf);
 
             /* We could get away with just < 0, but better safe than sorry. */
             if n <= 0 {
@@ -146,7 +145,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
             
 	     *next points to after the semicolon, so the entity ends at
 	     *next - enc->minBytesPerChar. */
-            let ch = (*enc).predefinedEntityName(
+            let ch = encoding.as_ref().unwrap().predefinedEntityName(
                 buf.inc_start(enc_mbpc)
                    .with_end(*next)
                    .dec_end(enc_mbpc as usize)) as XML_Char;
