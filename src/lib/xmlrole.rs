@@ -109,7 +109,7 @@ pub type PROLOG_STATE = prolog_state;
 #[derive(Copy, Clone, Default)]
 pub struct prolog_state {
     pub handler: Option<
-        unsafe extern "C" fn(
+        fn(
             _: &mut prolog_state,
             _: c_int,
             _: ExpatBufRef,
@@ -144,7 +144,7 @@ use ::libc;
 /* not XML_DTD */
 /* not XML_DTD */
 
-pub type PROLOG_HANDLER = unsafe extern "C" fn(
+pub type PROLOG_HANDLER = fn(
     _: &mut PROLOG_STATE,
     _: c_int,
     _: ExpatBufRef,
@@ -381,7 +381,7 @@ static KW_SYSTEM: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-unsafe extern "C" fn prolog0(
+fn prolog0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut buf: ExpatBufRef,
@@ -424,7 +424,7 @@ unsafe extern "C" fn prolog0(
     common(state, tok)
 }
 
-unsafe extern "C" fn prolog1(
+fn prolog1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut buf: ExpatBufRef,
@@ -463,7 +463,7 @@ unsafe extern "C" fn prolog1(
     common(state, tok)
 }
 
-unsafe extern "C" fn prolog2(
+fn prolog2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -482,7 +482,7 @@ unsafe extern "C" fn prolog2(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype0(
+fn doctype0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -499,7 +499,7 @@ unsafe extern "C" fn doctype0(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype1(
+fn doctype1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut buf: ExpatBufRef,
@@ -530,7 +530,7 @@ unsafe extern "C" fn doctype1(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype2(
+fn doctype2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -547,7 +547,7 @@ unsafe extern "C" fn doctype2(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype3(
+fn doctype3(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -564,7 +564,7 @@ unsafe extern "C" fn doctype3(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype4(
+fn doctype4(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -585,7 +585,7 @@ unsafe extern "C" fn doctype4(
     common(state, tok)
 }
 
-unsafe extern "C" fn doctype5(
+fn doctype5(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -602,7 +602,7 @@ unsafe extern "C" fn doctype5(
     common(state, tok)
 }
 
-unsafe extern "C" fn internalSubset(
+fn internalSubset(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -657,7 +657,7 @@ unsafe extern "C" fn internalSubset(
     common(state, tok)
 }
 
-unsafe extern "C" fn externalSubset0(
+fn externalSubset0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -670,7 +670,7 @@ unsafe extern "C" fn externalSubset0(
     externalSubset1(state, tok, buf, enc)
 }
 
-unsafe extern "C" fn externalSubset1(
+fn externalSubset1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -700,7 +700,7 @@ unsafe extern "C" fn externalSubset1(
 }
 /* XML_DTD */
 
-unsafe extern "C" fn entity0(
+fn entity0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -721,7 +721,7 @@ unsafe extern "C" fn entity0(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity1(
+fn entity1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -738,7 +738,7 @@ unsafe extern "C" fn entity1(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity2(
+fn entity2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -766,7 +766,7 @@ unsafe extern "C" fn entity2(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity3(
+fn entity3(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -783,7 +783,7 @@ unsafe extern "C" fn entity3(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity4(
+fn entity4(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -800,7 +800,7 @@ unsafe extern "C" fn entity4(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity5(
+fn entity5(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -827,7 +827,7 @@ unsafe extern "C" fn entity5(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity6(
+fn entity6(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -845,7 +845,7 @@ unsafe extern "C" fn entity6(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity7(
+fn entity7(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -873,7 +873,7 @@ unsafe extern "C" fn entity7(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity8(
+fn entity8(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -890,7 +890,7 @@ unsafe extern "C" fn entity8(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity9(
+fn entity9(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -907,7 +907,7 @@ unsafe extern "C" fn entity9(
     common(state, tok)
 }
 
-unsafe extern "C" fn entity10(
+fn entity10(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -928,7 +928,7 @@ unsafe extern "C" fn entity10(
     common(state, tok)
 }
 
-unsafe extern "C" fn notation0(
+fn notation0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -945,7 +945,7 @@ unsafe extern "C" fn notation0(
     common(state, tok)
 }
 
-unsafe extern "C" fn notation1(
+fn notation1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -968,7 +968,7 @@ unsafe extern "C" fn notation1(
     common(state, tok)
 }
 
-unsafe extern "C" fn notation2(
+fn notation2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -985,7 +985,7 @@ unsafe extern "C" fn notation2(
     common(state, tok)
 }
 
-unsafe extern "C" fn notation3(
+fn notation3(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1003,7 +1003,7 @@ unsafe extern "C" fn notation3(
     common(state, tok)
 }
 
-unsafe extern "C" fn notation4(
+fn notation4(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1029,7 +1029,7 @@ unsafe extern "C" fn notation4(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist0(
+fn attlist0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1046,7 +1046,7 @@ unsafe extern "C" fn attlist0(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist1(
+fn attlist1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1071,7 +1071,7 @@ unsafe extern "C" fn attlist1(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist2(
+fn attlist2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -1110,7 +1110,7 @@ unsafe extern "C" fn attlist2(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist3(
+fn attlist3(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1129,7 +1129,7 @@ unsafe extern "C" fn attlist3(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist4(
+fn attlist4(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1150,7 +1150,7 @@ unsafe extern "C" fn attlist4(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist5(
+fn attlist5(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1167,7 +1167,7 @@ unsafe extern "C" fn attlist5(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist6(
+fn attlist6(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1184,7 +1184,7 @@ unsafe extern "C" fn attlist6(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist7(
+fn attlist7(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1206,7 +1206,7 @@ unsafe extern "C" fn attlist7(
 }
 /* default value */
 
-unsafe extern "C" fn attlist8(
+fn attlist8(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -1249,7 +1249,7 @@ unsafe extern "C" fn attlist8(
     common(state, tok)
 }
 
-unsafe extern "C" fn attlist9(
+fn attlist9(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1266,7 +1266,7 @@ unsafe extern "C" fn attlist9(
     common(state, tok)
 }
 
-unsafe extern "C" fn element0(
+fn element0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1283,7 +1283,7 @@ unsafe extern "C" fn element0(
     common(state, tok)
 }
 
-unsafe extern "C" fn element1(
+fn element1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -1313,7 +1313,7 @@ unsafe extern "C" fn element1(
     common(state, tok)
 }
 
-unsafe extern "C" fn element2(
+fn element2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -1357,7 +1357,7 @@ unsafe extern "C" fn element2(
     common(state, tok)
 }
 
-unsafe extern "C" fn element3(
+fn element3(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1384,7 +1384,7 @@ unsafe extern "C" fn element3(
     common(state, tok)
 }
 
-unsafe extern "C" fn element4(
+fn element4(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1401,7 +1401,7 @@ unsafe extern "C" fn element4(
     common(state, tok)
 }
 
-unsafe extern "C" fn element5(
+fn element5(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1423,7 +1423,7 @@ unsafe extern "C" fn element5(
     common(state, tok)
 }
 
-unsafe extern "C" fn element6(
+fn element6(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1456,7 +1456,7 @@ unsafe extern "C" fn element6(
     common(state, tok)
 }
 
-unsafe extern "C" fn element7(
+fn element7(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1509,7 +1509,7 @@ unsafe extern "C" fn element7(
     common(state, tok)
 }
 
-unsafe extern "C" fn condSect0(
+fn condSect0(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     buf: ExpatBufRef,
@@ -1532,7 +1532,7 @@ unsafe extern "C" fn condSect0(
     common(state, tok)
 }
 
-unsafe extern "C" fn condSect1(
+fn condSect1(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1550,7 +1550,7 @@ unsafe extern "C" fn condSect1(
     common(state, tok)
 }
 
-unsafe extern "C" fn condSect2(
+fn condSect2(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1568,7 +1568,7 @@ unsafe extern "C" fn condSect2(
 }
 /* XML_DTD */
 
-unsafe extern "C" fn declClose(
+fn declClose(
     mut state: &mut PROLOG_STATE,
     mut tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1609,7 +1609,7 @@ unsafe extern "C" fn declClose(
  * LCOV_EXCL_START
  */
 
-unsafe extern "C" fn error(
+fn error(
     mut _state: &mut PROLOG_STATE,
     mut _tok: c_int,
     mut _buf: ExpatBufRef,
@@ -1619,7 +1619,7 @@ unsafe extern "C" fn error(
 }
 /* LCOV_EXCL_STOP */
 
-unsafe extern "C" fn common(mut state: &mut PROLOG_STATE, mut tok: c_int) -> c_int {
+fn common(mut state: &mut PROLOG_STATE, mut tok: c_int) -> c_int {
     if state.documentEntity == 0 && tok == super::xmltok::XML_TOK_PARAM_ENTITY_REF {
         return XML_ROLE_INNER_PARAM_ENTITY_REF;
     }
@@ -1628,7 +1628,7 @@ unsafe extern "C" fn common(mut state: &mut PROLOG_STATE, mut tok: c_int) -> c_i
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlPrologStateInit(mut state: &mut PROLOG_STATE) {
+pub fn XmlPrologStateInit(mut state: &mut PROLOG_STATE) {
     state.handler = Some(prolog0 as PROLOG_HANDLER);
     state.documentEntity = 1;
     state.includeLevel = 0u32;
@@ -1637,7 +1637,7 @@ pub unsafe extern "C" fn XmlPrologStateInit(mut state: &mut PROLOG_STATE) {
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn XmlPrologStateInitExternalEntity(mut state: &mut PROLOG_STATE) {
+pub fn XmlPrologStateInitExternalEntity(mut state: &mut PROLOG_STATE) {
     state.handler = Some(externalSubset0 as PROLOG_HANDLER);
     state.documentEntity = 0;
     state.includeLevel = 0u32;

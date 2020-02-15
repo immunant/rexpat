@@ -213,7 +213,7 @@ pub trait XmlEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe fn nameMatchesAscii(
+    fn nameMatchesAscii(
         &self,
         buf: ExpatBufRef,
         ptr2: *const libc::c_char,
@@ -2200,7 +2200,7 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe fn nameMatchesAscii(
+    fn nameMatchesAscii(
         &self,
         _buf: ExpatBufRef,
         _ptr2: *const libc::c_char,

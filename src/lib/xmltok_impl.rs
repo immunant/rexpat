@@ -1770,12 +1770,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         return 0 as libc::c_int;
     }
-    unsafe fn nameMatchesAscii(
+    fn nameMatchesAscii(
         &self,
         mut buf: ExpatBufRef,
         mut ptr2: *const libc::c_char,
     ) -> libc::c_int {
-        while *ptr2 != 0 {
+        while unsafe { *ptr2 != 0 } {
             if buf.len() < self.MINBPC() as usize {
                 /* This line cannot be executed.  The incoming data has already
                  * been tokenized once, so incomplete characters like this have
@@ -1784,11 +1784,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                  */
                 return 0 as libc::c_int;
             }
-            if !self.char_matches(buf.as_ptr(), *ptr2) {
+            if !self.char_matches(buf.as_ptr(), unsafe { *ptr2 }) {
                 return 0 as libc::c_int;
             }
             buf = buf.inc_start(self.MINBPC() as isize);
-            ptr2 = ptr2.offset(1)
+            ptr2 = unsafe { ptr2.offset(1) }
         }
         (buf.is_empty()) as libc::c_int
     }
