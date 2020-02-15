@@ -5684,7 +5684,7 @@ impl XML_ParserStruct {
                                     -(4),
                                     // TODO(SJC): is this right??
                                     ExpatBufRef::empty(),
-                                    &*enc,
+                                    enc,
                                 ) == super::xmlrole::XML_ROLE_ERROR
                             {
                                 return XML_Error::INCOMPLETE_PE;
@@ -5705,7 +5705,7 @@ impl XML_ParserStruct {
                 .m_prologState
                 .handler
                 .expect("non-null function pointer")(
-                    &mut self.m_prologState, tok, buf.with_end(next), &*enc
+                    &mut self.m_prologState, tok, buf.with_end(next), enc
                 );
             match role {
                 1 => {
