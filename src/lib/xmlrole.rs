@@ -33,8 +33,8 @@
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-use libc::{c_char, c_int, c_uint};
 use super::xmlparse::ExpatBufRef;
+use libc::{c_char, c_int, c_uint};
 pub type C2RustUnnamed_0 = c_int;
 
 pub const XML_ROLE_ERROR: C2RustUnnamed_0 = -1;
@@ -109,12 +109,7 @@ pub type PROLOG_STATE = prolog_state;
 #[derive(Copy, Clone, Default)]
 pub struct prolog_state {
     pub handler: Option<
-        fn(
-            _: &mut prolog_state,
-            _: c_int,
-            _: ExpatBufRef,
-            _: &super::xmltok::ENCODING,
-        ) -> c_int,
+        fn(_: &mut prolog_state, _: c_int, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> c_int,
     >,
     pub level: c_uint,
     pub role_none: c_int,
@@ -140,16 +135,12 @@ pub use crate::lib::xmltok::{
     XML_TOK_PERCENT, XML_TOK_PI, XML_TOK_POUND_NAME, XML_TOK_PREFIXED_NAME, XML_TOK_XML_DECL,
 };
 pub use crate::xmltok_h::{XML_TOK_INSTANCE_START, XML_TOK_PROLOG_S};
-use ::libc;
+use libc;
 /* not XML_DTD */
 /* not XML_DTD */
 
-pub type PROLOG_HANDLER = fn(
-    _: &mut PROLOG_STATE,
-    _: c_int,
-    _: ExpatBufRef,
-    _: &super::xmltok::ENCODING,
-) -> c_int;
+pub type PROLOG_HANDLER =
+    fn(_: &mut PROLOG_STATE, _: c_int, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> c_int;
 /* ndef _WIN32 */
 /* Doesn't check:
 
