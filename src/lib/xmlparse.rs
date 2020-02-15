@@ -1293,7 +1293,7 @@ mod unicode_defines {
     }
 }
 
-use unicode_defines::*;
+pub(crate) use unicode_defines::*;
 
 /* WFC: PE Between Declarations */
 

@@ -1,4 +1,4 @@
-use libc::{c_char, c_ushort, c_int};
+use libc::{c_char, c_int};
 use crate::expat_external_h::XML_Char;
 use crate::lib::xmltok::{
     MOZ_XmlUtf16Encode,
@@ -10,7 +10,7 @@ use crate::lib::xmltok::{
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
 use crate::xmltok_impl_h::ByteType;
-use crate::lib::xmlparse::ExpatBufRef;
+use crate::lib::xmlparse::{ExpatBufRef, XML_ENCODE_MAX};
 
 #[cfg(target_endian = "little")]
 use crate::lib::xmltok::internal_little2_encoding_ns as encoding;
@@ -136,7 +136,8 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
             if n <= 0 {
                 0
             } else {
-                MOZ_XmlUtf16Encode(n, result as *mut c_ushort)
+                let result_slice = std::slice::from_raw_parts_mut(result, XML_ENCODE_MAX);
+                MOZ_XmlUtf16Encode(n, result_slice)
             }
         }
 
