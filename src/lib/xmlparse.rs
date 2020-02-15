@@ -4028,7 +4028,7 @@ impl XML_ParserStruct {
                     }
                     if self.m_handlers.hasCharacterData() {
                         let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                        let n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR) as usize;
+                        let n = XmlEncode(n, &mut out_buf) as usize;
                         self.m_handlers.characterData(&out_buf[..n]);
                     } else if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -7338,7 +7338,7 @@ unsafe extern "C" fn appendAttributeValue(
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
-                    n = XmlEncode(n, out_buf.as_mut_ptr());
+                    n = XmlEncode(n, &mut out_buf);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7689,7 +7689,7 @@ unsafe extern "C" fn storeEntityValue(
                     result = XML_Error::BAD_CHAR_REF;
                     break;
                 } else {
-                    n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR);
+                    n = XmlEncode(n, &mut out_buf);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The

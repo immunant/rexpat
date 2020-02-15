@@ -2372,8 +2372,7 @@ impl UnknownEncoding {
                 } else {
                     self.types[i] = ByteType::OTHER;
                 }
-                self.utf8[i][0] =
-                    unsafe { XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
+                self.utf8[i][0] = XmlUtf8Encode(c, &mut self.utf8[i][1..]) as c_char;
                 self.utf16[i] = c as c_ushort
             }
         }
@@ -2473,7 +2472,7 @@ impl XmlEncodingImpl for UnknownEncoding {
             if n == 0 {
                 let mut c: c_int =
                     self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
-                n = XmlUtf8Encode(c, buf.as_mut_ptr());
+                n = XmlUtf8Encode(c, &mut buf);
                 if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
@@ -3174,48 +3173,48 @@ pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     result
 }
 
-pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
+pub fn XmlUtf8Encode(mut c: c_int, buf: &mut [c_char]) -> c_int {
     if c < 0 {
         return 0i32;
     }
     if c < min2 as c_int {
-        *buf.offset(0) = (c | UTF8_cval1 as c_int) as c_char;
+        buf[0] = (c | UTF8_cval1 as c_int) as c_char;
         return 1i32;
     }
     if c < min3 as c_int {
-        *buf.offset(0) = (c >> 6 | UTF8_cval2 as c_int) as c_char;
-        *buf.offset(1) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 6 | UTF8_cval2 as c_int) as c_char;
+        buf[1] = (c & 0x3fi32 | 0x80) as c_char;
         return 2i32;
     }
     if c < min4 as c_int {
-        *buf.offset(0) = (c >> 12 | UTF8_cval3 as c_int) as c_char;
-        *buf.offset(1) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(2) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 12 | UTF8_cval3 as c_int) as c_char;
+        buf[1] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        buf[2] = (c & 0x3fi32 | 0x80) as c_char;
         return 3i32;
     }
     if c < 0x110000 {
-        *buf.offset(0) = (c >> 18 | UTF8_cval4 as c_int) as c_char;
-        *buf.offset(1) = (c >> 12 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(2) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(3) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 18 | UTF8_cval4 as c_int) as c_char;
+        buf[1] = (c >> 12 & 0x3fi32 | 0x80) as c_char;
+        buf[2] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        buf[3] = (c & 0x3fi32 | 0x80) as c_char;
         return 4i32;
     }
     0
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
 }
 
-pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
+pub fn XmlUtf16Encode(mut charNum: c_int, buf: &mut [c_ushort]) -> c_int {
     if charNum < 0 {
         return 0i32;
     }
     if charNum < 0x10000 {
-        *buf.offset(0) = charNum as c_ushort;
+        buf[0] = charNum as c_ushort;
         return 1i32;
     }
     if charNum < 0x110000 {
         charNum -= 0x10000;
-        *buf.offset(0) = ((charNum >> 10) + 0xd800i32) as c_ushort;
-        *buf.offset(1) = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
+        buf[0] = ((charNum >> 10) + 0xd800i32) as c_ushort;
+        buf[1] = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
         return 2i32;
     }
     0
