@@ -1631,7 +1631,7 @@ impl XML_ParserStruct {
 
     unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
         self.m_processor = Some(prologInitProcessor as Processor);
-        super::xmlrole::MOZ_XmlPrologStateInit(&mut self.m_prologState as *mut _);
+        super::xmlrole::MOZ_XmlPrologStateInit(&mut self.m_prologState);
         if !encodingName.is_null() {
             self.m_protocolEncodingName = copyString(encodingName)
         }
@@ -1973,7 +1973,7 @@ pub unsafe extern "C" fn MOZ_XML_ExternalEntityParserCreate(
            PE parser. This would leave those prefixes with dangling pointers.
         */
         (*parser).m_isParamEntity = XML_TRUE;
-        super::xmlrole::MOZ_XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
+        super::xmlrole::MOZ_XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState);
         (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
     }
     /* XML_DTD */
@@ -2740,7 +2740,8 @@ impl XML_ParserStruct {
             &mut self.m_position,
         );
         self.m_positionPtr = self.m_bufferPtr;
-        return result;
+
+        result
     }
 }
 
@@ -2991,7 +2992,8 @@ impl XML_ParserStruct {
             self.m_eventPtr = self.m_bufferPtr;
             self.m_eventEndPtr = self.m_bufferPtr;
         }
-        return result;
+
+        result
     }
 }
 
@@ -3144,7 +3146,7 @@ pub unsafe extern "C" fn MOZ_XML_GetCurrentLineNumber(mut parser: XML_Parser) ->
         );
         (*parser).m_positionPtr = (*parser).m_eventPtr
     }
-    return (*parser).m_position.lineNumber.wrapping_add(1u64);
+    (*parser).m_position.lineNumber.wrapping_add(1u64)
 }
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> XML_Size {
@@ -3161,7 +3163,7 @@ pub unsafe extern "C" fn MOZ_XML_GetCurrentColumnNumber(mut parser: XML_Parser) 
         );
         (*parser).m_positionPtr = (*parser).m_eventPtr
     }
-    return (*parser).m_position.columnNumber;
+    (*parser).m_position.columnNumber
 }
 /* For backwards compatibility with previous versions. */
 /* Frees the content model passed to the element declaration handler */
@@ -3177,7 +3179,7 @@ pub unsafe extern "C" fn MOZ_XML_MemMalloc(mut parser: XML_Parser, mut size: siz
     if parser.is_null() {
         return NULL as *mut c_void;
     }
-    return MALLOC!(size);
+    MALLOC!(size)
 }
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XML_MemRealloc(
@@ -3188,7 +3190,7 @@ pub unsafe extern "C" fn MOZ_XML_MemRealloc(
     if parser.is_null() {
         return NULL as *mut c_void;
     }
-    return REALLOC!(ptr, size);
+    REALLOC!(ptr, size)
 }
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XML_MemFree(mut parser: XML_Parser, mut ptr: *mut c_void) {
@@ -3482,7 +3484,7 @@ unsafe extern "C" fn contentProcessor(
             return XML_Error::NO_MEMORY;
         }
     }
-    return result;
+    result
 }
 
 unsafe extern "C" fn externalEntityInitProcessor(
@@ -3537,7 +3539,7 @@ unsafe extern "C" fn externalEntityInitProcessor2(
         _ => {}
     }
     (*parser).m_processor = Some(externalEntityInitProcessor3 as Processor);
-    return externalEntityInitProcessor3(parser, buf, endPtr);
+    externalEntityInitProcessor3(parser, buf, endPtr)
 }
 
 unsafe extern "C" fn externalEntityInitProcessor3(
@@ -3584,7 +3586,7 @@ unsafe extern "C" fn externalEntityInitProcessor3(
     }
     (*parser).m_processor = Some(externalEntityContentProcessor as Processor);
     (*parser).m_tagLevel = 1;
-    return externalEntityContentProcessor(parser, buf, endPtr);
+    externalEntityContentProcessor(parser, buf, endPtr)
 }
 
 unsafe extern "C" fn externalEntityContentProcessor(
@@ -3604,7 +3606,7 @@ unsafe extern "C" fn externalEntityContentProcessor(
             return XML_Error::NO_MEMORY;
         }
     }
-    return result;
+    result
 }
 
 impl XML_ParserStruct {
@@ -4057,7 +4059,7 @@ impl XML_ParserStruct {
                     }
                     if self.m_handlers.hasCharacterData() {
                         let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                        let n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR) as usize;
+                        let n = XmlEncode(n, &mut out_buf) as usize;
                         self.m_handlers.characterData(&out_buf[..n]);
                     } else if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -4928,7 +4930,7 @@ unsafe extern "C" fn addBinding(
             },
         );
     }
-    return XML_Error::NONE;
+    XML_Error::NONE
 }
 /* The idea here is to avoid using stack for each CDATA section when
    the whole file is parsed with one call.
@@ -4960,7 +4962,7 @@ unsafe extern "C" fn cdataSectionProcessor(
             return contentProcessor(parser, buf, endPtr);
         }
     }
-    return result;
+    result
 }
 /* startPtr gets set to non-null if the section is closed, and to null if
    the section is not yet closed.
@@ -5124,7 +5126,7 @@ unsafe extern "C" fn ignoreSectionProcessor(
         (*parser).m_processor = Some(prologProcessor as Processor);
         return prologProcessor(parser, buf, endPtr);
     }
-    return result;
+    result
 }
 /* startPtr gets set to non-null is the section is closed, and to null
    if the section is not yet closed.
@@ -5259,7 +5261,7 @@ impl XML_ParserStruct {
             return XML_Error::NONE;
         }
 
-        return self.handleUnknownEncoding(self.m_protocolEncodingName);
+        self.handleUnknownEncoding(self.m_protocolEncodingName)
     }
 
     unsafe fn processXmlDecl(
@@ -5713,7 +5715,7 @@ impl XML_ParserStruct {
                                     -(4),
                                     // TODO(SJC): is this right??
                                     ExpatBufRef::empty(),
-                                    &*enc,
+                                    enc,
                                 ) == super::xmlrole::XML_ROLE_ERROR
                             {
                                 return XML_Error::INCOMPLETE_PE;
@@ -5734,7 +5736,7 @@ impl XML_ParserStruct {
                 .m_prologState
                 .handler
                 .expect("non-null function pointer")(
-                    &mut self.m_prologState, tok, buf.with_end(next), &*enc
+                    &mut self.m_prologState, tok, buf.with_end(next), enc
                 );
             match role {
                 1 => {
@@ -7190,7 +7192,7 @@ impl XML_ParserStruct {
                 self.m_freeInternalEntities = openEntity
             }
         }
-        return result;
+        result
     }
 }
 
@@ -7286,7 +7288,7 @@ unsafe extern "C" fn errorProcessor(
     mut _buf: ExpatBufRef,
     mut _nextPtr: *mut *const c_char,
 ) -> XML_Error {
-    return (*parser).m_errorCode;
+    (*parser).m_errorCode
 }
 
 unsafe extern "C" fn storeAttributeValue(
@@ -7317,7 +7319,7 @@ unsafe extern "C" fn storeAttributeValue(
     {
         return XML_Error::NO_MEMORY;
     }
-    return XML_Error::NONE;
+    XML_Error::NONE
 }
 
 unsafe extern "C" fn appendAttributeValue(
@@ -7367,7 +7369,7 @@ unsafe extern "C" fn appendAttributeValue(
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
-                    n = XmlEncode(n, out_buf.as_mut_ptr());
+                    n = XmlEncode(n, &mut out_buf);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7718,7 +7720,7 @@ unsafe extern "C" fn storeEntityValue(
                     result = XML_Error::BAD_CHAR_REF;
                     break;
                 } else {
-                    n = XmlEncode(n, out_buf.as_mut_ptr() as *mut ICHAR);
+                    n = XmlEncode(n, &mut out_buf);
                     /* The XmlEncode() functions can never return 0 here.  That
                      * error return happens if the code point passed in is either
                      * negative or greater than or equal to 0x110000.  The
@@ -7791,7 +7793,7 @@ unsafe extern "C" fn storeEntityValue(
     }
     (*parser).m_prologState.inEntityValue = oldInEntityValue;
     /* XML_DTD */
-    return result;
+    result
 }
 
 unsafe extern "C" fn normalizeLines(mut s: *mut XML_Char) {
@@ -8571,7 +8573,7 @@ unsafe extern "C" fn dtdCreate() -> *mut DTD {
     (*p).keepProcessing = XML_TRUE;
     (*p).hasParamEntityRefs = XML_FALSE;
     (*p).standalone = XML_FALSE;
-    return p;
+    p
 }
 /* do not call if m_parentParser != NULL */
 
@@ -8765,7 +8767,7 @@ unsafe extern "C" fn dtdCopy(
     (*newDtd).scaffSize = (*oldDtd).scaffSize;
     (*newDtd).scaffLevel = (*oldDtd).scaffLevel;
     (*newDtd).scaffIndex = (*oldDtd).scaffIndex;
-    return 1;
+    1
 }
 /* End dtdCopy */
 
@@ -8835,7 +8837,7 @@ unsafe extern "C" fn copyEntityTable(
         (*newE).is_param = (*oldE).is_param;
         (*newE).is_internal = (*oldE).is_internal
     }
-    return 1;
+    1
 }
 
 pub const INIT_POWER: c_int = 6;
@@ -8848,7 +8850,7 @@ unsafe extern "C" fn keyeq(mut s1: KEY, mut s2: KEY) -> XML_Bool {
         s1 = s1.offset(1);
         s2 = s2.offset(1)
     }
-    return XML_FALSE;
+    XML_FALSE
 }
 
 unsafe extern "C" fn keylen(mut s: KEY) -> size_t {
@@ -8960,7 +8962,7 @@ impl STRING_POOL {
         }
         s = self.start;
         self.start = self.ptr;
-        return s;
+        s
     }
 
     unsafe fn copyStringN(
@@ -9000,7 +9002,7 @@ impl STRING_POOL {
         }
         s = self.start;
         self.start = self.ptr;
-        return s;
+        s
     }
 
     unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
@@ -9326,7 +9328,7 @@ impl XML_ParserStruct {
                 return NULL as *mut ELEMENT_TYPE;
             }
         }
-        return ret;
+        ret
     }
 }
 
@@ -9352,7 +9354,7 @@ unsafe extern "C" fn copyString(
         s as *const c_void,
         (charsRequired as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
     );
-    return result;
+    result
 }
 unsafe extern "C" fn run_static_initializers() {
     xmlLen = (::std::mem::size_of::<[XML_Char; 37]>() as c_int as c_ulong)
