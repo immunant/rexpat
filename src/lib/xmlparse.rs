@@ -3856,13 +3856,15 @@ impl XML_ParserStruct {
                             (*tag).buf = temp;
                             (*tag).bufEnd = temp.offset(bufSize as isize);
                             to_buf = ExpatBufRefMut::new(
-                                (temp).offset(convLen as isize) as *mut XML_Char,
+                                (temp as *mut XML_Char).offset(convLen as isize),
                                 ((*tag).bufEnd as *mut XML_Char).offset(-1),
                             );
                         }
                     }
+                    assert!(!to_buf.is_empty());
+                    to_buf[0] = '\u{0}' as XML_Char;
+
                     (*tag).name.str_0 = (*tag).buf as *const XML_Char;
-                    *to_buf.as_mut_ptr() = '\u{0}' as XML_Char;
                     result_0 = self.storeAtts(enc_type, buf, &mut (*tag).name, &mut (*tag).bindings);
                     if result_0 as u64 != 0 {
                         return result_0;
