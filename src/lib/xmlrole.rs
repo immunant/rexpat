@@ -33,7 +33,7 @@
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-use libc::{c_char, c_int, c_uint, c_ulong};
+use libc::{c_char, c_int, c_uint};
 use super::xmlparse::ExpatBufRef;
 pub type C2RustUnnamed_0 = c_int;
 
@@ -158,9 +158,9 @@ pub type PROLOG_HANDLER = unsafe extern "C" fn(
 
 */
 
-static mut KW_ANY: [c_char; 4] = [ASCII_A, ASCII_N, ASCII_Y, '\u{0}' as c_char];
+static KW_ANY: [c_char; 4] = [ASCII_A, ASCII_N, ASCII_Y, '\u{0}' as c_char];
 
-static mut KW_ATTLIST: [c_char; 8] = [
+static KW_ATTLIST: [c_char; 8] = [
     ASCII_A,
     ASCII_T,
     ASCII_T,
@@ -171,7 +171,7 @@ static mut KW_ATTLIST: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_CDATA: [c_char; 6] = [
+static KW_CDATA: [c_char; 6] = [
     ASCII_C,
     ASCII_D,
     ASCII_A,
@@ -180,7 +180,7 @@ static mut KW_CDATA: [c_char; 6] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_DOCTYPE: [c_char; 8] = [
+static KW_DOCTYPE: [c_char; 8] = [
     ASCII_D,
     ASCII_O,
     ASCII_C,
@@ -191,7 +191,7 @@ static mut KW_DOCTYPE: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_ELEMENT: [c_char; 8] = [
+static KW_ELEMENT: [c_char; 8] = [
     ASCII_E,
     ASCII_L,
     ASCII_E,
@@ -202,7 +202,7 @@ static mut KW_ELEMENT: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_EMPTY: [c_char; 6] = [
+static KW_EMPTY: [c_char; 6] = [
     ASCII_E,
     ASCII_M,
     ASCII_P,
@@ -211,7 +211,7 @@ static mut KW_EMPTY: [c_char; 6] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_ENTITIES: [c_char; 9] = [
+static KW_ENTITIES: [c_char; 9] = [
     ASCII_E,
     ASCII_N,
     ASCII_T,
@@ -223,7 +223,7 @@ static mut KW_ENTITIES: [c_char; 9] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_ENTITY: [c_char; 7] = [
+static KW_ENTITY: [c_char; 7] = [
     ASCII_E,
     ASCII_N,
     ASCII_T,
@@ -233,7 +233,7 @@ static mut KW_ENTITY: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_FIXED: [c_char; 6] = [
+static KW_FIXED: [c_char; 6] = [
     ASCII_F,
     ASCII_I,
     ASCII_X,
@@ -242,9 +242,9 @@ static mut KW_FIXED: [c_char; 6] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_ID: [c_char; 3] = [ASCII_I, ASCII_D, '\u{0}' as c_char];
+static KW_ID: [c_char; 3] = [ASCII_I, ASCII_D, '\u{0}' as c_char];
 
-static mut KW_IDREF: [c_char; 6] = [
+static KW_IDREF: [c_char; 6] = [
     ASCII_I,
     ASCII_D,
     ASCII_R,
@@ -253,7 +253,7 @@ static mut KW_IDREF: [c_char; 6] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_IDREFS: [c_char; 7] = [
+static KW_IDREFS: [c_char; 7] = [
     ASCII_I,
     ASCII_D,
     ASCII_R,
@@ -263,7 +263,7 @@ static mut KW_IDREFS: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_IGNORE: [c_char; 7] = [
+static KW_IGNORE: [c_char; 7] = [
     ASCII_I,
     ASCII_G,
     ASCII_N,
@@ -273,7 +273,7 @@ static mut KW_IGNORE: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_IMPLIED: [c_char; 8] = [
+static KW_IMPLIED: [c_char; 8] = [
     ASCII_I,
     ASCII_M,
     ASCII_P,
@@ -284,7 +284,7 @@ static mut KW_IMPLIED: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_INCLUDE: [c_char; 8] = [
+static KW_INCLUDE: [c_char; 8] = [
     ASCII_I,
     ASCII_N,
     ASCII_C,
@@ -295,7 +295,7 @@ static mut KW_INCLUDE: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_NDATA: [c_char; 6] = [
+static KW_NDATA: [c_char; 6] = [
     ASCII_N,
     ASCII_D,
     ASCII_A,
@@ -304,7 +304,7 @@ static mut KW_NDATA: [c_char; 6] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_NMTOKEN: [c_char; 8] = [
+static KW_NMTOKEN: [c_char; 8] = [
     ASCII_N,
     ASCII_M,
     ASCII_T,
@@ -315,7 +315,7 @@ static mut KW_NMTOKEN: [c_char; 8] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_NMTOKENS: [c_char; 9] = [
+static KW_NMTOKENS: [c_char; 9] = [
     ASCII_N,
     ASCII_M,
     ASCII_T,
@@ -327,7 +327,7 @@ static mut KW_NMTOKENS: [c_char; 9] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_NOTATION: [c_char; 9] = [
+static KW_NOTATION: [c_char; 9] = [
     ASCII_N,
     ASCII_O,
     ASCII_T,
@@ -339,7 +339,7 @@ static mut KW_NOTATION: [c_char; 9] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_PCDATA: [c_char; 7] = [
+static KW_PCDATA: [c_char; 7] = [
     ASCII_P,
     ASCII_C,
     ASCII_D,
@@ -349,7 +349,7 @@ static mut KW_PCDATA: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_PUBLIC: [c_char; 7] = [
+static KW_PUBLIC: [c_char; 7] = [
     ASCII_P,
     ASCII_U,
     ASCII_B,
@@ -359,7 +359,7 @@ static mut KW_PUBLIC: [c_char; 7] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_REQUIRED: [c_char; 9] = [
+static KW_REQUIRED: [c_char; 9] = [
     ASCII_R,
     ASCII_E,
     ASCII_Q,
@@ -371,7 +371,7 @@ static mut KW_REQUIRED: [c_char; 9] = [
     '\u{0}' as c_char,
 ];
 
-static mut KW_SYSTEM: [c_char; 7] = [
+static KW_SYSTEM: [c_char; 7] = [
     ASCII_S,
     ASCII_Y,
     ASCII_S,
@@ -1080,30 +1080,21 @@ unsafe extern "C" fn attlist2(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ATTLIST_NONE,
         super::xmltok::XML_TOK_NAME => {
-            static mut types: [*const c_char; 8] = unsafe {
-                [
-                    KW_CDATA.as_ptr(),
-                    KW_ID.as_ptr(),
-                    KW_IDREF.as_ptr(),
-                    KW_IDREFS.as_ptr(),
-                    KW_ENTITY.as_ptr(),
-                    KW_ENTITIES.as_ptr(),
-                    KW_NMTOKEN.as_ptr(),
-                    KW_NMTOKENS.as_ptr(),
-                ]
-            };
-            let mut i: c_int = 0;
-            i = 0;
-            while i
-                < (::std::mem::size_of::<[*const c_char; 8]>() as c_ulong)
-                    .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong)
-                    as c_int
-            {
-                if enc.nameMatchesAscii(buf, types[i as usize]) != 0 {
+            static TYPES: [&[c_char]; 8] = [
+                &KW_CDATA,
+                &KW_ID,
+                &KW_IDREF,
+                &KW_IDREFS,
+                &KW_ENTITY,
+                &KW_ENTITIES,
+                &KW_NMTOKEN,
+                &KW_NMTOKENS,
+            ];
+            for i in 0..TYPES.len() {
+                if enc.nameMatchesAscii(buf, TYPES[i].as_ptr()) != 0 {
                     state.handler = Some(attlist8 as PROLOG_HANDLER);
-                    return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i;
+                    return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i as c_int;
                 }
-                i += 1
             }
             if enc.nameMatchesAscii(buf, KW_NOTATION.as_ptr()) != 0 {
                 state.handler = Some(attlist5 as PROLOG_HANDLER);
