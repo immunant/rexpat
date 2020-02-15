@@ -1600,7 +1600,7 @@ impl XML_ParserStruct {
 
     unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
         self.m_processor = Some(prologInitProcessor as Processor);
-        super::xmlrole::XmlPrologStateInit(&mut self.m_prologState as *mut _);
+        super::xmlrole::XmlPrologStateInit(&mut self.m_prologState);
         if !encodingName.is_null() {
             self.m_protocolEncodingName = copyString(encodingName)
         }
@@ -1942,7 +1942,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
            PE parser. This would leave those prefixes with dangling pointers.
         */
         (*parser).m_isParamEntity = XML_TRUE;
-        super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState as *mut _);
+        super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState);
         (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
     }
     /* XML_DTD */
