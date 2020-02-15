@@ -149,9 +149,9 @@ pub type PROLOG_HANDLER =
 
 */
 
-static KW_ANY: [c_char; 4] = [ASCII_A, ASCII_N, ASCII_Y, '\u{0}' as c_char];
+static KW_ANY: [c_char; 3] = [ASCII_A, ASCII_N, ASCII_Y];
 
-static KW_ATTLIST: [c_char; 8] = [
+static KW_ATTLIST: [c_char; 7] = [
     ASCII_A,
     ASCII_T,
     ASCII_T,
@@ -159,19 +159,17 @@ static KW_ATTLIST: [c_char; 8] = [
     ASCII_I,
     ASCII_S,
     ASCII_T,
-    '\u{0}' as c_char,
 ];
 
-static KW_CDATA: [c_char; 6] = [
+static KW_CDATA: [c_char; 5] = [
     ASCII_C,
     ASCII_D,
     ASCII_A,
     ASCII_T,
     ASCII_A,
-    '\u{0}' as c_char,
 ];
 
-static KW_DOCTYPE: [c_char; 8] = [
+static KW_DOCTYPE: [c_char; 7] = [
     ASCII_D,
     ASCII_O,
     ASCII_C,
@@ -179,10 +177,9 @@ static KW_DOCTYPE: [c_char; 8] = [
     ASCII_Y,
     ASCII_P,
     ASCII_E,
-    '\u{0}' as c_char,
 ];
 
-static KW_ELEMENT: [c_char; 8] = [
+static KW_ELEMENT: [c_char; 7] = [
     ASCII_E,
     ASCII_L,
     ASCII_E,
@@ -190,19 +187,17 @@ static KW_ELEMENT: [c_char; 8] = [
     ASCII_E,
     ASCII_N,
     ASCII_T,
-    '\u{0}' as c_char,
 ];
 
-static KW_EMPTY: [c_char; 6] = [
+static KW_EMPTY: [c_char; 5] = [
     ASCII_E,
     ASCII_M,
     ASCII_P,
     ASCII_T,
     ASCII_Y,
-    '\u{0}' as c_char,
 ];
 
-static KW_ENTITIES: [c_char; 9] = [
+static KW_ENTITIES: [c_char; 8] = [
     ASCII_E,
     ASCII_N,
     ASCII_T,
@@ -211,60 +206,54 @@ static KW_ENTITIES: [c_char; 9] = [
     ASCII_I,
     ASCII_E,
     ASCII_S,
-    '\u{0}' as c_char,
 ];
 
-static KW_ENTITY: [c_char; 7] = [
+static KW_ENTITY: [c_char; 6] = [
     ASCII_E,
     ASCII_N,
     ASCII_T,
     ASCII_I,
     ASCII_T,
     ASCII_Y,
-    '\u{0}' as c_char,
 ];
 
-static KW_FIXED: [c_char; 6] = [
+static KW_FIXED: [c_char; 5] = [
     ASCII_F,
     ASCII_I,
     ASCII_X,
     ASCII_E,
     ASCII_D,
-    '\u{0}' as c_char,
 ];
 
-static KW_ID: [c_char; 3] = [ASCII_I, ASCII_D, '\u{0}' as c_char];
+static KW_ID: [c_char; 2] = [ASCII_I, ASCII_D];
 
-static KW_IDREF: [c_char; 6] = [
+static KW_IDREF: [c_char; 5] = [
     ASCII_I,
     ASCII_D,
     ASCII_R,
     ASCII_E,
     ASCII_F,
-    '\u{0}' as c_char,
 ];
 
-static KW_IDREFS: [c_char; 7] = [
+static KW_IDREFS: [c_char; 6] = [
     ASCII_I,
     ASCII_D,
     ASCII_R,
     ASCII_E,
     ASCII_F,
     ASCII_S,
-    '\u{0}' as c_char,
 ];
 
-static KW_IGNORE: [c_char; 7] = [
+static KW_IGNORE: [c_char; 6] = [
     ASCII_I,
     ASCII_G,
     ASCII_N,
     ASCII_O,
     ASCII_R,
     ASCII_E,
-    '\u{0}' as c_char,
 ];
 
-static KW_IMPLIED: [c_char; 8] = [
+static KW_IMPLIED: [c_char; 7] = [
     ASCII_I,
     ASCII_M,
     ASCII_P,
@@ -272,10 +261,9 @@ static KW_IMPLIED: [c_char; 8] = [
     ASCII_I,
     ASCII_E,
     ASCII_D,
-    '\u{0}' as c_char,
 ];
 
-static KW_INCLUDE: [c_char; 8] = [
+static KW_INCLUDE: [c_char; 7] = [
     ASCII_I,
     ASCII_N,
     ASCII_C,
@@ -283,19 +271,17 @@ static KW_INCLUDE: [c_char; 8] = [
     ASCII_U,
     ASCII_D,
     ASCII_E,
-    '\u{0}' as c_char,
 ];
 
-static KW_NDATA: [c_char; 6] = [
+static KW_NDATA: [c_char; 5] = [
     ASCII_N,
     ASCII_D,
     ASCII_A,
     ASCII_T,
     ASCII_A,
-    '\u{0}' as c_char,
 ];
 
-static KW_NMTOKEN: [c_char; 8] = [
+static KW_NMTOKEN: [c_char; 7] = [
     ASCII_N,
     ASCII_M,
     ASCII_T,
@@ -303,10 +289,9 @@ static KW_NMTOKEN: [c_char; 8] = [
     ASCII_K,
     ASCII_E,
     ASCII_N,
-    '\u{0}' as c_char,
 ];
 
-static KW_NMTOKENS: [c_char; 9] = [
+static KW_NMTOKENS: [c_char; 8] = [
     ASCII_N,
     ASCII_M,
     ASCII_T,
@@ -315,10 +300,9 @@ static KW_NMTOKENS: [c_char; 9] = [
     ASCII_E,
     ASCII_N,
     ASCII_S,
-    '\u{0}' as c_char,
 ];
 
-static KW_NOTATION: [c_char; 9] = [
+static KW_NOTATION: [c_char; 8] = [
     ASCII_N,
     ASCII_O,
     ASCII_T,
@@ -327,30 +311,27 @@ static KW_NOTATION: [c_char; 9] = [
     ASCII_I,
     ASCII_O,
     ASCII_N,
-    '\u{0}' as c_char,
 ];
 
-static KW_PCDATA: [c_char; 7] = [
+static KW_PCDATA: [c_char; 6] = [
     ASCII_P,
     ASCII_C,
     ASCII_D,
     ASCII_A,
     ASCII_T,
     ASCII_A,
-    '\u{0}' as c_char,
 ];
 
-static KW_PUBLIC: [c_char; 7] = [
+static KW_PUBLIC: [c_char; 6] = [
     ASCII_P,
     ASCII_U,
     ASCII_B,
     ASCII_L,
     ASCII_I,
     ASCII_C,
-    '\u{0}' as c_char,
 ];
 
-static KW_REQUIRED: [c_char; 9] = [
+static KW_REQUIRED: [c_char; 8] = [
     ASCII_R,
     ASCII_E,
     ASCII_Q,
@@ -359,17 +340,15 @@ static KW_REQUIRED: [c_char; 9] = [
     ASCII_R,
     ASCII_E,
     ASCII_D,
-    '\u{0}' as c_char,
 ];
 
-static KW_SYSTEM: [c_char; 7] = [
+static KW_SYSTEM: [c_char; 6] = [
     ASCII_S,
     ASCII_Y,
     ASCII_S,
     ASCII_T,
     ASCII_E,
     ASCII_M,
-    '\u{0}' as c_char,
 ];
 
 fn prolog0(
@@ -399,7 +378,7 @@ fn prolog0(
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !(enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_DOCTYPE.as_ptr(),
+                &KW_DOCTYPE,
             ) == 0)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
@@ -438,7 +417,7 @@ fn prolog1(
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !(enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_DOCTYPE.as_ptr(),
+                &KW_DOCTYPE,
             ) == 0)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
@@ -507,11 +486,11 @@ fn doctype1(
             return XML_ROLE_DOCTYPE_CLOSE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_SYSTEM) != 0 {
                 state.handler = Some(doctype3 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
-            if enc.nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_PUBLIC) != 0 {
                 state.handler = Some(doctype2 as PROLOG_HANDLER);
                 return XML_ROLE_DOCTYPE_NONE;
             }
@@ -604,7 +583,7 @@ fn internalSubset(
         super::xmltok::XML_TOK_DECL_OPEN => {
             if enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_ENTITY.as_ptr(),
+                &KW_ENTITY,
             ) != 0
             {
                 state.handler = Some(entity0 as PROLOG_HANDLER);
@@ -612,7 +591,7 @@ fn internalSubset(
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_ATTLIST.as_ptr(),
+                &KW_ATTLIST,
             ) != 0
             {
                 state.handler = Some(attlist0 as PROLOG_HANDLER);
@@ -620,7 +599,7 @@ fn internalSubset(
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_ELEMENT.as_ptr(),
+                &KW_ELEMENT,
             ) != 0
             {
                 state.handler = Some(element0 as PROLOG_HANDLER);
@@ -628,7 +607,7 @@ fn internalSubset(
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
-                KW_NOTATION.as_ptr(),
+                &KW_NOTATION,
             ) != 0
             {
                 state.handler = Some(notation0 as PROLOG_HANDLER);
@@ -738,11 +717,11 @@ fn entity2(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_SYSTEM) != 0 {
                 state.handler = Some(entity4 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if enc.nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_PUBLIC) != 0 {
                 state.handler = Some(entity3 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -808,7 +787,7 @@ fn entity5(
             return XML_ROLE_ENTITY_COMPLETE;
         }
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_NDATA.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_NDATA) != 0 {
                 state.handler = Some(entity6 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -845,11 +824,11 @@ fn entity7(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ENTITY_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_SYSTEM) != 0 {
                 state.handler = Some(entity9 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
-            if enc.nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_PUBLIC) != 0 {
                 state.handler = Some(entity8 as PROLOG_HANDLER);
                 return XML_ROLE_ENTITY_NONE;
             }
@@ -945,11 +924,11 @@ fn notation1(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NOTATION_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_SYSTEM.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_SYSTEM) != 0 {
                 state.handler = Some(notation3 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
-            if enc.nameMatchesAscii(buf, KW_PUBLIC.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_PUBLIC) != 0 {
                 state.handler = Some(notation2 as PROLOG_HANDLER);
                 return XML_ROLE_NOTATION_NONE;
             }
@@ -1082,12 +1061,12 @@ fn attlist2(
                 &KW_NMTOKENS,
             ];
             for i in 0..TYPES.len() {
-                if enc.nameMatchesAscii(buf, TYPES[i].as_ptr()) != 0 {
+                if enc.nameMatchesAscii(buf, &TYPES[i]) != 0 {
                     state.handler = Some(attlist8 as PROLOG_HANDLER);
                     return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i as c_int;
                 }
             }
-            if enc.nameMatchesAscii(buf, KW_NOTATION.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_NOTATION) != 0 {
                 state.handler = Some(attlist5 as PROLOG_HANDLER);
                 return XML_ROLE_ATTLIST_NONE;
             }
@@ -1208,7 +1187,7 @@ fn attlist8(
         super::xmltok::XML_TOK_POUND_NAME => {
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
-                KW_IMPLIED.as_ptr(),
+                &KW_IMPLIED,
             ) != 0
             {
                 state.handler = Some(attlist1 as PROLOG_HANDLER);
@@ -1216,7 +1195,7 @@ fn attlist8(
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
-                KW_REQUIRED.as_ptr(),
+                &KW_REQUIRED,
             ) != 0
             {
                 state.handler = Some(attlist1 as PROLOG_HANDLER);
@@ -1224,7 +1203,7 @@ fn attlist8(
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
-                KW_FIXED.as_ptr(),
+                &KW_FIXED,
             ) != 0
             {
                 state.handler = Some(attlist9 as PROLOG_HANDLER);
@@ -1283,12 +1262,12 @@ fn element1(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_EMPTY.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_EMPTY) != 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_EMPTY;
             }
-            if enc.nameMatchesAscii(buf, KW_ANY.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_ANY) != 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE;
                 return XML_ROLE_CONTENT_ANY;
@@ -1315,7 +1294,7 @@ fn element2(
         super::xmltok::XML_TOK_POUND_NAME => {
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
-                KW_PCDATA.as_ptr(),
+                &KW_PCDATA,
             ) != 0
             {
                 state.handler = Some(element3 as PROLOG_HANDLER);
@@ -1509,11 +1488,11 @@ fn condSect0(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_NAME => {
-            if enc.nameMatchesAscii(buf, KW_INCLUDE.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_INCLUDE) != 0 {
                 state.handler = Some(condSect1 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }
-            if enc.nameMatchesAscii(buf, KW_IGNORE.as_ptr()) != 0 {
+            if enc.nameMatchesAscii(buf, &KW_IGNORE) != 0 {
                 state.handler = Some(condSect2 as PROLOG_HANDLER);
                 return XML_ROLE_NONE;
             }

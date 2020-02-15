@@ -216,7 +216,7 @@ pub trait XmlEncoding {
     fn nameMatchesAscii(
         &self,
         buf: ExpatBufRef,
-        ptr2: *const libc::c_char,
+        ptr2: &[libc::c_char],
     ) -> libc::c_int;
 
     unsafe fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
@@ -2203,7 +2203,7 @@ impl XmlEncoding for InitEncoding {
     fn nameMatchesAscii(
         &self,
         _buf: ExpatBufRef,
-        _ptr2: *const libc::c_char,
+        _ptr2: &[libc::c_char],
     ) -> libc::c_int {
         0
     }
@@ -2993,22 +2993,22 @@ unsafe fn parsePseudoAttribute<'a>(
     1
 }
 
-const KW_version: [c_char; 8] =
-    [ASCII_v, ASCII_e, ASCII_r, ASCII_s, ASCII_i, ASCII_o, ASCII_n, 0];
+const KW_version: [c_char; 7] =
+    [ASCII_v, ASCII_e, ASCII_r, ASCII_s, ASCII_i, ASCII_o, ASCII_n];
 
-const KW_encoding: [c_char; 9] =
-    [ASCII_e, ASCII_n, ASCII_c, ASCII_o, ASCII_d, ASCII_i, ASCII_n, ASCII_g, 0];
+const KW_encoding: [c_char; 8] =
+    [ASCII_e, ASCII_n, ASCII_c, ASCII_o, ASCII_d, ASCII_i, ASCII_n, ASCII_g];
 
-const KW_standalone: [c_char; 11] = [
-    ASCII_s, ASCII_t, ASCII_a, ASCII_n, ASCII_d, ASCII_a, ASCII_l, ASCII_o, ASCII_n, ASCII_e, 0
+const KW_standalone: [c_char; 10] = [
+    ASCII_s, ASCII_t, ASCII_a, ASCII_n, ASCII_d, ASCII_a, ASCII_l, ASCII_o, ASCII_n, ASCII_e
 ];
 
-const KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, 0];
+const KW_yes: [c_char; 3] = [ASCII_y, ASCII_e, ASCII_s];
 
-const KW_no: [c_char; 3] = [ASCII_n, ASCII_o, 0];
+const KW_no: [c_char; 2] = [ASCII_n, ASCII_o];
 
 #[cfg(feature = "mozilla")]
-const KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, 0];
+const KW_XML_1_0: [c_char; 3] = [ASCII_1, ASCII_PERIOD, ASCII_0];
 
 unsafe fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
@@ -3039,7 +3039,7 @@ unsafe fn doParseXmlDecl<'a>(
         return 0i32;
     }
     buf = buf.with_start(pseudo_ptr);
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_version.as_ptr()) == 0 {
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_version) == 0 {
         if isGeneralTextEntity == 0 {
             *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
             return 0i32;
@@ -3052,7 +3052,7 @@ unsafe fn doParseXmlDecl<'a>(
                                        .unwrap()
                                        .with_end(pseudo_ptr)
                                        .dec_end((*enc).minBytesPerChar() as usize),
-                                       KW_XML_1_0.as_ptr()) == 0
+                                       &KW_XML_1_0) == 0
             {
                 *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
                 return 0i32;
@@ -3073,7 +3073,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_encoding.as_ptr()) != 0 {
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_encoding) != 0 {
         let mut c: c_int = toAscii(enc, val_buf.unwrap());
         if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
@@ -3103,7 +3103,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_standalone.as_ptr()) == 0
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_standalone) == 0
         || isGeneralTextEntity != 0
     {
         *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
@@ -3114,7 +3114,7 @@ unsafe fn doParseXmlDecl<'a>(
             .unwrap()
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
-        KW_yes.as_ptr(),
+        &KW_yes,
     ) != 0
     {
         if !standalone.is_null() {
@@ -3125,7 +3125,7 @@ unsafe fn doParseXmlDecl<'a>(
             .unwrap()
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
-        KW_no.as_ptr(),
+        &KW_no,
     ) != 0
     {
         if !standalone.is_null() {
