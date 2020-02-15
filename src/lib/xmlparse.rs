@@ -3857,7 +3857,7 @@ impl XML_ParserStruct {
                             (*tag).bufEnd = temp.offset(bufSize as isize);
                             to_buf = ExpatBufRefMut::new(
                                 (temp).offset(convLen as isize) as *mut XML_Char,
-                                (*tag).bufEnd as *mut XML_Char,
+                                ((*tag).bufEnd as *mut XML_Char).offset(-1),
                             );
                         }
                     }
