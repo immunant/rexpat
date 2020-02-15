@@ -421,7 +421,7 @@ unsafe extern "C" fn prolog0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn prolog1(
@@ -460,7 +460,7 @@ unsafe extern "C" fn prolog1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn prolog2(
@@ -479,7 +479,7 @@ unsafe extern "C" fn prolog2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype0(
@@ -496,7 +496,7 @@ unsafe extern "C" fn doctype0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype1(
@@ -527,7 +527,7 @@ unsafe extern "C" fn doctype1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype2(
@@ -544,7 +544,7 @@ unsafe extern "C" fn doctype2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype3(
@@ -561,7 +561,7 @@ unsafe extern "C" fn doctype3(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype4(
@@ -582,7 +582,7 @@ unsafe extern "C" fn doctype4(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn doctype5(
@@ -599,7 +599,7 @@ unsafe extern "C" fn doctype5(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn internalSubset(
@@ -654,7 +654,7 @@ unsafe extern "C" fn internalSubset(
         super::xmltok::XML_TOK_NONE => return XML_ROLE_NONE,
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn externalSubset0(
@@ -667,7 +667,7 @@ unsafe extern "C" fn externalSubset0(
     if tok == super::xmltok::XML_TOK_XML_DECL {
         return XML_ROLE_TEXT_DECL;
     }
-    return externalSubset1(state, tok, buf, enc);
+    externalSubset1(state, tok, buf, enc)
 }
 
 unsafe extern "C" fn externalSubset1(
@@ -696,7 +696,7 @@ unsafe extern "C" fn externalSubset1(
         }
         _ => return internalSubset(state, tok, buf, enc),
     }
-    return common(state, tok);
+    common(state, tok)
 }
 /* XML_DTD */
 
@@ -718,7 +718,7 @@ unsafe extern "C" fn entity0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity1(
@@ -735,7 +735,7 @@ unsafe extern "C" fn entity1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity2(
@@ -763,7 +763,7 @@ unsafe extern "C" fn entity2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity3(
@@ -780,7 +780,7 @@ unsafe extern "C" fn entity3(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity4(
@@ -797,7 +797,7 @@ unsafe extern "C" fn entity4(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity5(
@@ -824,7 +824,7 @@ unsafe extern "C" fn entity5(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity6(
@@ -842,7 +842,7 @@ unsafe extern "C" fn entity6(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity7(
@@ -870,7 +870,7 @@ unsafe extern "C" fn entity7(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity8(
@@ -887,7 +887,7 @@ unsafe extern "C" fn entity8(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity9(
@@ -904,7 +904,7 @@ unsafe extern "C" fn entity9(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn entity10(
@@ -925,7 +925,7 @@ unsafe extern "C" fn entity10(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn notation0(
@@ -942,7 +942,7 @@ unsafe extern "C" fn notation0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn notation1(
@@ -965,7 +965,7 @@ unsafe extern "C" fn notation1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn notation2(
@@ -982,7 +982,7 @@ unsafe extern "C" fn notation2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn notation3(
@@ -1000,7 +1000,7 @@ unsafe extern "C" fn notation3(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn notation4(
@@ -1026,7 +1026,7 @@ unsafe extern "C" fn notation4(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist0(
@@ -1043,7 +1043,7 @@ unsafe extern "C" fn attlist0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist1(
@@ -1068,7 +1068,7 @@ unsafe extern "C" fn attlist1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist2(
@@ -1116,7 +1116,7 @@ unsafe extern "C" fn attlist2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist3(
@@ -1135,7 +1135,7 @@ unsafe extern "C" fn attlist3(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist4(
@@ -1156,7 +1156,7 @@ unsafe extern "C" fn attlist4(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist5(
@@ -1173,7 +1173,7 @@ unsafe extern "C" fn attlist5(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist6(
@@ -1190,7 +1190,7 @@ unsafe extern "C" fn attlist6(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist7(
@@ -1211,7 +1211,7 @@ unsafe extern "C" fn attlist7(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 /* default value */
 
@@ -1255,7 +1255,7 @@ unsafe extern "C" fn attlist8(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn attlist9(
@@ -1272,7 +1272,7 @@ unsafe extern "C" fn attlist9(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element0(
@@ -1289,7 +1289,7 @@ unsafe extern "C" fn element0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element1(
@@ -1319,7 +1319,7 @@ unsafe extern "C" fn element1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element2(
@@ -1363,7 +1363,7 @@ unsafe extern "C" fn element2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element3(
@@ -1390,7 +1390,7 @@ unsafe extern "C" fn element3(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element4(
@@ -1407,7 +1407,7 @@ unsafe extern "C" fn element4(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element5(
@@ -1429,7 +1429,7 @@ unsafe extern "C" fn element5(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element6(
@@ -1462,7 +1462,7 @@ unsafe extern "C" fn element6(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn element7(
@@ -1515,7 +1515,7 @@ unsafe extern "C" fn element7(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn condSect0(
@@ -1538,7 +1538,7 @@ unsafe extern "C" fn condSect0(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn condSect1(
@@ -1556,7 +1556,7 @@ unsafe extern "C" fn condSect1(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 
 unsafe extern "C" fn condSect2(
@@ -1573,7 +1573,7 @@ unsafe extern "C" fn condSect2(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 /* XML_DTD */
 
@@ -1595,7 +1595,7 @@ unsafe extern "C" fn declClose(
         }
         _ => {}
     }
-    return common(state, tok);
+    common(state, tok)
 }
 /* This function will only be invoked if the internal logic of the
  * parser has broken down.  It is used in two cases:
@@ -1624,7 +1624,7 @@ unsafe extern "C" fn error(
     mut _buf: ExpatBufRef,
     mut _enc: *const super::xmltok::ENCODING,
 ) -> c_int {
-    return XML_ROLE_NONE;
+    XML_ROLE_NONE
 }
 /* LCOV_EXCL_STOP */
 
@@ -1633,7 +1633,7 @@ unsafe extern "C" fn common(mut state: *mut PROLOG_STATE, mut tok: c_int) -> c_i
         return XML_ROLE_INNER_PARAM_ENTITY_REF;
     }
     (*state).handler = Some(error as PROLOG_HANDLER);
-    return XML_ROLE_ERROR;
+    XML_ROLE_ERROR
 }
 #[no_mangle]
 

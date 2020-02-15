@@ -180,7 +180,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "<!" */
@@ -229,7 +229,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             *nextTokPtr = buf.as_ptr();
             return XML_TOK_DECL_OPEN;
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
     unsafe fn checkPiTarget(
         &self,
@@ -262,7 +262,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             return 0 as libc::c_int;
         }
         *tokPtr = XML_TOK_XML_DECL;
-        return 1 as libc::c_int;
+        1 as libc::c_int
     }
 
     /* ptr points to character following "<?" */
@@ -329,7 +329,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
     unsafe fn scanCdataSection(
         &self,
@@ -357,7 +357,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             buf = buf.inc_start((self.MINBPC()) as isize)
         }
         *nextTokPtr = buf.as_ptr();
-        return XML_TOK_CDATA_SECT_OPEN;
+        XML_TOK_CDATA_SECT_OPEN
     }
 
     /* ptr points to character following "</" */
@@ -404,7 +404,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "&#X" */
@@ -437,7 +437,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 buf = buf.inc_start((self.MINBPC()) as isize)
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "&#" */
@@ -473,7 +473,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 buf = buf.inc_start((self.MINBPC()) as isize)
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "&" */
@@ -505,7 +505,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following first character of attribute name */
@@ -673,7 +673,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "<" */
@@ -789,7 +789,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 _ => {}
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 
     /* ptr points to character following "%" */
@@ -816,7 +816,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
     unsafe fn scanPoundName(
         &self,
@@ -871,7 +871,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
 }
 
@@ -947,7 +947,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
         *nextTokPtr = buf.as_ptr();
-        return XML_TOK_DATA_CHARS;
+        XML_TOK_DATA_CHARS
     }
     unsafe fn contentTok(
         &self,
@@ -1055,7 +1055,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
         *nextTokPtr = buf.as_ptr();
-        return XML_TOK_DATA_CHARS;
+        XML_TOK_DATA_CHARS
     }
     unsafe fn prologTok(
         &self,
@@ -1324,7 +1324,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
             }
         }
-        return -tok;
+        -tok
     }
     unsafe fn attributeValueTok(
         &self,
@@ -1399,7 +1399,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
         *nextTokPtr = buf.as_ptr();
-        return XML_TOK_DATA_CHARS;
+        XML_TOK_DATA_CHARS
     }
     unsafe fn entityValueTok(
         &self,
@@ -1473,7 +1473,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
         }
         *nextTokPtr = buf.as_ptr();
-        return XML_TOK_DATA_CHARS;
+        XML_TOK_DATA_CHARS
     }
     unsafe fn ignoreSectionTok(
         &self,
@@ -1523,7 +1523,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 _ => { buf = buf.inc_start(self.MINBPC() as isize) }
             }
         }
-        return XML_TOK_PARTIAL;
+        XML_TOK_PARTIAL
     }
     unsafe fn isPublicId(
         &self,
@@ -1556,7 +1556,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             buf = buf.inc_start(self.MINBPC() as isize)
         }
-        return 1 as libc::c_int;
+        1 as libc::c_int
     }
 
     /* This must only be called for a well-formed start-tag or empty
@@ -1712,7 +1712,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 buf = buf.inc_start(self.MINBPC() as isize)
             }
         }
-        return checkCharRefNumber(result);
+        checkCharRefNumber(result)
     }
     unsafe fn predefinedEntityName(
         &self,
@@ -1790,7 +1790,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             buf = buf.inc_start(self.MINBPC() as isize);
             ptr2 = ptr2.offset(1)
         }
-        return (buf.is_empty()) as libc::c_int;
+        (buf.is_empty()) as libc::c_int
     }
     unsafe fn nameLength(&self, mut ptr: *const libc::c_char) -> libc::c_int {
         let mut start: *const libc::c_char = ptr;
