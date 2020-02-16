@@ -41,8 +41,6 @@ use num_traits::ToPrimitive;
 
 pub type XML_Parser = *mut XML_ParserStruct;
 pub type XML_Bool = bool;
-pub const XML_TRUE: XML_Bool = true;
-pub const XML_FALSE: XML_Bool = false;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
    stanza can be added to code that still needs to support older

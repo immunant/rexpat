@@ -10,7 +10,7 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, main, register_tool)]
 
-use ::rexpat::expat_h::{XML_Bool, XML_Status};
+use ::rexpat::expat_h::{XML_Status};
 use ::rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler,
@@ -150,7 +150,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(end as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut done: XML_Bool = false;
+        let mut done = false;
         let mut len: c_int = 0;
         len = crate::stdlib::fread(
             Buff.as_mut_ptr() as *mut c_void,
