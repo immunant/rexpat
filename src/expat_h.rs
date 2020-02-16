@@ -429,11 +429,17 @@ pub struct XML_Encoding {
 */
 pub type XML_UnknownEncodingHandler =
     Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut XML_Encoding) -> c_int>;
-pub type XML_Parsing = c_uint;
-pub const XML_INITIALIZED: XML_Parsing = 0;
-pub const XML_PARSING: XML_Parsing = 1;
-pub const XML_FINISHED: XML_Parsing = 2;
-pub const XML_SUSPENDED: XML_Parsing = 3;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_Parsing {
+    INITIALIZED = 0,
+    PARSING = 1,
+    FINISHED = 2,
+    SUSPENDED = 3,
+}
+impl Default for XML_Parsing {
+    fn default() -> Self { XML_Parsing::INITIALIZED }
+}
 #[repr(C)]
 #[derive(Copy, Clone, Default)]
 pub struct XML_ParsingStatus {

@@ -54,10 +54,9 @@ pub use crate::expat_h::{
     XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_FEATURE_ATTR_INFO,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
-    XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T, XML_FINISHED,
-    XML_INITIALIZED,
+    XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T,
     XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_PARSING, XML_SUSPENDED, 
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE,
 };
 pub use crate::lib::xmlrole::{
     prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
@@ -1646,7 +1645,7 @@ impl XML_ParserStruct {
         >(NULL as intptr_t);
         self.m_unknownEncodingData = NULL as *mut c_void;
         self.m_parentParser = NULL as XML_Parser;
-        self.m_parsingStatus.parsing = XML_INITIALIZED;
+        self.m_parsingStatus.parsing = XML_Parsing::INITIALIZED;
         self.m_isParamEntity = false;
         self.m_useForeignDTD = false;
         self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
@@ -1734,8 +1733,8 @@ impl XML_ParserStruct {
         XXX There's no way for the caller to determine which of the
         XXX possible error cases caused the XML_Status::ERROR return.
         */
-        if self.m_parsingStatus.parsing == XML_PARSING
-            || self.m_parsingStatus.parsing == XML_SUSPENDED
+        if self.m_parsingStatus.parsing == XML_Parsing::PARSING
+            || self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED
         {
             return XML_Status::ERROR;
         }
@@ -2068,8 +2067,8 @@ pub unsafe extern "C" fn XML_UseForeignDTD(
         return XML_Error::INVALID_ARGUMENT;
     }
     /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    if (*parser).m_parsingStatus.parsing == XML_Parsing::PARSING
+        || (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED
     {
         return XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING;
     }
@@ -2095,8 +2094,8 @@ pub unsafe extern "C" fn XML_SetReturnNSTriplet(mut parser: XML_Parser, mut do_n
         return;
     }
     /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    if (*parser).m_parsingStatus.parsing == XML_Parsing::PARSING
+        || (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED
     {
         return;
     }
@@ -2493,8 +2492,8 @@ pub unsafe extern "C" fn XML_SetParamEntityParsing(
         return 0i32;
     }
     /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    if (*parser).m_parsingStatus.parsing == XML_Parsing::PARSING
+        || (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED
     {
         return 0i32;
     }
@@ -2516,8 +2515,8 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
         return XML_SetHashSalt((*parser).m_parentParser, hash_salt);
     }
     /* block after XML_Parse()/XML_ParseBuffer() has been called */
-    if (*parser).m_parsingStatus.parsing == XML_PARSING
-        || (*parser).m_parsingStatus.parsing == XML_SUSPENDED
+    if (*parser).m_parsingStatus.parsing == XML_Parsing::PARSING
+        || (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED
     {
         return 0i32;
     }
@@ -2541,15 +2540,15 @@ impl XML_ParserStruct {
             return XML_Status::ERROR;
         }
         match self.m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 self.m_errorCode = XML_Error::SUSPENDED;
                 return XML_Status::ERROR;
             }
-            2 => {
+            XML_Parsing::FINISHED => {
                 self.m_errorCode = XML_Error::FINISHED;
                 return XML_Status::ERROR;
             }
-            0 => {
+            XML_Parsing::INITIALIZED => {
                 if self.m_parentParser.is_null() && !self.startParsing() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
                     return XML_Status::ERROR;
@@ -2558,7 +2557,7 @@ impl XML_ParserStruct {
             _ => {}
         }
         /* fall through */
-        self.m_parsingStatus.parsing = XML_PARSING;
+        self.m_parsingStatus.parsing = XML_Parsing::PARSING;
         if len == 0 {
             self.m_parsingStatus.finalBuffer = isFinal != 0;
             if isFinal == 0 {
@@ -2580,7 +2579,7 @@ impl XML_ParserStruct {
             );
             if self.m_errorCode == XML_Error::NONE {
                 match self.m_parsingStatus.parsing {
-                    3 => {
+                    XML_Parsing::SUSPENDED => {
                         /* It is hard to be certain, but it seems that this case
                         * cannot occur.  This code is cleaning up a previous parse
                         * with no new data (since len == 0).  Changing the parsing
@@ -2603,9 +2602,9 @@ impl XML_ParserStruct {
                         self.m_positionPtr = self.m_bufferPtr;
                         return XML_Status::SUSPENDED;
                     }
-                    0 | 1 => {
+                    XML_Parsing::INITIALIZED | XML_Parsing::PARSING => {
                         /* LCOV_EXCL_STOP */
-                        self.m_parsingStatus.parsing = XML_FINISHED
+                        self.m_parsingStatus.parsing = XML_Parsing::FINISHED
                     }
                     _ => {}
                 }
@@ -2649,15 +2648,15 @@ impl XML_ParserStruct {
         let mut start: *const c_char = 0 as *const c_char;
         let mut result: XML_Status = XML_Status::OK;
         match self.m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 self.m_errorCode = XML_Error::SUSPENDED;
                 return XML_Status::ERROR as XML_Status;
             }
-            2 => {
+            XML_Parsing::FINISHED => {
                 self.m_errorCode = XML_Error::FINISHED;
                 return XML_Status::ERROR as XML_Status;
             }
-            0 => {
+            XML_Parsing::INITIALIZED => {
                 if self.m_parentParser.is_null() && !self.startParsing() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
                     return XML_Status::ERROR;
@@ -2666,7 +2665,7 @@ impl XML_ParserStruct {
             _ => {}
         }
         /* fall through */
-        self.m_parsingStatus.parsing = XML_PARSING;
+        self.m_parsingStatus.parsing = XML_Parsing::PARSING;
         start = self.m_bufferPtr;
         self.m_positionPtr = start;
         self.m_bufferEnd = self.m_bufferEnd.offset(len as isize);
@@ -2687,13 +2686,13 @@ impl XML_ParserStruct {
             return XML_Status::ERROR as XML_Status;
         } else {
             match self.m_parsingStatus.parsing {
-                3 => {
+                XML_Parsing::SUSPENDED => {
                     result = XML_Status::SUSPENDED;
                     /* should not happen */
                 }
-                0 | 1 => {
+                XML_Parsing::INITIALIZED | XML_Parsing::PARSING => {
                     if isFinal != 0 {
-                        self.m_parsingStatus.parsing = XML_FINISHED;
+                        self.m_parsingStatus.parsing = XML_Parsing::FINISHED;
                         return result;
                     }
                 }
@@ -2733,11 +2732,11 @@ impl XML_ParserStruct {
             return ptr::null_mut();
         }
         match self.m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 self.m_errorCode = XML_Error::SUSPENDED;
                 return ptr::null_mut();
             }
-            2 => {
+            XML_Parsing::FINISHED => {
                 self.m_errorCode = XML_Error::FINISHED;
                 return ptr::null_mut();
             }
@@ -2868,14 +2867,14 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
 impl XML_ParserStruct {
     pub unsafe fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
         match self.m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 if resumable {
                     self.m_errorCode = XML_Error::SUSPENDED;
                     return XML_Status::ERROR;
                 }
-                self.m_parsingStatus.parsing = XML_FINISHED
+                self.m_parsingStatus.parsing = XML_Parsing::FINISHED
             }
-            2 => {
+            XML_Parsing::FINISHED => {
                 self.m_errorCode = XML_Error::FINISHED;
                 return XML_Status::ERROR;
             }
@@ -2885,9 +2884,9 @@ impl XML_ParserStruct {
                         self.m_errorCode = XML_Error::SUSPEND_PE;
                         return XML_Status::ERROR;
                     }
-                    self.m_parsingStatus.parsing = XML_SUSPENDED
+                    self.m_parsingStatus.parsing = XML_Parsing::SUSPENDED
                 } else {
-                    self.m_parsingStatus.parsing = XML_FINISHED
+                    self.m_parsingStatus.parsing = XML_Parsing::FINISHED
                 }
             }
         }
@@ -2917,11 +2916,11 @@ pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool)
 impl XML_ParserStruct {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
         let mut result: XML_Status = XML_Status::OK;
-        if self.m_parsingStatus.parsing != XML_SUSPENDED {
+        if self.m_parsingStatus.parsing != XML_Parsing::SUSPENDED {
             self.m_errorCode = XML_Error::NOT_SUSPENDED;
             return XML_Status::ERROR;
         }
-        self.m_parsingStatus.parsing = XML_PARSING;
+        self.m_parsingStatus.parsing = XML_Parsing::PARSING;
         self.m_errorCode = self.m_processor.expect("non-null function pointer")(
             self,
             ExpatBufRef::new(
@@ -2936,10 +2935,10 @@ impl XML_ParserStruct {
             return XML_Status::ERROR;
         } else {
             match self.m_parsingStatus.parsing {
-                3 => result = XML_Status::SUSPENDED,
-                0 | 1 => {
+                XML_Parsing::SUSPENDED => result = XML_Status::SUSPENDED,
+                XML_Parsing::INITIALIZED | XML_Parsing::PARSING => {
                     if self.m_parsingStatus.finalBuffer {
-                        self.m_parsingStatus.parsing = XML_FINISHED;
+                        self.m_parsingStatus.parsing = XML_Parsing::FINISHED;
                         return result;
                     }
                 }
@@ -2976,7 +2975,7 @@ pub unsafe extern "C" fn XML_ResumeParser(mut parser: XML_Parser) -> XML_Status 
 /* Returns status of parser with respect to being initialized, parsing,
    finished, or suspended and processing the final buffer.
    XXX XML_Parse() and XML_ParseBuffer() should return XML_ParsingStatus,
-   XXX with XML_FINISHED_OK or XML_FINISHED_ERROR replacing XML_FINISHED
+   XXX with XML_Parsing::FINISHED_OK or XML_Parsing::FINISHED_ERROR replacing XML_Parsing::FINISHED
 */
 #[no_mangle]
 pub unsafe extern "C" fn XML_GetParsingStatus(
@@ -3528,11 +3527,11 @@ unsafe extern "C" fn externalEntityInitProcessor3(
                 return result;
             }
             match (*parser).m_parsingStatus.parsing {
-                3 => {
+                XML_Parsing::SUSPENDED => {
                     *endPtr = next;
                     return XML_Error::NONE;
                 }
-                2 => return XML_Error::ABORTED,
+                XML_Parsing::FINISHED => return XML_Error::ABORTED,
                 _ => buf = buf.with_start(next),
             }
         }
@@ -3619,7 +3618,7 @@ impl XML_ParserStruct {
                     }
                     /* LCOV_EXCL_STOP */
                     /* We are at the end of the final buffer, should we check for
-                       XML_SUSPENDED, XML_FINISHED?
+                       XML_Parsing::SUSPENDED, XML_Parsing::FINISHED?
                     */
                     if startTagLevel == 0 {
                         return XML_Error::NO_ELEMENTS;
@@ -3892,8 +3891,8 @@ impl XML_ParserStruct {
                     }
                     self.m_tempPool.clear();
                     self.freeBindings(bindings);
-                    if self.m_tagLevel == 0 && self.m_parsingStatus.parsing != XML_FINISHED {
-                        if self.m_parsingStatus.parsing == XML_SUSPENDED {
+                    if self.m_tagLevel == 0 && self.m_parsingStatus.parsing != XML_Parsing::FINISHED {
+                        if self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
                             self.m_processor = Some(epilogProcessor as Processor)
                         } else {
                             return epilogProcessor(self, buf.with_start(next), nextPtr);
@@ -4010,9 +4009,9 @@ impl XML_ParserStruct {
                             (*(*b).prefix).binding = (*b).prevPrefixBinding
                         }
                         if self.m_tagLevel == 0
-                            && self.m_parsingStatus.parsing != XML_FINISHED
+                            && self.m_parsingStatus.parsing != XML_Parsing::FINISHED
                         {
-                            if self.m_parsingStatus.parsing == XML_SUSPENDED {
+                            if self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
                                 self.m_processor = Some(epilogProcessor as Processor)
                             } else {
                                 return epilogProcessor(self, buf.with_start(next), nextPtr);
@@ -4102,7 +4101,7 @@ impl XML_ParserStruct {
                         reportDefault(self, enc_type, buf);
                     }
                     /* We are at the end of the final buffer, should we check for
-                       XML_SUSPENDED, XML_FINISHED?
+                       XML_Parsing::SUSPENDED, XML_Parsing::FINISHED?
                     */
                     if startTagLevel == 0 {
                         *eventPP = buf.end();
@@ -4175,11 +4174,11 @@ impl XML_ParserStruct {
             buf = buf.with_start(next);
             *eventPP = buf.as_ptr();
             match self.m_parsingStatus.parsing {
-                3 => {
+                XML_Parsing::SUSPENDED => {
                     *nextPtr = next;
                     return XML_Error::NONE;
                 }
-                2 => return XML_Error::ABORTED,
+                XML_Parsing::FINISHED => return XML_Error::ABORTED,
                 _ => {}
             }
         }
@@ -4972,7 +4971,7 @@ unsafe extern "C" fn doCdataSection(
                 }
                 *start_buf = Some(buf.with_start(next));
                 *nextPtr = next;
-                if (*parser).m_parsingStatus.parsing == XML_FINISHED {
+                if (*parser).m_parsingStatus.parsing == XML_Parsing::FINISHED {
                     return XML_Error::ABORTED;
                 } else {
                     return XML_Error::NONE;
@@ -5060,11 +5059,11 @@ unsafe extern "C" fn doCdataSection(
         buf = buf.with_start(next);
         *eventPP = buf.as_ptr();
         match (*parser).m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 *nextPtr = next;
                 return XML_Error::NONE;
             }
-            2 => return XML_Error::ABORTED,
+            XML_Parsing::FINISHED => return XML_Error::ABORTED,
             _ => {}
         }
     }
@@ -5144,7 +5143,7 @@ unsafe extern "C" fn doIgnoreSection(
             }
             *start_buf = Some(buf.with_start(next));
             *nextPtr = next;
-            if (*parser).m_parsingStatus.parsing == XML_FINISHED {
+            if (*parser).m_parsingStatus.parsing == XML_Parsing::FINISHED {
                 return XML_Error::ABORTED;
             } else {
                 return XML_Error::NONE;
@@ -5472,12 +5471,12 @@ unsafe extern "C" fn entityValueInitProcessor(
                 if result != XML_Error::NONE {
                     return result;
                 }
-                /* At this point, m_parsingStatus.parsing cannot be XML_SUSPENDED.  For
+                /* At this point, m_parsingStatus.parsing cannot be XML_Parsing::SUSPENDED.  For
                  * that to happen, a parameter entity parsing handler must have attempted
                  * to suspend the parser, which fails and raises an error.  The parser can
                  * be aborted, but can't be suspended.
                  */
-                if (*parser).m_parsingStatus.parsing == XML_FINISHED {
+                if (*parser).m_parsingStatus.parsing == XML_Parsing::FINISHED {
                     return XML_Error::ABORTED;
                 }
                 *nextPtr = next;
@@ -6978,11 +6977,11 @@ impl XML_ParserStruct {
                 reportDefault(self, enc_type, buf.with_end(next));
             }
             match self.m_parsingStatus.parsing {
-                3 => {
+                XML_Parsing::SUSPENDED => {
                     *nextPtr = next;
                     return XML_Error::NONE;
                 }
-                2 => return XML_Error::ABORTED,
+                XML_Parsing::FINISHED => return XML_Error::ABORTED,
                 _ => {
                     buf = buf.with_start(next);
                     tok = (*enc).xmlTok(XML_PROLOG_STATE, buf, &mut next)
@@ -7010,7 +7009,7 @@ unsafe extern "C" fn epilogProcessor(
                 /* report partial linebreak - it might be the last token */
                 if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, EncodingType::Normal, buf.with_end(next));
-                    if (*parser).m_parsingStatus.parsing == XML_FINISHED {
+                    if (*parser).m_parsingStatus.parsing == XML_Parsing::FINISHED {
                         return XML_Error::ABORTED;
                     }
                 }
@@ -7059,11 +7058,11 @@ unsafe extern "C" fn epilogProcessor(
         buf = buf.with_start(next);
         (*parser).m_eventPtr = buf.as_ptr();
         match (*parser).m_parsingStatus.parsing {
-            3 => {
+            XML_Parsing::SUSPENDED => {
                 *nextPtr = next;
                 return XML_Error::NONE;
             }
-            2 => return XML_Error::ABORTED,
+            XML_Parsing::FINISHED => return XML_Error::ABORTED,
             _ => {}
         }
     }
@@ -7125,7 +7124,7 @@ impl XML_ParserStruct {
             )
         }
         if result == XML_Error::NONE {
-            if text_buf.end() != next && self.m_parsingStatus.parsing == XML_SUSPENDED {
+            if text_buf.end() != next && self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
                 (*entity).processed = next.wrapping_offset_from(text_buf.as_ptr()) as i32;
                 self.m_processor = Some(internalEntityProcessor as Processor)
             } else {
@@ -7207,7 +7206,7 @@ unsafe extern "C" fn internalEntityProcessor(
     if result != XML_Error::NONE {
         return result;
     } else {
-        if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_SUSPENDED {
+        if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
             (*entity).processed =
                 next.wrapping_offset_from((*entity).textPtr as *mut c_char) as c_int;
             return result;

@@ -57,9 +57,9 @@ use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
     XML_ParsingStatus,
-    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
-    XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_SUSPENDED
+    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END,
+    XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE,
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
@@ -6178,7 +6178,7 @@ unsafe extern "C" fn test_reset_in_entity() {
 
         b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     resumable = true;
@@ -6200,7 +6200,7 @@ unsafe extern "C" fn test_reset_in_entity() {
         );
     }
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_SUSPENDED {
+    if status.parsing != XML_Parsing::SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6211,7 +6211,7 @@ unsafe extern "C" fn test_reset_in_entity() {
     }
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6378,7 +6378,7 @@ unsafe extern "C" fn external_entity_resetter(
     let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
@@ -6396,7 +6396,7 @@ unsafe extern "C" fn external_entity_resetter(
         );
     }
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6418,7 +6418,7 @@ unsafe extern "C" fn external_entity_resetter(
         return XML_Status::ERROR as c_int;
     }
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6451,7 +6451,7 @@ unsafe extern "C" fn external_entity_resetter(
     }
     XML_ParserReset(ext_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6652,7 +6652,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     let mut rc: XML_Status = XML_Status::ERROR;
@@ -6694,7 +6694,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
                 3148i32,
             );
         }
-        if status.parsing != XML_SUSPENDED {
+        if status.parsing != XML_Parsing::SUSPENDED {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -6721,7 +6721,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
                 3155i32,
             );
         }
-        if status.parsing != XML_FINISHED {
+        if status.parsing != XML_Parsing::FINISHED {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -15169,11 +15169,11 @@ unsafe extern "C" fn test_ns_parser_reset() {
         6848,
     );
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15184,7 +15184,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     }
     test_return_ns_triplet();
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15195,7 +15195,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     }
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
