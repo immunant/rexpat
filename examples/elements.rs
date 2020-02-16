@@ -91,7 +91,7 @@ unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut buf: [c_char; 8192] = [0; 8192];
     let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
-    let mut done: XML_Bool = 0;
+    let mut done = false;
     let mut depth: c_int = 0;
     XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
     XML_SetElementHandler(
@@ -126,7 +126,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
             XML_ParserFree(parser);
             return 1i32;
         }
-        if !(done == 0) {
+        if done {
             break;
         }
     }
