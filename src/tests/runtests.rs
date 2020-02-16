@@ -56,12 +56,11 @@ use crate::stdlib::{stderr, strncmp};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
-    XML_ParsingStatus, 
+    XML_ParsingStatus,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
     XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_SUSPENDED
 };
-use ::rexpat::siphash_h::{siphash, sipkey};
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
     XML_ExternalEntityParserCreate, XML_FreeContentModel, XML_GetBase, XML_GetBuffer,
@@ -117,356 +116,6 @@ pub mod minicheck_h {
     pub type tcase_test_function = Option<unsafe extern "C" fn() -> ()>;
 }
 
-pub mod siphash_h {
-
-    /* struct sipkey */
-
-    use crate::stddef_h::size_t;
-    use crate::stdlib::uint64_t;
-    use ::rexpat::siphash_h::{siphash, sipkey};
-    use libc::{c_char, c_int, c_uchar, c_ulong, c_void};
-    pub unsafe extern "C" fn sip_tokey(
-        mut key: *mut sipkey,
-        mut src: *const c_void,
-    ) -> *mut sipkey {
-        (*key).k[0] = (*(src as *const c_uchar).offset(0) as uint64_t) << 0
-            | (*(src as *const c_uchar).offset(1) as uint64_t) << 8
-            | (*(src as *const c_uchar).offset(2) as uint64_t) << 16
-            | (*(src as *const c_uchar).offset(3) as uint64_t) << 24
-            | (*(src as *const c_uchar).offset(4) as uint64_t) << 32
-            | (*(src as *const c_uchar).offset(5) as uint64_t) << 40
-            | (*(src as *const c_uchar).offset(6) as uint64_t) << 48
-            | (*(src as *const c_uchar).offset(7) as uint64_t) << 56;
-        (*key).k[1] = (*(src as *const c_uchar).offset(8).offset(0) as uint64_t) << 0
-            | (*(src as *const c_uchar).offset(8).offset(1) as uint64_t) << 8
-            | (*(src as *const c_uchar).offset(8).offset(2) as uint64_t) << 16
-            | (*(src as *const c_uchar).offset(8).offset(3) as uint64_t) << 24
-            | (*(src as *const c_uchar).offset(8).offset(4) as uint64_t) << 32
-            | (*(src as *const c_uchar).offset(8).offset(5) as uint64_t) << 40
-            | (*(src as *const c_uchar).offset(8).offset(6) as uint64_t) << 48
-            | (*(src as *const c_uchar).offset(8).offset(7) as uint64_t) << 56;
-        return key;
-    }
-    /* sip_tokey() */
-    /* SIPHASH_TOBIN */
-
-    pub unsafe extern "C" fn sip_round(mut H: *mut siphash, rounds: c_int) {
-        let mut i: c_int = 0;
-        i = 0;
-        while i < rounds {
-            (*H).v0 = ((*H).v0).wrapping_add((*H).v1);
-            (*H).v1 = (*H).v1 << 13 | (*H).v1 >> 64 - 13;
-            (*H).v1 ^= (*H).v0;
-            (*H).v0 = (*H).v0 << 32 | (*H).v0 >> 64 - 32;
-            (*H).v2 = ((*H).v2).wrapping_add((*H).v3);
-            (*H).v3 = (*H).v3 << 16 | (*H).v3 >> 64 - 16;
-            (*H).v3 ^= (*H).v2;
-            (*H).v0 = ((*H).v0).wrapping_add((*H).v3);
-            (*H).v3 = (*H).v3 << 21 | (*H).v3 >> 64 - 21;
-            (*H).v3 ^= (*H).v0;
-            (*H).v2 = ((*H).v2).wrapping_add((*H).v1);
-            (*H).v1 = (*H).v1 << 17 | (*H).v1 >> 64 - 17;
-            (*H).v1 ^= (*H).v2;
-            (*H).v2 = (*H).v2 << 32 | (*H).v2 >> 64 - 32;
-            i += 1
-        }
-    }
-    /* sip_round() */
-
-    pub unsafe extern "C" fn sip24_init(
-        mut H: *mut siphash,
-        mut key: *const sipkey,
-    ) -> *mut siphash {
-        (*H).v0 = ((0x736f6d65u64) << 32 | 0x70736575) ^ (*key).k[0];
-        (*H).v1 = ((0x646f7261u64) << 32 | 0x6e646f6d) ^ (*key).k[1];
-        (*H).v2 = ((0x6c796765u64) << 32 | 0x6e657261) ^ (*key).k[0];
-        (*H).v3 = ((0x74656462u64) << 32 | 0x79746573) ^ (*key).k[1];
-        (*H).p = (*H).buf.as_mut_ptr();
-        (*H).c = 0u64;
-        return H;
-    }
-    /* sip24_init() */
-
-    pub unsafe extern "C" fn sip24_update(
-        mut H: *mut siphash,
-        mut src: *const c_void,
-        mut len: size_t,
-    ) -> *mut siphash {
-        let mut p: *const c_uchar = src as *const c_uchar;
-        let mut pe: *const c_uchar = p.offset(len as isize);
-        let mut m: uint64_t = 0;
-        loop {
-            while p < pe
-                && (*H).p
-                    < &mut *(*H).buf.as_mut_ptr().offset(
-                        (::std::mem::size_of::<[c_uchar; 8]>() as c_ulong)
-                            .wrapping_div(::std::mem::size_of::<c_uchar>() as c_ulong)
-                            as isize,
-                    ) as *mut c_uchar
-            {
-                let fresh0 = p;
-                p = p.offset(1);
-                let fresh1 = (*H).p;
-                (*H).p = (*H).p.offset(1);
-                *fresh1 = *fresh0
-            }
-            if (*H).p
-                < &mut *(*H).buf.as_mut_ptr().offset(
-                    (::std::mem::size_of::<[c_uchar; 8]>() as c_ulong)
-                        .wrapping_div(::std::mem::size_of::<c_uchar>() as c_ulong)
-                        as isize,
-                ) as *mut c_uchar
-            {
-                break;
-            }
-            m = ((*H).buf[0] as uint64_t) << 0
-                | ((*H).buf[1] as uint64_t) << 8
-                | ((*H).buf[2] as uint64_t) << 16
-                | ((*H).buf[3] as uint64_t) << 24
-                | ((*H).buf[4] as uint64_t) << 32
-                | ((*H).buf[5] as uint64_t) << 40
-                | ((*H).buf[6] as uint64_t) << 48
-                | ((*H).buf[7] as uint64_t) << 56;
-            (*H).v3 ^= m;
-            sip_round(H, 2);
-            (*H).v0 ^= m;
-            (*H).p = (*H).buf.as_mut_ptr();
-            (*H).c = ((*H).c).wrapping_add(8u64);
-            if !(p < pe) {
-                break;
-            }
-        }
-        return H;
-    }
-    /* sip24_update() */
-
-    pub unsafe extern "C" fn sip24_final(mut H: *mut siphash) -> uint64_t {
-        let left: c_char = (*H).p.wrapping_offset_from((*H).buf.as_mut_ptr()) as c_char;
-        let mut b: uint64_t = (*H).c.wrapping_add(left as c_ulong) << 56;
-        let mut current_block_6: u64;
-        match left as c_int {
-            7 => {
-                b |= ((*H).buf[6] as uint64_t) << 48;
-                current_block_6 = 13145881433301908673;
-            }
-            6 => {
-                current_block_6 = 13145881433301908673;
-            }
-            5 => {
-                current_block_6 = 588075840077989673;
-            }
-            4 => {
-                current_block_6 = 9865490829578899964;
-            }
-            3 => {
-                current_block_6 = 610692000009365401;
-            }
-            2 => {
-                current_block_6 = 5204012310284484386;
-            }
-            1 => {
-                current_block_6 = 34749046854646975;
-            }
-            0 | _ => {
-                current_block_6 = 17965632435239708295;
-            }
-        }
-        match current_block_6 {
-            13145881433301908673 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[5] as uint64_t) << 40;
-                current_block_6 = 588075840077989673;
-            }
-            _ => {}
-        }
-        match current_block_6 {
-            588075840077989673 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[4] as uint64_t) << 32;
-                current_block_6 = 9865490829578899964;
-            }
-            _ => {}
-        }
-        match current_block_6 {
-            9865490829578899964 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[3] as uint64_t) << 24;
-                current_block_6 = 610692000009365401;
-            }
-            _ => {}
-        }
-        match current_block_6 {
-            610692000009365401 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[2] as uint64_t) << 16;
-                current_block_6 = 5204012310284484386;
-            }
-            _ => {}
-        }
-        match current_block_6 {
-            5204012310284484386 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[1] as uint64_t) << 8;
-                current_block_6 = 34749046854646975;
-            }
-            _ => {}
-        }
-        match current_block_6 {
-            34749046854646975 =>
-            /* fall through */
-            {
-                b |= ((*H).buf[0] as uint64_t) << 0
-            }
-            _ => {}
-        }
-        (*H).v3 ^= b;
-        sip_round(H, 2);
-        (*H).v0 ^= b;
-        (*H).v2 ^= 0xffu64;
-        sip_round(H, 4);
-        return (*H).v0 ^ (*H).v1 ^ (*H).v2 ^ (*H).v3;
-    }
-    /* sip24_final() */
-
-    pub unsafe extern "C" fn siphash24(
-        mut src: *const c_void,
-        mut len: size_t,
-        mut key: *const sipkey,
-    ) -> uint64_t {
-        let mut state: siphash = {
-            let mut init = siphash {
-                v0: 0u64,
-                v1: 0u64,
-                v2: 0u64,
-                v3: 0u64,
-                buf: [0u8, 0, 0, 0, 0, 0, 0, 0],
-                p: 0 as *mut c_uchar,
-                c: 0u64,
-            };
-            init
-        };
-        return sip24_final(sip24_update(sip24_init(&mut state, key), src, len));
-    }
-    /* siphash24() */
-    /*
-     * SipHash-2-4 output with
-     * k = 00 01 02 ...
-     * and
-     * in = (empty string)
-     * in = 00 (1 byte)
-     * in = 00 01 (2 bytes)
-     * in = 00 01 02 (3 bytes)
-     * ...
-     * in = 00 01 02 ... 3e (63 bytes)
-     */
-
-    pub unsafe extern "C" fn sip24_valid() -> c_int {
-        /* clang-format off */
-        pub static mut vectors: [[c_uchar; 8]; 64] = [
-            [0x31, 0xe, 0xe, 0xdd, 0x47, 0xdb, 0x6f, 0x72],
-            [0xfd, 0x67, 0xdc, 0x93, 0xc5, 0x39, 0xf8, 0x74],
-            [0x5a, 0x4f, 0xa9, 0xd9, 0x9, 0x80, 0x6c, 0xd],
-            [0x2d, 0x7e, 0xfb, 0xd7, 0x96, 0x66, 0x67, 0x85],
-            [0xb7, 0x87, 0x71, 0x27, 0xe0, 0x94, 0x27, 0xcf],
-            [0x8d, 0xa6, 0x99, 0xcd, 0x64, 0x55, 0x76, 0x18],
-            [0xce, 0xe3, 0xfe, 0x58, 0x6e, 0x46, 0xc9, 0xcb],
-            [0x37, 0xd1, 0x1, 0x8b, 0xf5, 0, 0x2, 0xab],
-            [0x62, 0x24, 0x93, 0x9a, 0x79, 0xf5, 0xf5, 0x93],
-            [0xb0, 0xe4, 0xa9, 0xb, 0xdf, 0x82, 0, 0x9e],
-            [0xf3, 0xb9, 0xdd, 0x94, 0xc5, 0xbb, 0x5d, 0x7a],
-            [0xa7, 0xad, 0x6b, 0x22, 0x46, 0x2f, 0xb3, 0xf4],
-            [0xfb, 0xe5, 0xe, 0x86, 0xbc, 0x8f, 0x1e, 0x75],
-            [0x90, 0x3d, 0x84, 0xc0, 0x27, 0x56, 0xea, 0x14],
-            [0xee, 0xf2, 0x7a, 0x8e, 0x90, 0xca, 0x23, 0xf7],
-            [0xe5, 0x45, 0xbe, 0x49, 0x61, 0xca, 0x29, 0xa1],
-            [0xdb, 0x9b, 0xc2, 0x57, 0x7f, 0xcc, 0x2a, 0x3f],
-            [0x94, 0x47, 0xbe, 0x2c, 0xf5, 0xe9, 0x9a, 0x69],
-            [0x9c, 0xd3, 0x8d, 0x96, 0xf0, 0xb3, 0xc1, 0x4b],
-            [0xbd, 0x61, 0x79, 0xa7, 0x1d, 0xc9, 0x6d, 0xbb],
-            [0x98, 0xee, 0xa2, 0x1a, 0xf2, 0x5c, 0xd6, 0xbe],
-            [0xc7, 0x67, 0x3b, 0x2e, 0xb0, 0xcb, 0xf2, 0xd0],
-            [0x88, 0x3e, 0xa3, 0xe3, 0x95, 0x67, 0x53, 0x93],
-            [0xc8, 0xce, 0x5c, 0xcd, 0x8c, 0x3, 0xc, 0xa8],
-            [0x94, 0xaf, 0x49, 0xf6, 0xc6, 0x50, 0xad, 0xb8],
-            [0xea, 0xb8, 0x85, 0x8a, 0xde, 0x92, 0xe1, 0xbc],
-            [0xf3, 0x15, 0xbb, 0x5b, 0xb8, 0x35, 0xd8, 0x17],
-            [0xad, 0xcf, 0x6b, 0x7, 0x63, 0x61, 0x2e, 0x2f],
-            [0xa5, 0xc9, 0x1d, 0xa7, 0xac, 0xaa, 0x4d, 0xde],
-            [0x71, 0x65, 0x95, 0x87, 0x66, 0x50, 0xa2, 0xa6],
-            [0x28, 0xef, 0x49, 0x5c, 0x53, 0xa3, 0x87, 0xad],
-            [0x42, 0xc3, 0x41, 0xd8, 0xfa, 0x92, 0xd8, 0x32],
-            [0xce, 0x7c, 0xf2, 0x72, 0x2f, 0x51, 0x27, 0x71],
-            [0xe3, 0x78, 0x59, 0xf9, 0x46, 0x23, 0xf3, 0xa7],
-            [0x38, 0x12, 0x5, 0xbb, 0x1a, 0xb0, 0xe0, 0x12],
-            [0xae, 0x97, 0xa1, 0xf, 0xd4, 0x34, 0xe0, 0x15],
-            [0xb4, 0xa3, 0x15, 0x8, 0xbe, 0xff, 0x4d, 0x31],
-            [0x81, 0x39, 0x62, 0x29, 0xf0, 0x90, 0x79, 0x2],
-            [0x4d, 0xc, 0xf4, 0x9e, 0xe5, 0xd4, 0xdc, 0xca],
-            [0x5c, 0x73, 0x33, 0x6a, 0x76, 0xd8, 0xbf, 0x9a],
-            [0xd0, 0xa7, 0x4, 0x53, 0x6b, 0xa9, 0x3e, 0xe],
-            [0x92, 0x59, 0x58, 0xfc, 0xd6, 0x42, 0xc, 0xad],
-            [0xa9, 0x15, 0xc2, 0x9b, 0xc8, 0x6, 0x73, 0x18],
-            [0x95, 0x2b, 0x79, 0xf3, 0xbc, 0xa, 0xa6, 0xd4],
-            [0xf2, 0x1d, 0xf2, 0xe4, 0x1d, 0x45, 0x35, 0xf9],
-            [0x87, 0x57, 0x75, 0x19, 0x4, 0x8f, 0x53, 0xa9],
-            [0x10, 0xa5, 0x6c, 0xf5, 0xdf, 0xcd, 0x9a, 0xdb],
-            [0xeb, 0x75, 0x9, 0x5c, 0xcd, 0x98, 0x6c, 0xd0],
-            [0x51, 0xa9, 0xcb, 0x9e, 0xcb, 0xa3, 0x12, 0xe6],
-            [0x96, 0xaf, 0xad, 0xfc, 0x2c, 0xe6, 0x66, 0xc7],
-            [0x72, 0xfe, 0x52, 0x97, 0x5a, 0x43, 0x64, 0xee],
-            [0x5a, 0x16, 0x45, 0xb2, 0x76, 0xd5, 0x92, 0xa1],
-            [0xb2, 0x74, 0xcb, 0x8e, 0xbf, 0x87, 0x87, 0xa],
-            [0x6f, 0x9b, 0xb4, 0x20, 0x3d, 0xe7, 0xb3, 0x81],
-            [0xea, 0xec, 0xb2, 0xa3, 0xb, 0x22, 0xa8, 0x7f],
-            [0x99, 0x24, 0xa4, 0x3c, 0xc1, 0x31, 0x57, 0x24],
-            [0xbd, 0x83, 0x8d, 0x3a, 0xaf, 0xbf, 0x8d, 0xb7],
-            [0xb, 0x1a, 0x2a, 0x32, 0x65, 0xd5, 0x1a, 0xea],
-            [0x13, 0x50, 0x79, 0xa3, 0x23, 0x1c, 0xe6, 0x60],
-            [0x93, 0x2b, 0x28, 0x46, 0xe4, 0xd7, 0x6, 0x66],
-            [0xe1, 0x91, 0x5f, 0x5c, 0xb1, 0xec, 0xa4, 0x6c],
-            [0xf3, 0x25, 0x96, 0x5c, 0xa1, 0x6d, 0x62, 0x9f],
-            [0x57, 0x5f, 0xf2, 0x8e, 0x60, 0x38, 0x1b, 0xe5],
-            [0x72, 0x45, 0x6, 0xeb, 0x4c, 0x32, 0x8a, 0x95],
-        ];
-        /* clang-format on */
-        let mut in_0: [c_uchar; 64] = [0; 64];
-        let mut k: sipkey = sipkey { k: [0; 2] };
-        let mut i: size_t = 0;
-        sip_tokey(
-            &mut k,
-            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr()
-                as *const c_void,
-        );
-        i = 0;
-        while i < ::std::mem::size_of::<[c_uchar; 64]>() as c_ulong {
-            in_0[i as usize] = i as c_uchar;
-            if siphash24(in_0.as_mut_ptr() as *const c_void, i, &mut k)
-                != (vectors[i as usize][0] as uint64_t) << 0
-                    | (vectors[i as usize][1] as uint64_t) << 8
-                    | (vectors[i as usize][2] as uint64_t) << 16
-                    | (vectors[i as usize][3] as uint64_t) << 24
-                    | (vectors[i as usize][4] as uint64_t) << 32
-                    | (vectors[i as usize][5] as uint64_t) << 40
-                    | (vectors[i as usize][6] as uint64_t) << 48
-                    | (vectors[i as usize][7] as uint64_t) << 56
-            {
-                return 0i32;
-            }
-            i = i.wrapping_add(1)
-        }
-        return 1;
-    }
-
-    /* SIPHASH_H */
-    /* SIPHASH_MAIN */
-    /* sip24_valid() */
-}
-
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
 pub use crate::expat_h::{
     XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
@@ -481,9 +130,6 @@ pub use crate::expat_h::{
 };
 pub use crate::minicheck_h::{
     tcase_setup_function, tcase_teardown_function, tcase_test_function, CK_NORMAL, CK_SILENT,
-};
-pub use crate::siphash_h::{
-    sip24_final, sip24_init, sip24_update, sip24_valid, sip_round, sip_tokey, siphash24,
 };
 pub use crate::stddef_h::{ptrdiff_t, size_t};
 pub use crate::stdlib::{
@@ -1166,82 +812,6 @@ unsafe extern "C" fn test_u0000_char() {
     );
 }
 
-unsafe extern "C" fn test_siphash_self() {
-    crate::minicheck::_check_set_test_info(
-        (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_siphash_self\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-            as *const c_char,
-        499,
-    );
-    if sip24_valid() == 0 {
-        crate::minicheck::_fail_unless(
-            0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            501i32,
-            b"SipHash self-test failed\x00".as_ptr() as *const c_char,
-        );
-    };
-}
-
-unsafe extern "C" fn test_siphash_spec() {
-    crate::minicheck::_check_set_test_info(
-        (*::std::mem::transmute::<&[u8; 18], &[c_char; 18]>(b"test_siphash_spec\x00")).as_ptr(),
-        b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-            as *const c_char,
-        505,
-    );
-    /* https://131002.net/siphash/siphash.pdf (page 19, "Test values") */
-    let message: [c_char; 16] = *::std::mem::transmute::<&[u8; 16], &[c_char; 16]>(
-        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x00",
-    );
-    let len: size_t = (::std::mem::size_of::<[c_char; 16]>() as c_ulong).wrapping_sub(1u64);
-    let expected: uint64_t = (0xa129ca61) << 32 | 0x49be45e5;
-    let mut state: siphash = siphash {
-        v0: 0,
-        v1: 0,
-        v2: 0,
-        v3: 0,
-        buf: [0; 8],
-        p: 0 as *mut c_uchar,
-        c: 0,
-    };
-    let mut key: sipkey = sipkey { k: [0; 2] };
-    sip_tokey(
-        &mut key,
-        b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x00".as_ptr() as *const c_void,
-    );
-    sip24_init(&mut state, &mut key);
-    /* Cover spread across calls */
-    sip24_update(&mut state, message.as_ptr() as *const c_void, 4);
-    sip24_update(
-        &mut state,
-        message.as_ptr().offset(4) as *const c_void,
-        len.wrapping_sub(4u64),
-    );
-    /* Cover null length */
-    sip24_update(&mut state, message.as_ptr() as *const c_void, 0);
-    if sip24_final(&mut state) != expected {
-        crate::minicheck::_fail_unless(
-            0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            526i32,
-            b"sip24_final failed spec test\n\x00".as_ptr() as *const c_char,
-        );
-    }
-    /* Cover wrapper */
-    if siphash24(message.as_ptr() as *const c_void, len, &mut key) != expected {
-        crate::minicheck::_fail_unless(
-            0i32,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            530i32,
-            b"siphash24 failed spec test\n\x00".as_ptr() as *const c_char,
-        );
-    };
-}
-
 unsafe extern "C" fn test_bom_utf8() {
     crate::minicheck::_check_set_test_info(
         (*::std::mem::transmute::<&[u8; 14], &[c_char; 14]>(b"test_bom_utf8\x00")).as_ptr(),
@@ -1475,7 +1045,7 @@ unsafe extern "C" fn test_danish_latin1() {
         659,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e>J\xf8rgen \xe6\xf8\xe5\xc6\xd8\xc5</e>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"J\xc3\xb8rgen \xc3\xa6\xc3\xb8\xc3\xa5\xc3\x86\xc3\x98\xc3\x85\x00".as_ptr()
@@ -1501,7 +1071,7 @@ unsafe extern "C" fn test_french_charref_hexidecimal() {
         674,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#xE9;&#xE8;&#xE0;&#xE7;&#xEA;&#xC8;</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00".as_ptr() as *const c_char;
@@ -1523,7 +1093,7 @@ unsafe extern "C" fn test_french_charref_decimal() {
         687,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc>&#233;&#232;&#224;&#231;&#234;&#200;</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7\xc3\xaa\xc3\x88\x00".as_ptr() as *const c_char;
@@ -1982,7 +1552,7 @@ unsafe extern "C" fn test_latin1_umlauts() {
         903,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<e a=\'\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; >\'\n  >\xe4 \xf6 \xfc &#228; &#246; &#252; &#x00E4; &#x0F6; &#xFC; ></e>\x00".as_ptr() as *const c_char;
     /* Expected results in UTF-8 */
     let mut expected: *const XML_Char =
@@ -2070,10 +1640,10 @@ unsafe extern "C" fn test_long_latin1_attribute() {
         945,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xe4\'>\n</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        
+
         b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\xc3\xa4\x00".as_ptr() as *const c_char;
     _run_attribute_check(
         text,
@@ -2096,10 +1666,10 @@ unsafe extern "C" fn test_long_ascii_attribute() {
         1002,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc att=\'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\'>\n</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
-        
+
         b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP01234\x00".as_ptr() as *const c_char;
     /* clang-format on */
     _run_attribute_check(
@@ -2475,7 +2045,7 @@ unsafe extern "C" fn test_really_long_lines() {
        this avoids writing bugs in buffer-filling code.
     */
     let mut text: *const c_char =
-        
+
         b"<e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
@@ -2504,7 +2074,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
      */
     let mut buffer: *mut c_void = 0 as *mut c_void;
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00".as_ptr() as *const c_char;
     let mut parse_len: c_int = strlen(text) as c_int;
     /* Need a cdata handler to provoke the code path we want to test */
@@ -2955,7 +2525,7 @@ unsafe extern "C" fn test_attr_whitespace_normalization() {
         1373,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ATTLIST doc\n            attr NMTOKENS #REQUIRED\n            ents ENTITIES #REQUIRED\n            refs IDREFS   #REQUIRED>\n]>\n<doc attr=\'    a  b c\t\td\te\t\' refs=\' id-1   \t  id-2\t\t\'  \n     ents=\' ent-1   \t\r\n            ent-2  \' >\n  <e id=\'id-1\'/>\n  <e id=\'id-2\'/>\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetStartElementHandler(
         g_parser,
@@ -3097,7 +2667,7 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
         1446,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -3151,7 +2721,7 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
         1475,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -3241,7 +2811,7 @@ unsafe extern "C" fn test_ext_entity_set_encoding() {
         1515,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3285,7 +2855,7 @@ unsafe extern "C" fn test_ext_entity_no_handler() {
         1537,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     XML_SetDefaultHandler(
         g_parser,
@@ -3313,7 +2883,7 @@ unsafe extern "C" fn test_ext_entity_set_bom() {
         1549,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3418,7 +2988,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding() {
         1605,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
@@ -3463,7 +3033,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
         1622,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
@@ -3563,7 +3133,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_standalone() {
         1663,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
@@ -3589,7 +3159,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
         1677,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3638,7 +3208,7 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
         1695,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3687,7 +3257,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
         1714,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3737,7 +3307,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
         1733,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3806,7 +3376,7 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
         1761,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
         let mut init = ExtTest {
@@ -3890,7 +3460,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
         1791,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let faults: [ExtFaults; 4] = [
         {
@@ -3972,7 +3542,7 @@ unsafe extern "C" fn test_dtd_default_handling() {
         1818,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]><doc/>\x00".as_ptr() as *const c_char;
     XML_SetDefaultHandler(
         g_parser,
@@ -4173,16 +3743,16 @@ unsafe extern "C" fn test_dtd_attr_handling() {
         {
             let mut init =
                  AttTest{definition:
-                             
+
                              b"<!NOTATION foo SYSTEM \'http://example.org/foo\'>\n<!ATTLIST doc a NOTATION (foo) #IMPLIED>\n]><doc/>\x00".as_ptr() as *const c_char,
                          element_name:
-                             
+
                              b"doc\x00".as_ptr() as *const c_char,
                          attr_name:
-                             
+
                              b"a\x00".as_ptr() as *const c_char,
                          attr_type:
-                             
+
                              b"NOTATION(foo)\x00".as_ptr() as
                                  *const c_char,
                          default_value: ::rexpat::stddef_h::NULL as *const XML_Char,
@@ -4318,7 +3888,7 @@ unsafe extern "C" fn test_ns_in_attribute_default_without_namespaces() {
         1943,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE e:element [\n  <!ATTLIST e:element\n    xmlns:e CDATA \'http://example.org/\'>\n      ]>\n<e:element/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
@@ -4333,7 +3903,7 @@ unsafe extern "C" fn test_ns_in_attribute_default_without_namespaces() {
 }
 
 static mut long_character_data_text: *const c_char =
-    
+
     b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><s>012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789</s>\x00".as_ptr() as *const c_char;
 
 static mut resumable: XML_Bool = false;
@@ -4805,7 +4375,7 @@ unsafe extern "C" fn test_long_cdata_utf16() {
         *::std::mem::transmute::<&[u8; 2197],
                                  &[c_char; 2197]>(b"\x00<\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00\'\x001\x00.\x000\x00\'\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00\'\x00u\x00t\x00f\x00-\x001\x006\x00\'\x00?\x00>\x00<\x00a\x00>\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00A\x00B\x00C\x00D\x00E\x00F\x00G\x00H\x00I\x00J\x00K\x00L\x00M\x00N\x00O\x00P\x00]\x00]\x00>\x00<\x00/\x00a\x00>\x00");
     let mut expected: *const XML_Char =
-        
+
         b"ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\x00".as_ptr() as *const c_char;
     /* clang-format on */
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
@@ -5459,7 +5029,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
 }
 
 static mut long_cdata_text: *const c_char =
-    
+
     b"<s><![CDATA[012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789]]></s>\x00".as_ptr() as *const c_char;
 /* Test stopping the parser in cdata handler */
 
@@ -5591,10 +5161,10 @@ unsafe extern "C" fn test_memory_allocation() {
                 *buffer.offset(0) = 'V' as c_char;
                 if strcmp(buffer, b"VEST\x00".as_ptr() as *const c_char) != 0 {
                     crate::minicheck::_fail_unless(0i32,
-                                 
+
                                  b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                  2530i32,
-                                 
+
                                  b"Reallocated memory not writable\x00".as_ptr() as *const c_char);
                 }
             }
@@ -5916,7 +5486,7 @@ unsafe extern "C" fn test_dtd_elements() {
         2652,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (chapter)>\n<!ELEMENT chapter (#PCDATA)>\n]>\n<doc><chapter>Wombats are go</chapter></doc>\x00".as_ptr() as *const c_char;
     XML_SetElementDeclHandler(
         g_parser,
@@ -6156,7 +5726,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
         2736,
     );
     let mut text1: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc [<!ENTITY entity \'hello world\'>]>\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char = b"<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest = {
@@ -6491,7 +6061,7 @@ unsafe extern "C" fn test_attributes() {
         2896,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (tag)>\n<!ATTLIST doc id ID #REQUIRED>\n]><doc a=\'1\' id=\'one\' b=\'2\'><tag c=\'3\'/></doc>\x00".as_ptr() as *const c_char;
     let mut doc_info: [AttrInfo; 4] = [
         {
@@ -6605,7 +6175,7 @@ unsafe extern "C" fn test_reset_in_entity() {
         2926,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
@@ -6904,7 +6474,7 @@ unsafe extern "C" fn test_subordinate_reset() {
         3047,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7025,7 +6595,7 @@ unsafe extern "C" fn test_subordinate_suspend() {
         3100,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7174,7 +6744,7 @@ unsafe extern "C" fn test_subordinate_xdecl_suspend() {
         3164,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7212,7 +6782,7 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
         3180,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -7295,7 +6865,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     } else {
         __assert_fail(b"buffer != NULL\x00".as_ptr() as
                           *const c_char,
-                      
+
                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       3219u32,
                       (*::std::mem::transmute::<&[u8; 123],
@@ -7357,7 +6927,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
         3234,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut faults: [ExtFaults; 3] = [
         {
@@ -7697,7 +7267,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
         3371,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_cr: c_int = 0;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
@@ -7961,7 +7531,7 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
         3476,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_rsqb: c_int = 0;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
@@ -8068,7 +7638,7 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
         3524,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -8229,7 +7799,7 @@ unsafe extern "C" fn test_user_parameters() {
         3607,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!-- Primary parse -->\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;\x00".as_ptr() as *const c_char;
     let mut epilog: *const c_char =
         b"<!-- Back to primary parser -->\n</doc>\x00".as_ptr() as *const c_char;
@@ -8412,7 +7982,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
         3681,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -8603,7 +8173,7 @@ unsafe extern "C" fn get_feature(
  */
 
 static mut get_buffer_test_text: *const c_char =
-    
+
     b"<documentwitharidiculouslylongelementnametoteaseaparticularcorneroftheallocationinXML_GetBuffersothatwecanimprovethecoverageyetagain012345678901123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789>\n<ef0\x00".as_ptr() as *const c_char;
 /* 0x420 */
 /* Test odd corners of the XML_GetBuffer interface */
@@ -9054,7 +8624,7 @@ unsafe extern "C" fn external_entity_param(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        
+
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char = b"<!ELEMENT el EMPTY>\n<el/>\n\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
@@ -9710,7 +9280,7 @@ unsafe extern "C" fn external_entity_valuer(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        
+
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     if systemId.is_null() {
@@ -10074,7 +9644,7 @@ unsafe extern "C" fn external_entity_value_aborter(
     mut _publicId: *const XML_Char,
 ) -> c_int {
     let mut text1: *const c_char =
-        
+
         b"<!ELEMENT doc EMPTY>\n<!ENTITY % e1 SYSTEM \'004-2.ent\'>\n<!ENTITY % e2 \'%e1;\'>\n%e1;\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\x00".as_ptr() as *const c_char;
@@ -10192,7 +9762,7 @@ unsafe extern "C" fn test_bad_public_doctype() {
         4413,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'{BadName}\' \'test\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     /* Setting a handler provokes a particular code path */
     XML_SetDoctypeDeclHandler(
@@ -10229,12 +9799,12 @@ unsafe extern "C" fn test_attribute_enum_value() {
         4426,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtTest = {
         let mut init =
                 ExtTest{parse_text:
-                            
+
                             b"<!ELEMENT animal (#PCDATA|a)*>\n<!ELEMENT a EMPTY>\n<!ATTLIST animal xml:space (default|preserve) \'preserve\'>\x00".as_ptr() as *const c_char,
                         encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
                         storage: ::rexpat::stddef_h::NULL as *mut crate::chardata::CharData,};
@@ -10428,7 +9998,7 @@ unsafe extern "C" fn test_nested_groups() {
         4503,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
@@ -10495,7 +10065,7 @@ unsafe extern "C" fn test_group_choice() {
         4530,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (a|b|c)+>\n<!ELEMENT a EMPTY>\n<!ELEMENT b (#PCDATA)>\n<!ELEMENT c ANY>\n]>\n<doc>\n<a/>\n<b attr=\'foo\'>This is a foo</b>\n<c></c>\n</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetElementDeclHandler(
         g_parser,
@@ -10572,7 +10142,7 @@ unsafe extern "C" fn external_entity_public(
     if !text.is_null() {
     } else {
         __assert_fail(b"text != NULL\x00".as_ptr() as *const c_char,
-                      
+
                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       4573u32,
                       (*::std::mem::transmute::<&[u8; 111],
@@ -10594,7 +10164,7 @@ unsafe extern "C" fn test_standalone_parameter_entity() {
         4580,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' standalone=\'yes\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/\' [\n<!ENTITY % entity \'<!ELEMENT doc (#PCDATA)>\'>\n%entity;\n]>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut dtd_data: [c_char; 22] =
         *::std::mem::transmute::<&[u8; 22], &mut [c_char; 22]>(b"<!ENTITY % e1 \'foo\'>\n\x00");
@@ -10636,7 +10206,7 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
         4600,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtTest = {
         let mut init = ExtTest {
@@ -10702,7 +10272,7 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
         4622,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE root SYSTEM \'http://example.org/dtd.ent\' [\n<!ELEMENT root (#PCDATA|a)* >\n]>\n<root></root>\x00".as_ptr() as *const c_char;
     let mut dtd_data: ExtFaults = {
         let mut init = ext_faults {
@@ -11200,7 +10770,7 @@ unsafe extern "C" fn test_hash_collision() {
      * not always.  This is an attempt to provide insurance.
      */
     let mut text: *const c_char =
-        
+
         b"<doc>\n<a1/><a2/><a3/><a4/><a5/><a6/><a7/><a8/>\n<b1></b1><b2 attr=\'foo\'>This is a foo</b2><b3></b3><b4></b4>\n<b5></b5><b6></b6><b7></b7><b8></b8>\n<c1/><c2/><c3/><c4/><c5/><c6/><c7/><c8/>\n<d1/><d2/><d3/><d4/><d5/><d6/><d7/>\n<d8>This triggers the table growth and collides with b2</d8>\n</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetHashSalt(g_parser, (0xffffffff) << 32 | 0xff99fc90);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
@@ -11240,7 +10810,7 @@ unsafe extern "C" fn test_suspend_resume_internal_entity() {
         4866,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY foo \'<suspend>Hi<suspend>Ho</suspend></suspend>\'>\n]>\n<doc>&foo;</doc>\n\x00".as_ptr() as *const c_char;
     let mut expected1: *const XML_Char = b"Hi\x00".as_ptr() as *const c_char;
     let mut expected2: *const XML_Char = b"HiHo\x00".as_ptr() as *const c_char;
@@ -11380,7 +10950,7 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
         4921,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY % foo \'<!ELEMENT doc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char = b"Hello, world\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
@@ -11571,7 +11141,7 @@ unsafe extern "C" fn test_standalone_internal_entity() {
         4992,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' standalone=\'yes\' ?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY % pe \'<!ATTLIST doc att2 CDATA \"&ge;\">\'>\n  <!ENTITY ge \'AttDefaultValue\'>\n  %pe;\n]>\n<doc att2=\'any\'/>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
@@ -11693,7 +11263,7 @@ unsafe extern "C" fn test_skipped_null_loaded_ext_entity() {
     let mut test_data: ExtHdlrData = {
         let mut init =
                 ext_hdlr_data{parse_text:
-                                  
+
                                   b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00".as_ptr() as *const c_char,
                               handler:
                                   Some(external_entity_null_loader as
@@ -11752,7 +11322,7 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
     let mut test_data: ExtHdlrData = {
         let mut init =
                 ext_hdlr_data{parse_text:
-                                  
+
                                   b"<!ENTITY % pe1 SYSTEM \'http://example.org/two.ent\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\n\x00".as_ptr() as *const c_char,
                               handler:
                                   ::std::mem::transmute::<libc::intptr_t,
@@ -12572,7 +12142,7 @@ unsafe extern "C" fn test_unknown_encoding_success() {
         5467,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<\x81d\x80oc>Hello, world</\x81d\x80oc>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -12679,7 +12249,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_1() {
         5502,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>Hi</abcdefghabcdefghabcdefghijkl\x80m\x80n\x80o\x80p>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"abcdefghabcdefghabcdefghijklmnop\x00".as_ptr() as *const c_char;
@@ -12742,7 +12312,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_2() {
         5524,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<abcdefghabcdefghabcdefghijklmnop>Hi</abcdefghabcdefghabcdefghijklmnop>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"abcdefghabcdefghabcdefghijklmnop\x00".as_ptr() as *const c_char;
@@ -13154,7 +12724,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom() {
         5675,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13219,7 +12789,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom() {
         5706,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13288,7 +12858,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom2() {
         5741,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13353,7 +12923,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom2() {
         5772,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13417,7 +12987,7 @@ unsafe extern "C" fn test_ext_entity_utf16_be() {
         5804,
     ); /* U+3E00 */
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13481,7 +13051,7 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
         5834,
     ); /* U+3E00 */
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -13605,7 +13175,7 @@ unsafe extern "C" fn test_ext_entity_utf16_unknown() {
         5906,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtFaults2 = {
         let mut init = ExtFaults2 {
@@ -13651,7 +13221,7 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
         5923,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: ExtTest2 = {
         let mut init = ExtTest2 {
@@ -14218,7 +13788,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
         6199,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?><!DOCTYPE doc SYSTEM \'foo\'><doc><e>&entity;</e></doc>\x00".as_ptr() as *const c_char;
     let mut fault: ExtFaults = {
         let mut init = ext_faults {
@@ -14378,7 +13948,7 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
     let mut test_data: ExtTest2 = {
         let mut init =
                 ExtTest2{parse_text:
-                             
+
                              b"\x00<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00".as_ptr() as *const c_char,
                          parse_len: 34,
                          encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
@@ -14446,7 +14016,7 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
     let mut test_data: ExtTest2 = {
         let mut init =
                 ExtTest2{parse_text:
-                             
+
                              b"<\x00!\x00E\x00N\x00T\x00I\x00T\x00Y\x00 \x00j\x00 \x00\'\x00b\x00a\x00z\x00\'\x00>\x00\x00".as_ptr() as *const c_char,
                          parse_len: 34,
                          encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
@@ -14705,7 +14275,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
         6426,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc PUBLIC \'pubname\' \'test.dtd\' [\n  <!ENTITY foo \'bar\'>\n]>\n<doc>&foo;</doc>\x00".as_ptr() as *const c_char;
     let mut test_data: [DefaultCheck; 3] = [
         {
@@ -14923,7 +14493,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
         6513,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'>\x00".as_ptr() as *const c_char;
     let mut epilog: *const c_char = b"</foo:e>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
@@ -15090,10 +14660,10 @@ unsafe extern "C" fn test_ns_tagname_overwrite() {
         6581,
     );
     let mut text: *const c_char =
-        
+
         b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00".as_ptr() as *const c_char;
     let mut result: *const XML_Char =
-        
+
         b"start http://example.org/ e\nstart http://example.org/ f\nattribute http://example.org/ attr\nend http://example.org/ f\nstart http://example.org/ g\nattribute http://example.org/ attr2\nend http://example.org/ g\nend http://example.org/ e\n\x00".as_ptr() as *const c_char;
     run_ns_tagname_overwrite_test(text, result);
 }
@@ -15110,10 +14680,10 @@ unsafe extern "C" fn test_ns_tagname_overwrite_triplet() {
         6599,
     );
     let mut text: *const c_char =
-        
+
         b"<n:e xmlns:n=\'http://example.org/\'>\n  <n:f n:attr=\'foo\'/>\n  <n:g n:attr2=\'bar\'/>\n</n:e>\x00".as_ptr() as *const c_char;
     let mut result: *const XML_Char =
-        
+
         b"start http://example.org/ e n\nstart http://example.org/ f n\nattribute http://example.org/ attr n\nend http://example.org/ f n\nstart http://example.org/ g n\nattribute http://example.org/ attr2 n\nend http://example.org/ g n\nend http://example.org/ e n\n\x00".as_ptr() as *const c_char;
     XML_SetReturnNSTriplet(g_parser, true);
     run_ns_tagname_overwrite_test(text, result);
@@ -15255,7 +14825,7 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
         6685,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -15356,7 +14926,7 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_3() {
         6728,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ELEMENT doc EMPTY>\n  <!ATTLIST doc\n    xmlns:prefix CDATA \'\'>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
@@ -15380,7 +14950,7 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_4() {
         6742,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    xmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00".as_ptr() as *const c_char;
     /* Packaged info expected by the end element handler;
     the weird structuring lets us re-use the triplet_end_checker()
@@ -15415,7 +14985,7 @@ unsafe extern "C" fn test_ns_unbound_prefix() {
         6763,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    notxmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
@@ -15492,7 +15062,7 @@ unsafe extern "C" fn test_ns_duplicate_attrs_diff_prefixes() {
         6794,
     );
     let mut text: *const c_char =
-        
+
         b"<doc xmlns:a=\'http://example.org/a\'\n     xmlns:b=\'http://example.org/a\'\n     a:a=\'v\' b:a=\'v\' />\x00".as_ptr() as *const c_char;
     _expect_failure(
         text,
@@ -15645,7 +15215,7 @@ unsafe extern "C" fn test_ns_long_element() {
         6866,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
         b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00".as_ptr()
@@ -15715,7 +15285,7 @@ unsafe extern "C" fn test_ns_extend_uri_buffer() {
         6902,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/\'> <foo:thisisalongenoughnametotriggerallocationaction   foo:a=\'12\' /></foo:e>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
@@ -15827,10 +15397,10 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
      * for all compilers.
      */
     let mut text1: *const c_char =
-        
+
         b"<doc ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:a=\'12\'\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        
+
         b" xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo\'\n></doc>\x00".as_ptr() as *const c_char;
     if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
         == XML_Status::ERROR
@@ -15866,7 +15436,7 @@ unsafe extern "C" fn test_ns_unknown_encoding_success() {
         7040,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'prefix-conv\'?>\n<foo:e xmlns:foo=\'http://example.org/\'>Hi</foo:e>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
@@ -16505,10 +16075,10 @@ unsafe extern "C" fn test_misc_features() {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_Char>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
-                                     
+
                                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                      7358i32,
-                                     
+
                                      b"Incorrect size of XML_Char\x00".as_ptr() as *const c_char);
                     }
                 }
@@ -16516,10 +16086,10 @@ unsafe extern "C" fn test_misc_features() {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_LChar>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
-                                     
+
                                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                                      7362i32,
-                                     
+
                                      b"Incorrect size of XML_LChar\x00".as_ptr() as *const c_char);
                     }
                 }
@@ -16755,7 +16325,7 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
     let inputThree: *const c_char =
         b"<!DOCTYPE d [\n<!ENTITY % e \']><d\'>\n\n%e;\x00".as_ptr() as *const c_char;
     let inputIssue317: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY % foo \']>\n<doc>Hell<oc (#PCDATA)*>\'>\n%foo;\n]>\n<doc>Hello, world</dVc>\x00".as_ptr() as *const c_char;
     let inputs: [*const c_char; 4] = [inputOne, inputTwo, inputThree, inputIssue317];
     let mut inputIndex: size_t = 0;
@@ -16952,7 +16522,7 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
         7609,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'ThisIsAStupidlyLongEncodingNameIntendedToTriggerPoolGrowth123456ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN\'?><doc>Hello, world</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -17134,7 +16704,7 @@ unsafe extern "C" fn test_alloc_parse_pi_3() {
         7705,
     );
     let mut text: *const c_char =
-        
+
         b"<?This processing instruction should be long enough to ensure thatit triggers the growth of an internal string pool when the      allocator fails at a cruicial moment FGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPQ?><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -17191,7 +16761,7 @@ unsafe extern "C" fn test_alloc_parse_comment() {
         7746,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!-- Test parsing this comment --><doc>Hi</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
@@ -17244,7 +16814,7 @@ unsafe extern "C" fn test_alloc_parse_comment_2() {
         7770,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<doc>Hello, world<!-- Parse this comment too --></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 15;
@@ -17351,7 +16921,7 @@ unsafe extern "C" fn test_alloc_create_external_parser() {
         7831,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut foo_text: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
@@ -17393,7 +16963,7 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
         7848,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut foo_text: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
@@ -17549,7 +17119,7 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
         7934,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
     XML_SetExternalEntityRefHandler(
@@ -17633,7 +17203,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
         7990,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let alloc_test_max_repeats: c_int = 50;
@@ -17731,7 +17301,7 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
         8052,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_allocation_count: c_int = 30;
@@ -17821,7 +17391,7 @@ unsafe extern "C" fn test_alloc_internal_entity() {
         8099,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_uint = 0;
     let max_alloc_count: c_uint = 20;
@@ -17883,7 +17453,7 @@ unsafe extern "C" fn test_alloc_dtd_default_handling() {
         8127,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ENTITY e SYSTEM \'http://example.org/e\'>\n<!NOTATION n SYSTEM \'http://example.org/n\'>\n<!ENTITY e1 SYSTEM \'http://example.org/e\' NDATA n>\n<!ELEMENT doc (#PCDATA)>\n<!ATTLIST doc a CDATA #IMPLIED>\n<?pi in dtd?>\n<!--comment in dtd-->\n]>\n<doc><![CDATA[text in doc]]></doc>\x00".as_ptr() as *const c_char;
     let mut expected: *const XML_Char =
         b"\n\n\n\n\n\n\n\n\n<doc>text in doc</doc>\x00".as_ptr() as *const c_char;
@@ -18264,7 +17834,7 @@ unsafe extern "C" fn external_entity_reallocator(
     } else {
         __assert_fail(b"buffer != NULL\x00".as_ptr() as
                           *const c_char,
-                      
+
                       b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
                       8271u32,
                       (*::std::mem::transmute::<&[u8; 116],
@@ -18292,7 +17862,7 @@ unsafe extern "C" fn test_alloc_ext_entity_realloc_buffer() {
         8279,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -18354,7 +17924,7 @@ unsafe extern "C" fn test_alloc_realloc_many_attributes() {
         8305,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ATTLIST doc za CDATA \'default\'>\n<!ATTLIST doc zb CDATA \'def2\'>\n<!ATTLIST doc zc CDATA \'def3\'>\n]>\n<doc a=\'1\'     b=\'2\'     c=\'3\'     d=\'4\'     e=\'5\'     f=\'6\'     g=\'7\'     h=\'8\'     i=\'9\'     j=\'10\'     k=\'11\'     l=\'12\'     m=\'13\'     n=\'14\'     p=\'15\'     q=\'16\'     r=\'17\'     s=\'18\'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -18561,7 +18131,7 @@ unsafe extern "C" fn test_alloc_parse_public_doctype() {
         8465,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'test\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
@@ -18635,7 +18205,7 @@ unsafe extern "C" fn test_alloc_parse_public_doctype_long_name() {
         8514,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<!DOCTYPE doc PUBLIC \'http://example.com/foo\' \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOPABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
@@ -18794,7 +18364,7 @@ unsafe extern "C" fn test_alloc_attribute_enum_value() {
         8608,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a \n    <a/>  \n\nyellow tiger</animal>\x00".as_ptr() as *const c_char;
     let mut dtd_text: [c_char; 108] =
         *::std::mem::transmute::<&[u8; 108],
@@ -18876,7 +18446,7 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
         8640,
     );
     let mut text: *const c_char =
-        
+
         b"<?xml version=\'1.0\' standalone=\'no\'?>\n<!DOCTYPE animal SYSTEM \'test.dtd\'>\n<animal>This is a yellow tiger</animal>\x00".as_ptr() as *const c_char;
     /* We wish to define a collection of attribute enums that will
      * cause the string pool storing them to have to expand.  This
@@ -18968,7 +18538,7 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
      * otherwise a different code path will pick up the realloc.
      */
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) #IMPLIED>\n]><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -19036,7 +18606,7 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
      * otherwise a different code path will pick up the realloc.
      */
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc EMPTY>\n<!ATTLIST doc a (ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|BBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|CBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|DBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|EBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|FBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|GBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|HBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|IBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|JBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|KBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|LBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|MBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|NBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|OBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO|PBCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMN) \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNO\'>\n]><doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -19096,7 +18666,7 @@ unsafe extern "C" fn test_alloc_notation() {
         8796,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!NOTATION ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'http://example.org/n\'>\n<!ENTITY e SYSTEM \'http://example.org/e\' NDATA ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -19183,7 +18753,7 @@ unsafe extern "C" fn test_alloc_public_notation() {
         8864,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!NOTATION note PUBLIC \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\' \'foo\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -19253,7 +18823,7 @@ unsafe extern "C" fn test_alloc_system_notation() {
         8913,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!NOTATION note SYSTEM \'http://example.com/a/long/enough/name/to/trigger/pool/growth/zz/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n<!ENTITY e SYSTEM \'http://example.com/e\' NDATA note>\n<!ELEMENT doc EMPTY>\n]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -19322,7 +18892,7 @@ unsafe extern "C" fn test_alloc_nested_groups() {
         8961,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
@@ -19415,7 +18985,7 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
         9001,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (e,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?,(e?))))))))))))))))))))))))))))))))>\n<!ELEMENT e EMPTY>]>\n<doc><e/></doc>\x00".as_ptr() as *const c_char;
     let mut storage: crate::chardata::CharData = crate::chardata::CharData {
         count: 0,
@@ -19506,7 +19076,7 @@ unsafe extern "C" fn test_alloc_large_group() {
         9041,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 50;
@@ -19575,7 +19145,7 @@ unsafe extern "C" fn test_alloc_realloc_group_choice() {
         9077,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n<!ELEMENT doc (a1|a2|a3|a4|a5|a6|a7|a8|b1|b2|b3|b4|b5|b6|b7|b8|c1|c2|c3|c4|c5|c6|c7|c8|d1|d2|d3|d4|d5|d6|d7|d8|e1)+>\n]>\n<doc>\n<a1/>\n<b2 attr=\'foo\'>This is a foo</b2>\n<c3></c3>\n</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -19771,7 +19341,7 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
         9167,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [<!ENTITY foo \'This entity will be substituted as an attribute value, and is   calculated to be exactly long enough that the terminating NUL   that the library adds internally will trigger the string pool togrow. GHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<doc a=\'&foo;\'></doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
@@ -19915,7 +19485,7 @@ unsafe extern "C" fn test_alloc_long_attr_default_with_char_ref() {
         9254,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [<!ATTLIST doc a CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHI&#x31;\'>]>\n<doc/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -19964,7 +19534,7 @@ unsafe extern "C" fn test_alloc_long_attr_value() {
         9298,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE test [<!ENTITY foo \'\nABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 25;
@@ -20020,10 +19590,10 @@ unsafe extern "C" fn test_alloc_nested_entities() {
     let mut test_data: ExtFaults = {
         let mut init =
                 ext_faults{parse_text:
-                               
+
                                b"<!ENTITY % pe1 \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n<!ENTITY % pe2 \'%pe1;\'>\n%pe2;\x00".as_ptr() as *const c_char,
                            fail_text:
-                               
+
                                b"Memory Fail not faulted\x00".as_ptr() as
                                    *const c_char,
                            encoding: ::rexpat::stddef_h::NULL as *const XML_Char,
@@ -20196,7 +19766,7 @@ unsafe extern "C" fn test_alloc_realloc_attributes() {
         9473,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ATTLIST doc\n    a1  (a|b|c)   \'a\'\n    a2  (foo|bar) #IMPLIED\n    a3  NMTOKEN   #IMPLIED\n    a4  NMTOKENS  #IMPLIED\n    a5  ID        #IMPLIED\n    a6  IDREF     #IMPLIED\n    a7  IDREFS    #IMPLIED\n    a8  ENTITY    #IMPLIED\n    a9  ENTITIES  #IMPLIED\n    a10 CDATA     #IMPLIED\n  >]>\n<doc>wombat</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 5;
@@ -20242,7 +19812,7 @@ unsafe extern "C" fn test_alloc_long_doc_name() {
         9508,
     );
     let mut text: *const c_char =
-        
+
         b"<LongRootElementNameThatWillCauseTheNextAllocationToExpandTheStringPoolForTheDTDQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ a=\'1\'/>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 20;
@@ -20291,7 +19861,7 @@ unsafe extern "C" fn test_alloc_long_base() {
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
     let mut base: *const XML_Char =
-        
+
         b"LongBaseURI/that/will/overflow/an/internal/buffer/and/cause/it/to/have/to/grow/PQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\x00".as_ptr() as *const c_char;
     /* clang-format on */
     let mut i: c_int = 0;
@@ -20356,7 +19926,7 @@ unsafe extern "C" fn test_alloc_long_public_id() {
         9599,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY e PUBLIC \'LongPublicIDThatShouldResultInAnInternalStringPoolGrowingAtASpecificMomentKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\' \'bar\'>\n]>\n<doc>&e;</doc>\x00".as_ptr() as *const c_char;
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
@@ -20418,7 +19988,7 @@ unsafe extern "C" fn test_alloc_long_entity_value() {
         9646,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ENTITY e1 \'Long entity value that should provoke a string pool to grow while setting up to parse the external entity below. xyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00".as_ptr() as *const c_char;
     let mut entity_text: [c_char; 12] =
         *::std::mem::transmute::<&[u8; 12], &mut [c_char; 12]>(b"Hello world\x00");
@@ -20480,7 +20050,7 @@ unsafe extern "C" fn test_alloc_long_notation() {
         9694,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!NOTATION note SYSTEM \'ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB\'>\n  <!ENTITY e1 SYSTEM \'foo\' NDATA ALongNotationNameThatShouldProvokeStringPoolGrowthWhileCallingAnExternalEntityParserUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AB>\n  <!ENTITY e2 SYSTEM \'bar\'>\n]>\n<doc>&e2;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
@@ -20833,7 +20403,7 @@ unsafe extern "C" fn test_nsalloc_long_prefix() {
         9873,
     );
     let mut text: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -20878,7 +20448,7 @@ unsafe extern "C" fn test_nsalloc_long_uri() {
         9949,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\' bar:a=\'12\'\nxmlns:bar=\'http://example.org/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789A/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -20924,7 +20494,7 @@ unsafe extern "C" fn test_nsalloc_long_attr() {
         10009,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/\' bar:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'12\'\nxmlns:bar=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -20970,11 +20540,11 @@ unsafe extern "C" fn test_nsalloc_long_attr_prefix() {
         10052,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/\' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:a=\'12\'\nxmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] =
         [b"http://example.org/ e foo\x00".as_ptr() as *const c_char,
-         
+
          b"http://example.org/ a ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ\x00".as_ptr() as *const c_char];
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -21039,12 +20609,15 @@ unsafe extern "C" fn test_nsalloc_realloc_attributes() {
         10138,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:e xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n       xmlns:bar=\'http://example.org/\'></foo:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 10;
     i = 0;
     while i < max_realloc_count {
+        // FIXME: `HashSet` doesn't use `realloc`, so we need
+        // to count the allocations instead
+        allocation_count = 3 * i as intptr_t;
         reallocation_count = i as intptr_t;
         if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
@@ -21085,7 +20658,7 @@ unsafe extern "C" fn test_nsalloc_long_element() {
         10162,
     );
     let mut text: *const c_char =
-        
+
         b"<foo:thisisalongenoughelementnametotriggerareallocation\n xmlns:foo=\'http://example.org/\' bar:a=\'12\'\n xmlns:bar=\'http://example.org/\'></foo:thisisalongenoughelementnametotriggerareallocation>\x00".as_ptr() as *const c_char;
     let mut elemstr: [*const XML_Char; 2] = [
         b"http://example.org/ thisisalongenoughelementnametotriggerareallocation foo\x00".as_ptr()
@@ -21167,7 +20740,7 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
         b"<doc xmlns=\'http://example.org/\'>\n  <e xmlns=\'\' />\n</doc>\x00".as_ptr()
             as *const c_char;
     let mut second: *const c_char =
-        
+
         b"<doc xmlns=\'http://example.org/long/enough/URI/to/reallocate/\'>\n  <e xmlns=\'\' />\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_uint = 0;
     let max_realloc_count: c_uint = 10;
@@ -21225,7 +20798,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_prefix() {
         10236,
     );
     let mut text: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 12;
@@ -21273,7 +20846,7 @@ unsafe extern "C" fn test_nsalloc_realloc_longer_prefix() {
         10312,
     );
     let mut text: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_realloc_count: c_int = 12;
@@ -21318,10 +20891,10 @@ unsafe extern "C" fn test_nsalloc_long_namespace() {
         10387,
     );
     let mut text1: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'>\n\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:attr=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -21373,7 +20946,7 @@ unsafe extern "C" fn test_nsalloc_less_long_namespace() {
         10504,
     );
     let mut text: *const c_char =
-        
+
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678=\'http://example.org/\'>\n<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:f ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:att=\'foo\'/>\n</ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678:e>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     let max_alloc_count: c_int = 40;
@@ -21418,7 +20991,7 @@ unsafe extern "C" fn test_nsalloc_long_context() {
         10574,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ATTLIST doc baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\' baz=\'2\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
@@ -21579,7 +21152,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context() {
         10654,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKL\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21595,7 +21168,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_2() {
         10685,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJK\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21611,7 +21184,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_3() {
         10716,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGH\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21627,7 +21200,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_4() {
         10747,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21643,7 +21216,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_5() {
         10778,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABC\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21659,7 +21232,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_6() {
         10809,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNOP\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21675,7 +21248,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_7() {
         10839,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLM\'>\n&en;</doc>\x00".as_ptr() as *const c_char;
     context_realloc_test(text);
 }
@@ -21691,7 +21264,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         10870,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP SYSTEM \'bar\'>\n]>\n<doc xmlns=\'http://example.org/baz\'>\n&ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
@@ -21781,10 +21354,10 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
         10943,
     );
     let mut text1: *const c_char =
-        
+
         b"<!DOCTYPE ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc [\n  <!ENTITY First SYSTEM \'foo/First\'>\n]>\n<ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo/Second\'>&First;\x00".as_ptr() as *const c_char;
     let mut text2: *const c_char =
-        
+
         b"</ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP:doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 2] = [
         {
@@ -21864,7 +21437,7 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
         11046,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc [\n  <!ATTLIST e a1 CDATA \'ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP\'>\n  <!ENTITY x SYSTEM \'foo\'>\n]>\n<doc>&x;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 2] = [
         {
@@ -21942,7 +21515,7 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
         11095,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE doc SYSTEM \'foo\' [\n  <!ENTITY en SYSTEM \'ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
@@ -21955,10 +21528,10 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
         {
             let mut init =
                  ExtOption{system_id:
-                               
+
                                b"ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/ABCDEFGHIJKLMNO/\x00".as_ptr() as *const c_char,
                            parse_text:
-                               
+
                                b"<e/>\x00".as_ptr() as
                                    *const c_char,};
             init
@@ -22032,7 +21605,7 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
         11167,
     );
     let mut text: *const c_char =
-        
+
         b"<!DOCTYPE pfx:element SYSTEM \'foo\' [\n  <!ATTLIST pfx:element baz ID #REQUIRED>\n  <!ENTITY en SYSTEM \'bar\'>\n]>\n<pfx:element xmlns:pfx=\'http://example.org/\' baz=\'2\'>\n&en;</pfx:element>\x00".as_ptr() as *const c_char;
     let mut options: [ExtOption; 3] = [
         {
@@ -22132,14 +21705,6 @@ unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
     crate::minicheck::tcase_add_test(
         tc_basic,
         Some(test_u0000_char as unsafe extern "C" fn() -> ()),
-    );
-    crate::minicheck::tcase_add_test(
-        tc_basic,
-        Some(test_siphash_self as unsafe extern "C" fn() -> ()),
-    );
-    crate::minicheck::tcase_add_test(
-        tc_basic,
-        Some(test_siphash_spec as unsafe extern "C" fn() -> ()),
     );
     crate::minicheck::tcase_add_test(
         tc_basic,
@@ -23490,7 +23055,7 @@ pub fn main() {
         );
     }
     args.push(::std::ptr::null_mut());
-    let argc: c_int = (args.len() - 1) as c_int; 
+    let argc: c_int = (args.len() - 1) as c_int;
     let mut argv: *mut *mut c_char = args.as_mut_ptr();
 
     unsafe {

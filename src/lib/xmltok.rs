@@ -213,10 +213,10 @@ pub trait XmlEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe fn nameMatchesAscii(
+    fn nameMatchesAscii(
         &self,
         buf: ExpatBufRef,
-        ptr2: *const libc::c_char,
+        ptr2: &[libc::c_char],
     ) -> libc::c_int;
 
     unsafe fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
@@ -531,12 +531,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         *fromP = fromP.inc_start(from.len().try_into().unwrap());
         if output_exhausted {
             /* needs to go first */
-            return XML_CONVERT_OUTPUT_EXHAUSTED;
+            XML_CONVERT_OUTPUT_EXHAUSTED
         } else if input_incomplete {
-            return XML_CONVERT_INPUT_INCOMPLETE;
+            XML_CONVERT_INPUT_INCOMPLETE
         } else {
-            return XML_CONVERT_COMPLETED;
-        };
+            XML_CONVERT_COMPLETED
+        }
     }
 
     #[inline]
@@ -619,7 +619,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
             }
             _ => {}
         }
-        return res;
+        res
     }
 }
 
@@ -791,10 +791,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
             *from = from.inc_start(1);
         }
         if to.is_empty() && !from.is_empty() {
-            return XML_CONVERT_OUTPUT_EXHAUSTED;
+            XML_CONVERT_OUTPUT_EXHAUSTED
         } else {
-            return XML_CONVERT_COMPLETED;
-        };
+            XML_CONVERT_COMPLETED
+        }
     }
 
     #[inline]
@@ -967,10 +967,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
         }
         *fromP = from;
         if !from.is_empty() {
-            return XML_CONVERT_INPUT_INCOMPLETE;
+            XML_CONVERT_INPUT_INCOMPLETE
         } else {
-            return XML_CONVERT_COMPLETED;
-        };
+            XML_CONVERT_COMPLETED
+        }
     }
 
     #[inline]
@@ -994,10 +994,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            return XML_CONVERT_OUTPUT_EXHAUSTED;
+            XML_CONVERT_OUTPUT_EXHAUSTED
         } else {
-            return res;
-        };
+            res
+        }
     }
 }
 
@@ -1160,10 +1160,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
         }
         *fromP = from;
         if !from.is_empty() {
-            return XML_CONVERT_INPUT_INCOMPLETE;
+            XML_CONVERT_INPUT_INCOMPLETE
         } else {
-            return XML_CONVERT_COMPLETED;
-        };
+            XML_CONVERT_COMPLETED
+        }
     }
 
     #[inline]
@@ -1187,10 +1187,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            return XML_CONVERT_OUTPUT_EXHAUSTED;
+            XML_CONVERT_OUTPUT_EXHAUSTED
         } else {
-            return res;
-        };
+            res
+        }
     }
 }
 
@@ -1947,10 +1947,10 @@ unsafe fn latin1_toUtf16(
         *from = from.inc_start(1);
     }
     if to.is_empty() && !from.is_empty() {
-        return XML_CONVERT_OUTPUT_EXHAUSTED;
+        XML_CONVERT_OUTPUT_EXHAUSTED
     } else {
-        return XML_CONVERT_COMPLETED;
-    };
+        XML_CONVERT_COMPLETED
+    }
 }
 
 #[derive(Clone)]
@@ -2140,7 +2140,7 @@ impl InitEncoding {
             }
         }
         *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
-        return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
+        (**self.encPtr).xmlTok(state, buf, nextTokPtr)
     }
 
 }
@@ -2200,10 +2200,10 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    unsafe fn nameMatchesAscii(
+    fn nameMatchesAscii(
         &self,
         _buf: ExpatBufRef,
-        _ptr2: *const libc::c_char,
+        _ptr2: &[libc::c_char],
     ) -> libc::c_int {
         0
     }
@@ -2372,8 +2372,7 @@ impl UnknownEncoding {
                 } else {
                     self.types[i] = ByteType::OTHER;
                 }
-                self.utf8[i][0] =
-                    unsafe { XmlUtf8Encode(c, self.utf8[i].as_mut_ptr().offset(1)) } as c_char;
+                self.utf8[i][0] = XmlUtf8Encode(c, &mut self.utf8[i][1..]) as c_char;
                 self.utf16[i] = c as c_ushort
             }
         }
@@ -2473,7 +2472,7 @@ impl XmlEncodingImpl for UnknownEncoding {
             if n == 0 {
                 let mut c: c_int =
                     self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
-                n = XmlUtf8Encode(c, buf.as_mut_ptr());
+                n = XmlUtf8Encode(c, &mut buf);
                 if n as c_long > to.len() as c_long {
                     return XML_CONVERT_OUTPUT_EXHAUSTED;
                 }
@@ -2513,10 +2512,10 @@ impl XmlEncodingImpl for UnknownEncoding {
             to.inc_start(1);
         }
         if to.is_empty() && !from_buf.is_empty() {
-            return XML_CONVERT_OUTPUT_EXHAUSTED;
+            XML_CONVERT_OUTPUT_EXHAUSTED
         } else {
-            return XML_CONVERT_COMPLETED;
-        };
+            XML_CONVERT_COMPLETED
+        }
     }
 }
 
@@ -2544,31 +2543,31 @@ static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
 static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
 
 pub fn XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
-    return unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() };
+    unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() }
 }
 
 pub fn XmlGetUtf8InternalEncoding() -> &'static ENCODING {
-    return unsafe { &**internal_utf8_encoding.as_ref().unwrap() };
+    unsafe { &**internal_utf8_encoding.as_ref().unwrap() }
 }
 
 #[cfg(target_endian = "little")]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    return unsafe { &**internal_little2_encoding.as_ref().unwrap() };
+    unsafe { &**internal_little2_encoding.as_ref().unwrap() }
 }
 
 #[cfg(target_endian = "big")]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    return unsafe { &**internal_big2_encoding.as_ref().unwrap() };
+    unsafe { &**internal_big2_encoding.as_ref().unwrap() }
 }
 
 #[cfg(target_endian = "little")]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    return unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() };
+    unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() }
 }
 
 #[cfg(target_endian = "big")]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    return unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() };
+    unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() }
 }
 
 // Initialized in run_static_initializers
@@ -2597,9 +2596,10 @@ pub unsafe fn findEncoding(
     }
     i = getEncodingIndex(out_buf.as_ptr());
     if i == UNKNOWN_ENC {
-        return None;
+        None
+    } else {
+        Some(encodings.unwrap()[i as usize])
     }
-    return Some(encodings.unwrap()[i as usize]);
 }
 
 pub unsafe fn findEncodingNS(
@@ -2622,9 +2622,10 @@ pub unsafe fn findEncodingNS(
     }
     i = getEncodingIndex(out_buf.as_ptr());
     if i == UNKNOWN_ENC {
-        return None;
+        None
+    } else {
+        Some(encodingsNS.unwrap()[i as usize])
     }
-    return Some(encodingsNS.unwrap()[i as usize]);
 }
 
 pub unsafe fn XmlParseXmlDeclNS<'a>(
@@ -2828,7 +2829,7 @@ unsafe fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> ByteType {
         }
         _ => {}
     }
-    return ByteType::NONASCII;
+    ByteType::NONASCII
 }
 
 unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
@@ -2856,7 +2857,7 @@ unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
             break;
         }
     }
-    return 1;
+    1
 }
 
 unsafe fn initUpdatePosition(
@@ -2892,7 +2893,7 @@ unsafe fn isSpace(mut c: c_int) -> c_int {
         32 | 13 | 10 | 9 => return 1,
         _ => {}
     }
-    return 0;
+    0
 }
 /* Return 1 if there's just optional white space or there's an S
    followed by name=val.
@@ -2988,25 +2989,25 @@ unsafe fn parsePseudoAttribute<'a>(
         buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
     *nextTokPtr = buf.inc_start((*enc).minBytesPerChar() as isize).as_ptr();
-    return 1;
+    1
 }
 
-const KW_version: [c_char; 8] =
-    [ASCII_v, ASCII_e, ASCII_r, ASCII_s, ASCII_i, ASCII_o, ASCII_n, 0];
+const KW_version: [c_char; 7] =
+    [ASCII_v, ASCII_e, ASCII_r, ASCII_s, ASCII_i, ASCII_o, ASCII_n];
 
-const KW_encoding: [c_char; 9] =
-    [ASCII_e, ASCII_n, ASCII_c, ASCII_o, ASCII_d, ASCII_i, ASCII_n, ASCII_g, 0];
+const KW_encoding: [c_char; 8] =
+    [ASCII_e, ASCII_n, ASCII_c, ASCII_o, ASCII_d, ASCII_i, ASCII_n, ASCII_g];
 
-const KW_standalone: [c_char; 11] = [
-    ASCII_s, ASCII_t, ASCII_a, ASCII_n, ASCII_d, ASCII_a, ASCII_l, ASCII_o, ASCII_n, ASCII_e, 0
+const KW_standalone: [c_char; 10] = [
+    ASCII_s, ASCII_t, ASCII_a, ASCII_n, ASCII_d, ASCII_a, ASCII_l, ASCII_o, ASCII_n, ASCII_e
 ];
 
-const KW_yes: [c_char; 4] = [ASCII_y, ASCII_e, ASCII_s, 0];
+const KW_yes: [c_char; 3] = [ASCII_y, ASCII_e, ASCII_s];
 
-const KW_no: [c_char; 3] = [ASCII_n, ASCII_o, 0];
+const KW_no: [c_char; 2] = [ASCII_n, ASCII_o];
 
 #[cfg(feature = "mozilla")]
-const KW_XML_1_0: [c_char; 4] = [ASCII_1, ASCII_PERIOD, ASCII_0, 0];
+const KW_XML_1_0: [c_char; 3] = [ASCII_1, ASCII_PERIOD, ASCII_0];
 
 unsafe fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
@@ -3037,7 +3038,7 @@ unsafe fn doParseXmlDecl<'a>(
         return 0i32;
     }
     buf = buf.with_start(pseudo_ptr);
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_version.as_ptr()) == 0 {
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_version) == 0 {
         if isGeneralTextEntity == 0 {
             *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
             return 0i32;
@@ -3046,11 +3047,13 @@ unsafe fn doParseXmlDecl<'a>(
         *versionBuf = val_buf;
         #[cfg(feature = "mozilla")]
         {
-            if (*enc).nameMatchesAscii(
-                val, ptr.offset(-((*enc).minBytesPerChar() as isize)),
-                KW_XML_1_0.as_ptr()) == 0
+            if (*enc).nameMatchesAscii(val_buf
+                                       .unwrap()
+                                       .with_end(pseudo_ptr)
+                                       .dec_end((*enc).minBytesPerChar() as usize),
+                                       &KW_XML_1_0) == 0
             {
-                *badPtr = val;
+                *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
                 return 0i32;
             }
         }
@@ -3069,7 +3072,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_encoding.as_ptr()) != 0 {
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_encoding) != 0 {
         let mut c: c_int = toAscii(enc, val_buf.unwrap());
         if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
@@ -3099,7 +3102,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1i32;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), KW_standalone.as_ptr()) == 0
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_standalone) == 0
         || isGeneralTextEntity != 0
     {
         *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
@@ -3110,7 +3113,7 @@ unsafe fn doParseXmlDecl<'a>(
             .unwrap()
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
-        KW_yes.as_ptr(),
+        &KW_yes,
     ) != 0
     {
         if !standalone.is_null() {
@@ -3121,7 +3124,7 @@ unsafe fn doParseXmlDecl<'a>(
             .unwrap()
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
-        KW_no.as_ptr(),
+        &KW_no,
     ) != 0
     {
         if !standalone.is_null() {
@@ -3139,7 +3142,7 @@ unsafe fn doParseXmlDecl<'a>(
         *badPtr = buf.as_ptr();
         return 0i32;
     }
-    return 1;
+    1
 }
 /* as nothing */
 /* isName2 */
@@ -3167,58 +3170,58 @@ pub fn checkCharRefNumber(mut result: c_int) -> c_int {
         }
         _ => {}
     } /* LCOV_EXCL_LINE: this case is always eliminated beforehand */
-    return result;
+    result
 }
 
-pub unsafe fn XmlUtf8Encode(mut c: c_int, mut buf: *mut c_char) -> c_int {
+pub fn XmlUtf8Encode(mut c: c_int, buf: &mut [c_char]) -> c_int {
     if c < 0 {
         return 0i32;
     }
     if c < min2 as c_int {
-        *buf.offset(0) = (c | UTF8_cval1 as c_int) as c_char;
+        buf[0] = (c | UTF8_cval1 as c_int) as c_char;
         return 1i32;
     }
     if c < min3 as c_int {
-        *buf.offset(0) = (c >> 6 | UTF8_cval2 as c_int) as c_char;
-        *buf.offset(1) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 6 | UTF8_cval2 as c_int) as c_char;
+        buf[1] = (c & 0x3fi32 | 0x80) as c_char;
         return 2i32;
     }
     if c < min4 as c_int {
-        *buf.offset(0) = (c >> 12 | UTF8_cval3 as c_int) as c_char;
-        *buf.offset(1) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(2) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 12 | UTF8_cval3 as c_int) as c_char;
+        buf[1] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        buf[2] = (c & 0x3fi32 | 0x80) as c_char;
         return 3i32;
     }
     if c < 0x110000 {
-        *buf.offset(0) = (c >> 18 | UTF8_cval4 as c_int) as c_char;
-        *buf.offset(1) = (c >> 12 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(2) = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        *buf.offset(3) = (c & 0x3fi32 | 0x80) as c_char;
+        buf[0] = (c >> 18 | UTF8_cval4 as c_int) as c_char;
+        buf[1] = (c >> 12 & 0x3fi32 | 0x80) as c_char;
+        buf[2] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
+        buf[3] = (c & 0x3fi32 | 0x80) as c_char;
         return 4i32;
     }
-    return 0;
+    0
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
 }
 
-pub unsafe fn XmlUtf16Encode(mut charNum: c_int, mut buf: *mut c_ushort) -> c_int {
+pub fn XmlUtf16Encode(mut charNum: c_int, buf: &mut [c_ushort]) -> c_int {
     if charNum < 0 {
         return 0i32;
     }
     if charNum < 0x10000 {
-        *buf.offset(0) = charNum as c_ushort;
+        buf[0] = charNum as c_ushort;
         return 1i32;
     }
     if charNum < 0x110000 {
         charNum -= 0x10000;
-        *buf.offset(0) = ((charNum >> 10) + 0xd800i32) as c_ushort;
-        *buf.offset(1) = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
+        buf[0] = ((charNum >> 10) + 0xd800i32) as c_ushort;
+        buf[1] = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
         return 2i32;
     }
-    return 0;
+    0
 }
 
 pub unsafe fn XmlSizeOfUnknownEncoding() -> c_int {
-    return ::std::mem::size_of::<unknown_encoding>() as c_int;
+    ::std::mem::size_of::<unknown_encoding>() as c_int
 }
 
 const KW_ISO_8859_1: [c_char; 11] = [
@@ -3264,7 +3267,7 @@ unsafe fn getEncodingIndex(mut name: *const c_char) -> c_int {
         }
         i += 1
     }
-    return UNKNOWN_ENC;
+    UNKNOWN_ENC
 }
 
 unsafe fn run_static_initializers() {
