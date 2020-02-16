@@ -56,7 +56,7 @@ use crate::stdlib::{stderr, strncmp};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
-    XML_ParsingStatus,
+    XML_Parsing, XML_ParsingStatus,
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END,
     XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE,
@@ -123,7 +123,7 @@ pub use crate::expat_h::{
     XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
     XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ErrorCode, XML_ExternalEntityRefHandler,
     XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing,
-    XML_Parser, XML_Parsing, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
+    XML_Parser, XML_Parsing::PARSING, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
     XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler,
