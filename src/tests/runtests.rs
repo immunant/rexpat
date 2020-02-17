@@ -57,7 +57,6 @@ use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
     XML_Parsing, XML_ParsingStatus,
-    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END,
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
@@ -8155,7 +8154,7 @@ unsafe extern "C" fn get_feature(
     if feature.is_null() {
         return XML_Status::ERROR as XML_Status;
     }
-    while (*feature).feature != XML_FEATURE_END {
+    while (*feature).feature != XML_FeatureEnum::END {
         if (*feature).feature == feature_id {
             *presult = (*feature).value;
             return XML_Status::OK as XML_Status;
@@ -8250,7 +8249,7 @@ unsafe extern "C" fn test_get_buffer_1() {
      * XML_CONTEXT_BYTES (if defined), so we subtract that from our
      * request.
      */
-    if get_feature(XML_FEATURE_CONTEXT_BYTES, &mut context_bytes) != XML_Status::OK {
+    if get_feature(XML_FeatureEnum::CONTEXT_BYTES, &mut context_bytes) != XML_Status::OK {
         context_bytes = 0
     }
     if !XML_GetBuffer(
@@ -16067,9 +16066,9 @@ unsafe extern "C" fn test_misc_features() {
         );
     } else {
         /* Loop through the features checking what we can */
-        while (*features).feature != XML_FEATURE_END {
+        while (*features).feature != XML_FeatureEnum::END {
             match (*features).feature {
-                6 => {
+                XML_FeatureEnum::SIZEOF_XML_CHAR => {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_Char>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
@@ -16080,7 +16079,7 @@ unsafe extern "C" fn test_misc_features() {
                                      b"Incorrect size of XML_Char\x00".as_ptr() as *const c_char);
                     }
                 }
-                7 => {
+                XML_FeatureEnum::SIZEOF_XML_LCHAR => {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_LChar>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,

@@ -51,10 +51,7 @@ pub use crate::expat_h::{
     XML_Parsing, XML_ParsingStatus, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
-    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp, XML_FEATURE_ATTR_INFO,
-    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
-    XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
-    XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T,
+    XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp,
 };
 pub use crate::lib::xmlrole::{
     prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
@@ -3309,12 +3306,12 @@ pub unsafe extern "C" fn XML_ExpatVersionInfo() -> XML_Expat_Version {
 pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
     const features: &[XML_Feature] = &[
         XML_Feature {
-            feature: XML_FEATURE_SIZEOF_XML_CHAR,
+            feature: XML_FeatureEnum::SIZEOF_XML_CHAR,
             name: wch!("sizeof(XML_Char)\x00"),
             value: ::std::mem::size_of::<XML_Char>() as c_long,
         },
         XML_Feature {
-            feature: XML_FEATURE_SIZEOF_XML_LCHAR,
+            feature: XML_FeatureEnum::SIZEOF_XML_LCHAR,
             name: wch!("sizeof(XML_LChar)\x00"),
             value: ::std::mem::size_of::<XML_LChar>() as c_long,
         },
@@ -3331,22 +3328,22 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
             value: 0i64,
         },
         XML_Feature {
-            feature: XML_FEATURE_DTD,
+            feature: XML_FeatureEnum::DTD,
             name: wch!("XML_DTD\x00"),
             value: 0i64,
         },
         XML_Feature {
-            feature: XML_FEATURE_CONTEXT_BYTES,
+            feature: XML_FeatureEnum::CONTEXT_BYTES,
             name: wch!("XML_CONTEXT_BYTES\x00"),
             value: XML_CONTEXT_BYTES as c_long,
         },
         XML_Feature {
-            feature: XML_FEATURE_NS,
+            feature: XML_FeatureEnum::NS,
             name: wch!("XML_NS\x00"),
             value: 0i64,
         },
         XML_Feature {
-            feature: XML_FEATURE_END,
+            feature: XML_FeatureEnum::END,
             name: NULL as *const XML_LChar,
             value: 0i64,
         },

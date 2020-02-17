@@ -466,18 +466,22 @@ pub struct XML_Expat_Version {
 }
 
 /* Added in Expat 1.95.5. */
-pub type XML_FeatureEnum = c_uint;
-pub const XML_FEATURE_END: XML_FeatureEnum = 0;
-pub const XML_FEATURE_UNICODE: XML_FeatureEnum = 1;
-pub const XML_FEATURE_UNICODE_WCHAR_T: XML_FeatureEnum = 2;
-pub const XML_FEATURE_DTD: XML_FeatureEnum = 3;
-pub const XML_FEATURE_CONTEXT_BYTES: XML_FeatureEnum = 4;
-pub const XML_FEATURE_MIN_SIZE: XML_FeatureEnum = 5;
-pub const XML_FEATURE_SIZEOF_XML_CHAR: XML_FeatureEnum = 6;
-pub const XML_FEATURE_SIZEOF_XML_LCHAR: XML_FeatureEnum = 7;
-pub const XML_FEATURE_NS: XML_FeatureEnum = 8;
-pub const XML_FEATURE_LARGE_SIZE: XML_FeatureEnum = 9;
-pub const XML_FEATURE_ATTR_INFO: XML_FeatureEnum = 10;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_FeatureEnum {
+    END = 0,
+    UNICODE,
+    UNICODE_WCHAR_T,
+    DTD,
+    CONTEXT_BYTES,
+    MIN_SIZE,
+    SIZEOF_XML_CHAR,
+    SIZEOF_XML_LCHAR,
+    NS,
+    LARGE_SIZE,
+    ATTR_INFO,
+    /* Additional features must be added to the end of this enum. */
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Feature {

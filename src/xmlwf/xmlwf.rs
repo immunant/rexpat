@@ -21,7 +21,7 @@
 compile_error!("The xmlwf is not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
 
 use ::rexpat::expat_h::{
-    XML_Encoding, XML_Feature, XML_FEATURE_END
+    XML_Encoding, XML_Feature
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ExpatVersion, XML_GetBase, XML_GetCurrentByteCount,
@@ -985,7 +985,7 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
         prog,
         XML_ExpatVersion(),
     );
-    if !features.is_null() && (*features.offset(0)).feature != XML_FEATURE_END {
+    if !features.is_null() && (*features.offset(0)).feature != XML_FeatureEnum::END {
         let mut i: c_int = 1;
         ::rexpat::stdlib::fprintf(
             stdout,
@@ -999,7 +999,7 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
                 (*features.offset(0isize)).value,
             );
         }
-        while (*features.offset(i as isize)).feature != XML_FEATURE_END {
+        while (*features.offset(i as isize)).feature != XML_FeatureEnum::END {
             ::rexpat::stdlib::fprintf(
                 stdout,
                 b", %s\x00".as_ptr() as *const c_char,
