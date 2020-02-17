@@ -446,10 +446,13 @@ pub struct XML_ParsingStatus {
     pub parsing: XML_Parsing,
     pub finalBuffer: XML_Bool,
 }
-pub type XML_ParamEntityParsing = c_uint;
-pub const XML_PARAM_ENTITY_PARSING_NEVER: XML_ParamEntityParsing = 0;
-pub const XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: XML_ParamEntityParsing = 1;
-pub const XML_PARAM_ENTITY_PARSING_ALWAYS: XML_ParamEntityParsing = 2;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_ParamEntityParsing {
+    NEVER = 0,
+    UNLESS_STANDALONE = 1,
+    ALWAYS = 2,
+}
 pub const XML_GetErrorLineNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
     XML_GetCurrentLineNumber;
 pub const XML_GetErrorColumnNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =

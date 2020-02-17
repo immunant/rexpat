@@ -55,8 +55,6 @@ pub use crate::expat_h::{
     XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_DTD, XML_FEATURE_END, XML_FEATURE_LARGE_SIZE,
     XML_FEATURE_MIN_SIZE, XML_FEATURE_NS, XML_FEATURE_SIZEOF_XML_CHAR,
     XML_FEATURE_SIZEOF_XML_LCHAR, XML_FEATURE_UNICODE, XML_FEATURE_UNICODE_WCHAR_T,
-    XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE,
 };
 pub use crate::lib::xmlrole::{
     prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
@@ -1525,7 +1523,7 @@ impl XML_ParserStruct {
             m_parsingStatus: XML_ParsingStatus::default(),
             m_isParamEntity: false,
             m_useForeignDTD: false,
-            m_paramEntityParsing: 0,
+            m_paramEntityParsing: XML_ParamEntityParsing::NEVER,
 
             #[cfg(feature = "mozilla")]
             m_mismatch: ptr::null(),
@@ -1648,7 +1646,7 @@ impl XML_ParserStruct {
         self.m_parsingStatus.parsing = XML_Parsing::INITIALIZED;
         self.m_isParamEntity = false;
         self.m_useForeignDTD = false;
-        self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+        self.m_paramEntityParsing = XML_ParamEntityParsing::NEVER;
     }
 
     /* moves list of bindings to m_freeBindingList */
@@ -1816,7 +1814,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     let mut oldHandlerArg: *mut c_void = 0 as *mut c_void;
     let mut oldDefaultExpandInternalEntities = false;
     let mut oldExternalEntityRefHandlerArg: XML_Parser = 0 as *mut XML_ParserStruct;
-    let mut oldParamEntityParsing: XML_ParamEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+    let mut oldParamEntityParsing: XML_ParamEntityParsing = XML_ParamEntityParsing::NEVER;
     let mut oldInEntityValue: c_int = 0;
     let mut oldns_triplets = false;
     /* Note that the new parser shares the same hash secret as the old
@@ -5265,8 +5263,8 @@ impl XML_ParserStruct {
         }
         if isGeneralTextEntity == 0 && standalone == 1 {
             (*self.m_dtd).standalone = true;
-            if self.m_paramEntityParsing == XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE {
-                self.m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER
+            if self.m_paramEntityParsing == XML_ParamEntityParsing::UNLESS_STANDALONE {
+                self.m_paramEntityParsing = XML_ParamEntityParsing::NEVER
             }
             /* XML_DTD */
         }
@@ -5815,7 +5813,7 @@ impl XML_ParserStruct {
                     if !self.m_doctypeSysid.is_null() || self.m_useForeignDTD as c_int != 0 {
                         let mut hadParamEntityRefs = (*dtd).hasParamEntityRefs;
                         (*dtd).hasParamEntityRefs = true;
-                        if self.m_paramEntityParsing != 0
+                        if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER
                             && self.m_handlers.hasExternalEntityRef()
                         {
                             let mut entity = hash_insert!(
@@ -5874,7 +5872,7 @@ impl XML_ParserStruct {
                     if self.m_useForeignDTD {
                         let mut hadParamEntityRefs_0 = (*dtd).hasParamEntityRefs;
                         (*dtd).hasParamEntityRefs = true;
-                        if self.m_paramEntityParsing != 0 && self.m_handlers.hasExternalEntityRef() {
+                        if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER && self.m_handlers.hasExternalEntityRef() {
                             let mut entity_0 = hash_insert!(
                                 &mut (*dtd).paramEntities,
                                 externalSubsetName.as_ptr(),

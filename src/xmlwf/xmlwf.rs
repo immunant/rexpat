@@ -21,8 +21,7 @@
 compile_error!("The xmlwf is not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
 
 use ::rexpat::expat_h::{
-    XML_Encoding, XML_Feature, XML_FEATURE_END, XML_PARAM_ENTITY_PARSING_ALWAYS,
-    XML_PARAM_ENTITY_PARSING_NEVER,
+    XML_Encoding, XML_Feature, XML_FEATURE_END
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ExpatVersion, XML_GetBase, XML_GetCurrentByteCount,
@@ -1037,7 +1036,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
     let mut useNamespaces: c_int = 0;
     let mut requireStandalone: c_int = 0;
     let mut requiresNotations: c_int = 0;
-    let mut paramEntityParsing: XML_ParamEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+    let mut paramEntityParsing: XML_ParamEntityParsing = XML_ParamEntityParsing::NEVER;
     let mut useStdin: c_int = 0;
     let mut userData: XmlwfUserData = {
         let mut init = xmlwfUserData {
@@ -1081,7 +1080,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
                 current_block_46 = 13707613154239713890;
             }
             112 => {
-                paramEntityParsing = XML_PARAM_ENTITY_PARSING_ALWAYS;
+                paramEntityParsing = XML_ParamEntityParsing::ALWAYS;
                 current_block_46 = 4092296097885336037;
             }
             120 => {
