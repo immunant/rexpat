@@ -93,7 +93,7 @@ pub use crate::stdlib::{
     __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf,
     ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
 };
-use crate::stdlib::{__assert_fail, memcmp, memcpy, memmove, memset};
+use crate::stdlib::{memcmp, memcpy, memmove, memset};
 pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 use num_traits::FromPrimitive;
@@ -2986,19 +2986,7 @@ pub unsafe extern "C" fn XML_GetParsingStatus(
     if parser.is_null() {
         return;
     }
-    if !status.is_null() {
-    } else {
-        __assert_fail(
-            b"status != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr()
-                as *const c_char,
-            2113u32,
-            (*::std::mem::transmute::<&[u8; 59], &[c_char; 59]>(
-                b"void XML_GetParsingStatus(XML_Parser, XML_ParsingStatus *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!status.is_null());
     *status = (*parser).m_parsingStatus;
 }
 /* If XML_Parse or XML_ParseBuffer have returned XML_Status::ERROR, then
@@ -6494,15 +6482,7 @@ impl XML_ParserStruct {
                         if myindex < 0 {
                             return XML_Error::NO_MEMORY;
                         }
-                        if !(*dtd).scaffIndex.is_null() {
-                        } else {
-                            __assert_fail(b"dtd->scaffIndex != NULL\x00".as_ptr() as *const c_char,
-
-                                          b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/lib/xmlparse.c\x00".as_ptr() as *const c_char,
-                                          4790u32,
-                                          (*::std::mem::transmute::<&[u8; 136],
-                                                                    &[c_char; 136]>(b"enum XML_Error doProlog(XML_Parser, const ENCODING *, const char *, const char *, int, const char *, const char **, XML_Bool, XML_Bool)\x00")).as_ptr());
-                        }
+                        assert!(!(*dtd).scaffIndex.is_null());
                         *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
                         (*dtd).scaffLevel += 1;
                         (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_Content_Type::SEQ;

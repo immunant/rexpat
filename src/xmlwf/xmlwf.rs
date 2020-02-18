@@ -34,7 +34,7 @@ use ::rexpat::lib::xmlparse::{
     XML_SetNotationDeclHandler, XML_SetParamEntityParsing, XML_SetProcessingInstructionHandler,
     XML_SetUnknownEncodingHandler, XML_SetUserData, XML_UseParserAsHandlerArg,
 };
-use ::rexpat::stdlib::{__assert_fail, malloc, memcpy, strlen};
+use ::rexpat::stdlib::{malloc, memcpy, strlen};
 use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
 
 use ::std::mem::transmute;
@@ -121,16 +121,7 @@ unsafe extern "C" fn characterData(
 unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
     putc('=' as i32, fp);
     putc('\"' as i32, fp);
-    if !s.is_null() {
-    } else {
-        __assert_fail(
-            b"s\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/xmlwf/xmlwf.c\x00".as_ptr()
-                as *const c_char,
-            110u32,
-            __ASSERT_FUNCTION.as_ptr(),
-        );
-    }
+    assert!(!s.is_null());
     loop {
         match *s as c_int {
             0 | 1 => {
