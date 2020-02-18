@@ -35,15 +35,13 @@ pub use crate::lib::xmlparse::XML_ParserStruct;
 use crate::lib::xmlparse::{MOZ_XML_GetCurrentColumnNumber,
                            MOZ_XML_GetCurrentLineNumber};
 use crate::stddef_h::size_t;
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
+use libc::{c_char, c_int, c_long, c_uint, c_void};
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 
 pub type XML_Parser = *mut XML_ParserStruct;
-pub type XML_Bool = c_uchar;
-pub const XML_TRUE: XML_Bool = 1;
-pub const XML_FALSE: XML_Bool = 0;
+pub type XML_Bool = bool;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
    stanza can be added to code that still needs to support older

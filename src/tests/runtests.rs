@@ -57,9 +57,9 @@ use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
     XML_ParsingStatus,
-    XML_FALSE, XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
+    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
     XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_TRUE, XML_SUSPENDED
+    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_SUSPENDED
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
@@ -430,7 +430,7 @@ unsafe extern "C" fn _XML_Parse_SINGLE_BYTES(
         return XML_Parse(parser, s, len, isFinal as c_int);
     }
     while offset < len {
-        let innerIsFinal: c_int = (offset == len - 1 && isFinal != 0) as c_int;
+        let innerIsFinal: c_int = (offset == len - 1 && isFinal) as c_int;
         let c: c_char = *s.offset(offset as isize);
         res = XML_Parse(
             parser,
@@ -453,7 +453,7 @@ unsafe extern "C" fn _expect_failure(
     mut file: *const c_char,
     mut lineno: c_int,
 ) {
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::OK
     {
         /* Hackish use of _fail_unless() macro, but let's us report
@@ -693,7 +693,7 @@ unsafe extern "C" fn external_entity_optioner(
                 ext_parser,
                 (*options).parse_text,
                 strlen((*options).parse_text) as c_int,
-                XML_TRUE,
+                true,
             );
             XML_ParserFree(ext_parser);
             return rc as c_int;
@@ -773,7 +773,7 @@ unsafe extern "C" fn test_nul_byte() {
         g_parser,
         text.as_mut_ptr(),
         (::std::mem::size_of::<[c_char; 13]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -821,7 +821,7 @@ unsafe extern "C" fn test_bom_utf8() {
     );
     /* This test is really just making sure we don't core on a UTF-8 BOM. */
     let mut text: *const c_char = b"\xef\xbb\xbf<e/>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -846,7 +846,7 @@ unsafe extern "C" fn test_bom_utf16_be() {
         g_parser,
         text.as_mut_ptr(),
         (::std::mem::size_of::<[c_char; 11]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -871,7 +871,7 @@ unsafe extern "C" fn test_bom_utf16_le() {
         g_parser,
         text.as_mut_ptr(),
         (::std::mem::size_of::<[c_char; 11]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -897,7 +897,7 @@ unsafe extern "C" fn test_nobom_utf16_le() {
         g_parser,
         text.as_mut_ptr(),
         (::std::mem::size_of::<[c_char; 11]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE as c_int,
+        true as c_int,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -956,7 +956,7 @@ unsafe extern "C" fn _run_character_check(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(g_parser, file, line);
@@ -990,7 +990,7 @@ unsafe extern "C" fn _run_attribute_check(
                 ) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(g_parser, file, line);
@@ -1027,7 +1027,7 @@ unsafe extern "C" fn _run_ext_character_check(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(g_parser, file, line);
@@ -1196,7 +1196,7 @@ unsafe extern "C" fn test_illegal_utf8() {
             g_parser,
             text.as_mut_ptr(),
             strlen(text.as_mut_ptr()) as c_int,
-            XML_TRUE,
+            true,
         ) == XML_Status::OK
         {
             sprintf(
@@ -1412,7 +1412,7 @@ unsafe extern "C" fn test_utf16() {
         g_parser,
         text.as_mut_ptr(),
         (::std::mem::size_of::<[c_char; 141]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -1452,7 +1452,7 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
         g_parser,
         text.as_mut_ptr(),
         first_chunk_bytes as c_int,
-        XML_FALSE,
+        false,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -1469,7 +1469,7 @@ unsafe extern "C" fn test_utf16_le_epilog_newline() {
             (::std::mem::size_of::<[c_char; 19]>() as c_ulong)
                 .wrapping_sub(first_chunk_bytes as c_ulong)
                 .wrapping_sub(1u64) as c_int,
-            XML_TRUE,
+            true,
         );
         if rc == XML_Status::ERROR {
             _xml_failure(
@@ -1692,7 +1692,7 @@ unsafe extern "C" fn test_line_number_after_parse() {
     );
     let mut text: *const c_char = b"<tag>\n\n\n</tag>\x00".as_ptr() as *const c_char;
     let mut lineno: XML_Size = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -1731,7 +1731,7 @@ unsafe extern "C" fn test_column_number_after_parse() {
     );
     let mut text: *const c_char = b"<tag></tag>\x00".as_ptr() as *const c_char;
     let mut colno: XML_Size = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -1932,7 +1932,7 @@ unsafe extern "C" fn test_line_and_column_numbers_inside_handlers() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -1961,7 +1961,7 @@ unsafe extern "C" fn test_line_number_after_error() {
     ); /* missing </b> */
     let mut text: *const c_char = b"<a>\n  <b>\n  </a>\x00".as_ptr() as *const c_char;
     let mut lineno: XML_Size = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -2001,7 +2001,7 @@ unsafe extern "C" fn test_column_number_after_error() {
     ); /* missing </b> */
     let mut text: *const c_char = b"<a>\n  <b>\n  </a>\x00".as_ptr() as *const c_char;
     let mut colno: XML_Size = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -2047,7 +2047,7 @@ unsafe extern "C" fn test_really_long_lines() {
     let mut text: *const c_char =
 
         b"<e>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+</e>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -2109,7 +2109,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
         );
     }
     memcpy(buffer, text as *const c_void, parse_len as c_ulong);
-    if XML_ParseBuffer(g_parser, parse_len, XML_TRUE as c_int) == XML_Status::ERROR {
+    if XML_ParseBuffer(g_parser, parse_len, true as c_int) == XML_Status::ERROR {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -2169,7 +2169,7 @@ unsafe extern "C" fn test_end_element_events() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -2538,7 +2538,7 @@ unsafe extern "C" fn test_attr_whitespace_normalization() {
                 ) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -2681,7 +2681,7 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
         )),
         ::rexpat::stddef_h::NULL as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -2735,7 +2735,7 @@ unsafe extern "C" fn test_unrecognised_encoding_internal_entity() {
         )),
         ::rexpat::stddef_h::NULL as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -2787,7 +2787,7 @@ unsafe extern "C" fn external_entity_loader(
         extparser,
         (*test_data).parse_text,
         strlen((*test_data).parse_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -2956,7 +2956,7 @@ unsafe extern "C" fn external_entity_faulter(
         ext_parser,
         (*fault).parse_text,
         strlen((*fault).parse_text) as c_int,
-        XML_TRUE,
+        true,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -3084,7 +3084,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_unread_external_subset() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -3736,7 +3736,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 attr_name: b"a\x00".as_ptr() as *const c_char,
                 attr_type: b"(one|two|three)\x00".as_ptr() as *const c_char,
                 default_value: ::rexpat::stddef_h::NULL as *const XML_Char,
-                is_required: XML_TRUE,
+                is_required: true,
             };
             init
         },
@@ -3756,7 +3756,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                              b"NOTATION(foo)\x00".as_ptr() as
                                  *const c_char,
                          default_value: ::rexpat::stddef_h::NULL as *const XML_Char,
-                         is_required: XML_FALSE,};
+                         is_required: false,};
             init
         },
         {
@@ -3767,7 +3767,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 attr_name: b"a\x00".as_ptr() as *const c_char,
                 attr_type: b"NOTATION(foo)\x00".as_ptr() as *const c_char,
                 default_value: b"bar\x00".as_ptr() as *const c_char,
-                is_required: XML_FALSE,
+                is_required: false,
             };
             init
         },
@@ -3779,7 +3779,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 attr_name: b"a\x00".as_ptr() as *const c_char,
                 attr_type: b"CDATA\x00".as_ptr() as *const c_char,
                 default_value: b"\xdb\xb2\x00".as_ptr() as *const c_char,
-                is_required: XML_FALSE,
+                is_required: false,
             };
             init
         },
@@ -3790,7 +3790,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
                 attr_name: ::rexpat::stddef_h::NULL as *const XML_Char,
                 attr_type: ::rexpat::stddef_h::NULL as *const XML_Char,
                 default_value: ::rexpat::stddef_h::NULL as *const XML_Char,
-                is_required: XML_FALSE,
+                is_required: false,
             };
             init
         },
@@ -3813,7 +3813,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
             ),
         );
         XML_SetUserData(g_parser, test as *mut c_void);
-        if _XML_Parse_SINGLE_BYTES(g_parser, prolog, strlen(prolog) as c_int, XML_FALSE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, prolog, strlen(prolog) as c_int, false)
             == XML_Status::ERROR
         {
             _xml_failure(
@@ -3827,7 +3827,7 @@ unsafe extern "C" fn test_dtd_attr_handling() {
             g_parser,
             (*test).definition,
             strlen((*test).definition) as c_int,
-            XML_TRUE,
+            true,
         ) == XML_Status::ERROR
         {
             _xml_failure(
@@ -3861,7 +3861,7 @@ unsafe extern "C" fn test_empty_ns_without_namespaces() {
     let mut text: *const c_char =
         b"<doc xmlns:prefix=\'http://example.org/\'>\n  <e xmlns:prefix=\'\'/>\n</doc>\x00".as_ptr()
             as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -3890,7 +3890,7 @@ unsafe extern "C" fn test_ns_in_attribute_default_without_namespaces() {
     let mut text: *const c_char =
 
         b"<!DOCTYPE e:element [\n  <!ATTLIST e:element\n    xmlns:e CDATA \'http://example.org/\'>\n      ]>\n<e:element/>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -3906,7 +3906,7 @@ static mut long_character_data_text: *const c_char =
 
     b"<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><s>012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789</s>\x00".as_ptr() as *const c_char;
 
-static mut resumable: XML_Bool = XML_FALSE;
+static mut resumable: XML_Bool = false;
 
 unsafe extern "C" fn clearing_aborting_character_handler(
     mut _userData: *mut c_void,
@@ -3948,8 +3948,8 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         _xml_failure(
@@ -3995,8 +3995,8 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_TRUE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -4015,7 +4015,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
         );
     }
     /* Try parsing directly */
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -4037,7 +4037,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
     };
 }
 
-static mut abortable: XML_Bool = XML_FALSE;
+static mut abortable: XML_Bool = false;
 
 unsafe extern "C" fn parser_stop_character_handler(
     mut _userData: *mut c_void,
@@ -4051,9 +4051,9 @@ unsafe extern "C" fn parser_stop_character_handler(
             ::rexpat::stddef_h::NULL as libc::intptr_t,
         ),
     );
-    if resumable == 0 {
+    if !resumable {
         /* Check that aborting an aborted parser is faulted */
-        if XML_StopParser(g_parser, XML_FALSE) != XML_Status::ERROR {
+        if XML_StopParser(g_parser, false) != XML_Status::ERROR {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -4070,9 +4070,9 @@ unsafe extern "C" fn parser_stop_character_handler(
                 2054i32,
             );
         }
-    } else if abortable != 0 {
+    } else if abortable {
         /* Check that aborting a suspended parser works */
-        if XML_StopParser(g_parser, XML_FALSE) == XML_Status::ERROR {
+        if XML_StopParser(g_parser, false) == XML_Status::ERROR {
             _xml_failure(
                 g_parser,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -4082,7 +4082,7 @@ unsafe extern "C" fn parser_stop_character_handler(
         }
     } else {
         /* Check that suspending a suspended parser works */
-        if XML_StopParser(g_parser, XML_TRUE) != XML_Status::ERROR {
+        if XML_StopParser(g_parser, true) != XML_Status::ERROR {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -4121,9 +4121,9 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_FALSE;
-    abortable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = false;
+    abortable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -4142,9 +4142,9 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_TRUE;
-    abortable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    abortable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::SUSPENDED
     {
         crate::minicheck::_fail_unless(
@@ -4163,9 +4163,9 @@ unsafe extern "C" fn test_repeated_stop_parser_between_char_data_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_TRUE;
-    abortable = XML_TRUE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    abortable = true;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -4214,7 +4214,7 @@ unsafe extern "C" fn test_good_cdata_ascii() {
         g_parser,
         Some(dummy_end_cdata_handler as unsafe extern "C" fn(_: *mut c_void) -> ()),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -4246,7 +4246,7 @@ unsafe extern "C" fn test_good_cdata_ascii() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -4294,7 +4294,7 @@ unsafe extern "C" fn test_good_cdata_utf16() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 129]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -4343,7 +4343,7 @@ unsafe extern "C" fn test_good_cdata_utf16_le() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 129]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -4429,7 +4429,7 @@ unsafe extern "C" fn test_long_cdata_utf16() {
     if XML_ParseBuffer(
         g_parser,
         (::std::mem::size_of::<[c_char; 2197]>() as c_ulong).wrapping_sub(1u64) as c_int,
-        XML_TRUE as c_int,
+        true as c_int,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -4487,7 +4487,7 @@ unsafe extern "C" fn test_multichar_cdata_utf16() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 127]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -4524,7 +4524,7 @@ unsafe extern "C" fn test_utf16_bad_surrogate_pair() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 123]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -4710,7 +4710,7 @@ unsafe extern "C" fn test_bad_cdata() {
             g_parser,
             cases[i as usize].text,
             strlen(cases[i as usize].text) as c_int,
-            XML_TRUE,
+            true,
         );
         let actualError: XML_Error = XML_GetError(g_parser);
         if actualStatus == XML_Status::ERROR {
@@ -4974,7 +4974,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             g_parser,
             prolog.as_ptr(),
             ::std::mem::size_of::<[c_char; 87]>() as c_int - 1,
-            XML_FALSE,
+            false,
         ) == XML_Status::ERROR
         {
             _xml_failure(
@@ -4988,7 +4988,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             g_parser,
             cases[i as usize].text,
             cases[i as usize].text_bytes as c_int,
-            XML_TRUE,
+            true,
         );
         if actual_status == XML_Status::ERROR {
         } else {
@@ -5051,7 +5051,7 @@ unsafe extern "C" fn test_stop_parser_between_cdata_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_FALSE;
+    resumable = false;
     _expect_failure(
         text,
         XML_Error::ABORTED,
@@ -5082,8 +5082,8 @@ unsafe extern "C" fn test_suspend_parser_between_cdata_calls() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_TRUE;
-    result = _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE);
+    resumable = true;
+    result = _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true);
     if result != XML_Status::SUSPENDED {
         if result == XML_Status::ERROR {
             _xml_failure(
@@ -5261,7 +5261,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5296,7 +5296,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5335,7 +5335,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         entity_text,
         strlen(entity_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -5382,7 +5382,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         entity_text,
         strlen(entity_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -5422,7 +5422,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         entity_text,
         strlen(entity_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -5461,7 +5461,7 @@ unsafe extern "C" fn test_default_current() {
         g_parser,
         entity_text,
         strlen(entity_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -5499,7 +5499,7 @@ unsafe extern "C" fn test_dtd_elements() {
                 ) -> (),
         )),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5555,7 +5555,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
+    if XML_UseForeignDTD(g_parser, true) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5564,7 +5564,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
             b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5577,7 +5577,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     /* Ensure that trying to set the DTD after parsing has started
      * is faulted, even if it's the same setting.
      */
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
+    if XML_UseForeignDTD(g_parser, true) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5597,7 +5597,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
         );
     }
     /* Now finish the parse */
-    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5650,7 +5650,7 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
         g_parser,
         Some(reject_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
+    if XML_UseForeignDTD(g_parser, true) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5705,7 +5705,7 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
                 ) -> c_int,
         ),
     );
-    XML_UseForeignDTD(g_parser, XML_TRUE);
+    XML_UseForeignDTD(g_parser, true);
     _expect_failure(
         text,
         XML_Error::EXTERNAL_ENTITY_HANDLING,
@@ -5762,7 +5762,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
+    if XML_UseForeignDTD(g_parser, true) != XML_Error::NONE {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5771,7 +5771,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
             b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5784,7 +5784,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     /* Ensure that trying to set the DTD after parsing has started
      * is faulted, even if it's the same setting.
      */
-    if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
+    if XML_UseForeignDTD(g_parser, true) != XML_Error::CANT_CHANGE_FEATURE_ONCE_PARSING {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -5804,7 +5804,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
         );
     }
     /* Now finish the parse */
-    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5854,8 +5854,8 @@ unsafe extern "C" fn test_foreign_dtd_without_external_subset() {
                 ) -> c_int,
         ),
     );
-    XML_UseForeignDTD(g_parser, XML_TRUE);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    XML_UseForeignDTD(g_parser, true);
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -5892,7 +5892,7 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
                 ) -> c_int,
         ),
     );
-    XML_UseForeignDTD(g_parser, XML_TRUE);
+    XML_UseForeignDTD(g_parser, true);
     _expect_failure(
         text,
         XML_Error::UNDEFINED_ENTITY,
@@ -6152,7 +6152,7 @@ unsafe extern "C" fn test_attributes() {
         ),
     );
     XML_SetUserData(g_parser, info.as_mut_ptr() as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6179,9 +6179,9 @@ unsafe extern "C" fn test_reset_in_entity() {
         b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
-    resumable = XML_TRUE;
+    resumable = true;
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -6189,7 +6189,7 @@ unsafe extern "C" fn test_reset_in_entity() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6232,7 +6232,7 @@ unsafe extern "C" fn test_resume_invalid_parse() {
         2950,
     ); /* Missing closing wedge */
     let mut text: *const c_char = b"<doc>Hello</doc\x00".as_ptr() as *const c_char;
-    resumable = XML_TRUE;
+    resumable = true;
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -6240,7 +6240,7 @@ unsafe extern "C" fn test_resume_invalid_parse() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6280,7 +6280,7 @@ unsafe extern "C" fn test_resume_resuspended() {
         2966,
     );
     let mut text: *const c_char = b"<doc>Hello<meep/>world</doc>\x00".as_ptr() as *const c_char;
-    resumable = XML_TRUE;
+    resumable = true;
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -6288,7 +6288,7 @@ unsafe extern "C" fn test_resume_resuspended() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6298,7 +6298,7 @@ unsafe extern "C" fn test_resume_resuspended() {
             2973i32,
         );
     }
-    resumable = XML_TRUE;
+    resumable = true;
     XML_SetCharacterDataHandler(
         g_parser,
         Some(
@@ -6354,7 +6354,7 @@ unsafe extern "C" fn test_cdata_default() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6379,7 +6379,7 @@ unsafe extern "C" fn external_entity_resetter(
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
         parser,
@@ -6406,7 +6406,7 @@ unsafe extern "C" fn external_entity_resetter(
         );
         return XML_Status::ERROR as c_int;
     }
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6429,7 +6429,7 @@ unsafe extern "C" fn external_entity_resetter(
         return XML_Status::ERROR as c_int;
     }
     /* Check we can't parse here */
-    if XML_Parse(ext_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(ext_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -6490,7 +6490,7 @@ unsafe extern "C" fn test_subordinate_reset() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6509,7 +6509,7 @@ unsafe extern "C" fn entity_suspending_decl_handler(
     mut model: *mut XML_Content,
 ) {
     let mut ext_parser: XML_Parser = userData as XML_Parser;
-    if XML_StopParser(ext_parser, XML_TRUE) != XML_Status::ERROR {
+    if XML_StopParser(ext_parser, true) != XML_Status::ERROR {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6571,7 +6571,7 @@ unsafe extern "C" fn external_entity_suspender(
         )),
     );
     XML_SetUserData(ext_parser, ext_parser as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6611,7 +6611,7 @@ unsafe extern "C" fn test_subordinate_suspend() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6653,7 +6653,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     let mut rc: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
@@ -6683,9 +6683,9 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
         ),
     );
     XML_SetUserData(ext_parser, ext_parser as *mut c_void);
-    rc = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE);
+    rc = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true);
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if resumable != 0 {
+    if resumable {
         if rc == XML_Status::ERROR {
             _xml_failure(
                 ext_parser,
@@ -6760,8 +6760,8 @@ unsafe extern "C" fn test_subordinate_xdecl_suspend() {
                 ) -> c_int,
         ),
     );
-    resumable = XML_TRUE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6798,8 +6798,8 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
                 ) -> c_int,
         ),
     );
-    resumable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -6850,7 +6850,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
         ),
     );
     XML_SetUserData(ext_parser, ext_parser as *mut c_void);
-    resumable = XML_TRUE;
+    resumable = true;
     buffer = XML_GetBuffer(ext_parser, parse_len);
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
@@ -6876,7 +6876,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
         (*fault).parse_text as *const c_void,
         parse_len as c_ulong,
     );
-    if XML_ParseBuffer(ext_parser, parse_len, XML_FALSE as c_int)
+    if XML_ParseBuffer(ext_parser, parse_len, false as c_int)
         != XML_Status::SUSPENDED
     {
         crate::minicheck::_fail_unless(
@@ -6895,7 +6895,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
             3224i32,
         );
     }
-    if XML_ParseBuffer(ext_parser, 0, XML_TRUE as c_int) != XML_Status::ERROR {
+    if XML_ParseBuffer(ext_parser, 0, true as c_int) != XML_Status::ERROR {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7027,7 +7027,7 @@ unsafe extern "C" fn test_explicit_encoding() {
             b"Failed to set explicit encoding\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7049,7 +7049,7 @@ unsafe extern "C" fn test_explicit_encoding() {
             b"Allowed encoding change\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7107,7 +7107,7 @@ unsafe extern "C" fn test_trailing_cr() {
     );
     XML_SetUserData(g_parser, &mut found_cr as *mut c_int as *mut c_void);
     found_cr = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -7138,7 +7138,7 @@ unsafe extern "C" fn test_trailing_cr() {
     );
     XML_SetUserData(g_parser, &mut found_cr as *mut c_int as *mut c_void);
     found_cr = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -7191,7 +7191,7 @@ unsafe extern "C" fn external_entity_cr_catcher(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7235,7 +7235,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -7286,7 +7286,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     );
     XML_SetUserData(g_parser, &mut found_cr as *mut c_int as *mut c_void);
     found_cr = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::OK
     {
         _xml_failure(
@@ -7323,7 +7323,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     );
     XML_SetUserData(g_parser, &mut found_cr as *mut c_int as *mut c_void);
     found_cr = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::OK
     {
         _xml_failure(
@@ -7378,7 +7378,7 @@ unsafe extern "C" fn test_trailing_rsqb() {
     );
     XML_SetUserData(g_parser, &mut found_rsqb as *mut c_int as *mut c_void);
     found_rsqb = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text8, text8_len, XML_TRUE) == XML_Status::OK {
+    if _XML_Parse_SINGLE_BYTES(g_parser, text8, text8_len, true) == XML_Status::OK {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7411,7 +7411,7 @@ unsafe extern "C" fn test_trailing_rsqb() {
         g_parser,
         text16.as_ptr(),
         ::std::mem::size_of::<[c_char; 15]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -7446,7 +7446,7 @@ unsafe extern "C" fn test_trailing_rsqb() {
         g_parser,
         text16.as_ptr(),
         ::std::mem::size_of::<[c_char; 15]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -7499,7 +7499,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -7550,7 +7550,7 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
     );
     XML_SetUserData(g_parser, &mut found_rsqb as *mut c_int as *mut c_void);
     found_rsqb = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::OK
     {
         _xml_failure(
@@ -7614,7 +7614,7 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7654,7 +7654,7 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::OK
     {
         _xml_failure(
@@ -7775,7 +7775,7 @@ unsafe extern "C" fn external_entity_param_checker(
         );
     }
     handler_data = ext_parser as *mut c_void;
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7849,7 +7849,7 @@ unsafe extern "C" fn test_user_parameters() {
     XML_UseParserAsHandlerArg(g_parser);
     XML_SetUserData(g_parser, 1i32 as *mut c_void);
     handler_data = g_parser as *mut c_void;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7878,7 +7878,7 @@ unsafe extern "C" fn test_user_parameters() {
             b"Changed param entity parsing policy while parsing\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, epilog, strlen(epilog) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, epilog, strlen(epilog) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -7959,7 +7959,7 @@ unsafe extern "C" fn external_entity_ref_param_checker(
             b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8003,7 +8003,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
      */
     XML_SetExternalEntityRefHandlerArg(g_parser, text as *mut c_void);
     handler_data = text as *mut c_void;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8031,7 +8031,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     );
     XML_SetExternalEntityRefHandlerArg(g_parser, ::rexpat::stddef_h::NULL as *mut c_void);
     handler_data = g_parser as *mut c_void;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8057,7 +8057,7 @@ unsafe extern "C" fn test_empty_parse() {
         g_parser,
         ::rexpat::stddef_h::NULL as *const c_char,
         0,
-        XML_FALSE as c_int,
+        false as c_int,
     ) == XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -8072,7 +8072,7 @@ unsafe extern "C" fn test_empty_parse() {
         g_parser,
         ::rexpat::stddef_h::NULL as *const c_char,
         0,
-        XML_TRUE as c_int,
+        true as c_int,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -8094,7 +8094,7 @@ unsafe extern "C" fn test_empty_parse() {
     }
     /* Now try with valid text before the empty end */
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8108,7 +8108,7 @@ unsafe extern "C" fn test_empty_parse() {
         g_parser,
         ::rexpat::stddef_h::NULL as *const c_char,
         0,
-        XML_TRUE as c_int,
+        true as c_int,
     ) == XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -8121,7 +8121,7 @@ unsafe extern "C" fn test_empty_parse() {
     }
     /* Now try with invalid text before the empty end */
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
-    if _XML_Parse_SINGLE_BYTES(g_parser, partial, strlen(partial) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, partial, strlen(partial) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8135,7 +8135,7 @@ unsafe extern "C" fn test_empty_parse() {
         g_parser,
         ::rexpat::stddef_h::NULL as *const c_char,
         0,
-        XML_TRUE as c_int,
+        true as c_int,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -8223,7 +8223,7 @@ unsafe extern "C" fn test_get_buffer_1() {
         );
     }
     memcpy(buffer, text as *const c_void, strlen(text));
-    if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_FALSE as c_int)
+    if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8316,7 +8316,7 @@ unsafe extern "C" fn test_get_buffer_2() {
         );
     }
     memcpy(buffer, text as *const c_void, strlen(text));
-    if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_FALSE as c_int)
+    if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8356,7 +8356,7 @@ unsafe extern "C" fn test_byte_info_at_end() {
             b"Byte index/count incorrect at start of parse\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8400,7 +8400,7 @@ unsafe extern "C" fn test_byte_info_at_error() {
         3870,
     );
     let mut text: *const c_char = b"<doc></wombat></doc>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::OK
     {
         crate::minicheck::_fail_unless(
@@ -8540,7 +8540,7 @@ unsafe extern "C" fn test_byte_info_at_cdata() {
         ),
     );
     XML_SetUserData(g_parser, &mut data as *mut ByteTestData as *mut c_void);
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::OK
     {
         _xml_failure(
@@ -8585,7 +8585,7 @@ unsafe extern "C" fn test_predefined_entities() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8646,7 +8646,7 @@ unsafe extern "C" fn external_entity_param(
         );
     }
     if strcmp(systemId, b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, true)
             != XML_Status::ERROR
         {
             crate::minicheck::_fail_unless(
@@ -8666,7 +8666,7 @@ unsafe extern "C" fn external_entity_param(
             );
         }
     } else if strcmp(systemId, b"004-2.ent\x00".as_ptr() as *const c_char) == 0 {
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, true)
             != XML_Status::ERROR
         {
             crate::minicheck::_fail_unless(
@@ -8788,7 +8788,7 @@ unsafe extern "C" fn external_entity_load_ignore(
             b"Could not create external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8886,7 +8886,7 @@ unsafe extern "C" fn test_ignore_section() {
         g_parser,
         Some(dummy_end_element as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -8928,7 +8928,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
         ext_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 73]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -9032,7 +9032,7 @@ unsafe extern "C" fn test_ignore_section_utf16() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 85]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -9074,7 +9074,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
         ext_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 73]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -9178,7 +9178,7 @@ unsafe extern "C" fn test_ignore_section_utf16_be() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 85]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -9301,7 +9301,7 @@ unsafe extern "C" fn external_entity_valuer(
         );
     }
     if strcmp(systemId, b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, true)
             == XML_Status::ERROR
         {
             _xml_failure(
@@ -9319,7 +9319,7 @@ unsafe extern "C" fn external_entity_valuer(
             ext_parser,
             (*fault).parse_text,
             strlen((*fault).parse_text) as c_int,
-            XML_TRUE,
+            true,
         );
         if (*fault).error == XML_Error::NONE {
             if status == XML_Status::ERROR {
@@ -9506,7 +9506,7 @@ unsafe extern "C" fn test_external_entity_values() {
             g_parser,
             &mut *data_004_2.as_mut_ptr().offset(i as isize) as *mut ExtFaults as *mut c_void,
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             == XML_Status::ERROR
         {
             _xml_failure(
@@ -9557,7 +9557,7 @@ unsafe extern "C" fn external_entity_not_standalone(
             ext_parser,
             Some(reject_not_standalone_handler as unsafe extern "C" fn(_: *mut c_void) -> c_int),
         );
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, true)
             != XML_Status::ERROR
         {
             crate::minicheck::_fail_unless(
@@ -9586,7 +9586,7 @@ unsafe extern "C" fn external_entity_not_standalone(
         return XML_Status::ERROR as c_int;
     } else {
         if strcmp(systemId, b"bar\x00".as_ptr() as *const c_char) == 0 {
-            if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, XML_TRUE)
+            if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, true)
                 == XML_Status::ERROR
             {
                 _xml_failure(
@@ -9667,7 +9667,7 @@ unsafe extern "C" fn external_entity_value_aborter(
         );
     }
     if strcmp(systemId, b"004-1.ent\x00".as_ptr() as *const c_char) == 0 {
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text1, strlen(text1) as c_int, true)
             == XML_Status::ERROR
         {
             _xml_failure(
@@ -9692,7 +9692,7 @@ unsafe extern "C" fn external_entity_value_aborter(
             ),
         );
         XML_SetUserData(ext_parser, ext_parser as *mut c_void);
-        if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(ext_parser, text2, strlen(text2) as c_int, true)
             != XML_Status::ERROR
         {
             crate::minicheck::_fail_unless(
@@ -9740,8 +9740,8 @@ unsafe extern "C" fn test_ext_entity_value_abort() {
                 ) -> c_int,
         ),
     );
-    resumable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -9910,7 +9910,7 @@ unsafe extern "C" fn test_dtd_stop_processing() {
         ),
     );
     dummy_handler_flags = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -9957,7 +9957,7 @@ unsafe extern "C" fn test_public_notation_no_sysid() {
                 ) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10032,7 +10032,7 @@ unsafe extern "C" fn test_nested_groups() {
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
     dummy_handler_flags = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10079,7 +10079,7 @@ unsafe extern "C" fn test_group_choice() {
         )),
     );
     dummy_handler_flags = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10148,7 +10148,7 @@ unsafe extern "C" fn external_entity_public(
                       (*::std::mem::transmute::<&[u8; 111],
                                                 &[c_char; 111]>(b"int external_entity_public(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
     }
-    parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE) as c_int;
+    parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true) as c_int;
     XML_ParserFree(ext_parser);
     return parse_res;
 }
@@ -10183,7 +10183,7 @@ unsafe extern "C" fn test_standalone_parameter_entity() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10239,7 +10239,7 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
         ),
     );
     dummy_handler_flags = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10355,7 +10355,7 @@ unsafe extern "C" fn external_entity_devaluer(
             ),
         );
     }
-    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10396,7 +10396,7 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
         ),
     );
     XML_SetUserData(g_parser, 0 as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10424,8 +10424,8 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
                 ) -> c_int,
         ),
     );
-    XML_SetUserData(g_parser, XML_TRUE as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    XML_SetUserData(g_parser, 1 as *mut c_void);
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10473,8 +10473,8 @@ unsafe extern "C" fn test_suspend_xdecl() {
                 ) -> (),
         ),
     );
-    resumable = XML_TRUE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -10493,7 +10493,7 @@ unsafe extern "C" fn test_suspend_xdecl() {
         );
     }
     /* Attempt to start a new parse while suspended */
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -10553,8 +10553,8 @@ unsafe extern "C" fn test_abort_epilog() {
         ),
     );
     XML_SetUserData(g_parser, match_0.as_mut_ptr() as *mut c_void);
-    resumable = XML_FALSE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = false;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -10594,7 +10594,7 @@ unsafe extern "C" fn test_abort_epilog_2() {
         ),
     );
     XML_SetUserData(g_parser, match_0.as_mut_ptr() as *mut c_void);
-    resumable = XML_FALSE;
+    resumable = false;
     _expect_failure(
         text,
         XML_Error::ABORTED,
@@ -10624,8 +10624,8 @@ unsafe extern "C" fn test_suspend_epilog() {
         ),
     );
     XML_SetUserData(g_parser, match_0.as_mut_ptr() as *mut c_void);
-    resumable = XML_TRUE;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    resumable = true;
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -10638,7 +10638,7 @@ unsafe extern "C" fn test_suspend_epilog() {
 }
 
 unsafe extern "C" fn suspending_end_handler(mut userData: *mut c_void, mut _s: *const XML_Char) {
-    XML_StopParser(userData as XML_Parser, 1);
+    XML_StopParser(userData as XML_Parser, true);
 }
 
 unsafe extern "C" fn test_suspend_in_sole_empty_tag() {
@@ -10659,7 +10659,7 @@ unsafe extern "C" fn test_suspend_in_sole_empty_tag() {
         ),
     );
     XML_SetUserData(g_parser, g_parser as *mut c_void);
-    rc = _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE);
+    rc = _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true);
     if rc == XML_Status::ERROR {
         _xml_failure(
             g_parser,
@@ -10724,7 +10724,7 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
     );
     let mut text: *const c_char = b"<doc></doc>\xe2\x82\x00".as_ptr() as *const c_char;
     /* First check that no fault is raised if the parse is not finished */
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10735,7 +10735,7 @@ unsafe extern "C" fn test_partial_char_in_epilog() {
         );
     }
     /* Now check that it is faulted once we finish */
-    if XML_ParseBuffer(g_parser, 0, XML_TRUE as c_int) != XML_Status::ERROR {
+    if XML_ParseBuffer(g_parser, 0, true as c_int) != XML_Status::ERROR {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -10773,7 +10773,7 @@ unsafe extern "C" fn test_hash_collision() {
 
         b"<doc>\n<a1/><a2/><a3/><a4/><a5/><a6/><a7/><a8/>\n<b1></b1><b2 attr=\'foo\'>This is a foo</b2><b3></b3><b4></b4>\n<b5></b5><b6></b6><b7></b7><b8></b8>\n<c1/><c2/><c3/><c4/><c5/><c6/><c7/><c8/>\n<d1/><d2/><d3/><d4/><d5/><d6/><d7/>\n<d8>This triggers the table growth and collides with b2</d8>\n</doc>\n\x00".as_ptr() as *const c_char;
     XML_SetHashSalt(g_parser, (0xffffffff) << 32 | 0xff99fc90);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -10792,10 +10792,10 @@ unsafe extern "C" fn start_element_suspender(
     mut _atts: *mut *const XML_Char,
 ) {
     if strcmp(name, b"suspend\x00".as_ptr() as *const c_char) == 0 {
-        XML_StopParser(g_parser, XML_TRUE);
+        XML_StopParser(g_parser, true);
     }
     if strcmp(name, b"abort\x00".as_ptr() as *const c_char) == 0 {
-        XML_StopParser(g_parser, XML_FALSE);
+        XML_StopParser(g_parser, false);
     };
 }
 
@@ -10841,7 +10841,7 @@ unsafe extern "C" fn test_suspend_resume_internal_entity() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -10900,7 +10900,7 @@ unsafe extern "C" fn test_resume_entity_with_syntax_error() {
                 ) -> (),
         ),
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -10935,7 +10935,7 @@ unsafe extern "C" fn element_decl_suspender(
     mut _name: *const XML_Char,
     mut model: *mut XML_Content,
 ) {
-    XML_StopParser(g_parser, XML_TRUE);
+    XML_StopParser(g_parser, true);
     XML_FreeContentModel(g_parser, model);
 }
 
@@ -10981,7 +10981,7 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -11015,7 +11015,7 @@ unsafe extern "C" fn test_restart_on_error() {
         4946,
     );
     let mut text: *const c_char = b"<$doc><doc></doc>\x00".as_ptr() as *const c_char;
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -11038,7 +11038,7 @@ unsafe extern "C" fn test_restart_on_error() {
         g_parser,
         ::rexpat::stddef_h::NULL as *const c_char,
         0,
-        XML_TRUE as c_int,
+        true as c_int,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -11115,7 +11115,7 @@ unsafe extern "C" fn test_trailing_cr_in_att_value() {
         4980,
     );
     let mut text: *const c_char = b"<doc a=\'value\r\'/>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11144,7 +11144,7 @@ unsafe extern "C" fn test_standalone_internal_entity() {
 
         b"<?xml version=\'1.0\' standalone=\'yes\' ?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY % pe \'<!ATTLIST doc att2 CDATA \"&ge;\">\'>\n  <!ENTITY ge \'AttDefaultValue\'>\n  %pe;\n]>\n<doc att2=\'any\'/>\x00".as_ptr() as *const c_char;
     XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11192,7 +11192,7 @@ unsafe extern "C" fn test_skipped_external_entity() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11233,7 +11233,7 @@ unsafe extern "C" fn external_entity_oneshot_loader(
         ext_parser,
         (*test_data).parse_text,
         strlen((*test_data).parse_text) as c_int,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -11294,7 +11294,7 @@ unsafe extern "C" fn test_skipped_null_loaded_ext_entity() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11346,7 +11346,7 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11417,7 +11417,7 @@ unsafe extern "C" fn test_param_entity_with_trailing_cr() {
     entity_name_to_match = b"pe\x00".as_ptr() as *const c_char;
     entity_value_to_match = b"<!ATTLIST doc att CDATA \"default\">\n\x00".as_ptr() as *const c_char;
     entity_match_flag = ENTITY_MATCH_NOT_FOUND;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11507,7 +11507,7 @@ unsafe extern "C" fn test_invalid_character_entity_3() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 125]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -11580,7 +11580,7 @@ unsafe extern "C" fn test_pi_handled_in_default() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11624,7 +11624,7 @@ unsafe extern "C" fn test_comment_handled_in_default() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11680,7 +11680,7 @@ unsafe extern "C" fn test_pi_yml() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11722,7 +11722,7 @@ unsafe extern "C" fn test_pi_xnl() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11766,7 +11766,7 @@ unsafe extern "C" fn test_pi_xmm() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -11815,7 +11815,7 @@ unsafe extern "C" fn test_utf16_pi() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 21]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -11864,7 +11864,7 @@ unsafe extern "C" fn test_utf16_be_pi() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 21]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -11911,7 +11911,7 @@ unsafe extern "C" fn test_utf16_be_comment() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 51]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -11952,7 +11952,7 @@ unsafe extern "C" fn test_utf16_le_comment() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 51]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -12285,7 +12285,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_1() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -12348,7 +12348,7 @@ unsafe extern "C" fn test_unknown_encoding_long_name_2() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -12675,7 +12675,7 @@ unsafe extern "C" fn external_entity_loader2(
             extparser,
             (*test_data).parse_text,
             (*test_data).parse_len,
-            XML_TRUE as c_int,
+            true as c_int,
         ) == XML_Status::ERROR
         {
             _xml_failure(
@@ -12689,7 +12689,7 @@ unsafe extern "C" fn external_entity_loader2(
         extparser,
         (*test_data).parse_text,
         (*test_data).parse_len,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -12765,7 +12765,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -12830,7 +12830,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -12899,7 +12899,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16le_bom2() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -12964,7 +12964,7 @@ unsafe extern "C" fn test_ext_entity_latin1_utf16be_bom2() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if XML_Parse(g_parser, text, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_Parse(g_parser, text, strlen(text) as c_int, true as c_int)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -13028,7 +13028,7 @@ unsafe extern "C" fn test_ext_entity_utf16_be() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -13092,7 +13092,7 @@ unsafe extern "C" fn test_ext_entity_utf16_le() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -13143,7 +13143,7 @@ unsafe extern "C" fn external_entity_faulter2(
         extparser,
         (*test_data).parse_text,
         (*test_data).parse_len,
-        XML_TRUE as c_int,
+        true as c_int,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -13261,7 +13261,7 @@ unsafe extern "C" fn test_ext_entity_utf8_non_bom() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -13362,7 +13362,7 @@ unsafe extern "C" fn test_trailing_spaces_in_elements() {
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -13410,7 +13410,7 @@ unsafe extern "C" fn test_utf16_attribute() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 23]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -13463,7 +13463,7 @@ unsafe extern "C" fn test_utf16_second_attr() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 35]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -13564,7 +13564,7 @@ unsafe extern "C" fn test_utf16_pe() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 155]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -13627,7 +13627,7 @@ unsafe extern "C" fn test_bad_attr_desc_keyword_utf16() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 91]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -13698,7 +13698,7 @@ unsafe extern "C" fn test_bad_doctype_utf16() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 53]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -13872,7 +13872,7 @@ unsafe extern "C" fn test_entity_in_utf16_be_attr() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 55]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -13921,7 +13921,7 @@ unsafe extern "C" fn test_entity_in_utf16_le_attr() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 55]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -13989,7 +13989,7 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 137]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -14057,7 +14057,7 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 137]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -14258,7 +14258,7 @@ unsafe extern "C" fn checking_default_handler(
                 (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
             ) == 0
         {
-            (*data.offset(i as isize)).seen = XML_TRUE;
+            (*data.offset(i as isize)).seen = true;
             break;
         } else {
             i += 1
@@ -14282,7 +14282,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
             let mut init = default_check {
                 expected: b"\'pubname\'\x00".as_ptr() as *const c_char,
                 expectedLen: 9,
-                seen: XML_FALSE,
+                seen: false,
             };
             init
         },
@@ -14290,7 +14290,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
             let mut init = default_check {
                 expected: b"\'test.dtd\'\x00".as_ptr() as *const c_char,
                 expectedLen: 10,
-                seen: XML_FALSE,
+                seen: false,
             };
             init
         },
@@ -14298,7 +14298,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
             let mut init = default_check {
                 expected: ::rexpat::stddef_h::NULL as *const XML_Char,
                 expectedLen: 0,
-                seen: XML_FALSE,
+                seen: false,
             };
             init
         },
@@ -14332,7 +14332,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
                 ) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14344,7 +14344,7 @@ unsafe extern "C" fn test_default_doctype_handler() {
     }
     i = 0;
     while !test_data[i as usize].expected.is_null() {
-        if test_data[i as usize].seen == 0 {
+        if !test_data[i as usize].seen {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -14377,7 +14377,7 @@ unsafe extern "C" fn test_empty_element_abort() {
                 ) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -14418,9 +14418,9 @@ unsafe extern "C" fn namespace_teardown() {
    element name, and the second is the expected attribute name.
 */
 
-static mut triplet_start_flag: XML_Bool = XML_FALSE;
+static mut triplet_start_flag: XML_Bool = false;
 
-static mut triplet_end_flag: XML_Bool = XML_FALSE;
+static mut triplet_end_flag: XML_Bool = false;
 
 unsafe extern "C" fn triplet_start_checker(
     mut userData: *mut c_void,
@@ -14457,7 +14457,7 @@ unsafe extern "C" fn triplet_start_checker(
             buffer.as_mut_ptr(),
         );
     }
-    triplet_start_flag = XML_TRUE;
+    triplet_start_flag = true;
 }
 /* Check that the element name passed to the end-element handler matches
    the expected value.  The expected value is passed as the first element
@@ -14481,7 +14481,7 @@ unsafe extern "C" fn triplet_end_checker(mut userData: *mut c_void, mut name: *c
             buffer.as_mut_ptr(),
         );
     }
-    triplet_end_flag = XML_TRUE;
+    triplet_end_flag = true;
 }
 
 unsafe extern "C" fn test_return_ns_triplet() {
@@ -14500,7 +14500,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
         b"http://example.org/ e foo\x00".as_ptr() as *const c_char,
         b"http://example.org/ a bar\x00".as_ptr() as *const c_char,
     ];
-    XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+    XML_SetReturnNSTriplet(g_parser, true);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
     XML_SetElementHandler(
         g_parser,
@@ -14529,10 +14529,10 @@ unsafe extern "C" fn test_return_ns_triplet() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    triplet_start_flag = XML_FALSE;
-    triplet_end_flag = XML_FALSE;
+    triplet_start_flag = false;
+    triplet_end_flag = false;
     dummy_handler_flags = 0;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14542,7 +14542,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
             6529i32,
         );
     }
-    if triplet_start_flag == 0 {
+    if !triplet_start_flag {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -14552,8 +14552,8 @@ unsafe extern "C" fn test_return_ns_triplet() {
         );
     }
     /* Check that unsetting "return triplets" fails while still parsing */
-    XML_SetReturnNSTriplet(g_parser, XML_FALSE);
-    if _XML_Parse_SINGLE_BYTES(g_parser, epilog, strlen(epilog) as c_int, XML_TRUE)
+    XML_SetReturnNSTriplet(g_parser, false);
+    if _XML_Parse_SINGLE_BYTES(g_parser, epilog, strlen(epilog) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14563,7 +14563,7 @@ unsafe extern "C" fn test_return_ns_triplet() {
             6536i32,
         );
     }
-    if triplet_end_flag == 0 {
+    if !triplet_end_flag {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -14637,7 +14637,7 @@ unsafe extern "C" fn run_ns_tagname_overwrite_test(
             overwrite_end_checker as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14685,7 +14685,7 @@ unsafe extern "C" fn test_ns_tagname_overwrite_triplet() {
     let mut result: *const XML_Char =
 
         b"start http://example.org/ e n\nstart http://example.org/ f n\nattribute http://example.org/ attr n\nend http://example.org/ f n\nstart http://example.org/ g n\nattribute http://example.org/ attr2 n\nend http://example.org/ g n\nend http://example.org/ e n\n\x00".as_ptr() as *const c_char;
-    XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+    XML_SetReturnNSTriplet(g_parser, true);
     run_ns_tagname_overwrite_test(text, result);
 }
 /* Regression test for SF bug #620343. */
@@ -14764,7 +14764,7 @@ unsafe extern "C" fn test_start_ns_clears_start_element() {
         ),
     );
     XML_UseParserAsHandlerArg(g_parser);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14799,7 +14799,7 @@ unsafe extern "C" fn external_entity_handler(
         context,
         ::rexpat::stddef_h::NULL as *const XML_Char,
     );
-    if _XML_Parse_SINGLE_BYTES(p2, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(p2, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14854,7 +14854,7 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
         ),
     );
     XML_SetUserData(g_parser, ::rexpat::stddef_h::NULL as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14957,13 +14957,13 @@ unsafe extern "C" fn test_ns_prefix_with_empty_uri_4() {
     function also used for another test. */
     let mut elemstr: [*const XML_Char; 1] =
         [b"http://example.org/ doc prefix\x00".as_ptr() as *const c_char];
-    XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+    XML_SetReturnNSTriplet(g_parser, true);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
     XML_SetEndElementHandler(
         g_parser,
         Some(triplet_end_checker as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -14987,7 +14987,7 @@ unsafe extern "C" fn test_ns_unbound_prefix() {
     let mut text: *const c_char =
 
         b"<!DOCTYPE doc [\n  <!ELEMENT prefix:doc EMPTY>\n  <!ATTLIST prefix:doc\n    notxmlns:prefix CDATA \'http://example.org/\'>\n]>\n<prefix:doc/>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -15038,7 +15038,7 @@ unsafe extern "C" fn test_ns_default_with_empty_uri() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15101,7 +15101,7 @@ unsafe extern "C" fn test_ns_duplicate_hashes() {
     let mut text: *const c_char =
         b"<doc xmlns:a=\'http://example.org/a\'\n     a:a=\'v\' a:i=\'w\' />\x00".as_ptr()
             as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15170,7 +15170,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     );
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
         parsing: XML_INITIALIZED,
-        finalBuffer: 0,
+        finalBuffer: false,
     };
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
     if status.parsing != XML_INITIALIZED {
@@ -15222,7 +15222,7 @@ unsafe extern "C" fn test_ns_long_element() {
             as *const c_char,
         b"http://example.org/ a bar\x00".as_ptr() as *const c_char,
     ];
-    XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+    XML_SetReturnNSTriplet(g_parser, true);
     XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
     XML_SetElementHandler(
         g_parser,
@@ -15236,7 +15236,7 @@ unsafe extern "C" fn test_ns_long_element() {
         ),
         Some(triplet_end_checker as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15260,7 +15260,7 @@ unsafe extern "C" fn test_ns_mixed_prefix_atts() {
     let mut text: *const c_char =
         b"<e a=\'12\' bar:b=\'13\'\n xmlns:bar=\'http://example.org/\'></e>\x00".as_ptr()
             as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15287,7 +15287,7 @@ unsafe extern "C" fn test_ns_extend_uri_buffer() {
     let mut text: *const c_char =
 
         b"<foo:e xmlns:foo=\'http://example.org/\'> <foo:thisisalongenoughnametotriggerallocationaction   foo:a=\'12\' /></foo:e>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15325,7 +15325,7 @@ unsafe extern "C" fn test_ns_reserved_attributes() {
         6922,
     );
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15402,7 +15402,7 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
     let mut text2: *const c_char =
 
         b" xmlns:ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP=\'foo\'\n></doc>\x00".as_ptr() as *const c_char;
-    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15412,7 +15412,7 @@ unsafe extern "C" fn test_ns_extremely_long_prefix() {
             7032i32,
         );
     }
-    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -15577,7 +15577,7 @@ unsafe extern "C" fn test_ns_utf16_leafname() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 59]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -15626,7 +15626,7 @@ unsafe extern "C" fn test_ns_utf16_element_leafname() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 41]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -15686,7 +15686,7 @@ unsafe extern "C" fn test_ns_utf16_doctype() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 155]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -15917,7 +15917,7 @@ unsafe extern "C" fn parse_version(
     mut version_struct: *mut XML_Expat_Version,
 ) -> XML_Bool {
     if version_text.is_null() {
-        return XML_FALSE;
+        return false;
     }
     while *version_text as c_int != 0 {
         if *version_text >= ASCII_0 && *version_text <= ASCII_9 {
@@ -15926,7 +15926,7 @@ unsafe extern "C" fn parse_version(
         version_text = version_text.offset(1)
     }
     if *version_text as c_int == 0 {
-        return XML_FALSE;
+        return false;
     }
     /* version_struct->major = strtoul(version_text, 10, &version_text) */
     (*version_struct).major = 0;
@@ -15939,7 +15939,7 @@ unsafe extern "C" fn parse_version(
     let fresh3 = version_text;
     version_text = version_text.offset(1);
     if *fresh3 != ASCII_PERIOD {
-        return XML_FALSE;
+        return false;
     }
     /* Now for the minor version number */
     (*version_struct).minor = 0;
@@ -15952,7 +15952,7 @@ unsafe extern "C" fn parse_version(
     let fresh5 = version_text;
     version_text = version_text.offset(1);
     if *fresh5 != ASCII_PERIOD {
-        return XML_FALSE;
+        return false;
     }
     /* Finally the micro version number */
     (*version_struct).micro = 0;
@@ -15963,9 +15963,9 @@ unsafe extern "C" fn parse_version(
             10 * (*version_struct).micro + (*fresh6 as c_int - ASCII_0 as c_int)
     }
     if *version_text != 0 {
-        return XML_FALSE;
+        return false;
     }
-    return XML_TRUE;
+    return true;
 }
 
 unsafe extern "C" fn versions_equal(
@@ -16017,7 +16017,7 @@ unsafe extern "C" fn test_misc_version() {
             .as_ptr(),
         );
     }
-    if parse_version(version_text, &mut parsed_version) == 0 {
+    if !parse_version(version_text, &mut parsed_version) {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -16183,7 +16183,7 @@ unsafe extern "C" fn test_misc_utf16le() {
         g_parser,
         text.as_ptr(),
         ::std::mem::size_of::<[c_char; 61]>() as c_int - 1,
-        XML_TRUE,
+        true,
     ) == XML_Status::ERROR
     {
         _xml_failure(
@@ -16209,7 +16209,7 @@ unsafe extern "C" fn end_element_issue_240(mut userData: *mut c_void, mut _name:
     let mut mydata: *mut DataIssue240 = userData as *mut DataIssue240;
     (*mydata).deep -= 1;
     if (*mydata).deep == 0 {
-        XML_StopParser((*mydata).parser, 0u8);
+        XML_StopParser((*mydata).parser, false);
     };
 }
 
@@ -16453,7 +16453,7 @@ unsafe extern "C" fn test_alloc_parse_xdecl() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16553,7 +16553,7 @@ unsafe extern "C" fn test_alloc_parse_xdecl_2() {
             )),
             ::rexpat::stddef_h::NULL as *mut c_void,
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16610,7 +16610,7 @@ unsafe extern "C" fn test_alloc_parse_pi() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16666,7 +16666,7 @@ unsafe extern "C" fn test_alloc_parse_pi_2() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16722,7 +16722,7 @@ unsafe extern "C" fn test_alloc_parse_pi_3() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16775,7 +16775,7 @@ unsafe extern "C" fn test_alloc_parse_comment() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16828,7 +16828,7 @@ unsafe extern "C" fn test_alloc_parse_comment_2() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -16940,7 +16940,7 @@ unsafe extern "C" fn test_alloc_create_external_parser() {
                 ) -> c_int,
         ),
     );
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -16987,7 +16987,7 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
             ),
         );
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -17090,7 +17090,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
         }
     }
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
-    if _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -17136,7 +17136,7 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
         ),
     );
     XML_SetUserData(g_parser, ::rexpat::stddef_h::NULL as *mut c_void);
-    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -17172,7 +17172,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         if new_parser.is_null() {
             return XML_Status::ERROR as c_int;
         }
-        rv = _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, XML_TRUE)
+        rv = _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, true)
     } else {
         /* Just run through once */
         text = b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
@@ -17184,7 +17184,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         if new_parser.is_null() {
             return XML_Status::ERROR as c_int;
         }
-        rv = _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, XML_TRUE)
+        rv = _XML_Parse_SINGLE_BYTES(new_parser, text, strlen(text) as c_int, true)
     }
     XML_ParserFree(new_parser);
     if rv == XML_Status::ERROR {
@@ -17226,7 +17226,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
         );
         XML_SetUserData(g_parser, ::rexpat::stddef_h::NULL as *mut c_void);
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             == XML_Status::OK
         {
             break;
@@ -17282,7 +17282,7 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
         XML_ParserFree(ext_parser);
         return XML_Status::ERROR as c_int;
     }
-    status = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE);
+    status = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true);
     XML_ParserFree(ext_parser);
     if status == XML_Status::ERROR {
         return XML_Status::ERROR as c_int;
@@ -17321,7 +17321,7 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
             ),
         );
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             == XML_Status::OK
         {
             break;
@@ -17410,7 +17410,7 @@ unsafe extern "C" fn test_alloc_internal_entity() {
             )),
             ::rexpat::stddef_h::NULL as *mut c_void,
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -17592,7 +17592,7 @@ unsafe extern "C" fn test_alloc_dtd_default_handling() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -17763,7 +17763,7 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
             );
         }
         memcpy(buffer, text as *const c_void, strlen(text));
-        if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_FALSE as c_int)
+        if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
             == XML_Status::OK
         {
             break;
@@ -17841,7 +17841,7 @@ unsafe extern "C" fn external_entity_reallocator(
                                                 &[c_char; 116]>(b"int external_entity_reallocator(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
     }
     memcpy(buffer, text as *const c_void, strlen(text));
-    status = XML_ParseBuffer(ext_parser, strlen(text) as c_int, XML_FALSE as c_int);
+    status = XML_ParseBuffer(ext_parser, strlen(text) as c_int, false as c_int);
     reallocation_count = -1;
     XML_ParserFree(ext_parser);
     return if status == XML_Status::OK {
@@ -17882,7 +17882,7 @@ unsafe extern "C" fn test_alloc_ext_entity_realloc_buffer() {
             ),
         );
         XML_SetUserData(g_parser, i as *mut c_void);
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             == XML_Status::OK
         {
             break;
@@ -17931,7 +17931,7 @@ unsafe extern "C" fn test_alloc_realloc_many_attributes() {
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18015,7 +18015,7 @@ unsafe extern "C" fn test_alloc_public_entity_value() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18090,7 +18090,7 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18153,7 +18153,7 @@ unsafe extern "C" fn test_alloc_parse_public_doctype() {
             ),
             Some(dummy_end_doctype_decl_handler as unsafe extern "C" fn(_: *mut c_void) -> ()),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18226,7 +18226,7 @@ unsafe extern "C" fn test_alloc_parse_public_doctype_long_name() {
             ),
             Some(dummy_end_doctype_decl_handler as unsafe extern "C" fn(_: *mut c_void) -> ()),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18274,7 +18274,7 @@ unsafe extern "C" fn external_entity_alloc(
     if ext_parser.is_null() {
         return XML_Status::ERROR as c_int;
     }
-    parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, XML_TRUE) as c_int;
+    parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true) as c_int;
     XML_ParserFree(ext_parser);
     return parse_res;
 }
@@ -18313,7 +18313,7 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
                     ) -> c_int,
             ),
         );
-        if XML_UseForeignDTD(g_parser, XML_TRUE) != XML_Error::NONE {
+        if XML_UseForeignDTD(g_parser, true) != XML_Error::NONE {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -18322,7 +18322,7 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
                 b"Could not set foreign DTD\x00".as_ptr() as *const c_char,
             );
         }
-        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18404,7 +18404,7 @@ unsafe extern "C" fn test_alloc_attribute_enum_value() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18491,7 +18491,7 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18559,7 +18559,7 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18627,7 +18627,7 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18704,7 +18704,7 @@ unsafe extern "C" fn test_alloc_notation() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18774,7 +18774,7 @@ unsafe extern "C" fn test_alloc_public_notation() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18844,7 +18844,7 @@ unsafe extern "C" fn test_alloc_system_notation() {
                     ) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -18931,7 +18931,7 @@ unsafe extern "C" fn test_alloc_nested_groups() {
             &mut storage as *mut crate::chardata::CharData as *mut c_void,
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19024,7 +19024,7 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
             &mut storage as *mut crate::chardata::CharData as *mut c_void,
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19095,7 +19095,7 @@ unsafe extern "C" fn test_alloc_large_group() {
             )),
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19164,7 +19164,7 @@ unsafe extern "C" fn test_alloc_realloc_group_choice() {
             )),
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19229,7 +19229,7 @@ unsafe extern "C" fn test_alloc_pi_in_epilog() {
             ),
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19291,7 +19291,7 @@ unsafe extern "C" fn test_alloc_comment_in_epilog() {
             ),
         );
         dummy_handler_flags = 0;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19348,7 +19348,7 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19394,7 +19394,7 @@ unsafe extern "C" fn test_alloc_attribute_whitespace() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19440,7 +19440,7 @@ unsafe extern "C" fn test_alloc_attribute_predefined_entity() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19492,7 +19492,7 @@ unsafe extern "C" fn test_alloc_long_attr_default_with_char_ref() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19541,7 +19541,7 @@ unsafe extern "C" fn test_alloc_long_attr_value() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19662,7 +19662,7 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19727,7 +19727,7 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19773,7 +19773,7 @@ unsafe extern "C" fn test_alloc_realloc_attributes() {
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19819,7 +19819,7 @@ unsafe extern "C" fn test_alloc_long_doc_name() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -19887,7 +19887,7 @@ unsafe extern "C" fn test_alloc_long_base() {
         if XML_SetBase(g_parser, base) == XML_Status::ERROR {
             XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
         } else {
-            if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+            if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
                 != XML_Status::ERROR
             {
                 break;
@@ -19950,7 +19950,7 @@ unsafe extern "C" fn test_alloc_long_public_id() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20012,7 +20012,7 @@ unsafe extern "C" fn test_alloc_long_entity_value() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20095,7 +20095,7 @@ unsafe extern "C" fn test_alloc_long_notation() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20176,7 +20176,7 @@ unsafe extern "C" fn test_nsalloc_xmlns() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20223,7 +20223,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     /* Try a parse before the start of the world */
     /* (Exercises new code path) */
     allocation_count = 0;
-    if XML_ParseBuffer(g_parser, 0, XML_FALSE as c_int) != XML_Status::ERROR {
+    if XML_ParseBuffer(g_parser, 0, false as c_int) != XML_Status::ERROR {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20243,7 +20243,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
     }
     /* Now with actual memory allocation */
     allocation_count = ALLOC_ALWAYS_SUCCEED as intptr_t;
-    if XML_ParseBuffer(g_parser, 0, XML_FALSE as c_int) != XML_Status::OK {
+    if XML_ParseBuffer(g_parser, 0, false as c_int) != XML_Status::OK {
         _xml_failure(
             g_parser,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20277,7 +20277,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
                 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: c_int) -> (),
         ),
     );
-    resumable = XML_TRUE;
+    resumable = true;
     buffer = XML_GetBuffer(g_parser, strlen(text) as c_int);
     if buffer.is_null() {
         crate::minicheck::_fail_unless(
@@ -20302,7 +20302,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
         );
     }
     memcpy(buffer, text as *const c_void, strlen(text));
-    if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_ParseBuffer(g_parser, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
     {
         _xml_failure(
@@ -20320,7 +20320,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             9849i32,
         );
     }
-    if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_ParseBuffer(g_parser, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -20363,7 +20363,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             9861i32,
         );
     }
-    if XML_ParseBuffer(g_parser, strlen(text) as c_int, XML_TRUE as c_int)
+    if XML_ParseBuffer(g_parser, strlen(text) as c_int, true as c_int)
         != XML_Status::ERROR
     {
         crate::minicheck::_fail_unless(
@@ -20410,7 +20410,7 @@ unsafe extern "C" fn test_nsalloc_long_prefix() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20455,7 +20455,7 @@ unsafe extern "C" fn test_nsalloc_long_uri() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20501,7 +20501,7 @@ unsafe extern "C" fn test_nsalloc_long_attr() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20551,7 +20551,7 @@ unsafe extern "C" fn test_nsalloc_long_attr_prefix() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+        XML_SetReturnNSTriplet(g_parser, true);
         XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
         XML_SetElementHandler(
             g_parser,
@@ -20568,7 +20568,7 @@ unsafe extern "C" fn test_nsalloc_long_attr_prefix() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20619,7 +20619,7 @@ unsafe extern "C" fn test_nsalloc_realloc_attributes() {
         // to count the allocations instead
         allocation_count = 3 * i as intptr_t;
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20670,7 +20670,7 @@ unsafe extern "C" fn test_nsalloc_long_element() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        XML_SetReturnNSTriplet(g_parser, XML_TRUE);
+        XML_SetReturnNSTriplet(g_parser, true);
         XML_SetUserData(g_parser, elemstr.as_mut_ptr() as *mut c_void);
         XML_SetElementHandler(
             g_parser,
@@ -20687,7 +20687,7 @@ unsafe extern "C" fn test_nsalloc_long_element() {
                     as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20745,7 +20745,7 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
     let mut i: c_uint = 0;
     let max_realloc_count: c_uint = 10;
     /* First, do a full parse that will leave bindings around */
-    if _XML_Parse_SINGLE_BYTES(g_parser, first, strlen(first) as c_int, XML_TRUE)
+    if _XML_Parse_SINGLE_BYTES(g_parser, first, strlen(first) as c_int, true)
         == XML_Status::ERROR
     {
         _xml_failure(
@@ -20760,7 +20760,7 @@ unsafe extern "C" fn test_nsalloc_realloc_binding_uri() {
     while i < max_realloc_count {
         XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, second, strlen(second) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, second, strlen(second) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20805,7 +20805,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_prefix() {
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20853,7 +20853,7 @@ unsafe extern "C" fn test_nsalloc_realloc_longer_prefix() {
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -20901,9 +20901,9 @@ unsafe extern "C" fn test_nsalloc_long_namespace() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
             != XML_Status::ERROR
-            && _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+            && _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
                 != XML_Status::ERROR
         {
             break;
@@ -20953,7 +20953,7 @@ unsafe extern "C" fn test_nsalloc_less_long_namespace() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21036,7 +21036,7 @@ unsafe extern "C" fn test_nsalloc_long_context() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21112,7 +21112,7 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21309,7 +21309,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21395,9 +21395,9 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, XML_FALSE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text1, strlen(text1) as c_int, false)
             != XML_Status::ERROR
-            && _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, XML_TRUE)
+            && _XML_Parse_SINGLE_BYTES(g_parser, text2, strlen(text2) as c_int, true)
                 != XML_Status::ERROR
         {
             break;
@@ -21475,7 +21475,7 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21564,7 +21564,7 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
@@ -21650,7 +21650,7 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
                     ) -> c_int,
             ),
         );
-        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, XML_TRUE)
+        if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
             != XML_Status::ERROR
         {
             break;
