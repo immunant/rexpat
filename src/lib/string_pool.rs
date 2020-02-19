@@ -9,6 +9,7 @@ use libc::{INT_MAX, c_int, c_uint, c_ulong};
 
 use std::cell::Cell;
 use std::convert::TryInto;
+use std::mem::ManuallyDrop;
 use std::ptr;
 
 fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
@@ -61,7 +62,7 @@ pub(crate) struct StringPool {
 impl StringPool {
     pub(crate) fn new() -> Result<Self, ()> {
         Ok(StringPool {
-            bump: Bump::new()?,
+            bump: Bump::try_new()?,
             currentBumpVec: Cell::new(RawBumpVec::new()),
         })
     }
@@ -82,7 +83,7 @@ impl StringPool {
     /// bookkeeping so that it will create a new vec next time get_bump_vec
     /// is called.
     fn consume_current_vec(&self) -> &mut [XML_Char] {
-        let slice = self.get_bump_vec().into_bump_slice_mut();
+        let slice = ManuallyDrop::into_inner(self.get_bump_vec()).into_bump_slice_mut();
 
         self.currentBumpVec.set(RawBumpVec::new());
 
@@ -119,22 +120,22 @@ impl StringPool {
         self.currentBumpVec.set(RawBumpVec::new())
     }
 
-    fn get_bump_vec(&self) -> BumpVec<XML_Char> {
+    fn get_bump_vec(&self) -> ManuallyDrop<BumpVec<XML_Char>> {
         // If we don't already have an existing bump vec, create a new one
         // otherwise regenerate previous one
         if self.currentBumpVec.get().start.is_null() {
-            BumpVec::new_in(&self.bump)
+            ManuallyDrop::new(BumpVec::new_in(&self.bump))
         } else {
             let RawBumpVec { start, len, cap } = self.currentBumpVec.get();
 
             unsafe {
-                BumpVec::from_raw_parts_in(start, len, cap, &self.bump)
+                ManuallyDrop::new(BumpVec::from_raw_parts_in(start, len, cap, &self.bump))
             }
         }
     }
 
     pub(crate) fn current_slice(&self) -> &[XML_Char] {
-        self.get_bump_vec().into_bump_slice()
+        ManuallyDrop::into_inner(self.get_bump_vec()).into_bump_slice()
     }
 
     /// Updates bookeeping so that the current bump vec can be regenerated
@@ -255,6 +256,14 @@ impl StringPool {
 
             start2 = start.add(len);
             end2 = start.add(cap) as *mut ICHAR;
+
+            // Zero cap bytes
+            let mut tmp = start2;
+
+            while tmp != end2 {
+                std::ptr::write(tmp, 0);
+                tmp = tmp.add(1);
+            }
 
             // Vec[init len, uninit cap - len]
             // FIXME: Writing to slice of uninit memory (UB most likely)
@@ -470,10 +479,15 @@ fn test_store_string() {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
     };
     let string = unsafe {
-        pool.storeString(enc, read_buf)
+        pool.storeString(enc, read_buf).unwrap()
     };
 
-    assert_eq!(&*string.unwrap(), &[C, D, D, NULL]);
+    assert_eq!(pool.bump.allocated_bytes(), 1036);
+    assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.appendChar(A));
-    assert_eq!(pool.get_bump_vec().as_slice(), [A]);
+    assert_eq!(pool.current_slice(), [A]);
+    assert_eq!(pool.bump.allocated_bytes(), 2072);
+
+    // No overlap between buffers:
+    assert_eq!(&*string, &[C, D, D, NULL]);
 }
