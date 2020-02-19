@@ -172,11 +172,12 @@ impl StringPool {
         buf[len - 1] = c;
     }
 
-    /// Decrements the length, panicing if len is 0
+    /// Decrements the length, panicing if len is 0 in debug
     pub(crate) fn backtrack(&self) {
         let RawBumpVec { start, cap, len } = self.currentBumpVec.get();
 
-        assert!(len > 0);
+        // The original C code should have already ensured this is true
+        debug_assert!(len > 0);
 
         self.currentBumpVec.set(RawBumpVec { start, cap, len: len - 1 });
     }
@@ -202,9 +203,8 @@ impl StringPool {
         self.bump.reset()
     }
 
-    /// Replaced by drop?
     pub(crate) unsafe fn destroy(&mut self) {
-
+        self.clear()
     }
 
     pub(crate) unsafe fn storeString(
@@ -241,26 +241,38 @@ impl StringPool {
     ) -> bool {
         let RawBumpVec { mut start, .. } = self.currentBumpVec.get();
 
-        // REVIEW: Can this be replaced with self.is_full() &&?
+        // REVIEW: Can this be replaced with self.is_empty() &&?
         if start.is_null() && !self.grow() {
             return false;
         }
 
-        let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
-        let mut end2;
-        let mut start2;
+        let RawBumpVec { mut start, mut cap, mut len } = self.currentBumpVec.get();
+        let mut cap_begin;
+        let mut cap_end;
 
-        // TODO: Test looping w/ new cap/len.
         loop {
             debug_assert!(len <= cap);
 
-            start2 = start.add(len);
-            end2 = start.add(cap) as *mut ICHAR;
+            // Continue to allocate if we don't have enough space
+            while (cap - len) < readBuf.len() {
+                if !self.grow() {
+                    return false;
+                }
+
+                let RawBumpVec { start: new_start, cap: new_cap, .. } = self.currentBumpVec.get();
+
+                start = new_start;
+                cap = new_cap;
+            }
+
+            cap_begin = start.add(len);
+            cap_end = start.add(cap) as *mut ICHAR;
 
             // Zero cap bytes
-            let mut tmp = start2;
+            // REVIEW: grow() may be a better place for this
+            let mut tmp = cap_begin;
 
-            while tmp != end2 {
+            while tmp != cap_end {
                 std::ptr::write(tmp, 0);
                 tmp = tmp.add(1);
             }
@@ -268,7 +280,7 @@ impl StringPool {
             // Vec[init len, uninit cap - len]
             // FIXME: Writing to slice of uninit memory (UB most likely)
             // XmlConvert should probably take a &mut ExpatBufRefMut<T = MaybeUninit<XML_Char>> instead
-            let mut writeBuf = ExpatBufRefMut::new(start2, end2);
+            let mut writeBuf = ExpatBufRefMut::new(cap_begin, cap_end);
 
             let convert_res = XmlConvert!(
                 enc,
@@ -277,17 +289,19 @@ impl StringPool {
             );
 
             // TODO: How to not need wrapping_offset_from here? Cast to u/isize first?
-            let len = writeBuf.as_ptr().wrapping_offset_from(start).try_into().unwrap();
+            let new_len = writeBuf.as_ptr().wrapping_offset_from(start).try_into().unwrap();
 
-            self.set_len(len);
+            self.set_len(new_len);
 
             if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
                 break;
             }
 
-            if !self.grow() {
-                return false;
-            }
+            // if !self.grow() {
+            //     return false;
+            // }
+
+            len = new_len;
         }
 
         !self.currentBumpVec.get().start.is_null() // TODO: Just return true?
@@ -348,7 +362,7 @@ impl StringPool {
     /// it's possible to allocate or not
     pub(crate) fn grow(&self) -> bool {
         let mut buf = self.get_bump_vec();
-        let mut blockSize_0: c_int = buf.len() as c_int;
+        let mut blockSize_0: c_int = buf.capacity() as c_int;
         let mut bytesToAllocate_0: size_t = 0;
         // if blockSize_0 < 0 {
         //     /* This condition traps a situation where either more than
@@ -377,10 +391,6 @@ impl StringPool {
         if bytesToAllocate_0 == 0 {
             return false;
         }
-
-        // REVIEW: Should this be additional bytes or bytes including
-        // what's already allocated?
-        // buf.reserve_exact(bytesToAllocate_0 as usize);
 
         if buf.try_reserve_exact(bytesToAllocate_0 as usize).is_err() {
             return false;

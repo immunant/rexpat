@@ -2633,7 +2633,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 XML_Status::ERROR as XML_Status
             } else {
                 memcpy(buff, s as *const c_void, len as c_ulong);
-                XML_ParseBuffer(self, len, isFinal)
+                self.parseBuffer(len, isFinal)
             }
         }
     }
@@ -2692,6 +2692,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             ),
             &mut self.m_bufferPtr,
         );
+
         if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
             self.m_processor = Some(errorProcessor as Processor);
@@ -5279,7 +5280,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
 
                 // REVIEW: Is this necessary? Vec has already been completed
-                // self.m_temp2Pool.finish_current()
+                self.m_temp2Pool.finish_current()
             }
             if let Some(version_buf) = version_buf {
                 storedversion = self.m_temp2Pool.storeString(
@@ -7374,6 +7375,7 @@ unsafe extern "C" fn appendAttributeValue(
                         Some(name) => name,
                         None => return XML_Error::NO_MEMORY,
                     };
+
                     let entity = hash_lookup!((*dtd).generalEntities, name.as_ptr());
 
                     (*parser).m_temp2Pool.clear_current();
