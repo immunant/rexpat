@@ -3933,7 +3933,7 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
     );
     /* The sample data must be big enough that there are two calls to
        the character data handler from within the inner "for" loop of
-       the XML_TOK_DATA_CHARS case in doContent(), and the character
+       the XML_TOK::DATA_CHARS case in doContent(), and the character
        handler must stop the parser and clear the character data
        handler.
     */
@@ -3980,7 +3980,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
     );
     /* The sample data must be big enough that there are two calls to
        the character data handler from within the inner "for" loop of
-       the XML_TOK_DATA_CHARS case in doContent(), and the character
+       the XML_TOK::DATA_CHARS case in doContent(), and the character
        handler must stop the parser and clear the character data
        handler.
     */
