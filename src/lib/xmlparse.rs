@@ -1693,7 +1693,7 @@ impl XML_ParserStruct {
             let new_parent = std::mem::take(&mut self.m_freeTagList);
             tStk = std::mem::replace(&mut tag.parent, new_parent);
             self.moveToFreeBindingList(tag.bindings);
-            tag.bindings = NULL as *mut BINDING;
+            tag.bindings = ptr::null_mut();
             self.m_freeTagList = Some(tag);
         }
         /* move m_openInternalEntities to m_freeInternalEntities */
@@ -3768,9 +3768,9 @@ impl XML_ParserStruct {
                             tag
                         }
                     };
-                    tag.bindings = NULL as *mut BINDING;
-                    tag.name.localPart = NULL as *const XML_Char;
-                    tag.name.prefix = NULL as *const XML_Char;
+                    tag.bindings = ptr::null_mut();
+                    tag.name.localPart = ptr::null();
+                    tag.name.prefix = ptr::null();
                     let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
                     tag.rawName = fromBuf.as_ptr();
                     tag.rawNameLength = (*enc).nameLength(tag.rawName);
