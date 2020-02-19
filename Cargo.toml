@@ -11,7 +11,7 @@ description = "A libexpat compatible Rust crate"
 
 [lib]
 name = "rexpat"
-crate-type = ["staticlib", "rlib", "cdylib"]
+###MOZILLA DISABLED: crate-type = ["staticlib", "rlib", "cdylib"]
 
 [[bin]]
 path = "src/xmlwf/xmlwf.rs"
