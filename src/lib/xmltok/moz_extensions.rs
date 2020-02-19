@@ -4,9 +4,9 @@ use crate::lib::xmltok::{
     MOZ_XmlUtf16Encode,
     XmlEncoding,
     XmlEncodingImpl,
-    XML_TOK_INVALID,
-    XML_TOK_CHAR_REF,
-    XML_TOK_ENTITY_REF,
+    XML_TOK::INVALID,
+    XML_TOK::CHAR_REF,
+    XML_TOK::ENTITY_REF,
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
 use crate::xmltok_impl_h::ByteType;
@@ -123,12 +123,12 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
     let tok = encoding.as_ref().unwrap().scanRef(buf.inc_start(enc_mbpc), next);
-    if tok <= XML_TOK_INVALID {
+    if tok <= XML_TOK::INVALID {
         return 0;
     }
 
     match tok {
-        XML_TOK_CHAR_REF => {
+        XML_TOK::CHAR_REF => {
             /* XmlCharRefNumber expects to be pointed to the '&'. */
             let n = encoding.as_ref().unwrap().charRefNumber(buf);
 
@@ -141,7 +141,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
             }
         }
 
-        XML_TOK_ENTITY_REF => {
+        XML_TOK::ENTITY_REF => {
 	    /* XmlPredefinedEntityName expects to be pointed to the char after '&'.
             
 	     *next points to after the semicolon, so the entity ends at
