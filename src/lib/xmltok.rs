@@ -3183,20 +3183,20 @@ pub fn XmlUtf8Encode(mut c: c_int, buf: &mut [c_char]) -> c_int {
     }
     if c < min3 as c_int {
         buf[0] = (c >> 6 | UTF8_cval2 as c_int) as c_char;
-        buf[1] = (c & 0x3fi32 | 0x80) as c_char;
+        buf[1] = (c & 0x3f | 0x80) as c_char;
         return 2;
     }
     if c < min4 as c_int {
         buf[0] = (c >> 12 | UTF8_cval3 as c_int) as c_char;
-        buf[1] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        buf[2] = (c & 0x3fi32 | 0x80) as c_char;
+        buf[1] = (c >> 6 & 0x3f | 0x80) as c_char;
+        buf[2] = (c & 0x3f | 0x80) as c_char;
         return 3;
     }
     if c < 0x110000 {
         buf[0] = (c >> 18 | UTF8_cval4 as c_int) as c_char;
-        buf[1] = (c >> 12 & 0x3fi32 | 0x80) as c_char;
-        buf[2] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
-        buf[3] = (c & 0x3fi32 | 0x80) as c_char;
+        buf[1] = (c >> 12 & 0x3f | 0x80) as c_char;
+        buf[2] = (c >> 6 & 0x3f | 0x80) as c_char;
+        buf[3] = (c & 0x3f | 0x80) as c_char;
         return 4;
     }
     0
@@ -3214,7 +3214,7 @@ pub fn XmlUtf16Encode(mut charNum: c_int, buf: &mut [c_ushort]) -> c_int {
     if charNum < 0x110000 {
         charNum -= 0x10000;
         buf[0] = ((charNum >> 10) + 0xd800) as c_ushort;
-        buf[1] = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
+        buf[1] = ((charNum & 0x3ff) + 0xdc00) as c_ushort;
         return 2;
     }
     0
