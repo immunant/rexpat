@@ -3354,8 +3354,8 @@ pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XM
 */
 impl XML_ParserStruct {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
-        let mut tagp = &mut self.m_tagStack;
-        while let Some(tag) = tagp {
+        let mut tStk = &mut self.m_tagStack;
+        while let Some(tag) = tStk {
             let mut bufSize: c_int = 0;
             let mut nameLen: c_int = (::std::mem::size_of::<XML_Char>() as c_ulong)
                 .wrapping_mul((tag.name.strLen + 1) as c_ulong)
@@ -3407,7 +3407,7 @@ impl XML_ParserStruct {
                 tag.rawNameLength as c_ulong,
             );
             tag.rawName = rawNameBuf;
-            tagp = &mut tag.parent;
+            tStk = &mut tag.parent;
         }
         true
     }
@@ -4713,12 +4713,12 @@ impl XML_ParserStruct {
                 ((*binding).uriLen as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
             );
-            let mut tagp = &mut self.m_tagStack;
-            while let Some(tag) = tagp {
+            let mut tStk = &mut self.m_tagStack;
+            while let Some(tag) = tStk {
                 if tag.name.str_0 == (*binding).uri as *const XML_Char {
                     tag.name.str_0 = uri
                 }
-                tagp = &mut tag.parent;
+                tStk = &mut tag.parent;
             }
             FREE!((*binding).uri);
             (*binding).uri = uri
