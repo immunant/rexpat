@@ -1981,6 +1981,7 @@ impl Drop for XML_ParserStruct {
                 tagList = (*tagList).parent;
                 FREE!((*p).buf);
                 destroyBindings((*p).bindings);
+                FREE!(p);
             }
             /* free m_openInternalEntities and m_freeInternalEntities */
             entityList = self.m_openInternalEntities;
