@@ -597,7 +597,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                              | (from[1] as c_int & 0x3f) << 12
                              | (from[2] as c_int & 0x3f) << 6
                              | from[3] as c_int & 0x3f) as c_ulong;
-                        n = n.wrapping_sub(0x10000u64);
+                        n = n.wrapping_sub(0x10000);
                         to[0] = (n >> 10 | 0xd800) as c_ushort;
                         to[1] = (n & 0x3ff | 0xdc00) as c_ushort;
                         to.inc_start(2);
@@ -2775,7 +2775,7 @@ pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
         let prev: c_uchar = from_buf[i-1] as c_uchar;
         if prev as c_uint & 0xf8 == 0xf0 {
             /* 4-byte character, lead by 0b11110xxx byte */
-            if walked.wrapping_add(1u64) >= 4u64 {
+            if walked.wrapping_add(1) >= 4 {
                 i += 4 - 1;
                 break;
             } else {
@@ -2783,7 +2783,7 @@ pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
             }
         } else if prev as c_uint & 0xf0 == 0xe0 {
             /* 3-byte character, lead by 0b1110xxxx byte */
-            if walked.wrapping_add(1u64) >= 3u64 {
+            if walked.wrapping_add(1) >= 3 {
                 i += 3 - 1;
                 break;
             } else {
@@ -2791,7 +2791,7 @@ pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
             }
         } else if prev as c_uint & 0xe0 == 0xc0 {
             /* 2-byte character, lead by 0b110xxxxx byte */
-            if walked.wrapping_add(1u64) >= 2u64 {
+            if walked.wrapping_add(1) >= 2 {
                 i += 2 - 1;
                 break;
             } else {
@@ -2851,7 +2851,7 @@ unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
             c2 = (c2 as c_int + (ASCII_A - ASCII_a) as c_int) as c_char
         }
         if c1 as c_int != c2 as c_int {
-            return 0i32;
+            return 0;
         }
         if c1 == 0 {
             break;
@@ -2910,11 +2910,11 @@ unsafe fn parsePseudoAttribute<'a>(
     let mut open: c_char = 0;
     if buf.is_empty() {
         *name = None;
-        return 1i32;
+        return 1;
     }
     if isSpace(toAscii(enc, buf)) == 0 {
         *nextTokPtr = buf.as_ptr();
-        return 0i32;
+        return 0;
     }
     loop {
         buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
@@ -2924,14 +2924,14 @@ unsafe fn parsePseudoAttribute<'a>(
     }
     if buf.is_empty() {
         *name = None;
-        return 1i32;
+        return 1;
     }
     *name = Some(buf.clone());
     loop {
         c = toAscii(enc, buf);
         if c == -1 {
             *nextTokPtr = buf.as_ptr();
-            return 0i32;
+            return 0;
         }
         if c == ASCII_EQUALS as c_int {
             *name = name.map(|name| name.with_end(buf.as_ptr()));
@@ -2947,7 +2947,7 @@ unsafe fn parsePseudoAttribute<'a>(
             }
             if c != ASCII_EQUALS as c_int {
                 *nextTokPtr = buf.as_ptr();
-                return 0i32;
+                return 0;
             }
             break;
         } else {
@@ -2956,7 +2956,7 @@ unsafe fn parsePseudoAttribute<'a>(
     }
     if buf.as_ptr() == name.unwrap().as_ptr() {
         *nextTokPtr = buf.as_ptr();
-        return 0i32;
+        return 0;
     }
     buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     c = toAscii(enc, buf);
@@ -2966,7 +2966,7 @@ unsafe fn parsePseudoAttribute<'a>(
     }
     if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
         *nextTokPtr = buf.as_ptr();
-        return 0i32;
+        return 0;
     }
     open = c as c_char;
     buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
@@ -2984,7 +2984,7 @@ unsafe fn parsePseudoAttribute<'a>(
             && c != ASCII_UNDERSCORE as c_int
         {
             *nextTokPtr = buf.as_ptr();
-            return 0i32;
+            return 0;
         }
         buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
@@ -3028,20 +3028,20 @@ unsafe fn doParseXmlDecl<'a>(
     let mut val_buf = None;
     let mut name = None;
     buf = buf
-        .inc_start((5i32 * (*enc).minBytesPerChar()) as isize)
-        .dec_end((2i32 * (*enc).minBytesPerChar()) as usize);
+        .inc_start((5 * (*enc).minBytesPerChar()) as isize)
+        .dec_end((2 * (*enc).minBytesPerChar()) as usize);
     let mut pseudo_ptr = buf.as_ptr();
     if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
         || name.is_none()
     {
         *badPtr = pseudo_ptr;
-        return 0i32;
+        return 0;
     }
     buf = buf.with_start(pseudo_ptr);
     if (*enc).nameMatchesAscii(name.unwrap(), &KW_version) == 0 {
         if isGeneralTextEntity == 0 {
             *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
-            return 0i32;
+            return 0;
         }
     } else {
         *versionBuf = val_buf;
@@ -3054,22 +3054,22 @@ unsafe fn doParseXmlDecl<'a>(
                                        &KW_XML_1_0) == 0
             {
                 *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
-                return 0i32;
+                return 0;
             }
         }
         let mut pseudo_ptr = buf.as_ptr();
         if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
             *badPtr = pseudo_ptr;
-            return 0i32;
+            return 0;
         }
         buf = buf.with_start(pseudo_ptr);
         if name.is_none() {
             if isGeneralTextEntity != 0 {
                 /* a TextDecl must have an EncodingDecl */
                 *badPtr = buf.as_ptr();
-                return 0i32;
+                return 0;
             }
-            return 1i32;
+            return 1;
         }
     }
     if (*enc).nameMatchesAscii(name.unwrap(), &KW_encoding) != 0 {
@@ -3078,7 +3078,7 @@ unsafe fn doParseXmlDecl<'a>(
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
         {
             *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
-            return 0i32;
+            return 0;
         }
         if !encodingName.is_null() {
             *encodingName = val_buf.unwrap().as_ptr();
@@ -3095,18 +3095,18 @@ unsafe fn doParseXmlDecl<'a>(
         let mut pseudo_ptr = buf.as_ptr();
         if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
             *badPtr = buf.as_ptr();
-            return 0i32;
+            return 0;
         }
         buf = buf.with_start(pseudo_ptr);
         if name.is_none() {
-            return 1i32;
+            return 1;
         }
     }
     if (*enc).nameMatchesAscii(name.unwrap(), &KW_standalone) == 0
         || isGeneralTextEntity != 0
     {
         *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
-        return 0i32;
+        return 0;
     }
     if (*enc).nameMatchesAscii(
         val_buf
@@ -3132,7 +3132,7 @@ unsafe fn doParseXmlDecl<'a>(
         }
     } else {
         *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
-        return 0i32;
+        return 0;
     }
     // TODO(SJC): make toAscii take a buf
     while isSpace(toAscii(enc, buf)) != 0 {
@@ -3140,7 +3140,7 @@ unsafe fn doParseXmlDecl<'a>(
     }
     if !buf.is_empty() {
         *badPtr = buf.as_ptr();
-        return 0i32;
+        return 0;
     }
     1
 }
@@ -3175,29 +3175,29 @@ pub fn checkCharRefNumber(mut result: c_int) -> c_int {
 
 pub fn XmlUtf8Encode(mut c: c_int, buf: &mut [c_char]) -> c_int {
     if c < 0 {
-        return 0i32;
+        return 0;
     }
     if c < min2 as c_int {
         buf[0] = (c | UTF8_cval1 as c_int) as c_char;
-        return 1i32;
+        return 1;
     }
     if c < min3 as c_int {
         buf[0] = (c >> 6 | UTF8_cval2 as c_int) as c_char;
         buf[1] = (c & 0x3fi32 | 0x80) as c_char;
-        return 2i32;
+        return 2;
     }
     if c < min4 as c_int {
         buf[0] = (c >> 12 | UTF8_cval3 as c_int) as c_char;
         buf[1] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
         buf[2] = (c & 0x3fi32 | 0x80) as c_char;
-        return 3i32;
+        return 3;
     }
     if c < 0x110000 {
         buf[0] = (c >> 18 | UTF8_cval4 as c_int) as c_char;
         buf[1] = (c >> 12 & 0x3fi32 | 0x80) as c_char;
         buf[2] = (c >> 6 & 0x3fi32 | 0x80) as c_char;
         buf[3] = (c & 0x3fi32 | 0x80) as c_char;
-        return 4i32;
+        return 4;
     }
     0
     /* LCOV_EXCL_LINE: this case too is eliminated before calling */
@@ -3205,17 +3205,17 @@ pub fn XmlUtf8Encode(mut c: c_int, buf: &mut [c_char]) -> c_int {
 
 pub fn XmlUtf16Encode(mut charNum: c_int, buf: &mut [c_ushort]) -> c_int {
     if charNum < 0 {
-        return 0i32;
+        return 0;
     }
     if charNum < 0x10000 {
         buf[0] = charNum as c_ushort;
-        return 1i32;
+        return 1;
     }
     if charNum < 0x110000 {
         charNum -= 0x10000;
-        buf[0] = ((charNum >> 10) + 0xd800i32) as c_ushort;
+        buf[0] = ((charNum >> 10) + 0xd800) as c_ushort;
         buf[1] = ((charNum & 0x3ffi32) + 0xdc00) as c_ushort;
-        return 2i32;
+        return 2;
     }
     0
 }
