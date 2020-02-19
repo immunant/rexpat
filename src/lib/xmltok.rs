@@ -88,24 +88,25 @@ pub enum XML_TOK {
 
 /* The following tokens are returned only by XmlPrologTok */
     PROLOG_S = 15,
-    PROLOG_S_NEG = -15, /* NOTE: added in c2rust port */
+    PROLOG_S_NEG = -15,      /* NOTE: added in c2rust port */
     DECL_OPEN = 16, /* <!foo */
     DECL_CLOSE = 17, /* > */
     NAME = 18,
     NAME_NEG = -18,
     NMTOKEN = 19,
+    NMTOKEN_NEG = -19,       /* NOTE: added in c2rust port */
     POUND_NAME = 20, /* #name */
-    POUND_NAME_NEG = -20, /* NOTE: added in c2rust port */
+    POUND_NAME_NEG = -20,    /* NOTE: added in c2rust port */
     OR = 21, /* | */
     PERCENT = 22,
     OPEN_PAREN = 23,
     CLOSE_PAREN = 24,
-    CLOSE_PAREN_NEG = -24, /* NOTE: added in c2rust port */
+    CLOSE_PAREN_NEG = -24,   /* NOTE: added in c2rust port */
     OPEN_BRACKET = 25,
     CLOSE_BRACKET = 26,
     CLOSE_BRACKET_NEG = -26, /* NOTE: added in c2rust port */
     LITERAL = 27,
-    LITERAL_NEG = -27,
+    LITERAL_NEG = -27,       /* NOTE: added in c2rust port */
     PARAM_ENTITY_REF = 28,
     INSTANCE_START = 29,
 
@@ -130,6 +131,7 @@ pub enum XML_TOK {
    name with a colon.
 */
     PREFIXED_NAME = 41,
+    PREFIXED_NAME_NEG = -41,
     IGNORE_SECT = 42,
 }
 
@@ -145,7 +147,17 @@ impl XML_TOK {
             XML_TOK::LITERAL_NEG => XML_TOK::LITERAL,
             XML_TOK::NAME_NEG => XML_TOK::NAME,
             XML_TOK::NAME => XML_TOK::NAME_NEG,
-            _ => panic!("XML_TOK.negate() should handle: {:?}", self)
+            XML_TOK::PREFIXED_NAME => XML_TOK::PREFIXED_NAME_NEG,
+            XML_TOK::NMTOKEN => XML_TOK::NMTOKEN_NEG,
+            /* FIXME: not 100% sure we need the cases below */
+            XML_TOK::CLOSE_BRACKET_NEG => XML_TOK::CLOSE_BRACKET,
+            XML_TOK::CLOSE_BRACKET => XML_TOK::CLOSE_BRACKET_NEG,
+            XML_TOK::PREFIXED_NAME_NEG => XML_TOK::PREFIXED_NAME,
+            XML_TOK::NMTOKEN_NEG => XML_TOK::NMTOKEN,
+
+            _unimplemented => unimplemented!(
+                "negation not implemented for {}", 
+                self.to_i32().unwrap()),
         }
     }
 }
