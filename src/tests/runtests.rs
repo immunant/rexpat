@@ -81,7 +81,7 @@ use ::rexpat::lib::xmlparse::{
 };
 use ::rexpat::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::rexpat::stdbool_h::{false_0, true_0};
-use ::rexpat::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
+use ::rexpat::stdlib::{fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::rexpat::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
 use ::rexpat::lib::xmlparse::ExpatBufRef;
@@ -2092,19 +2092,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1246u32,
-            (*::std::mem::transmute::<&[u8; 42], &[c_char; 42]>(
-                b"void test_really_long_encoded_lines(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, parse_len as c_ulong);
     if XML_ParseBuffer(g_parser, parse_len, true as c_int) == XML_Status::ERROR {
         _xml_failure(
@@ -2194,7 +2182,7 @@ unsafe extern "C" fn test_end_element_events() {
 unsafe extern "C" fn is_whitespace_normalized(
     mut s: *const XML_Char,
     mut is_cdata: c_int,
-) -> c_int {
+) -> bool {
     let mut blanks: c_int = 0;
     let mut at_start: c_int = 1;
     while *s != 0 {
@@ -2204,276 +2192,48 @@ unsafe extern "C" fn is_whitespace_normalized(
             || *s as c_int == '\n' as i32
             || *s as c_int == '\r' as i32
         {
-            return 0i32;
+            return false;
         } else {
             if at_start != 0 {
                 at_start = 0;
                 if blanks != 0 && is_cdata == 0 {
                     /* illegal leading blanks */
-                    return 0i32;
+                    return false;
                 }
             } else if blanks > 1 && is_cdata == 0 {
-                return 0i32;
+                return false;
             }
             blanks = 0
         }
         s = s.offset(1)
     }
     if blanks != 0 && is_cdata == 0 {
-        return 0i32;
+        return false;
     }
-    return 1;
+    return true;
 }
 /* Check the attribute whitespace checker: */
 
 unsafe extern "C" fn testhelper_is_whitespace_normalized() {
-    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 0) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1328u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1329u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 0) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1330u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1331u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" abc def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1332u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\" abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1333u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc  def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1334u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc  def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1335u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc def ghi \"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1336u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi \"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1337u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" \"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1338u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\" \"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1339u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1340u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1341u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1342u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1343u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1344u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1345u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc\t def\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc\\t def\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1346u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    };
+    assert!(is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 1));
+    assert!(is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc\t def\x00".as_ptr() as *const c_char, 1));
 }
 
 unsafe extern "C" fn check_attr_contains_normalized_whitespace(
@@ -2490,7 +2250,7 @@ unsafe extern "C" fn check_attr_contains_normalized_whitespace(
             || strcmp(b"ents\x00".as_ptr() as *const c_char, attrname) == 0
             || strcmp(b"refs\x00".as_ptr() as *const c_char, attrname) == 0
         {
-            if is_whitespace_normalized(value, 0) == 0 {
+            if !is_whitespace_normalized(value, 0) {
                 let mut buffer: [c_char; 256] = [0; 256];
                 sprintf(
                     buffer.as_mut_ptr(),
@@ -4405,19 +4165,7 @@ unsafe extern "C" fn test_long_cdata_utf16() {
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            2249u32,
-            (*::std::mem::transmute::<&[u8; 33], &[c_char; 33]>(
-                b"void test_long_cdata_utf16(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(
         buffer,
         text.as_ptr() as *const c_void,
@@ -4710,19 +4458,7 @@ unsafe extern "C" fn test_bad_cdata() {
             true,
         );
         let actualError: XML_Error = XML_GetError(g_parser);
-        if actualStatus == XML_Status::ERROR {
-        } else {
-            __assert_fail(
-                b"actualStatus == XML_Status::ERROR\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                2363u32,
-                (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(
-                    b"void test_bad_cdata(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(actualStatus == XML_Status::ERROR);
         if actualError != cases[i as usize].expectedError {
             let mut message: [c_char; 100] = [0; 100];
             sprintf(
@@ -4987,19 +4723,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             cases[i as usize].text_bytes as c_int,
             true,
         );
-        if actual_status == XML_Status::ERROR {
-        } else {
-            __assert_fail(
-                b"actual_status == XML_Status::ERROR\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                2435u32,
-                (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
-                    b"void test_bad_cdata_utf16(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(actual_status == XML_Status::ERROR);
         actual_error = XML_GetError(g_parser);
         if actual_error != cases[i as usize].expected_error {
             let mut message: [c_char; 1024] = [0; 1024];
@@ -6858,16 +6582,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(b"buffer != NULL\x00".as_ptr() as
-                          *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      3219u32,
-                      (*::std::mem::transmute::<&[u8; 123],
-                                                &[c_char; 123]>(b"int external_entity_suspending_faulter(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!buffer.is_null());
     memcpy(
         buffer,
         (*fault).parse_text as *const c_void,
@@ -8206,19 +7921,7 @@ unsafe extern "C" fn test_get_buffer_1() {
             b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            3799u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_get_buffer_1(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
@@ -8299,19 +8002,7 @@ unsafe extern "C" fn test_get_buffer_2() {
             b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            3837u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_get_buffer_2(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
@@ -10136,15 +9827,7 @@ unsafe extern "C" fn external_entity_public(
             b"Unexpected parameters to external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if !text.is_null() {
-    } else {
-        __assert_fail(b"text != NULL\x00".as_ptr() as *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      4573u32,
-                      (*::std::mem::transmute::<&[u8; 111],
-                                                &[c_char; 111]>(b"int external_entity_public(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!text.is_null());
     parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true) as c_int;
     XML_ParserFree(ext_parser);
     return parse_res;
@@ -16001,19 +15684,7 @@ unsafe extern "C" fn test_misc_version() {
             b"Could not obtain version text\x00".as_ptr() as *const c_char,
         );
     }
-    if !version_text.is_null() {
-    } else {
-        __assert_fail(
-            b"version_text != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            7325u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_misc_version(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!version_text.is_null());
     if !parse_version(version_text, &mut parsed_version) {
         crate::minicheck::_fail_unless(
             0i32,
@@ -17746,19 +17417,7 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
                 b"1.5K buffer reallocation failed\x00".as_ptr() as *const c_char,
             );
         }
-        if !buffer.is_null() {
-        } else {
-            __assert_fail(
-                b"buffer != NULL\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                8233u32,
-                (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                    b"void test_alloc_realloc_buffer(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(!buffer.is_null());
         memcpy(buffer, text as *const c_void, strlen(text));
         if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
             == XML_Status::OK
@@ -17827,16 +17486,7 @@ unsafe extern "C" fn external_entity_reallocator(
             b"Buffer allocation failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(b"buffer != NULL\x00".as_ptr() as
-                          *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      8271u32,
-                      (*::std::mem::transmute::<&[u8; 116],
-                                                &[c_char; 116]>(b"int external_entity_reallocator(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     status = XML_ParseBuffer(ext_parser, strlen(text) as c_int, false as c_int);
     reallocation_count = -1;
@@ -20285,19 +19935,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Could not acquire parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            9843u32,
-            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                b"void test_nsalloc_parse_buffer(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
