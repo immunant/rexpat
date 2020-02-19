@@ -1692,8 +1692,8 @@ impl XML_ParserStruct {
         while let Some(mut tag) = tStk {
             let new_parent = std::mem::take(&mut self.m_freeTagList);
             tStk = std::mem::replace(&mut tag.parent, new_parent);
-            self.moveToFreeBindingList((*tag).bindings);
-            (*tag).bindings = NULL as *mut BINDING;
+            self.moveToFreeBindingList(tag.bindings);
+            tag.bindings = NULL as *mut BINDING;
             self.m_freeTagList = Some(tag);
         }
         /* move m_openInternalEntities to m_freeInternalEntities */
@@ -3383,7 +3383,7 @@ impl XML_ParserStruct {
                 /* if tag->name.str points to tag->buf (only when namespace
                 processing is off) then we have to update it
                 */
-                if tag.name.str_0 == (*tag).buf as *const XML_Char {
+                if tag.name.str_0 == tag.buf as *const XML_Char {
                     tag.name.str_0 = temp as *const XML_Char
                 }
                 /* if tag->name.localPart is set (when namespace processing is on)
