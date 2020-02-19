@@ -377,7 +377,7 @@ fn prolog0(
         super::xmltok::XML_TOK_BOM => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !(enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_DOCTYPE,
             ) == 0)
             {
@@ -416,7 +416,7 @@ fn prolog1(
         }
         super::xmltok::XML_TOK_DECL_OPEN => {
             if !(enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_DOCTYPE,
             ) == 0)
             {
@@ -582,7 +582,7 @@ fn internalSubset(
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_DECL_OPEN => {
             if enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_ENTITY,
             ) != 0
             {
@@ -590,7 +590,7 @@ fn internalSubset(
                 return XML_ROLE_ENTITY_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_ATTLIST,
             ) != 0
             {
@@ -598,7 +598,7 @@ fn internalSubset(
                 return XML_ROLE_ATTLIST_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_ELEMENT,
             ) != 0
             {
@@ -606,7 +606,7 @@ fn internalSubset(
                 return XML_ROLE_ELEMENT_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2i32 * enc.minBytesPerChar()) as isize),
+                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_NOTATION,
             ) != 0
             {
@@ -652,8 +652,8 @@ fn externalSubset1(
             return XML_ROLE_NONE;
         }
         super::xmltok::XML_TOK_COND_SECT_CLOSE => {
-            if !(state.includeLevel == 0u32) {
-                state.includeLevel = state.includeLevel.wrapping_sub(1u32);
+            if !(state.includeLevel == 0) {
+                state.includeLevel = state.includeLevel.wrapping_sub(1);
                 return XML_ROLE_NONE;
             }
         }
@@ -1275,7 +1275,7 @@ fn element1(
         }
         super::xmltok::XML_TOK_OPEN_PAREN => {
             state.handler = Some(element2 as PROLOG_HANDLER);
-            state.level = 1u32;
+            state.level = 1;
             return XML_ROLE_GROUP_OPEN;
         }
         _ => {}
@@ -1302,7 +1302,7 @@ fn element2(
             }
         }
         super::xmltok::XML_TOK_OPEN_PAREN => {
-            state.level = 2u32;
+            state.level = 2;
             state.handler = Some(element6 as PROLOG_HANDLER);
             return XML_ROLE_GROUP_OPEN;
         }
@@ -1402,7 +1402,7 @@ fn element6(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_OPEN_PAREN => {
-            state.level = state.level.wrapping_add(1u32);
+            state.level = state.level.wrapping_add(1);
             return XML_ROLE_GROUP_OPEN;
         }
         super::xmltok::XML_TOK_NAME | super::xmltok::XML_TOK_PREFIXED_NAME => {
@@ -1435,32 +1435,32 @@ fn element7(
     match tok {
         XML_TOK_PROLOG_S => return XML_ROLE_ELEMENT_NONE,
         super::xmltok::XML_TOK_CLOSE_PAREN => {
-            state.level = state.level.wrapping_sub(1u32);
-            if state.level == 0u32 {
+            state.level = state.level.wrapping_sub(1);
+            if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE
             }
             return XML_ROLE_GROUP_CLOSE;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_ASTERISK => {
-            state.level = state.level.wrapping_sub(1u32);
-            if state.level == 0u32 {
+            state.level = state.level.wrapping_sub(1);
+            if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE
             }
             return XML_ROLE_GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_QUESTION => {
-            state.level = state.level.wrapping_sub(1u32);
-            if state.level == 0u32 {
+            state.level = state.level.wrapping_sub(1);
+            if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE
             }
             return XML_ROLE_GROUP_CLOSE_OPT;
         }
         super::xmltok::XML_TOK_CLOSE_PAREN_PLUS => {
-            state.level = state.level.wrapping_sub(1u32);
-            if state.level == 0u32 {
+            state.level = state.level.wrapping_sub(1);
+            if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
                 state.role_none = XML_ROLE_ELEMENT_NONE
             }
@@ -1512,7 +1512,7 @@ fn condSect1(
         XML_TOK_PROLOG_S => return XML_ROLE_NONE,
         super::xmltok::XML_TOK_OPEN_BRACKET => {
             state.handler = Some(externalSubset1 as PROLOG_HANDLER);
-            state.includeLevel = state.includeLevel.wrapping_add(1u32);
+            state.includeLevel = state.includeLevel.wrapping_add(1);
             return XML_ROLE_NONE;
         }
         _ => {}
@@ -1601,7 +1601,7 @@ fn common(mut state: &mut PROLOG_STATE, mut tok: c_int) -> c_int {
 pub fn MOZ_XmlPrologStateInit(mut state: &mut PROLOG_STATE) {
     state.handler = Some(prolog0 as PROLOG_HANDLER);
     state.documentEntity = 1;
-    state.includeLevel = 0u32;
+    state.includeLevel = 0;
     state.inEntityValue = 0;
     /* XML_DTD */
 }
@@ -1610,6 +1610,6 @@ pub fn MOZ_XmlPrologStateInit(mut state: &mut PROLOG_STATE) {
 pub fn MOZ_XmlPrologStateInitExternalEntity(mut state: &mut PROLOG_STATE) {
     state.handler = Some(externalSubset0 as PROLOG_HANDLER);
     state.documentEntity = 0;
-    state.includeLevel = 0u32;
+    state.includeLevel = 0;
 }
 /* XML_DTD */
