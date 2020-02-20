@@ -99,24 +99,11 @@ impl StringPool {
     /// Moves the start pointer to the current length so that a new bump vec region begins
     /// REVIEW: Maybe shouldn't be necessary or just force a new vec creation..?
     pub(crate) fn finish_current(&self) {
-        // let RawBumpVec { mut start, cap, len } = self.currentBumpVec.get();
-
-        // unsafe {
-        //     start = start.add(len);
-        // }
-
-        // self.currentBumpVec.set(RawBumpVec { start, cap: cap - len, len: 0 });
-        self.resetCurrentBumpVec()
+        self.currentBumpVec.set(RawBumpVec::new())
     }
 
     pub(crate) fn len(&self) -> usize {
         self.currentBumpVec.get().len
-    }
-
-    // TODO: Use finish_current instead?
-    // #[cfg(test)]
-    fn resetCurrentBumpVec(&self) {
-        self.currentBumpVec.set(RawBumpVec::new())
     }
 
     fn get_bump_vec(&self) -> ManuallyDrop<BumpVec<XML_Char>> {
@@ -426,7 +413,7 @@ fn test_append_char() {
     // assert_eq!(pool.bump.allocated_bytes(), size_of::<XML_Char>() * 2);
 
     // New BumpVec
-    pool.resetCurrentBumpVec();
+    pool.finish_current();
 
     assert!(pool.appendChar(C));
     assert_eq!(pool.get_bump_vec().as_slice(), [C]);

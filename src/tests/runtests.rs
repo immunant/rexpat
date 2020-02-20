@@ -15515,7 +15515,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
     /* Try several levels of allocation */
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         g_parser = XML_ParserCreate_MM(
             b"us-ascii\x00".as_ptr() as *const c_char,
             None,
@@ -18729,7 +18729,7 @@ unsafe extern "C" fn test_alloc_large_group() {
     let max_alloc_count: c_int = 50;
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         XML_SetElementDeclHandler(
             g_parser,
             transmute(Some(
@@ -19515,7 +19515,7 @@ unsafe extern "C" fn test_alloc_long_base() {
     let max_alloc_count: c_int = 25;
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         XML_SetUserData(g_parser, entity_text.as_mut_ptr() as *mut c_void);
         XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
