@@ -39,7 +39,7 @@ use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 
-pub type XML_Parser<'scaffold> = *mut XML_ParserStruct<'scaffold>;
+pub type XML_Parser<'scf> = *mut XML_ParserStruct<'scf>;
 pub type XML_Bool = bool;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
