@@ -1312,7 +1312,7 @@ const fn init_block_size_const() -> c_int {
 
 pub const INIT_BUFFER_SIZE: c_int = 1024;
 
-pub const EXPAND_SPARE: c_int = 24;
+pub const EXPAND_SPARE: usize = 24;
 
 pub const INIT_SCAFFOLD_ELEMENTS: c_int = 32;
 
@@ -4696,11 +4696,11 @@ impl XML_ParserStruct {
         }
         let n = i + (*binding).uriLen + prefixLen;
         if n > (*binding).uriAlloc {
-            uri = MALLOC![XML_Char; n + EXPAND_SPARE];
+            uri = MALLOC![XML_Char; n as usize + EXPAND_SPARE];
             if uri.is_null() {
                 return XML_Error::NO_MEMORY;
             }
-            (*binding).uriAlloc = n + EXPAND_SPARE;
+            (*binding).uriAlloc = n + EXPAND_SPARE as c_int;
             memcpy(
                 uri as *mut c_void,
                 (*binding).uri as *const c_void,
@@ -4739,10 +4739,6 @@ impl XML_ParserStruct {
     }
 }
 
-// Initialized in run_static_initializers
-static mut xmlLen: c_int = 0;
-// Initialized in run_static_initializers
-static mut xmlnsLen: c_int = 0;
 /* addBinding() overwrites the value of prefix->binding without checking.
    Therefore one must keep track of the old value outside of addBinding().
 */
@@ -4771,7 +4767,6 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     let mut b: *mut BINDING = 0 as *mut BINDING;
-    let mut len: c_int = 0;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
     if *uri as c_int == '\u{0}' as i32 && !(*prefix).name.is_null() {
         return XML_Error::UNDECLARING_PREFIX;
@@ -4792,25 +4787,25 @@ unsafe extern "C" fn addBinding(
             mustBeXML = true
         }
     }
-    len = 0;
-    while *uri.offset(len as isize) != 0 {
+    let mut len = 0;
+    while *uri.add(len) != 0 {
         if isXML as c_int != 0
-            && (len > xmlLen
-                || *uri.offset(len as isize) as c_int != xmlNamespace[len as usize] as c_int)
+            && (len > xmlNamespace.len()
+                || *uri.add(len) as c_int != xmlNamespace[len] as c_int)
         {
             isXML = false
         }
         if !mustBeXML
             && isXMLNS
-            && (len > xmlnsLen
-                || *uri.offset(len as isize) as c_int != xmlnsNamespace[len as usize] as c_int)
+            && (len > xmlnsNamespace.len()
+                || *uri.add(len) as c_int != xmlnsNamespace[len] as c_int)
         {
             isXMLNS = false
         }
-        len += 1
+        len += 1;
     }
-    isXML = isXML && len == xmlLen;
-    isXMLNS = isXMLNS && len == xmlnsLen;
+    isXML = isXML && len == xmlNamespace.len();
+    isXMLNS = isXMLNS && len == xmlnsNamespace.len();
     if mustBeXML != isXML {
         return if mustBeXML {
             XML_Error::RESERVED_PREFIX_XML
@@ -4822,17 +4817,17 @@ unsafe extern "C" fn addBinding(
         return XML_Error::RESERVED_NAMESPACE_URI;
     }
     if (*parser).m_namespaceSeparator != 0 {
-        len += 1
+        len += 1;
     }
     if !(*parser).m_freeBindingList.is_null() {
         b = (*parser).m_freeBindingList;
-        if len > (*b).uriAlloc {
+        if len > (*b).uriAlloc as usize {
             let mut temp: *mut XML_Char = REALLOC!((*b).uri => [XML_Char; len + EXPAND_SPARE]);
             if temp.is_null() {
                 return XML_Error::NO_MEMORY;
             }
             (*b).uri = temp;
-            (*b).uriAlloc = len + EXPAND_SPARE
+            (*b).uriAlloc = (len + EXPAND_SPARE).try_into().unwrap();
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
@@ -4845,9 +4840,9 @@ unsafe extern "C" fn addBinding(
             FREE!(b);
             return XML_Error::NO_MEMORY;
         }
-        (*b).uriAlloc = len + EXPAND_SPARE
+        (*b).uriAlloc = (len + EXPAND_SPARE).try_into().unwrap();
     }
-    (*b).uriLen = len;
+    (*b).uriLen = len.try_into().unwrap();
     memcpy(
         (*b).uri as *mut c_void,
         uri as *const c_void,
@@ -9291,16 +9286,3 @@ unsafe extern "C" fn copyString(
     );
     result
 }
-unsafe extern "C" fn run_static_initializers() {
-    xmlLen = (::std::mem::size_of::<[XML_Char; 37]>() as c_int as c_ulong)
-        .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong)
-        .wrapping_sub(1) as c_int;
-    xmlnsLen = (::std::mem::size_of::<[XML_Char; 30]>() as c_int as c_ulong)
-        .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong)
-        .wrapping_sub(1) as c_int
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
