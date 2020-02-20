@@ -3327,13 +3327,13 @@ pub unsafe extern "C" fn MOZ_XML_GetFeatureList() -> *const XML_Feature {
         },
         #[cfg(feature = "unicode")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE,
+            feature: XML_FeatureEnum::UNICODE,
             name: wch!("XML_UNICODE\x00"),
             value: 0,
         },
         #[cfg(feature = "unicode_wchar_t")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE_WCHAR_T,
+            feature: XML_FeatureEnum::UNICODE_WCHAR_T,
             name: wch!("XML_UNICODE_WHCAR_T\x00"),
             value: 0,
         },
