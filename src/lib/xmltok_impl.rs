@@ -1,11 +1,10 @@
 use libc::{c_char, c_int, c_long, size_t};
 
 use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
-use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl};
+use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl, XML_TOK};
 use crate::ascii_h::*;
 use crate::expat_h::{XML_Error};
 pub use crate::expat_external_h::XML_Size;
-use crate::xmltok_h::*;
 use crate::xmltok_impl_h::ByteType;
 use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 
@@ -39,18 +38,18 @@ macro_rules! MATCH_INVALID_CASES {
             $e,
             LEAD_CASE(n) => {
                 if $buf.len() < n as usize {
-                    return XML_TOK_PARTIAL_CHAR;
+                    return XML_TOK::PARTIAL_CHAR;
                 }
                 if $self.is_invalid_char($buf.as_ptr(), n) {
                     *$nextTokPtr = $buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
                 $buf = $buf.inc_start(n);
             }
             ByteType::NONXML | ByteType::MALFORM | ByteType::TRAIL => {
                 *$nextTokPtr = $buf.as_ptr();
 
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
             $($tail)*
         }
@@ -67,17 +66,17 @@ macro_rules! CHECK_NAME_CASES {
             $e,
             LEAD_CASE(n) => {
                 if $buf.len() < n as usize {
-                    return XML_TOK_PARTIAL_CHAR;
+                    return XML_TOK::PARTIAL_CHAR;
                 }
                 if !$self.is_name_char($buf.as_ptr(), n) {
                     *$nextTokPtr = $buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
                 $buf = $buf.inc_start(n as isize);
             }
             ByteType::NONASCII if !$self.is_name_char_minbpc($buf.as_ptr()) => {
                 *$nextTokPtr = $buf.as_ptr();
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
             ByteType::NONASCII | ByteType::NMSTRT | ByteType::HEX | ByteType::DIGIT | ByteType::NAME | ByteType::MINUS => {
                 $buf = $buf.inc_start($self.MINBPC() as isize);
@@ -97,17 +96,17 @@ macro_rules! CHECK_NMSTRT_CASES {
             $e,
             LEAD_CASE(n) => {
                 if $buf.len() < n as usize {
-                    return XML_TOK_PARTIAL_CHAR;
+                    return XML_TOK::PARTIAL_CHAR;
                 }
                 if !$self.is_nmstrt_char($buf.as_ptr(), n) {
                     *$nextTokPtr = $buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
                 $buf = $buf.inc_start(n as isize);
             }
             ByteType::NONASCII if !$self.is_nmstrt_char_minbpc($buf.as_ptr()) => {
                 *$nextTokPtr = $buf.as_ptr();
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
             ByteType::NONASCII | ByteType::NMSTRT | ByteType::HEX => {
                 $buf = $buf.inc_start($self.MINBPC() as isize);
@@ -133,7 +132,7 @@ macro_rules! HAS_CHAR {
 macro_rules! REQUIRE_CHARS {
     ($buf:ident, $count:expr, $self:ident) => {
         if !HAS_CHARS!($buf, $count, $self) {
-            return XML_TOK_PARTIAL;
+            return XML_TOK::PARTIAL;
         }
     };
 }
@@ -151,11 +150,11 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         if HAS_CHAR!(buf, self) {
             if !self.char_matches(buf.as_ptr(), ASCII_MINUS) {
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
             buf = buf.inc_start((self.MINBPC()) as isize);
             while HAS_CHAR!(buf, self) {
@@ -170,17 +169,17 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                             REQUIRE_CHAR!(buf, self);
                             if !self.char_matches(buf.as_ptr(), ASCII_GT) {
                                 *nextTokPtr = buf.as_ptr();
-                                return XML_TOK_INVALID
+                                return XML_TOK::INVALID
                             }
                             *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                            return XML_TOK_COMMENT
+                            return XML_TOK::COMMENT
                         }
                     }
                     _ => { buf = buf.inc_start((self.MINBPC()) as isize); }
                 }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "<!" */
@@ -188,18 +187,18 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         match self.byte_type(buf.as_ptr()) {
             ByteType::MINUS => return self.scanComment(buf.inc_start(self.MINBPC() as isize), nextTokPtr),
             ByteType::LSQB => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_COND_SECT_OPEN;
+                return XML_TOK::COND_SECT_OPEN;
             }
             ByteType::NMSTRT | ByteType::HEX => buf = buf.inc_start((self.MINBPC()) as isize),
             _ => {
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
         }
         while HAS_CHAR!(buf, self) {
@@ -210,7 +209,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     match self.byte_type(buf.as_ptr().offset(self.MINBPC())) {
                         ByteType::S | ByteType::CR | ByteType::LF | ByteType::PERCNT => {
                             *nextTokPtr = buf.as_ptr();
-                            return XML_TOK_INVALID;
+                            return XML_TOK::INVALID;
                         }
                         _ => {}
                     }
@@ -222,22 +221,22 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
                 _ => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
             }
             /* fall through */
             *nextTokPtr = buf.as_ptr();
-            return XML_TOK_DECL_OPEN;
+            return XML_TOK::DECL_OPEN;
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
     unsafe fn checkPiTarget(
         &self,
         mut buf: ExpatBufRef,
-        mut tokPtr: *mut libc::c_int,
+        mut tokPtr: *mut XML_TOK,
     ) -> libc::c_int {
         let mut upper: libc::c_int = 0 as libc::c_int;
-        *tokPtr = XML_TOK_PI;
+        *tokPtr = XML_TOK::PI;
         if buf.len() as libc::c_long != (self.MINBPC() * 3) as libc::c_long {
             return 1 as libc::c_int;
         }
@@ -261,7 +260,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         if upper != 0 {
             return 0 as libc::c_int;
         }
-        *tokPtr = XML_TOK_XML_DECL;
+        *tokPtr = XML_TOK::XML_DECL;
         1 as libc::c_int
     }
 
@@ -270,14 +269,14 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        let mut tok: libc::c_int = 0;
+    ) -> XML_TOK {
+        let mut tok = XML_TOK::INVALID;
         let target = buf.clone();
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
             match self.byte_type(buf.as_ptr()),
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         while HAS_CHAR!(buf, self) {
             CHECK_NAME_CASES! {
@@ -287,7 +286,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     if self.checkPiTarget(target.with_end(buf.as_ptr()), &mut tok) == 0
                        {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     while HAS_CHAR!(buf, self) {
@@ -306,13 +305,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                             _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
                         }
                     }
-                    return XML_TOK_PARTIAL
+                    return XML_TOK::PARTIAL
                 }
                 ByteType::QUEST => {
                     if self.checkPiTarget(target.with_end(buf.as_ptr()), &mut tok) == 0
                        {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     REQUIRE_CHAR!(buf, self);
@@ -321,21 +320,21 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         return tok
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID
+                    return XML_TOK::INVALID
                 }
                 _ => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID
+                    return XML_TOK::INVALID
                 }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
     unsafe fn scanCdataSection(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         pub static mut CDATA_LSQB: [libc::c_char; 6] = [
             ASCII_C as libc::c_char,
             ASCII_D as libc::c_char,
@@ -351,13 +350,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         while i < 6 as libc::c_int {
             if !self.char_matches(buf.as_ptr(), CDATA_LSQB[i as usize]) {
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID;
+                return XML_TOK::INVALID;
             }
             i += 1;
             buf = buf.inc_start((self.MINBPC()) as isize)
         }
         *nextTokPtr = buf.as_ptr();
-        XML_TOK_CDATA_SECT_OPEN
+        XML_TOK::CDATA_SECT_OPEN
     }
 
     /* ptr points to character following "</" */
@@ -365,12 +364,12 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
             match self.byte_type(buf.as_ptr()),
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         while HAS_CHAR!(buf, self) {
             CHECK_NAME_CASES! {
@@ -384,13 +383,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                             ByteType::GT => {
                                 *nextTokPtr =
                                     buf.as_ptr().offset(self.MINBPC());
-                                return XML_TOK_END_TAG
+                                return XML_TOK::END_TAG
                             }
-                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                         }
                         buf = buf.inc_start((self.MINBPC()) as isize)
                     }
-                    return XML_TOK_PARTIAL
+                    return XML_TOK::PARTIAL
                 }
                 ByteType::COLON => {
                     /* no need to check qname syntax here,
@@ -399,12 +398,12 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 }
                 ByteType::GT => {
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_END_TAG
+                    return XML_TOK::END_TAG
                 }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "&#X" */
@@ -412,13 +411,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         if HAS_CHAR!(buf, self) {
             match self.byte_type(buf.as_ptr()) {
                 ByteType::DIGIT | ByteType::HEX => {}
                 _ => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
             }
             buf = buf.inc_start((self.MINBPC()) as isize);
@@ -427,17 +426,17 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     ByteType::DIGIT | ByteType::HEX => {}
                     ByteType::SEMI => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CHAR_REF;
+                        return XML_TOK::CHAR_REF;
                     }
                     _ => {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID;
+                        return XML_TOK::INVALID;
                     }
                 }
                 buf = buf.inc_start((self.MINBPC()) as isize)
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "&#" */
@@ -445,7 +444,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         if HAS_CHAR!(buf, self) {
             if self.char_matches(buf.as_ptr(), ASCII_x) {
                 return self.scanHexCharRef(buf.inc_start(self.MINBPC() as isize), nextTokPtr);
@@ -454,7 +453,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 ByteType::DIGIT => {}
                 _ => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
             }
             buf = buf.inc_start((self.MINBPC()) as isize);
@@ -463,17 +462,17 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     ByteType::DIGIT => {}
                     ByteType::SEMI => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CHAR_REF;
+                        return XML_TOK::CHAR_REF;
                     }
                     _ => {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID;
+                        return XML_TOK::INVALID;
                     }
                 }
                 buf = buf.inc_start((self.MINBPC()) as isize)
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "&" */
@@ -481,7 +480,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
@@ -492,7 +491,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     nextTokPtr,
                 )
             }
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         while HAS_CHAR!(buf, self) {
             CHECK_NAME_CASES! {
@@ -500,12 +499,12 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 match self.byte_type(buf.as_ptr()),
                 ByteType::SEMI => {
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_ENTITY_REF
+                    return XML_TOK::ENTITY_REF
                 }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following first character of attribute name */
@@ -513,7 +512,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         #[derive(PartialEq)]
         enum Label {
             None,
@@ -531,7 +530,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 ByteType::COLON => {
                     if hadColon != 0 {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     hadColon = 1;
                     buf = buf.inc_start((self.MINBPC()) as isize);
@@ -539,7 +538,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     CHECK_NMSTRT_CASES! {
                         (buf, nextTokPtr, self),
                         match self.byte_type(buf.as_ptr()),
-                        _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                        _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                     }
                 }
                 ByteType::S | ByteType::CR | ByteType::LF => {
@@ -550,13 +549,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         if t == ByteType::EQUALS { break ; }
                         match t {
                             ByteType::S | ByteType::LF | ByteType::CR => { }
-                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                         }
                     }
                     current_block = Label::EqFallthrough;
                 }
                 ByteType::EQUALS => { current_block = Label::EqFallthrough; }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
             if current_block == Label::EqFallthrough {
                 /* fall through */
@@ -574,7 +573,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         ByteType::S | ByteType::LF | ByteType::CR => {}
                         _ => {
                             *nextTokPtr = buf.as_ptr();
-                            return XML_TOK_INVALID;
+                            return XML_TOK::INVALID;
                         }
                     }
                 }
@@ -591,17 +590,16 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         match t,
                         ByteType::AMP => {
                             let mut ptr = buf.as_ptr();
-                            let mut tok: libc::c_int =
-                                self.scanRef(buf.inc_start(self.MINBPC() as isize), &mut ptr);
+                            let mut tok = self.scanRef(buf.inc_start(self.MINBPC() as isize), &mut ptr);
                             buf = buf.with_start(ptr);
-                            if tok <= 0 as libc::c_int {
-                                if tok == XML_TOK_INVALID {
+                            if tok.is_error() {
+                                if tok == XML_TOK::INVALID {
                                     *nextTokPtr = buf.as_ptr()
                                 }
                                 return tok
                             }
                         }
-                        ByteType::LT => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                        ByteType::LT => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                         _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
                     }
                 }
@@ -619,7 +617,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                     _ => {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID;
+                        return XML_TOK::INVALID;
                     }
                 }
                 match current_block {
@@ -646,7 +644,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                                 }
                                 _ => {
                                     *nextTokPtr = buf.as_ptr();
-                                    return XML_TOK_INVALID
+                                    return XML_TOK::INVALID
                                 }
                             }
                             break;
@@ -657,23 +655,23 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 match current_block {
                     Label::Gt => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_START_TAG_WITH_ATTS;
+                        return XML_TOK::START_TAG_WITH_ATTS;
                     }
                     Label::Sol => {
                         buf = buf.inc_start((self.MINBPC()) as isize);
                         REQUIRE_CHAR!(buf, self);
                         if !self.char_matches(buf.as_ptr(), ASCII_GT) {
                             *nextTokPtr = buf.as_ptr();
-                            return XML_TOK_INVALID;
+                            return XML_TOK::INVALID;
                         }
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_EMPTY_ELEMENT_WITH_ATTS;
+                        return XML_TOK::EMPTY_ELEMENT_WITH_ATTS;
                     }
                     _ => { }
                 }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "<" */
@@ -681,7 +679,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         let mut hadColon: libc::c_int = 0;
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
@@ -700,7 +698,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     _ => { }
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID
+                return XML_TOK::INVALID
             }
             ByteType::QUEST => {
                 return self.scanPi(buf.inc_start(self.MINBPC() as isize), nextTokPtr)
@@ -708,7 +706,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             ByteType::SOL => {
                 return self.scanEndTag(buf.inc_start(self.MINBPC() as isize), nextTokPtr)
             }
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         hadColon = 0 as libc::c_int;
         /* we have a start-tag */
@@ -722,7 +720,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 ByteType::COLON => {
                     if hadColon != 0 {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     hadColon = 1 as libc::c_int;
                     buf = buf.inc_start((self.MINBPC()) as isize);
@@ -730,7 +728,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     CHECK_NMSTRT_CASES! {
                         (buf, nextTokPtr, self),
                         match self.byte_type(buf.as_ptr()),
-                        _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                        _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                     }
                     current_block_161 = 12655303178690906525;
                 }
@@ -756,19 +754,19 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                                 buf = buf.inc_start((self.MINBPC()) as isize);
                                 continue ;
                             }
-                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                         }
                         return self.scanAtts(buf, nextTokPtr)
                     }
                     match current_block_161 {
                         15370445274224965566 => { }
                         3926109038817298867 => { }
-                        _ => { return XML_TOK_PARTIAL }
+                        _ => { return XML_TOK::PARTIAL }
                     }
                 }
                 ByteType::GT => { current_block_161 = 15370445274224965566; }
                 ByteType::SOL => { current_block_161 = 3926109038817298867; }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
             match current_block_161 {
                 3926109038817298867 => {
@@ -776,20 +774,20 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     REQUIRE_CHAR!(buf, self);
                     if !self.char_matches(buf.as_ptr(), ASCII_GT) {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID;
+                        return XML_TOK::INVALID;
                     }
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_EMPTY_ELEMENT_NO_ATTS;
+                    return XML_TOK::EMPTY_ELEMENT_NO_ATTS;
                 }
                 15370445274224965566 => {
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_START_TAG_NO_ATTS;
+                    return XML_TOK::START_TAG_NO_ATTS;
                 }
                 16331546839105579257 => buf = buf.inc_start((self.MINBPC()) as isize),
                 _ => {}
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 
     /* ptr points to character following "%" */
@@ -797,13 +795,13 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
             match self.byte_type(buf.as_ptr()),
-            ByteType::S | ByteType::LF | ByteType::CR | ByteType::PERCNT => { *nextTokPtr = buf.as_ptr(); return XML_TOK_PERCENT }
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            ByteType::S | ByteType::LF | ByteType::CR | ByteType::PERCNT => { *nextTokPtr = buf.as_ptr(); return XML_TOK::PERCENT }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         while HAS_CHAR!(buf, self) {
             CHECK_NAME_CASES! {
@@ -811,23 +809,23 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 match self.byte_type(buf.as_ptr()),
                 ByteType::SEMI => {
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_PARAM_ENTITY_REF
+                    return XML_TOK::PARAM_ENTITY_REF
                 }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
     unsafe fn scanPoundName(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
             match self.byte_type(buf.as_ptr()),
-            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+            _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
         while HAS_CHAR!(buf, self) {
             CHECK_NAME_CASES! {
@@ -835,19 +833,19 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 match self.byte_type(buf.as_ptr()),
                 ByteType::CR | ByteType::LF | ByteType::S | ByteType::RPAR | ByteType::GT | ByteType::PERCNT | ByteType::VERBAR => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_POUND_NAME
+                    return XML_TOK::POUND_NAME
                 }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
-        return -XML_TOK_POUND_NAME;
+        return XML_TOK::POUND_NAME_NEG;
     }
     unsafe fn scanLit(
         &self,
         mut open: ByteType,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         while HAS_CHAR!(buf, self) {
             let mut t = self.byte_type(buf.as_ptr());
             MATCH_INVALID_CASES! {
@@ -857,21 +855,21 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     if t == open {
                         if !HAS_CHAR!(buf, self) {
-                            return -XML_TOK_LITERAL
+                            return XML_TOK::LITERAL_NEG
                         }
                         *nextTokPtr = buf.as_ptr();
                         match self.byte_type(buf.as_ptr()) {
                             ByteType::S | ByteType::CR | ByteType::LF | ByteType::GT | ByteType::PERCNT | ByteType::LSQB => {
-                                return XML_TOK_LITERAL
+                                return XML_TOK::LITERAL
                             }
-                            _ => { return XML_TOK_INVALID }
+                            _ => { return XML_TOK::INVALID }
                         }
                     }
                 }
                 _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
 }
 
@@ -882,16 +880,16 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         if buf.is_empty() {
-            return XML_TOK_NONE;
+            return XML_TOK::NONE;
         }
         if self.MINBPC() > 1 {
             let mut n: size_t = buf.len();
             if n & (self.MINBPC() - 1) as size_t != 0 {
                 n &= !(self.MINBPC() - 1) as size_t;
                 if n == 0 {
-                    return XML_TOK_PARTIAL;
+                    return XML_TOK::PARTIAL;
                 }
                 buf = buf.with_len(n);
             }
@@ -910,7 +908,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         buf = prev_buf;
                     } else {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CDATA_SECT_CLOSE
+                        return XML_TOK::CDATA_SECT_CLOSE
                     }
                 }
             }
@@ -921,11 +919,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     buf = buf.inc_start((self.MINBPC()) as isize)
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_DATA_NEWLINE
+                return XML_TOK::DATA_NEWLINE
             }
             ByteType::LF => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_DATA_NEWLINE
+                return XML_TOK::DATA_NEWLINE
             }
             _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
         }
@@ -935,34 +933,34 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 LEAD_CASE(n) => {
                     if buf.len() < n as usize || self.is_invalid_char(buf.as_ptr(), n) {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_DATA_CHARS;
+                        return XML_TOK::DATA_CHARS;
                     }
                     buf = buf.inc_start(n as isize);
                 }
                 ByteType::NONXML | ByteType::MALFORM | ByteType::TRAIL | ByteType::CR | ByteType::LF | ByteType::RSQB => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 _ => { buf = buf.inc_start((self.MINBPC()) as isize) }
             }
         }
         *nextTokPtr = buf.as_ptr();
-        XML_TOK_DATA_CHARS
+        XML_TOK::DATA_CHARS
     }
     unsafe fn contentTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         if buf.is_empty() {
-            return XML_TOK_NONE;
+            return XML_TOK::NONE;
         }
         if self.MINBPC() > 1 {
             let mut n: size_t = buf.len() as libc::c_long as size_t;
             if n & (self.MINBPC() - 1) as size_t != 0 {
                 n &= !(self.MINBPC() - 1) as size_t;
                 if n == 0 {
-                    return XML_TOK_PARTIAL;
+                    return XML_TOK::PARTIAL;
                 }
                 buf = buf.with_len(n as usize)
             }
@@ -979,32 +977,32 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             ByteType::CR => {
                 buf = buf.inc_start(self.MINBPC() as isize);
                 if !HAS_CHAR!(buf, self) {
-                    return XML_TOK_TRAILING_CR
+                    return XML_TOK::TRAILING_CR
                 }
                 if self.byte_type(buf.as_ptr()) == ByteType::LF {
                     buf = buf.inc_start(self.MINBPC() as isize)
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_DATA_NEWLINE
+                return XML_TOK::DATA_NEWLINE
             }
             ByteType::LF => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_DATA_NEWLINE
+                return XML_TOK::DATA_NEWLINE
             }
             ByteType::RSQB => {
                 buf = buf.inc_start(self.MINBPC() as isize);
                 if !HAS_CHAR!(buf, self) {
-                    return XML_TOK_TRAILING_RSQB
+                    return XML_TOK::TRAILING_RSQB
                 }
                 if self.char_matches(buf.as_ptr(), ASCII_RSQB) {
                     let prev_buf = buf.clone();
                     buf = buf.inc_start(self.MINBPC() as isize);
                     if !HAS_CHAR!(buf, self) {
-                        return XML_TOK_TRAILING_RSQB
+                        return XML_TOK::TRAILING_RSQB
                     }
                     if !self.char_matches(buf.as_ptr(), ASCII_GT) {
                         buf = prev_buf;
-                    } else { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                    } else { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                 }
             }
             _ => { buf = buf.inc_start(self.MINBPC() as isize) }
@@ -1016,7 +1014,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 LEAD_CASE(n) => {
                     if buf.len() < n as usize || self.is_invalid_char(buf.as_ptr(), n) {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_DATA_CHARS;
+                        return XML_TOK::DATA_CHARS;
                     }
                     buf = buf.inc_start(n as isize);
                     current_block_76 = 10213293998891106930;
@@ -1032,7 +1030,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                             } else {
                                 *nextTokPtr =
                                     buf.as_ptr().offset((2 * self.MINBPC()) as isize);
-                                return XML_TOK_INVALID
+                                return XML_TOK::INVALID
                             }
                             current_block_76 = 10213293998891106930;
                         } else { current_block_76 = 4244197895050895038; }
@@ -1050,28 +1048,28 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 10213293998891106930 => {}
                 _ => {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS;
+                    return XML_TOK::DATA_CHARS;
                 }
             }
         }
         *nextTokPtr = buf.as_ptr();
-        XML_TOK_DATA_CHARS
+        XML_TOK::DATA_CHARS
     }
     unsafe fn prologTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        let mut tok: libc::c_int = 0;
+    ) -> XML_TOK {
+        let mut tok = XML_TOK::INVALID;
         if buf.is_empty() {
-            return XML_TOK_NONE;
+            return XML_TOK::NONE;
         }
         if self.MINBPC() > 1 {
             let mut n: size_t = buf.len() as libc::c_long as size_t;
             if n & (self.MINBPC() - 1) as size_t != 0 {
                 n &= !(self.MINBPC() - 1) as size_t;
                 if n == 0 {
-                    return XML_TOK_PARTIAL;
+                    return XML_TOK::PARTIAL;
                 }
                 buf = buf.with_len(n as usize)
             }
@@ -1081,17 +1079,17 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             self.byte_type(buf.as_ptr()),
             LEAD_CASE(n) => {
                 if (buf.len() as c_long) < n as c_long {
-                    return XML_TOK_PARTIAL_CHAR;
+                    return XML_TOK::PARTIAL_CHAR;
                 }
                 if self.is_nmstrt_char(buf.as_ptr(), n) {
                     buf = buf.inc_start(n as isize);
-                    tok = XML_TOK_NAME;
+                    tok = XML_TOK::NAME;
                 } else if self.is_name_char(buf.as_ptr(), n) {
                     buf = buf.inc_start(n as isize);
-                    tok = XML_TOK_NMTOKEN
+                    tok = XML_TOK::NMTOKEN
                 } else {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID
+                    return XML_TOK::INVALID
                 }
                 current_block_112 = 2222055338596505704;
             }
@@ -1116,18 +1114,18 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     }
                     ByteType::NMSTRT | ByteType::HEX | ByteType::NONASCII | ByteType::LEAD2 | ByteType::LEAD3 | ByteType::LEAD4 => {
                         *nextTokPtr = buf.as_ptr().offset(-(self.MINBPC()));
-                        return XML_TOK_INSTANCE_START
+                        return XML_TOK::INSTANCE_START
                     }
                     _ => { }
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID
+                return XML_TOK::INVALID
             }
             ByteType::CR => {
                 if buf.len() == self.MINBPC() as usize {
                     *nextTokPtr = buf.end();
                     /* indicate that this might be part of a CR/LF pair */
-                    return -XML_TOK_PROLOG_S
+                    return XML_TOK::PROLOG_S_NEG
                 }
                 current_block_112 = 1103933966285275534;
             }
@@ -1137,97 +1135,97 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             }
             ByteType::COMMA => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_COMMA
+                return XML_TOK::COMMA
             }
             ByteType::LSQB => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_OPEN_BRACKET
+                return XML_TOK::OPEN_BRACKET
             }
             ByteType::RSQB => {
                 buf = buf.inc_start(self.MINBPC() as isize);
                 if !HAS_CHAR!(buf, self) {
-                    return -XML_TOK_CLOSE_BRACKET
+                    return XML_TOK::CLOSE_BRACKET_NEG
                 }
                 if self.char_matches(buf.as_ptr(), ASCII_RSQB) {
                     REQUIRE_CHARS!(buf, 2, self);
                     if self.char_matches(buf.as_ptr().offset(self.MINBPC()), ASCII_GT) {
                         *nextTokPtr = buf.as_ptr().offset(2 * self.MINBPC());
-                        return XML_TOK_COND_SECT_CLOSE
+                        return XML_TOK::COND_SECT_CLOSE
                     }
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_CLOSE_BRACKET
+                return XML_TOK::CLOSE_BRACKET
             }
             ByteType::LPAR => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_OPEN_PAREN
+                return XML_TOK::OPEN_PAREN
             }
             ByteType::RPAR => {
                 buf = buf.inc_start(self.MINBPC() as isize);
                 if !HAS_CHAR!(buf, self) {
-                    return -XML_TOK_CLOSE_PAREN
+                    return XML_TOK::CLOSE_PAREN_NEG
                 }
                 match self.byte_type(buf.as_ptr()) {
                     ByteType::AST => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CLOSE_PAREN_ASTERISK
+                        return XML_TOK::CLOSE_PAREN_ASTERISK
                     }
                     ByteType::QUEST => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CLOSE_PAREN_QUESTION
+                        return XML_TOK::CLOSE_PAREN_QUESTION
                     }
                     ByteType::PLUS => {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_CLOSE_PAREN_PLUS
+                        return XML_TOK::CLOSE_PAREN_PLUS
                     }
                     ByteType::CR | ByteType::LF | ByteType::S | ByteType::GT | ByteType::COMMA | ByteType::VERBAR | ByteType::RPAR => {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_CLOSE_PAREN
+                        return XML_TOK::CLOSE_PAREN
                     }
                     _ => { }
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID
+                return XML_TOK::INVALID
             }
             ByteType::VERBAR => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_OR
+                return XML_TOK::OR
             }
             ByteType::GT => {
                 *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                return XML_TOK_DECL_CLOSE
+                return XML_TOK::DECL_CLOSE
             }
             ByteType::NUM => {
                 return self.scanPoundName(buf.inc_start(self.MINBPC() as isize),
                                               nextTokPtr)
             }
             ByteType::NMSTRT | ByteType::HEX => {
-                tok = XML_TOK_NAME;
+                tok = XML_TOK::NAME;
                 buf = buf.inc_start(self.MINBPC() as isize);
                 current_block_112 = 2222055338596505704;
             }
             ByteType::DIGIT | ByteType::NAME | ByteType::MINUS | ByteType::COLON => {
-                tok = XML_TOK_NMTOKEN;
+                tok = XML_TOK::NMTOKEN;
                 buf = buf.inc_start(self.MINBPC() as isize);
                 current_block_112 = 2222055338596505704;
             }
             ByteType::NONASCII => {
                 if self.is_nmstrt_char_minbpc(buf.as_ptr()) {
                     buf = buf.inc_start(self.MINBPC() as isize);
-                    tok = XML_TOK_NAME;
+                    tok = XML_TOK::NAME;
                     current_block_112 = 2222055338596505704;
                 } else if self.is_name_char_minbpc(buf.as_ptr()) {
                     buf = buf.inc_start(self.MINBPC() as isize);
-                    tok = XML_TOK_NMTOKEN;
+                    tok = XML_TOK::NMTOKEN;
                     current_block_112 = 2222055338596505704;
                 } else {
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID
+                    return XML_TOK::INVALID
                 }
             }
             _ => {
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_INVALID
+                return XML_TOK::INVALID
             }
         }
         match current_block_112 {
@@ -1263,12 +1261,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         /* fall through */
                         {
                             *nextTokPtr = buf.as_ptr();
-                            return XML_TOK_PROLOG_S;
+                            return XML_TOK::PROLOG_S;
                         }
                     }
                 }
                 *nextTokPtr = buf.as_ptr();
-                return XML_TOK_PROLOG_S;
+                return XML_TOK::PROLOG_S;
             }
         }
         while HAS_CHAR!(buf, self) {
@@ -1282,58 +1280,58 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 ByteType::COLON => {
                     buf = buf.inc_start(self.MINBPC() as isize);
                     match tok {
-                        XML_TOK_NAME => {
+                        XML_TOK::NAME => {
                             REQUIRE_CHAR!(buf, self);
-                            tok = XML_TOK_PREFIXED_NAME;
+                            tok = XML_TOK::PREFIXED_NAME;
                             CHECK_NAME_CASES! {
                                 (buf, nextTokPtr, self),
                                 match self.byte_type(buf.as_ptr()),
                                 _ => {
-                                    tok = XML_TOK_NMTOKEN;
+                                    tok = XML_TOK::NMTOKEN;
                                 }
                             }
                         }
-                        XML_TOK_PREFIXED_NAME => { tok = XML_TOK_NMTOKEN }
+                        XML_TOK::PREFIXED_NAME => { tok = XML_TOK::NMTOKEN }
                         _ => { }
                     }
                 }
                 ByteType::PLUS => {
-                    if tok == XML_TOK_NMTOKEN {
+                    if tok == XML_TOK::NMTOKEN {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_NAME_PLUS
+                    return XML_TOK::NAME_PLUS
                 }
                 ByteType::AST => {
-                    if tok == XML_TOK_NMTOKEN {
+                    if tok == XML_TOK::NMTOKEN {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_NAME_ASTERISK
+                    return XML_TOK::NAME_ASTERISK
                 }
                 ByteType::QUEST => {
-                    if tok == XML_TOK_NMTOKEN {
+                    if tok == XML_TOK::NMTOKEN {
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_INVALID
+                        return XML_TOK::INVALID
                     }
                     *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                    return XML_TOK_NAME_QUESTION
+                    return XML_TOK::NAME_QUESTION
                 }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK_INVALID }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
-        -tok
+        tok.negate()
     }
     unsafe fn attributeValueTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         let mut start: *const libc::c_char = 0 as *const libc::c_char;
         if buf.is_empty() {
-            return XML_TOK_NONE;
+            return XML_TOK::NONE;
         } else {
             if !HAS_CHAR!(buf, self) {
                 /* This line cannot be executed.  The incoming data has already
@@ -1341,7 +1339,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                  * already been eliminated from the input.  Retaining the paranoia
                  * check is still valuable, however.
                  */
-                return XML_TOK_PARTIAL;
+                return XML_TOK::PARTIAL;
             }
         }
         start = buf.as_ptr();
@@ -1357,58 +1355,58 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                                                 nextTokPtr)
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::LT => {
                     /* this is for inside entity references */
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_INVALID;
+                    return XML_TOK::INVALID;
                 }
                 ByteType::LF => {
                     if buf.as_ptr() == start {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_DATA_NEWLINE
+                        return XML_TOK::DATA_NEWLINE
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::CR => {
                     if buf.as_ptr() == start {
                         buf = buf.inc_start(self.MINBPC() as isize);
                         if !HAS_CHAR!(buf, self) {
-                            return XML_TOK_TRAILING_CR
+                            return XML_TOK::TRAILING_CR
                         }
                         if self.byte_type(buf.as_ptr()) == ByteType::LF {
                             buf = buf.inc_start(self.MINBPC() as isize)
                         }
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_DATA_NEWLINE
+                        return XML_TOK::DATA_NEWLINE
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::S => {
                     if buf.as_ptr() == start {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_ATTRIBUTE_VALUE_S
+                        return XML_TOK::ATTRIBUTE_VALUE_S
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 _ => { buf = buf.inc_start(self.MINBPC() as isize) }
             }
         }
         *nextTokPtr = buf.as_ptr();
-        XML_TOK_DATA_CHARS
+        XML_TOK::DATA_CHARS
     }
     unsafe fn entityValueTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         let mut start: *const libc::c_char = 0 as *const libc::c_char;
         if buf.is_empty() {
-            return XML_TOK_NONE;
+            return XML_TOK::NONE;
         } else {
             if !HAS_CHAR!(buf, self) {
                 /* This line cannot be executed.  The incoming data has already
@@ -1416,7 +1414,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                  * already been eliminated from the input.  Retaining the paranoia
                  * check is still valuable, however.
                  */
-                return XML_TOK_PARTIAL;
+                return XML_TOK::PARTIAL;
             }
         }
         start = buf.as_ptr();
@@ -1432,54 +1430,54 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                                                 nextTokPtr)
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::PERCNT => {
                     if buf.as_ptr() == start {
-                        let mut tok: libc::c_int =
+                        let tok =
                             self.scanPercent(buf.inc_start(self.MINBPC() as isize),
                                                  nextTokPtr);
-                        return if tok == XML_TOK_PERCENT {
-                                   XML_TOK_INVALID
+                        return if tok == XML_TOK::PERCENT {
+                                   XML_TOK::INVALID
                                } else { tok }
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::LF => {
                     if buf.as_ptr() == start {
                         *nextTokPtr = buf.as_ptr().offset(self.MINBPC());
-                        return XML_TOK_DATA_NEWLINE
+                        return XML_TOK::DATA_NEWLINE
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 ByteType::CR => {
                     if buf.as_ptr() == start {
                         buf = buf.inc_start(self.MINBPC() as isize);
                         if !HAS_CHAR!(buf, self) {
-                            return XML_TOK_TRAILING_CR
+                            return XML_TOK::TRAILING_CR
                         }
                         if self.byte_type(buf.as_ptr()) == ByteType::LF {
                             buf = buf.inc_start(self.MINBPC() as isize)
                         }
                         *nextTokPtr = buf.as_ptr();
-                        return XML_TOK_DATA_NEWLINE
+                        return XML_TOK::DATA_NEWLINE
                     }
                     *nextTokPtr = buf.as_ptr();
-                    return XML_TOK_DATA_CHARS
+                    return XML_TOK::DATA_CHARS
                 }
                 _ => { buf = buf.inc_start(self.MINBPC() as isize) }
             }
         }
         *nextTokPtr = buf.as_ptr();
-        XML_TOK_DATA_CHARS
+        XML_TOK::DATA_CHARS
     }
     unsafe fn ignoreSectionTok(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         let mut level: libc::c_int = 0 as libc::c_int;
         if self.MINBPC() > 1 {
             let mut n: size_t = buf.len() as libc::c_long as size_t;
@@ -1514,7 +1512,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                             buf = buf.inc_start(self.MINBPC() as isize);
                             if level == 0 as libc::c_int {
                                 *nextTokPtr = buf.as_ptr();
-                                return XML_TOK_IGNORE_SECT
+                                return XML_TOK::IGNORE_SECT
                             }
                             level -= 1
                         }
@@ -1523,7 +1521,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 _ => { buf = buf.inc_start(self.MINBPC() as isize) }
             }
         }
-        XML_TOK_PARTIAL
+        XML_TOK::PARTIAL
     }
     unsafe fn isPublicId(
         &self,
@@ -1774,7 +1772,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         &self,
         mut buf: ExpatBufRef,
         mut ptr2: &[libc::c_char],
-    ) -> libc::c_int {
+    ) -> bool {
         for ch in ptr2 {
             if buf.len() < self.MINBPC() as usize {
                 /* This line cannot be executed.  The incoming data has already
@@ -1782,14 +1780,14 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                  * already been eliminated from the input.  Retaining the
                  * paranoia check is still valuable, however.
                  */
-                return 0 as libc::c_int;
+                return false;
             }
             if !self.char_matches(buf.as_ptr(), *ch) {
-                return 0 as libc::c_int;
+                return false;
             }
             buf = buf.inc_start(self.MINBPC() as isize);
         }
-        (buf.is_empty()) as libc::c_int
+        buf.is_empty()
     }
     unsafe fn nameLength(&self, mut ptr: *const libc::c_char) -> libc::c_int {
         let mut start: *const libc::c_char = ptr;

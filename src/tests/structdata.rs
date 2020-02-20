@@ -33,7 +33,7 @@
 */
 
 use crate::minicheck::_fail_unless;
-use crate::stdlib::{__assert_fail, malloc, memcpy, realloc, strlen};
+use crate::stdlib::{malloc, memcpy, realloc, strlen};
 use ::libc::{free, sprintf, strcmp};
 use libc::{c_char, c_int, c_ulong, c_void};
 #[repr(C)]
@@ -64,38 +64,14 @@ unsafe extern "C" fn xmlstrdup(mut s: *const XML_Char) -> *mut XML_Char {
         .wrapping_add(1u64)
         .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong);
     let mut dup: *mut XML_Char = malloc(byte_count) as *mut XML_Char;
-    if !dup.is_null() {
-    } else {
-        __assert_fail(
-            b"dup != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            63u32,
-            (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
-                b"XML_Char *xmlstrdup(const XML_Char *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!dup.is_null());
     memcpy(dup as *mut c_void, s as *const c_void, byte_count);
     return dup;
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            70u32,
-            (*::std::mem::transmute::<&[u8; 35], &[c_char; 35]>(
-                b"void StructData_Init(StructData *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
     (*storage).count = 0;
     (*storage).max_count = 0;
     (*storage).entries = NULL as *mut StructDataEntry;
@@ -145,32 +121,8 @@ pub unsafe extern "C" fn StructData_AddItem(
     mut data2: c_int,
 ) {
     let mut entry: *mut StructDataEntry = 0 as *mut StructDataEntry;
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            81u32,
-            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
-                b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if !s.is_null() {
-    } else {
-        __assert_fail(
-            b"s != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            82u32,
-            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
-                b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
+    assert!(!s.is_null());
     if (*storage).count == (*storage).max_count {
         let mut new: *mut StructDataEntry = 0 as *mut StructDataEntry;
         (*storage).max_count += STRUCT_EXTENSION_COUNT;
@@ -179,19 +131,7 @@ pub unsafe extern "C" fn StructData_AddItem(
             ((*storage).max_count as c_ulong)
                 .wrapping_mul(::std::mem::size_of::<StructDataEntry>() as c_ulong),
         ) as *mut StructDataEntry;
-        if !new.is_null() {
-        } else {
-            __assert_fail(
-                b"new != NULL\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00"
-                    .as_ptr() as *const c_char,
-                89u32,
-                (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
-                    b"void StructData_AddItem(StructData *, const XML_Char *, int, int, int)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(!new.is_null());
         (*storage).entries = new
     }
     entry = &mut *(*storage).entries.offset((*storage).count as isize) as *mut StructDataEntry;
@@ -213,32 +153,8 @@ pub unsafe extern "C" fn StructData_CheckItems(
 ) {
     let mut buffer: [c_char; 1024] = [0; 1024];
     let mut i: c_int = 0;
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            110u32,
-            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
-                b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if !expected.is_null() {
-    } else {
-        __assert_fail(
-            b"expected != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            111u32,
-            (*::std::mem::transmute::<&[u8; 71], &[c_char; 71]>(
-                b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
+    assert!(!expected.is_null());
     if count != (*storage).count {
         sprintf(
             buffer.as_mut_ptr(),
@@ -261,26 +177,8 @@ pub unsafe extern "C" fn StructData_CheckItems(
                 &mut *(*storage).entries.offset(i as isize) as *mut StructDataEntry;
             let mut want: *const StructDataEntry =
                 &*expected.offset(i as isize) as *const StructDataEntry;
-            if !got.is_null() {
-            } else {
-                __assert_fail(b"got != NULL\x00".as_ptr() as
-                                  *const c_char,
-                              
-                              b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
-                              122u32,
-                              (*::std::mem::transmute::<&[u8; 71],
-                                                        &[c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
-            }
-            if !want.is_null() {
-            } else {
-                __assert_fail(b"want != NULL\x00".as_ptr() as
-                                  *const c_char,
-                              
-                              b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr() as *const c_char,
-                              123u32,
-                              (*::std::mem::transmute::<&[u8; 71],
-                                                        &[c_char; 71]>(b"void StructData_CheckItems(StructData *, const StructDataEntry *, int)\x00")).as_ptr());
-            }
+            assert!(!got.is_null());
+            assert!(!want.is_null());
             if strcmp((*got).str_0, (*want).str_0) != 0 {
                 StructData_Dispose(storage);
                 _fail_unless(
@@ -323,19 +221,7 @@ pub unsafe extern "C" fn StructData_CheckItems(
 
 pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
     let mut i: c_int = 0;
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/structdata.c\x00".as_ptr()
-                as *const c_char,
-            148u32,
-            (*::std::mem::transmute::<&[u8; 38], &[c_char; 38]>(
-                b"void StructData_Dispose(StructData *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
     i = 0;
     while i < (*storage).count {
         free((*(*storage).entries.offset(i as isize)).str_0 as *mut c_void);

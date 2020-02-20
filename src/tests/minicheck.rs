@@ -35,7 +35,7 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-use crate::stdlib::{__assert_fail, calloc, fprintf, realloc, stderr, strlen};
+use crate::stdlib::{calloc, fprintf, realloc, stderr, strlen};
 use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
 use libc::{c_char, c_double, c_int, c_ulong, c_void};
@@ -99,45 +99,9 @@ pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
 }
 #[no_mangle]
 pub unsafe extern "C" fn suite_add_tcase(mut suite: *mut Suite, mut tc: *mut TCase) {
-    if !suite.is_null() {
-    } else {
-        __assert_fail(
-            b"suite != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            66u32,
-            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
-                b"void suite_add_tcase(Suite *, TCase *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if !tc.is_null() {
-    } else {
-        __assert_fail(
-            b"tc != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            67u32,
-            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
-                b"void suite_add_tcase(Suite *, TCase *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if (*tc).next_tcase.is_null() {
-    } else {
-        __assert_fail(
-            b"tc->next_tcase == NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            68u32,
-            (*::std::mem::transmute::<&[u8; 39], &[c_char; 39]>(
-                b"void suite_add_tcase(Suite *, TCase *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!suite.is_null());
+    assert!(!tc.is_null());
+    assert!((*tc).next_tcase.is_null());
     (*tc).next_tcase = (*suite).tests;
     (*suite).tests = tc;
 }
@@ -148,53 +112,21 @@ pub unsafe extern "C" fn tcase_add_checked_fixture(
     mut setup: tcase_setup_function,
     mut teardown: tcase_teardown_function,
 ) {
-    if !tc.is_null() {
-    } else {
-        __assert_fail(b"tc != NULL\x00".as_ptr() as *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr() as *const c_char,
-                      77u32,
-                      (*::std::mem::transmute::<&[u8; 87],
-                                                &[c_char; 87]>(b"void tcase_add_checked_fixture(TCase *, tcase_setup_function, tcase_teardown_function)\x00")).as_ptr());
-    }
+    assert!(!tc.is_null());
     (*tc).setup = setup;
     (*tc).teardown = teardown;
 }
 #[no_mangle]
 
 pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test_function) {
-    if !tc.is_null() {
-    } else {
-        __assert_fail(
-            b"tc != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            84u32,
-            (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
-                b"void tcase_add_test(TCase *, tcase_test_function)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!tc.is_null());
     if (*tc).allocated == (*tc).ntests {
         let mut nalloc: c_int = (*tc).allocated + 100;
         let mut new_size: size_t = (::std::mem::size_of::<tcase_test_function>() as c_ulong)
             .wrapping_mul(nalloc as c_ulong);
         let mut new_tests: *mut tcase_test_function =
             realloc((*tc).tests as *mut c_void, new_size) as *mut tcase_test_function;
-        if !new_tests.is_null() {
-        } else {
-            __assert_fail(
-                b"new_tests != NULL\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00"
-                    .as_ptr() as *const c_char,
-                89u32,
-                (*::std::mem::transmute::<&[u8; 50], &[c_char; 50]>(
-                    b"void tcase_add_test(TCase *, tcase_test_function)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(!new_tests.is_null());
         (*tc).tests = new_tests;
         (*tc).allocated = nalloc
     }
@@ -273,19 +205,7 @@ unsafe extern "C" fn add_failure(mut runner: *mut SRunner, mut verbosity: c_int)
 pub unsafe extern "C" fn srunner_run_all(mut runner: *mut SRunner, mut verbosity: c_int) {
     let mut suite: *mut Suite = 0 as *mut Suite;
     let mut tc: *mut TCase = 0 as *mut TCase;
-    if !runner.is_null() {
-    } else {
-        __assert_fail(
-            b"runner != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            156u32,
-            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                b"void srunner_run_all(SRunner *, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!runner.is_null());
     suite = (*runner).suite;
     write_volatile(&mut tc as *mut *mut TCase, (*suite).tests);
     while !tc.is_null() {
@@ -379,19 +299,7 @@ pub unsafe extern "C" fn _fail_unless(
 #[no_mangle]
 
 pub unsafe extern "C" fn srunner_ntests_failed(mut runner: *mut SRunner) -> c_int {
-    if !runner.is_null() {
-    } else {
-        __assert_fail(
-            b"runner != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/minicheck.c\x00".as_ptr()
-                as *const c_char,
-            217u32,
-            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                b"int srunner_ntests_failed(SRunner *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!runner.is_null());
     return (*runner).nfailures;
 }
 #[no_mangle]

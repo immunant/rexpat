@@ -25,11 +25,23 @@ pub mod stdlib {
     use ::rexpat::stdlib::_IO_FILE;
     use libc::{c_int, c_long, c_ulong, c_void};
     extern "C" {
+        #[cfg(all(unix, not(target_os = "macos")))]
+        #[no_mangle]
+        pub static mut stderr: *mut FILE;
+
+        #[cfg(all(unix, not(target_os = "macos")))]
         #[no_mangle]
         pub static mut stdin: *mut FILE;
 
+        #[cfg(target_os = "macos")]
         #[no_mangle]
+        #[link_name = "__stderrp"]
         pub static mut stderr: *mut FILE;
+
+        #[cfg(target_os = "macos")]
+        #[no_mangle]
+        #[link_name = "__stdinp"]
+        pub static mut stdin: *mut FILE;
 
         #[no_mangle]
         pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;

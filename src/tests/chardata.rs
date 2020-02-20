@@ -33,7 +33,7 @@
 */
 
 use crate::minicheck::_fail_unless;
-use crate::stdlib::{__assert_fail, memcmp, memcpy};
+use crate::stdlib::{memcmp, memcpy};
 use ::libc::sprintf;
 use libc::{c_char, c_int, c_ulong, c_void};
 #[repr(C)]
@@ -48,19 +48,7 @@ use ::libc;
 
 unsafe extern "C" fn xmlstrlen(mut s: *const XML_Char) -> c_int {
     let mut len: c_int = 0;
-    if !s.is_null() {
-    } else {
-        __assert_fail(
-            b"s != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr()
-                as *const c_char,
-            47u32,
-            (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
-                b"int xmlstrlen(const XML_Char *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!s.is_null());
     while *s.offset(len as isize) as c_int != 0 {
         len += 1
     }
@@ -69,19 +57,7 @@ unsafe extern "C" fn xmlstrlen(mut s: *const XML_Char) -> c_int {
 #[no_mangle]
 
 pub unsafe extern "C" fn CharData_Init(mut storage: *mut CharData) {
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr()
-                as *const c_char,
-            55u32,
-            (*::std::mem::transmute::<&[u8; 31], &[c_char; 31]>(
-                b"void CharData_Init(CharData *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
     (*storage).count = -(1);
 }
 #[no_mangle]
@@ -92,32 +68,8 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
     mut len: c_int,
 ) {
     let mut maxchars: c_int = 0;
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr()
-                as *const c_char,
-            63u32,
-            (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
-                b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if !s.is_null() {
-    } else {
-        __assert_fail(
-            b"s != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr()
-                as *const c_char,
-            64u32,
-            (*::std::mem::transmute::<&[u8; 64], &[c_char; 64]>(
-                b"void CharData_AppendXMLChars(CharData *, const XML_Char *, int)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
+    assert!(!s.is_null());
     maxchars = (::std::mem::size_of::<[XML_Char; 2048]>() as c_ulong)
         .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong) as c_int;
     if (*storage).count < 0 {
@@ -154,19 +106,7 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
     let mut buffer: [c_char; 1024] = [0; 1024];
     let mut len: c_int = xmlstrlen(expected);
     let mut count: c_int = 0;
-    if !storage.is_null() {
-    } else {
-        __assert_fail(
-            b"storage != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/chardata.c\x00".as_ptr()
-                as *const c_char,
-            85u32,
-            (*::std::mem::transmute::<&[u8; 57], &[c_char; 57]>(
-                b"int CharData_CheckXMLChars(CharData *, const XML_Char *)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!storage.is_null());
     count = if (*storage).count < 0 {
         0
     } else {

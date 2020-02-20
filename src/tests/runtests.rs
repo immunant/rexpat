@@ -56,10 +56,7 @@ use crate::stdlib::{stderr, strncmp};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
-    XML_ParsingStatus,
-    XML_FEATURE_CONTEXT_BYTES, XML_FEATURE_END, XML_FINISHED,
-    XML_INITIALIZED, XML_PARAM_ENTITY_PARSING_ALWAYS, XML_PARAM_ENTITY_PARSING_NEVER,
-    XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE, XML_SUSPENDED
+    XML_Parsing, XML_ParsingStatus,
 };
 use ::rexpat::lib::xmlparse::{
     XML_DefaultCurrent, XML_ErrorString, XML_ExpatVersion, XML_ExpatVersionInfo,
@@ -84,7 +81,7 @@ use ::rexpat::lib::xmlparse::{
 };
 use ::rexpat::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::rexpat::stdbool_h::{false_0, true_0};
-use ::rexpat::stdlib::{__assert_fail, fprintf, malloc, memcmp, memcpy, realloc, strlen};
+use ::rexpat::stdlib::{fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::rexpat::*;
 use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
 use ::rexpat::lib::xmlparse::ExpatBufRef;
@@ -123,7 +120,7 @@ pub use crate::expat_h::{
     XML_EndCdataSectionHandler, XML_EndDoctypeDeclHandler, XML_EndElementHandler,
     XML_EndNamespaceDeclHandler, XML_EntityDeclHandler, XML_Error, XML_ErrorCode, XML_ExternalEntityRefHandler,
     XML_FeatureEnum, XML_NotStandaloneHandler, XML_NotationDeclHandler, XML_ParamEntityParsing,
-    XML_Parser, XML_Parsing, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
+    XML_Parser, XML_Parsing::PARSING, XML_ProcessingInstructionHandler, XML_SkippedEntityHandler,
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_Status, XML_UnknownEncodingHandler,
     XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler,
@@ -2095,19 +2092,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1246u32,
-            (*::std::mem::transmute::<&[u8; 42], &[c_char; 42]>(
-                b"void test_really_long_encoded_lines(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, parse_len as c_ulong);
     if XML_ParseBuffer(g_parser, parse_len, true as c_int) == XML_Status::ERROR {
         _xml_failure(
@@ -2197,7 +2182,7 @@ unsafe extern "C" fn test_end_element_events() {
 unsafe extern "C" fn is_whitespace_normalized(
     mut s: *const XML_Char,
     mut is_cdata: c_int,
-) -> c_int {
+) -> bool {
     let mut blanks: c_int = 0;
     let mut at_start: c_int = 1;
     while *s != 0 {
@@ -2207,276 +2192,48 @@ unsafe extern "C" fn is_whitespace_normalized(
             || *s as c_int == '\n' as i32
             || *s as c_int == '\r' as i32
         {
-            return 0i32;
+            return false;
         } else {
             if at_start != 0 {
                 at_start = 0;
                 if blanks != 0 && is_cdata == 0 {
                     /* illegal leading blanks */
-                    return 0i32;
+                    return false;
                 }
             } else if blanks > 1 && is_cdata == 0 {
-                return 0i32;
+                return false;
             }
             blanks = 0
         }
         s = s.offset(1)
     }
     if blanks != 0 && is_cdata == 0 {
-        return 0i32;
+        return false;
     }
-    return 1;
+    return true;
 }
 /* Check the attribute whitespace checker: */
 
 unsafe extern "C" fn testhelper_is_whitespace_normalized() {
-    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 0) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1328u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1329u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 0) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1330u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1331u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" abc def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1332u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\" abc def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1333u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc  def ghi\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1334u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc  def ghi\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1335u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc def ghi \"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1336u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\"abc def ghi \"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1337u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\" \"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1338u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 1) != 0 {
-    } else {
-        __assert_fail(
-            b"is_whitespace_normalized(XCS(\" \"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1339u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1340u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\t\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1341u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1342u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\n\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1343u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 0) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 0)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1344u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"\\r\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1345u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
-    if is_whitespace_normalized(b"abc\t def\x00".as_ptr() as *const c_char, 1) == 0 {
-    } else {
-        __assert_fail(
-            b"! is_whitespace_normalized(XCS(\"abc\\t def\"), 1)\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            1346u32,
-            (*::std::mem::transmute::<&[u8; 47], &[c_char; 47]>(
-                b"void testhelper_is_whitespace_normalized(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    };
+    assert!(is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc\x00".as_ptr() as *const c_char, 1));
+    assert!(is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b" abc def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc  def ghi\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b"abc def ghi \x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 0));
+    assert!(is_whitespace_normalized(b" \x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\t\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\n\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 0));
+    assert!(!is_whitespace_normalized(b"\r\x00".as_ptr() as *const c_char, 1));
+    assert!(!is_whitespace_normalized(b"abc\t def\x00".as_ptr() as *const c_char, 1));
 }
 
 unsafe extern "C" fn check_attr_contains_normalized_whitespace(
@@ -2493,7 +2250,7 @@ unsafe extern "C" fn check_attr_contains_normalized_whitespace(
             || strcmp(b"ents\x00".as_ptr() as *const c_char, attrname) == 0
             || strcmp(b"refs\x00".as_ptr() as *const c_char, attrname) == 0
         {
-            if is_whitespace_normalized(value, 0) == 0 {
+            if !is_whitespace_normalized(value, 0) {
                 let mut buffer: [c_char; 256] = [0; 256];
                 sprintf(
                     buffer.as_mut_ptr(),
@@ -3044,7 +2801,7 @@ unsafe extern "C" fn test_ext_entity_bad_encoding_2() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -3169,7 +2926,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset_standalone(
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -3218,7 +2975,7 @@ unsafe extern "C" fn test_entity_with_external_subset_unless_standalone() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::UNLESS_STANDALONE);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -3267,7 +3024,7 @@ unsafe extern "C" fn test_wfc_undeclared_entity_with_external_subset() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -3317,7 +3074,7 @@ unsafe extern "C" fn test_not_standalone_handler_reject() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -3386,7 +3143,7 @@ unsafe extern "C" fn test_not_standalone_handler_accept() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -3504,7 +3261,7 @@ unsafe extern "C" fn test_ext_entity_invalid_parse() {
     ];
     let mut fault: *const ExtFaults = faults.as_ptr();
     while !(*fault).parse_text.is_null() {
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -3936,7 +3693,7 @@ unsafe extern "C" fn test_stop_parser_between_char_data_calls() {
     );
     /* The sample data must be big enough that there are two calls to
        the character data handler from within the inner "for" loop of
-       the XML_TOK_DATA_CHARS case in doContent(), and the character
+       the XML_TOK::DATA_CHARS case in doContent(), and the character
        handler must stop the parser and clear the character data
        handler.
     */
@@ -3983,7 +3740,7 @@ unsafe extern "C" fn test_suspend_parser_between_char_data_calls() {
     );
     /* The sample data must be big enough that there are two calls to
        the character data handler from within the inner "for" loop of
-       the XML_TOK_DATA_CHARS case in doContent(), and the character
+       the XML_TOK::DATA_CHARS case in doContent(), and the character
        handler must stop the parser and clear the character data
        handler.
     */
@@ -4408,19 +4165,7 @@ unsafe extern "C" fn test_long_cdata_utf16() {
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            2249u32,
-            (*::std::mem::transmute::<&[u8; 33], &[c_char; 33]>(
-                b"void test_long_cdata_utf16(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(
         buffer,
         text.as_ptr() as *const c_void,
@@ -4713,19 +4458,7 @@ unsafe extern "C" fn test_bad_cdata() {
             true,
         );
         let actualError: XML_Error = XML_GetError(g_parser);
-        if actualStatus == XML_Status::ERROR {
-        } else {
-            __assert_fail(
-                b"actualStatus == XML_Status::ERROR\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                2363u32,
-                (*::std::mem::transmute::<&[u8; 26], &[c_char; 26]>(
-                    b"void test_bad_cdata(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(actualStatus == XML_Status::ERROR);
         if actualError != cases[i as usize].expectedError {
             let mut message: [c_char; 100] = [0; 100];
             sprintf(
@@ -4990,19 +4723,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
             cases[i as usize].text_bytes as c_int,
             true,
         );
-        if actual_status == XML_Status::ERROR {
-        } else {
-            __assert_fail(
-                b"actual_status == XML_Status::ERROR\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                2435u32,
-                (*::std::mem::transmute::<&[u8; 32], &[c_char; 32]>(
-                    b"void test_bad_cdata_utf16(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(actual_status == XML_Status::ERROR);
         actual_error = XML_GetError(g_parser);
         if actual_error != cases[i as usize].expected_error {
             let mut message: [c_char; 1024] = [0; 1024];
@@ -5532,7 +5253,7 @@ unsafe extern "C" fn test_set_foreign_dtd() {
     };
     /* Check hash salt is passed through too */
     XML_SetHashSalt(g_parser, 0x12345678);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -5631,7 +5352,7 @@ unsafe extern "C" fn test_foreign_dtd_not_standalone() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -5690,7 +5411,7 @@ unsafe extern "C" fn test_invalid_foreign_dtd() {
         };
         init
     };
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtFaults as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -5739,7 +5460,7 @@ unsafe extern "C" fn test_foreign_dtd_with_doctype() {
     };
     /* Check hash salt is passed through too */
     XML_SetHashSalt(g_parser, 0x12345678);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -5839,7 +5560,7 @@ unsafe extern "C" fn test_foreign_dtd_without_external_subset() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc [<!ENTITY foo \'bar\'>]>\n<doc>&foo;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, ::rexpat::stddef_h::NULL as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -5878,7 +5599,7 @@ unsafe extern "C" fn test_empty_foreign_dtd() {
     let mut text: *const c_char =
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<doc>&entity;</doc>\x00".as_ptr()
             as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6178,7 +5899,7 @@ unsafe extern "C" fn test_reset_in_entity() {
 
         b"<!DOCTYPE doc [\n<!ENTITY wombat \'wom\'>\n<!ENTITY entity \'hi &wom; there\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     resumable = true;
@@ -6200,7 +5921,7 @@ unsafe extern "C" fn test_reset_in_entity() {
         );
     }
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_SUSPENDED {
+    if status.parsing != XML_Parsing::SUSPENDED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6211,7 +5932,7 @@ unsafe extern "C" fn test_reset_in_entity() {
     }
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6378,7 +6099,7 @@ unsafe extern "C" fn external_entity_resetter(
     let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
@@ -6396,7 +6117,7 @@ unsafe extern "C" fn external_entity_resetter(
         );
     }
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6418,7 +6139,7 @@ unsafe extern "C" fn external_entity_resetter(
         return XML_Status::ERROR as c_int;
     }
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6451,7 +6172,7 @@ unsafe extern "C" fn external_entity_resetter(
     }
     XML_ParserReset(ext_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(ext_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -6476,7 +6197,7 @@ unsafe extern "C" fn test_subordinate_reset() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6597,7 +6318,7 @@ unsafe extern "C" fn test_subordinate_suspend() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6652,7 +6373,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     let mut rc: XML_Status = XML_Status::ERROR;
@@ -6694,7 +6415,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
                 3148i32,
             );
         }
-        if status.parsing != XML_SUSPENDED {
+        if status.parsing != XML_Parsing::SUSPENDED {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -6721,7 +6442,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
                 3155i32,
             );
         }
-        if status.parsing != XML_FINISHED {
+        if status.parsing != XML_Parsing::FINISHED {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
@@ -6746,7 +6467,7 @@ unsafe extern "C" fn test_subordinate_xdecl_suspend() {
     let mut text: *const c_char =
 
         b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6784,7 +6505,7 @@ unsafe extern "C" fn test_subordinate_xdecl_abort() {
     let mut text: *const c_char =
 
         b"<!DOCTYPE doc [\n  <!ENTITY entity SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -6861,16 +6582,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
             b"Could not allocate parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(b"buffer != NULL\x00".as_ptr() as
-                          *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      3219u32,
-                      (*::std::mem::transmute::<&[u8; 123],
-                                                &[c_char; 123]>(b"int external_entity_suspending_faulter(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!buffer.is_null());
     memcpy(
         buffer,
         (*fault).parse_text as *const c_void,
@@ -6964,7 +6676,7 @@ unsafe extern "C" fn test_ext_entity_invalid_suspended_parse() {
     let mut fault: *mut ExtFaults = 0 as *mut ExtFaults;
     fault = &mut *faults.as_mut_ptr().offset(0) as *mut ExtFaults;
     while !(*fault).parse_text.is_null() {
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -7270,7 +6982,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
 
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_cr: c_int = 0;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -7307,7 +7019,7 @@ unsafe extern "C" fn test_ext_entity_trailing_cr() {
     }
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     /* Try again with a different trailing CR */
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -7534,7 +7246,7 @@ unsafe extern "C" fn test_ext_entity_trailing_rsqb() {
 
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut found_rsqb: c_int = 0;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -7640,7 +7352,7 @@ unsafe extern "C" fn test_ext_entity_good_cdata() {
     let mut text: *const c_char =
 
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -7806,7 +7518,7 @@ unsafe extern "C" fn test_user_parameters() {
     comment_count = 0;
     skip_count = 0;
     xdecl_count = 0;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetXmlDeclHandler(
         g_parser,
         Some(
@@ -7869,7 +7581,7 @@ unsafe extern "C" fn test_user_parameters() {
         );
     }
     /* Ensure we can't change policy mid-parse */
-    if XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_NEVER) != 0 {
+    if XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::NEVER) != 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -7984,7 +7696,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -8015,7 +7727,7 @@ unsafe extern "C" fn test_ext_entity_ref_parameter() {
     }
     /* Now try again with unset args */
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -8157,7 +7869,7 @@ unsafe extern "C" fn get_feature(
     if feature.is_null() {
         return XML_Status::ERROR as XML_Status;
     }
-    while (*feature).feature != XML_FEATURE_END {
+    while (*feature).feature != XML_FeatureEnum::END {
         if (*feature).feature == feature_id {
             *presult = (*feature).value;
             return XML_Status::OK as XML_Status;
@@ -8209,19 +7921,7 @@ unsafe extern "C" fn test_get_buffer_1() {
             b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            3799u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_get_buffer_1(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
@@ -8252,7 +7952,7 @@ unsafe extern "C" fn test_get_buffer_1() {
      * XML_CONTEXT_BYTES (if defined), so we subtract that from our
      * request.
      */
-    if get_feature(XML_FEATURE_CONTEXT_BYTES, &mut context_bytes) != XML_Status::OK {
+    if get_feature(XML_FeatureEnum::CONTEXT_BYTES, &mut context_bytes) != XML_Status::OK {
         context_bytes = 0
     }
     if !XML_GetBuffer(
@@ -8302,19 +8002,7 @@ unsafe extern "C" fn test_get_buffer_2() {
             b"1.5K buffer failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            3837u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_get_buffer_2(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
         == XML_Status::ERROR
@@ -8708,7 +8396,7 @@ unsafe extern "C" fn test_invalid_tag_in_dtd() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -8818,7 +8506,7 @@ unsafe extern "C" fn test_ignore_section() {
         data: [0; 2048],
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
@@ -8960,7 +8648,7 @@ unsafe extern "C" fn test_ignore_section_utf16() {
         data: [0; 2048],
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
@@ -9106,7 +8794,7 @@ unsafe extern "C" fn test_ignore_section_utf16_be() {
         data: [0; 2048],
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(
         g_parser,
         &mut storage as *mut crate::chardata::CharData as *mut c_void,
@@ -9243,7 +8931,7 @@ unsafe extern "C" fn test_bad_ignore_section() {
     let mut fault: *mut ExtFaults = 0 as *mut ExtFaults;
     fault = &mut *faults.as_mut_ptr().offset(0) as *mut ExtFaults;
     while !(*fault).parse_text.is_null() {
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -9488,7 +9176,7 @@ unsafe extern "C" fn test_external_entity_values() {
     let mut i: c_int = 0;
     i = 0;
     while !data_004_2[i as usize].parse_text.is_null() {
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -9612,7 +9300,7 @@ unsafe extern "C" fn test_ext_entity_not_standalone() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -9726,7 +9414,7 @@ unsafe extern "C" fn test_ext_entity_value_abort() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc SYSTEM \'004-1.ent\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -9826,7 +9514,7 @@ unsafe extern "C" fn test_attribute_enum_value() {
         ),
     );
     XML_SetUserData(g_parser, &mut dtd_data as *mut ExtTest as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     /* An attribute list handler provokes a different code path */
     XML_SetAttlistDeclHandler(
         g_parser,
@@ -10139,15 +9827,7 @@ unsafe extern "C" fn external_entity_public(
             b"Unexpected parameters to external entity parser\x00".as_ptr() as *const c_char,
         );
     }
-    if !text.is_null() {
-    } else {
-        __assert_fail(b"text != NULL\x00".as_ptr() as *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      4573u32,
-                      (*::std::mem::transmute::<&[u8; 111],
-                                                &[c_char; 111]>(b"int external_entity_public(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!text.is_null());
     parse_res = _XML_Parse_SINGLE_BYTES(ext_parser, text, strlen(text) as c_int, true) as c_int;
     XML_ParserFree(ext_parser);
     return parse_res;
@@ -10169,7 +9849,7 @@ unsafe extern "C" fn test_standalone_parameter_entity() {
     let mut dtd_data: [c_char; 22] =
         *::std::mem::transmute::<&[u8; 22], &mut [c_char; 22]>(b"<!ENTITY % e1 \'foo\'>\n\x00");
     XML_SetUserData(g_parser, dtd_data.as_mut_ptr() as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -10230,7 +9910,7 @@ unsafe extern "C" fn test_skipped_parameter_entity() {
         ),
     );
     XML_SetUserData(g_parser, &mut dtd_data as *mut ExtTest as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetSkippedEntityHandler(
         g_parser,
         Some(
@@ -10298,7 +9978,7 @@ unsafe extern "C" fn test_recursive_external_parameter_entity() {
         ),
     );
     XML_SetUserData(g_parser, &mut dtd_data as *mut ExtFaults as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     _expect_failure(
         text,
         XML_Error::EXTERNAL_ENTITY_HANDLING,
@@ -10381,7 +10061,7 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
     );
     let mut text: *const c_char =
         b"<!DOCTYPE doc SYSTEM \'foo\'>\n<doc></doc>\n\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -10410,7 +10090,7 @@ unsafe extern "C" fn test_undefined_ext_entity_in_external_dtd() {
      * another copy of itself.
      */
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -10958,7 +10638,7 @@ unsafe extern "C" fn test_suspend_resume_parameter_entity() {
         data: [0; 2048],
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetElementDeclHandler(
         g_parser,
         transmute(Some(
@@ -11143,7 +10823,7 @@ unsafe extern "C" fn test_standalone_internal_entity() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\' standalone=\'yes\' ?>\n<!DOCTYPE doc [\n  <!ELEMENT doc (#PCDATA)>\n  <!ENTITY % pe \'<!ATTLIST doc att2 CDATA \"&ge;\">\'>\n  <!ENTITY ge \'AttDefaultValue\'>\n  %pe;\n]>\n<doc att2=\'any\'/>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
         == XML_Status::ERROR
     {
@@ -11178,7 +10858,7 @@ unsafe extern "C" fn test_skipped_external_entity() {
         init
     };
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -11280,7 +10960,7 @@ unsafe extern "C" fn test_skipped_null_loaded_ext_entity() {
         init
     };
     XML_SetUserData(g_parser, &mut test_data as *mut ExtHdlrData as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -11332,7 +11012,7 @@ unsafe extern "C" fn test_skipped_unloaded_ext_entity() {
         init
     };
     XML_SetUserData(g_parser, &mut test_data as *mut ExtHdlrData as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -11383,7 +11063,7 @@ unsafe extern "C" fn test_param_entity_with_trailing_cr() {
         init
     };
     XML_SetUserData(g_parser, &mut test_data as *mut ExtTest as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -13811,7 +13491,7 @@ unsafe extern "C" fn test_unknown_encoding_bad_ignore() {
         )),
         ::rexpat::stddef_h::NULL as *mut c_void,
     );
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -13963,7 +13643,7 @@ unsafe extern "C" fn test_entity_public_utf16_be() {
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
     test_data.storage = &mut storage;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -14031,7 +13711,7 @@ unsafe extern "C" fn test_entity_public_utf16_le() {
     };
     crate::chardata::CharData_Init(&mut storage as *mut _);
     test_data.storage = &mut storage;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -14827,7 +14507,7 @@ unsafe extern "C" fn test_default_ns_from_ext_subset_and_ext_ge() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -15169,11 +14849,11 @@ unsafe extern "C" fn test_ns_parser_reset() {
         6848,
     );
     let mut status: XML_ParsingStatus = XML_ParsingStatus {
-        parsing: XML_INITIALIZED,
+        parsing: XML_Parsing::INITIALIZED,
         finalBuffer: false,
     };
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15184,7 +14864,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     }
     test_return_ns_triplet();
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_FINISHED {
+    if status.parsing != XML_Parsing::FINISHED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -15195,7 +14875,7 @@ unsafe extern "C" fn test_ns_parser_reset() {
     }
     XML_ParserReset(g_parser, ::rexpat::stddef_h::NULL as *const XML_Char);
     XML_GetParsingStatus(g_parser, &mut status as *mut _);
-    if status.parsing != XML_INITIALIZED {
+    if status.parsing != XML_Parsing::INITIALIZED {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -16004,19 +15684,7 @@ unsafe extern "C" fn test_misc_version() {
             b"Could not obtain version text\x00".as_ptr() as *const c_char,
         );
     }
-    if !version_text.is_null() {
-    } else {
-        __assert_fail(
-            b"version_text != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            7325u32,
-            (*::std::mem::transmute::<&[u8; 29], &[c_char; 29]>(
-                b"void test_misc_version(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!version_text.is_null());
     if !parse_version(version_text, &mut parsed_version) {
         crate::minicheck::_fail_unless(
             0i32,
@@ -16069,9 +15737,9 @@ unsafe extern "C" fn test_misc_features() {
         );
     } else {
         /* Loop through the features checking what we can */
-        while (*features).feature != XML_FEATURE_END {
+        while (*features).feature != XML_FeatureEnum::END {
             match (*features).feature {
-                6 => {
+                XML_FeatureEnum::SIZEOF_XML_CHAR => {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_Char>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
@@ -16082,7 +15750,7 @@ unsafe extern "C" fn test_misc_features() {
                                      b"Incorrect size of XML_Char\x00".as_ptr() as *const c_char);
                     }
                 }
-                7 => {
+                XML_FeatureEnum::SIZEOF_XML_LCHAR => {
                     if (*features).value as c_ulong != ::std::mem::size_of::<XML_LChar>() as c_ulong
                     {
                         crate::minicheck::_fail_unless(0i32,
@@ -16340,14 +16008,14 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
         let mut columnNumber: XML_Size = 0;
         let input: *const c_char = inputs[inputIndex as usize];
         parser = XML_ParserCreate(::rexpat::stddef_h::NULL as *const XML_Char);
-        setParamEntityResult = XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        setParamEntityResult = XML_SetParamEntityParsing(parser, XML_ParamEntityParsing::ALWAYS);
         if setParamEntityResult != 1 {
             crate::minicheck::_fail_unless(
                 0i32,
                 b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
                     .as_ptr() as *const c_char,
                 7519i32,
-                b"Failed to set XML_PARAM_ENTITY_PARSING_ALWAYS.\x00".as_ptr() as *const c_char,
+                b"Failed to set XML_ParamEntityParsing::ALWAYS.\x00".as_ptr() as *const c_char,
             );
         }
         parseResult = XML_Parse(parser, input, strlen(input) as c_int, 0);
@@ -16925,7 +16593,7 @@ unsafe extern "C" fn test_alloc_create_external_parser() {
         b"<?xml version=\'1.0\' encoding=\'us-ascii\'?>\n<!DOCTYPE doc SYSTEM \'foo\'>\n<doc>&entity;</doc>\x00".as_ptr() as *const c_char;
     let mut foo_text: [c_char; 26] =
         *::std::mem::transmute::<&[u8; 26], &mut [c_char; 26]>(b"<!ELEMENT doc (#PCDATA)*>\x00");
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetUserData(g_parser, foo_text.as_mut_ptr() as *mut c_void);
     XML_SetExternalEntityRefHandler(
         g_parser,
@@ -16971,7 +16639,7 @@ unsafe extern "C" fn test_alloc_run_external_parser() {
     let max_alloc_count: c_uint = 15;
     i = 0;
     while i < max_alloc_count {
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetUserData(g_parser, foo_text.as_mut_ptr() as *mut c_void);
         XML_SetExternalEntityRefHandler(
             g_parser,
@@ -17121,7 +16789,7 @@ unsafe extern "C" fn test_alloc_dtd_copy_default_atts() {
     let mut text: *const c_char =
 
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -17210,7 +16878,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
     i = 0;
     while i < alloc_test_max_repeats {
         allocation_count = -1;
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -17749,19 +17417,7 @@ unsafe extern "C" fn test_alloc_realloc_buffer() {
                 b"1.5K buffer reallocation failed\x00".as_ptr() as *const c_char,
             );
         }
-        if !buffer.is_null() {
-        } else {
-            __assert_fail(
-                b"buffer != NULL\x00".as_ptr() as *const c_char,
-                b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00"
-                    .as_ptr() as *const c_char,
-                8233u32,
-                (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                    b"void test_alloc_realloc_buffer(void)\x00",
-                ))
-                .as_ptr(),
-            );
-        }
+        assert!(!buffer.is_null());
         memcpy(buffer, text as *const c_void, strlen(text));
         if XML_ParseBuffer(g_parser, strlen(text) as c_int, false as c_int)
             == XML_Status::OK
@@ -17830,16 +17486,7 @@ unsafe extern "C" fn external_entity_reallocator(
             b"Buffer allocation failed\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(b"buffer != NULL\x00".as_ptr() as
-                          *const c_char,
-
-                      b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr() as *const c_char,
-                      8271u32,
-                      (*::std::mem::transmute::<&[u8; 116],
-                                                &[c_char; 116]>(b"int external_entity_reallocator(XML_Parser, const XML_Char *, const XML_Char *, const XML_Char *, const XML_Char *)\x00")).as_ptr());
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     status = XML_ParseBuffer(ext_parser, strlen(text) as c_int, false as c_int);
     reallocation_count = -1;
@@ -17983,7 +17630,7 @@ unsafe extern "C" fn test_alloc_public_entity_value() {
         allocation_count = i as intptr_t;
         dummy_handler_flags = 0;
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -18076,7 +17723,7 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -18298,7 +17945,7 @@ unsafe extern "C" fn test_alloc_set_foreign_dtd() {
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetUserData(g_parser, &mut text2 as *mut [c_char; 26] as *mut c_void);
         XML_SetExternalEntityRefHandler(
             g_parser,
@@ -18388,7 +18035,7 @@ unsafe extern "C" fn test_alloc_attribute_enum_value() {
             ),
         );
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         /* An attribute list handler provokes a different code path */
         XML_SetAttlistDeclHandler(
             g_parser,
@@ -18475,7 +18122,7 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
             ),
         );
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         /* An attribute list handler provokes a different code path */
         XML_SetAttlistDeclHandler(
             g_parser,
@@ -19603,7 +19250,7 @@ unsafe extern "C" fn test_alloc_nested_entities() {
     /* Causes an allocation error in a nested storeEntityValue() */
     allocation_count = 12;
     XML_SetUserData(g_parser, &mut test_data as *mut ExtFaults as *mut c_void);
-    XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+    XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
         g_parser,
         Some(
@@ -19648,7 +19295,7 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -19713,7 +19360,7 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, dtd_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -19870,7 +19517,7 @@ unsafe extern "C" fn test_alloc_long_base() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, entity_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -19936,7 +19583,7 @@ unsafe extern "C" fn test_alloc_long_public_id() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, entity_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -19998,7 +19645,7 @@ unsafe extern "C" fn test_alloc_long_entity_value() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, entity_text.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -20081,7 +19728,7 @@ unsafe extern "C" fn test_alloc_long_notation() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -20288,19 +19935,7 @@ unsafe extern "C" fn test_nsalloc_parse_buffer() {
             b"Could not acquire parse buffer\x00".as_ptr() as *const c_char,
         );
     }
-    if !buffer.is_null() {
-    } else {
-        __assert_fail(
-            b"buffer != NULL\x00".as_ptr() as *const c_char,
-            b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
-                as *const c_char,
-            9843u32,
-            (*::std::mem::transmute::<&[u8; 37], &[c_char; 37]>(
-                b"void test_nsalloc_parse_buffer(void)\x00",
-            ))
-            .as_ptr(),
-        );
-    }
+    assert!(!buffer.is_null());
     memcpy(buffer, text as *const c_void, strlen(text));
     if XML_ParseBuffer(g_parser, strlen(text) as c_int, true as c_int)
         != XML_Status::SUSPENDED
@@ -21022,7 +20657,7 @@ unsafe extern "C" fn test_nsalloc_long_context() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21098,7 +20733,7 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21295,7 +20930,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21381,7 +21016,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_context_in_dtd() {
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21461,7 +21096,7 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21550,7 +21185,7 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
@@ -21636,7 +21271,7 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         XML_SetUserData(g_parser, options.as_mut_ptr() as *mut c_void);
-        XML_SetParamEntityParsing(g_parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
+        XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
             g_parser,
             Some(
