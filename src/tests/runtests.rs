@@ -22334,11 +22334,10 @@ unsafe extern "C" fn make_suite() -> *mut crate::minicheck::Suite {
         tc_misc,
         Some(test_misc_features as unsafe extern "C" fn() -> ()),
     );
-    // FIXME:
-    // crate::minicheck::tcase_add_test(
-    //     tc_misc,
-    //     Some(test_misc_attribute_leak as unsafe extern "C" fn() -> ()),
-    // );
+    crate::minicheck::tcase_add_test(
+        tc_misc,
+        Some(test_misc_attribute_leak as unsafe extern "C" fn() -> ()),
+    );
     crate::minicheck::tcase_add_test(
         tc_misc,
         Some(test_misc_utf16le as unsafe extern "C" fn() -> ()),

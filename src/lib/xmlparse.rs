@@ -8468,14 +8468,14 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
 unsafe extern "C" fn dtdDestroy(
     mut p: *mut DTD,
 ) {
+    std::ptr::drop_in_place(&mut (*p).pool);
+    std::ptr::drop_in_place(&mut (*p).entityValuePool);
     std::ptr::drop_in_place(&mut (*p).generalEntities);
     std::ptr::drop_in_place(&mut (*p).paramEntities);
     /* XML_DTD */
     std::ptr::drop_in_place(&mut (*p).elementTypes);
     std::ptr::drop_in_place(&mut (*p).attributeIds);
     std::ptr::drop_in_place(&mut (*p).prefixes);
-    (*p).pool.destroy();
-    (*p).entityValuePool.destroy();
     std::ptr::drop_in_place(&mut (*p).scaffold);
     FREE!(p);
 }
