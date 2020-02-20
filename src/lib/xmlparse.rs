@@ -6541,18 +6541,20 @@ impl<'scaffold> XML_ParserStruct<'scaffold> {
                     {
                         return XML_Error::SYNTAX;
                     }
-                    let mut scaff = (*dtd).scaffold.borrow_mut();
-                    let idx = scaff.index.last().copied().unwrap();
                     if (*dtd).in_eldecl as c_int != 0
                         && *self
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize)
                         == 0
-                        && scaff.scaffold[idx].type_0 != XML_Content_Type::MIXED
                     {
-                        scaff.scaffold[idx].type_0 = XML_Content_Type::CHOICE;
-                        if self.m_handlers.hasElementDecl() {
-                            handleDefault = false
+                        let mut scaff = (*dtd).scaffold.borrow_mut();
+                        let idx = scaff.index.last().copied().unwrap();
+                        if scaff.scaffold[idx].type_0 != XML_Content_Type::MIXED
+                        {
+                            scaff.scaffold[idx].type_0 = XML_Content_Type::CHOICE;
+                            if self.m_handlers.hasElementDecl() {
+                                handleDefault = false
+                            }
                         }
                     }
                     *self
