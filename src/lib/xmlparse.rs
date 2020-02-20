@@ -9163,7 +9163,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     strpos,
                 );
                 i = i.wrapping_add(1);
-                cn = scaff.scaffold[cn].nextsib
+                cn = scaff.scaffold[cn].nextsib;
             }
             (*dest).name = NULL as *mut XML_Char
         };
