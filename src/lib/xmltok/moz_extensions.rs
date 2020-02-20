@@ -121,7 +121,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
     let tok = encoding.scanRef(buf.inc_start(enc_mbpc), next);
-    if tok <= XML_TOK::INVALID {
+    if tok.is_error() {
         return 0;
     }
 
