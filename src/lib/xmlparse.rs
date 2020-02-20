@@ -1688,12 +1688,13 @@ impl XML_ParserStruct {
             return false;
         }
         /* move m_tagStack to m_freeTagList */
-        let mut tStk = std::mem::take(&mut self.m_tagStack);
+        let mut tStk = self.m_tagStack.take();
         while let Some(mut tag) = tStk {
-            let new_parent = std::mem::take(&mut self.m_freeTagList);
-            tStk = std::mem::replace(&mut tag.parent, new_parent);
             self.moveToFreeBindingList(tag.bindings);
             tag.bindings = ptr::null_mut();
+
+            let new_parent = self.m_freeTagList.take();
+            tStk = std::mem::replace(&mut tag.parent, new_parent);
             self.m_freeTagList = Some(tag);
         }
         /* move m_openInternalEntities to m_freeInternalEntities */
@@ -3748,9 +3749,9 @@ impl XML_ParserStruct {
                     /* fall through */
                     let mut result_0: XML_Error = XML_Error::NONE;
                     let mut to_buf: ExpatBufRefMut<XML_Char>;
-                    let mut tag = match std::mem::take(&mut self.m_freeTagList) {
+                    let mut tag = match self.m_freeTagList.take() {
                         Some(mut tag) => {
-                            self.m_freeTagList = std::mem::take(&mut tag.parent);
+                            self.m_freeTagList = tag.parent.take();
                             tag
                         }
                         None => {
@@ -3825,7 +3826,7 @@ impl XML_ParserStruct {
                     self.m_tempPool.clear();
 
                     // FIXME: do we need to update m_tagStack when returning an error?
-                    tag.parent = std::mem::take(&mut self.m_tagStack);
+                    tag.parent = self.m_tagStack.take();
                     self.m_tagStack = Some(tag);
                 }
                 super::xmltok::XML_TOK_EMPTY_ELEMENT_NO_ATTS
@@ -3889,8 +3890,8 @@ impl XML_ParserStruct {
                         return XML_Error::ASYNC_ENTITY;
                     } else {
                         // Pop the tag off the tagStack
-                        let mut tag = std::mem::take(&mut self.m_tagStack).unwrap();
-                        self.m_tagStack = std::mem::take(&mut tag.parent);
+                        let mut tag = self.m_tagStack.take().unwrap();
+                        self.m_tagStack = tag.parent.take();
 
                         let rawName_0 = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
                         let len = (*enc).nameLength(rawName_0.as_ptr());
@@ -3994,7 +3995,7 @@ impl XML_ParserStruct {
                         }
 
                         // Move the tag to the free list
-                        tag.parent = std::mem::take(&mut self.m_freeTagList);
+                        tag.parent = self.m_freeTagList.take();
                         self.m_freeTagList = Some(tag);
 
                         if self.m_tagLevel == 0
