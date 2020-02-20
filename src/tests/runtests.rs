@@ -279,8 +279,8 @@ pub type DefaultCheck = default_check;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct DataIssue240 {
-    pub parser: XML_Parser,
+pub struct DataIssue240<'scaffold> {
+    pub parser: XML_Parser<'scaffold>,
     pub deep: c_int,
 }
 /* ptrdiff_t */
@@ -18992,7 +18992,7 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
         data: [0; 2048],
     };
     let mut i: c_int = 0;
-    let max_realloc_count: c_int = 10;
+    let max_realloc_count: c_int = 15;
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
