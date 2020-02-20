@@ -4790,22 +4790,22 @@ unsafe extern "C" fn addBinding(
     let mut len = 0;
     while *uri.add(len) != 0 {
         if isXML as c_int != 0
-            && (len > xmlNamespace.len()
+            && (len >= xmlNamespace.len()
                 || *uri.add(len) as c_int != xmlNamespace[len] as c_int)
         {
             isXML = false
         }
         if !mustBeXML
             && isXMLNS
-            && (len > xmlnsNamespace.len()
+            && (len >= xmlnsNamespace.len()
                 || *uri.add(len) as c_int != xmlnsNamespace[len] as c_int)
         {
             isXMLNS = false
         }
         len += 1;
     }
-    isXML = isXML && len == xmlNamespace.len();
-    isXMLNS = isXMLNS && len == xmlnsNamespace.len();
+    isXML = isXML && len == (xmlNamespace.len() - 1);
+    isXMLNS = isXMLNS && len == (xmlnsNamespace.len() - 1);
     if mustBeXML != isXML {
         return if mustBeXML {
             XML_Error::RESERVED_PREFIX_XML
