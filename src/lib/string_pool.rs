@@ -44,7 +44,7 @@ struct RawBumpVec {
 }
 
 impl RawBumpVec {
-    fn new() -> Self {
+    const fn new() -> Self {
         RawBumpVec {
             start: ptr::null_mut(),
             len: 0,
@@ -200,10 +200,6 @@ impl StringPool {
 
     pub(crate) fn clear(&mut self) {
         self.bump.reset()
-    }
-
-    pub(crate) unsafe fn destroy(&mut self) {
-        self.clear()
     }
 
     pub(crate) unsafe fn storeString(

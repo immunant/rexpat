@@ -2013,8 +2013,6 @@ impl<'scf> Drop for XML_ParserStruct<'scf> {
             }
             destroyBindings(self.m_freeBindingList);
             destroyBindings(self.m_inheritedBindings);
-            self.m_tempPool.destroy();
-            self.m_temp2Pool.destroy();
             FREE!(self.m_protocolEncodingName);
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
