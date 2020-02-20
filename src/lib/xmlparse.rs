@@ -9123,14 +9123,13 @@ impl STRING_POOL {
 impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn build_node(
         &mut self,
-        mut src_node: c_int,
+        mut src_node: usize,
         mut dest: *mut XML_Content,
         mut contpos: *mut *mut XML_Content,
         mut strpos: *mut *mut XML_Char,
     ) {
         let dtd: *mut DTD = self.m_dtd;
         let scaff = RefCell::borrow(&(*dtd).scaffold);
-        let src_node = src_node as usize;
         (*dest).type_0 = scaff.scaffold[src_node].type_0;
         (*dest).quant = scaff.scaffold[src_node].quant;
         if (*dest).type_0 == XML_Content_Type::NAME {
@@ -9150,14 +9149,14 @@ impl<'scf> XML_ParserStruct<'scf> {
             (*dest).children = NULL as *mut XML_Content
         } else {
             let mut i: c_uint = 0;
-            (*dest).numchildren = scaff.scaffold[src_node].childcnt as c_uint;
+            (*dest).numchildren = scaff.scaffold[src_node].childcnt.try_into().unwrap();
             (*dest).children = *contpos;
             *contpos = (*contpos).offset((*dest).numchildren as isize);
             i = 0;
             let mut cn = scaff.scaffold[src_node].firstchild;
             while i < (*dest).numchildren {
                 self.build_node(
-                    cn as c_int,
+                    cn,
                     &mut *(*dest).children.offset(i as isize),
                     contpos,
                     strpos,
