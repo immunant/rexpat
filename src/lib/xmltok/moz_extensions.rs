@@ -4,9 +4,7 @@ use crate::lib::xmltok::{
     MOZ_XmlUtf16Encode,
     XmlEncoding,
     XmlEncodingImpl,
-    XML_TOK::INVALID,
-    XML_TOK::CHAR_REF,
-    XML_TOK::ENTITY_REF,
+    XML_TOK,
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
 use crate::xmltok_impl_h::ByteType;
