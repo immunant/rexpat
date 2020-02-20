@@ -53,7 +53,6 @@ impl RawBumpVec {
     }
 }
 
-// #[derive(PartialEq)]
 pub(crate) struct StringPool {
     bump: Bump,
     currentBumpVec: Cell<RawBumpVec>,
