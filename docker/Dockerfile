@@ -24,6 +24,7 @@ RUN apt-get update -qq && \
     build-essential       \
     curl                  \
     ed                    \
+	gdb                   \
     git                   \
     python3.7-minimal     \
     libcap-dev            \
