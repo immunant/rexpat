@@ -38,6 +38,7 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
+use std::marker::PhantomData;
 use std::ptr;
 use crate::xmltok_impl_h::ByteType;
 use num_derive::{ToPrimitive};
@@ -381,12 +382,6 @@ macro_rules! UCS2_GET_NAMING {
 
 struct Utf8EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> Utf8EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
 type Utf8Encoding = Utf8EncodingImpl<Utf8EncodingTable>;
 type Utf8EncodingNS = Utf8EncodingImpl<Utf8EncodingTableNS>;
 type InternalUtf8Encoding = Utf8EncodingImpl<InternalUtf8EncodingTable>;
@@ -667,12 +662,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
 
 struct Latin1EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> Latin1EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
 type Latin1Encoding = Latin1EncodingImpl<Latin1EncodingTable>;
 type Latin1EncodingNS = Latin1EncodingImpl<Latin1EncodingTableNS>;
 
@@ -766,12 +755,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
 
 struct AsciiEncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> AsciiEncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
 type AsciiEncoding = AsciiEncodingImpl<AsciiEncodingTable>;
 type AsciiEncodingNS = AsciiEncodingImpl<AsciiEncodingTableNS>;
 
@@ -850,12 +833,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
 }
 
 struct Little2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
-
-impl<T: NormalEncodingTable> Little2EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 type Little2Encoding = Little2EncodingImpl<Latin1EncodingTable>;
 type Little2EncodingNS = Little2EncodingImpl<Latin1EncodingTableNS>;
@@ -1044,12 +1021,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
 }
 
 struct Big2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
-
-impl<T: NormalEncodingTable> Big2EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 type Big2Encoding = Big2EncodingImpl<Latin1EncodingTable>;
 type Big2EncodingNS = Big2EncodingImpl<Latin1EncodingTableNS>;
@@ -2025,14 +1996,14 @@ impl InitEncoding {
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
-        Self::new_impl(encPtr, name, encodingsNS.as_ref().unwrap())
+        Self::new_impl(encPtr, name, &encodingsNS)
     }
 
     pub unsafe fn new(
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
-        Self::new_impl(encPtr, name, encodings.as_ref().unwrap())
+        Self::new_impl(encPtr, name, &encodings)
     }
 
     /* This is what detects the encoding.  encodingTable maps from
@@ -2282,10 +2253,7 @@ impl XmlEncoding for InitEncoding {
         buf: ExpatBufRef,
         pos: *mut POSITION,
     ) {
-        utf8_encoding
-            .as_ref()
-            .unwrap()
-            .updatePosition(buf, pos);
+        utf8_encoding.updatePosition(buf, pos);
     }
 
     unsafe fn isPublicId(
@@ -2563,60 +2531,74 @@ impl XmlEncodingImpl for UnknownEncoding {
 
 
 
-static mut latin1_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut latin1_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut internal_utf8_encoding: Option<Box<InternalUtf8Encoding>> = None;
-static mut internal_utf8_encoding_ns: Option<Box<InternalUtf8EncodingNS>> = None;
-static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static latin1_encoding: Latin1Encoding = Latin1EncodingImpl(PhantomData);
+static latin1_encoding_ns: Latin1EncodingNS = Latin1EncodingImpl(PhantomData);
+static utf8_encoding: Utf8Encoding = Utf8EncodingImpl(PhantomData);
+static utf8_encoding_ns: Utf8EncodingNS = Utf8EncodingImpl(PhantomData);
+static internal_utf8_encoding: InternalUtf8Encoding = Utf8EncodingImpl(PhantomData);
+static internal_utf8_encoding_ns: InternalUtf8EncodingNS = Utf8EncodingImpl(PhantomData);
+static ascii_encoding: AsciiEncoding = AsciiEncodingImpl(PhantomData);
+static ascii_encoding_ns: AsciiEncodingNS = AsciiEncodingImpl(PhantomData);
+static little2_encoding: Little2Encoding = Little2EncodingImpl(PhantomData);
+static little2_encoding_ns: Little2EncodingNS = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding: Option<Box<InternalLittle2Encoding>> = None;
+static internal_little2_encoding: InternalLittle2Encoding = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding_ns: Option<Box<InternalLittle2EncodingNS>> = None;
-static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static internal_little2_encoding_ns: InternalLittle2EncodingNS = Little2EncodingImpl(PhantomData);
+static big2_encoding: Big2Encoding = Big2EncodingImpl(PhantomData);
+static big2_encoding_ns: Big2EncodingNS = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
+static internal_big2_encoding: InternalBig2Encoding = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
+static internal_big2_encoding_ns: InternalBig2EncodingNS = Big2EncodingImpl(PhantomData);
 
 pub fn MOZ_XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() }
+    &internal_utf8_encoding_ns
 }
 
 pub fn MOZ_XmlGetUtf8InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_utf8_encoding.as_ref().unwrap() }
+    &internal_utf8_encoding
 }
 
 #[cfg(target_endian = "little")]
 pub fn MOZ_XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_little2_encoding.as_ref().unwrap() }
+    &internal_little2_encoding
 }
 
 #[cfg(target_endian = "big")]
 pub fn MOZ_XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_big2_encoding.as_ref().unwrap() }
+    &internal_big2_encoding
 }
 
 #[cfg(target_endian = "little")]
 pub fn MOZ_XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() }
+    &internal_little2_encoding_ns
 }
 
 #[cfg(target_endian = "big")]
 pub fn MOZ_XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() }
+    &internal_big2_encoding_ns
 }
 
-// Initialized in run_static_initializers
-pub static mut encodingsNS: Option<[&'static ENCODING; 7]> = None;
+pub static mut encodingsNS: [&'static ENCODING; 7] = [
+    &latin1_encoding_ns,
+    &ascii_encoding_ns,
+    &utf8_encoding_ns,
+    &big2_encoding_ns,
+    &big2_encoding_ns,
+    &little2_encoding_ns,
+    &utf8_encoding_ns,
+];
 
-// Initialized in run_static_initializers
-pub static mut encodings: Option<[&'static ENCODING; 7]> = None;
+pub static mut encodings: [&'static ENCODING; 7] = [
+    &latin1_encoding,
+    &ascii_encoding,
+    &utf8_encoding,
+    &big2_encoding,
+    &big2_encoding,
+    &little2_encoding,
+    &utf8_encoding,
+];
 
 pub unsafe fn findEncoding(
     mut enc: &ENCODING,
@@ -2640,7 +2622,7 @@ pub unsafe fn findEncoding(
     if i == UNKNOWN_ENC {
         None
     } else {
-        Some(encodings.unwrap()[i as usize])
+        Some(encodings[i as usize])
     }
 }
 
@@ -2666,7 +2648,7 @@ pub unsafe fn findEncodingNS(
     if i == UNKNOWN_ENC {
         None
     } else {
-        Some(encodingsNS.unwrap()[i as usize])
+        Some(encodingsNS[i as usize])
     }
 }
 
@@ -2907,10 +2889,7 @@ unsafe fn initUpdatePosition(
     buf: ExpatBufRef,
     mut pos: *mut POSITION,
 ) {
-    utf8_encoding
-        .as_ref()
-        .unwrap()
-        .updatePosition(buf, pos);
+    utf8_encoding.updatePosition(buf, pos);
 }
 
 unsafe fn toAscii(
@@ -3311,52 +3290,4 @@ unsafe fn getEncodingIndex(mut name: *const c_char) -> c_int {
     }
     UNKNOWN_ENC
 }
-
-unsafe fn run_static_initializers() {
-    latin1_encoding = Some(Box::new(Latin1Encoding::new()));
-    latin1_encoding_ns = Some(Box::new(Latin1EncodingNS::new()));
-    utf8_encoding = Some(Box::new(Utf8Encoding::new()));
-    utf8_encoding_ns = Some(Box::new(Utf8EncodingNS::new()));
-    internal_utf8_encoding = Some(Box::new(InternalUtf8Encoding::new()));
-    internal_utf8_encoding_ns = Some(Box::new(InternalUtf8EncodingNS::new()));
-    ascii_encoding = Some(Box::new(AsciiEncoding::new()));
-    ascii_encoding_ns = Some(Box::new(AsciiEncodingNS::new()));
-    little2_encoding = Some(Box::new(Little2Encoding::new()));
-    little2_encoding_ns = Some(Box::new(Little2EncodingNS::new()));
-    #[cfg(target_endian = "little")]
-    {
-        internal_little2_encoding = Some(Box::new(InternalLittle2Encoding::new()));
-        internal_little2_encoding_ns = Some(Box::new(InternalLittle2EncodingNS::new()));
-    }
-    big2_encoding = Some(Box::new(Big2Encoding::new()));
-    big2_encoding_ns = Some(Box::new(Big2EncodingNS::new()));
-    #[cfg(target_endian = "big")]
-    {
-        internal_big2_encoding = Some(Box::new(InternalBig2Encoding::new()));
-        internal_big2_encoding_ns = Some(Box::new(InternalBig2EncodingNS::new()));
-    }
-    encodingsNS = Some([
-        &**latin1_encoding_ns.as_ref().unwrap(),
-        &**ascii_encoding_ns.as_ref().unwrap(),
-        &**utf8_encoding_ns.as_ref().unwrap(),
-        &**big2_encoding_ns.as_ref().unwrap(),
-        &**big2_encoding_ns.as_ref().unwrap(),
-        &**little2_encoding_ns.as_ref().unwrap(),
-        &**utf8_encoding_ns.as_ref().unwrap(),
-    ]);
-    encodings = Some([
-        &**latin1_encoding.as_ref().unwrap(),
-        &**ascii_encoding.as_ref().unwrap(),
-        &**utf8_encoding.as_ref().unwrap(),
-        &**big2_encoding.as_ref().unwrap(),
-        &**big2_encoding.as_ref().unwrap(),
-        &**little2_encoding.as_ref().unwrap(),
-        &**utf8_encoding.as_ref().unwrap(),
-    ]);
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 // XML_NS
