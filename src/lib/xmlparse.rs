@@ -9113,7 +9113,7 @@ impl STRING_POOL {
 impl<'scf> XML_ParserStruct<'scf> {
     fn build_node(
         &mut self,
-        mut src_node: usize,
+        src_node: usize,
         dest: &mut XML_Content,
         contpos: &mut &[Cell<XML_Content>],
         strpos: &mut &[Cell<XML_Char>],
