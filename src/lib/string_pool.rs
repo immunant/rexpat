@@ -61,7 +61,7 @@ pub(crate) struct StringPool {
 impl StringPool {
     pub(crate) fn new() -> Result<Self, ()> {
         Ok(StringPool {
-            bump: Bump::try_new()?,
+            bump: Bump::try_new().map_err(|_| ())?,
             currentBumpVec: Cell::new(RawBumpVec::new()),
         })
     }
