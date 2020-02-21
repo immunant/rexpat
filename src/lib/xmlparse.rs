@@ -109,13 +109,8 @@ pub use crate::lib::xmltok::{MOZ_XmlParseXmlDecl, MOZ_XmlParseXmlDeclNS,
                              UnknownEncoding};
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __pid_t, __ssize_t,
-    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf,
-    ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
-};
 use crate::stdlib::{memcmp, memcpy, memmove, memset};
-pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
+pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 use num_traits::{ToPrimitive,FromPrimitive};
 
