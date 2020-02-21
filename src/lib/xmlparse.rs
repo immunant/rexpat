@@ -6906,13 +6906,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
-                        let empty_index = {
+                        let empty_scaffold = {
                             let mut scf = (*dtd).scaffold.borrow_mut();
                             let idx = scf.index.pop().unwrap();
                             scf.scaffold[idx].quant = quant;
                             scf.index.is_empty()
                         };
-                        if empty_index {
+                        if empty_scaffold {
                             if !handleDefault {
                                 let mut model: *mut XML_Content = self.build_model();
                                 if model.is_null() {
