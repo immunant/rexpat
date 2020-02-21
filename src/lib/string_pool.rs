@@ -1,5 +1,5 @@
 use crate::expat_external_h::XML_Char;
-use crate::lib::xmlparse::{ICHAR, INIT_BLOCK_SIZE, ExpatBufRef, ExpatBufRefMut, XmlConvert};
+use crate::lib::xmlparse::{ICHAR, ExpatBufRef, ExpatBufRefMut, XmlConvert};
 use crate::lib::xmltok::{ENCODING, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_COMPLETED};
 use crate::stddef_h::size_t;
 
@@ -11,6 +11,20 @@ use std::cell::Cell;
 use std::convert::TryInto;
 use std::mem::ManuallyDrop;
 use std::ptr;
+
+pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
+
+#[cfg(feature = "mozilla")]
+const fn init_block_size_const() -> usize {
+    // FIXME: should be `offset_of(BLOCK, s)`, but that's not supported yet,
+    // so we over-estimate its offset
+    1024 - (std::mem::size_of::<BLOCK>() / std::mem::size_of::<XML_Char>())
+}
+
+#[cfg(not(feature = "mozilla"))]
+const fn init_block_size_const() -> usize {
+    1024
+}
 
 fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
     /* Unprotected math would be:
@@ -38,8 +52,8 @@ fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
 
 #[derive(Copy, Clone, PartialEq)]
 struct RawBumpVec {
-    start: *mut XML_Char, // self.start
-    len: usize, // self.ptr
+    start: *mut XML_Char,
+    len: usize,
     cap: usize,
 }
 
@@ -66,12 +80,14 @@ impl StringPool {
         })
     }
 
+    /// Determined whether or not the current BumpVec is empty.
     pub(crate) fn is_empty(&self) -> bool {
         let RawBumpVec { len, .. } = self.currentBumpVec.get();
 
         len == 0
     }
 
+    /// Determines whether or not the current BumpVec is full.
     pub(crate) fn is_full(&self) -> bool {
         let RawBumpVec { cap, len, .. } = self.currentBumpVec.get();
 
@@ -102,10 +118,14 @@ impl StringPool {
         self.currentBumpVec.set(RawBumpVec::new())
     }
 
+    /// Obtains the length of the current BumpVec.
     pub(crate) fn len(&self) -> usize {
         self.currentBumpVec.get().len
     }
 
+    /// Gets the current BumpVec. For internal use only, so as to maintain the invariant that
+    /// only one instance of the vec exists at any given time. For example, calling get_bump_vec
+    /// twice in a row may very well lead to UB due to overlapping owning pointers.
     fn get_bump_vec(&self) -> ManuallyDrop<BumpVec<XML_Char>> {
         // If we don't already have an existing bump vec, create a new one
         // otherwise regenerate previous one
@@ -120,6 +140,7 @@ impl StringPool {
         }
     }
 
+    /// Gets an immutable buffer into the current BumpVec.
     pub(crate) fn current_slice(&self) -> &[XML_Char] {
         ManuallyDrop::into_inner(self.get_bump_vec()).into_bump_slice()
     }
@@ -135,6 +156,7 @@ impl StringPool {
         });
     }
 
+    /// Appends a char to the current BumpVec.
     pub(crate) fn appendChar(&self, c: XML_Char) -> bool {
         if self.is_full() && !self.grow() {
             false
@@ -149,6 +171,7 @@ impl StringPool {
         }
     }
 
+    /// Overwrites the last char in the current BumpVec.
     /// Note that this will panic if empty and that this is not an insert
     /// operation as it does not shift bytes afterwards.
     pub(crate) fn prepend_char(&self, c: XML_Char) {
@@ -175,6 +198,7 @@ impl StringPool {
         buf[buf.len() - 1]
     }
 
+    /// Appends an entire C String to the current BumpVec.
     pub(crate) unsafe fn appendString(&self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
             if !self.appendChar(*s) {
@@ -182,9 +206,10 @@ impl StringPool {
             }
             s = s.offset(1)
         }
-        !self.currentBumpVec.get().start.is_null() // TODO: Just return true?
+        true
     }
 
+    /// Resets the current BumpVec and deallocates its contents.
     pub(crate) fn clear(&mut self) {
         self.bump.reset()
     }
@@ -250,18 +275,8 @@ impl StringPool {
             cap_begin = start.add(len);
             cap_end = start.add(cap) as *mut ICHAR;
 
-            // Zero cap bytes
-            // REVIEW: grow() may be a better place for this
-            let mut tmp = cap_begin;
-
-            while tmp != cap_end {
-                std::ptr::write(tmp, 0);
-                tmp = tmp.add(1);
-            }
-
-            // Vec[init len, uninit cap - len]
-            // FIXME: Writing to slice of uninit memory (UB most likely)
-            // XmlConvert should probably take a &mut ExpatBufRefMut<T = MaybeUninit<XML_Char>> instead
+            // NOTE: We avoid UB when writing to the capacity via a mutable slice by zeroing the
+            // capacity ahead of time in the grow() method
             let mut writeBuf = ExpatBufRefMut::new(cap_begin, cap_end);
 
             let convert_res = XmlConvert!(
@@ -286,7 +301,7 @@ impl StringPool {
             len = new_len;
         }
 
-        !self.currentBumpVec.get().start.is_null() // TODO: Just return true?
+        true
     }
 
     pub(crate) unsafe fn copyString(
@@ -344,7 +359,7 @@ impl StringPool {
     /// it's possible to allocate or not
     pub(crate) fn grow(&self) -> bool {
         let mut buf = self.get_bump_vec();
-        let mut blockSize_0: c_int = buf.capacity() as c_int;
+        let mut blockSize_0 = buf.capacity();
         let mut bytesToAllocate_0: size_t = 0;
         // if blockSize_0 < 0 {
         //     /* This condition traps a situation where either more than
@@ -359,16 +374,16 @@ impl StringPool {
         //     return false;
         //     /* LCOV_EXCL_LINE */
         // }
-        if blockSize_0 < INIT_BLOCK_SIZE {
-            blockSize_0 = INIT_BLOCK_SIZE
+        blockSize_0 = if blockSize_0 < INIT_BLOCK_SIZE {
+            INIT_BLOCK_SIZE
         } else {
             /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-            if ((blockSize_0 as c_uint).wrapping_mul(2u32) as c_int) < 0 {
-                return false;
-            } /* save one level of indirection */
-            blockSize_0 *= 2
-        } /* save one level of indirection */
-        bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0); /* save one level of indirection */
+            match blockSize_0.checked_mul(2) {
+                Some(size) => size,
+                None => return false,
+            }
+        };
+        bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0.try_into().unwrap());
 
         if bytesToAllocate_0 == 0 {
             return false;
@@ -379,6 +394,21 @@ impl StringPool {
         };
 
         self.update_raw(&mut buf);
+
+        // Zero capacity bytes
+        let start = buf.as_mut_ptr();
+
+        // Safety: This is safe because we are writing to data we actually own,
+        // and don't go out of bounds of the BumpVec's capactiy
+        unsafe {
+            let mut tmp = start.add(buf.len());
+            let end = start.add(buf.capacity());
+
+            while tmp != end {
+                ptr::write(tmp, 0);
+                tmp = tmp.add(1);
+            }
+        }
 
         true
     }
@@ -399,27 +429,20 @@ mod consts {
 #[test]
 fn test_append_char() {
     use consts::*;
-    // use std::mem::size_of;
 
     let mut pool = StringPool::new().unwrap();
 
     assert!(pool.appendChar(A));
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
-    // allocated_bytes seems to always return 0 for some reason
-    // assert_eq!(pool.bump.allocated_bytes(), size_of::<XML_Char>());
 
     assert!(pool.appendChar(B));
     assert_eq!(pool.get_bump_vec().as_slice(), [A, B]);
-    // assert_eq!(pool.bump.allocated_bytes(), size_of::<XML_Char>() * 2);
 
     // New BumpVec
     pool.finish_current();
 
     assert!(pool.appendChar(C));
     assert_eq!(pool.get_bump_vec().as_slice(), [C]);
-
-    // Check whole Bump buff
-    // assert_eq!(pool.bump.allocated_bytes(), size_of::<XML_Char>() * 3);
 }
 
 #[test]
