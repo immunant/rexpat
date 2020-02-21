@@ -6841,14 +6841,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 4542134034984465527 => {
                     if (*dtd).in_eldecl {
-                        let mut el: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
-                        let mut name_2: *const XML_Char = 0 as *const XML_Char;
-                        let mut nameLen: c_int = 0;
                         let mut nxt: *const c_char = if quant == XML_Content_Quant::NONE {
                             next
                         } else {
                             next.offset(-((*enc).minBytesPerChar() as isize))
                         };
+
                         let mut scf = (*dtd).scaffold.borrow_mut();
                         let myindex_0 = match scf.next_part() {
                             Some(myindex) => myindex,
@@ -6856,14 +6854,15 @@ impl<'scf> XML_ParserStruct<'scf> {
                         };
                         scf.scaffold[myindex_0].type_0 = XML_Content_Type::NAME;
                         scf.scaffold[myindex_0].quant = quant;
-                        el = self.getElementType(enc_type, buf.with_end(nxt));
+
+                        let mut el = self.getElementType(enc_type, buf.with_end(nxt));
                         if el.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        name_2 = (*el).name;
-                        let ref mut fresh36 = scf.scaffold[myindex_0].name;
-                        *fresh36 = name_2;
-                        nameLen = 0;
+                        scf.scaffold[myindex_0].name = (*el).name;
+
+                        let mut name_2 = (*el).name;
+                        let mut nameLen = 0;
                         loop {
                             let fresh37 = nameLen;
                             nameLen = nameLen + 1;
