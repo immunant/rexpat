@@ -82,13 +82,8 @@ pub use crate::lib::xmltok::{
 };
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __pid_t, __ssize_t,
-    __suseconds_t, __time_t, __timezone_ptr_t, __uint64_t, fprintf,
-    ssize_t, stderr, timezone, uint64_t, FILE, GRND_NONBLOCK, _IO_FILE,
-};
 use crate::stdlib::{memcmp, memcpy, memmove, memset};
-pub use ::libc::{timeval, EINTR, INT_MAX, O_RDONLY};
+pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 use num_traits::{ToPrimitive,FromPrimitive};
 
@@ -96,7 +91,7 @@ use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
 use std::borrow::Cow;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
@@ -3325,13 +3320,13 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         },
         #[cfg(feature = "unicode")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE,
+            feature: XML_FeatureEnum::UNICODE,
             name: wch!("XML_UNICODE\x00"),
             value: 0,
         },
         #[cfg(feature = "unicode_wchar_t")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE_WCHAR_T,
+            feature: XML_FeatureEnum::UNICODE_WCHAR_T,
             name: wch!("XML_UNICODE_WHCAR_T\x00"),
             value: 0,
         },
@@ -9116,58 +9111,54 @@ impl STRING_POOL {
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    unsafe fn build_node(
+    fn build_node(
         &mut self,
         mut src_node: usize,
-        mut dest: *mut XML_Content,
-        mut contpos: *mut *mut XML_Content,
-        mut strpos: *mut *mut XML_Char,
+        dest: &mut XML_Content,
+        contpos: &mut &[Cell<XML_Content>],
+        strpos: &mut &[Cell<XML_Char>],
     ) {
         let dtd: *mut DTD = self.m_dtd;
-        let scf = RefCell::borrow(&(*dtd).scaffold);
-        (*dest).type_0 = scf.scaffold[src_node].type_0;
-        (*dest).quant = scf.scaffold[src_node].quant;
-        if (*dest).type_0 == XML_Content_Type::NAME {
-            let mut src: *const XML_Char = 0 as *const XML_Char;
-            (*dest).name = *strpos;
-            src = scf.scaffold[src_node].name;
+        let scf = RefCell::borrow(unsafe { &(*dtd).scaffold });
+        dest.type_0 = scf.scaffold[src_node].type_0;
+        dest.quant = scf.scaffold[src_node].quant;
+        if dest.type_0 == XML_Content_Type::NAME {
+            dest.name = (*strpos).as_ptr() as *mut XML_Char;
+            dest.numchildren = 0;
+            dest.children = ptr::null_mut();
+
+            let mut src = scf.scaffold[src_node].name;
             loop {
-                let fresh83 = *strpos;
-                *strpos = (*strpos).offset(1);
-                *fresh83 = *src;
-                if *src == 0 {
+                let (first, rest) = strpos.split_first().unwrap();
+                *strpos = rest;
+
+                first.set(unsafe { *src });
+                if first.get() == 0 {
                     break;
                 }
-                src = src.offset(1)
+                unsafe { src = src.offset(1) };
             }
-            (*dest).numchildren = 0;
-            (*dest).children = NULL as *mut XML_Content
         } else {
-            let mut i: c_uint = 0;
-            (*dest).numchildren = scf.scaffold[src_node].childcnt.try_into().unwrap();
-            (*dest).children = *contpos;
-            *contpos = (*contpos).offset((*dest).numchildren as isize);
-            i = 0;
+            let (children, rest) = contpos.split_at(scf.scaffold[src_node].childcnt);
+            *contpos = rest;
+
+            dest.name = ptr::null_mut();
+            dest.numchildren = children.len().try_into().unwrap();
+            dest.children = children.as_ptr() as *mut XML_Content;
+
             let mut cn = scf.scaffold[src_node].firstchild;
-            while i < (*dest).numchildren {
-                self.build_node(
-                    cn,
-                    &mut *(*dest).children.offset(i as isize),
-                    contpos,
-                    strpos,
-                );
-                i = i.wrapping_add(1);
+            for child in children {
+                let mut child_content = unsafe { std::mem::zeroed() };
+                self.build_node(cn, &mut child_content, contpos, strpos);
+                child.set(child_content);
                 cn = scf.scaffold[cn].nextsib;
             }
-            (*dest).name = NULL as *mut XML_Char
         };
     }
 
     unsafe fn build_model(&mut self) -> *mut XML_Content {
         let dtd: *mut DTD = self.m_dtd;
         let mut ret: *mut XML_Content = 0 as *mut XML_Content;
-        let mut cpos: *mut XML_Content = 0 as *mut XML_Content;
-        let mut str: *mut XML_Char = 0 as *mut XML_Char;
         let scaffold_len = (*dtd).scaffold.borrow().scaffold.len();
         let mut allocsize: c_int = (scaffold_len as c_ulong)
             .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
@@ -9179,9 +9170,13 @@ impl<'scf> XML_ParserStruct<'scf> {
         if ret.is_null() {
             return NULL as *mut XML_Content;
         }
-        str = &mut *ret.add(scaffold_len) as *mut XML_Content as *mut XML_Char;
-        cpos = &mut *ret.offset(1) as *mut XML_Content;
-        self.build_node(0, ret, &mut cpos, &mut str);
+        let mut str = std::slice::from_raw_parts(
+            ret.add(scaffold_len) as *const Cell<XML_Char>,
+            (*dtd).contentStringLen as usize);
+        let mut cpos = std::slice::from_raw_parts(
+            ret.offset(1) as *const Cell<XML_Content>,
+            scaffold_len as usize - 1);
+        self.build_node(0, &mut *ret, &mut cpos, &mut str);
         ret
     }
 
