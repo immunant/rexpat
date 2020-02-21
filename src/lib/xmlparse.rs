@@ -90,6 +90,7 @@ use num_traits::{ToPrimitive,FromPrimitive};
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
+use std::cell::Cell;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
@@ -9157,58 +9158,53 @@ impl XML_ParserStruct {
         next
     }
 
-    unsafe fn build_node(
+    fn build_node(
         &mut self,
-        mut src_node: c_int,
-        mut dest: *mut XML_Content,
-        mut contpos: *mut *mut XML_Content,
-        mut strpos: *mut *mut XML_Char,
+        src_node: c_int,
+        dest: &mut XML_Content,
+        contpos: &mut &[Cell<XML_Content>],
+        strpos: &mut &[Cell<XML_Char>],
     ) {
         let dtd: *mut DTD = self.m_dtd;
-        (*dest).type_0 = (*(*dtd).scaffold.offset(src_node as isize)).type_0;
-        (*dest).quant = (*(*dtd).scaffold.offset(src_node as isize)).quant;
-        if (*dest).type_0 == XML_Content_Type::NAME {
-            let mut src: *const XML_Char = 0 as *const XML_Char;
-            (*dest).name = *strpos;
-            src = (*(*dtd).scaffold.offset(src_node as isize)).name;
+        dest.type_0 = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).type_0 };
+        dest.quant = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).quant };
+        if dest.type_0 == XML_Content_Type::NAME {
+            dest.name = (*strpos).as_ptr() as *mut XML_Char;
+            dest.numchildren = 0;
+            dest.children = ptr::null_mut();
+
+            let mut src = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).name };
             loop {
-                let fresh83 = *strpos;
-                *strpos = (*strpos).offset(1);
-                *fresh83 = *src;
-                if *src == 0 {
+                let (first, rest) = strpos.split_first().unwrap();
+                *strpos = rest;
+
+                first.set(unsafe { *src });
+                if first.get() == 0 {
                     break;
                 }
-                src = src.offset(1)
+                unsafe { src = src.offset(1) };
             }
-            (*dest).numchildren = 0;
-            (*dest).children = NULL as *mut XML_Content
         } else {
-            let mut i: c_uint = 0;
-            let mut cn: c_int = 0;
-            (*dest).numchildren = (*(*dtd).scaffold.offset(src_node as isize)).childcnt as c_uint;
-            (*dest).children = *contpos;
-            *contpos = (*contpos).offset((*dest).numchildren as isize);
-            i = 0;
-            cn = (*(*dtd).scaffold.offset(src_node as isize)).firstchild;
-            while i < (*dest).numchildren {
-                self.build_node(
-                    cn,
-                    &mut *(*dest).children.offset(i as isize),
-                    contpos,
-                    strpos,
-                );
-                i = i.wrapping_add(1);
-                cn = (*(*dtd).scaffold.offset(cn as isize)).nextsib
+            let (children, rest) = unsafe { contpos.split_at((*(*dtd).scaffold.offset(src_node as isize)).childcnt as usize) };
+            *contpos = rest;
+
+            dest.name = ptr::null_mut();
+            dest.numchildren = children.len() as c_uint;
+            dest.children = children.as_ptr() as *mut XML_Content;
+
+            let mut cn = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).firstchild };
+            for child in children {
+                let mut child_content = unsafe { std::mem::zeroed() };
+                self.build_node(cn, &mut child_content, contpos, strpos);
+                child.set(child_content);
+                cn = unsafe { (*(*dtd).scaffold.offset(cn as isize)).nextsib };
             }
-            (*dest).name = NULL as *mut XML_Char
         };
     }
 
     unsafe fn build_model(&mut self) -> *mut XML_Content {
         let dtd: *mut DTD = self.m_dtd;
         let mut ret: *mut XML_Content = 0 as *mut XML_Content;
-        let mut cpos: *mut XML_Content = 0 as *mut XML_Content;
-        let mut str: *mut XML_Char = 0 as *mut XML_Char;
         let mut allocsize: c_int = ((*dtd).scaffCount as c_ulong)
             .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
             .wrapping_add(
@@ -9219,9 +9215,13 @@ impl XML_ParserStruct {
         if ret.is_null() {
             return NULL as *mut XML_Content;
         }
-        str = &mut *ret.offset((*dtd).scaffCount as isize) as *mut XML_Content as *mut XML_Char;
-        cpos = &mut *ret.offset(1) as *mut XML_Content;
-        self.build_node(0, ret, &mut cpos, &mut str);
+        let mut str = std::slice::from_raw_parts(
+            ret.offset((*dtd).scaffCount as isize) as *const Cell<XML_Char>,
+            (*dtd).contentStringLen as usize);
+        let mut cpos = std::slice::from_raw_parts(
+            ret.offset(1) as *const Cell<XML_Content>,
+            (*dtd).scaffCount as usize);
+        self.build_node(0, &mut *ret, &mut cpos, &mut str);
         ret
     }
 
