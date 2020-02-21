@@ -91,7 +91,7 @@ use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
 use std::borrow::Cow;
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
@@ -9111,13 +9111,13 @@ impl STRING_POOL {
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    fn build_node(
+    fn build_node<'a, 'b>(
         &mut self,
         src_node: usize,
         dest: &mut XML_Content,
-        contpos: &mut &[Cell<XML_Content>],
-        strpos: &mut &[Cell<XML_Char>],
-    ) {
+        mut contpos: &'a mut [XML_Content],
+        mut strpos: &'b mut [XML_Char],
+    ) -> (&'a mut [XML_Content], &'b mut [XML_Char]) {
         let dtd: *mut DTD = self.m_dtd;
         let scf = RefCell::borrow(unsafe { &(*dtd).scaffold });
         dest.type_0 = scf.scaffold[src_node].type_0;
@@ -9129,18 +9129,17 @@ impl<'scf> XML_ParserStruct<'scf> {
 
             let mut src = scf.scaffold[src_node].name;
             loop {
-                let (first, rest) = strpos.split_first().unwrap();
-                *strpos = rest;
-
-                first.set(unsafe { *src });
-                if first.get() == 0 {
-                    break;
+                let (first, rest) = strpos.split_first_mut().unwrap();
+                *first = unsafe { *src };
+                if *first == 0 {
+                    return (contpos, rest);
                 }
                 unsafe { src = src.offset(1) };
+                strpos = rest;
             }
         } else {
-            let (children, rest) = contpos.split_at(scf.scaffold[src_node].childcnt);
-            *contpos = rest;
+            let (children, rest) = contpos.split_at_mut(scf.scaffold[src_node].childcnt);
+            contpos = rest;
 
             dest.name = ptr::null_mut();
             dest.numchildren = children.len().try_into().unwrap();
@@ -9148,12 +9147,13 @@ impl<'scf> XML_ParserStruct<'scf> {
 
             let mut cn = scf.scaffold[src_node].firstchild;
             for child in children {
-                let mut child_content = unsafe { std::mem::zeroed() };
-                self.build_node(cn, &mut child_content, contpos, strpos);
-                child.set(child_content);
+                let (ncp, nsp) = self.build_node(cn, child, contpos, strpos);
                 cn = scf.scaffold[cn].nextsib;
+                contpos = ncp;
+                strpos = nsp;
             }
-        };
+        }
+        (contpos, strpos)
     }
 
     unsafe fn build_model(&mut self) -> *mut XML_Content {
@@ -9170,13 +9170,13 @@ impl<'scf> XML_ParserStruct<'scf> {
         if ret.is_null() {
             return NULL as *mut XML_Content;
         }
-        let mut str = std::slice::from_raw_parts(
-            ret.add(scaffold_len) as *const Cell<XML_Char>,
+        let str = std::slice::from_raw_parts_mut(
+            ret.add(scaffold_len) as *mut XML_Char,
             (*dtd).contentStringLen as usize);
-        let mut cpos = std::slice::from_raw_parts(
-            ret.offset(1) as *const Cell<XML_Content>,
+        let cpos = std::slice::from_raw_parts_mut(
+            ret.offset(1) as *mut XML_Content,
             scaffold_len as usize - 1);
-        self.build_node(0, &mut *ret, &mut cpos, &mut str);
+        self.build_node(0, &mut *ret, cpos, str);
         ret
     }
 
