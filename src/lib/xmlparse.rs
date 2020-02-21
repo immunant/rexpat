@@ -818,8 +818,8 @@ pub struct XML_ParserStruct {
     pub m_declAttributeIsId: XML_Bool,
     pub m_dtd: *mut DTD,
     pub m_curBase: *const XML_Char,
-    pub m_tagStack: *mut TAG,
-    pub m_freeTagList: *mut TAG,
+    pub m_tagStack: Option<Box<Tag>>,
+    pub m_freeTagList: Option<Box<Tag>>,
     pub m_inheritedBindings: *mut BINDING,
     pub m_freeBindingList: *mut BINDING,
     pub m_nSpecifiedAtts: c_int,
@@ -1001,12 +1001,10 @@ pub struct prefix {
    A parser re-uses these structures, maintaining a list of allocated
    TAG objects in a free list.
 */
-pub type TAG = tag;
-
 #[repr(C)]
-#[derive(Copy, Clone)]
-pub struct tag {
-    pub parent: *mut tag,
+#[derive(Clone)]
+pub struct Tag {
+    pub parent: Option<Box<Tag>>,
     pub rawName: *const c_char,
     pub rawNameLength: c_int,
     pub name: TAG_NAME,
@@ -1294,7 +1292,7 @@ const fn init_block_size_const() -> c_int {
 
 pub const INIT_BUFFER_SIZE: c_int = 1024;
 
-pub const EXPAND_SPARE: c_int = 24;
+pub const EXPAND_SPARE: usize = 24;
 
 pub const INIT_SCAFFOLD_ELEMENTS: c_int = 32;
 
@@ -1334,6 +1332,17 @@ macro_rules! FREE {
         // FIXME: get the actual layout somehow
         alloc::dealloc($ptr as *mut u8, Layout::new::<u8>())
     };
+}
+
+// TODO: move this closer to the definition of `tag`,
+// it's only here because it needs the definition of `FREE`
+impl Drop for Tag {
+    fn drop(&mut self) {
+        unsafe {
+            FREE!(self.buf);
+            destroyBindings(self.bindings);
+        }
+    }
 }
 
 /* Constructs a new parser; encoding is the encoding specified by the
@@ -1481,8 +1490,8 @@ impl XML_ParserStruct {
             m_declAttributeIsId: false,
             m_dtd: ptr::null_mut(),
             m_curBase: ptr::null(),
-            m_tagStack: ptr::null_mut(),
-            m_freeTagList: ptr::null_mut(),
+            m_tagStack: None,
+            m_freeTagList: None,
             m_inheritedBindings: ptr::null_mut(),
             m_freeBindingList: ptr::null_mut(),
             m_nSpecifiedAtts: 0,
@@ -1543,7 +1552,7 @@ impl XML_ParserStruct {
             }
         }
         parser.m_freeBindingList = NULL as *mut BINDING;
-        parser.m_freeTagList = NULL as *mut TAG;
+        parser.m_freeTagList = None;
         parser.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
         parser.m_groupSize = 0;
         parser.m_groupConnector = NULL as *mut c_char;
@@ -1610,7 +1619,7 @@ impl XML_ParserStruct {
         self.m_openInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
-        self.m_tagStack = NULL as *mut TAG;
+        self.m_tagStack = None;
         self.m_inheritedBindings = NULL as *mut BINDING;
         self.m_nSpecifiedAtts = 0;
         self.m_unknownEncoding = None;
@@ -1648,20 +1657,19 @@ impl XML_ParserStruct {
 */
 impl XML_ParserStruct {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
-        let mut tStk: *mut TAG = 0 as *mut TAG;
         let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         if !self.m_parentParser.is_null() {
             return false;
         }
         /* move m_tagStack to m_freeTagList */
-        tStk = self.m_tagStack;
-        while !tStk.is_null() {
-            let mut tag: *mut TAG = tStk;
-            tStk = (*tStk).parent;
-            (*tag).parent = self.m_freeTagList;
-            self.moveToFreeBindingList((*tag).bindings);
-            (*tag).bindings = NULL as *mut BINDING;
-            self.m_freeTagList = tag
+        let mut tStk = self.m_tagStack.take();
+        while let Some(mut tag) = tStk {
+            self.moveToFreeBindingList(tag.bindings);
+            tag.bindings = ptr::null_mut();
+
+            let new_parent = self.m_freeTagList.take();
+            tStk = std::mem::replace(&mut tag.parent, new_parent);
+            self.m_freeTagList = Some(tag);
         }
         /* move m_openInternalEntities to m_freeInternalEntities */
         openEntityList = self.m_openInternalEntities;
@@ -1937,26 +1945,8 @@ unsafe fn destroyBindings(mut bindings: *mut BINDING) {
 impl Drop for XML_ParserStruct {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
-        let mut tagList: *mut TAG = 0 as *mut TAG;
         let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
-        /* free m_tagStack and m_freeTagList */
-        tagList = self.m_tagStack;
         unsafe {
-            loop {
-                let mut p: *mut TAG = 0 as *mut TAG;
-                if tagList.is_null() {
-                    if self.m_freeTagList.is_null() {
-                        break;
-                    }
-                    tagList = self.m_freeTagList;
-                    self.m_freeTagList = NULL as *mut TAG
-                }
-                p = tagList;
-                tagList = (*tagList).parent;
-                FREE!((*p).buf);
-                destroyBindings((*p).bindings);
-                FREE!(p);
-            }
             /* free m_openInternalEntities and m_freeInternalEntities */
             entityList = self.m_openInternalEntities;
             loop {
@@ -3286,13 +3276,13 @@ pub unsafe extern "C" fn XML_GetFeatureList() -> *const XML_Feature {
         },
         #[cfg(feature = "unicode")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE,
+            feature: XML_FeatureEnum::UNICODE,
             name: wch!("XML_UNICODE\x00"),
             value: 0,
         },
         #[cfg(feature = "unicode_wchar_t")]
         XML_Feature {
-            feature: XML_FEATURE_UNICODE_WCHAR_T,
+            feature: XML_FeatureEnum::UNICODE_WCHAR_T,
             name: wch!("XML_UNICODE_WHCAR_T\x00"),
             value: 0,
         },
@@ -3339,60 +3329,60 @@ pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XM
 */
 impl XML_ParserStruct {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
-        let mut tag: *mut TAG = self.m_tagStack;
-        while !tag.is_null() {
+        let mut tStk = &mut self.m_tagStack;
+        while let Some(tag) = tStk {
             let mut bufSize: c_int = 0;
             let mut nameLen: c_int = (::std::mem::size_of::<XML_Char>() as c_ulong)
-                .wrapping_mul(((*tag).name.strLen + 1) as c_ulong)
+                .wrapping_mul((tag.name.strLen + 1) as c_ulong)
                 as c_int;
-            let mut rawNameBuf: *mut c_char = (*tag).buf.offset(nameLen as isize);
+            let mut rawNameBuf: *mut c_char = tag.buf.offset(nameLen as isize);
             /* Stop if already stored.  Since m_tagStack is a stack, we can stop
             at the first entry that has already been copied; everything
             below it in the stack is already been accounted for in a
             previous call to this function.
             */
-            if (*tag).rawName == rawNameBuf as *const c_char {
+            if tag.rawName == rawNameBuf as *const c_char {
                 break;
             }
             /* For re-use purposes we need to ensure that the
             size of tag->buf is a multiple of sizeof(XML_Char).
             */
             bufSize = (nameLen as c_ulong).wrapping_add(
-                round_up((*tag).rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
+                round_up(tag.rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
             ) as c_int;
-            if bufSize as c_long > (*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_long {
-                let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
+            if bufSize as c_long > tag.bufEnd.wrapping_offset_from(tag.buf) as c_long {
+                let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
                 if temp.is_null() {
                     return false;
                 }
                 /* if tag->name.str points to tag->buf (only when namespace
                 processing is off) then we have to update it
                 */
-                if (*tag).name.str_0 == (*tag).buf as *const XML_Char {
-                    (*tag).name.str_0 = temp as *const XML_Char
+                if tag.name.str_0 == tag.buf as *const XML_Char {
+                    tag.name.str_0 = temp as *const XML_Char
                 }
                 /* if tag->name.localPart is set (when namespace processing is on)
                 then update it as well, since it will always point into tag->buf
                 */
-                if !(*tag).name.localPart.is_null() {
-                    (*tag).name.localPart = (temp).offset(
-                        (*tag)
+                if !tag.name.localPart.is_null() {
+                    tag.name.localPart = (temp).offset(
+                        tag
                             .name
                             .localPart
-                            .wrapping_offset_from((*tag).buf as *const XML_Char),
+                            .wrapping_offset_from(tag.buf as *const XML_Char),
                     ) as *const XML_Char
                 } /* XmlContentTok doesn't always set the last arg */
-                (*tag).buf = temp;
-                (*tag).bufEnd = temp.offset(bufSize as isize);
+                tag.buf = temp;
+                tag.bufEnd = temp.offset(bufSize as isize);
                 rawNameBuf = temp.offset(nameLen as isize)
             }
             memcpy(
                 rawNameBuf as *mut c_void,
-                (*tag).rawName as *const c_void,
-                (*tag).rawNameLength as c_ulong,
+                tag.rawName as *const c_void,
+                tag.rawNameLength as c_ulong,
             );
-            (*tag).rawName = rawNameBuf;
-            tag = (*tag).parent
+            tag.rawName = rawNameBuf;
+            tStk = &mut tag.parent;
         }
         true
     }
@@ -3730,39 +3720,41 @@ impl XML_ParserStruct {
                 super::xmltok::XML_TOK::START_TAG_NO_ATTS
                 | super::xmltok::XML_TOK::START_TAG_WITH_ATTS => {
                     /* fall through */
-                    let mut tag: *mut TAG = 0 as *mut TAG;
                     let mut result_0: XML_Error = XML_Error::NONE;
                     let mut to_buf: ExpatBufRefMut<XML_Char>;
-                    if !self.m_freeTagList.is_null() {
-                        tag = self.m_freeTagList;
-                        self.m_freeTagList = (*self.m_freeTagList).parent
-                    } else {
-                        tag = MALLOC!(@TAG);
-                        if tag.is_null() {
-                            return XML_Error::NO_MEMORY;
+                    let mut tag = match self.m_freeTagList.take() {
+                        Some(mut tag) => {
+                            self.m_freeTagList = tag.parent.take();
+                            tag
                         }
-                        (*tag).buf = MALLOC![c_char; INIT_TAG_BUF_SIZE];
-                        if (*tag).buf.is_null() {
-                            FREE!(tag);
-                            return XML_Error::NO_MEMORY;
+                        None => {
+                            let mut tag = match Box::try_new(std::mem::zeroed::<Tag>()) {
+                                Ok(tag) => tag,
+                                Err(_) => return XML_Error::NO_MEMORY
+                            };
+
+                            tag.buf = MALLOC![c_char; INIT_TAG_BUF_SIZE];
+                            if tag.buf.is_null() {
+                                return XML_Error::NO_MEMORY;
+                            }
+                            tag.bufEnd = tag.buf.offset(INIT_TAG_BUF_SIZE as isize);
+
+                            tag
                         }
-                        (*tag).bufEnd = (*tag).buf.offset(INIT_TAG_BUF_SIZE as isize)
-                    }
-                    (*tag).bindings = NULL as *mut BINDING;
-                    (*tag).parent = self.m_tagStack;
-                    self.m_tagStack = tag;
-                    (*tag).name.localPart = NULL as *const XML_Char;
-                    (*tag).name.prefix = NULL as *const XML_Char;
+                    };
+                    tag.bindings = ptr::null_mut();
+                    tag.name.localPart = ptr::null();
+                    tag.name.prefix = ptr::null();
                     let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
-                    (*tag).rawName = fromBuf.as_ptr();
-                    (*tag).rawNameLength = (*enc).nameLength((*tag).rawName);
-                    fromBuf = fromBuf.with_len((*tag).rawNameLength as usize);
+                    tag.rawName = fromBuf.as_ptr();
+                    tag.rawNameLength = (*enc).nameLength(tag.rawName);
+                    fromBuf = fromBuf.with_len(tag.rawNameLength as usize);
                     self.m_tagLevel += 1;
                     // let mut rawNameEnd: *const c_char =
-                    //     (*tag).rawName.offset((*tag).rawNameLength as isize);
+                    //     tag.rawName.offset(tag.rawNameLength as isize);
                     to_buf = ExpatBufRefMut::new(
-                        (*tag).buf as *mut ICHAR,
-                        ((*tag).bufEnd as *mut ICHAR).offset(-1),
+                        tag.buf as *mut ICHAR,
+                        (tag.bufEnd as *mut ICHAR).offset(-1),
                     );
                     loop {
                         let mut bufSize: c_int = 0;
@@ -3772,39 +3764,43 @@ impl XML_ParserStruct {
                             &mut fromBuf,
                             &mut to_buf,
                         );
-                        convLen = to_buf.as_ptr().wrapping_offset_from((*tag).buf as *mut XML_Char).try_into().unwrap();
+                        convLen = to_buf.as_ptr().wrapping_offset_from(tag.buf as *mut XML_Char).try_into().unwrap();
                         if fromBuf.is_empty() || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
                         {
-                            (*tag).name.strLen = convLen;
+                            tag.name.strLen = convLen;
                             break;
                         } else {
-                            bufSize = ((*tag).bufEnd.wrapping_offset_from((*tag).buf) as c_int) << 1;
-                            let mut temp = REALLOC!((*tag).buf => [c_char; bufSize]);
+                            bufSize = (tag.bufEnd.wrapping_offset_from(tag.buf) as c_int) << 1;
+                            let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
                             if temp.is_null() {
                                 return XML_Error::NO_MEMORY;
                             }
-                            (*tag).buf = temp;
-                            (*tag).bufEnd = temp.offset(bufSize as isize);
+                            tag.buf = temp;
+                            tag.bufEnd = temp.offset(bufSize as isize);
                             to_buf = ExpatBufRefMut::new(
                                 (temp as *mut XML_Char).offset(convLen as isize),
-                                ((*tag).bufEnd as *mut XML_Char).offset(-1),
+                                (tag.bufEnd as *mut XML_Char).offset(-1),
                             );
                         }
                     }
-                    (*tag).name.str_0 = (*tag).buf as *const XML_Char;
+                    tag.name.str_0 = tag.buf as *const XML_Char;
                     *to_buf.as_mut_ptr() = '\u{0}' as XML_Char;
-                    result_0 = self.storeAtts(enc_type, buf, &mut (*tag).name, &mut (*tag).bindings);
+                    result_0 = self.storeAtts(enc_type, buf, &mut tag.name, &mut tag.bindings);
                     if result_0 as u64 != 0 {
                         return result_0;
                     }
 
                     let handlers = self.m_handlers;
-                    let started = handlers.startElement((*tag).name.str_0, &mut self.m_atts);
+                    let started = handlers.startElement(tag.name.str_0, &mut self.m_atts);
 
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
                     self.m_tempPool.clear();
+
+                    // FIXME: do we need to update m_tagStack when returning an error?
+                    tag.parent = self.m_tagStack.take();
+                    self.m_tagStack = Some(tag);
                 }
                 super::xmltok::XML_TOK::EMPTY_ELEMENT_NO_ATTS
                 | super::xmltok::XML_TOK::EMPTY_ELEMENT_WITH_ATTS => {
@@ -3866,16 +3862,15 @@ impl XML_ParserStruct {
                     if self.m_tagLevel == startTagLevel {
                         return XML_Error::ASYNC_ENTITY;
                     } else {
-                        let mut len: c_int = 0;
-                        let mut tag_0: *mut TAG = self.m_tagStack;
-                        self.m_tagStack = (*tag_0).parent;
-                        (*tag_0).parent = self.m_freeTagList;
-                        self.m_freeTagList = tag_0;
+                        // Pop the tag off the tagStack
+                        let mut tag = self.m_tagStack.take().unwrap();
+                        self.m_tagStack = tag.parent.take();
+
                         let rawName_0 = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
-                        len = (*enc).nameLength(rawName_0.as_ptr());
-                        if len != (*tag_0).rawNameLength
+                        let len = (*enc).nameLength(rawName_0.as_ptr());
+                        if len != tag.rawNameLength
                             || memcmp(
-                                (*tag_0).rawName as *const c_void,
+                                tag.rawName as *const c_void,
                                 rawName_0.as_ptr() as *const c_void,
                                 len as c_ulong,
                             ) != 0
@@ -3886,14 +3881,14 @@ impl XML_ParserStruct {
                                 let mut localPart: *const XML_Char = 0 as *const XML_Char;
                                 let mut prefix: *const XML_Char = 0 as *const XML_Char;
                                 let mut uri: *mut XML_Char = 0 as *mut XML_Char;
-                                localPart = (*tag_0).name.localPart;
+                                localPart = tag.name.localPart;
                                 if self.m_ns as c_int != 0 && !localPart.is_null() {
                                     /* localPart and prefix may have been overwritten in
                                        tag->name.str, since this points to the binding->uri
                                        buffer which gets re-used; so we have to add them again
                                     */
-                                    uri = ((*tag_0).name.str_0 as *mut XML_Char)
-                                        .offset((*tag_0).name.uriLen as isize);
+                                    uri = (tag.name.str_0 as *mut XML_Char)
+                                        .offset(tag.name.uriLen as isize);
                                     /* don't need to check for space - already done in storeAtts() */
                                     while *localPart != 0 {
                                         let fresh2 = localPart;
@@ -3902,7 +3897,7 @@ impl XML_ParserStruct {
                                         uri = uri.offset(1);
                                         *fresh3 = *fresh2
                                     }
-                                    prefix = (*tag_0).name.prefix as *mut XML_Char;
+                                    prefix = tag.name.prefix as *mut XML_Char;
                                     if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
                                         let fresh4 = uri;
                                         uri = uri.offset(1);
@@ -3917,7 +3912,7 @@ impl XML_ParserStruct {
                                     }
                                     *uri = '\u{0}' as XML_Char
                                 }
-                                self.m_mismatch = (*tag_0).name.str_0;
+                                self.m_mismatch = tag.name.str_0;
                             }
                             *eventPP = rawName_0.as_ptr();
                             return XML_Error::TAG_MISMATCH;
@@ -3927,14 +3922,14 @@ impl XML_ParserStruct {
                             let mut localPart: *const XML_Char = 0 as *const XML_Char;
                             let mut prefix: *const XML_Char = 0 as *const XML_Char;
                             let mut uri: *mut XML_Char = 0 as *mut XML_Char;
-                            localPart = (*tag_0).name.localPart;
+                            localPart = tag.name.localPart;
                             if self.m_ns as c_int != 0 && !localPart.is_null() {
                                 /* localPart and prefix may have been overwritten in
                                    tag->name.str, since this points to the binding->uri
                                    buffer which gets re-used; so we have to add them again
                                 */
-                                uri = ((*tag_0).name.str_0 as *mut XML_Char)
-                                    .offset((*tag_0).name.uriLen as isize);
+                                uri = (tag.name.str_0 as *mut XML_Char)
+                                    .offset(tag.name.uriLen as isize);
                                 /* don't need to check for space - already done in storeAtts() */
                                 while *localPart != 0 {
                                     let fresh2 = localPart;
@@ -3943,7 +3938,7 @@ impl XML_ParserStruct {
                                     uri = uri.offset(1);
                                     *fresh3 = *fresh2
                                 }
-                                prefix = (*tag_0).name.prefix as *mut XML_Char;
+                                prefix = tag.name.prefix as *mut XML_Char;
                                 if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
                                     let fresh4 = uri;
                                     uri = uri.offset(1);
@@ -3959,18 +3954,23 @@ impl XML_ParserStruct {
                                 *uri = '\u{0}' as XML_Char
                             }
 
-                            self.m_handlers.endElement((*tag_0).name.str_0);
+                            self.m_handlers.endElement(tag.name.str_0);
                         } else if self.m_handlers.hasDefault() {
                             reportDefault(self, enc_type, buf.with_end(next));
                         }
-                        while !(*tag_0).bindings.is_null() {
-                            let mut b: *mut BINDING = (*tag_0).bindings;
+                        while !tag.bindings.is_null() {
+                            let mut b: *mut BINDING = tag.bindings;
                             self.m_handlers.endNamespaceDecl((*(*b).prefix).name);
-                            (*tag_0).bindings = (*(*tag_0).bindings).nextTagBinding;
+                            tag.bindings = (*tag.bindings).nextTagBinding;
                             (*b).nextTagBinding = self.m_freeBindingList;
                             self.m_freeBindingList = b;
                             (*(*b).prefix).binding = (*b).prevPrefixBinding
                         }
+
+                        // Move the tag to the free list
+                        tag.parent = self.m_freeTagList.take();
+                        self.m_freeTagList = Some(tag);
+
                         if self.m_tagLevel == 0
                             && self.m_parsingStatus.parsing != XML_Parsing::FINISHED
                         {
@@ -4676,24 +4676,23 @@ impl XML_ParserStruct {
         }
         let n = i + (*binding).uriLen + prefixLen;
         if n > (*binding).uriAlloc {
-            let mut p: *mut TAG = 0 as *mut TAG;
-            uri = MALLOC![XML_Char; n + EXPAND_SPARE];
+            uri = MALLOC![XML_Char; n as usize + EXPAND_SPARE];
             if uri.is_null() {
                 return XML_Error::NO_MEMORY;
             }
-            (*binding).uriAlloc = n + EXPAND_SPARE;
+            (*binding).uriAlloc = n + EXPAND_SPARE as c_int;
             memcpy(
                 uri as *mut c_void,
                 (*binding).uri as *const c_void,
                 ((*binding).uriLen as c_ulong)
                     .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
             );
-            p = self.m_tagStack;
-            while !p.is_null() {
-                if (*p).name.str_0 == (*binding).uri as *const XML_Char {
-                    (*p).name.str_0 = uri
+            let mut tStk = &mut self.m_tagStack;
+            while let Some(tag) = tStk {
+                if tag.name.str_0 == (*binding).uri as *const XML_Char {
+                    tag.name.str_0 = uri
                 }
-                p = (*p).parent
+                tStk = &mut tag.parent;
             }
             FREE!((*binding).uri);
             (*binding).uri = uri
@@ -4720,10 +4719,6 @@ impl XML_ParserStruct {
     }
 }
 
-// Initialized in run_static_initializers
-static mut xmlLen: c_int = 0;
-// Initialized in run_static_initializers
-static mut xmlnsLen: c_int = 0;
 /* addBinding() overwrites the value of prefix->binding without checking.
    Therefore one must keep track of the old value outside of addBinding().
 */
@@ -4752,7 +4747,6 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     let mut b: *mut BINDING = 0 as *mut BINDING;
-    let mut len: c_int = 0;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
     if *uri as c_int == '\u{0}' as i32 && !(*prefix).name.is_null() {
         return XML_Error::UNDECLARING_PREFIX;
@@ -4773,25 +4767,25 @@ unsafe extern "C" fn addBinding(
             mustBeXML = true
         }
     }
-    len = 0;
-    while *uri.offset(len as isize) != 0 {
+    let mut len = 0;
+    while *uri.add(len) != 0 {
         if isXML as c_int != 0
-            && (len > xmlLen
-                || *uri.offset(len as isize) as c_int != xmlNamespace[len as usize] as c_int)
+            && (len >= xmlNamespace.len()
+                || *uri.add(len) as c_int != xmlNamespace[len] as c_int)
         {
             isXML = false
         }
         if !mustBeXML
             && isXMLNS
-            && (len > xmlnsLen
-                || *uri.offset(len as isize) as c_int != xmlnsNamespace[len as usize] as c_int)
+            && (len >= xmlnsNamespace.len()
+                || *uri.add(len) as c_int != xmlnsNamespace[len] as c_int)
         {
             isXMLNS = false
         }
-        len += 1
+        len += 1;
     }
-    isXML = isXML && len == xmlLen;
-    isXMLNS = isXMLNS && len == xmlnsLen;
+    isXML = isXML && len == (xmlNamespace.len() - 1);
+    isXMLNS = isXMLNS && len == (xmlnsNamespace.len() - 1);
     if mustBeXML != isXML {
         return if mustBeXML {
             XML_Error::RESERVED_PREFIX_XML
@@ -4803,17 +4797,17 @@ unsafe extern "C" fn addBinding(
         return XML_Error::RESERVED_NAMESPACE_URI;
     }
     if (*parser).m_namespaceSeparator != 0 {
-        len += 1
+        len += 1;
     }
     if !(*parser).m_freeBindingList.is_null() {
         b = (*parser).m_freeBindingList;
-        if len > (*b).uriAlloc {
+        if len > (*b).uriAlloc as usize {
             let mut temp: *mut XML_Char = REALLOC!((*b).uri => [XML_Char; len + EXPAND_SPARE]);
             if temp.is_null() {
                 return XML_Error::NO_MEMORY;
             }
             (*b).uri = temp;
-            (*b).uriAlloc = len + EXPAND_SPARE
+            (*b).uriAlloc = (len + EXPAND_SPARE).try_into().unwrap();
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
@@ -4826,9 +4820,9 @@ unsafe extern "C" fn addBinding(
             FREE!(b);
             return XML_Error::NO_MEMORY;
         }
-        (*b).uriAlloc = len + EXPAND_SPARE
+        (*b).uriAlloc = (len + EXPAND_SPARE).try_into().unwrap();
     }
-    (*b).uriLen = len;
+    (*b).uriLen = len.try_into().unwrap();
     memcpy(
         (*b).uri as *mut c_void,
         uri as *const c_void,
@@ -9271,16 +9265,3 @@ unsafe extern "C" fn copyString(
     );
     result
 }
-unsafe extern "C" fn run_static_initializers() {
-    xmlLen = (::std::mem::size_of::<[XML_Char; 37]>() as c_int as c_ulong)
-        .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong)
-        .wrapping_sub(1) as c_int;
-    xmlnsLen = (::std::mem::size_of::<[XML_Char; 30]>() as c_int as c_ulong)
-        .wrapping_div(::std::mem::size_of::<XML_Char>() as c_ulong)
-        .wrapping_sub(1) as c_int
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
