@@ -17741,16 +17741,17 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8459i32,
-            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18142,16 +18143,17 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8689i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18210,16 +18212,17 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8739i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18278,16 +18281,17 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8789i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18999,16 +19003,17 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9202i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -19313,16 +19318,17 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9421i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i > max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -19378,16 +19384,17 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9467i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse requireed reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20751,15 +20758,16 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             10649i32,
-            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
+            b"Parsing required reallocation\x00".as_ptr() as *const c_char,
         );
-    } else if i == max_realloc_count {
+    } else if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20948,7 +20956,8 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         nsalloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20956,7 +20965,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
             10932i32,
             b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
-    } else if i == max_realloc_count {
+    } else if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
