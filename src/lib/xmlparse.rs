@@ -6485,14 +6485,14 @@ impl<'scf> XML_ParserStruct<'scf> {
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize) = 0;
                     if (*dtd).in_eldecl {
-                        let mut scaff = (*dtd).scaffold.borrow_mut();
-                        if scaff.index.try_reserve(1).is_err() {
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        if scf.index.try_reserve(1).is_err() {
                             return XML_Error::NO_MEMORY;
                         }
-                        match scaff.next_part() {
+                        match scf.next_part() {
                             Some(myindex) => {
-                                scaff.index.push(myindex);
-                                scaff.scaffold[myindex].type_0 = XML_Content_Type::SEQ;
+                                scf.index.push(myindex);
+                                scf.scaffold[myindex].type_0 = XML_Content_Type::SEQ;
                             }
                             None => return XML_Error::NO_MEMORY
                         };
@@ -6532,11 +6532,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                         .offset(self.m_prologState.level as isize)
                         == 0
                     {
-                        let mut scaff = (*dtd).scaffold.borrow_mut();
-                        let idx = scaff.index.last().copied().unwrap();
-                        if scaff.scaffold[idx].type_0 != XML_Content_Type::MIXED
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let idx = scf.index.last().copied().unwrap();
+                        if scf.scaffold[idx].type_0 != XML_Content_Type::MIXED
                         {
-                            scaff.scaffold[idx].type_0 = XML_Content_Type::CHOICE;
+                            scf.scaffold[idx].type_0 = XML_Content_Type::CHOICE;
                             if self.m_handlers.hasElementDecl() {
                                 handleDefault = false
                             }
@@ -6692,9 +6692,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         // FIXME: turn into new Cow::Owned instead???
-                        let mut scaff = (*dtd).scaffold.borrow_mut();
-                        scaff.scaffold.clear();
-                        scaff.index.clear();
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        scf.scaffold.clear();
+                        scf.index.clear();
                         (*dtd).in_eldecl = true;
                         handleDefault = false
                     }
@@ -6726,9 +6726,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 43 => {
                     if (*dtd).in_eldecl {
-                        let mut scaff = (*dtd).scaffold.borrow_mut();
-                        let idx = scaff.index.last().copied().unwrap();
-                        scaff.scaffold[idx].type_0 = XML_Content_Type::MIXED;
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let idx = scf.index.last().copied().unwrap();
+                        scf.scaffold[idx].type_0 = XML_Content_Type::MIXED;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
@@ -6876,19 +6876,19 @@ impl<'scf> XML_ParserStruct<'scf> {
                         } else {
                             next.offset(-((*enc).minBytesPerChar() as isize))
                         };
-                        let mut scaff = (*dtd).scaffold.borrow_mut();
-                        let myindex_0 = match scaff.next_part() {
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let myindex_0 = match scf.next_part() {
                             Some(myindex) => myindex,
                             None => return XML_Error::NO_MEMORY
                         };
-                        scaff.scaffold[myindex_0].type_0 = XML_Content_Type::NAME;
-                        scaff.scaffold[myindex_0].quant = quant;
+                        scf.scaffold[myindex_0].type_0 = XML_Content_Type::NAME;
+                        scf.scaffold[myindex_0].quant = quant;
                         el = self.getElementType(enc_type, buf.with_end(nxt));
                         if el.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
                         name_2 = (*el).name;
-                        let ref mut fresh36 = scaff.scaffold[myindex_0].name;
+                        let ref mut fresh36 = scf.scaffold[myindex_0].name;
                         *fresh36 = name_2;
                         nameLen = 0;
                         loop {
@@ -6912,10 +6912,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                             handleDefault = false
                         }
                         let empty_index = {
-                            let mut scaff = (*dtd).scaffold.borrow_mut();
-                            let idx = scaff.index.pop().unwrap();
-                            scaff.scaffold[idx].quant = quant;
-                            scaff.index.is_empty()
+                            let mut scf = (*dtd).scaffold.borrow_mut();
+                            let idx = scf.index.pop().unwrap();
+                            scf.scaffold[idx].quant = quant;
+                            scf.index.is_empty()
                         };
                         if empty_index {
                             if !handleDefault {
@@ -9124,13 +9124,13 @@ impl<'scf> XML_ParserStruct<'scf> {
         mut strpos: *mut *mut XML_Char,
     ) {
         let dtd: *mut DTD = self.m_dtd;
-        let scaff = RefCell::borrow(&(*dtd).scaffold);
-        (*dest).type_0 = scaff.scaffold[src_node].type_0;
-        (*dest).quant = scaff.scaffold[src_node].quant;
+        let scf = RefCell::borrow(&(*dtd).scaffold);
+        (*dest).type_0 = scf.scaffold[src_node].type_0;
+        (*dest).quant = scf.scaffold[src_node].quant;
         if (*dest).type_0 == XML_Content_Type::NAME {
             let mut src: *const XML_Char = 0 as *const XML_Char;
             (*dest).name = *strpos;
-            src = scaff.scaffold[src_node].name;
+            src = scf.scaffold[src_node].name;
             loop {
                 let fresh83 = *strpos;
                 *strpos = (*strpos).offset(1);
@@ -9144,11 +9144,11 @@ impl<'scf> XML_ParserStruct<'scf> {
             (*dest).children = NULL as *mut XML_Content
         } else {
             let mut i: c_uint = 0;
-            (*dest).numchildren = scaff.scaffold[src_node].childcnt.try_into().unwrap();
+            (*dest).numchildren = scf.scaffold[src_node].childcnt.try_into().unwrap();
             (*dest).children = *contpos;
             *contpos = (*contpos).offset((*dest).numchildren as isize);
             i = 0;
-            let mut cn = scaff.scaffold[src_node].firstchild;
+            let mut cn = scf.scaffold[src_node].firstchild;
             while i < (*dest).numchildren {
                 self.build_node(
                     cn,
@@ -9157,7 +9157,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     strpos,
                 );
                 i = i.wrapping_add(1);
-                cn = scaff.scaffold[cn].nextsib;
+                cn = scf.scaffold[cn].nextsib;
             }
             (*dest).name = NULL as *mut XML_Char
         };
