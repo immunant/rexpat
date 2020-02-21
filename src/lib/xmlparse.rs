@@ -90,6 +90,8 @@ use num_traits::{ToPrimitive,FromPrimitive};
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
@@ -312,7 +314,7 @@ trait XmlHandlers {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-struct CXmlHandlers {
+struct CXmlHandlers<'scf> {
     m_attlistDeclHandler: XML_AttlistDeclHandler,
     m_characterDataHandler: XML_CharacterDataHandler,
     m_commentHandler: XML_CommentHandler,
@@ -324,7 +326,7 @@ struct CXmlHandlers {
     m_endNamespaceDeclHandler: XML_EndNamespaceDeclHandler,
     m_entityDeclHandler: XML_EntityDeclHandler,
     m_externalEntityRefHandler: XML_ExternalEntityRefHandler,
-    m_externalEntityRefHandlerArg: XML_Parser,
+    m_externalEntityRefHandlerArg: XML_Parser<'scf>,
     m_handlerArg: *mut c_void,
     m_notationDeclHandler: XML_NotationDeclHandler,
     m_notStandaloneHandler: XML_NotStandaloneHandler,
@@ -340,7 +342,7 @@ struct CXmlHandlers {
     m_xmlDeclHandler: XML_XmlDeclHandler,
 }
 
-impl Default for CXmlHandlers {
+impl<'scf> Default for CXmlHandlers<'scf> {
     fn default() -> Self {
         CXmlHandlers {
             m_attlistDeclHandler: None,
@@ -387,7 +389,7 @@ impl EncodingType {
     }
 }
 
-impl CXmlHandlers {
+impl<'scf> CXmlHandlers<'scf> {
     fn setStartElement(&mut self, handler: XML_StartElementHandler) {
         self.m_startElementHandler = handler;
     }
@@ -477,7 +479,7 @@ impl CXmlHandlers {
     }
 }
 
-impl XmlHandlers for CXmlHandlers {
+impl<'scf> XmlHandlers for CXmlHandlers<'scf> {
     unsafe fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
         self.m_startElementHandler.map(|handler| {
             handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
@@ -783,7 +785,7 @@ impl Attribute {
 }
 
 #[repr(C)]
-pub struct XML_ParserStruct {
+pub struct XML_ParserStruct<'scf> {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
     pub m_userData: *mut c_void,
@@ -800,7 +802,7 @@ pub struct XML_ParserStruct {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    m_handlers: CXmlHandlers,
+    m_handlers: CXmlHandlers<'scf>,
     pub m_encoding: *const ENCODING,
     pub m_initEncoding: Option<InitEncoding>,
     pub m_internalEncoding: &'static super::xmltok::ENCODING,
@@ -831,7 +833,7 @@ pub struct XML_ParserStruct {
     pub m_declAttributeId: *mut ATTRIBUTE_ID,
     pub m_declAttributeIsCdata: XML_Bool,
     pub m_declAttributeIsId: XML_Bool,
-    pub m_dtd: *mut DTD,
+    pub m_dtd: *mut DTD<'scf>,
     pub m_curBase: *const XML_Char,
     pub m_tagStack: Option<Box<Tag>>,
     pub m_freeTagList: Option<Box<Tag>>,
@@ -848,7 +850,7 @@ pub struct XML_ParserStruct {
     pub m_groupConnector: *mut c_char,
     pub m_groupSize: c_uint,
     pub m_namespaceSeparator: XML_Char,
-    pub m_parentParser: XML_Parser,
+    pub m_parentParser: XML_Parser<'scf>,
     pub m_parsingStatus: XML_ParsingStatus,
     pub m_isParamEntity: XML_Bool,
     pub m_useForeignDTD: XML_Bool,
@@ -858,7 +860,7 @@ pub struct XML_ParserStruct {
     pub m_mismatch: *const XML_Char,
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     fn encoding<'a, 'b>(&'a self, enc_type: EncodingType) -> &'b dyn XmlEncoding {
         match enc_type {
             EncodingType::Normal => unsafe { &*self.m_encoding },
@@ -1100,7 +1102,7 @@ macro_rules! hash_lookup {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct DTD {
+pub struct DTD<'scf> {
     // TODO: get rid of the `Box`es to eliminate the extra indirection;
     // for now, we can keep them since they're equivalent to the C code's
     // structure anyway
@@ -1119,12 +1121,40 @@ pub struct DTD {
     pub paramEntities: HashMap<HashKey, Box<ENTITY>>,
     pub defaultPrefix: PREFIX,
     pub in_eldecl: XML_Bool,
-    pub scaffold: *mut CONTENT_SCAFFOLD,
+    pub scaffold: Cow<'scf, RefCell<Scaffold>>,
     pub contentStringLen: c_uint,
-    pub scaffSize: c_uint,
-    pub scaffCount: c_uint,
-    pub scaffLevel: c_int,
-    pub scaffIndex: *mut c_int,
+}
+
+#[repr(C)]
+#[derive(Clone, Default)]
+pub struct Scaffold {
+    scaffold: Vec<CONTENT_SCAFFOLD>,
+    index: Vec<usize>,
+}
+
+impl Scaffold {
+    fn next_part(&mut self) -> Option<usize> {
+        if self.scaffold.try_reserve(1).is_err() {
+            return None;
+        }
+
+        let next = self.scaffold.len();
+        self.scaffold.push(unsafe { std::mem::zeroed() });
+
+        if !self.index.is_empty() {
+            let idx = self.index.last().unwrap();
+            if self.scaffold[*idx].lastchild != 0 {
+                let lc = self.scaffold[*idx].lastchild;
+                self.scaffold[lc].nextsib = next;
+            }
+            if self.scaffold[*idx].childcnt == 0 {
+                self.scaffold[*idx].firstchild = next;
+            }
+            self.scaffold[*idx].lastchild = next;
+            self.scaffold[*idx].childcnt += 1;
+        }
+        Some(next)
+    }
 }
 
 #[repr(C)]
@@ -1133,10 +1163,10 @@ pub struct CONTENT_SCAFFOLD {
     pub type_0: XML_Content_Type,
     pub quant: XML_Content_Quant,
     pub name: *const XML_Char,
-    pub firstchild: c_int,
-    pub lastchild: c_int,
-    pub childcnt: c_int,
-    pub nextsib: c_int,
+    pub firstchild: usize,
+    pub lastchild: usize,
+    pub childcnt: usize,
+    pub nextsib: usize,
 }
 
 #[repr(C)]
@@ -1364,7 +1394,9 @@ impl Drop for Tag {
    external protocol or NULL if there is none specified.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> XML_Parser {
+pub unsafe extern "C" fn XML_ParserCreate<'scf>(
+    mut encodingName: *const XML_Char
+) -> XML_Parser<'scf> {
     XML_ParserCreate_MM(
         encodingName,
         None,
@@ -1383,10 +1415,10 @@ pub unsafe extern "C" fn XML_ParserCreate(mut encodingName: *const XML_Char) -> 
    triplets (see XML_SetReturnNSTriplet).
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreateNS(
+pub unsafe extern "C" fn XML_ParserCreateNS<'scf>(
     mut encodingName: *const XML_Char,
     mut nsSep: XML_Char,
-) -> XML_Parser {
+) -> XML_Parser<'scf> {
     let mut tmp: [XML_Char; 2] = [0; 2];
     tmp[0] = nsSep;
     XML_ParserCreate_MM(
@@ -1406,7 +1438,7 @@ const implicitContext: [XML_Char; 41] = XML_STR![
 
 /* To avoid warnings about unused functions: */
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     /* only valid for root parser */
     unsafe fn startParsing(&mut self) -> XML_Bool {
         /* hash functions must be initialized before setContext() is called */
@@ -1441,7 +1473,7 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
     XML_ParserStruct::create(encodingName, nameSep, NULL as *mut DTD)
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     fn new(use_namespaces: bool) -> Self {
         Self {
             m_userData: ptr::null_mut(),
@@ -1670,7 +1702,7 @@ impl XML_ParserStruct {
 
    Added in Expat 1.95.3.
 */
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
         let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         if !self.m_parentParser.is_null() {
@@ -1725,7 +1757,7 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
      has no effect and returns XML_Status::ERROR.
 */
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
         /* Block after XML_Parse()/XML_ParseBuffer() has been called.
         XXX There's no way for the caller to determine which of the
@@ -1957,7 +1989,7 @@ unsafe fn destroyBindings(mut bindings: *mut BINDING) {
     }
 }
 
-impl Drop for XML_ParserStruct {
+impl<'scf> Drop for XML_ParserStruct<'scf> {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
         let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
@@ -1987,10 +2019,7 @@ impl Drop for XML_ParserStruct {
             */
             if !self.m_isParamEntity && !self.m_dtd.is_null() {
                 /* XML_DTD */
-                dtdDestroy(
-                    self.m_dtd,
-                    self.m_parentParser.is_null(),
-                );
+                dtdDestroy(self.m_dtd);
             }
             FREE!(self.m_groupConnector);
             FREE!(self.m_buffer);
@@ -2515,7 +2544,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
    values.
 */
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
             return XML_Status::ERROR;
@@ -2624,7 +2653,7 @@ pub unsafe extern "C" fn XML_Parse(
     (*parser).parse(s, len, isFinal)
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
         let mut start: *const c_char = 0 as *const c_char;
         let mut result: XML_Status = XML_Status::OK;
@@ -2706,7 +2735,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     (*parser).parseBuffer(len, isFinal)
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
@@ -2845,7 +2874,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
    When suspended, parsing can be resumed by calling XML_ResumeParser().
 */
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
         match self.m_parsingStatus.parsing {
             XML_Parsing::SUSPENDED => {
@@ -2894,7 +2923,7 @@ pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool)
    That is, the parent parser will not resume by itself and it is up to the
    application to call XML_ResumeParser() on it at the appropriate moment.
 */
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
         let mut result: XML_Status = XML_Status::OK;
         if self.m_parsingStatus.parsing != XML_Parsing::SUSPENDED {
@@ -3342,7 +3371,7 @@ pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XM
    processed, and not yet closed, we need to store tag->rawName in a more
    permanent location, since the parse buffer is about to be discarded.
 */
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
         let mut tStk = &mut self.m_tagStack;
         while let Some(tag) = tStk {
@@ -3544,7 +3573,7 @@ unsafe extern "C" fn externalEntityContentProcessor(
     result
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn doContent(
         &mut self,
         startTagLevel: c_int,
@@ -5155,7 +5184,7 @@ unsafe extern "C" fn doIgnoreSection(
 }
 /* XML_DTD */
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn initializeEncoding(&mut self) -> XML_Error {
         let mut s: *const c_char = 0 as *const c_char;
         if cfg!(feature = "unicode") {
@@ -5569,7 +5598,7 @@ unsafe extern "C" fn prologProcessor(
     );
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
@@ -6438,14 +6467,6 @@ impl XML_ParserStruct {
                                 return XML_Error::NO_MEMORY;
                             }
                             self.m_groupConnector = new_connector;
-                            if !(*dtd).scaffIndex.is_null() {
-                                let new_scaff_index: *mut c_int = REALLOC!(
-                                    (*dtd).scaffIndex => [c_int; self.m_groupSize]);
-                                if new_scaff_index.is_null() {
-                                    return XML_Error::NO_MEMORY;
-                                }
-                                (*dtd).scaffIndex = new_scaff_index
-                            }
                         } else {
                             self.m_groupSize = 32;
                             self.m_groupConnector = MALLOC![c_char; self.m_groupSize];
@@ -6459,14 +6480,17 @@ impl XML_ParserStruct {
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize) = 0;
                     if (*dtd).in_eldecl {
-                        let mut myindex: c_int = self.nextScaffoldPart();
-                        if myindex < 0 {
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        if scf.index.try_reserve(1).is_err() {
                             return XML_Error::NO_MEMORY;
                         }
-                        assert!(!(*dtd).scaffIndex.is_null());
-                        *(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) = myindex;
-                        (*dtd).scaffLevel += 1;
-                        (*(*dtd).scaffold.offset(myindex as isize)).type_0 = XML_Content_Type::SEQ;
+                        match scf.next_part() {
+                            Some(myindex) => {
+                                scf.index.push(myindex);
+                                scf.scaffold[myindex].type_0 = XML_Content_Type::SEQ;
+                            }
+                            None => return XML_Error::NO_MEMORY
+                        };
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
@@ -6502,18 +6526,15 @@ impl XML_ParserStruct {
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize)
                         == 0
-                        && (*(*dtd).scaffold.offset(
-                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                        ))
-                        .type_0
-                        != XML_Content_Type::MIXED
                     {
-                        (*(*dtd).scaffold.offset(
-                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                        ))
-                            .type_0 = XML_Content_Type::CHOICE;
-                        if self.m_handlers.hasElementDecl() {
-                            handleDefault = false
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let idx = scf.index.last().copied().unwrap();
+                        if scf.scaffold[idx].type_0 != XML_Content_Type::MIXED
+                        {
+                            scf.scaffold[idx].type_0 = XML_Content_Type::CHOICE;
+                            if self.m_handlers.hasElementDecl() {
+                                handleDefault = false
+                            }
                         }
                     }
                     *self
@@ -6665,8 +6686,10 @@ impl XML_ParserStruct {
                         if self.m_declElementType.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        (*dtd).scaffLevel = 0;
-                        (*dtd).scaffCount = 0;
+                        // FIXME: turn into new Cow::Owned instead???
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        scf.scaffold.clear();
+                        scf.index.clear();
                         (*dtd).in_eldecl = true;
                         handleDefault = false
                     }
@@ -6698,10 +6721,9 @@ impl XML_ParserStruct {
                 }
                 43 => {
                     if (*dtd).in_eldecl {
-                        (*(*dtd).scaffold.offset(
-                            *(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize,
-                        ))
-                            .type_0 = XML_Content_Type::MIXED;
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let idx = scf.index.last().copied().unwrap();
+                        scf.scaffold[idx].type_0 = XML_Content_Type::MIXED;
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
@@ -6849,18 +6871,19 @@ impl XML_ParserStruct {
                         } else {
                             next.offset(-((*enc).minBytesPerChar() as isize))
                         };
-                        let mut myindex_0: c_int = self.nextScaffoldPart();
-                        if myindex_0 < 0 {
-                            return XML_Error::NO_MEMORY;
-                        }
-                        (*(*dtd).scaffold.offset(myindex_0 as isize)).type_0 = XML_Content_Type::NAME;
-                        (*(*dtd).scaffold.offset(myindex_0 as isize)).quant = quant;
+                        let mut scf = (*dtd).scaffold.borrow_mut();
+                        let myindex_0 = match scf.next_part() {
+                            Some(myindex) => myindex,
+                            None => return XML_Error::NO_MEMORY
+                        };
+                        scf.scaffold[myindex_0].type_0 = XML_Content_Type::NAME;
+                        scf.scaffold[myindex_0].quant = quant;
                         el = self.getElementType(enc_type, buf.with_end(nxt));
                         if el.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
                         name_2 = (*el).name;
-                        let ref mut fresh36 = (*(*dtd).scaffold.offset(myindex_0 as isize)).name;
+                        let ref mut fresh36 = scf.scaffold[myindex_0].name;
                         *fresh36 = name_2;
                         nameLen = 0;
                         loop {
@@ -6883,12 +6906,13 @@ impl XML_ParserStruct {
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
-                        (*dtd).scaffLevel -= 1;
-                        (*(*dtd)
-                         .scaffold
-                         .offset(*(*dtd).scaffIndex.offset((*dtd).scaffLevel as isize) as isize))
-                            .quant = quant;
-                        if (*dtd).scaffLevel == 0 {
+                        let empty_scaffold = {
+                            let mut scf = (*dtd).scaffold.borrow_mut();
+                            let idx = scf.index.pop().unwrap();
+                            scf.scaffold[idx].quant = quant;
+                            scf.index.is_empty()
+                        };
+                        if empty_scaffold {
                             if !handleDefault {
                                 let mut model: *mut XML_Content = self.build_model();
                                 if model.is_null() {
@@ -7030,7 +7054,7 @@ unsafe extern "C" fn epilogProcessor(
     }
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn processInternalEntity(
         &mut self,
         mut entity: *mut ENTITY,
@@ -7925,7 +7949,7 @@ unsafe extern "C" fn defineAttribute(
     }
 }
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn setElementTypePrefix(
         &mut self,
         mut elementType: *mut ELEMENT_TYPE,
@@ -8109,7 +8133,7 @@ impl XML_ParserStruct {
 
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
-impl XML_ParserStruct {
+impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn getContext(&mut self) -> *const XML_Char {
         let dtd: *mut DTD = self.m_dtd;
         let mut needSep = false;
@@ -8471,7 +8495,7 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
     *p = '\u{0}' as XML_Char;
 }
 
-unsafe extern "C" fn dtdCreate() -> *mut DTD {
+unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     let mut p: *mut DTD = MALLOC!(@DTD);
     if p.is_null() {
         return p;
@@ -8489,11 +8513,7 @@ unsafe extern "C" fn dtdCreate() -> *mut DTD {
     (*p).defaultPrefix.name = NULL as *const XML_Char;
     (*p).defaultPrefix.binding = NULL as *mut BINDING;
     (*p).in_eldecl = false;
-    (*p).scaffIndex = NULL as *mut c_int;
-    (*p).scaffold = NULL as *mut CONTENT_SCAFFOLD;
-    (*p).scaffLevel = 0;
-    (*p).scaffSize = 0;
-    (*p).scaffCount = 0;
+    std::ptr::write(&mut (*p).scaffold, Default::default());
     (*p).contentStringLen = 0;
     (*p).keepProcessing = true;
     (*p).hasParamEntityRefs = false;
@@ -8515,13 +8535,7 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
     (*p).defaultPrefix.name = NULL as *const XML_Char;
     (*p).defaultPrefix.binding = NULL as *mut BINDING;
     (*p).in_eldecl = false;
-    FREE!((*p).scaffIndex);
-    (*p).scaffIndex = NULL as *mut c_int;
-    FREE!((*p).scaffold);
-    (*p).scaffold = NULL as *mut CONTENT_SCAFFOLD;
-    (*p).scaffLevel = 0;
-    (*p).scaffSize = 0;
-    (*p).scaffCount = 0;
+    (*p).scaffold = Default::default();
     (*p).contentStringLen = 0;
     (*p).keepProcessing = true;
     (*p).hasParamEntityRefs = false;
@@ -8530,7 +8544,6 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
 
 unsafe extern "C" fn dtdDestroy(
     mut p: *mut DTD,
-    mut isDocEntity: XML_Bool,
 ) {
     std::ptr::drop_in_place(&mut (*p).generalEntities);
     std::ptr::drop_in_place(&mut (*p).paramEntities);
@@ -8540,19 +8553,16 @@ unsafe extern "C" fn dtdDestroy(
     std::ptr::drop_in_place(&mut (*p).prefixes);
     (*p).pool.destroy();
     (*p).entityValuePool.destroy();
-    if isDocEntity {
-        FREE!((*p).scaffIndex);
-        FREE!((*p).scaffold);
-    }
+    std::ptr::drop_in_place(&mut (*p).scaffold);
     FREE!(p);
 }
 /* Do a deep copy of the DTD. Return 0 for out of memory, non-zero otherwise.
    The new DTD has already been initialized.
 */
 
-unsafe extern "C" fn dtdCopy(
-    mut newDtd: *mut DTD,
-    mut oldDtd: *const DTD,
+unsafe extern "C" fn dtdCopy<'scf>(
+    mut newDtd: *mut DTD<'scf>,
+    mut oldDtd: *const DTD<'scf>,
 ) -> c_int {
     /* Copy the prefix table. */
     for oldP in (*oldDtd).prefixes.values() {
@@ -8687,11 +8697,8 @@ unsafe extern "C" fn dtdCopy(
     (*newDtd).standalone = (*oldDtd).standalone;
     /* Don't want deep copying for scaffolding */
     (*newDtd).in_eldecl = (*oldDtd).in_eldecl;
-    (*newDtd).scaffold = (*oldDtd).scaffold;
+    (*newDtd).scaffold = Cow::Borrowed(&(*oldDtd).scaffold);
     (*newDtd).contentStringLen = (*oldDtd).contentStringLen;
-    (*newDtd).scaffSize = (*oldDtd).scaffSize;
-    (*newDtd).scaffLevel = (*oldDtd).scaffLevel;
-    (*newDtd).scaffIndex = (*oldDtd).scaffIndex;
     1
 }
 /* End dtdCopy */
@@ -9103,76 +9110,24 @@ impl STRING_POOL {
     }
 }
 
-impl XML_ParserStruct {
-    unsafe fn nextScaffoldPart(&mut self) -> c_int {
-        let dtd: *mut DTD = self.m_dtd;
-        let mut me: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
-        let mut next: c_int = 0;
-        if (*dtd).scaffIndex.is_null() {
-            (*dtd).scaffIndex = MALLOC![c_int; self.m_groupSize];
-            if (*dtd).scaffIndex.is_null() {
-                return -1;
-            }
-            *(*dtd).scaffIndex.offset(0) = 0
-        }
-        if (*dtd).scaffCount >= (*dtd).scaffSize {
-            let mut temp: *mut CONTENT_SCAFFOLD = 0 as *mut CONTENT_SCAFFOLD;
-            if !(*dtd).scaffold.is_null() {
-                temp = REALLOC!((*dtd).scaffold => [CONTENT_SCAFFOLD; (*dtd).scaffSize.wrapping_mul(2)]);
-                if temp.is_null() {
-                    return -1;
-                }
-                (*dtd).scaffSize = (*dtd).scaffSize.wrapping_mul(2)
-            } else {
-                temp = MALLOC![CONTENT_SCAFFOLD; INIT_SCAFFOLD_ELEMENTS];
-                if temp.is_null() {
-                    return -1;
-                }
-                (*dtd).scaffSize = INIT_SCAFFOLD_ELEMENTS as c_uint
-            }
-            (*dtd).scaffold = temp
-        }
-        let fresh82 = (*dtd).scaffCount;
-        (*dtd).scaffCount = (*dtd).scaffCount.wrapping_add(1);
-        next = fresh82 as c_int;
-        me = &mut *(*dtd).scaffold.offset(next as isize) as *mut CONTENT_SCAFFOLD;
-        if (*dtd).scaffLevel != 0 {
-            let mut parent: *mut CONTENT_SCAFFOLD = &mut *(*dtd)
-                .scaffold
-                .offset(*(*dtd).scaffIndex.offset(((*dtd).scaffLevel - 1) as isize) as isize)
-                as *mut CONTENT_SCAFFOLD;
-            if (*parent).lastchild != 0 {
-                (*(*dtd).scaffold.offset((*parent).lastchild as isize)).nextsib = next
-            }
-            if (*parent).childcnt == 0 {
-                (*parent).firstchild = next
-            }
-            (*parent).lastchild = next;
-            (*parent).childcnt += 1
-        }
-        (*me).nextsib = 0;
-        (*me).childcnt = (*me).nextsib;
-        (*me).lastchild = (*me).childcnt;
-        (*me).firstchild = (*me).lastchild;
-        next
-    }
-
+impl<'scf> XML_ParserStruct<'scf> {
     fn build_node<'a, 'b>(
         &mut self,
-        src_node: c_int,
+        src_node: usize,
         dest: &mut XML_Content,
         mut contpos: &'a mut [XML_Content],
         mut strpos: &'b mut [XML_Char],
     ) -> (&'a mut [XML_Content], &'b mut [XML_Char]) {
         let dtd: *mut DTD = self.m_dtd;
-        dest.type_0 = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).type_0 };
-        dest.quant = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).quant };
+        let scf = RefCell::borrow(unsafe { &(*dtd).scaffold });
+        dest.type_0 = scf.scaffold[src_node].type_0;
+        dest.quant = scf.scaffold[src_node].quant;
         if dest.type_0 == XML_Content_Type::NAME {
             dest.name = (*strpos).as_ptr() as *mut XML_Char;
             dest.numchildren = 0;
             dest.children = ptr::null_mut();
 
-            let mut src = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).name };
+            let mut src = scf.scaffold[src_node].name;
             loop {
                 let (first, rest) = strpos.split_first_mut().unwrap();
                 *first = unsafe { *src };
@@ -9183,17 +9138,17 @@ impl XML_ParserStruct {
                 strpos = rest;
             }
         } else {
-            let (children, rest) = unsafe { contpos.split_at_mut((*(*dtd).scaffold.offset(src_node as isize)).childcnt as usize) };
+            let (children, rest) = contpos.split_at_mut(scf.scaffold[src_node].childcnt);
             contpos = rest;
 
             dest.name = ptr::null_mut();
             dest.numchildren = children.len().try_into().unwrap();
             dest.children = children.as_ptr() as *mut XML_Content;
 
-            let mut cn = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).firstchild };
+            let mut cn = scf.scaffold[src_node].firstchild;
             for child in children {
                 let (ncp, nsp) = self.build_node(cn, child, contpos, strpos);
-                cn = unsafe { (*(*dtd).scaffold.offset(cn as isize)).nextsib };
+                cn = scf.scaffold[cn].nextsib;
                 contpos = ncp;
                 strpos = nsp;
             }
@@ -9204,7 +9159,8 @@ impl XML_ParserStruct {
     unsafe fn build_model(&mut self) -> *mut XML_Content {
         let dtd: *mut DTD = self.m_dtd;
         let mut ret: *mut XML_Content = 0 as *mut XML_Content;
-        let mut allocsize: c_int = ((*dtd).scaffCount as c_ulong)
+        let scaffold_len = (*dtd).scaffold.borrow().scaffold.len();
+        let mut allocsize: c_int = (scaffold_len as c_ulong)
             .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
             .wrapping_add(
                 ((*dtd).contentStringLen as c_ulong)
@@ -9215,11 +9171,11 @@ impl XML_ParserStruct {
             return NULL as *mut XML_Content;
         }
         let str = std::slice::from_raw_parts_mut(
-            ret.offset((*dtd).scaffCount as isize) as *mut XML_Char,
+            ret.add(scaffold_len) as *mut XML_Char,
             (*dtd).contentStringLen as usize);
         let cpos = std::slice::from_raw_parts_mut(
             ret.offset(1) as *mut XML_Content,
-            (*dtd).scaffCount as usize - 1);
+            scaffold_len as usize - 1);
         self.build_node(0, &mut *ret, cpos, str);
         ret
     }
