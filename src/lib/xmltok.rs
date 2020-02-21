@@ -38,88 +38,131 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
+use std::marker::PhantomData;
 use std::ptr;
 use crate::xmltok_impl_h::ByteType;
+use num_derive::{ToPrimitive};
 use num_traits::{ToPrimitive, FromPrimitive};
 
 #[cfg(feature = "mozilla")]
 pub mod moz_extensions;
 
-pub const XML_TOK_TRAILING_RSQB: c_int = -5; /* ] or ]] at the end of the scan; might be
+
+#[repr(i32)]
+#[derive(ToPrimitive, PartialEq, Copy, Clone, Debug)]
+pub enum XML_TOK {    
+    TRAILING_RSQB = -5, /* ] or ]] at the end of the scan, might be
                                              start of illegal ]]> sequence */
 
 /* The following tokens may be returned by both XmlPrologTok and
    XmlContentTok.
 */
-pub const XML_TOK_NONE: c_int = -4; /* The string to be scanned is empty */
-pub const XML_TOK_TRAILING_CR: c_int = -3; /* A CR at the end of the scan;
-                                            * might be part of CRLF sequence */
-pub const XML_TOK_PARTIAL_CHAR: c_int = -2; /* only part of a multibyte sequence */
-pub const XML_TOK_PARTIAL: c_int = -1; /* only part of a token */
-pub const XML_TOK_INVALID: c_int = 0;
+    NONE = -4, /* The string to be scanned is empty */
+    TRAILING_CR = -3, /* A CR at the end of the scan,
+                                                * might be part of CRLF sequence */
+    PARTIAL_CHAR = -2, /* only part of a multibyte sequence */
+    PARTIAL = -1, /* only part of a token */
+    INVALID = 0,
 
-/* The following tokens are returned by XmlContentTok; some are also
+/* The following tokens are returned by XmlContentTok, some are also
    returned by XmlAttributeValueTok, XmlEntityTok, XmlCdataSectionTok.
 */
 
-pub const XML_TOK_START_TAG_WITH_ATTS: c_int = 1;
-pub const XML_TOK_START_TAG_NO_ATTS: c_int = 2;
-pub const XML_TOK_EMPTY_ELEMENT_WITH_ATTS: c_int = 3; /* empty element tag <e/> */
-pub const XML_TOK_EMPTY_ELEMENT_NO_ATTS: c_int = 4;
-pub const XML_TOK_END_TAG: c_int = 5;
-pub const XML_TOK_DATA_CHARS: c_int = 6;
-pub const XML_TOK_DATA_NEWLINE: c_int = 7;
-pub const XML_TOK_CDATA_SECT_OPEN: c_int = 8;
-pub const XML_TOK_ENTITY_REF: c_int = 9;
-pub const XML_TOK_CHAR_REF: c_int = 10; /* numeric character reference */
+    START_TAG_WITH_ATTS = 1,
+    START_TAG_NO_ATTS = 2,
+    EMPTY_ELEMENT_WITH_ATTS = 3, /* empty element tag <e/> */
+    EMPTY_ELEMENT_NO_ATTS = 4,
+    END_TAG = 5,
+    DATA_CHARS = 6,
+    DATA_NEWLINE = 7,
+    CDATA_SECT_OPEN = 8,
+    ENTITY_REF = 9,
+    CHAR_REF = 10, /* numeric character reference */
 
 /* The following tokens may be returned by both XmlPrologTok and
    XmlContentTok.
 */
-pub const XML_TOK_PI: c_int = 11; /* processing instruction */
-pub const XML_TOK_XML_DECL: c_int = 12; /* XML decl or text decl */
-pub const XML_TOK_COMMENT: c_int = 13;
-pub const XML_TOK_BOM: c_int = 14; /* Byte order mark */
+    PI = 11, /* processing instruction */
+    XML_DECL = 12, /* XML decl or text decl */
+    COMMENT = 13,
+    BOM = 14, /* Byte order mark */
 
 /* The following tokens are returned only by XmlPrologTok */
-pub const XML_TOK_PROLOG_S: c_int = 15;
-pub const XML_TOK_DECL_OPEN: c_int = 16; /* <!foo */
-pub const XML_TOK_DECL_CLOSE: c_int = 17; /* > */
-pub const XML_TOK_NAME: c_int = 18;
-pub const XML_TOK_NMTOKEN: c_int = 19;
-pub const XML_TOK_POUND_NAME: c_int = 20; /* #name */
-pub const XML_TOK_OR: c_int = 21; /* | */
-pub const XML_TOK_PERCENT: c_int = 22;
-pub const XML_TOK_OPEN_PAREN: c_int = 23;
-pub const XML_TOK_CLOSE_PAREN: c_int = 24;
-pub const XML_TOK_OPEN_BRACKET: c_int = 25;
-pub const XML_TOK_CLOSE_BRACKET: c_int = 26;
-pub const XML_TOK_LITERAL: c_int = 27;
-pub const XML_TOK_PARAM_ENTITY_REF: c_int = 28;
-pub const XML_TOK_INSTANCE_START: c_int = 29;
+    PROLOG_S = 15,
+    PROLOG_S_NEG = -15,      /* NOTE: added in c2rust port */
+    DECL_OPEN = 16, /* <!foo */
+    DECL_CLOSE = 17, /* > */
+    NAME = 18,
+    NAME_NEG = -18,
+    NMTOKEN = 19,
+    NMTOKEN_NEG = -19,       /* NOTE: added in c2rust port */
+    POUND_NAME = 20, /* #name */
+    POUND_NAME_NEG = -20,    /* NOTE: added in c2rust port */
+    OR = 21, /* | */
+    PERCENT = 22,
+    OPEN_PAREN = 23,
+    CLOSE_PAREN = 24,
+    CLOSE_PAREN_NEG = -24,   /* NOTE: added in c2rust port */
+    OPEN_BRACKET = 25,
+    CLOSE_BRACKET = 26,
+    CLOSE_BRACKET_NEG = -26, /* NOTE: added in c2rust port */
+    LITERAL = 27,
+    LITERAL_NEG = -27,       /* NOTE: added in c2rust port */
+    PARAM_ENTITY_REF = 28,
+    INSTANCE_START = 29,
 
 /* The following occur only in element type declarations */
-pub const XML_TOK_NAME_QUESTION: c_int = 30; /* name? */
-pub const XML_TOK_NAME_ASTERISK: c_int = 31; /* name* */
-pub const XML_TOK_NAME_PLUS: c_int = 32; /* name+ */
-pub const XML_TOK_COND_SECT_OPEN: c_int = 33; /* <![ */
-pub const XML_TOK_COND_SECT_CLOSE: c_int = 34; /* ]]> */
-pub const XML_TOK_CLOSE_PAREN_QUESTION: c_int = 35; /* )? */
-pub const XML_TOK_CLOSE_PAREN_ASTERISK: c_int = 36; /* )* */
-pub const XML_TOK_CLOSE_PAREN_PLUS: c_int = 37; /* )+ */
-pub const XML_TOK_COMMA: c_int = 38;
+    NAME_QUESTION = 30, /* name? */
+    NAME_ASTERISK = 31, /* name* */
+    NAME_PLUS = 32, /* name+ */
+    COND_SECT_OPEN = 33, /* <![ */
+    COND_SECT_CLOSE = 34, /* ]]> */
+    CLOSE_PAREN_QUESTION = 35, /* )? */
+    CLOSE_PAREN_ASTERISK = 36, /* )* */
+    CLOSE_PAREN_PLUS = 37, /* )+ */
+    COMMA = 38,
 
 /* The following token is returned only by XmlAttributeValueTok */
-pub const XML_TOK_ATTRIBUTE_VALUE_S: c_int = 39;
+    ATTRIBUTE_VALUE_S = 39,
 
 /* The following token is returned only by XmlCdataSectionTok */
-pub const XML_TOK_CDATA_SECT_CLOSE: c_int = 40;
+    CDATA_SECT_CLOSE = 40,
 
 /* With namespace processing this is returned by XmlPrologTok for a
    name with a colon.
 */
-pub const XML_TOK_PREFIXED_NAME: c_int = 41;
-pub const XML_TOK_IGNORE_SECT: c_int = 42;
+    PREFIXED_NAME = 41,
+    PREFIXED_NAME_NEG = -41,
+    IGNORE_SECT = 42,
+}
+
+impl XML_TOK {
+    pub fn is_error(&self) -> bool {
+        self.to_i32().unwrap() <= 0
+    }
+
+    pub fn negate(&self) -> XML_TOK {
+        match self {
+            XML_TOK::CLOSE_PAREN_NEG => XML_TOK::CLOSE_PAREN,
+            XML_TOK::POUND_NAME_NEG => XML_TOK::POUND_NAME,
+            XML_TOK::LITERAL_NEG => XML_TOK::LITERAL,
+            XML_TOK::NAME_NEG => XML_TOK::NAME,
+            XML_TOK::NAME => XML_TOK::NAME_NEG,
+            XML_TOK::PREFIXED_NAME => XML_TOK::PREFIXED_NAME_NEG,
+            XML_TOK::NMTOKEN => XML_TOK::NMTOKEN_NEG,
+            /* FIXME: not 100% sure we need the cases below */
+            XML_TOK::CLOSE_BRACKET_NEG => XML_TOK::CLOSE_BRACKET,
+            XML_TOK::CLOSE_BRACKET => XML_TOK::CLOSE_BRACKET_NEG,
+            XML_TOK::PREFIXED_NAME_NEG => XML_TOK::PREFIXED_NAME,
+            XML_TOK::NMTOKEN_NEG => XML_TOK::NMTOKEN,
+
+            _unimplemented => unimplemented!(
+                "negation not implemented for {}", 
+                self.to_i32().unwrap()),
+        }
+    }
+}
+
 pub const XML_PROLOG_STATE: c_int = 0;
 pub const XML_CONTENT_STATE: c_int = 1;
 pub const XML_CDATA_SECTION_STATE: c_int = 2;
@@ -184,40 +227,40 @@ pub trait XmlEncoding {
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
     unsafe fn contentTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
     unsafe fn cdataSectionTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
     unsafe fn ignoreSectionTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
 
     // literalScanners[2]
     unsafe fn attributeValueTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
     unsafe fn entityValueTok(
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int;
+    ) -> XML_TOK;
 
     fn nameMatchesAscii(
         &self,
         buf: ExpatBufRef,
         ptr2: &[libc::c_char],
-    ) -> libc::c_int;
+    ) -> bool;
 
     unsafe fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
 
@@ -271,7 +314,7 @@ pub trait XmlEncoding {
         state: c_int,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const c_char,
-    ) -> c_int {
+    ) -> XML_TOK {
         match state {
             XML_PROLOG_STATE => self.prologTok(buf, nextTokPtr),
             XML_CONTENT_STATE => self.contentTok(buf, nextTokPtr),
@@ -287,7 +330,7 @@ pub trait XmlEncoding {
         literal_type: c_int,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const c_char,
-    ) -> c_int {
+    ) -> XML_TOK {
         match literal_type {
             XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(buf, nextTokPtr),
             XML_ENTITY_VALUE_LITERAL => self.entityValueTok(buf, nextTokPtr),
@@ -338,12 +381,6 @@ macro_rules! UCS2_GET_NAMING {
 }
 
 struct Utf8EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
-
-impl<T: NormalEncodingTable> Utf8EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 type Utf8Encoding = Utf8EncodingImpl<Utf8EncodingTable>;
 type Utf8EncodingNS = Utf8EncodingImpl<Utf8EncodingTableNS>;
@@ -625,12 +662,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
 
 struct Latin1EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> Latin1EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
 type Latin1Encoding = Latin1EncodingImpl<Latin1EncodingTable>;
 type Latin1EncodingNS = Latin1EncodingImpl<Latin1EncodingTableNS>;
 
@@ -724,12 +755,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
 
 struct AsciiEncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
 
-impl<T: NormalEncodingTable> AsciiEncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
 type AsciiEncoding = AsciiEncodingImpl<AsciiEncodingTable>;
 type AsciiEncodingNS = AsciiEncodingImpl<AsciiEncodingTableNS>;
 
@@ -808,12 +833,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
 }
 
 struct Little2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
-
-impl<T: NormalEncodingTable> Little2EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 type Little2Encoding = Little2EncodingImpl<Latin1EncodingTable>;
 type Little2EncodingNS = Little2EncodingImpl<Latin1EncodingTableNS>;
@@ -1002,12 +1021,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
 }
 
 struct Big2EncodingImpl<T: NormalEncodingTable>(std::marker::PhantomData<T>);
-
-impl<T: NormalEncodingTable> Big2EncodingImpl<T> {
-    fn new() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 type Big2Encoding = Big2EncodingImpl<Latin1EncodingTable>;
 type Big2EncodingNS = Big2EncodingImpl<Latin1EncodingTableNS>;
@@ -1983,14 +1996,14 @@ impl InitEncoding {
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
-        Self::new_impl(encPtr, name, encodingsNS.as_ref().unwrap())
+        Self::new_impl(encPtr, name, &encodingsNS)
     }
 
     pub unsafe fn new(
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
-        Self::new_impl(encPtr, name, encodings.as_ref().unwrap())
+        Self::new_impl(encPtr, name, &encodings)
     }
 
     /* This is what detects the encoding.  encodingTable maps from
@@ -2004,9 +2017,9 @@ impl InitEncoding {
         mut state: c_int,
         buf: ExpatBufRef,
         mut nextTokPtr: *mut *const c_char,
-    ) -> c_int {
+    ) -> XML_TOK {
         if buf.is_empty() {
-            return crate::xmltok_h::XML_TOK_NONE;
+            return XML_TOK::NONE;
         }
         if buf.len() == 1 {
             /* only a single byte available for auto-detection */
@@ -2014,7 +2027,7 @@ impl InitEncoding {
             /* so we're parsing an external text entity... */
             /* if UTF-16 was externally specified, then we need at least 2 bytes */
             match self.encoding_index as c_int {
-                3 | 5 | 4 => return crate::xmltok_h::XML_TOK_PARTIAL,
+                3 | 5 | 4 => return XML_TOK::PARTIAL,
                 _ => {}
             }
             let mut current_block_5: u64;
@@ -2039,7 +2052,7 @@ impl InitEncoding {
                 _ =>
                 /* fall through */
                 {
-                    return crate::xmltok_h::XML_TOK_PARTIAL
+                    return XML_TOK::PARTIAL
                 }
             }
         } else {
@@ -2050,7 +2063,7 @@ impl InitEncoding {
                     {
                         *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
-                        return crate::xmltok_h::XML_TOK_BOM;
+                        return XML_TOK::BOM;
                     }
                 }
                 15360 => {
@@ -2068,7 +2081,7 @@ impl InitEncoding {
                     {
                         *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
-                        return crate::xmltok_h::XML_TOK_BOM;
+                        return XML_TOK::BOM;
                     }
                 }
                 61371 => {
@@ -2097,12 +2110,12 @@ impl InitEncoding {
                         10758786907990354186 => {}
                         _ => {
                             if buf.len() == 2 {
-                                return crate::xmltok_h::XML_TOK_PARTIAL;
+                                return XML_TOK::PARTIAL;
                             }
                             if buf[2] as c_uchar as c_int == 0xbf {
                                 *nextTokPtr = buf.as_ptr().offset(3);
                                 *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize];
-                                return crate::xmltok_h::XML_TOK_BOM;
+                                return XML_TOK::BOM;
                             }
                         }
                     }
@@ -2151,7 +2164,7 @@ impl XmlEncoding for InitEncoding {
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         self.initScan(
             XML_PROLOG_STATE,
             buf,
@@ -2162,7 +2175,7 @@ impl XmlEncoding for InitEncoding {
         &self,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
+    ) -> XML_TOK {
         self.initScan(
             XML_CONTENT_STATE,
             buf,
@@ -2173,15 +2186,15 @@ impl XmlEncoding for InitEncoding {
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        0
+    ) -> XML_TOK {
+        XML_TOK::INVALID
     }
     unsafe fn ignoreSectionTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        0
+    ) -> XML_TOK {
+        XML_TOK::INVALID
     }
 
     // literalScanners[2]
@@ -2189,23 +2202,23 @@ impl XmlEncoding for InitEncoding {
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        0
+    ) -> XML_TOK {
+        XML_TOK::INVALID
     }
     unsafe fn entityValueTok(
         &self,
         _buf: ExpatBufRef,
         _nextTokPtr: *mut *const libc::c_char,
-    ) -> libc::c_int {
-        0
+    ) -> XML_TOK {
+        XML_TOK::INVALID
     }
 
     fn nameMatchesAscii(
         &self,
         _buf: ExpatBufRef,
         _ptr2: &[libc::c_char],
-    ) -> libc::c_int {
-        0
+    ) -> bool {
+        false
     }
 
     unsafe fn nameLength(&self, _ptr: *const libc::c_char) -> libc::c_int {
@@ -2240,10 +2253,7 @@ impl XmlEncoding for InitEncoding {
         buf: ExpatBufRef,
         pos: *mut POSITION,
     ) {
-        utf8_encoding
-            .as_ref()
-            .unwrap()
-            .updatePosition(buf, pos);
+        utf8_encoding.updatePosition(buf, pos);
     }
 
     unsafe fn isPublicId(
@@ -2521,60 +2531,74 @@ impl XmlEncodingImpl for UnknownEncoding {
 
 
 
-static mut latin1_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut latin1_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut utf8_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut utf8_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut internal_utf8_encoding: Option<Box<InternalUtf8Encoding>> = None;
-static mut internal_utf8_encoding_ns: Option<Box<InternalUtf8EncodingNS>> = None;
-static mut ascii_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut ascii_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
-static mut little2_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut little2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static latin1_encoding: Latin1Encoding = Latin1EncodingImpl(PhantomData);
+static latin1_encoding_ns: Latin1EncodingNS = Latin1EncodingImpl(PhantomData);
+static utf8_encoding: Utf8Encoding = Utf8EncodingImpl(PhantomData);
+static utf8_encoding_ns: Utf8EncodingNS = Utf8EncodingImpl(PhantomData);
+static internal_utf8_encoding: InternalUtf8Encoding = Utf8EncodingImpl(PhantomData);
+static internal_utf8_encoding_ns: InternalUtf8EncodingNS = Utf8EncodingImpl(PhantomData);
+static ascii_encoding: AsciiEncoding = AsciiEncodingImpl(PhantomData);
+static ascii_encoding_ns: AsciiEncodingNS = AsciiEncodingImpl(PhantomData);
+static little2_encoding: Little2Encoding = Little2EncodingImpl(PhantomData);
+static little2_encoding_ns: Little2EncodingNS = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding: Option<Box<InternalLittle2Encoding>> = None;
+static internal_little2_encoding: InternalLittle2Encoding = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static mut internal_little2_encoding_ns: Option<Box<InternalLittle2EncodingNS>> = None;
-static mut big2_encoding: Option<Box<dyn XmlEncoding>> = None;
-static mut big2_encoding_ns: Option<Box<dyn XmlEncoding>> = None;
+static internal_little2_encoding_ns: InternalLittle2EncodingNS = Little2EncodingImpl(PhantomData);
+static big2_encoding: Big2Encoding = Big2EncodingImpl(PhantomData);
+static big2_encoding_ns: Big2EncodingNS = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding: Option<Box<InternalBig2Encoding>> = None;
+static internal_big2_encoding: InternalBig2Encoding = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static mut internal_big2_encoding_ns: Option<Box<InternalBig2EncodingNS>> = None;
+static internal_big2_encoding_ns: InternalBig2EncodingNS = Big2EncodingImpl(PhantomData);
 
 pub fn XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_utf8_encoding_ns.as_ref().unwrap() }
+    &internal_utf8_encoding_ns
 }
 
 pub fn XmlGetUtf8InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_utf8_encoding.as_ref().unwrap() }
+    &internal_utf8_encoding
 }
 
 #[cfg(target_endian = "little")]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_little2_encoding.as_ref().unwrap() }
+    &internal_little2_encoding
 }
 
 #[cfg(target_endian = "big")]
 pub fn XmlGetUtf16InternalEncoding() -> &'static ENCODING {
-    unsafe { &**internal_big2_encoding.as_ref().unwrap() }
+    &internal_big2_encoding
 }
 
 #[cfg(target_endian = "little")]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_little2_encoding_ns.as_ref().unwrap() }
+    &internal_little2_encoding_ns
 }
 
 #[cfg(target_endian = "big")]
 pub fn XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
-    unsafe { &**internal_big2_encoding_ns.as_ref().unwrap() }
+    &internal_big2_encoding_ns
 }
 
-// Initialized in run_static_initializers
-pub static mut encodingsNS: Option<[&'static ENCODING; 7]> = None;
+pub static mut encodingsNS: [&'static ENCODING; 7] = [
+    &latin1_encoding_ns,
+    &ascii_encoding_ns,
+    &utf8_encoding_ns,
+    &big2_encoding_ns,
+    &big2_encoding_ns,
+    &little2_encoding_ns,
+    &utf8_encoding_ns,
+];
 
-// Initialized in run_static_initializers
-pub static mut encodings: Option<[&'static ENCODING; 7]> = None;
+pub static mut encodings: [&'static ENCODING; 7] = [
+    &latin1_encoding,
+    &ascii_encoding,
+    &utf8_encoding,
+    &big2_encoding,
+    &big2_encoding,
+    &little2_encoding,
+    &utf8_encoding,
+];
 
 pub unsafe fn findEncoding(
     mut enc: &ENCODING,
@@ -2598,7 +2622,7 @@ pub unsafe fn findEncoding(
     if i == UNKNOWN_ENC {
         None
     } else {
-        Some(encodings.unwrap()[i as usize])
+        Some(encodings[i as usize])
     }
 }
 
@@ -2624,7 +2648,7 @@ pub unsafe fn findEncodingNS(
     if i == UNKNOWN_ENC {
         None
     } else {
-        Some(encodingsNS.unwrap()[i as usize])
+        Some(encodingsNS[i as usize])
     }
 }
 
@@ -2865,10 +2889,7 @@ unsafe fn initUpdatePosition(
     buf: ExpatBufRef,
     mut pos: *mut POSITION,
 ) {
-    utf8_encoding
-        .as_ref()
-        .unwrap()
-        .updatePosition(buf, pos);
+    utf8_encoding.updatePosition(buf, pos);
 }
 
 unsafe fn toAscii(
@@ -3038,7 +3059,7 @@ unsafe fn doParseXmlDecl<'a>(
         return 0;
     }
     buf = buf.with_start(pseudo_ptr);
-    if (*enc).nameMatchesAscii(name.unwrap(), &KW_version) == 0 {
+    if !(*enc).nameMatchesAscii(name.unwrap(), &KW_version) {
         if isGeneralTextEntity == 0 {
             *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
             return 0;
@@ -3047,11 +3068,11 @@ unsafe fn doParseXmlDecl<'a>(
         *versionBuf = val_buf;
         #[cfg(feature = "mozilla")]
         {
-            if (*enc).nameMatchesAscii(val_buf
+            if !(*enc).nameMatchesAscii(val_buf
                                        .unwrap()
                                        .with_end(pseudo_ptr)
                                        .dec_end((*enc).minBytesPerChar() as usize),
-                                       &KW_XML_1_0) == 0
+                                       &KW_XML_1_0)
             {
                 *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
                 return 0;
@@ -3072,7 +3093,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), &KW_encoding) != 0 {
+    if (*enc).nameMatchesAscii(name.unwrap(), &KW_encoding) {
         let mut c: c_int = toAscii(enc, val_buf.unwrap());
         if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
@@ -3102,7 +3123,7 @@ unsafe fn doParseXmlDecl<'a>(
             return 1;
         }
     }
-    if (*enc).nameMatchesAscii(name.unwrap(), &KW_standalone) == 0
+    if !(*enc).nameMatchesAscii(name.unwrap(), &KW_standalone)
         || isGeneralTextEntity != 0
     {
         *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
@@ -3114,7 +3135,7 @@ unsafe fn doParseXmlDecl<'a>(
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
         &KW_yes,
-    ) != 0
+    )
     {
         if !standalone.is_null() {
             *standalone = 1
@@ -3125,7 +3146,7 @@ unsafe fn doParseXmlDecl<'a>(
             .with_end(buf.as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
         &KW_no,
-    ) != 0
+    )
     {
         if !standalone.is_null() {
             *standalone = 0
@@ -3269,52 +3290,4 @@ unsafe fn getEncodingIndex(mut name: *const c_char) -> c_int {
     }
     UNKNOWN_ENC
 }
-
-unsafe fn run_static_initializers() {
-    latin1_encoding = Some(Box::new(Latin1Encoding::new()));
-    latin1_encoding_ns = Some(Box::new(Latin1EncodingNS::new()));
-    utf8_encoding = Some(Box::new(Utf8Encoding::new()));
-    utf8_encoding_ns = Some(Box::new(Utf8EncodingNS::new()));
-    internal_utf8_encoding = Some(Box::new(InternalUtf8Encoding::new()));
-    internal_utf8_encoding_ns = Some(Box::new(InternalUtf8EncodingNS::new()));
-    ascii_encoding = Some(Box::new(AsciiEncoding::new()));
-    ascii_encoding_ns = Some(Box::new(AsciiEncodingNS::new()));
-    little2_encoding = Some(Box::new(Little2Encoding::new()));
-    little2_encoding_ns = Some(Box::new(Little2EncodingNS::new()));
-    #[cfg(target_endian = "little")]
-    {
-        internal_little2_encoding = Some(Box::new(InternalLittle2Encoding::new()));
-        internal_little2_encoding_ns = Some(Box::new(InternalLittle2EncodingNS::new()));
-    }
-    big2_encoding = Some(Box::new(Big2Encoding::new()));
-    big2_encoding_ns = Some(Box::new(Big2EncodingNS::new()));
-    #[cfg(target_endian = "big")]
-    {
-        internal_big2_encoding = Some(Box::new(InternalBig2Encoding::new()));
-        internal_big2_encoding_ns = Some(Box::new(InternalBig2EncodingNS::new()));
-    }
-    encodingsNS = Some([
-        &**latin1_encoding_ns.as_ref().unwrap(),
-        &**ascii_encoding_ns.as_ref().unwrap(),
-        &**utf8_encoding_ns.as_ref().unwrap(),
-        &**big2_encoding_ns.as_ref().unwrap(),
-        &**big2_encoding_ns.as_ref().unwrap(),
-        &**little2_encoding_ns.as_ref().unwrap(),
-        &**utf8_encoding_ns.as_ref().unwrap(),
-    ]);
-    encodings = Some([
-        &**latin1_encoding.as_ref().unwrap(),
-        &**ascii_encoding.as_ref().unwrap(),
-        &**utf8_encoding.as_ref().unwrap(),
-        &**big2_encoding.as_ref().unwrap(),
-        &**big2_encoding.as_ref().unwrap(),
-        &**little2_encoding.as_ref().unwrap(),
-        &**utf8_encoding.as_ref().unwrap(),
-    ]);
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 // XML_NS

@@ -39,7 +39,7 @@ use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 
-pub type XML_Parser = *mut XML_ParserStruct;
+pub type XML_Parser<'scf> = *mut XML_ParserStruct<'scf>;
 pub type XML_Bool = bool;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
@@ -56,7 +56,7 @@ pub type XML_Bool = bool;
 */
 
 #[repr(u32)]
-#[derive(PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum XML_Status {
     ERROR,
     OK,
@@ -64,7 +64,7 @@ pub enum XML_Status {
 }
 
 #[repr(u32)]
-#[derive(PartialEq, Clone, Copy, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Copy, Debug, FromPrimitive, PartialEq, ToPrimitive)]
 pub enum XML_Error {
     NONE,
     NO_MEMORY,
@@ -115,7 +115,7 @@ pub enum XML_Error {
 }
 pub type XML_ErrorCode = libc::c_uint;
 impl XML_Error {
-    pub fn code(&self) -> XML_ErrorCode { 
+    pub fn code(&self) -> XML_ErrorCode {
         // libc::c_uint is always u32 as of 0.2.66
         ToPrimitive::to_u32(self).unwrap()
     }
@@ -141,7 +141,7 @@ pub enum XML_Content_Type {
 #[repr(u32)]
 #[derive(PartialEq, Clone, Copy)]
 pub enum XML_Content_Quant {
-    NONE, 
+    NONE,
     OPT,
     REP,
     PLUS
@@ -429,21 +429,30 @@ pub struct XML_Encoding {
 */
 pub type XML_UnknownEncodingHandler =
     Option<unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char, _: *mut XML_Encoding) -> c_int>;
-pub type XML_Parsing = c_uint;
-pub const XML_INITIALIZED: XML_Parsing = 0;
-pub const XML_PARSING: XML_Parsing = 1;
-pub const XML_FINISHED: XML_Parsing = 2;
-pub const XML_SUSPENDED: XML_Parsing = 3;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_Parsing {
+    INITIALIZED = 0,
+    PARSING = 1,
+    FINISHED = 2,
+    SUSPENDED = 3,
+}
+impl Default for XML_Parsing {
+    fn default() -> Self { XML_Parsing::INITIALIZED }
+}
 #[repr(C)]
 #[derive(Copy, Clone, Default)]
 pub struct XML_ParsingStatus {
     pub parsing: XML_Parsing,
     pub finalBuffer: XML_Bool,
 }
-pub type XML_ParamEntityParsing = c_uint;
-pub const XML_PARAM_ENTITY_PARSING_NEVER: XML_ParamEntityParsing = 0;
-pub const XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE: XML_ParamEntityParsing = 1;
-pub const XML_PARAM_ENTITY_PARSING_ALWAYS: XML_ParamEntityParsing = 2;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_ParamEntityParsing {
+    NEVER = 0,
+    UNLESS_STANDALONE = 1,
+    ALWAYS = 2,
+}
 pub const XML_GetErrorLineNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
     XML_GetCurrentLineNumber;
 pub const XML_GetErrorColumnNumber: unsafe extern "C" fn(_: XML_Parser) -> XML_Size =
@@ -457,18 +466,22 @@ pub struct XML_Expat_Version {
 }
 
 /* Added in Expat 1.95.5. */
-pub type XML_FeatureEnum = c_uint;
-pub const XML_FEATURE_END: XML_FeatureEnum = 0;
-pub const XML_FEATURE_UNICODE: XML_FeatureEnum = 1;
-pub const XML_FEATURE_UNICODE_WCHAR_T: XML_FeatureEnum = 2;
-pub const XML_FEATURE_DTD: XML_FeatureEnum = 3;
-pub const XML_FEATURE_CONTEXT_BYTES: XML_FeatureEnum = 4;
-pub const XML_FEATURE_MIN_SIZE: XML_FeatureEnum = 5;
-pub const XML_FEATURE_SIZEOF_XML_CHAR: XML_FeatureEnum = 6;
-pub const XML_FEATURE_SIZEOF_XML_LCHAR: XML_FeatureEnum = 7;
-pub const XML_FEATURE_NS: XML_FeatureEnum = 8;
-pub const XML_FEATURE_LARGE_SIZE: XML_FeatureEnum = 9;
-pub const XML_FEATURE_ATTR_INFO: XML_FeatureEnum = 10;
+#[repr(u32)]
+#[derive(Copy, Clone, PartialEq)]
+pub enum XML_FeatureEnum {
+    END = 0,
+    UNICODE,
+    UNICODE_WCHAR_T,
+    DTD,
+    CONTEXT_BYTES,
+    MIN_SIZE,
+    SIZEOF_XML_CHAR,
+    SIZEOF_XML_LCHAR,
+    NS,
+    LARGE_SIZE,
+    ATTR_INFO,
+    /* Additional features must be added to the end of this enum. */
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct XML_Feature {

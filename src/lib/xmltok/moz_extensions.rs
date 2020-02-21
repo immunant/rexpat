@@ -4,9 +4,7 @@ use crate::lib::xmltok::{
     MOZ_XmlUtf16Encode,
     XmlEncoding,
     XmlEncodingImpl,
-    XML_TOK_INVALID,
-    XML_TOK_CHAR_REF,
-    XML_TOK_ENTITY_REF,
+    XML_TOK,
 };
 use crate::lib::xmltok_impl::XmlTokImpl;
 use crate::xmltok_impl_h::ByteType;
@@ -20,19 +18,19 @@ use crate::lib::xmltok::internal_big2_encoding_ns as encoding;
 
 macro_rules! BYTE_TYPE {
     ($p:expr) => {
-        encoding.as_ref().unwrap().byte_type($p)
+        encoding.byte_type($p)
     };
 }
 
 macro_rules! IS_NAME_CHAR_MINBPC {
     ($p:expr) => {
-        encoding.as_ref().unwrap().is_name_char_minbpc($p)
+        encoding.is_name_char_minbpc($p)
     };
 }
 
 macro_rules! IS_NMSTRT_CHAR_MINBPC {
     ($p:expr) => {
-        encoding.as_ref().unwrap().is_nmstrt_char_minbpc($p)
+        encoding.is_nmstrt_char_minbpc($p)
     };
 }
 
@@ -119,18 +117,18 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
 ) -> c_int {
     // Can we assert here somehow?
     // MOZ_ASSERT(*ptr == '&');
-    let enc_mbpc = encoding.as_ref().unwrap().MINBPC();
+    let enc_mbpc = encoding.MINBPC();
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
-    let tok = encoding.as_ref().unwrap().scanRef(buf.inc_start(enc_mbpc), next);
-    if tok <= XML_TOK_INVALID {
+    let tok = encoding.scanRef(buf.inc_start(enc_mbpc), next);
+    if tok.is_error() {
         return 0;
     }
 
     match tok {
-        XML_TOK_CHAR_REF => {
+        XML_TOK::CHAR_REF => {
             /* XmlCharRefNumber expects to be pointed to the '&'. */
-            let n = encoding.as_ref().unwrap().charRefNumber(buf);
+            let n = encoding.charRefNumber(buf);
 
             /* We could get away with just < 0, but better safe than sorry. */
             if n <= 0 {
@@ -141,12 +139,12 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
             }
         }
 
-        XML_TOK_ENTITY_REF => {
+        XML_TOK::ENTITY_REF => {
 	    /* XmlPredefinedEntityName expects to be pointed to the char after '&'.
             
 	     *next points to after the semicolon, so the entity ends at
 	     *next - enc->minBytesPerChar. */
-            let ch = encoding.as_ref().unwrap().predefinedEntityName(
+            let ch = encoding.predefinedEntityName(
                 buf.inc_start(enc_mbpc)
                    .with_end(*next)
                    .dec_end(enc_mbpc as usize)) as XML_Char;

@@ -3,13 +3,6 @@ use ::libc::timespec;
 use libc::{c_char, c_int, c_long, c_schar, c_uint, c_ulong, c_ushort, c_void};
 extern "C" {
     #[no_mangle]
-    pub fn __assert_fail(
-        __assertion: *const c_char,
-        __file: *const c_char,
-        __line: c_uint,
-        __function: *const c_char,
-    ) -> !;
-    #[no_mangle]
     pub fn _setjmp(_: *mut __jmp_buf_tag) -> c_int;
 
     #[no_mangle]
@@ -18,13 +11,31 @@ extern "C" {
     #[no_mangle]
     pub fn longjmp(_: *mut __jmp_buf_tag, _: c_int) -> !;
 
+    #[cfg(all(unix, not(target_os = "macos")))]
     #[no_mangle]
     pub static mut stdout: *mut FILE;
 
+    #[cfg(all(unix, not(target_os = "macos")))]
     #[no_mangle]
     pub static mut stderr: *mut FILE;
 
+    #[cfg(all(unix, not(target_os = "macos")))]
     #[no_mangle]
+    pub static mut stdin: *mut FILE;
+
+    #[cfg(target_os = "macos")]
+    #[no_mangle]
+    #[link_name = "__stdoutp"]
+    pub static mut stdout: *mut FILE;
+
+    #[cfg(target_os = "macos")]
+    #[no_mangle]
+    #[link_name = "__stderrp"]
+    pub static mut stderr: *mut FILE;
+
+    #[cfg(target_os = "macos")]
+    #[no_mangle]
+    #[link_name = "__stdinp"]
     pub static mut stdin: *mut FILE;
 
     #[no_mangle]
