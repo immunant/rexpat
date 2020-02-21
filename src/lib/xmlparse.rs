@@ -9189,7 +9189,7 @@ impl XML_ParserStruct {
             *contpos = rest;
 
             dest.name = ptr::null_mut();
-            dest.numchildren = children.len() as c_uint;
+            dest.numchildren = children.len().try_into().unwrap();
             dest.children = children.as_ptr() as *mut XML_Content;
 
             let mut cn = unsafe { (*(*dtd).scaffold.offset(src_node as isize)).firstchild };
@@ -9220,7 +9220,7 @@ impl XML_ParserStruct {
             (*dtd).contentStringLen as usize);
         let mut cpos = std::slice::from_raw_parts(
             ret.offset(1) as *const Cell<XML_Content>,
-            (*dtd).scaffCount as usize);
+            (*dtd).scaffCount as usize - 1);
         self.build_node(0, &mut *ret, &mut cpos, &mut str);
         ret
     }
