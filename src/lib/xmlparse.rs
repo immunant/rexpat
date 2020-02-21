@@ -1145,10 +1145,10 @@ impl Scaffold {
             let idx = self.index.last().unwrap();
             if self.scaffold[*idx].lastchild != 0 {
                 let lc = self.scaffold[*idx].lastchild;
-                self.scaffold[lc].nextsib = next
+                self.scaffold[lc].nextsib = next;
             }
             if self.scaffold[*idx].childcnt == 0 {
-                self.scaffold[*idx].firstchild = next
+                self.scaffold[*idx].firstchild = next;
             }
             self.scaffold[*idx].lastchild = next;
             self.scaffold[*idx].childcnt += 1;
