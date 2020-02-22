@@ -27,8 +27,8 @@ pub use ::libc::{perror, O_RDONLY};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct PROCESS_ARGS<'scf> {
-    pub parser: XML_Parser<'scf>,
+pub struct PROCESS_ARGS<'dtd> {
+    pub parser: XML_Parser<'dtd>,
     pub retPtr: *mut c_int,
 }
 /*
