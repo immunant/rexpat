@@ -5,6 +5,7 @@ use crate::stddef_h::size_t;
 
 use bumpalo::Bump;
 use bumpalo::collections::vec::Vec as BumpVec;
+use fallible_collections::FallibleBox;
 use libc::{INT_MAX, c_int, c_uint, c_ulong};
 
 use std::cell::RefCell;
@@ -69,9 +70,10 @@ pub(crate) struct StringPool(Option<InnerStringPool>);
 impl StringPool {
     pub(crate) fn try_new() -> Result<Self, ()> {
         let bump = Bump::try_new().map_err(|_| ())?;
+        let boxed_bump = Box::try_new(bump).map_err(|_| ())?;
 
         Ok(StringPool(Some(InnerStringPool::new(
-            Box::new(bump),
+            boxed_bump,
             |bump| RefCell::new(BumpVec::new_in(&bump)),
         ))))
     }
