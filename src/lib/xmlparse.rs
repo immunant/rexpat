@@ -1005,6 +1005,15 @@ pub struct prefix {
     pub binding: *mut BINDING,
 }
 
+impl Default for prefix {
+    fn default() -> prefix {
+        prefix {
+            name: ptr::null(),
+            binding: ptr::null_mut(),
+        }
+    }
+}
+
 /* TAG represents an open element.
    The name of the element is stored in both the document and API
    encodings.  The memory buffer 'buf' is a separately-allocated
@@ -1169,7 +1178,7 @@ impl<'dtd> DTD<'dtd> {
             hasParamEntityRefs: Cell::new(false),
             standalone: Cell::new(false),
             paramEntityRead: Cell::new(false),
-            defaultPrefix: Cell::new(PREFIX { name: ptr::null(), binding: ptr::null_mut() }),
+            defaultPrefix: Default::default(),
             in_eldecl: Cell::new(false),
             scaffold: Default::default(),
             contentStringLen: Cell::new(0),
@@ -1195,7 +1204,7 @@ impl<'dtd> DTD<'dtd> {
         scf.index.clear();
 
         self.paramEntityRead.set(false);
-        self.defaultPrefix.set(PREFIX { name: ptr::null(), binding: ptr::null_mut() });
+        self.defaultPrefix.take();
         self.in_eldecl.set(false);
         self.contentStringLen.set(0);
         self.keepProcessing.set(true);
@@ -1211,7 +1220,7 @@ impl<'dtd> DTD<'dtd> {
             hasParamEntityRefs: self.hasParamEntityRefs.clone(),
             standalone: self.standalone.clone(),
             paramEntityRead: self.paramEntityRead.clone(),
-            defaultPrefix: Cell::new(PREFIX { name: ptr::null(), binding: ptr::null_mut() }),
+            defaultPrefix: Default::default(),
             in_eldecl: self.in_eldecl.clone(),
             /* Don't want deep copying for scaffolding */
             scaffold: Cow::Borrowed(self.scaffold.as_ref()),
