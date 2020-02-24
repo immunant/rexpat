@@ -50,7 +50,7 @@ fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
     bytesToAllocate as size_t
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug)]
 struct RawBumpVec {
     start: *mut XML_Char,
     len: usize,
@@ -73,14 +73,14 @@ pub(crate) struct StringPool {
 }
 
 impl StringPool {
-    pub(crate) fn new() -> Result<Self, ()> {
+    pub(crate) fn try_new() -> Result<Self, ()> {
         Ok(StringPool {
             bump: Bump::try_new().map_err(|_| ())?,
             currentBumpVec: Cell::new(RawBumpVec::new()),
         })
     }
 
-    /// Determined whether or not the current BumpVec is empty.
+    /// Determines whether or not the current BumpVec is empty.
     pub(crate) fn is_empty(&self) -> bool {
         let RawBumpVec { len, .. } = self.currentBumpVec.get();
 
@@ -95,12 +95,11 @@ impl StringPool {
     }
 
     /// Gets the current vec, converts it into a slice, and resets
-    /// bookkeeping so that it will create a new vec next time get_bump_vec
-    /// is called.
+    // bookkeeping so that it will create a new vec next time.
     fn consume_current_vec(&self) -> &mut [XML_Char] {
         let slice = ManuallyDrop::into_inner(self.get_bump_vec()).into_bump_slice_mut();
 
-        self.currentBumpVec.set(RawBumpVec::new());
+        self.finish_current();
 
         slice
     }
@@ -214,7 +213,7 @@ impl StringPool {
         self.bump.reset()
     }
 
-    pub(crate) unsafe fn storeString(
+    pub(crate) fn storeString(
         &self,
         enc: &ENCODING,
         buf: ExpatBufRef,
@@ -231,24 +230,29 @@ impl StringPool {
         Some(self.consume_current_vec())
     }
 
-    unsafe fn set_len(&self, len: usize) {
+    /// Sets a new length on the current bump vec. This is always safe because:
+    /// 1) We assert the length is never greater than the capacity.
+    /// 2) We always zero the capacity buffer in grow(), so we can
+    ///    never point to uninit data.
+    fn set_len(&self, len: usize) {
         let mut buf = self.get_bump_vec();
 
-        debug_assert!(len <= buf.capacity());
+        assert!(len <= buf.capacity());
 
-        buf.set_len(len);
+        unsafe {
+            buf.set_len(len);
+        }
 
         self.update_raw(&mut buf);
     }
 
-    pub(crate) unsafe fn append(
+    pub(crate) fn append(
         &self,
         enc: &ENCODING,
         mut readBuf: ExpatBufRef,
     ) -> bool {
         let RawBumpVec { mut start, .. } = self.currentBumpVec.get();
 
-        // REVIEW: Can this be replaced with self.is_empty() &&?
         if start.is_null() && !self.grow() {
             return false;
         }
@@ -272,18 +276,23 @@ impl StringPool {
                 cap = new_cap;
             }
 
-            cap_begin = start.add(len);
-            cap_end = start.add(cap) as *mut ICHAR;
+            // Always safe to offset inbounds into the buffer
+            unsafe {
+                cap_begin = start.add(len);
+                cap_end = start.add(cap) as *mut ICHAR;
+            }
 
             // NOTE: We avoid UB when writing to the capacity via a mutable slice by zeroing the
             // capacity ahead of time in the grow() method
             let mut writeBuf = ExpatBufRefMut::new(cap_begin, cap_end);
 
-            let convert_res = XmlConvert!(
-                enc,
-                &mut readBuf,
-                &mut writeBuf,
-            );
+            let convert_res = unsafe {
+                XmlConvert!(
+                    enc,
+                    &mut readBuf,
+                    &mut writeBuf,
+                )
+            };
 
             // TODO: How to not need wrapping_offset_from here? Cast to u/isize first?
             let new_len = writeBuf.as_ptr().wrapping_offset_from(start).try_into().unwrap();
@@ -293,10 +302,6 @@ impl StringPool {
             if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
                 break;
             }
-
-            // if !self.grow() {
-            //     return false;
-            // }
 
             len = new_len;
         }
@@ -308,7 +313,6 @@ impl StringPool {
         &self,
         mut s: *const XML_Char,
     ) -> Option<&mut [XML_Char]> {
-        // self.appendString(s);?
         loop {
             if !self.appendChar(*s) {
                 return None;
@@ -399,7 +403,7 @@ impl StringPool {
         let start = buf.as_mut_ptr();
 
         // Safety: This is safe because we are writing to data we actually own,
-        // and don't go out of bounds of the BumpVec's capactiy
+        // and don't go out of bounds of the BumpVec's capacity
         unsafe {
             let mut tmp = start.add(buf.len());
             let end = start.add(buf.capacity());
@@ -430,7 +434,7 @@ mod consts {
 fn test_append_char() {
     use consts::*;
 
-    let mut pool = StringPool::new().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
@@ -449,7 +453,7 @@ fn test_append_char() {
 fn test_append_string() {
     use consts::*;
 
-    let mut pool = StringPool::new().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
     let mut string = [A, B, C, NULL];
 
     unsafe {
@@ -463,7 +467,7 @@ fn test_append_string() {
 fn test_copy_string() {
     use consts::*;
 
-    let mut pool = StringPool::new().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
@@ -488,14 +492,12 @@ fn test_store_string() {
     use consts::*;
     use crate::lib::xmlparse::XmlGetInternalEncoding;
 
-    let mut pool = StringPool::new().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
     let enc = XmlGetInternalEncoding();
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
     };
-    let string = unsafe {
-        pool.storeString(enc, read_buf).unwrap()
-    };
+    let string = pool.storeString(enc, read_buf).unwrap();
 
     assert_eq!(pool.bump.allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);

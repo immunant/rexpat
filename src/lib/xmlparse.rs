@@ -1548,8 +1548,8 @@ impl<'scf> XML_ParserStruct<'scf> {
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
-            m_tempPool: StringPool::new()?,
-            m_temp2Pool: StringPool::new()?,
+            m_tempPool: StringPool::try_new()?,
+            m_temp2Pool: StringPool::try_new()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
             m_namespaceSeparator: 0,
@@ -8408,11 +8408,11 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 
 unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     // Fail if pools fail to allocate
-    let pool1 = match StringPool::new() {
+    let pool1 = match StringPool::try_new() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };
-    let pool2 = match StringPool::new() {
+    let pool2 = match StringPool::try_new() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };
