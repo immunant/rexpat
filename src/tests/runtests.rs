@@ -16868,7 +16868,8 @@ unsafe extern "C" fn test_alloc_external_entity() {
 
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let alloc_test_max_repeats: c_int = 50;
+    // REXPAT: String pool allocates a bit more now, was 50
+    let alloc_test_max_repeats: c_int = 56;
     i = 0;
     while i < alloc_test_max_repeats {
         allocation_count = -1;
@@ -16966,7 +16967,8 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
 
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let max_allocation_count: c_int = 30;
+    // REXPAT: String pool allocates a bit more now, was 30
+    let max_allocation_count: c_int = 36;
     i = 0;
     while i < max_allocation_count {
         XML_SetExternalEntityRefHandler(
@@ -20653,7 +20655,8 @@ unsafe extern "C" fn test_nsalloc_long_context() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 70;
+    // REXPAT: String pool allocates a bit more now, was 70
+    let max_alloc_count: c_int = 76;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21094,7 +21097,8 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 50;
+    // REXPAT: String pool allocates a bit more now, was 50
+    let max_alloc_count: c_int = 56;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21183,7 +21187,8 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 55;
+    // REXPAT: String pool allocates a bit more now, was 55
+    let max_alloc_count: c_int = 60;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21269,7 +21274,8 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 70;
+    // REXPAT: String pool allocates a bit more now, was 70
+    let max_alloc_count: c_int = 76;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
