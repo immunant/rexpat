@@ -119,10 +119,19 @@ impl StringPool {
         self.inner().rent(|vec| vec.borrow().len())
     }
 
-    /// Gets an immutable buffer into the current BumpVec.
-    // Note: this isn't safe. What happens when the Vec reallocates and moves?
-    pub(crate) unsafe fn current_slice(&mut self) -> &[XML_Char] {
-        self.inner().ref_rent(|v| v.try_borrow_unguarded().unwrap().as_slice())
+    /// Call callback with an immutable buffer of the current BumpVec. This must
+    /// be a callback to ensure that we don't (safely) borrow the slice for
+    /// longer than it stays vaild.
+    pub(crate) fn current_slice<F, R>(&self, mut callback: F) -> R
+        where F: FnMut(&[XML_Char]) -> R
+    {
+        self.inner().rent(|v| callback(v.borrow().as_slice()))
+    }
+
+    /// Unsafe temporary version of `current_slice()`. This needs to be removed
+    /// when callers are made safe.
+    pub(crate) unsafe fn current_start(&self) -> *const XML_Char {
+        self.inner().rent(|v| v.borrow().as_ptr())
     }
 
     /// Appends a char to the current BumpVec.
@@ -229,7 +238,12 @@ impl StringPool {
             return false;
         }
 
-        let (mut start, mut cap, mut len) = self.inner().rent(|vec| (vec.borrow_mut().as_mut_ptr(), vec.borrow().capacity(), vec.borrow().len()));
+        let (mut start, mut cap, mut len) = self.inner().rent(|vec| {
+            let start = vec.borrow_mut().as_mut_ptr();
+            let cap = vec.borrow().capacity();
+            let len = vec.borrow().len();
+            (start, cap, len)
+        });
         let mut cap_begin;
         let mut cap_end;
 
@@ -242,8 +256,11 @@ impl StringPool {
                     return false;
                 }
 
-                let (new_start, new_cap) = self.inner().rent(|vec| (vec.borrow_mut().as_mut_ptr(), vec.borrow().capacity()));
-
+                let (new_start, new_cap) = self.inner().rent(|vec| {
+                    let new_start = vec.borrow_mut().as_mut_ptr();
+                    let new_cap = vec.borrow().capacity();
+                    (new_start, new_cap)
+                });
                 start = new_start;
                 cap = new_cap;
             }
@@ -413,16 +430,16 @@ fn test_append_char() {
     let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
-    assert_eq!(pool.current_slice(), [A]);
+    pool.current_slice(|s| assert_eq!(s, [A]));
 
     assert!(pool.appendChar(B));
-    assert_eq!(pool.current_slice(), [A, B]);
+    pool.current_slice(|s| assert_eq!(s, [A, B]));
 
     // New BumpVec
     pool.finish_current();
 
     assert!(pool.appendChar(C));
-    assert_eq!(pool.current_slice(), [C]);
+    pool.current_slice(|s| assert_eq!(s, [C]));
 }
 
 #[test]
@@ -436,7 +453,7 @@ fn test_append_string() {
         assert!(pool.appendString(string.as_mut_ptr()));
     }
 
-    assert_eq!(pool.current_slice(), [A, B, C]);
+    pool.current_slice(|s| assert_eq!(s, [A, B, C]));
 }
 
 #[test]
@@ -446,7 +463,7 @@ fn test_copy_string() {
     let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
-    assert_eq!(pool.current_slice(), [A]);
+    pool.current_slice(|s| assert_eq!(s, [A]));
 
     let new_string = unsafe {
         pool.copyString(S.as_ptr())
@@ -454,7 +471,7 @@ fn test_copy_string() {
 
     assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
     assert!(pool.appendChar(B));
-    assert_eq!(pool.current_slice(), [B]);
+    pool.current_slice(|s| assert_eq!(s, [B]));
 
     let new_string2 = unsafe {
         pool.copyStringN(S.as_ptr(), 4)
@@ -480,7 +497,7 @@ fn test_store_string() {
     assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.appendChar(A));
-    assert_eq!(pool.current_slice(), [A]);
+    pool.current_slice(|s| assert_eq!(s, [A]));
     assert_eq!(pool.inner().head().allocated_bytes(), 2072);
 
     // No overlap between buffers:
