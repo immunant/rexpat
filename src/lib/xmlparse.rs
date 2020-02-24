@@ -1370,7 +1370,7 @@ impl<'dtd> Clone for DTD<'dtd> {
 }
 
 #[repr(C)]
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct Scaffold {
     scaffold: Vec<CONTENT_SCAFFOLD>,
     index: Vec<usize>,
@@ -1398,6 +1398,12 @@ impl Scaffold {
             self.scaffold[*idx].childcnt += 1;
         }
         Some(next)
+    }
+}
+
+impl Clone for Scaffold {
+    fn clone(&self) -> Scaffold {
+        panic!("tried to clone a DTD scaffold");
     }
 }
 
