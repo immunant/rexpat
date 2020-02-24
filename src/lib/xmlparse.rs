@@ -1203,7 +1203,7 @@ impl<'dtd> DTD<'dtd> {
         self.standalone.set(false);
     }
 
-    fn try_clone<'clone, 's: 'clone>(&'s self) -> Result<DTD<'clone>, TryReserveError> {
+    fn try_clone<'s>(&'s self) -> Result<DTD<'s>, TryReserveError> {
         let mut newDtd = DTD {
             tables: Default::default(),
             pools: Default::default(),
