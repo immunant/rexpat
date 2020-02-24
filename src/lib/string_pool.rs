@@ -95,26 +95,20 @@ impl StringPool {
     }
 
     /// Gets the current vec, converts it into a slice, and resets
-    // bookkeeping so that it will create a new vec next time.
-    fn consume_current_vec(&self) -> &mut [XML_Char] {
+    /// bookkeeping so that it will create a new vec next time.
+    pub(crate) fn finish_slice(&self) -> &mut [XML_Char] {
         let slice = ManuallyDrop::into_inner(self.get_bump_vec()).into_bump_slice_mut();
 
-        self.finish_current();
+        self.currentBumpVec.set(RawBumpVec::new());
 
         slice
     }
 
     /// Resets the current bump vec to the beginning
-    pub(crate) fn clear_current(&self) {
+    pub(crate) fn clear_slice(&self) {
         let RawBumpVec { start, cap, .. } = self.currentBumpVec.get();
 
         self.currentBumpVec.set(RawBumpVec { start, cap, len: 0 });
-    }
-
-    /// Moves the start pointer to the current length so that a new bump vec region begins
-    /// REVIEW: Maybe shouldn't be necessary or just force a new vec creation..?
-    pub(crate) fn finish_current(&self) {
-        self.currentBumpVec.set(RawBumpVec::new())
     }
 
     /// Obtains the length of the current BumpVec.
@@ -227,7 +221,7 @@ impl StringPool {
 
         self.appendChar('\0' as XML_Char);
 
-        Some(self.consume_current_vec())
+        Some(self.finish_slice())
     }
 
     /// Sets a new length on the current bump vec. This is always safe because:
@@ -324,7 +318,7 @@ impl StringPool {
             }
         }
 
-        Some(self.consume_current_vec())
+        Some(self.finish_slice())
     }
 
     pub(crate) unsafe fn copyStringN(
@@ -356,7 +350,7 @@ impl StringPool {
             s = s.offset(1)
         }
 
-        Some(&*self.consume_current_vec())
+        Some(&*self.finish_slice())
     }
 
     /// There's currently no try_push in Bumpalo, so can't determine if
@@ -440,10 +434,7 @@ fn test_append_char() {
     assert_eq!(pool.get_bump_vec().as_slice(), [A]);
 
     assert!(pool.appendChar(B));
-    assert_eq!(pool.get_bump_vec().as_slice(), [A, B]);
-
-    // New BumpVec
-    pool.finish_current();
+    assert_eq!(pool.finish_slice(), [A, B]);
 
     assert!(pool.appendChar(C));
     assert_eq!(pool.get_bump_vec().as_slice(), [C]);
