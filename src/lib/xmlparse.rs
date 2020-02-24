@@ -1114,7 +1114,7 @@ macro_rules! hash_lookup {
 pub struct DTD<'dtd> {
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
-    scaffold: Cow<'dtd, RefCell<Scaffold>>,
+    scaffold: Cow<'dtd, RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
     standalone: Cell<XML_Bool>,
@@ -1371,12 +1371,12 @@ impl<'dtd> Clone for DTD<'dtd> {
 
 #[repr(C)]
 #[derive(Default)]
-pub struct Scaffold {
+pub struct DTDScaffold {
     scaffold: Vec<CONTENT_SCAFFOLD>,
     index: Vec<usize>,
 }
 
-impl Scaffold {
+impl DTDScaffold {
     fn next_part(&mut self) -> Option<usize> {
         if self.scaffold.try_reserve(1).is_err() {
             return None;
@@ -1401,8 +1401,8 @@ impl Scaffold {
     }
 }
 
-impl Clone for Scaffold {
-    fn clone(&self) -> Scaffold {
+impl Clone for DTDScaffold {
+    fn clone(&self) -> DTDScaffold {
         panic!("tried to clone a DTD scaffold");
     }
 }
