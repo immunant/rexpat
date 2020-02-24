@@ -37,10 +37,13 @@ wchar = { path = "deps/wchar", optional = true }
 bencher = "0.1"
 num-traits = "0.2"
 num-derive = "0.2"
-bumpalo = { path = "../bumpalo", version = "3.2", features = ["collections"] }
+bumpalo = { version = "3.2", features = ["collections"] }
 rental = "0.5"
 
 [features]
 unicode = []
 unicode_wchar_t = ["wchar"]
 mozilla = ["unicode"]
+
+[replace]
+"bumpalo:3.2.0" = { git = "https://github.com/immunant/bumpalo.git" }
