@@ -414,43 +414,43 @@ mod consts {
 fn test_append_char() {
     use consts::*;
 
-    let mut pool = StringPool::try_create().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
-    assert_eq!(pool.get_bump_vec().as_slice(), [A]);
+    assert_eq!(pool.current_slice(), [A]);
 
     assert!(pool.appendChar(B));
-    assert_eq!(pool.get_bump_vec().as_slice(), [A, B]);
+    assert_eq!(pool.current_slice(), [A, B]);
 
     // New BumpVec
     pool.finish_current();
 
     assert!(pool.appendChar(C));
-    assert_eq!(pool.get_bump_vec().as_slice(), [C]);
+    assert_eq!(pool.current_slice(), [C]);
 }
 
 #[test]
 fn test_append_string() {
     use consts::*;
 
-    let mut pool = StringPool::try_create().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
     let mut string = [A, B, C, NULL];
 
     unsafe {
         assert!(pool.appendString(string.as_mut_ptr()));
     }
 
-    assert_eq!(pool.get_bump_vec().as_slice(), [A, B, C]);
+    assert_eq!(pool.current_slice(), [A, B, C]);
 }
 
 #[test]
 fn test_copy_string() {
     use consts::*;
 
-    let mut pool = StringPool::try_create().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.appendChar(A));
-    assert_eq!(pool.get_bump_vec().as_slice(), [A]);
+    assert_eq!(pool.current_slice(), [A]);
 
     let new_string = unsafe {
         pool.copyString(S.as_ptr())
@@ -458,7 +458,7 @@ fn test_copy_string() {
 
     assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
     assert!(pool.appendChar(B));
-    assert_eq!(pool.get_bump_vec().as_slice(), [B]);
+    assert_eq!(pool.current_slice(), [B]);
 
     let new_string2 = unsafe {
         pool.copyStringN(S.as_ptr(), 4)
@@ -472,7 +472,7 @@ fn test_store_string() {
     use consts::*;
     use crate::lib::xmlparse::XmlGetInternalEncoding;
 
-    let mut pool = StringPool::try_create().unwrap();
+    let mut pool = StringPool::try_new().unwrap();
     let enc = XmlGetInternalEncoding();
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
@@ -481,11 +481,11 @@ fn test_store_string() {
         pool.storeString(enc, read_buf).unwrap()
     };
 
-    assert_eq!(pool.head().allocated_bytes(), 1036);
+    assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.appendChar(A));
     assert_eq!(pool.current_slice(), [A]);
-    assert_eq!(pool.head().allocated_bytes(), 2072);
+    assert_eq!(pool.inner().head().allocated_bytes(), 2072);
 
     // No overlap between buffers:
     assert_eq!(&*string, &[C, D, D, NULL]);
