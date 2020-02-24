@@ -152,9 +152,10 @@ impl StringPool {
     /// operation as it does not shift bytes afterwards.
     pub(crate) fn prepend_char(&self, c: XML_Char) {
         self.inner().rent(|buf| {
-            let len = buf.borrow().len();
-
-            buf.borrow_mut()[len - 1] = c;
+            *buf
+                .borrow_mut()
+                .last_mut()
+                .expect("Called prepend_char() when string was empty") = c;
         })
     }
 
@@ -165,7 +166,7 @@ impl StringPool {
 
     /// Gets the last character, panicing if len is 0
     pub(crate) fn get_last_char(&self) -> XML_Char {
-        self.inner().rent(|buf| buf.borrow_mut()[buf.borrow().len() - 1])
+        self.inner().rent(|buf| *buf.borrow().last().expect("Called get_last_char() when string was empty"))
     }
 
     /// Appends an entire C String to the current BumpVec.
