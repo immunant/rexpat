@@ -5964,9 +5964,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if !self.m_tempPool.append(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        // REXPAT: this did not originally call
-                        // poolFinish(m_tempPool), but it probably should have
-                        self.m_declAttributeType = self.m_tempPool.consume_current_vec().as_ptr();
+                        // This gets finalized later, not exactly the safest
+                        // idiom though.
+                        self.m_declAttributeType = self.m_tempPool.current_start();
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
