@@ -93,7 +93,7 @@ use std::alloc::{self, Layout};
 use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
 use std::cmp;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, TryReserveError};
 use std::convert::TryInto;
 use std::mem;
 use std::ops;
@@ -1102,7 +1102,6 @@ macro_rules! hash_lookup {
 }
 
 #[repr(C)]
-#[derive(Clone)]
 pub struct DTD<'dtd> {
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
@@ -1116,7 +1115,7 @@ pub struct DTD<'dtd> {
     contentStringLen: Cell<c_uint>,
 }
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct DTDTables {
     // TODO: get rid of the `Box`es to eliminate the extra indirection;
     // for now, we can keep them since they're equivalent to the C code's
@@ -1130,10 +1129,26 @@ pub struct DTDTables {
     paramEntities: HashMap<HashKey, Box<ENTITY>>,
 }
 
-#[derive(Clone)]
 pub struct DTDPools {
     pool: STRING_POOL,
     entityValuePool: STRING_POOL,
+}
+
+impl DTDPools {
+    fn new() -> DTDPools {
+        unsafe {
+            let mut pools = std::mem::zeroed::<DTDPools>();
+            pools.pool.init();
+            pools.entityValuePool.init();
+            pools
+        }
+    }
+}
+
+impl Default for DTDPools {
+    fn default() -> DTDPools {
+        Self::new()
+    }
 }
 
 impl Drop for DTDPools {
@@ -1142,6 +1157,206 @@ impl Drop for DTDPools {
             self.pool.destroy();
             self.entityValuePool.destroy();
         }
+    }
+}
+
+impl<'dtd> DTD<'dtd> {
+    fn new() -> DTD<'dtd> {
+        DTD {
+            tables: Default::default(),
+            pools: Default::default(),
+            keepProcessing: Cell::new(true),
+            hasParamEntityRefs: Cell::new(false),
+            standalone: Cell::new(false),
+            paramEntityRead: Cell::new(false),
+            defaultPrefix: Cell::new(PREFIX { name: ptr::null(), binding: ptr::null_mut() }),
+            in_eldecl: Cell::new(false),
+            scaffold: Default::default(),
+            contentStringLen: Cell::new(0),
+        }
+    }
+
+    fn reset(&self) {
+        let mut tables = self.tables.borrow_mut();
+        tables.generalEntities.clear();
+        tables.paramEntities.clear();
+        tables.elementTypes.clear();
+        tables.attributeIds.clear();
+        tables.prefixes.clear();
+
+        let mut pools = self.pools.borrow_mut();
+        unsafe {
+            pools.pool.clear();
+            pools.entityValuePool.clear();
+        }
+
+        let mut scf = self.scaffold.borrow_mut();
+        scf.scaffold.clear();
+        scf.index.clear();
+
+        self.paramEntityRead.set(false);
+        self.defaultPrefix.set(PREFIX { name: ptr::null(), binding: ptr::null_mut() });
+        self.in_eldecl.set(false);
+        self.contentStringLen.set(0);
+        self.keepProcessing.set(true);
+        self.hasParamEntityRefs.set(false);
+        self.standalone.set(false);
+    }
+
+    fn try_clone<'clone, 's: 'clone>(&'s self) -> Result<DTD<'clone>, TryReserveError> {
+        let mut newDtd = DTD {
+            tables: Default::default(),
+            pools: Default::default(),
+            keepProcessing: self.keepProcessing.clone(),
+            hasParamEntityRefs: self.hasParamEntityRefs.clone(),
+            standalone: self.standalone.clone(),
+            paramEntityRead: self.paramEntityRead.clone(),
+            defaultPrefix: Cell::new(PREFIX { name: ptr::null(), binding: ptr::null_mut() }),
+            in_eldecl: self.in_eldecl.clone(),
+            /* Don't want deep copying for scaffolding */
+            scaffold: Cow::Borrowed(self.scaffold.as_ref()),
+            contentStringLen: self.contentStringLen.clone(),
+        };
+
+        unsafe {
+            let mut new_pools = newDtd.pools.borrow_mut();
+            let mut new_tables = newDtd.tables.borrow_mut();
+            let old_tables = self.tables.borrow();
+            /* Copy the prefix table. */
+            for oldP in old_tables.prefixes.values() {
+                let mut name: *const XML_Char = 0 as *const XML_Char;
+                name = new_pools.pool.copyString((*oldP).name);
+                if name.is_null() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                if hash_insert!(
+                    &mut new_tables.prefixes,
+                    name,
+                    PREFIX
+                )
+                .is_null()
+                {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+            }
+            for oldA in old_tables.attributeIds.values()
+            /* Copy the attribute id table. */
+            {
+                let mut name_0: *const XML_Char = 0 as *const XML_Char;
+                /* Remember to allocate the scratch byte before the name. */
+                if if new_pools.pool.ptr == new_pools.pool.end as *mut XML_Char
+                    && !new_pools.pool.grow()
+                {
+                    0
+                } else {
+                    let fresh68 = new_pools.pool.ptr;
+                    new_pools.pool.ptr = new_pools.pool.ptr.offset(1);
+                    *fresh68 = AttributeType::Unset.into();
+                    1
+                } == 0
+                {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                name_0 = new_pools.pool.copyString((*oldA).name.name());
+                if name_0.is_null() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                let typed_name = TypedAttributeName(name_0 as *mut XML_Char);
+                let newA = hash_insert!(
+                    &mut new_tables.attributeIds,
+                    typed_name,
+                    ATTRIBUTE_ID
+                );
+                if newA.is_null() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                (*newA).maybeTokenized = (*oldA).maybeTokenized;
+                if !(*oldA).prefix.is_null() {
+                    (*newA).xmlns = (*oldA).xmlns;
+                    if (*oldA).prefix == &self.defaultPrefix as *const _ as *mut _ {
+                        (*newA).prefix = &newDtd.defaultPrefix as *const _ as *mut _;
+                    } else {
+                        (*newA).prefix = hash_lookup!(
+                            new_tables.prefixes,
+                            (*(*oldA).prefix).name
+                        );
+                    }
+                }
+            }
+            /* Copy the element type table. */
+            for oldE in old_tables.elementTypes.values() {
+                let mut name_1: *const XML_Char = 0 as *const XML_Char;
+                name_1 = new_pools.pool.copyString((*oldE).name);
+                if name_1.is_null() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                let newE = hash_insert!(
+                    &mut new_tables.elementTypes,
+                    name_1,
+                    ELEMENT_TYPE,
+                    ELEMENT_TYPE::new
+                );
+                if newE.is_null() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                if !(*oldE).idAtt.is_null() {
+                    (*newE).idAtt = hash_lookup!(
+                        new_tables.attributeIds,
+                        (*(*oldE).idAtt).name
+                    );
+                }
+                if !(*oldE).prefix.is_null() {
+                    (*newE).prefix = hash_lookup!(
+                        new_tables.prefixes,
+                        (*(*oldE).prefix).name
+                    );
+                }
+
+                if (*newE).defaultAtts.try_reserve((*oldE).defaultAtts.len()).is_err() {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                for oldAtt in &(*oldE).defaultAtts {
+                    let id = hash_lookup!(new_tables.attributeIds, (*oldAtt.id).name);
+                    let isCdata = oldAtt.isCdata;
+                    let value = if !oldAtt.value.is_null() {
+                        let value = new_pools.pool.copyString(oldAtt.value);
+                        if value.is_null() {
+                            return Err(TryReserveError::CapacityOverflow);
+                        }
+                        value
+                    } else {
+                        ptr::null()
+                    };
+                    let newAtt = DEFAULT_ATTRIBUTE { id, isCdata, value };
+                    (*newE).defaultAtts.push(newAtt);
+                }
+            }
+            /* Copy the entity tables. */
+            if copyEntityTable(
+                &mut new_tables.generalEntities,
+                &mut new_pools.pool,
+                &old_tables.generalEntities,
+            ) == 0
+            {
+                return Err(TryReserveError::CapacityOverflow);
+            }
+            if copyEntityTable(
+                &mut new_tables.paramEntities,
+                &mut new_pools.pool,
+                &old_tables.paramEntities,
+            ) == 0
+            {
+                return Err(TryReserveError::CapacityOverflow);
+            }
+        }
+
+        Ok(newDtd)
+    }
+}
+
+impl<'dtd> Clone for DTD<'dtd> {
+    fn clone(&self) -> DTD<'dtd> {
+        panic!("tried to clone a DTD");
     }
 }
 
@@ -1491,7 +1706,7 @@ pub unsafe extern "C" fn XML_ParserCreate_MM<'dtd>(
         unimplemented!("custom memory allocators are not supported");
     }
     XML_ParserStruct::create(encodingName, nameSep,
-                             Cow::Owned(dtdCreate()))
+                             Cow::Owned(DTD::new()))
 }
 
 impl<'dtd> XML_ParserStruct<'dtd> {
@@ -1750,7 +1965,7 @@ impl<'dtd> XML_ParserStruct<'dtd> {
         FREE!(self.m_protocolEncodingName);
         self.m_protocolEncodingName = NULL as *const XML_Char;
         self.init(encodingName);
-        dtdReset(&self.m_dtd);
+        self.m_dtd.reset();
         true
     }
 }
@@ -1905,14 +2120,12 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'dtd>(
        to worry which hash secrets each table has.
     */
     let newDtd = if context.is_null() {
-        // TODO: use `try_clone`
         Cow::Borrowed((*parser).m_dtd.as_ref())
     } else {
-        let mut newDtd = dtdCreate();
-        if dtdCopy(&mut newDtd, &(*parser).m_dtd) == 0 {
-            return ptr::null_mut();
-        }
-        // TODO: use `try_new`
+        let newDtd = match (*parser).m_dtd.try_clone() {
+            Ok(newDtd) => newDtd,
+            Err(_) => return ptr::null_mut()
+        };
         Cow::Owned(newDtd)
     };
     /* XML_DTD */
@@ -8528,203 +8741,6 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
     }
     *p = '\u{0}' as XML_Char;
 }
-
-// TODO: refactor this into new/default
-unsafe extern "C" fn dtdCreate<'dtd>() -> DTD<'dtd> {
-    let mut pools = std::mem::zeroed::<DTDPools>();
-    pools.pool.init();
-    pools.entityValuePool.init();
-
-    DTD {
-        tables: Default::default(),
-        pools: RefCell::new(pools),
-        keepProcessing: Cell::new(true),
-        hasParamEntityRefs: Cell::new(false),
-        standalone: Cell::new(false),
-        paramEntityRead: Cell::new(false),
-        defaultPrefix: Cell::new(PREFIX { name: ptr::null(), binding: ptr::null_mut() }),
-        in_eldecl: Cell::new(false),
-        scaffold: Default::default(),
-        contentStringLen: Cell::new(0),
-    }
-}
-/* do not call if m_parentParser != NULL */
-
-// TODO: refactor this into method
-unsafe extern "C" fn dtdReset<'dtd>(p: &DTD<'dtd>) {
-    let mut tables = p.tables.borrow_mut();
-    tables.generalEntities.clear();
-    tables.paramEntities.clear();
-    tables.elementTypes.clear();
-    tables.attributeIds.clear();
-    tables.prefixes.clear();
-
-    let mut pools = p.pools.borrow_mut();
-    pools.pool.clear();
-    pools.entityValuePool.clear();
-
-    let mut scf = p.scaffold.borrow_mut();
-    scf.scaffold.clear();
-    scf.index.clear();
-
-    p.paramEntityRead.set(false);
-    p.defaultPrefix.set(PREFIX { name: ptr::null(), binding: ptr::null_mut() });
-    p.in_eldecl.set(false);
-    p.contentStringLen.set(0);
-    p.keepProcessing.set(true);
-    p.hasParamEntityRefs.set(false);
-    p.standalone.set(false);
-}
-
-/* Do a deep copy of the DTD. Return 0 for out of memory, non-zero otherwise.
-   The new DTD has already been initialized.
-*/
-
-unsafe extern "C" fn dtdCopy<'dtd>(
-    mut newDtd: &mut DTD<'dtd>,
-    mut oldDtd: &'dtd DTD<'dtd>,
-) -> c_int {
-    let mut new_pools = newDtd.pools.borrow_mut();
-    let mut new_tables = newDtd.tables.borrow_mut();
-    let old_tables = oldDtd.tables.borrow();
-    /* Copy the prefix table. */
-    for oldP in old_tables.prefixes.values() {
-        let mut name: *const XML_Char = 0 as *const XML_Char;
-        name = new_pools.pool.copyString((*oldP).name);
-        if name.is_null() {
-            return 0;
-        }
-        if hash_insert!(
-            &mut new_tables.prefixes,
-            name,
-            PREFIX
-        )
-        .is_null()
-        {
-            return 0;
-        }
-    }
-    for oldA in old_tables.attributeIds.values()
-    /* Copy the attribute id table. */
-    {
-        let mut name_0: *const XML_Char = 0 as *const XML_Char;
-        /* Remember to allocate the scratch byte before the name. */
-        if if new_pools.pool.ptr == new_pools.pool.end as *mut XML_Char
-            && !new_pools.pool.grow()
-        {
-            0
-        } else {
-            let fresh68 = new_pools.pool.ptr;
-            new_pools.pool.ptr = new_pools.pool.ptr.offset(1);
-            *fresh68 = AttributeType::Unset.into();
-            1
-        } == 0
-        {
-            return 0;
-        }
-        name_0 = new_pools.pool.copyString((*oldA).name.name());
-        if name_0.is_null() {
-            return 0;
-        }
-        let typed_name = TypedAttributeName(name_0 as *mut XML_Char);
-        let newA = hash_insert!(
-            &mut new_tables.attributeIds,
-            typed_name,
-            ATTRIBUTE_ID
-        );
-        if newA.is_null() {
-            return 0;
-        }
-        (*newA).maybeTokenized = (*oldA).maybeTokenized;
-        if !(*oldA).prefix.is_null() {
-            (*newA).xmlns = (*oldA).xmlns;
-            if (*oldA).prefix == &oldDtd.defaultPrefix as *const _ as *mut _ {
-                (*newA).prefix = &newDtd.defaultPrefix as *const _ as *mut _;
-            } else {
-                (*newA).prefix = hash_lookup!(
-                    new_tables.prefixes,
-                    (*(*oldA).prefix).name
-                );
-            }
-        }
-    }
-    /* Copy the element type table. */
-    for oldE in old_tables.elementTypes.values() {
-        let mut name_1: *const XML_Char = 0 as *const XML_Char;
-        name_1 = new_pools.pool.copyString((*oldE).name);
-        if name_1.is_null() {
-            return 0;
-        }
-        let newE = hash_insert!(
-            &mut new_tables.elementTypes,
-            name_1,
-            ELEMENT_TYPE,
-            ELEMENT_TYPE::new
-        );
-        if newE.is_null() {
-            return 0;
-        }
-        if !(*oldE).idAtt.is_null() {
-            (*newE).idAtt = hash_lookup!(
-                new_tables.attributeIds,
-                (*(*oldE).idAtt).name
-            );
-        }
-        if !(*oldE).prefix.is_null() {
-            (*newE).prefix = hash_lookup!(
-                new_tables.prefixes,
-                (*(*oldE).prefix).name
-            );
-        }
-
-        if (*newE).defaultAtts.try_reserve((*oldE).defaultAtts.len()).is_err() {
-            return 0;
-        }
-        for oldAtt in &(*oldE).defaultAtts {
-            let id = hash_lookup!(new_tables.attributeIds, (*oldAtt.id).name);
-            let isCdata = oldAtt.isCdata;
-            let value = if !oldAtt.value.is_null() {
-                let value = new_pools.pool.copyString(oldAtt.value);
-                if value.is_null() {
-                    return 0;
-                }
-                value
-            } else {
-                ptr::null()
-            };
-            let newAtt = DEFAULT_ATTRIBUTE { id, isCdata, value };
-            (*newE).defaultAtts.push(newAtt);
-        }
-    }
-    /* Copy the entity tables. */
-    if copyEntityTable(
-        &mut new_tables.generalEntities,
-        &mut new_pools.pool,
-        &old_tables.generalEntities,
-    ) == 0
-    {
-        return 0;
-    }
-    if copyEntityTable(
-        &mut new_tables.paramEntities,
-        &mut new_pools.pool,
-        &old_tables.paramEntities,
-    ) == 0
-    {
-        return 0;
-    }
-    newDtd.paramEntityRead.set(oldDtd.paramEntityRead.get());
-    /* XML_DTD */
-    newDtd.keepProcessing.set(oldDtd.keepProcessing.get());
-    newDtd.hasParamEntityRefs.set(oldDtd.hasParamEntityRefs.get());
-    newDtd.standalone.set(oldDtd.standalone.get());
-    /* Don't want deep copying for scaffolding */
-    newDtd.in_eldecl.set(oldDtd.in_eldecl.get());
-    newDtd.scaffold = Cow::Borrowed(oldDtd.scaffold.as_ref());
-    newDtd.contentStringLen.set(oldDtd.contentStringLen.get());
-    1
-}
-/* End dtdCopy */
 
 unsafe extern "C" fn copyEntityTable(
     mut newTable: &mut HashMap<HashKey, Box<ENTITY>>,
