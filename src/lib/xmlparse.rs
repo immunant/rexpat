@@ -1528,8 +1528,8 @@ impl<'scf> XML_ParserStruct<'scf> {
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
-            m_tempPool: StringPool::new()?,
-            m_temp2Pool: StringPool::new()?,
+            m_tempPool: StringPool::try_create()?,
+            m_temp2Pool: StringPool::try_create()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
             m_namespaceSeparator: 0,
@@ -5257,7 +5257,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
 
                 // REVIEW: Is this necessary? Vec has already been completed
-                self.m_temp2Pool.finish_current()
+                // self.m_temp2Pool.finish_current()
             }
             if let Some(version_buf) = version_buf {
                 storedversion = self.m_temp2Pool.storeString(
@@ -6101,9 +6101,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if !self.m_declEntity.is_null() {
-                            (*self.m_declEntity).textPtr = (*dtd).entityValuePool.current_slice().as_ptr();
-                            (*self.m_declEntity).textLen = (*dtd).entityValuePool.len() as c_int;
-                            (*dtd).entityValuePool.finish_current();
+                            let string_slice = (*dtd).entityValuePool.finish_string();
+
+                            (*self.m_declEntity).textPtr = string_slice.as_ptr();
+                            (*self.m_declEntity).textLen = string_slice.len() as c_int;
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
@@ -8078,11 +8079,11 @@ const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 /// to avoid borrowing the entirety of the parser when returning so that the data
 /// can be passed back to a handler
 // self.m_dtd, self.m_tempPool,
-unsafe fn getContext<'p, 'scf>(
-    dtd: &'scf mut DTD,
-    m_tempPool: &'p mut StringPool,
+unsafe fn getContext<'bump>(
+    dtd: &mut DTD,
+    m_tempPool: &'bump mut StringPool,
     m_namespaceSeparator: XML_Char,
-) -> Option<&'p [XML_Char]> {
+) -> Option<&'bump [XML_Char]> {
     let mut needSep = false;
     if !dtd.defaultPrefix.binding.is_null() {
         let mut i: c_int = 0;
@@ -8266,7 +8267,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 self.m_tempPool.clear_current()
             } else if *s == ASCII_EQUALS as XML_Char {
                 let mut prefix: *mut PREFIX;
-                if self.m_tempPool.current_slice().is_empty() {
+                if self.m_tempPool.is_empty() {
                     prefix = &mut (*dtd).defaultPrefix
                 } else {
                     if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
@@ -8387,11 +8388,11 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 
 unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     // Fail if pools fail to allocate
-    let pool1 = match StringPool::new() {
+    let pool1 = match StringPool::try_create() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };
-    let pool2 = match StringPool::new() {
+    let pool2 = match StringPool::try_create() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };
