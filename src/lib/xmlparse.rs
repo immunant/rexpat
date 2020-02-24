@@ -295,7 +295,7 @@ trait XmlHandlers {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 struct CXmlHandlers<'scf> {
     m_attlistDeclHandler: XML_AttlistDeclHandler,
     m_characterDataHandler: XML_CharacterDataHandler,
@@ -318,6 +318,9 @@ struct CXmlHandlers<'scf> {
     m_startDoctypeDeclHandler: XML_StartDoctypeDeclHandler,
     m_startElementHandler: XML_StartElementHandler,
     m_startNamespaceDeclHandler: XML_StartNamespaceDeclHandler,
+    m_unknownEncoding: Option<Box<UnknownEncoding>>,
+    m_unknownEncodingData: *mut c_void,
+    m_unknownEncodingRelease: Option<unsafe extern "C" fn(_: *mut c_void)>,
     m_unknownEncodingHandler: XML_UnknownEncodingHandler,
     m_unknownEncodingHandlerData: *mut c_void,
     m_unparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler,
@@ -348,6 +351,9 @@ impl<'scf> Default for CXmlHandlers<'scf> {
             m_startDoctypeDeclHandler: None,
             m_startElementHandler: None,
             m_startNamespaceDeclHandler: None,
+            m_unknownEncoding: None,
+            m_unknownEncodingData: std::ptr::null_mut(),
+            m_unknownEncodingRelease: None,
             m_unknownEncodingHandler: None,
             m_unknownEncodingHandlerData: std::ptr::null_mut(),
             m_unparsedEntityDeclHandler: None,
@@ -791,9 +797,6 @@ pub struct XML_ParserStruct<'scf> {
     pub m_protocolEncodingName: *const XML_Char,
     pub m_ns: XML_Bool,
     pub m_ns_triplets: XML_Bool,
-    pub m_unknownEncoding: Option<Box<UnknownEncoding>>,
-    pub m_unknownEncodingData: *mut c_void,
-    pub m_unknownEncodingRelease: Option<unsafe extern "C" fn(_: *mut c_void) -> ()>,
     pub m_prologState: super::xmlrole::PROLOG_STATE,
     pub m_processor: Option<Processor>,
     pub m_errorCode: XML_Error,
@@ -1492,9 +1495,6 @@ impl<'scf> XML_ParserStruct<'scf> {
             m_protocolEncodingName: ptr::null(),
             m_ns: false,
             m_ns_triplets: false,
-            m_unknownEncoding: None,
-            m_unknownEncodingData: ptr::null_mut(),
-            m_unknownEncodingRelease: None,
             m_prologState: super::xmlrole::PROLOG_STATE::default(),
             m_processor: None,
             m_errorCode: XML_Error::NONE,
@@ -1528,8 +1528,8 @@ impl<'scf> XML_ParserStruct<'scf> {
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::POSITION::default(),
-            m_tempPool: StringPool::try_create()?,
-            m_temp2Pool: StringPool::try_create()?,
+            m_tempPool: StringPool::try_new()?,
+            m_temp2Pool: StringPool::try_new()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
             m_namespaceSeparator: 0,
@@ -1588,7 +1588,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         parser.m_groupSize = 0;
         parser.m_groupConnector = NULL as *mut c_char;
         parser.m_initEncoding = None;
-        parser.m_unknownEncoding = None;
+        parser.m_handlers.m_unknownEncoding = None;
         parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
         parser.m_ns = false;
         parser.m_ns_triplets = false;
@@ -1651,12 +1651,9 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_tagStack = None;
         self.m_inheritedBindings = NULL as *mut BINDING;
         self.m_nSpecifiedAtts = 0;
-        self.m_unknownEncoding = None;
-        self.m_unknownEncodingRelease = ::std::mem::transmute::<
-            intptr_t,
-            Option<unsafe extern "C" fn(_: *mut c_void)>,
-        >(NULL as intptr_t);
-        self.m_unknownEncodingData = NULL as *mut c_void;
+        self.m_handlers.m_unknownEncoding = None;
+        self.m_handlers.m_unknownEncodingRelease = None;
+        self.m_handlers.m_unknownEncodingData = std::ptr::null_mut();
         self.m_parentParser = NULL as XML_Parser;
         self.m_parsingStatus.parsing = XML_Parsing::INITIALIZED;
         self.m_isParamEntity = false;
@@ -1709,10 +1706,10 @@ impl<'scf> XML_ParserStruct<'scf> {
             self.m_freeInternalEntities = openEntity
         }
         self.moveToFreeBindingList(self.m_inheritedBindings);
-        let _ = self.m_unknownEncoding.take();
-        if self.m_unknownEncodingRelease.is_some() {
-            self.m_unknownEncodingRelease
-                .expect("non-null function pointer")(self.m_unknownEncodingData);
+        let _ = self.m_handlers.m_unknownEncoding.take();
+        if self.m_handlers.m_unknownEncodingRelease.is_some() {
+            self.m_handlers.m_unknownEncodingRelease
+                .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
         }
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
@@ -2004,9 +2001,9 @@ impl<'scf> Drop for XML_ParserStruct<'scf> {
             FREE!(self.m_groupConnector);
             FREE!(self.m_buffer);
             FREE!(self.m_dataBuf);
-            if self.m_unknownEncodingRelease.is_some() {
-                self.m_unknownEncodingRelease
-                    .expect("non-null function pointer")(self.m_unknownEncodingData);
+            if self.m_handlers.m_unknownEncodingRelease.is_some() {
+                self.m_handlers.m_unknownEncodingRelease
+                    .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
             }
         }
     }
@@ -3820,7 +3817,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         return result_0;
                     }
 
-                    let handlers = self.m_handlers;
+                    let handlers = &self.m_handlers;
                     let started = handlers.startElement(tag.name.str_0, &mut self.m_atts);
 
                     if !started && handlers.hasDefault() {
@@ -3861,7 +3858,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         return result_1;
                     }
                     self.m_tempPool.finish_current();
-                    let handlers = self.m_handlers;
+                    let handlers = &self.m_handlers;
                     let started = handlers.startElement(name_0.str_0, &mut self.m_atts);
                     if started {
                         noElmHandlers = false
@@ -4108,7 +4105,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     return XML_Error::NONE;
                 }
                 super::xmltok::XML_TOK::DATA_CHARS => {
-                    let mut handlers = self.m_handlers;
+                    let mut handlers = &self.m_handlers;
                     if handlers.hasCharacterData() {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
                             loop {
@@ -4964,7 +4961,7 @@ unsafe extern "C" fn doCdataSection(
                 }
             }
             super::xmltok::XML_TOK::DATA_CHARS => {
-                let mut handlers = (*parser).m_handlers;
+                let mut handlers = &(*parser).m_handlers;
                 if handlers.hasCharacterData() {
                     if MUST_CONVERT!(enc, buf.as_ptr()) {
                         loop {
@@ -5201,7 +5198,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             return XML_Error::NONE;
         }
 
-        self.handleUnknownEncoding(self.m_protocolEncodingName)
+        self.m_handlers.handleUnknownEncoding(self.m_protocolEncodingName, self.m_ns, &mut self.m_encoding)
     }
 
     unsafe fn processXmlDecl(
@@ -5304,7 +5301,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         return XML_Error::NO_MEMORY;
                     }
                 }
-                result = self.handleUnknownEncoding(storedEncName.as_ref().unwrap().as_ptr());
+                result = self.m_handlers.handleUnknownEncoding(storedEncName.as_ref().unwrap().as_ptr(), self.m_ns, &mut self.m_encoding);
                 // drop(storedEncName);
                 // drop(storedversion);
                 self.m_temp2Pool.clear();
@@ -5321,12 +5318,16 @@ impl<'scf> XML_ParserStruct<'scf> {
         }
         XML_Error::NONE
     }
+}
 
+impl CXmlHandlers {
     unsafe fn handleUnknownEncoding(
         &mut self,
         mut encodingName: *const XML_Char,
+        m_ns: bool,
+        m_encoding: &mut *const ENCODING,
     ) -> XML_Error {
-        if self.m_handlers.hasUnknownEncoding() {
+        if self.hasUnknownEncoding() {
             let mut info: XML_Encoding = XML_Encoding {
                 map: [0; 256],
                 data: 0 as *mut c_void,
@@ -5350,13 +5351,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                 >(NULL as intptr_t);
 
             // Unwrapping because the handler was already checked to exist
-            if self.m_handlers.unknownEncoding(encodingName, &mut info).unwrap() != 0 {
+            if self.unknownEncoding(encodingName, &mut info).unwrap() != 0 {
                 let mut unknown_enc = UnknownEncoding::new();
                 let initialized = unknown_enc.initialize(
                     info.map.as_mut_ptr(),
                     info.convert,
                     info.data,
-                    self.m_ns
+                    m_ns,
                 );
                 if initialized {
                     match Box::try_new(unknown_enc) {
@@ -5367,7 +5368,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         Ok(unknown_enc) => {
-                            self.m_encoding = &*unknown_enc;
+                            *m_encoding = &*unknown_enc;
                             self.m_unknownEncoding = Some(unknown_enc);
                             self.m_unknownEncodingData = info.data;
                             self.m_unknownEncodingRelease = info.release;
@@ -8388,11 +8389,11 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 
 unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     // Fail if pools fail to allocate
-    let pool1 = match StringPool::try_create() {
+    let pool1 = match StringPool::try_new() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };
-    let pool2 = match StringPool::try_create() {
+    let pool2 = match StringPool::try_new() {
         Ok(pool) => pool,
         Err(()) => return ptr::null_mut(),
     };

@@ -8,7 +8,7 @@ use bumpalo::collections::vec::Vec as BumpVec;
 use libc::{INT_MAX, c_int, c_uint, c_ulong};
 
 use std::convert::TryInto;
-use std::mem::replace;
+use std::mem::{replace, swap};
 use std::ptr;
 
 pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
@@ -54,39 +54,49 @@ rental! {
         use super::*;
 
         #[rental(debug)]
-        pub(crate) struct StringPool {
+        pub(crate) struct InnerStringPool {
             bump: Box<Bump>,
             current_bump_vec: BumpVec<'bump, XML_Char>,
         }
     }
 }
 
-pub(crate) use rental_pool::StringPool;
+use rental_pool::InnerStringPool;
+
+pub(crate) struct StringPool(Option<InnerStringPool>);
 
 impl StringPool {
-    pub(crate) fn try_create() -> Result<Self, ()> {
+    pub(crate) fn try_new() -> Result<Self, ()> {
         let bump = Bump::try_new().map_err(|_| ())?;
 
-        Ok(StringPool::new(
+        Ok(StringPool(Some(InnerStringPool::new(
             Box::new(bump),
             |bump| BumpVec::new_in(&bump),
-        ))
+        ))))
+    }
+
+    fn inner(&self) -> &InnerStringPool {
+        self.0.as_ref().unwrap()
+    }
+
+    fn inner_mut(&mut self) -> &mut InnerStringPool {
+        self.0.as_mut().unwrap()
     }
 
     /// Determines whether or not the current BumpVec is empty.
     pub(crate) fn is_empty(&self) -> bool {
-        self.rent(|vec| vec.is_empty())
+        self.inner().rent(|vec| vec.is_empty())
     }
 
     /// Determines whether or not the current BumpVec is full.
     pub(crate) fn is_full(&self) -> bool {
-        self.rent(|vec| vec.len() == vec.capacity())
+        self.inner().rent(|vec| vec.len() == vec.capacity())
     }
 
     /// Gets the current vec, converts it into a slice, and resets
     /// bookkeeping so that it will create a new vec next time.
     pub(crate) fn consume_current_vec(&mut self) -> &mut [XML_Char] {
-        self.ref_rent_all_mut(|mut pool| {
+        self.inner_mut().ref_rent_all_mut(|mut pool| {
             let mut vec = BumpVec::new_in(&pool.bump);
 
             replace(pool.current_bump_vec, vec).into_bump_slice_mut()
@@ -111,12 +121,12 @@ impl StringPool {
 
     /// Obtains the length of the current BumpVec.
     pub(crate) fn len(&self) -> usize {
-        self.rent(|vec| vec.len())
+        self.inner().rent(|vec| vec.len())
     }
 
     /// Gets an immutable buffer into the current BumpVec.
     pub(crate) fn current_slice(&self) -> &[XML_Char] {
-        self.ref_rent(|v| v.as_slice())
+        self.inner().ref_rent(|v| v.as_slice())
     }
 
     /// Appends a char to the current BumpVec.
@@ -124,7 +134,7 @@ impl StringPool {
         if self.is_full() && !self.grow() {
             false
         } else {
-            self.rent_mut(|buf| buf.push(c));
+            self.inner_mut().rent_mut(|buf| buf.push(c));
 
             true
         }
@@ -134,7 +144,7 @@ impl StringPool {
     /// Note that this will panic if empty and that this is not an insert
     /// operation as it does not shift bytes afterwards.
     pub(crate) fn prepend_char(&mut self, c: XML_Char) {
-        self.rent_mut(|buf| {
+        self.inner_mut().rent_mut(|buf| {
             let len = buf.len();
 
             buf[len - 1] = c;
@@ -143,12 +153,12 @@ impl StringPool {
 
     /// Decrements the length, panicing if len is 0 in debug
     pub(crate) fn backtrack(&mut self) {
-        self.rent_mut(|vec| vec.pop().expect("Called backtrack() on empty BumpVec"));
+        self.inner_mut().rent_mut(|vec| vec.pop().expect("Called backtrack() on empty BumpVec"));
     }
 
     /// Gets the last character, panicing if len is 0
-    pub(crate) fn get_last_char(&mut self) -> XML_Char {
-        self.rent_mut(|buf| buf[buf.len() - 1])
+    pub(crate) fn get_last_char(&self) -> XML_Char {
+        self.inner().rent(|buf| buf[buf.len() - 1])
     }
 
     /// Appends an entire C String to the current BumpVec.
@@ -164,7 +174,20 @@ impl StringPool {
 
     /// Resets the current Bump and deallocates its contents.
     pub(crate) fn clear(&mut self) {
-        self.into_head();
+        let mut inner_pool = None;
+
+        swap(&mut self.0, &mut inner_pool);
+
+        let mut bump = inner_pool.unwrap().into_head();
+
+        bump.reset();
+
+        inner_pool = Some(InnerStringPool::new(
+            bump,
+            |bump| BumpVec::new_in(&bump),
+        ));
+
+        swap(&mut self.0, &mut inner_pool);
     }
 
     pub(crate) fn storeString(
@@ -189,7 +212,7 @@ impl StringPool {
     /// 2) We always zero the capacity buffer in grow(), so we can
     ///    never point to uninit data.
     fn set_len(&mut self, len: usize) {
-        self.rent_mut(|vec| {
+        self.inner_mut().rent_mut(|vec| {
             assert!(len <= vec.capacity());
 
             unsafe {
@@ -203,14 +226,14 @@ impl StringPool {
         enc: &ENCODING,
         mut readBuf: ExpatBufRef,
     ) -> bool {
-        let start = self.rent(|vec| vec.as_ptr());
+        let start = self.inner().rent(|vec| vec.as_ptr());
 
         // REVIEW: Can this be replaced with self.is_empty() &&?
         if start.is_null() && !self.grow() {
             return false;
         }
 
-        let (mut start, mut cap, mut len) = self.rent_mut(|vec| (vec.as_mut_ptr(), vec.capacity(), vec.len()));
+        let (mut start, mut cap, mut len) = self.inner_mut().rent_mut(|vec| (vec.as_mut_ptr(), vec.capacity(), vec.len()));
         let mut cap_begin;
         let mut cap_end;
 
@@ -223,7 +246,7 @@ impl StringPool {
                     return false;
                 }
 
-                let (new_start, new_cap) = self.rent_mut(|vec| (vec.as_mut_ptr(), vec.capacity()));
+                let (new_start, new_cap) = self.inner_mut().rent_mut(|vec| (vec.as_mut_ptr(), vec.capacity()));
 
                 start = new_start;
                 cap = new_cap;
@@ -320,7 +343,7 @@ impl StringPool {
     /// There's currently no try_push in Bumpalo, so can't determine if
     /// it's possible to allocate or not
     pub(crate) fn grow(&mut self) -> bool {
-        self.rent_mut(|buf| {
+        self.inner_mut().rent_mut(|buf| {
             let mut blockSize_0 = buf.capacity();
             let mut bytesToAllocate_0: size_t = 0;
             // if blockSize_0 < 0 {
