@@ -5323,7 +5323,7 @@ impl<'scf> XML_ParserStruct<'scf> {
     }
 }
 
-impl CXmlHandlers {
+impl<'scf> CXmlHandlers<'scf> {
     unsafe fn handleUnknownEncoding(
         &mut self,
         mut encodingName: *const XML_Char,

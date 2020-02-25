@@ -493,9 +493,7 @@ fn test_store_string() {
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
     };
-    let string = unsafe {
-        pool.storeString(enc, read_buf).unwrap()
-    };
+    let string = pool.storeString(enc, read_buf).unwrap();
 
     assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
