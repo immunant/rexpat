@@ -2061,79 +2061,11 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'p>(
     mut context: *const XML_Char,
     mut encodingName: *const XML_Char,
 ) -> XML_Parser<'p> {
-    let mut oldStartElementHandler: XML_StartElementHandler = None;
-    let mut oldEndElementHandler: XML_EndElementHandler = None;
-    let mut oldCharacterDataHandler: XML_CharacterDataHandler = None;
-    let mut oldProcessingInstructionHandler: XML_ProcessingInstructionHandler = None;
-    let mut oldCommentHandler: XML_CommentHandler = None;
-    let mut oldStartCdataSectionHandler: XML_StartCdataSectionHandler = None;
-    let mut oldEndCdataSectionHandler: XML_EndCdataSectionHandler = None;
-    let mut oldDefaultHandler: XML_DefaultHandler = None;
-    let mut oldUnparsedEntityDeclHandler: XML_UnparsedEntityDeclHandler = None;
-    let mut oldNotationDeclHandler: XML_NotationDeclHandler = None;
-    let mut oldStartNamespaceDeclHandler: XML_StartNamespaceDeclHandler = None;
-    let mut oldEndNamespaceDeclHandler: XML_EndNamespaceDeclHandler = None;
-    let mut oldNotStandaloneHandler: XML_NotStandaloneHandler = None;
-    let mut oldExternalEntityRefHandler: XML_ExternalEntityRefHandler = None;
-    let mut oldSkippedEntityHandler: XML_SkippedEntityHandler = None;
-    let mut oldUnknownEncodingHandler: XML_UnknownEncodingHandler = None;
-    let mut oldElementDeclHandler: XML_ElementDeclHandler = None;
-    let mut oldAttlistDeclHandler: XML_AttlistDeclHandler = None;
-    let mut oldEntityDeclHandler: XML_EntityDeclHandler = None;
-    let mut oldXmlDeclHandler: XML_XmlDeclHandler = None;
-    let mut oldDeclElementType: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
-    let mut oldUserData: *mut c_void = 0 as *mut c_void;
-    let mut oldHandlerArg: *mut c_void = 0 as *mut c_void;
-    let mut oldDefaultExpandInternalEntities = false;
-    let mut oldExternalEntityRefHandlerArg: XML_Parser = 0 as *mut XML_ParserStruct;
-    let mut oldParamEntityParsing: XML_ParamEntityParsing = XML_ParamEntityParsing::NEVER;
-    let mut oldInEntityValue: c_int = 0;
-    let mut oldns_triplets = false;
-    /* Note that the new parser shares the same hash secret as the old
-       parser, so that dtdCopy and copyEntityTable can lookup values
-       from hash tables associated with either parser without us having
-       to worry which hash secrets each table has.
-    */
     /* Validate the oldParser parameter before we pull everything out of it */
     let mut oldParser = match oldParser {
         Some(parser) => parser,
         None => return NULL as XML_Parser
     };
-    /* Stash the original parser contents on the stack */
-    // TODO: Maybe just copy/clone the handler struct?
-    oldStartElementHandler = oldParser.m_handlers.m_startElementHandler;
-    oldEndElementHandler = oldParser.m_handlers.m_endElementHandler;
-    oldCharacterDataHandler = oldParser.m_handlers.m_characterDataHandler;
-    oldProcessingInstructionHandler = oldParser.m_handlers.m_processingInstructionHandler;
-    oldCommentHandler = oldParser.m_handlers.m_commentHandler;
-    oldStartCdataSectionHandler = oldParser.m_handlers.m_startCdataSectionHandler;
-    oldEndCdataSectionHandler = oldParser.m_handlers.m_endCdataSectionHandler;
-    oldDefaultHandler = oldParser.m_handlers.m_defaultHandler;
-    oldUnparsedEntityDeclHandler = oldParser.m_handlers.m_unparsedEntityDeclHandler;
-    oldNotationDeclHandler = oldParser.m_handlers.m_notationDeclHandler;
-    oldStartNamespaceDeclHandler = oldParser.m_handlers.m_startNamespaceDeclHandler;
-    oldEndNamespaceDeclHandler = oldParser.m_handlers.m_endNamespaceDeclHandler;
-    oldNotStandaloneHandler = oldParser.m_handlers.m_notStandaloneHandler;
-    oldExternalEntityRefHandler = oldParser.m_handlers.m_externalEntityRefHandler;
-    oldSkippedEntityHandler = oldParser.m_handlers.m_skippedEntityHandler;
-    oldUnknownEncodingHandler = oldParser.m_handlers.m_unknownEncodingHandler;
-    oldElementDeclHandler = oldParser.m_handlers.m_elementDeclHandler;
-    oldAttlistDeclHandler = oldParser.m_handlers.m_attlistDeclHandler;
-    oldEntityDeclHandler = oldParser.m_handlers.m_entityDeclHandler;
-    oldXmlDeclHandler = oldParser.m_handlers.m_xmlDeclHandler;
-    oldDeclElementType = oldParser.m_declElementType;
-    oldUserData = oldParser.m_userData;
-    oldHandlerArg = oldParser.m_handlers.m_handlerArg;
-    oldDefaultExpandInternalEntities = oldParser.m_defaultExpandInternalEntities;
-    oldExternalEntityRefHandlerArg = oldParser.m_handlers.m_externalEntityRefHandlerArg;
-    oldParamEntityParsing = oldParser.m_paramEntityParsing;
-    oldInEntityValue = oldParser.m_prologState.inEntityValue;
-    oldns_triplets = oldParser.m_ns_triplets;
-    /* Note that the new parser shares the same hash secret as the old
-       parser, so that dtdCopy and copyEntityTable can lookup values
-       from hash tables associated with either parser without us having
-       to worry which hash secrets each table has.
-    */
     let newDtd = if context.is_null() {
         Cow::Borrowed(oldParser.m_dtd.as_ref())
     } else {
@@ -2163,48 +2095,48 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'p>(
     if parser.is_null() {
         return NULL as XML_Parser;
     }
-    (*parser).m_handlers.setStartElement(oldStartElementHandler);
-    (*parser).m_handlers.setEndElement(oldEndElementHandler);
-    (*parser).m_handlers.setCharacterData(oldCharacterDataHandler);
-    (*parser).m_handlers.setProcessingInstruction(oldProcessingInstructionHandler);
-    (*parser).m_handlers.setComment(oldCommentHandler);
-    (*parser).m_handlers.setStartCDataSection(oldStartCdataSectionHandler);
-    (*parser).m_handlers.setEndCDataSection(oldEndCdataSectionHandler);
-    (*parser).m_handlers.setDefault(oldDefaultHandler);
-    (*parser).m_handlers.setUnparsedEntityDecl(oldUnparsedEntityDeclHandler);
-    (*parser).m_handlers.setNotationDecl(oldNotationDeclHandler);
-    (*parser).m_handlers.setStartNamespaceDecl(oldStartNamespaceDeclHandler);
-    (*parser).m_handlers.setEndNamespaceDecl(oldEndNamespaceDeclHandler);
-    (*parser).m_handlers.setNotStandalone(oldNotStandaloneHandler);
-    (*parser).m_handlers.setExternalEntityRef(oldExternalEntityRefHandler);
-    (*parser).m_handlers.setSkippedEntity(oldSkippedEntityHandler);
-    (*parser).m_handlers.setUnknownEncoding(oldUnknownEncodingHandler);
-    (*parser).m_handlers.setElementDecl(oldElementDeclHandler);
-    (*parser).m_handlers.setAttlistDecl(oldAttlistDeclHandler);
-    (*parser).m_handlers.setEntityDecl(oldEntityDeclHandler);
-    (*parser).m_handlers.setXmlDecl(oldXmlDeclHandler);
-    (*parser).m_declElementType = oldDeclElementType;
-    (*parser).m_userData = oldUserData;
-    if oldUserData == oldHandlerArg {
-        (*parser).m_handlers.m_handlerArg = (*parser).m_userData
+    (*parser).m_handlers.setStartElement(oldParser.m_handlers.m_startElementHandler);
+    (*parser).m_handlers.setEndElement(oldParser.m_handlers.m_endElementHandler);
+    (*parser).m_handlers.setCharacterData(oldParser.m_handlers.m_characterDataHandler);
+    (*parser).m_handlers.setProcessingInstruction(oldParser.m_handlers.m_processingInstructionHandler);
+    (*parser).m_handlers.setComment(oldParser.m_handlers.m_commentHandler);
+    (*parser).m_handlers.setStartCDataSection(oldParser.m_handlers.m_startCdataSectionHandler);
+    (*parser).m_handlers.setEndCDataSection(oldParser.m_handlers.m_endCdataSectionHandler);
+    (*parser).m_handlers.setDefault(oldParser.m_handlers.m_defaultHandler);
+    (*parser).m_handlers.setUnparsedEntityDecl(oldParser.m_handlers.m_unparsedEntityDeclHandler);
+    (*parser).m_handlers.setNotationDecl(oldParser.m_handlers.m_notationDeclHandler);
+    (*parser).m_handlers.setStartNamespaceDecl(oldParser.m_handlers.m_startNamespaceDeclHandler);
+    (*parser).m_handlers.setEndNamespaceDecl(oldParser.m_handlers.m_endNamespaceDeclHandler);
+    (*parser).m_handlers.setNotStandalone(oldParser.m_handlers.m_notStandaloneHandler);
+    (*parser).m_handlers.setExternalEntityRef(oldParser.m_handlers.m_externalEntityRefHandler);
+    (*parser).m_handlers.setSkippedEntity(oldParser.m_handlers.m_skippedEntityHandler);
+    (*parser).m_handlers.setUnknownEncoding(oldParser.m_handlers.m_unknownEncodingHandler);
+    (*parser).m_handlers.setElementDecl(oldParser.m_handlers.m_elementDeclHandler);
+    (*parser).m_handlers.setAttlistDecl(oldParser.m_handlers.m_attlistDeclHandler);
+    (*parser).m_handlers.setEntityDecl(oldParser.m_handlers.m_entityDeclHandler);
+    (*parser).m_handlers.setXmlDecl(oldParser.m_handlers.m_xmlDeclHandler);
+    (*parser).m_declElementType = oldParser.m_declElementType;
+    (*parser).m_userData = oldParser.m_userData;
+    if oldParser.m_userData == oldParser.m_handlers.m_handlerArg {
+        (*parser).m_handlers.m_handlerArg = (*parser).m_userData;
     } else {
-        (*parser).m_handlers.m_handlerArg = parser as *mut c_void
+        (*parser).m_handlers.m_handlerArg = parser as *mut c_void;
     }
-    if oldExternalEntityRefHandlerArg != oldParser as *const _ as *mut _ {
-        (*parser).m_handlers.m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg
+    if oldParser.m_handlers.m_externalEntityRefHandlerArg != oldParser as *const _ as *mut _ {
+        (*parser).m_handlers.m_externalEntityRefHandlerArg = oldParser.m_handlers.m_externalEntityRefHandlerArg;
     }
-    (*parser).m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
-    (*parser).m_ns_triplets = oldns_triplets;
+    (*parser).m_defaultExpandInternalEntities = oldParser.m_defaultExpandInternalEntities;
+    (*parser).m_ns_triplets = oldParser.m_ns_triplets;
     (*parser).m_parentParser = Some(oldParser);
-    (*parser).m_paramEntityParsing = oldParamEntityParsing;
-    (*parser).m_prologState.inEntityValue = oldInEntityValue;
+    (*parser).m_paramEntityParsing = oldParser.m_paramEntityParsing;
+    (*parser).m_prologState.inEntityValue = oldParser.m_prologState.inEntityValue;
     if !context.is_null() {
         /* XML_DTD */
         if !(*parser).setContext(context) {
             XML_ParserFree(parser);
             return NULL as XML_Parser;
         }
-        (*parser).m_processor = Some(externalEntityInitProcessor as Processor)
+        (*parser).m_processor = Some(externalEntityInitProcessor as Processor);
     } else {
         /* The DTD instance referenced by parser->m_dtd is shared between the
            document's root parser and external PE parsers, therefore one does not
@@ -2215,7 +2147,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'p>(
         */
         (*parser).m_isParamEntity = true;
         super::xmlrole::XmlPrologStateInitExternalEntity(&mut (*parser).m_prologState);
-        (*parser).m_processor = Some(externalParEntInitProcessor as Processor)
+        (*parser).m_processor = Some(externalParEntInitProcessor as Processor);
     }
     /* XML_DTD */
     parser
