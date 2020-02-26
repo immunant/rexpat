@@ -1,5 +1,5 @@
 use crate::stddef_h::size_t;
-use ::libc::timespec;
+use ::libc::{stat};
 use libc::{c_char, c_int, c_long, c_schar, c_uint, c_ulong, c_ushort, c_void};
 extern "C" {
     #[no_mangle]
@@ -139,25 +139,6 @@ pub const GRND_NONBLOCK: c_int = 0x1;
 pub type __jmp_buf = [c_long; 8];
 // ================ END setjmp_h ================
 // =============== BEGIN stat_h ================
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct stat {
-    pub st_dev: __dev_t,
-    pub st_ino: __ino_t,
-    pub st_nlink: __nlink_t,
-    pub st_mode: __mode_t,
-    pub st_uid: __uid_t,
-    pub st_gid: __gid_t,
-    pub __pad0: c_int,
-    pub st_rdev: __dev_t,
-    pub st_size: __off_t,
-    pub st_blksize: __blksize_t,
-    pub st_blocks: __blkcnt_t,
-    pub st_atim: timespec,
-    pub st_mtim: timespec,
-    pub st_ctim: timespec,
-    pub __glibc_reserved: [__syscall_slong_t; 3],
-}
 pub const __S_IFMT: c_int = 0o170000;
 // ================ END stat_h ================
 // =============== BEGIN stdint_uintn_h ================
