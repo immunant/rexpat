@@ -314,7 +314,7 @@ trait XmlHandlers {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-struct CXmlHandlers<'p> {
+struct CXmlHandlers<'parser> {
     m_attlistDeclHandler: XML_AttlistDeclHandler,
     m_characterDataHandler: XML_CharacterDataHandler,
     m_commentHandler: XML_CommentHandler,
@@ -326,7 +326,7 @@ struct CXmlHandlers<'p> {
     m_endNamespaceDeclHandler: XML_EndNamespaceDeclHandler,
     m_entityDeclHandler: XML_EntityDeclHandler,
     m_externalEntityRefHandler: XML_ExternalEntityRefHandler,
-    m_externalEntityRefHandlerArg: XML_Parser<'p>,
+    m_externalEntityRefHandlerArg: XML_Parser<'parser>,
     m_handlerArg: *mut c_void,
     m_notationDeclHandler: XML_NotationDeclHandler,
     m_notStandaloneHandler: XML_NotStandaloneHandler,
@@ -342,7 +342,7 @@ struct CXmlHandlers<'p> {
     m_xmlDeclHandler: XML_XmlDeclHandler,
 }
 
-impl<'p> Default for CXmlHandlers<'p> {
+impl<'parser> Default for CXmlHandlers<'parser> {
     fn default() -> Self {
         CXmlHandlers {
             m_attlistDeclHandler: None,
@@ -389,7 +389,7 @@ impl EncodingType {
     }
 }
 
-impl<'p> CXmlHandlers<'p> {
+impl<'parser> CXmlHandlers<'parser> {
     fn setStartElement(&mut self, handler: XML_StartElementHandler) {
         self.m_startElementHandler = handler;
     }
@@ -479,7 +479,7 @@ impl<'p> CXmlHandlers<'p> {
     }
 }
 
-impl<'p> XmlHandlers for CXmlHandlers<'p> {
+impl<'parser> XmlHandlers for CXmlHandlers<'parser> {
     unsafe fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
         self.m_startElementHandler.map(|handler| {
             handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
@@ -785,7 +785,7 @@ impl Attribute {
 }
 
 #[repr(C)]
-pub struct XML_ParserStruct<'p> {
+pub struct XML_ParserStruct<'parser> {
     /* The first member must be m_userData so that the XML_GetUserData
     macro works. */
     pub m_userData: *mut c_void,
@@ -802,7 +802,7 @@ pub struct XML_ParserStruct<'p> {
     pub m_dataBufEnd: *mut XML_Char,
 
     // Handlers should be trait, with native C callback instance
-    m_handlers: CXmlHandlers<'p>,
+    m_handlers: CXmlHandlers<'parser>,
     pub m_encoding: *const ENCODING,
     pub m_initEncoding: Option<InitEncoding>,
     pub m_internalEncoding: &'static super::xmltok::ENCODING,
@@ -833,7 +833,7 @@ pub struct XML_ParserStruct<'p> {
     pub m_declAttributeId: *mut ATTRIBUTE_ID,
     pub m_declAttributeIsCdata: XML_Bool,
     pub m_declAttributeIsId: XML_Bool,
-    pub m_dtd: Cow<'p, DTD<'p>>,
+    pub m_dtd: Cow<'parser, DTD<'parser>>,
     pub m_curBase: *const XML_Char,
     pub m_tagStack: Option<Box<Tag>>,
     pub m_freeTagList: Option<Box<Tag>>,
@@ -850,7 +850,7 @@ pub struct XML_ParserStruct<'p> {
     pub m_groupConnector: *mut c_char,
     pub m_groupSize: c_uint,
     pub m_namespaceSeparator: XML_Char,
-    pub m_parentParser: Option<&'p XML_ParserStruct<'p>>,
+    pub m_parentParser: Option<&'parser XML_ParserStruct<'parser>>,
     pub m_parsingStatus: XML_ParsingStatus,
     pub m_isParamEntity: XML_Bool,
     pub m_useForeignDTD: XML_Bool,
@@ -860,7 +860,7 @@ pub struct XML_ParserStruct<'p> {
     pub m_mismatch: *const XML_Char,
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     fn encoding<'a, 'b>(&'a self, enc_type: EncodingType) -> &'b dyn XmlEncoding {
         match enc_type {
             EncodingType::Normal => unsafe { &*self.m_encoding },
@@ -1111,10 +1111,10 @@ macro_rules! hash_lookup {
 }
 
 #[repr(C)]
-pub struct DTD<'p> {
+pub struct DTD<'parser> {
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
-    scaffold: Cow<'p, RefCell<DTDScaffold>>,
+    scaffold: Cow<'parser, RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
     standalone: Cell<XML_Bool>,
@@ -1169,8 +1169,8 @@ impl Drop for DTDPools {
     }
 }
 
-impl<'p> DTD<'p> {
-    fn new() -> DTD<'p> {
+impl<'parser> DTD<'parser> {
+    fn new() -> DTD<'parser> {
         DTD {
             tables: Default::default(),
             pools: Default::default(),
@@ -1363,8 +1363,8 @@ impl<'p> DTD<'p> {
     }
 }
 
-impl<'p> Clone for DTD<'p> {
-    fn clone(&self) -> DTD<'p> {
+impl<'parser> Clone for DTD<'parser> {
+    fn clone(&self) -> DTD<'parser> {
         panic!("tried to clone a DTD");
     }
 }
@@ -1644,9 +1644,9 @@ impl Drop for Tag {
    external protocol or NULL if there is none specified.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreate<'p>(
+pub unsafe extern "C" fn XML_ParserCreate<'parser>(
     mut encodingName: *const XML_Char
-) -> XML_Parser<'p> {
+) -> XML_Parser<'parser> {
     XML_ParserCreate_MM(
         encodingName,
         None,
@@ -1665,10 +1665,10 @@ pub unsafe extern "C" fn XML_ParserCreate<'p>(
    triplets (see XML_SetReturnNSTriplet).
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreateNS<'p>(
+pub unsafe extern "C" fn XML_ParserCreateNS<'parser>(
     mut encodingName: *const XML_Char,
     mut nsSep: XML_Char,
-) -> XML_Parser<'p> {
+) -> XML_Parser<'parser> {
     let mut tmp: [XML_Char; 2] = [0; 2];
     tmp[0] = nsSep;
     XML_ParserCreate_MM(
@@ -1688,7 +1688,7 @@ const implicitContext: [XML_Char; 41] = XML_STR![
 
 /* To avoid warnings about unused functions: */
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     /* only valid for root parser */
     unsafe fn startParsing(&mut self) -> XML_Bool {
         /* hash functions must be initialized before setContext() is called */
@@ -1712,11 +1712,11 @@ impl<'p> XML_ParserStruct<'p> {
    the given suite.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ParserCreate_MM<'p>(
+pub unsafe extern "C" fn XML_ParserCreate_MM<'parser>(
     mut encodingName: *const XML_Char,
     mut memsuite: Option<&XML_Memory_Handling_Suite>,
     mut nameSep: *const XML_Char,
-) -> XML_Parser<'p> {
+) -> XML_Parser<'parser> {
     if memsuite.is_some() {
         unimplemented!("custom memory allocators are not supported");
     }
@@ -1724,8 +1724,8 @@ pub unsafe extern "C" fn XML_ParserCreate_MM<'p>(
                              Cow::Owned(DTD::new()))
 }
 
-impl<'p> XML_ParserStruct<'p> {
-    fn new(use_namespaces: bool, dtd: Cow<'p, DTD<'p>>) -> Self {
+impl<'parser> XML_ParserStruct<'parser> {
+    fn new(use_namespaces: bool, dtd: Cow<'parser, DTD<'parser>>) -> Self {
         Self {
             m_userData: ptr::null_mut(),
             m_buffer: ptr::null_mut(),
@@ -1817,8 +1817,8 @@ impl<'p> XML_ParserStruct<'p> {
     unsafe fn create(
         mut encodingName: *const XML_Char,
         mut nameSep: *const XML_Char,
-        mut dtd: Cow<'p, DTD<'p>>,
-    ) -> XML_Parser<'p> {
+        mut dtd: Cow<'parser, DTD<'parser>>,
+    ) -> XML_Parser<'parser> {
         let use_namespaces = !nameSep.is_null();
         let mut parser = XML_ParserStruct::new(use_namespaces, dtd);
 
@@ -1945,7 +1945,7 @@ impl<'p> XML_ParserStruct<'p> {
 
    Added in Expat 1.95.3.
 */
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
         let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
         if self.m_parentParser.is_some() {
@@ -2000,7 +2000,7 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
      has no effect and returns XML_Status::ERROR.
 */
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
         /* Block after XML_Parse()/XML_ParseBuffer() has been called.
         XXX There's no way for the caller to determine which of the
@@ -2056,11 +2056,11 @@ pub unsafe extern "C" fn XML_SetEncoding(
    Otherwise returns a new XML_Parser object.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'p>(
-    mut oldParser: Option<&'p XML_ParserStruct<'p>>,
+pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'parser>(
+    mut oldParser: Option<&'parser XML_ParserStruct<'parser>>,
     mut context: *const XML_Char,
     mut encodingName: *const XML_Char,
-) -> XML_Parser<'p> {
+) -> XML_Parser<'parser> {
     /* Validate the oldParser parameter before we pull everything out of it */
     let mut oldParser = match oldParser {
         Some(parser) => parser,
@@ -2165,7 +2165,7 @@ unsafe fn destroyBindings(mut bindings: *mut BINDING) {
     }
 }
 
-impl<'p> Drop for XML_ParserStruct<'p> {
+impl<'parser> Drop for XML_ParserStruct<'parser> {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
         let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
@@ -2703,7 +2703,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(_: XML_Parser, _: c_ulong) -> c_int {
    values.
 */
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
             return XML_Status::ERROR;
@@ -2812,7 +2812,7 @@ pub unsafe extern "C" fn XML_Parse(
     (*parser).parse(s, len, isFinal)
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn parseBuffer(&mut self, len: c_int, isFinal: c_int) -> XML_Status {
         let mut start: *const c_char = 0 as *const c_char;
         let mut result: XML_Status = XML_Status::OK;
@@ -2894,7 +2894,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
     (*parser).parseBuffer(len, isFinal)
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
@@ -3033,7 +3033,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
    When suspended, parsing can be resumed by calling XML_ResumeParser().
 */
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
         match self.m_parsingStatus.parsing {
             XML_Parsing::SUSPENDED => {
@@ -3082,7 +3082,7 @@ pub unsafe extern "C" fn XML_StopParser(parser: XML_Parser, resumable: XML_Bool)
    That is, the parent parser will not resume by itself and it is up to the
    application to call XML_ResumeParser() on it at the appropriate moment.
 */
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     pub unsafe fn resumeParser(&mut self) -> XML_Status {
         let mut result: XML_Status = XML_Status::OK;
         if self.m_parsingStatus.parsing != XML_Parsing::SUSPENDED {
@@ -3530,7 +3530,7 @@ pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XM
    processed, and not yet closed, we need to store tag->rawName in a more
    permanent location, since the parse buffer is about to be discarded.
 */
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
         let mut tStk = &mut self.m_tagStack;
         while let Some(tag) = tStk {
@@ -3732,7 +3732,7 @@ unsafe extern "C" fn externalEntityContentProcessor(
     result
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn doContent(
         &mut self,
         startTagLevel: c_int,
@@ -5349,7 +5349,7 @@ unsafe extern "C" fn doIgnoreSection(
 }
 /* XML_DTD */
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn initializeEncoding(&mut self) -> XML_Error {
         let mut s: *const c_char = 0 as *const c_char;
         if cfg!(feature = "unicode") {
@@ -5763,7 +5763,7 @@ unsafe extern "C" fn prologProcessor(
     );
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
@@ -7229,7 +7229,7 @@ unsafe extern "C" fn epilogProcessor(
     }
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn processInternalEntity(
         &mut self,
         mut entity: *mut ENTITY,
@@ -8127,7 +8127,7 @@ unsafe extern "C" fn defineAttribute(
     }
 }
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn setElementTypePrefix(
         &mut self,
         mut elementType: *mut ELEMENT_TYPE,
@@ -8312,7 +8312,7 @@ impl<'p> XML_ParserStruct<'p> {
 
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn getContext(&mut self) -> *const XML_Char {
         let mut needSep = false;
         if !self.m_dtd.defaultPrefix.get().binding.is_null() {
@@ -9082,7 +9082,7 @@ impl STRING_POOL {
         true
     }
 }
-impl<'p> XML_ParserStruct<'p> {
+impl<'parser> XML_ParserStruct<'parser> {
     fn build_node<'a, 'b>(
         &self,
         src_node: usize,
