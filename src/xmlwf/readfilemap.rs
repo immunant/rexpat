@@ -3,11 +3,11 @@ pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_lock_t, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
     __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
-    __uid_t, ssize_t, FILE, _IO_FILE, __S_IFMT,
+    __uid_t, ssize_t, FILE, _IO_FILE,
 };
 use crate::stdlib::{fprintf, fstat, malloc, read, stderr};
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
-use ::libc::{self, close, free, open, perror, stat};
+use ::libc::{self, close, free, open, perror, stat, S_IFREG, S_IFMT};
 pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_uint, c_void};
 /*
@@ -75,7 +75,7 @@ pub unsafe extern "C" fn filemap(
         close(fd);
         return 0i32;
     }
-    if !(sb.st_mode as c_uint & __S_IFMT as c_uint == 0o100000) {
+    if !(sb.st_mode & S_IFMT == S_IFREG) {
         fprintf(
             stderr,
             b"%s: not a regular file\n\x00".as_ptr() as *const c_char,
