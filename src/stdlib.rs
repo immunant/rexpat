@@ -1,6 +1,6 @@
 use crate::stddef_h::size_t;
-use ::libc::{stat};
-use libc::{c_char, c_int, c_long, c_schar, c_uint, c_ulong, c_ushort, c_void};
+use ::libc::{stat, FILE};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
 extern "C" {
     #[no_mangle]
     pub fn _setjmp(_: *mut __jmp_buf_tag) -> c_int;
@@ -42,12 +42,6 @@ extern "C" {
     pub fn strncmp(_: *const c_char, _: *const c_char, _: c_ulong) -> c_int;
 
     #[no_mangle]
-    pub fn fclose(__stream: *mut FILE) -> c_int;
-
-    #[no_mangle]
-    pub fn fopen(_: *const c_char, _: *const c_char) -> *mut FILE;
-
-    #[no_mangle]
     pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
 
     #[no_mangle]
@@ -85,8 +79,7 @@ extern "C" {
 
     #[no_mangle]
     pub fn strlen(_: *const c_char) -> c_ulong;
-    #[no_mangle]
-    pub fn fstat(__fd: c_int, __buf: *mut stat) -> c_int;
+
     #[no_mangle]
     pub fn read(__fd: c_int, __buf: *mut c_void, __nbytes: size_t) -> ssize_t;
 
@@ -113,7 +106,6 @@ pub const __ASSERT_FUNCTION: [c_char; 46] = unsafe {
 pub type __compar_fn_t = Option<unsafe extern "C" fn(_: *const c_void, _: *const c_void) -> c_int>;
 
 // =============== BEGIN FILE_h ================
-pub type FILE = _IO_FILE;
 // ================ END FILE_h ================
 // =============== BEGIN __sigset_t_h ================
 #[repr(C)]
@@ -149,39 +141,7 @@ pub type ssize_t = __ssize_t;
 // ================ END stdio_h ================
 // =============== BEGIN struct_FILE_h ================
 pub type _IO_lock_t = ();
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct _IO_FILE {
-    pub _flags: c_int,
-    pub _IO_read_ptr: *mut c_char,
-    pub _IO_read_end: *mut c_char,
-    pub _IO_read_base: *mut c_char,
-    pub _IO_write_base: *mut c_char,
-    pub _IO_write_ptr: *mut c_char,
-    pub _IO_write_end: *mut c_char,
-    pub _IO_buf_base: *mut c_char,
-    pub _IO_buf_end: *mut c_char,
-    pub _IO_save_base: *mut c_char,
-    pub _IO_backup_base: *mut c_char,
-    pub _IO_save_end: *mut c_char,
-    pub _markers: *mut _IO_marker,
-    pub _chain: *mut _IO_FILE,
-    pub _fileno: c_int,
-    pub _flags2: c_int,
-    pub _old_offset: __off_t,
-    pub _cur_column: c_ushort,
-    pub _vtable_offset: c_schar,
-    pub _shortbuf: [c_char; 1],
-    pub _lock: *mut c_void,
-    pub _offset: __off64_t,
-    pub _codecvt: *mut _IO_codecvt,
-    pub _wide_data: *mut _IO_wide_data,
-    pub _freeres_list: *mut _IO_FILE,
-    pub _freeres_buf: *mut c_void,
-    pub __pad5: size_t,
-    pub _mode: c_int,
-    pub _unused2: [c_char; 20],
-}
+
 // ================ END struct_FILE_h ================
 // =============== BEGIN time_h ================
 #[repr(C)]

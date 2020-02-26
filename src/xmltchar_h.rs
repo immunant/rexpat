@@ -1,5 +1,5 @@
-use crate::stdlib::{fopen, fprintf, fputs, putc, strlen, FILE};
-use ::libc::{open, perror, remove, strcat, strchr, strcmp, strcpy, strrchr};
+use crate::stdlib::{fprintf, fputs, putc, strlen};
+use ::libc::{open, fopen, perror, remove, strcat, strchr, strcmp, strcpy, strrchr, FILE};
 use libc::{c_char, c_int, c_ulong};
 pub const ftprintf: unsafe extern "C" fn(_: *mut FILE, _: *const c_char, _: ...) -> c_int = fprintf;
 pub const tcscpy: unsafe extern "C" fn(_: *mut c_char, _: *const c_char) -> *mut c_char = strcpy;

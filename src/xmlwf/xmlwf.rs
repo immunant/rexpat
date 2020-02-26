@@ -39,7 +39,7 @@ use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF
 use ::std::mem::transmute;
 
 pub use rexpat::*;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void, FILE, fclose, fopen};
 
 pub mod codepage;
 pub mod readfilemap;
@@ -56,8 +56,8 @@ pub use crate::expat_h::{
 };
 pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
-    _IO_lock_t, __compar_fn_t, __off64_t, __off_t, fclose,
-    fopen, fputs, putc, qsort, setvbuf, stderr, stdout, FILE, __ASSERT_FUNCTION,
+    _IO_lock_t, __compar_fn_t, __off64_t, __off_t, 
+    fputs, putc, qsort, setvbuf, stderr, stdout, __ASSERT_FUNCTION,
 };
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 

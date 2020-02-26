@@ -22,8 +22,7 @@ use ::libc::{exit, printf};
 use libc::{c_char, c_int, c_ulong, c_void};
 pub mod stdlib {
 
-    use ::rexpat::stdlib::_IO_FILE;
-    use libc::{c_int, c_long, c_ulong, c_void};
+    use libc::{c_int, c_long, c_ulong, c_void, FILE};
     extern "C" {
         #[cfg(all(unix, not(target_os = "macos")))]
         #[no_mangle]
@@ -52,7 +51,6 @@ pub mod stdlib {
         #[no_mangle]
         pub fn ferror(__stream: *mut FILE) -> c_int;
     }
-    pub type FILE = _IO_FILE;
     pub type _IO_lock_t = ();
     pub type __off_t = c_long;
 
@@ -65,7 +63,7 @@ pub use ::rexpat::expat_h::{
 };
 pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, FILE,
+    _IO_lock_t, __off64_t, __off_t,
 };
 
 /* Read an XML document from standard input and print an element

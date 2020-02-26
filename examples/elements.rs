@@ -27,7 +27,7 @@ pub use ::rexpat::expat_h::{
 };
 pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, FILE,
+    _IO_lock_t, __off64_t, __off_t, 
 };
 
 /* This is simple demonstration of how to use expat. This program

@@ -131,7 +131,7 @@ pub use crate::minicheck_h::{
 pub use crate::stddef_h::{ptrdiff_t, size_t};
 pub use crate::stdlib::{
     _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
-    uint64_t, FILE,
+    uint64_t, 
 };
 
 /* Test attribute counts, indexing, etc */
