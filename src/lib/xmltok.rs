@@ -34,7 +34,7 @@
 
 /* The following token may be returned by XmlContentTok */
 
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, size_t};
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
@@ -2702,7 +2702,7 @@ pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::stdbool_h::{false_0, true_0};
-pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
+pub use crate::stddef_h::{ptrdiff_t, NULL};
 pub use crate::xmltok_impl_h::*;
 
 pub type normal_encoding = Box<dyn XmlEncoding>;

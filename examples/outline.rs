@@ -19,10 +19,10 @@ use ::rexpat::stddef_h::NULL;
 use ::rexpat::stdlib::fprintf;
 use ::libc::{exit, printf};
 
-use libc::{c_char, c_int, c_ulong, c_void};
+use libc::{c_char, c_int, c_void, fread};
 pub mod stdlib {
 
-    use libc::{c_int, c_long, c_ulong, c_void, FILE};
+    use libc::{c_int, c_long, FILE};
     extern "C" {
         #[cfg(all(unix, not(target_os = "macos")))]
         #[no_mangle]
@@ -43,9 +43,6 @@ pub mod stdlib {
         pub static mut stdin: *mut FILE;
 
         #[no_mangle]
-        pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
-
-        #[no_mangle]
         pub fn feof(__stream: *mut FILE) -> c_int;
 
         #[no_mangle]
@@ -61,7 +58,6 @@ pub use ::rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use ::rexpat::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler,
 };
-pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
     _IO_lock_t, __off64_t, __off_t,
 };
@@ -162,10 +158,10 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     loop {
         let mut done = false;
         let mut len: c_int = 0;
-        len = crate::stdlib::fread(
+        len = fread(
             Buff.as_mut_ptr() as *mut c_void,
             1,
-            BUFFSIZE as c_ulong,
+            BUFFSIZE as usize,
             crate::stdlib::stdin,
         ) as c_int;
         if crate::stdlib::ferror(crate::stdlib::stdin) != 0 {

@@ -1,5 +1,4 @@
-use crate::stddef_h::size_t;
-use ::libc::{stat, FILE};
+use ::libc::{stat, FILE, size_t};
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
 extern "C" {
     #[no_mangle]
@@ -52,21 +51,9 @@ extern "C" {
 
     #[no_mangle]
     pub fn fputs(__s: *const c_char, __stream: *mut FILE) -> c_int;
-    #[no_mangle]
-    pub fn qsort(__base: *mut c_void, __nmemb: size_t, __size: size_t, __compar: __compar_fn_t);
 
     #[no_mangle]
     pub fn fprintf(_: *mut FILE, _: *const c_char, _: ...) -> c_int;
-    #[no_mangle]
-    pub fn malloc(_: c_ulong) -> *mut c_void;
-
-    #[no_mangle]
-    pub fn calloc(_: c_ulong, _: c_ulong) -> *mut c_void;
-
-    #[no_mangle]
-    pub fn realloc(_: *mut c_void, _: c_ulong) -> *mut c_void;
-    #[no_mangle]
-    pub fn memcpy(_: *mut c_void, _: *const c_void, _: c_ulong) -> *mut c_void;
 
     #[no_mangle]
     pub fn memmove(_: *mut c_void, _: *const c_void, _: c_ulong) -> *mut c_void;
@@ -76,9 +63,6 @@ extern "C" {
 
     #[no_mangle]
     pub fn memcmp(_: *const c_void, _: *const c_void, _: c_ulong) -> c_int;
-
-    #[no_mangle]
-    pub fn strlen(_: *const c_char) -> c_ulong;
 
     #[no_mangle]
     pub fn read(__fd: c_int, __buf: *mut c_void, __nbytes: size_t) -> ssize_t;

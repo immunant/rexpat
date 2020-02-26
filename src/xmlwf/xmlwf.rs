@@ -33,13 +33,12 @@ use ::rexpat::lib::xmlparse::{
     XML_SetNotationDeclHandler, XML_SetParamEntityParsing, XML_SetProcessingInstructionHandler,
     XML_SetUnknownEncodingHandler, XML_SetUserData, XML_UseParserAsHandlerArg,
 };
-use ::rexpat::stdlib::{malloc, memcpy, strlen};
-use ::libc::{exit, free, remove, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
+use ::libc::{exit, malloc, free, memcpy, remove, strlen, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
 
 use ::std::mem::transmute;
 
 pub use rexpat::*;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_void, FILE, fclose, fopen};
+use libc::{c_char, c_int, c_long, c_uint, c_void, FILE, size_t, fclose, fopen, qsort};
 
 pub mod codepage;
 pub mod readfilemap;
@@ -54,10 +53,9 @@ pub use crate::expat_h::{
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_UnknownEncodingHandler,
 };
-pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_lock_t, __compar_fn_t, __off64_t, __off_t, 
-    fputs, putc, qsort, setvbuf, stderr, stdout, __ASSERT_FUNCTION,
+    fputs, putc, setvbuf, stderr, stdout, __ASSERT_FUNCTION,
 };
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 
@@ -182,7 +180,7 @@ unsafe extern "C" fn startElement(
         qsort(
             atts as *mut c_void,
             nAtts as size_t,
-            (::std::mem::size_of::<*mut XML_Char>() as c_ulong).wrapping_mul(2u64),
+            (::std::mem::size_of::<*mut XML_Char>()).wrapping_mul(2),
             Some(attcmp as unsafe extern "C" fn(_: *const c_void, _: *const c_void) -> c_int),
         );
     }
@@ -247,7 +245,7 @@ unsafe extern "C" fn startElementNS(
         qsort(
             atts as *mut c_void,
             nAtts as size_t,
-            (::std::mem::size_of::<*mut XML_Char>() as c_ulong).wrapping_mul(2u64),
+            (::std::mem::size_of::<*mut XML_Char>()).wrapping_mul(2),
             Some(nsattcmp as unsafe extern "C" fn(_: *const c_void, _: *const c_void) -> c_int),
         );
     }
@@ -308,7 +306,6 @@ unsafe extern "C" fn processingInstruction(
 unsafe extern "C" fn xcsdup(mut s: *const XML_Char) -> *mut XML_Char {
     let mut result: *mut XML_Char = 0 as *mut XML_Char;
     let mut count: c_int = 0;
-    let mut numBytes: c_int = 0;
     loop
     /* Get the length of the string, including terminator */
     {
@@ -318,16 +315,16 @@ unsafe extern "C" fn xcsdup(mut s: *const XML_Char) -> *mut XML_Char {
             break;
         }
     }
-    numBytes =
-        (count as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong) as c_int;
-    result = malloc(numBytes as c_ulong) as *mut XML_Char;
+    let numBytes =
+        (count as usize).wrapping_mul(::std::mem::size_of::<XML_Char>());
+    result = malloc(numBytes) as *mut XML_Char;
     if result.is_null() {
         return ::rexpat::stddef_h::NULL as *mut XML_Char;
     }
     memcpy(
         result as *mut c_void,
         s as *const c_void,
-        numBytes as c_ulong,
+        numBytes,
     );
     return result;
 }
@@ -385,9 +382,8 @@ unsafe extern "C" fn notationCmp(mut a: *const c_void, mut b: *const c_void) -> 
 unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     let mut data: *mut XmlwfUserData = userData as *mut XmlwfUserData;
     let mut notations: *mut *mut NotationList = 0 as *mut *mut NotationList;
-    let mut notationCount: c_int = 0;
+    let mut notationCount = 0usize;
     let mut p: *mut NotationList = 0 as *mut NotationList;
-    let mut i: c_int = 0;
     /* How many notations do we have? */
     p = (*data).notationListHead;
     while !p.is_null() {
@@ -401,8 +397,8 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
         return;
     }
     notations = malloc(
-        (notationCount as c_ulong)
-            .wrapping_mul(::std::mem::size_of::<*mut NotationList>() as c_ulong),
+        (notationCount)
+            .wrapping_mul(::std::mem::size_of::<*mut NotationList>()),
     ) as *mut *mut NotationList;
     if notations.is_null() {
         ::rexpat::stdlib::fprintf(
@@ -413,7 +409,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
         return;
     }
     p = (*data).notationListHead;
-    i = 0;
+    let mut i = 0;
     while i < notationCount {
         let ref mut fresh4 = *notations.offset(i as isize);
         *fresh4 = p;
@@ -423,7 +419,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     qsort(
         notations as *mut c_void,
         notationCount as size_t,
-        ::std::mem::size_of::<*mut NotationList>() as c_ulong,
+        ::std::mem::size_of::<*mut NotationList>(),
         Some(notationCmp as unsafe extern "C" fn(_: *const c_void, _: *const c_void) -> c_int),
     );
     /* Output the DOCTYPE header */
@@ -471,7 +467,7 @@ unsafe extern "C" fn notationDecl(
 ) {
     let mut data: *mut XmlwfUserData = userData as *mut XmlwfUserData;
     let mut entry: *mut NotationList =
-        malloc(::std::mem::size_of::<NotationList>() as c_ulong) as *mut NotationList;
+        malloc(::std::mem::size_of::<NotationList>()) as *mut NotationList;
     let mut errorMessage: *const c_char =
         b"Unable to store NOTATION for output\n\x00".as_ptr() as *const c_char;
     if entry.is_null() {
@@ -944,7 +940,7 @@ unsafe extern "C" fn unknownEncoding(
     /* We could just cast the code page integer to a void *,
     and avoid the use of release. */
     (*info).release = Some(free as unsafe extern "C" fn(_: *mut c_void) -> ());
-    (*info).data = malloc(::std::mem::size_of::<c_int>() as c_ulong);
+    (*info).data = malloc(::std::mem::size_of::<c_int>());
     if (*info).data.is_null() {
         return 0i32;
     }
@@ -1245,8 +1241,8 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             outName = malloc(
                 strlen(outputDir)
                     .wrapping_add(strlen(file))
-                    .wrapping_add(2u64)
-                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                    .wrapping_add(2)
+                    .wrapping_mul(::std::mem::size_of::<XML_Char>()),
             ) as *mut XML_Char;
             strcpy(outName, outputDir);
             strcat(outName, delim);

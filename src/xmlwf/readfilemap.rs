@@ -1,13 +1,12 @@
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
-pub use crate::stddef_h::size_t;
 pub use crate::stdlib::{
     _IO_lock_t, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
     __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
     __uid_t, ssize_t
 };
-use crate::stdlib::{fprintf, malloc, read, stderr};
+use crate::stdlib::{fprintf, read, stderr};
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
-use ::libc::{self, close, free, open, fstat, perror, stat, S_IFREG, S_IFMT};
+use ::libc::{self, close, free, open, fstat, perror, stat, malloc, S_IFREG, S_IFMT, size_t};
 pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_void};
 /*
@@ -95,7 +94,7 @@ pub unsafe extern "C" fn filemap(
         static mut c: c_char = '\u{0}' as c_char;
         processor.expect("non-null function pointer")(
             &c as *const c_char as *const c_void,
-            0u64,
+            0,
             name,
             arg,
         );

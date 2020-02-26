@@ -10,7 +10,7 @@
 #![register_tool(c2rust)]
 #![feature(const_raw_ptr_to_usize_cast, main, register_tool)]
 
-use ::rexpat::expat_h::{XML_Bool, XML_Status};
+use ::rexpat::expat_h::{XML_Status};
 use ::rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
@@ -19,13 +19,12 @@ use ::rexpat::stddef_h::NULL;
 use ::rexpat::stdlib::fprintf;
 use ::libc::{printf, putchar};
 
-use libc::{c_char, c_int, c_ulong, c_void};
+use libc::{c_char, c_int, c_void, size_t, fread};
 
 pub use ::rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use ::rexpat::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler,
 };
-pub use ::rexpat::stddef_h::size_t;
 pub use ::rexpat::stdlib::{
     _IO_lock_t, __off64_t, __off_t, 
 };
@@ -107,13 +106,13 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
         Some(endElement as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> ()),
     );
     loop {
-        let mut len: size_t = ::rexpat::stdlib::fread(
+        let mut len: size_t = fread(
             buf.as_mut_ptr() as *mut c_void,
             1,
-            ::std::mem::size_of::<[c_char; 8192]>() as c_ulong,
+            ::std::mem::size_of::<[c_char; 8192]>(),
             ::rexpat::stdlib::stdin,
         );
-        done = (len < ::std::mem::size_of::<[c_char; 8192]>() as c_ulong) as XML_Bool;
+        done = len < ::std::mem::size_of::<[c_char; 8192]>();
         if XML_Parse(parser, buf.as_mut_ptr(), len as c_int, done as c_int)
             == XML_Status::ERROR
         {

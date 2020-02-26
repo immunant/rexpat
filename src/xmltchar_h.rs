@@ -1,10 +1,10 @@
-use crate::stdlib::{fprintf, fputs, putc, strlen};
-use ::libc::{open, fopen, perror, remove, strcat, strchr, strcmp, strcpy, strrchr, FILE};
-use libc::{c_char, c_int, c_ulong};
+use crate::stdlib::{fprintf, fputs, putc};
+use ::libc::{open, fopen, perror, remove, strcat, strchr, strcmp, strcpy, strrchr, strlen, FILE, size_t};
+use libc::{c_char, c_int};
 pub const ftprintf: unsafe extern "C" fn(_: *mut FILE, _: *const c_char, _: ...) -> c_int = fprintf;
 pub const tcscpy: unsafe extern "C" fn(_: *mut c_char, _: *const c_char) -> *mut c_char = strcpy;
 pub const tcsrchr: unsafe extern "C" fn(_: *const c_char, _: c_int) -> *mut c_char = strrchr;
-pub const tcslen: unsafe extern "C" fn(_: *const c_char) -> c_ulong = strlen;
+pub const tcslen: unsafe extern "C" fn(_: *const c_char) -> size_t = strlen;
 pub const tperror: unsafe extern "C" fn(_: *const c_char) -> () = perror;
 pub const topen: unsafe extern "C" fn(_: *const c_char, _: c_int, _: ...) -> c_int = open;
 pub const tfopen: unsafe extern "C" fn(_: *const c_char, _: *const c_char) -> *mut FILE = fopen;

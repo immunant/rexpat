@@ -35,10 +35,10 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-use crate::stdlib::{calloc, fprintf, realloc, stderr, strlen};
+use crate::stdlib::{fprintf, stderr};
 use ::libc::{free, printf};
 use ::std::ptr::write_volatile;
-use libc::{c_char, c_double, c_int, c_ulong, c_void};
+use libc::{c_char, c_double, c_int, realloc, c_void, calloc, strlen};
 pub const CK_VERBOSE: c_int = 2;
 
 pub type tcase_setup_function = Option<unsafe extern "C" fn() -> ()>;
@@ -74,7 +74,7 @@ pub struct TCase {
     pub next_tcase: *mut TCase,
 }
 
-pub use crate::stddef_h::{size_t, NULL};
+pub use crate::stddef_h::{NULL};
 pub use crate::stdlib::{
     _IO_lock_t, __jmp_buf, __jmp_buf_tag, __off64_t,
     __off_t, __sigset_t, _setjmp, jmp_buf, longjmp,
@@ -83,7 +83,7 @@ use ::libc;
 
 #[no_mangle]
 pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
-    let mut suite: *mut Suite = calloc(1, ::std::mem::size_of::<Suite>() as c_ulong) as *mut Suite;
+    let mut suite: *mut Suite = calloc(1, ::std::mem::size_of::<Suite>()) as *mut Suite;
     if !suite.is_null() {
         (*suite).name = name
     }
@@ -91,7 +91,7 @@ pub unsafe extern "C" fn suite_create(mut name: *const c_char) -> *mut Suite {
 }
 #[no_mangle]
 pub unsafe extern "C" fn tcase_create(mut name: *const c_char) -> *mut TCase {
-    let mut tc: *mut TCase = calloc(1, ::std::mem::size_of::<TCase>() as c_ulong) as *mut TCase;
+    let mut tc: *mut TCase = calloc(1, ::std::mem::size_of::<TCase>()) as *mut TCase;
     if !tc.is_null() {
         (*tc).name = name
     }
@@ -122,8 +122,8 @@ pub unsafe extern "C" fn tcase_add_test(mut tc: *mut TCase, mut test: tcase_test
     assert!(!tc.is_null());
     if (*tc).allocated == (*tc).ntests {
         let mut nalloc: c_int = (*tc).allocated + 100;
-        let mut new_size: size_t = (::std::mem::size_of::<tcase_test_function>() as c_ulong)
-            .wrapping_mul(nalloc as c_ulong);
+        let mut new_size = ::std::mem::size_of::<tcase_test_function>()
+            .wrapping_mul(nalloc as usize);
         let mut new_tests: *mut tcase_test_function =
             realloc((*tc).tests as *mut c_void, new_size) as *mut tcase_test_function;
         assert!(!new_tests.is_null());
@@ -158,7 +158,7 @@ unsafe extern "C" fn suite_free(mut suite: *mut Suite) {
 
 pub unsafe extern "C" fn srunner_create(mut suite: *mut Suite) -> *mut SRunner {
     let mut runner: *mut SRunner =
-        calloc(1, ::std::mem::size_of::<SRunner>() as c_ulong) as *mut SRunner;
+        calloc(1, ::std::mem::size_of::<SRunner>()) as *mut SRunner;
     if !runner.is_null() {
         (*runner).suite = suite
     }
@@ -282,7 +282,7 @@ pub unsafe extern "C" fn _fail_unless(
     */
     if !msg.is_null() {
         let has_newline: c_int =
-            (*msg.offset(strlen(msg).wrapping_sub(1u64) as isize) as c_int == '\n' as i32) as c_int;
+            (*msg.offset(strlen(msg).wrapping_sub(1) as isize) as c_int == '\n' as i32) as c_int;
         fprintf(
             stderr,
             b"ERROR: %s%s\x00".as_ptr() as *const c_char,
