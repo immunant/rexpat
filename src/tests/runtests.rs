@@ -89,7 +89,7 @@ use ::rexpat::lib::xmlparse::ExpatBufRef;
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::mem::transmute;
 
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, size_t};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, size_t, ptrdiff_t};
 
 pub mod chardata;
 pub mod memcheck;
@@ -128,7 +128,6 @@ pub use crate::expat_h::{
 pub use crate::minicheck_h::{
     tcase_setup_function, tcase_teardown_function, tcase_test_function, CK_NORMAL, CK_SILENT,
 };
-pub use crate::stddef_h::{ptrdiff_t};
 pub use crate::stdlib::{
     _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
     uint64_t, 
@@ -1252,77 +1251,77 @@ unsafe extern "C" fn test_utf8_auto_align() {
     let mut cases: [TestCase; 11] = [
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: UTF8_LEAD_1.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_2.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xdf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_3.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -2i64,
+                expectedMovementInChars: -2,
                 input: b"\xef\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xef\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_4.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -2i64,
+                expectedMovementInChars: -2,
                 input: b"\xf7\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -3i64,
+                expectedMovementInChars: -3,
                 input: b"\xf7\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xf7\xbf\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
@@ -1342,7 +1341,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
         _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
         fromLim = buf.end();
-        actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially) as c_long;
+        actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially);
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
             success = false_0 != 0;

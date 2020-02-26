@@ -81,10 +81,10 @@ pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
-pub use crate::stddef_h::{ptrdiff_t, NULL};
+pub use crate::stddef_h::{NULL};
 use crate::stdlib::{memcmp, memmove, memset};
 pub use ::libc::INT_MAX;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, memcpy};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy};
 use num_traits::{ToPrimitive,FromPrimitive};
 
 use fallible_collections::FallibleBox;
@@ -9026,7 +9026,7 @@ impl STRING_POOL {
             /* NOTE: Needs to be calculated prior to calling `realloc`
             to avoid dangling pointers: */
             let offsetInsideBlock: ptrdiff_t =
-                self.ptr.wrapping_offset_from(self.start) as c_long;
+                self.ptr.wrapping_offset_from(self.start);
             if blockSize < 0 {
                 /* This condition traps a situation where either more than
                  * INT_MAX/2 bytes have already been allocated.  This isn't

@@ -2702,7 +2702,7 @@ pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::stdbool_h::{false_0, true_0};
-pub use crate::stddef_h::{ptrdiff_t, NULL};
+pub use crate::stddef_h::{NULL};
 pub use crate::xmltok_impl_h::*;
 
 pub type normal_encoding = Box<dyn XmlEncoding>;
