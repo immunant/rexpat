@@ -18,12 +18,12 @@ pub use crate::lib::xmlparse::{
 };
 pub use crate::stddef_h::NULL;
 pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __ssize_t, fprintf,
+    _IO_lock_t, __off64_t, __off_t, __ssize_t,
     ssize_t, stderr, stdout
 };
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
 use ::libc;
-pub use ::libc::{perror, O_RDONLY};
+pub use ::libc::{perror, fprintf, O_RDONLY};
 
 #[repr(C)]
 #[derive(Copy, Clone)]

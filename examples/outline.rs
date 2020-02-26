@@ -16,8 +16,7 @@ use ::rexpat::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler,
 };
 use ::rexpat::stddef_h::NULL;
-use ::rexpat::stdlib::fprintf;
-use ::libc::{exit, printf};
+use ::libc::{exit, printf, fprintf};
 
 use libc::{c_char, c_int, c_void, fread};
 pub mod stdlib {

@@ -54,10 +54,10 @@ use rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
     XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
 };
-use rexpat::stdlib::{fprintf, fread,};
+use rexpat::stdlib::{fread,};
 use std::ffi::CString;
 use std::ptr::null_mut;
-use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void, FILE, fclose, fopen, malloc};
+use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void, FILE, fclose, fopen, fprintf, malloc};
 
 pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};

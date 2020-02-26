@@ -53,9 +53,6 @@ extern "C" {
     pub fn fputs(__s: *const c_char, __stream: *mut FILE) -> c_int;
 
     #[no_mangle]
-    pub fn fprintf(_: *mut FILE, _: *const c_char, _: ...) -> c_int;
-
-    #[no_mangle]
     pub fn memmove(_: *mut c_void, _: *const c_void, _: c_ulong) -> *mut c_void;
 
     #[no_mangle]

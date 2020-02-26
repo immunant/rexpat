@@ -35,8 +35,8 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-use crate::stdlib::{fprintf, stderr};
-use ::libc::{free, printf};
+use crate::stdlib::{stderr};
+use ::libc::{free, printf, fprintf};
 use ::std::ptr::write_volatile;
 use libc::{c_char, c_double, c_int, realloc, c_void, calloc, strlen};
 pub const CK_VERBOSE: c_int = 2;

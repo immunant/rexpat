@@ -4,9 +4,9 @@ pub use crate::stdlib::{
     __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
     __uid_t, ssize_t
 };
-use crate::stdlib::{fprintf, read, stderr};
+use crate::stdlib::{read, stderr};
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
-use ::libc::{self, close, free, open, fstat, perror, stat, malloc, S_IFREG, S_IFMT, size_t};
+use ::libc::{self, close, free, open, fstat, fprintf, perror, stat, malloc, S_IFREG, S_IFMT, size_t};
 pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_void};
 /*

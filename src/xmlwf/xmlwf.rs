@@ -38,7 +38,7 @@ use ::libc::{exit, malloc, free, memcpy, remove, strlen, strcat, strchr, strcmp,
 use ::std::mem::transmute;
 
 pub use rexpat::*;
-use libc::{c_char, c_int, c_long, c_uint, c_void, FILE, size_t, fclose, fopen, qsort};
+use libc::{c_char, c_int, c_long, c_uint, c_void, FILE, size_t, fclose, fopen, fprintf, qsort};
 
 pub mod codepage;
 pub mod readfilemap;
@@ -100,7 +100,7 @@ unsafe extern "C" fn characterData(
                 fputs(b"&quot;\x00".as_ptr() as *const c_char, fp);
             }
             9 | 10 | 13 => {
-                ::rexpat::stdlib::fprintf(
+                fprintf(
                     fp,
                     b"&#%d;\x00".as_ptr() as *const c_char,
                     *s as c_int,
@@ -138,7 +138,7 @@ unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
                 fputs(b"&gt;\x00".as_ptr() as *const c_char, fp);
             }
             9 | 10 | 13 => {
-                ::rexpat::stdlib::fprintf(
+                fprintf(
                     fp,
                     b"&#%d;\x00".as_ptr() as *const c_char,
                     *s as c_int,
@@ -256,7 +256,7 @@ unsafe extern "C" fn startElementNS(
         sep = strrchr(name, '\u{1}' as i32);
         putc(' ' as i32, fp);
         if !sep.is_null() {
-            ::rexpat::stdlib::fprintf(fp, b"n%d:\x00".as_ptr() as *const c_char, nsi);
+            fprintf(fp, b"n%d:\x00".as_ptr() as *const c_char, nsi);
             fputs(sep.offset(1isize), fp);
         } else {
             fputs(name, fp);
@@ -265,7 +265,7 @@ unsafe extern "C" fn startElementNS(
         if !sep.is_null() {
             let fresh2 = nsi;
             nsi = nsi + 1;
-            ::rexpat::stdlib::fprintf(fp, b" xmlns:n%d\x00".as_ptr() as *const c_char, fresh2);
+            fprintf(fp, b" xmlns:n%d\x00".as_ptr() as *const c_char, fresh2);
             attributeValue(fp, name);
         }
         atts = atts.offset(1)
@@ -401,7 +401,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
             .wrapping_mul(::std::mem::size_of::<*mut NotationList>()),
     ) as *mut *mut NotationList;
     if notations.is_null() {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             stderr,
             b"Unable to sort notations\x00".as_ptr() as *const c_char,
         );
@@ -573,9 +573,9 @@ unsafe extern "C" fn metaLocation(mut parser: XML_Parser) {
     let mut uri: *const XML_Char = XML_GetBase(parser);
     let mut fp: *mut FILE = (*(*(parser as *mut *mut c_void) as *mut XmlwfUserData)).fp;
     if !uri.is_null() {
-        ::rexpat::stdlib::fprintf(fp, b" uri=\"%s\"\x00".as_ptr() as *const c_char, uri);
+        fprintf(fp, b" uri=\"%s\"\x00".as_ptr() as *const c_char, uri);
     }
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b" byte=\"%ld\" nbytes=\"%d\" line=\"%lu\" col=\"%lu\"\x00".as_ptr() as *const c_char,
         XML_GetCurrentByteIndex(parser),
@@ -616,7 +616,7 @@ unsafe extern "C" fn metaStartElement(
     } else {
         idAttPtr = atts.offset(idAttIndex as isize)
     }
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b"<starttag name=\"%s\"\x00".as_ptr() as *const c_char,
         name,
@@ -625,7 +625,7 @@ unsafe extern "C" fn metaStartElement(
     if !(*atts).is_null() {
         fputs(b">\n\x00".as_ptr() as *const c_char, fp);
         loop {
-            ::rexpat::stdlib::fprintf(
+            fprintf(
                 fp,
                 b"<attribute name=\"%s\" value=\"\x00".as_ptr() as *const c_char,
                 *atts.offset(0isize),
@@ -660,7 +660,7 @@ unsafe extern "C" fn metaEndElement(mut userData: *mut c_void, mut name: *const 
     let mut parser: XML_Parser = userData as XML_Parser;
     let mut data: *mut XmlwfUserData = *(parser as *mut *mut c_void) as *mut XmlwfUserData;
     let mut fp: *mut FILE = (*data).fp;
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b"<endtag name=\"%s\"\x00".as_ptr() as *const c_char,
         name,
@@ -677,7 +677,7 @@ unsafe extern "C" fn metaProcessingInstruction(
     let mut parser: XML_Parser = userData as XML_Parser;
     let mut usrData: *mut XmlwfUserData = *(parser as *mut *mut c_void) as *mut XmlwfUserData;
     let mut fp: *mut FILE = (*usrData).fp;
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b"<pi target=\"%s\" data=\"\x00".as_ptr() as *const c_char,
         target,
@@ -742,7 +742,7 @@ unsafe extern "C" fn metaStartDoctypeDecl(
     let mut parser: XML_Parser = userData as XML_Parser;
     let mut data: *mut XmlwfUserData = *(parser as *mut *mut c_void) as *mut XmlwfUserData;
     let mut fp: *mut FILE = (*data).fp;
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b"<startdoctype name=\"%s\"\x00".as_ptr() as *const c_char,
         doctypeName,
@@ -770,13 +770,13 @@ unsafe extern "C" fn metaNotationDecl(
     let mut parser: XML_Parser = userData as XML_Parser;
     let mut data: *mut XmlwfUserData = *(parser as *mut *mut c_void) as *mut XmlwfUserData;
     let mut fp: *mut FILE = (*data).fp;
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         fp,
         b"<notation name=\"%s\"\x00".as_ptr() as *const c_char,
         notationName,
     );
     if !publicId.is_null() {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b" public=\"%s\"\x00".as_ptr() as *const c_char,
             publicId,
@@ -806,7 +806,7 @@ unsafe extern "C" fn metaEntityDecl(
     let mut data: *mut XmlwfUserData = *(parser as *mut *mut c_void) as *mut XmlwfUserData;
     let mut fp: *mut FILE = (*data).fp;
     if !value.is_null() {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
@@ -816,13 +816,13 @@ unsafe extern "C" fn metaEntityDecl(
         characterData(data as *mut c_void, value, value_length);
         fputs(b"</entity/>\n\x00".as_ptr() as *const c_char, fp);
     } else if !notationName.is_null() {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
         );
         if !publicId.is_null() {
-            ::rexpat::stdlib::fprintf(
+            fprintf(
                 fp,
                 b" public=\"%s\"\x00".as_ptr() as *const c_char,
                 publicId,
@@ -831,7 +831,7 @@ unsafe extern "C" fn metaEntityDecl(
         fputs(b" system=\"\x00".as_ptr() as *const c_char, fp);
         characterData(data as *mut c_void, systemId, strlen(systemId) as c_int);
         putc('\"' as i32, fp);
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b" notation=\"%s\"\x00".as_ptr() as *const c_char,
             notationName,
@@ -839,13 +839,13 @@ unsafe extern "C" fn metaEntityDecl(
         metaLocation(parser);
         fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
     } else {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b"<entity name=\"%s\"\x00".as_ptr() as *const c_char,
             entityName,
         );
         if !publicId.is_null() {
-            ::rexpat::stdlib::fprintf(
+            fprintf(
                 fp,
                 b" public=\"%s\"\x00".as_ptr() as *const c_char,
                 publicId,
@@ -869,7 +869,7 @@ unsafe extern "C" fn metaStartNamespaceDecl(
     let mut fp: *mut FILE = (*data).fp;
     fputs(b"<startns\x00".as_ptr() as *const c_char, fp);
     if !prefix.is_null() {
-        ::rexpat::stdlib::fprintf(fp, b" prefix=\"%s\"\x00".as_ptr() as *const c_char, prefix);
+        fprintf(fp, b" prefix=\"%s\"\x00".as_ptr() as *const c_char, prefix);
     }
     if !uri.is_null() {
         fputs(b" ns=\"\x00".as_ptr() as *const c_char, fp);
@@ -887,7 +887,7 @@ unsafe extern "C" fn metaEndNamespaceDecl(mut userData: *mut c_void, mut prefix:
     if prefix.is_null() {
         fputs(b"<endns/>\n\x00".as_ptr() as *const c_char, fp);
     } else {
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             fp,
             b"<endns prefix=\"%s\"/>\n\x00".as_ptr() as *const c_char,
             prefix,
@@ -966,7 +966,7 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
         }
         s = s.offset(1)
     }
-    ::rexpat::stdlib::fprintf(
+    fprintf(
         stdout,
         b"%s using %s\n\x00".as_ptr() as *const c_char,
         prog,
@@ -974,26 +974,26 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
     );
     if !features.is_null() && (*features.offset(0)).feature != XML_FeatureEnum::END {
         let mut i: c_int = 1;
-        ::rexpat::stdlib::fprintf(
+        fprintf(
             stdout,
             b"%s\x00".as_ptr() as *const c_char,
             (*features.offset(0isize)).name,
         );
         if (*features.offset(0)).value != 0 {
-            ::rexpat::stdlib::fprintf(
+            fprintf(
                 stdout,
                 b"=%ld\x00".as_ptr() as *const c_char,
                 (*features.offset(0isize)).value,
             );
         }
         while (*features.offset(i as isize)).feature != XML_FeatureEnum::END {
-            ::rexpat::stdlib::fprintf(
+            fprintf(
                 stdout,
                 b", %s\x00".as_ptr() as *const c_char,
                 (*features.offset(i as isize)).name,
             );
             if (*features.offset(i as isize)).value != 0 {
-                ::rexpat::stdlib::fprintf(
+                fprintf(
                     stdout,
                     b"=%ld\x00".as_ptr() as *const c_char,
                     (*features.offset(i as isize)).value,
@@ -1001,12 +1001,12 @@ unsafe extern "C" fn showVersion(mut prog: *mut XML_Char) {
             }
             i += 1
         }
-        ::rexpat::stdlib::fprintf(stdout, b"\n\x00".as_ptr() as *const c_char);
+        fprintf(stdout, b"\n\x00".as_ptr() as *const c_char);
     };
 }
 
 unsafe extern "C" fn usage(mut prog: *const XML_Char, mut rc: c_int) {
-    ::rexpat::stdlib::fprintf(stderr,
+    fprintf(stderr,
 
             b"usage: %s [-s] [-n] [-p] [-x] [-e ENCODING] [-w] [-r] [-d DIRECTORY]\n             [-c | -m | -t] [-N]\n             [FILE [FILE ...]]\n\nxmlwf - Determines if an XML document is well-formed\n\npositional arguments:\n  FILE          files to process (default: STDIN)\n\ninput control arguments:\n  -s            print an error if the document is not [s]tandalone\n  -n            enable [n]amespace processing\n  -p            enable processing external DTDs and [p]arameter entities\n  -x            enable processing of e[x]ternal entities\n  -e ENCODING   override any in-document [e]ncoding declaration\n  -w            enable support for [W]indows code pages\n  -r            disable memory-mapping and use normal file [r]ead IO calls instead\n\noutput control arguments:\n  -d DIRECTORY  output [d]estination directory\n  -c            write a [c]opy of input XML, not canonical XML\n  -m            write [m]eta XML, not canonical XML\n  -t            write no XML output for [t]iming of plain parsing\n  -N            enable adding doctype and [n]otation declarations\n\ninfo arguments:\n  -h            show this [h]elp message and exit\n  -v            show program\'s [v]ersion number and exit\n\nlibexpat is software libre, licensed under the MIT license.\nPlease report bugs at https://github.com/libexpat/libexpat/issues.  Thank you!\n\x00".as_ptr() as *const c_char, prog);
     exit(rc);

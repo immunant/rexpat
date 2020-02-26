@@ -16,8 +16,7 @@ use ::rexpat::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
 };
 use ::rexpat::stddef_h::NULL;
-use ::rexpat::stdlib::fprintf;
-use ::libc::{printf, putchar};
+use ::libc::{printf, putchar, fprintf};
 
 use libc::{c_char, c_int, c_void, size_t, fread};
 

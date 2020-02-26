@@ -81,9 +81,8 @@ use ::rexpat::lib::xmlparse::{
 };
 use ::rexpat::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::rexpat::stdbool_h::{false_0, true_0};
-use ::rexpat::stdlib::{fprintf};
 pub use ::rexpat::*;
-use ::libc::{free, printf, sprintf, strcmp, strlen, malloc, realloc, memcmp, memcpy, EXIT_FAILURE, EXIT_SUCCESS};
+use ::libc::{free, printf, sprintf, fprintf, strcmp, strlen, malloc, realloc, memcmp, memcpy, EXIT_FAILURE, EXIT_SUCCESS};
 use ::rexpat::lib::xmlparse::ExpatBufRef;
 
 use std::alloc::{GlobalAlloc, Layout, System};
