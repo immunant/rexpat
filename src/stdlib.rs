@@ -82,11 +82,6 @@ extern "C" {
 #[repr(C)] pub struct _IO_codecvt { _private: [u8; 0] }
 #[repr(C)] pub struct _IO_wide_data { _private: [u8; 0] }
 
-pub const __ASSERT_FUNCTION: [c_char; 46] = unsafe {
-    *::std::mem::transmute::<&[u8; 46], &[c_char; 46]>(
-        b"void attributeValue(FILE *, const XML_Char *)\x00",
-    )
-};
 pub type __compar_fn_t = Option<unsafe extern "C" fn(_: *const c_void, _: *const c_void) -> c_int>;
 
 // =============== BEGIN FILE_h ================

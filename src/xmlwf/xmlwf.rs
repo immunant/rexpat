@@ -55,7 +55,7 @@ pub use crate::expat_h::{
 };
 pub use crate::stdlib::{
     _IO_lock_t, __compar_fn_t, __off64_t, __off_t, 
-    fputs, putc, setvbuf, stderr, stdout, __ASSERT_FUNCTION,
+    fputs, putc, setvbuf, stderr, stdout,
 };
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 
