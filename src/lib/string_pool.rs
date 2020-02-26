@@ -161,7 +161,7 @@ impl StringPool {
     }
 
     /// Overwrites the last char in the current BumpVec.
-    /// Note that this will panic if empty and that this is not an insert
+    /// Note that this will panic if empty. This is not an insert
     /// operation as it does not shift bytes afterwards.
     pub(crate) fn prepend_char(&self, c: XML_Char) {
         self.inner().rent(|buf| {
