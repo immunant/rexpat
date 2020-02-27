@@ -83,6 +83,7 @@ pub use crate::lib::xmltok::{
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 use crate::stdlib::{memcmp, memcpy, memmove, memset};
+use crate::fallible_rc::Rc;
 pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
 use num_traits::{ToPrimitive,FromPrimitive};
@@ -90,7 +91,6 @@ use num_traits::{ToPrimitive,FromPrimitive};
 use fallible_collections::FallibleBox;
 
 use std::alloc::{self, Layout};
-use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
 use std::cmp;
 use std::collections::{HashMap, HashSet, TryReserveError};
@@ -833,7 +833,7 @@ pub struct XML_ParserStruct<'parser> {
     pub m_declAttributeId: *mut ATTRIBUTE_ID,
     pub m_declAttributeIsCdata: XML_Bool,
     pub m_declAttributeIsId: XML_Bool,
-    pub m_dtd: Cow<'parser, DTD<'parser>>,
+    pub m_dtd: Rc<DTD>,
     pub m_curBase: *const XML_Char,
     pub m_tagStack: Option<Box<Tag>>,
     pub m_freeTagList: Option<Box<Tag>>,
@@ -1111,10 +1111,10 @@ macro_rules! hash_lookup {
 }
 
 #[repr(C)]
-pub struct DTD<'parser> {
+pub struct DTD {
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
-    scaffold: Cow<'parser, RefCell<DTDScaffold>>,
+    scaffold: Rc<RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
     standalone: Cell<XML_Bool>,
@@ -1169,9 +1169,9 @@ impl Drop for DTDPools {
     }
 }
 
-impl<'parser> DTD<'parser> {
-    fn new() -> DTD<'parser> {
-        DTD {
+impl<'parser> DTD {
+    fn new() -> Result<DTD, TryReserveError> {
+        Ok(DTD {
             tables: Default::default(),
             pools: Default::default(),
             keepProcessing: Cell::new(true),
@@ -1180,9 +1180,9 @@ impl<'parser> DTD<'parser> {
             paramEntityRead: Cell::new(false),
             defaultPrefix: Default::default(),
             in_eldecl: Cell::new(false),
-            scaffold: Default::default(),
+            scaffold: Rc::try_new(Default::default())?,
             contentStringLen: Cell::new(0),
-        }
+        })
     }
 
     fn reset(&self) {
@@ -1212,7 +1212,7 @@ impl<'parser> DTD<'parser> {
         self.standalone.set(false);
     }
 
-    fn try_clone<'s>(&'s self) -> Result<DTD<'s>, TryReserveError> {
+    fn try_clone(&self) -> Result<DTD, TryReserveError> {
         let mut newDtd = DTD {
             tables: Default::default(),
             pools: Default::default(),
@@ -1223,7 +1223,7 @@ impl<'parser> DTD<'parser> {
             defaultPrefix: Default::default(),
             in_eldecl: self.in_eldecl.clone(),
             /* Don't want deep copying for scaffolding */
-            scaffold: Cow::Borrowed(self.scaffold.as_ref()),
+            scaffold: Rc::clone(&self.scaffold),
             contentStringLen: self.contentStringLen.clone(),
         };
 
@@ -1363,8 +1363,8 @@ impl<'parser> DTD<'parser> {
     }
 }
 
-impl<'parser> Clone for DTD<'parser> {
-    fn clone(&self) -> DTD<'parser> {
+impl<'parser> Clone for DTD {
+    fn clone(&self) -> DTD {
         panic!("tried to clone a DTD");
     }
 }
@@ -1720,12 +1720,15 @@ pub unsafe extern "C" fn XML_ParserCreate_MM<'parser>(
     if memsuite.is_some() {
         unimplemented!("custom memory allocators are not supported");
     }
-    XML_ParserStruct::create(encodingName, nameSep,
-                             Cow::Owned(DTD::new()))
+    let dtd = match DTD::new().and_then(Rc::try_new) {
+        Ok(dtd) => dtd,
+        Err(_) => return ptr::null_mut()
+    };
+    XML_ParserStruct::create(encodingName, nameSep, dtd)
 }
 
 impl<'parser> XML_ParserStruct<'parser> {
-    fn new(use_namespaces: bool, dtd: Cow<'parser, DTD<'parser>>) -> Self {
+    fn new(use_namespaces: bool, dtd: Rc<DTD>) -> Self {
         Self {
             m_userData: ptr::null_mut(),
             m_buffer: ptr::null_mut(),
@@ -1817,7 +1820,7 @@ impl<'parser> XML_ParserStruct<'parser> {
     unsafe fn create(
         mut encodingName: *const XML_Char,
         mut nameSep: *const XML_Char,
-        mut dtd: Cow<'parser, DTD<'parser>>,
+        mut dtd: Rc<DTD>,
     ) -> XML_Parser<'parser> {
         let use_namespaces = !nameSep.is_null();
         let mut parser = XML_ParserStruct::new(use_namespaces, dtd);
@@ -2067,13 +2070,12 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'parser>(
         None => return NULL as XML_Parser
     };
     let newDtd = if context.is_null() {
-        Cow::Borrowed(oldParser.m_dtd.as_ref())
+        Rc::clone(&oldParser.m_dtd)
     } else {
-        let newDtd = match oldParser.m_dtd.try_clone() {
+        match oldParser.m_dtd.try_clone().and_then(Rc::try_new) {
             Ok(newDtd) => newDtd,
             Err(_) => return ptr::null_mut()
-        };
-        Cow::Owned(newDtd)
+        }
     };
     /* XML_DTD */
     /* Note that the magical uses of the pre-processor to make field
@@ -6859,7 +6861,7 @@ impl<'parser> XML_ParserStruct<'parser> {
                         if self.m_declElementType.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        // FIXME: turn into new Cow::Owned instead???
+                        // FIXME: turn into new Rc instead???
                         let mut scf = self.m_dtd.scaffold.borrow_mut();
                         scf.scaffold.clear();
                         scf.index.clear();

@@ -31,6 +31,8 @@ pub mod stdlib;
 pub mod xmltchar_h;
 pub mod xmltok_impl_h;
 
+mod fallible_rc;
+
 pub mod lib {
     pub mod nametab;
     pub mod xmlparse;
