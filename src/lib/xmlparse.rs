@@ -62,8 +62,9 @@ pub use crate::lib::xmltok::{
 };
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{NULL};
+use crate::stdlib::{memcmp, memmove, memset};
 pub use ::libc::INT_MAX;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy, memcmp, memmove, memset};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy};
 use num_traits::{ToPrimitive,FromPrimitive};
 
 use fallible_collections::FallibleBox;
@@ -1314,7 +1315,7 @@ const fn init_block_size_const() -> c_int {
     1024
 }
 
-pub const INIT_BUFFER_SIZE: isize = 1024;
+pub const INIT_BUFFER_SIZE: c_int = 1024;
 
 pub const EXPAND_SPARE: usize = 24;
 
@@ -1636,7 +1637,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         memset(
             &mut self.m_position as *mut super::xmltok::POSITION as *mut c_void,
             0,
-            ::std::mem::size_of::<super::xmltok::POSITION>(),
+            ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
         );
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = NULL as *const c_char;
@@ -2524,7 +2525,7 @@ pub unsafe extern "C" fn XML_SetHashSalt(mut parser: XML_Parser, mut hash_salt: 
 */
 
 impl<'scf> XML_ParserStruct<'scf> {
-    pub unsafe fn parse(&mut self, s: *const c_char, len: isize, isFinal: c_int) -> XML_Status {
+    pub unsafe fn parse(&mut self, s: *const c_char, len: c_int, isFinal: c_int) -> XML_Status {
         if len < 0 || s.is_null() && len != 0 {
             return XML_Status::ERROR;
         }
@@ -2610,7 +2611,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 XML_Status::ERROR as XML_Status
             } else {
                 memcpy(buff, s as *const c_void, len as usize);
-                XML_ParseBuffer(self, len as i32, isFinal)
+                XML_ParseBuffer(self, len, isFinal)
             }
         }
     }
@@ -2629,7 +2630,7 @@ pub unsafe extern "C" fn XML_Parse(
         }
         return XML_Status::ERROR;
     }
-    (*parser).parse(s, len.try_into().unwrap(), isFinal)
+    (*parser).parse(s, len, isFinal)
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
@@ -2715,7 +2716,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    pub unsafe fn getBuffer(&mut self, len: isize) -> *mut c_void {
+    pub unsafe fn getBuffer(&mut self, len: c_int) -> *mut c_void {
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
             return ptr::null_mut();
@@ -2733,7 +2734,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         }
         if len as isize > safe_ptr_diff(self.m_bufferLim, self.m_bufferEnd) {
             let maybe_needed_size = len.checked_add(
-                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr)
+                safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_int
             );
             let mut neededSize = match maybe_needed_size {
                 None => {
@@ -2744,31 +2745,33 @@ impl<'scf> XML_ParserStruct<'scf> {
             };
             let keep = cmp::min(
                 XML_CONTEXT_BYTES,
-                safe_ptr_diff(self.m_bufferPtr, self.m_buffer),
+                safe_ptr_diff(self.m_bufferPtr, self.m_buffer) as c_int,
             );
             neededSize += keep;
             if (neededSize as isize) <= safe_ptr_diff(self.m_bufferLim, self.m_buffer) {
                 if (keep as isize) < safe_ptr_diff(self.m_bufferPtr, self.m_buffer) {
                     let offset = safe_ptr_diff(self.m_bufferPtr, self.m_buffer) - keep as isize;
-                    let n = self.m_bufferEnd.wrapping_offset_from(self.m_bufferPtr) + keep;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
                     memmove(
                         self.m_buffer as *mut c_void,
                         &mut *self.m_buffer.offset(offset as isize) as *mut c_char
                             as *const c_void,
-                        n.try_into().unwrap(),
+                        (self
+                            .m_bufferEnd
+                            .wrapping_offset_from(self.m_bufferPtr) as c_long
+                            + keep as c_long) as c_ulong,
                     );
                     self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
                     self.m_bufferPtr = self.m_bufferPtr.offset(-offset);
                 }
             } else {
-                let mut bufferSize = match safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) {
+                let mut bufferSize: c_int = match safe_ptr_diff(self.m_bufferLim, self.m_bufferPtr) {
                     0 => INIT_BUFFER_SIZE,
                     size => size.try_into().unwrap(),
                 };
                 while bufferSize < neededSize {
-                    bufferSize = match 2isize.checked_mul(bufferSize) {
+                    bufferSize = match 2i32.checked_mul(bufferSize) {
                         Some(s) => s,
                         None => {
                             self.m_errorCode = XML_Error::NO_MEMORY;
@@ -2817,7 +2820,7 @@ pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -
         return NULL as *mut c_void;
     }
 
-    (*parser).getBuffer(len.try_into().unwrap())
+    (*parser).getBuffer(len)
 }
 /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
    Must be called from within a call-back handler, except when aborting
@@ -3893,7 +3896,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             || memcmp(
                                 tag.rawName as *const c_void,
                                 rawName_0.as_ptr() as *const c_void,
-                                len.try_into().unwrap(),
+                                len as c_ulong,
                             ) != 0
                         {
                             #[cfg(feature = "mozilla")]

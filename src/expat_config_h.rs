@@ -1,2 +1,2 @@
-
-pub const XML_CONTEXT_BYTES: isize = 1024;
+use libc::c_int;
+pub const XML_CONTEXT_BYTES: c_int = 1024;
