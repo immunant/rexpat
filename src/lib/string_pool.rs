@@ -150,7 +150,7 @@ impl StringPool {
     }
 
     /// Appends a char to the current BumpVec.
-    pub(crate) fn appendChar(&self, c: XML_Char) -> bool {
+    pub(crate) fn append_char(&self, c: XML_Char) -> bool {
         if self.is_full() && !self.grow() {
             false
         } else {
@@ -163,16 +163,15 @@ impl StringPool {
     /// Overwrites the last char in the current BumpVec.
     /// Note that this will panic if empty. This is not an insert
     /// operation as it does not shift bytes afterwards.
-    pub(crate) fn prepend_char(&self, c: XML_Char) {
+    pub(crate) fn replace_last_char(&self, c: XML_Char) {
         self.inner().rent(|buf| {
-            *buf
-                .borrow_mut()
+            *buf.borrow_mut()
                 .last_mut()
-                .expect("Called prepend_char() when string was empty") = c;
+                .expect("Called replace_last_char() when string was empty") = c;
         })
     }
 
-    /// Decrements the length, panicing if len is 0 in debug
+    /// Decrements the length, panicing if len is 0
     pub(crate) fn backtrack(&self) {
         self.inner().rent(|vec| vec.borrow_mut().pop().expect("Called backtrack() on empty BumpVec"));
     }
@@ -185,7 +184,7 @@ impl StringPool {
     /// Appends an entire C String to the current BumpVec.
     pub(crate) unsafe fn appendString(&self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
-            if !self.appendChar(*s) {
+            if !self.append_char(*s) {
                 return false;
             }
             s = s.offset(1)
@@ -195,7 +194,7 @@ impl StringPool {
 
     /// Resets the current Bump and deallocates its contents.
     pub(crate) fn clear(&mut self) {
-        let inner_pool = self.0.take();
+        let mut inner_pool = self.0.take();
 
         let mut bump = inner_pool.unwrap().into_head();
 
@@ -221,12 +220,16 @@ impl StringPool {
             return None;
         }
 
-        self.appendChar('\0' as XML_Char);
+        self.append_char('\0' as XML_Char);
 
         Some(self.consume_current_vec())
     }
 
-    /// Sets a new length on the current bump vec. This is always safe because:
+    /// Sets a new length on the current bump vec.
+    ///
+    /// # Safety
+    ///
+    /// This is always safe because:
     /// 1) We assert the length is never greater than the capacity.
     /// 2) We always zero the capacity buffer in grow(), so we can
     ///    never point to uninit data.
@@ -322,7 +325,7 @@ impl StringPool {
     ) -> Option<&mut [XML_Char]> {
         // self.appendString(s);?
         loop {
-            if !self.appendChar(*s) {
+            if !self.append_char(*s) {
                 return None;
             }
             let fresh78 = s;
@@ -357,7 +360,7 @@ impl StringPool {
             return None;
         }
         while n > 0 {
-            if !self.appendChar(*s) {
+            if !self.append_char(*s) {
                 return None;
             }
             n -= 1;
@@ -443,16 +446,16 @@ fn test_append_char() {
 
     let mut pool = StringPool::try_new().unwrap();
 
-    assert!(pool.appendChar(A));
+    assert!(pool.append_char(A));
     pool.current_slice(|s| assert_eq!(s, [A]));
 
-    assert!(pool.appendChar(B));
+    assert!(pool.append_char(B));
     pool.current_slice(|s| assert_eq!(s, [A, B]));
 
     // New BumpVec
     pool.finish_current();
 
-    assert!(pool.appendChar(C));
+    assert!(pool.append_char(C));
     pool.current_slice(|s| assert_eq!(s, [C]));
 }
 
@@ -476,7 +479,7 @@ fn test_copy_string() {
 
     let mut pool = StringPool::try_new().unwrap();
 
-    assert!(pool.appendChar(A));
+    assert!(pool.append_char(A));
     pool.current_slice(|s| assert_eq!(s, [A]));
 
     let new_string = unsafe {
@@ -484,7 +487,7 @@ fn test_copy_string() {
     };
 
     assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
-    assert!(pool.appendChar(B));
+    assert!(pool.append_char(B));
     pool.current_slice(|s| assert_eq!(s, [B]));
 
     let new_string2 = unsafe {
@@ -508,7 +511,7 @@ fn test_store_string() {
 
     assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
-    assert!(pool.appendChar(A));
+    assert!(pool.append_char(A));
     pool.current_slice(|s| assert_eq!(s, [A]));
     assert_eq!(pool.inner().head().allocated_bytes(), 2072);
 

@@ -236,7 +236,7 @@ macro_rules! XML_STR {
 
 impl STRING_POOL {
     #[inline]
-    unsafe fn appendChar(&mut self, c: XML_Char) -> bool {
+    unsafe fn append_char(&mut self, c: XML_Char) -> bool {
         if self.ptr == self.end as *mut XML_Char && !self.grow() {
             false
         } else {
@@ -4459,13 +4459,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     j_0 = 0;
                     while j_0 < (*b).uriLen {
                         let c: XML_Char = *(*b).uri.offset(j_0 as isize);
-                        if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                            0
-                        } else {
-                            self.m_tempPool.appendChar(c);
-                            1
-                        } == 0
-                        {
+                        if !self.m_tempPool.append_char(c) {
                             return XML_Error::NO_MEMORY;
                         }
                         j_0 += 1
@@ -4479,13 +4473,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     loop {
                         /* copies null terminator */
-                        if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                            0
-                        } else {
-                            self.m_tempPool.appendChar(*s);
-                            1
-                        } == 0
-                        {
+                        if !self.m_tempPool.append_char(*s) {
                             return XML_Error::NO_MEMORY;
                         }
                         let fresh24 = s;
@@ -4509,16 +4497,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     if self.m_ns_triplets {
                         /* append namespace separator and prefix */
-                        self.m_tempPool.prepend_char(self.m_namespaceSeparator);
+                        self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
                         s = (*(*b).prefix).name;
                         loop {
-                            if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                                0
-                            } else {
-                                self.m_tempPool.appendChar(*s);
-                                1
-                            } == 0
-                            {
+                            if !self.m_tempPool.append_char(*s) {
                                 return XML_Error::NO_MEMORY;
                             }
                             let fresh26 = s;
@@ -4578,7 +4560,7 @@ impl<'scf> XML_ParserStruct<'scf> {
 
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
                     if !self.m_tempPool.appendString(xmlnsNamespace.as_ptr()) ||
-                        !self.m_tempPool.appendChar(self.m_namespaceSeparator)
+                        !self.m_tempPool.append_char(self.m_namespaceSeparator)
                     {
                         return XML_Error::NO_MEMORY;
                     }
@@ -4587,7 +4569,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if *s == ':' as XML_Char {
                         s = s.offset(1);
                         loop { /* copies null terminator */
-                            if !self.m_tempPool.appendChar(*s) {
+                            if !self.m_tempPool.append_char(*s) {
                                 return XML_Error::NO_MEMORY;
                             }
                             if *s == '\u{0}' as XML_Char {
@@ -4598,9 +4580,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
 
                         if self.m_ns_triplets { /* append namespace separator and prefix */
-                            self.m_tempPool.prepend_char(self.m_namespaceSeparator);
+                            self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
                             if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
-                                !self.m_tempPool.appendChar('\u{0}' as XML_Char)
+                                !self.m_tempPool.append_char('\u{0}' as XML_Char)
                             {
                                 return XML_Error::NO_MEMORY;
                             }
@@ -4608,7 +4590,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     } else {
                         /* xlmns attribute without a prefix. */
                         if !self.m_tempPool.appendString(xmlnsPrefix.as_ptr()) ||
-                            !self.m_tempPool.appendChar('\u{0}' as XML_Char)
+                            !self.m_tempPool.append_char('\u{0}' as XML_Char)
                         {
                             return XML_Error::NO_MEMORY;
                         }
@@ -5991,21 +5973,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 && *self.m_declAttributeType.offset(1) == ASCII_O as XML_Char
                             {
                                 /* Enumerated or Notation type */
-                                if (if self.m_tempPool.is_full() && !self.m_tempPool.grow()
-                                    {
-                                        0
-                                    } else {
-                                        self.m_tempPool.appendChar(ASCII_RPAREN as XML_Char);
-                                        1
-                                    }) == 0
-                                    || (if self.m_tempPool.is_full() && !self.m_tempPool.grow()
-                                        {
-                                            0
-                                        } else {
-                                            self.m_tempPool.appendChar('\u{0}' as XML_Char);
-                                            1
-                                        }) == 0
-                                {
+                                if !self.m_tempPool.append_char(ASCII_RPAREN as XML_Char)
+                                || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
                                 self.m_declAttributeType = self.m_tempPool.consume_current_vec().as_ptr();
@@ -6060,21 +6029,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 && *self.m_declAttributeType.offset(1) == ASCII_O as XML_Char
                             {
                                 /* Enumerated or Notation type */
-                                if (if self.m_tempPool.is_full() && !self.m_tempPool.grow()
-                                    {
-                                        0
-                                    } else {
-                                        self.m_tempPool.appendChar(ASCII_RPAREN as XML_Char);
-                                        1
-                                    }) == 0
-                                    || (if self.m_tempPool.is_full() && !self.m_tempPool.grow()
-                                        {
-                                            0
-                                        } else {
-                                            self.m_tempPool.appendChar('\u{0}' as XML_Char);
-                                            1
-                                        }) == 0
-                                {
+                                if !self.m_tempPool.append_char(ASCII_RPAREN as XML_Char)
+                                || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
                                 self.m_declAttributeType = self.m_tempPool.consume_current_vec().as_ptr();
@@ -7237,13 +7193,7 @@ unsafe extern "C" fn storeAttributeValue(
     if !isCdata && !pool.is_empty() && pool.get_last_char() as c_int == 0x20 {
         pool.backtrack();
     }
-    if if pool.is_full() && !pool.grow() {
-        0
-    } else {
-        pool.appendChar('\u{0}' as XML_Char);
-        1
-    } == 0
-    {
+    if !pool.append_char('\u{0}' as XML_Char) {
         return XML_Error::NO_MEMORY;
     }
     XML_Error::NONE
@@ -7304,7 +7254,7 @@ unsafe extern "C" fn appendAttributeValue(
                      */
                     i = 0;
                     while i < n {
-                        if !pool.appendChar(out_buf[i as usize]) {
+                        if !pool.append_char(out_buf[i as usize]) {
                             return XML_Error::NO_MEMORY;
                         }
                         i += 1
@@ -7334,13 +7284,7 @@ unsafe extern "C" fn appendAttributeValue(
                         .dec_end((*enc).minBytesPerChar() as usize)
                 ) as XML_Char;
                 if ch != 0 {
-                    if if pool.is_full() && !pool.grow() {
-                        0
-                    } else {
-                        (*pool).appendChar(ch);
-                        1
-                    } == 0
-                    {
+                    if !(*pool).append_char(ch) {
                         return XML_Error::NO_MEMORY;
                     }
                 } else {
@@ -7478,13 +7422,7 @@ unsafe extern "C" fn appendAttributeValue(
             /* fall through */
             {
                 if !(!isCdata && (pool.is_empty() || pool.get_last_char() as c_int == 0x20)) {
-                    if if pool.is_full() && !pool.grow() {
-                        0
-                    } else {
-                        pool.appendChar(0x20);
-                        1
-                    } == 0
-                    {
+                    if !pool.append_char(0x20) {
                         return XML_Error::NO_MEMORY;
                     }
                 }
@@ -7648,11 +7586,10 @@ unsafe extern "C" fn storeEntityValue(
                      */
                     i = 0;
                     while i < n {
-                        if (*pool).is_full() && !(*pool).grow() {
+                        if !(*pool).append_char(out_buf[i as usize]) {
                             result = XML_Error::NO_MEMORY;
                             break 's_41;
                         } else {
-                            (*pool).appendChar(out_buf[i as usize]);
                             i += 1
                         }
                     }
@@ -7692,11 +7629,9 @@ unsafe extern "C" fn storeEntityValue(
             13862322071133341448 =>
             /* fall through */
             {
-                if (*pool).is_full() && !(*pool).grow() {
+                if !(*pool).append_char(0xa) {
                     result = XML_Error::NO_MEMORY;
                     break;
-                } else {
-                    (*pool).appendChar(0xa);
                 }
             }
             _ => {}
@@ -7925,24 +7860,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                 let mut s: *const XML_Char = 0 as *const XML_Char;
                 s = (*elementType).name;
                 while s != name {
-                    if if (*dtd).pool.is_full() && !(*dtd).pool.grow() {
-                        0
-                    } else {
-                        (*dtd).pool.appendChar(*s);
-                        1
-                    } == 0
-                    {
+                    if !(*dtd).pool.append_char(*s) {
                         return 0;
                     }
                     s = s.offset(1)
                 }
-                if if (*dtd).pool.is_full() && !(*dtd).pool.grow() {
-                    0
-                } else {
-                    (*dtd).pool.appendChar('\u{0}' as XML_Char);
-                    1
-                } == 0
-                {
+                if !(*dtd).pool.append_char('\u{0}' as XML_Char) {
                     return 0;
                 }
                 // This is unsafe, start needs be very temporary
@@ -7975,13 +7898,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         mut buf: ExpatBufRef,
     ) -> *mut ATTRIBUTE_ID {
         let dtd: *mut DTD = self.m_dtd;
-        if if (*dtd).pool.is_full() && !(*dtd).pool.grow() {
-            0
-        } else {
-            (*dtd).pool.appendChar(AttributeType::Unset.into());
-            1
-        } == 0
-        {
+        if !(*dtd).pool.append_char(AttributeType::Unset.into()) {
             return NULL as *mut ATTRIBUTE_ID;
         }
         let enc = self.encoding(enc_type);
@@ -8033,24 +7950,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                             let mut j: c_int = 0; /* save one level of indirection */
                             j = 0;
                             while j < i {
-                                if if (*dtd).pool.is_full() && !(*dtd).pool.grow() {
-                                    0
-                                } else {
-                                    (*dtd).pool.appendChar(name[usize::try_from(j).unwrap()]);
-                                    1
-                                } == 0
-                                {
+                                if !(*dtd).pool.append_char(name[usize::try_from(j).unwrap()]) {
                                     return NULL as *mut ATTRIBUTE_ID;
                                 }
                                 j += 1
                             }
-                            if if (*dtd).pool.is_full() && !(*dtd).pool.grow() {
-                                0
-                            } else {
-                                (*dtd).pool.appendChar('\u{0}' as XML_Char);
-                                1
-                            } == 0
-                            {
+                            if !(*dtd).pool.append_char('\u{0}' as XML_Char) {
                                 return NULL as *mut ATTRIBUTE_ID;
                             }
                             let tempName = (*dtd).pool.current_start();
@@ -8094,13 +7999,7 @@ unsafe fn getContext<'bump>(
     if !dtd.defaultPrefix.binding.is_null() {
         let mut i: c_int = 0;
         let mut len: c_int = 0;
-        if if m_tempPool.is_full() && !m_tempPool.grow() {
-            0
-        } else {
-            m_tempPool.appendChar(ASCII_EQUALS as XML_Char);
-            1
-        } == 0
-        {
+        if !m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
             return false;
         }
         len = (*dtd.defaultPrefix.binding).uriLen;
@@ -8109,13 +8008,7 @@ unsafe fn getContext<'bump>(
         }
         i = 0;
         while i < len {
-            if if m_tempPool.is_full() && !m_tempPool.grow() {
-                0
-            } else {
-                m_tempPool.appendChar(*(*dtd.defaultPrefix.binding).uri.offset(i as isize));
-                1
-            } == 0
-            {
+            if !m_tempPool.append_char(*(*dtd.defaultPrefix.binding).uri.offset(i as isize)) {
                 /* Because of memory caching, I don't believe this line can be
                     * executed.
                     *
@@ -8154,36 +8047,17 @@ unsafe fn getContext<'bump>(
         let mut len_0: c_int = 0;
         let mut s: *const XML_Char = 0 as *const XML_Char;
         if !(*prefix).binding.is_null() {
-            if needSep
-                && (if m_tempPool.is_full() && !m_tempPool.grow() {
-                        0
-                    } else {
-                        m_tempPool.appendChar(CONTEXT_SEP);
-                        1
-                    }) == 0
-            {
+            if needSep && !m_tempPool.append_char(CONTEXT_SEP) {
                 return false;
             }
             s = (*prefix).name;
             while *s != 0 {
-                if if m_tempPool.is_full() && !m_tempPool.grow() {
-                    0
-                } else {
-                    m_tempPool.appendChar(*s);
-                    1
-                } == 0
-                {
+                if !m_tempPool.append_char(*s) {
                     return false;
                 }
                 s = s.offset(1)
             }
-            if if m_tempPool.is_full() && !m_tempPool.grow() {
-                0
-            } else {
-                m_tempPool.appendChar(ASCII_EQUALS as XML_Char);
-                1
-            } == 0
-            {
+            if !m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
                 return false;
             }
             len_0 = (*(*prefix).binding).uriLen;
@@ -8192,13 +8066,7 @@ unsafe fn getContext<'bump>(
             }
             i_0 = 0;
             while i_0 < len_0 {
-                if if m_tempPool.is_full() && !m_tempPool.grow() {
-                    0
-                } else {
-                    m_tempPool.appendChar(*(*(*prefix).binding).uri.offset(i_0 as isize));
-                    1
-                } == 0
-                {
+                if !m_tempPool.append_char(*(*(*prefix).binding).uri.offset(i_0 as isize)) {
                     return false;
                 }
                 i_0 += 1
@@ -8210,39 +8078,20 @@ unsafe fn getContext<'bump>(
         if !(*e).open {
             continue;
         }
-        if needSep
-            && (if m_tempPool.is_full() && !m_tempPool.grow() {
-                    0
-                } else {
-                    m_tempPool.appendChar(CONTEXT_SEP);
-                    1
-                }) == 0
-        {
+        if needSep && !m_tempPool.append_char(CONTEXT_SEP) {
             return false;
         }
         // TODO: Could the following be replaced by m_tempPool.appendString((*e).name)?
         let mut s_0 = (*e).name;
         while *s_0 != 0 {
-            if if m_tempPool.is_full() && !m_tempPool.grow() {
-                0
-            } else {
-                m_tempPool.appendChar(*s_0);
-                1
-            } == 0
-            {
+            if !m_tempPool.append_char(*s_0) {
                 return false;
             }
             s_0 = s_0.offset(1)
         }
         needSep = true
     }
-    if if m_tempPool.is_full() && !m_tempPool.grow() {
-        0
-    } else {
-        m_tempPool.appendChar('\u{0}' as XML_Char);
-        1
-    } == 0
-    {
+    if !m_tempPool.append_char('\u{0}' as XML_Char) {
         return false;
     }
 
@@ -8255,13 +8104,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         let mut s: *const XML_Char = context;
         while *context != '\u{0}' as XML_Char {
             if *s == CONTEXT_SEP || *s == '\u{0}' as XML_Char {
-                if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                    0
-                } else {
-                    self.m_tempPool.appendChar('\u{0}' as XML_Char);
-                    1
-                } == 0
-                {
+                if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                     return false;
                 }
                 self.m_tempPool.current_slice(|entity_name| {
@@ -8279,13 +8122,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 if self.m_tempPool.is_empty() {
                     prefix = &mut (*dtd).defaultPrefix
                 } else {
-                    if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                        0
-                    } else {
-                        self.m_tempPool.appendChar('\u{0}' as XML_Char);
-                        1
-                    } == 0
-                    {
+                    if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                         return false;
                     }
                     prefix = self.m_tempPool.current_slice(|prefix_name| {
@@ -8315,24 +8152,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 context = s.offset(1);
                 while *context != CONTEXT_SEP && *context != '\u{0}' as XML_Char {
-                    if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                        0
-                    } else {
-                        self.m_tempPool.appendChar(*context);
-                        1
-                    } == 0
-                    {
+                    if !self.m_tempPool.append_char(*context) {
                         return false;
                     }
                     context = context.offset(1)
                 }
-                if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                    0
-                } else {
-                    self.m_tempPool.appendChar('\u{0}' as XML_Char);
-                    1
-                } == 0
-                {
+                if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                     return false;
                 }
                 if addBinding(
@@ -8350,13 +8175,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 s = context
             } else {
-                if if self.m_tempPool.is_full() && !self.m_tempPool.grow() {
-                    0
-                } else {
-                    self.m_tempPool.appendChar(*s);
-                    1
-                } == 0
-                {
+                if !self.m_tempPool.append_char(*s) {
                     return false;
                 }
                 s = s.offset(1)
@@ -8494,13 +8313,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
     /* Copy the attribute id table. */
     {
         /* Remember to allocate the scratch byte before the name. */
-        if if (*newDtd).pool.is_full() && !(*newDtd).pool.grow() {
-            0
-        } else {
-            (*newDtd).pool.appendChar(AttributeType::Unset.into());
-            1
-        } == 0
-        {
+        if !(*newDtd).pool.append_char(AttributeType::Unset.into()) {
             return 0;
         }
         let mut name_0 = match (*newDtd).pool.copyString((*oldA).name.name()) {
@@ -8578,7 +8391,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
     /* Copy the entity tables. */
     if copyEntityTable(
         &mut (*newDtd).generalEntities,
-        &mut (*newDtd).pool,
+        &(*newDtd).pool,
         &(*oldDtd).generalEntities,
     ) == 0
     {
@@ -8586,7 +8399,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
     }
     if copyEntityTable(
         &mut (*newDtd).paramEntities,
-        &mut (*newDtd).pool,
+        &(*newDtd).pool,
         &(*oldDtd).paramEntities,
     ) == 0
     {
@@ -8607,7 +8420,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
 
 unsafe extern "C" fn copyEntityTable(
     mut newTable: &mut HashMap<HashKey, Box<ENTITY>>,
-    mut newPool: &mut StringPool,
+    mut newPool: &StringPool,
     mut oldTable: &HashMap<HashKey, Box<ENTITY>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = NULL as *const XML_Char;
@@ -8839,7 +8652,7 @@ impl STRING_POOL {
 
     unsafe fn appendString(&mut self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
-            if !self.appendChar(*s) {
+            if !self.append_char(*s) {
                 return false;
             }
             s = s.offset(1)
