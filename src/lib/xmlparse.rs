@@ -54,28 +54,8 @@ pub use crate::expat_h::{
     XML_UnparsedEntityDeclHandler, XML_XmlDeclHandler, XML_cp,
 };
 pub use crate::lib::xmlrole::{
-    prolog_state, C2RustUnnamed_0, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
-    PROLOG_STATE, XML_ROLE_ATTLIST_ELEMENT_NAME, XML_ROLE_ATTLIST_NONE,
-    XML_ROLE_ATTRIBUTE_ENUM_VALUE, XML_ROLE_ATTRIBUTE_NAME, XML_ROLE_ATTRIBUTE_NOTATION_VALUE,
-    XML_ROLE_ATTRIBUTE_TYPE_CDATA, XML_ROLE_ATTRIBUTE_TYPE_ENTITIES,
-    XML_ROLE_ATTRIBUTE_TYPE_ENTITY, XML_ROLE_ATTRIBUTE_TYPE_ID, XML_ROLE_ATTRIBUTE_TYPE_IDREF,
-    XML_ROLE_ATTRIBUTE_TYPE_IDREFS, XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN,
-    XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS, XML_ROLE_COMMENT, XML_ROLE_CONTENT_ANY,
-    XML_ROLE_CONTENT_ELEMENT, XML_ROLE_CONTENT_ELEMENT_OPT, XML_ROLE_CONTENT_ELEMENT_PLUS,
-    XML_ROLE_CONTENT_ELEMENT_REP, XML_ROLE_CONTENT_EMPTY, XML_ROLE_CONTENT_PCDATA,
-    XML_ROLE_DEFAULT_ATTRIBUTE_VALUE, XML_ROLE_DOCTYPE_CLOSE, XML_ROLE_DOCTYPE_INTERNAL_SUBSET,
-    XML_ROLE_DOCTYPE_NAME, XML_ROLE_DOCTYPE_NONE, XML_ROLE_DOCTYPE_PUBLIC_ID,
-    XML_ROLE_DOCTYPE_SYSTEM_ID, XML_ROLE_ELEMENT_NAME, XML_ROLE_ELEMENT_NONE,
-    XML_ROLE_ENTITY_COMPLETE, XML_ROLE_ENTITY_NONE, XML_ROLE_ENTITY_NOTATION_NAME,
-    XML_ROLE_ENTITY_PUBLIC_ID, XML_ROLE_ENTITY_SYSTEM_ID, XML_ROLE_ENTITY_VALUE, XML_ROLE_ERROR,
-    XML_ROLE_FIXED_ATTRIBUTE_VALUE, XML_ROLE_GENERAL_ENTITY_NAME, XML_ROLE_GROUP_CHOICE,
-    XML_ROLE_GROUP_CLOSE, XML_ROLE_GROUP_CLOSE_OPT, XML_ROLE_GROUP_CLOSE_PLUS,
-    XML_ROLE_GROUP_CLOSE_REP, XML_ROLE_GROUP_OPEN, XML_ROLE_GROUP_SEQUENCE, XML_ROLE_IGNORE_SECT,
-    XML_ROLE_IMPLIED_ATTRIBUTE_VALUE, XML_ROLE_INNER_PARAM_ENTITY_REF, XML_ROLE_INSTANCE_START,
-    XML_ROLE_NONE, XML_ROLE_NOTATION_NAME, XML_ROLE_NOTATION_NONE, XML_ROLE_NOTATION_NO_SYSTEM_ID,
-    XML_ROLE_NOTATION_PUBLIC_ID, XML_ROLE_NOTATION_SYSTEM_ID, XML_ROLE_PARAM_ENTITY_NAME,
-    XML_ROLE_PARAM_ENTITY_REF, XML_ROLE_PI, XML_ROLE_REQUIRED_ATTRIBUTE_VALUE, XML_ROLE_TEXT_DECL,
-    XML_ROLE_XML_DECL,
+    prolog_state, XmlPrologStateInit, XmlPrologStateInitExternalEntity,
+    PROLOG_STATE, XML_ROLE
 };
 pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
@@ -5639,7 +5619,6 @@ impl<'scf> XML_ParserStruct<'scf> {
         }
         let mut enc = self.encoding(enc_type);
         loop {
-            let mut role: c_int = 0;
             let mut handleDefault = true;
             *eventPP = buf.as_ptr();
             *eventEndPP = next;
@@ -5677,7 +5656,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     // TODO(SJC): is this right??
                                     ExpatBufRef::empty(),
                                     enc,
-                                ) == super::xmlrole::XML_ROLE_ERROR
+                                ) == super::xmlrole::XML_ROLE::ERROR
                             {
                                 return XML_Error::INCOMPLETE_PE;
                             }
@@ -5694,14 +5673,14 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                 }
             } /* always initialize to NULL */
-            role = self
+            let role = self
                 .m_prologState
                 .handler
                 .expect("non-null function pointer")(
                     &mut self.m_prologState, tok, buf.with_end(next), enc
                 );
             match role {
-                1 => {
+                XML_ROLE::XML_DECL => {
                     let mut result: XML_Error = self.processXmlDecl(0, buf.with_end(next));
                     if result != XML_Error::NONE {
                         return result;
@@ -5710,7 +5689,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     handleDefault = false;
                     current_block = 1553878188884632965;
                 }
-                4 => {
+                XML_ROLE::DOCTYPE_NAME => {
                     if self.m_handlers.hasStartDoctypeDecl() {
                         self.m_doctypeName =
                             self.m_tempPool.storeString(enc, buf.with_end(next));
@@ -5724,7 +5703,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_doctypeSysid = NULL as *const XML_Char;
                     current_block = 1553878188884632965;
                 }
-                7 => {
+                XML_ROLE::DOCTYPE_INTERNAL_SUBSET => {
                     let startHandlerRan = self.m_handlers.startDoctypeDecl(
                         self.m_doctypeName,
                         self.m_doctypeSysid,
@@ -5739,7 +5718,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                57 => {
+                XML_ROLE::TEXT_DECL => {
                     let mut result_0: XML_Error = self.processXmlDecl(1, buf.with_end(next));
                     if result_0 != XML_Error::NONE {
                         return result_0;
@@ -5748,7 +5727,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     handleDefault = false;
                     current_block = 1553878188884632965;
                 }
-                6 => {
+                XML_ROLE::DOCTYPE_PUBLIC_ID => {
                     /* XML_DTD */
                     self.m_useForeignDTD = false;
                     self.m_declEntity = hash_insert!(
@@ -5785,10 +5764,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                         current_block = 926243229934402080;
                     }
                 }
-                14 => {
+                XML_ROLE::ENTITY_PUBLIC_ID => {
                     current_block = 926243229934402080;
                 }
-                8 => {
+                XML_ROLE::DOCTYPE_CLOSE => {
                     if allowClosingDoctype != true {
                         /* Must not close doctype from within expanded parameter entities */
                         return XML_Error::INVALID_TOKEN;
@@ -5804,7 +5783,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         handleDefault = false
                     }
                     /* parser->m_doctypeSysid will be non-NULL in the case of a previous
-                    XML_ROLE_DOCTYPE_SYSTEM_ID, even if parser->m_startDoctypeDeclHandler
+                    XML_ROLE::DOCTYPE_SYSTEM_ID, even if parser->m_startDoctypeDeclHandler
                     was not set, indicating an external subset
                      */
                     if !self.m_doctypeSysid.is_null() || self.m_useForeignDTD as c_int != 0 {
@@ -5862,7 +5841,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                2 => {
+                XML_ROLE::INSTANCE_START => {
                     /* if there is no DOCTYPE declaration then now is the
                     last chance to read the foreign DTD
                      */
@@ -5906,14 +5885,14 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_processor = Some(contentProcessor as Processor);
                     return contentProcessor(self, buf, nextPtr);
                 }
-                34 => {
+                XML_ROLE::ATTLIST_ELEMENT_NAME => {
                     self.m_declElementType = self.getElementType(enc_type, buf.with_end(next));
                     if self.m_declElementType.is_null() {
                         return XML_Error::NO_MEMORY;
                     }
                     current_block = 6455255476181645667;
                 }
-                22 => {
+                XML_ROLE::ATTRIBUTE_NAME => {
                     self.m_declAttributeId = self.getAttributeId(enc_type, buf.with_end(next));
                     if self.m_declAttributeId.is_null() {
                         return XML_Error::NO_MEMORY;
@@ -5923,47 +5902,47 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declAttributeIsId = false;
                     current_block = 6455255476181645667;
                 }
-                23 => {
+                XML_ROLE::ATTRIBUTE_TYPE_CDATA => {
                     self.m_declAttributeIsCdata = true;
                     self.m_declAttributeType = atypeCDATA.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                24 => {
+                XML_ROLE::ATTRIBUTE_TYPE_ID => {
                     self.m_declAttributeIsId = true;
                     self.m_declAttributeType = atypeID.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                25 => {
+                XML_ROLE::ATTRIBUTE_TYPE_IDREF => {
                     self.m_declAttributeType = atypeIDREF.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                26 => {
+                XML_ROLE::ATTRIBUTE_TYPE_IDREFS => {
                     self.m_declAttributeType = atypeIDREFS.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                27 => {
+                XML_ROLE::ATTRIBUTE_TYPE_ENTITY => {
                     self.m_declAttributeType = atypeENTITY.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                28 => {
+                XML_ROLE::ATTRIBUTE_TYPE_ENTITIES => {
                     self.m_declAttributeType = atypeENTITIES.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                29 => {
+                XML_ROLE::ATTRIBUTE_TYPE_NMTOKEN => {
                     self.m_declAttributeType = atypeNMTOKEN.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                30 => {
+                XML_ROLE::ATTRIBUTE_TYPE_NMTOKENS => {
                     self.m_declAttributeType = atypeNMTOKENS.as_ptr();
                     current_block = 6455255476181645667;
                 }
-                31 | 32 => {
+                XML_ROLE::ATTRIBUTE_ENUM_VALUE | XML_ROLE::ATTRIBUTE_NOTATION_VALUE => {
                     if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
                         let mut prefix: *const XML_Char = 0 as *const XML_Char;
                         if !self.m_declAttributeType.is_null() {
                             prefix = enumValueSep.as_ptr()
                         } else {
-                            prefix = if role == super::xmlrole::XML_ROLE_ATTRIBUTE_NOTATION_VALUE {
+                            prefix = if role == super::xmlrole::XML_ROLE::ATTRIBUTE_NOTATION_VALUE {
                                 notationPrefix.as_ptr()
                             } else {
                                 enumValueStart.as_ptr()
@@ -5980,7 +5959,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                35 | 36 => {
+                XML_ROLE::IMPLIED_ATTRIBUTE_VALUE | XML_ROLE::REQUIRED_ATTRIBUTE_VALUE => {
                     if (*dtd).keepProcessing {
                         if defineAttribute(
                             self.m_declElementType,
@@ -6034,7 +6013,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 (*self.m_declAttributeId).name.name(),
                                 self.m_declAttributeType,
                                 0 as *const XML_Char,
-                                (role == super::xmlrole::XML_ROLE_REQUIRED_ATTRIBUTE_VALUE) as c_int,
+                                (role == super::xmlrole::XML_ROLE::REQUIRED_ATTRIBUTE_VALUE) as c_int,
                             );
                             self.m_tempPool.clear();
                             handleDefault = false
@@ -6042,7 +6021,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                37 | 38 => {
+                XML_ROLE::DEFAULT_ATTRIBUTE_VALUE | XML_ROLE::FIXED_ATTRIBUTE_VALUE => {
                     if (*dtd).keepProcessing {
                         let mut attVal: *const XML_Char = 0 as *const XML_Char;
                         let mut result_1: XML_Error = storeAttributeValue(
@@ -6113,7 +6092,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 (*self.m_declAttributeId).name.name(),
                                 self.m_declAttributeType,
                                 attVal,
-                                (role == super::xmlrole::XML_ROLE_FIXED_ATTRIBUTE_VALUE) as c_int,
+                                (role == super::xmlrole::XML_ROLE::FIXED_ATTRIBUTE_VALUE) as c_int,
                             );
                             self.m_tempPool.clear();
                             handleDefault = false
@@ -6121,7 +6100,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                12 => {
+                XML_ROLE::ENTITY_VALUE => {
                     if (*dtd).keepProcessing {
                         let mut result_2: XML_Error = storeEntityValue(
                             self,
@@ -6162,7 +6141,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                5 => {
+                XML_ROLE::DOCTYPE_SYSTEM_ID => {
                     self.m_useForeignDTD = false;
                     /* XML_DTD */
                     (*dtd).hasParamEntityRefs = true;
@@ -6205,10 +6184,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 15307276507984219638;
                 }
-                13 => {
+                XML_ROLE::ENTITY_SYSTEM_ID => {
                     current_block = 15307276507984219638;
                 }
-                15 => {
+                XML_ROLE::ENTITY_COMPLETE => {
                     if (*dtd).keepProcessing as c_int != 0
                         && !self.m_declEntity.is_null()
                         && self.m_handlers.hasEntityDecl()
@@ -6228,7 +6207,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                16 => {
+                XML_ROLE::ENTITY_NOTATION_NAME => {
                     if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
                         (*self.m_declEntity).notation =
                             (*dtd).pool.storeString(enc, buf.with_end(next));
@@ -6263,7 +6242,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                9 => {
+                XML_ROLE::GENERAL_ENTITY_NAME => {
                     if (*enc).predefinedEntityName(buf.with_end(next)) != 0 {
                         self.m_declEntity = NULL as *mut ENTITY
                     } else if (*dtd).keepProcessing {
@@ -6304,7 +6283,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                10 => {
+                XML_ROLE::PARAM_ENTITY_NAME => {
                     if (*dtd).keepProcessing {
                         let mut name_0: *const XML_Char =
                             (*dtd).pool.storeString(enc, buf.with_end(next));
@@ -6342,7 +6321,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                18 => {
+                XML_ROLE::NOTATION_NAME => {
                     self.m_declNotationPublicId = NULL as *const XML_Char;
                     self.m_declNotationName = NULL as *const XML_Char;
                     if self.m_handlers.hasNotationDecl() {
@@ -6356,7 +6335,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                21 => {
+                XML_ROLE::NOTATION_PUBLIC_ID => {
                     if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
                         return XML_Error::PUBLICID;
                     }
@@ -6379,7 +6358,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                19 => {
+                XML_ROLE::NOTATION_SYSTEM_ID => {
                     if !self.m_declNotationName.is_null()
                         && self.m_handlers.hasNotationDecl()
                     {
@@ -6405,7 +6384,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_tempPool.clear();
                     current_block = 1553878188884632965;
                 }
-                20 => {
+                XML_ROLE::NOTATION_NO_SYSTEM_ID => {
                     if !self.m_declNotationPublicId.is_null()
                         && self.m_handlers.hasNotationDecl()
                     {
@@ -6421,7 +6400,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_tempPool.clear();
                     current_block = 1553878188884632965;
                 }
-                -1 => {
+                XML_ROLE::ERROR => {
                     match tok {
                         super::xmltok::XML_TOK::PARAM_ENTITY_REF => {
                             /* PE references in internal subset are
@@ -6432,7 +6411,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         _ => return XML_Error::SYNTAX,
                     }
                 }
-                58 => {
+                XML_ROLE::IGNORE_SECT => {
                     let mut result_3: XML_Error = XML_Error::NONE;
                     if self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
@@ -6451,7 +6430,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     next = ignore_buf.unwrap().as_ptr();
                     current_block = 1553878188884632965;
                 }
-                44 => {
+                XML_ROLE::GROUP_OPEN => {
                     /* XML_DTD */
                     if self.m_prologState.level >= self.m_groupSize {
                         if self.m_groupSize != 0 {
@@ -6493,7 +6472,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                50 => {
+                XML_ROLE::GROUP_SEQUENCE => {
                     if *self
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize)
@@ -6509,7 +6488,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                49 => {
+                XML_ROLE::GROUP_CHOICE => {
                     if *self
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize)
@@ -6538,7 +6517,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         .offset(self.m_prologState.level as isize) = ASCII_PIPE;
                     current_block = 1553878188884632965;
                 }
-                60 | 59 => {
+                XML_ROLE::PARAM_ENTITY_REF | XML_ROLE::INNER_PARAM_ENTITY_REF => {
                     (*dtd).hasParamEntityRefs = true;
                     if self.m_paramEntityParsing as u64 == 0 {
                         (*dtd).keepProcessing = (*dtd).standalone;
@@ -6601,7 +6580,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         } else if entity_1.is_null() {
                             (*dtd).keepProcessing = (*dtd).standalone;
                             /* cannot report skipped entities in declarations */
-                            if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF
+                            if role == super::xmlrole::XML_ROLE::PARAM_ENTITY_REF
                                 && self.m_handlers.hasSkippedEntity()
                             {
                                 self.m_handlers.skippedEntity(name_1, 1);
@@ -6620,7 +6599,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 if !(*entity_1).textPtr.is_null() {
                                     let mut result_4: XML_Error = XML_Error::NONE;
                                     let mut betweenDecl =
-                                        if role == super::xmlrole::XML_ROLE_PARAM_ENTITY_REF {
+                                        if role == super::xmlrole::XML_ROLE::PARAM_ENTITY_REF {
                                             true
                                         } else {
                                             false
@@ -6675,7 +6654,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
                     }
                 }
-                40 => {
+                XML_ROLE::ELEMENT_NAME => {
                     /* Element declaration stuff */
                     if self.m_handlers.hasElementDecl() {
                         self.m_declElementType = self.getElementType(enc_type, buf.with_end(next));
@@ -6691,7 +6670,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                41 | 42 => {
+                XML_ROLE::CONTENT_ANY | XML_ROLE::CONTENT_EMPTY => {
                     if (*dtd).in_eldecl {
                         if self.m_handlers.hasElementDecl() {
                             let mut content: *mut XML_Content = MALLOC!(@XML_Content);
@@ -6702,7 +6681,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*content).name = NULL as *mut XML_Char;
                             (*content).numchildren = 0;
                             (*content).children = NULL as *mut XML_Content;
-                            (*content).type_0 = if role == super::xmlrole::XML_ROLE_CONTENT_ANY {
+                            (*content).type_0 = if role == super::xmlrole::XML_ROLE::CONTENT_ANY {
                                 XML_Content_Type::ANY
                             } else {
                                 XML_Content_Type::EMPTY
@@ -6715,7 +6694,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                43 => {
+                XML_ROLE::CONTENT_PCDATA => {
                     if (*dtd).in_eldecl {
                         let mut scf = (*dtd).scaffold.borrow_mut();
                         let idx = scf.index.last().copied().unwrap();
@@ -6726,39 +6705,39 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                51 => {
+                XML_ROLE::CONTENT_ELEMENT => {
                     quant = XML_Content_Quant::NONE;
                     current_block = 4542134034984465527;
                 }
-                53 => {
+                XML_ROLE::CONTENT_ELEMENT_OPT => {
                     quant = XML_Content_Quant::OPT;
                     current_block = 4542134034984465527;
                 }
-                52 => {
+                XML_ROLE::CONTENT_ELEMENT_REP => {
                     quant = XML_Content_Quant::REP;
                     current_block = 4542134034984465527;
                 }
-                54 => {
+                XML_ROLE::CONTENT_ELEMENT_PLUS => {
                     quant = XML_Content_Quant::PLUS;
                     current_block = 4542134034984465527;
                 }
-                45 => {
+                XML_ROLE::GROUP_CLOSE => {
                     quant = XML_Content_Quant::NONE;
                     current_block = 7739131043814808354;
                 }
-                47 => {
+                XML_ROLE::GROUP_CLOSE_OPT => {
                     quant = XML_Content_Quant::OPT;
                     current_block = 7739131043814808354;
                 }
-                46 => {
+                XML_ROLE::GROUP_CLOSE_REP => {
                     quant = XML_Content_Quant::REP;
                     current_block = 7739131043814808354;
                 }
-                48 => {
+                XML_ROLE::GROUP_CLOSE_PLUS => {
                     quant = XML_Content_Quant::PLUS;
                     current_block = 7739131043814808354;
                 }
-                55 => {
+                XML_ROLE::PI => {
                     /* End element declaration stuff */
                     if reportProcessingInstruction(self, enc_type, buf.with_end(next)) == 0 {
                         return XML_Error::NO_MEMORY;
@@ -6766,53 +6745,53 @@ impl<'scf> XML_ParserStruct<'scf> {
                     handleDefault = false;
                     current_block = 1553878188884632965;
                 }
-                56 => {
+                XML_ROLE::COMMENT => {
                     if reportComment(self, enc_type, buf.with_end(next)) == 0 {
                         return XML_Error::NO_MEMORY;
                     }
                     handleDefault = false;
                     current_block = 1553878188884632965;
                 }
-                0 => {
+                XML_ROLE::NONE => {
                     match tok {
                         super::xmltok::XML_TOK::BOM => handleDefault = false,
                         _ => {}
                     }
                     current_block = 1553878188884632965;
                 }
-                3 => {
+                XML_ROLE::DOCTYPE_NONE => {
                     if self.m_handlers.hasStartDoctypeDecl() {
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
-                11 => {
+                XML_ROLE::ENTITY_NONE => {
                     if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasEntityDecl() {
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
-                17 => {
+                XML_ROLE::NOTATION_NONE => {
                     if self.m_handlers.hasNotationDecl() {
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
-                33 => {
+                XML_ROLE::ATTLIST_NONE => {
                     if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
-                39 => {
+                XML_ROLE::ELEMENT_NONE => {
                     if self.m_handlers.hasElementDecl() {
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
-                _ => {
-                    current_block = 1553878188884632965;
-                }
+                // _ => {
+                //     current_block = 1553878188884632965;
+                // }
             }
             match current_block {
                 926243229934402080 =>
@@ -6841,10 +6820,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                         (*self.m_declEntity).base = self.m_curBase;
                         (*dtd).pool.start = (*dtd).pool.ptr;
                         /* Don't suppress the default handler if we fell through from
-                         * the XML_ROLE_DOCTYPE_SYSTEM_ID case.
+                         * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
                          */
                         if self.m_handlers.hasEntityDecl()
-                            && role == super::xmlrole::XML_ROLE_ENTITY_SYSTEM_ID
+                            && role == super::xmlrole::XML_ROLE::ENTITY_SYSTEM_ID
                         {
                             handleDefault = false
                         }
@@ -6942,10 +6921,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                         (*self.m_declEntity).publicId = tem;
                         (*dtd).pool.start = (*dtd).pool.ptr;
                         /* Don't suppress the default handler if we fell through from
-                         * the XML_ROLE_DOCTYPE_PUBLIC_ID case.
+                         * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
                          */
                         if self.m_handlers.hasEntityDecl()
-                            && role == super::xmlrole::XML_ROLE_ENTITY_PUBLIC_ID
+                            && role == super::xmlrole::XML_ROLE::ENTITY_PUBLIC_ID
                         {
                             handleDefault = false
                         }
