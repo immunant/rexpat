@@ -2115,11 +2115,11 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
         return XML_Status::ERROR;
     }
     if !p.is_null() {
-        let new_p = match (*(*parser).m_dtd).pool.copyString(p) {
+        let p = match (*(*parser).m_dtd).pool.copyString(p) {
             Some(p) => p,
             None => return XML_Status::ERROR,
         };
-        (*parser).m_curBase = new_p.as_ptr()
+        (*parser).m_curBase = p.as_ptr()
     } else {
         (*parser).m_curBase = NULL as *const XML_Char
     }
