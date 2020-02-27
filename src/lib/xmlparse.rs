@@ -1458,7 +1458,7 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    fn new(use_namespaces: bool) -> Result<Self, ()> {
+    fn try_new(use_namespaces: bool) -> Result<Self, ()> {
         Ok(Self {
             m_userData: ptr::null_mut(),
             m_buffer: ptr::null_mut(),
@@ -1550,7 +1550,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         mut dtd: *mut DTD,
     ) -> XML_Parser {
         let use_namespaces = !nameSep.is_null();
-        let mut parser = match XML_ParserStruct::new(use_namespaces) {
+        let mut parser = match XML_ParserStruct::try_new(use_namespaces) {
             Ok(parser) => parser,
             Err(()) => return ptr::null_mut(),
         };
@@ -1560,7 +1560,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             Err(_) => return ptr::null_mut(),
         };
 
-        // TODO: Move initialization into XML_ParserStruct::new
+        // TODO: Move initialization into XML_ParserStruct::try_new
         parser.m_buffer = NULL as *mut c_char;
         parser.m_bufferLim = NULL as *const c_char;
         if parser.m_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
@@ -3718,10 +3718,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     (*entity).open = true;
                                     // Avoiding borrowing issues by separating out
                                     // the fields here:
-                                    let dtd = &mut *self.m_dtd;
-                                    let pool = &mut self.m_tempPool;
-                                    let sep = self.m_namespaceSeparator;
-                                    let context = getContext(dtd, pool, sep);
+                                    let context = self.getContext();
                                     (*entity).open = false;
                                     if !context {
                                         return XML_Error::NO_MEMORY;
@@ -4304,14 +4301,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                 self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.consume_current_vec().as_ptr()));
             } else {
                 /* the value did not need normalizing */
-                let fresh10 = self.m_tempPool.storeString(
-                    enc,
-                    ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)
-                );
-                if fresh10.is_none() {
-                    return XML_Error::NO_MEMORY;
-                }
-                self.m_atts.push(Attribute::new((*attId).name.name(), fresh10.unwrap().as_ptr()));
+                let fresh10 = match self.m_tempPool.storeString(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
+                    Some(string) => string,
+                    None => return XML_Error::NO_MEMORY,
+                };
+                self.m_atts.push(Attribute::new((*attId).name.name(), fresh10.as_ptr()));
                 self.m_tempPool.finish_current() // REVIEW: Maybe superflous? storeString should end
             }
             /* handle prefixed attribute names */
@@ -5287,8 +5281,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                 }
                 result = self.m_handlers.handleUnknownEncoding(storedEncName.as_ref().unwrap().as_ptr(), self.m_ns, &mut self.m_encoding);
-                // drop(storedEncName);
-                // drop(storedversion);
                 self.m_temp2Pool.clear();
                 if result == XML_Error::UNKNOWN_ENCODING {
                     self.m_eventPtr = encodingName
@@ -5297,8 +5289,6 @@ impl<'scf> XML_ParserStruct<'scf> {
             }
         }
         if !storedEncName.is_none() || !storedversion.is_none() {
-            drop(storedEncName);
-            drop(storedversion);
             self.m_temp2Pool.clear();
         }
         XML_Error::NONE
@@ -5742,13 +5732,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let mut pubId = match pubIdBuf.as_mut() {
+                        let mut pubId = match pubIdBuf {
                             Some(id) => id,
                             None => return XML_Error::NO_MEMORY,
                         };
                         normalizePublicId(pubId.as_mut_ptr());
                         self.m_doctypePubid = pubId.as_ptr(); // Swapped v
-                        drop(pubIdBuf);
                         self.m_tempPool.finish_current(); //     Swapped ^
                         handleDefault = false;
                         current_block = 9007411418488376351;
@@ -6099,15 +6088,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        self.m_doctypeSysid = match sysId.as_ref() {
+                        self.m_doctypeSysid = match sysId {
                             Some(id) => id.as_ptr(),
                             None => ptr::null(),
                         };
                         if self.m_doctypeSysid.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-
-                        drop(sysId);
 
                         self.m_tempPool.finish_current();
                         handleDefault = false
@@ -7441,7 +7428,7 @@ unsafe extern "C" fn storeEntityValue(
 ) -> XML_Error {
     let mut current_block: u64; /* save one level of indirection */
     let dtd: *mut DTD = (*parser).m_dtd;
-    let mut pool: *mut StringPool = &mut (*dtd).entityValuePool;
+    let pool = &(*dtd).entityValuePool;
     let mut result: XML_Error = XML_Error::NONE;
     let mut oldInEntityValue: c_int = (*parser).m_prologState.inEntityValue;
     let enc = (*parser).encoding(enc_type);
@@ -7450,11 +7437,9 @@ unsafe extern "C" fn storeEntityValue(
     /* never return Null for the value argument in EntityDeclHandler,
     since this would indicate an external entity; therefore we
     have to make sure that entityValuePool.start is not null */
-    // if (*pool).blocks.is_null() {
-    if !(*pool).grow() {
+    if pool.is_empty() && !pool.grow() {
         return XML_Error::NO_MEMORY;
     }
-    // }
     's_41: loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok = (*enc).xmlLiteralTok(
@@ -7549,7 +7534,7 @@ unsafe extern "C" fn storeEntityValue(
                 break;
             }
             super::xmltok::XML_TOK::ENTITY_REF | super::xmltok::XML_TOK::DATA_CHARS => {
-                if !(*pool).append(enc, entityTextBuf.with_end(next)) {
+                if !pool.append(enc, entityTextBuf.with_end(next)) {
                     result = XML_Error::NO_MEMORY;
                     break;
                 } else {
@@ -7586,7 +7571,7 @@ unsafe extern "C" fn storeEntityValue(
                      */
                     i = 0;
                     while i < n {
-                        if !(*pool).append_char(out_buf[i as usize]) {
+                        if !pool.append_char(out_buf[i as usize]) {
                             result = XML_Error::NO_MEMORY;
                             break 's_41;
                         } else {
@@ -7629,7 +7614,7 @@ unsafe extern "C" fn storeEntityValue(
             13862322071133341448 =>
             /* fall through */
             {
-                if !(*pool).append_char(0xa) {
+                if !pool.append_char(0xa) {
                     result = XML_Error::NO_MEMORY;
                     break;
                 }
@@ -7986,116 +7971,111 @@ impl<'scf> XML_ParserStruct<'scf> {
 
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
-/// This was a method on XML_ParserStruct, however we turned it back into a free fn
-/// to avoid borrowing the entirety of the parser when returning so that the data
-/// can be passed back to a handler
-// self.m_dtd, self.m_tempPool,
-unsafe fn getContext<'bump>(
-    dtd: &mut DTD,
-    m_tempPool: &'bump mut StringPool,
-    m_namespaceSeparator: XML_Char,
-) -> bool {
-    let mut needSep = false;
-    if !dtd.defaultPrefix.binding.is_null() {
-        let mut i: c_int = 0;
-        let mut len: c_int = 0;
-        if !m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
-            return false;
-        }
-        len = (*dtd.defaultPrefix.binding).uriLen;
-        if m_namespaceSeparator != 0 {
-            len -= 1
-        }
-        i = 0;
-        while i < len {
-            if !m_tempPool.append_char(*(*dtd.defaultPrefix.binding).uri.offset(i as isize)) {
-                /* Because of memory caching, I don't believe this line can be
-                    * executed.
-                    *
-                    * This is part of a loop copying the default prefix binding
-                    * URI into the parser's temporary string pool.  Previously,
-                    * that URI was copied into the same string pool, with a
-                    * terminating NUL character, as part of setContext().  When
-                    * the pool was cleared, that leaves a block definitely big
-                    * enough to hold the URI on the free block list of the pool.
-                    * The URI copy in getContext() therefore cannot run out of
-                    * memory.
-                    *
-                    * If the pool is used between the setContext() and
-                    * getContext() calls, the worst it can do is leave a bigger
-                    * block on the front of the free list.  Given that this is
-                    * all somewhat inobvious and program logic can be changed, we
-                    * don't delete the line but we do exclude it from the test
-                    * coverage statistics.
-                    */
-                return false;
-                /* LCOV_EXCL_LINE */
-            }
-            i += 1
-        }
-        needSep = true
-    }
-    for prefix in dtd.prefixes.values_mut()
-    /* This test appears to be (justifiable) paranoia.  There does
-        * not seem to be a way of injecting a prefix without a binding
-        * that doesn't get errored long before this function is called.
-        * The test should remain for safety's sake, so we instead
-        * exclude the following line from the coverage statistics.
-        */
-    {
-        let mut i_0: c_int = 0; /* save one level of indirection */
-        let mut len_0: c_int = 0;
-        let mut s: *const XML_Char = 0 as *const XML_Char;
-        if !(*prefix).binding.is_null() {
-            if needSep && !m_tempPool.append_char(CONTEXT_SEP) {
+impl<'scf> XML_ParserStruct<'scf> {
+    unsafe fn getContext(&mut self) -> bool {
+        let dtd: *mut DTD = self.m_dtd;
+        let mut needSep = false;
+        if !(*dtd).defaultPrefix.binding.is_null() {
+            let mut i: c_int = 0;
+            let mut len: c_int = 0;
+            if !self.m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
                 return false;
             }
-            s = (*prefix).name;
-            while *s != 0 {
-                if !m_tempPool.append_char(*s) {
+            len = (*(*dtd).defaultPrefix.binding).uriLen;
+            if self.m_namespaceSeparator != 0 {
+                len -= 1
+            }
+            i = 0;
+            while i < len {
+                if !self.m_tempPool.append_char(*(*(*dtd).defaultPrefix.binding).uri.offset(i as isize)) {
+                    /* Because of memory caching, I don't believe this line can be
+                     * executed.
+                     *
+                     * This is part of a loop copying the default prefix binding
+                     * URI into the parser's temporary string pool.  Previously,
+                     * that URI was copied into the same string pool, with a
+                     * terminating NUL character, as part of setContext().  When
+                     * the pool was cleared, that leaves a block definitely big
+                     * enough to hold the URI on the free block list of the pool.
+                     * The URI copy in getContext() therefore cannot run out of
+                     * memory.
+                     *
+                     * If the pool is used between the setContext() and
+                     * getContext() calls, the worst it can do is leave a bigger
+                     * block on the front of the free list.  Given that this is
+                     * all somewhat inobvious and program logic can be changed, we
+                     * don't delete the line but we do exclude it from the test
+                     * coverage statistics.
+                     */
                     return false;
+                    /* LCOV_EXCL_LINE */
                 }
-                s = s.offset(1)
-            }
-            if !m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
-                return false;
-            }
-            len_0 = (*(*prefix).binding).uriLen;
-            if m_namespaceSeparator != 0 {
-                len_0 -= 1
-            }
-            i_0 = 0;
-            while i_0 < len_0 {
-                if !m_tempPool.append_char(*(*(*prefix).binding).uri.offset(i_0 as isize)) {
-                    return false;
-                }
-                i_0 += 1
+                i += 1
             }
             needSep = true
         }
-    }
-    for e in dtd.generalEntities.values() {
-        if !(*e).open {
-            continue;
+        for prefix in (*dtd).prefixes.values_mut()
+        /* This test appears to be (justifiable) paranoia.  There does
+            * not seem to be a way of injecting a prefix without a binding
+            * that doesn't get errored long before this function is called.
+            * The test should remain for safety's sake, so we instead
+            * exclude the following line from the coverage statistics.
+            */
+        {
+            let mut i_0: c_int = 0; /* save one level of indirection */
+            let mut len_0: c_int = 0;
+            let mut s: *const XML_Char = 0 as *const XML_Char;
+            if !(*prefix).binding.is_null() {
+                if needSep && !self.m_tempPool.append_char(CONTEXT_SEP) {
+                    return false;
+                }
+                s = (*prefix).name;
+                while *s != 0 {
+                    if !self.m_tempPool.append_char(*s) {
+                        return false;
+                    }
+                    s = s.offset(1)
+                }
+                if !self.m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
+                    return false;
+                }
+                len_0 = (*(*prefix).binding).uriLen;
+                if self.m_namespaceSeparator != 0 {
+                    len_0 -= 1
+                }
+                i_0 = 0;
+                while i_0 < len_0 {
+                    if !self.m_tempPool.append_char(*(*(*prefix).binding).uri.offset(i_0 as isize)) {
+                        return false;
+                    }
+                    i_0 += 1
+                }
+                needSep = true
+            }
         }
-        if needSep && !m_tempPool.append_char(CONTEXT_SEP) {
-            return false;
-        }
-        // TODO: Could the following be replaced by m_tempPool.appendString((*e).name)?
-        let mut s_0 = (*e).name;
-        while *s_0 != 0 {
-            if !m_tempPool.append_char(*s_0) {
+        for e in (*dtd).generalEntities.values() {
+            if !(*e).open {
+                continue;
+            }
+            if needSep && !self.m_tempPool.append_char(CONTEXT_SEP) {
                 return false;
             }
-            s_0 = s_0.offset(1)
+            // TODO: Could the following be replaced by m_tempPool.appendString((*e).name)?
+            let mut s_0 = (*e).name;
+            while *s_0 != 0 {
+                if !self.m_tempPool.append_char(*s_0) {
+                    return false;
+                }
+                s_0 = s_0.offset(1)
+            }
+            needSep = true
         }
-        needSep = true
-    }
-    if !m_tempPool.append_char('\u{0}' as XML_Char) {
-        return false;
-    }
+        if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
+            return false;
+        }
 
-    true
+        true
+    }
 }
 
 impl<'scf> XML_ParserStruct<'scf> {

@@ -216,11 +216,9 @@ impl StringPool {
         if !self.append(enc, buf) {
             return None;
         }
-        if self.is_full() && !self.grow() {
+        if !self.append_char('\0' as XML_Char) {
             return None;
         }
-
-        self.append_char('\0' as XML_Char);
 
         Some(self.consume_current_vec())
     }
@@ -342,22 +340,6 @@ impl StringPool {
         mut s: *const XML_Char,
         mut n: c_int,
     ) -> Option<&[XML_Char]> {
-        // REVIEW: Is this correct:
-        // if self.ptr.is_null() && !self.grow() {
-        if self.is_empty() && !self.grow() {
-            /* The following line is unreachable given the current usage of
-            * poolCopyStringN().  Currently it is called from exactly one
-            * place to copy the text of a simple general entity.  By that
-            * point, the name of the entity is already stored in the pool, so
-            * pool->ptr cannot be NULL.
-            *
-            * If poolCopyStringN() is used elsewhere as it well might be,
-            * this line may well become executable again.  Regardless, this
-            * sort of check shouldn't be removed lightly, so we just exclude
-            * it from the coverage statistics.
-            */
-            return None;
-        }
         while n > 0 {
             if !self.append_char(*s) {
                 return None;
@@ -373,9 +355,9 @@ impl StringPool {
     /// it's possible to allocate or not
     pub(crate) fn grow(&self) -> bool {
         self.inner().rent(|buf| {
-            let mut blockSize_0 = buf.borrow().capacity();
-            let mut bytesToAllocate_0: size_t = 0;
-            // if blockSize_0 < 0 {
+            let mut blockSize = buf.borrow().capacity();
+            let mut bytesToAllocate: size_t = 0;
+            // if blockSize < 0 {
             //     /* This condition traps a situation where either more than
             //      * INT_MAX bytes have already been allocated (which is prevented
             //      * by various pieces of program logic, not least this one, never
@@ -388,22 +370,22 @@ impl StringPool {
             //     return false;
             //     /* LCOV_EXCL_LINE */
             // }
-            blockSize_0 = if blockSize_0 < INIT_BLOCK_SIZE {
+            blockSize = if blockSize < INIT_BLOCK_SIZE {
                 INIT_BLOCK_SIZE
             } else {
                 /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-                match blockSize_0.checked_mul(2) {
+                match blockSize.checked_mul(2) {
                     Some(size) => size,
                     None => return false,
                 }
             };
-            bytesToAllocate_0 = poolBytesToAllocateFor(blockSize_0.try_into().unwrap());
+            bytesToAllocate = poolBytesToAllocateFor(blockSize.try_into().unwrap());
 
-            if bytesToAllocate_0 == 0 {
+            if bytesToAllocate == 0 {
                 return false;
             }
 
-            if buf.borrow_mut().try_reserve_exact(bytesToAllocate_0 as usize).is_err() {
+            if buf.borrow_mut().try_reserve_exact(bytesToAllocate as usize).is_err() {
                 return false;
             };
 
