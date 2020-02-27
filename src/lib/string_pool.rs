@@ -195,9 +195,7 @@ impl StringPool {
 
     /// Resets the current Bump and deallocates its contents.
     pub(crate) fn clear(&mut self) {
-        let mut inner_pool = None;
-
-        swap(&mut self.0, &mut inner_pool);
+        let inner_pool = self.0.take();
 
         let mut bump = inner_pool.unwrap().into_head();
 
