@@ -35,7 +35,7 @@ impl<T> Clone for Rc<T> {
     fn clone(&self) -> Self {
         let inner = unsafe { self.inner.as_ref() };
         let old_rc = inner.rc.get();
-        assert!(old_rc > 0);
+        assert!(old_rc > 0 && old_rc < usize::max_value());
         inner.rc.set(old_rc + 1);
         Rc {
             inner: self.inner,
