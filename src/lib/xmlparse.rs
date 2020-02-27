@@ -62,9 +62,8 @@ pub use crate::lib::xmltok::{
 };
 pub use crate::lib::xmltok::*;
 pub use crate::stddef_h::{NULL};
-use crate::stdlib::{memcmp, memmove, memset};
 pub use ::libc::INT_MAX;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
 
 use fallible_collections::FallibleBox;
@@ -1637,7 +1636,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         memset(
             &mut self.m_position as *mut super::xmltok::POSITION as *mut c_void,
             0,
-            ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
+            ::std::mem::size_of::<super::xmltok::POSITION>(),
         );
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = NULL as *const c_char;
@@ -2759,8 +2758,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                             as *const c_void,
                         (self
                             .m_bufferEnd
-                            .wrapping_offset_from(self.m_bufferPtr) as c_long
-                            + keep as c_long) as c_ulong,
+                            .wrapping_offset_from(self.m_bufferPtr)
+                            + keep as isize).try_into().unwrap(),
                     );
                     self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
                     self.m_bufferPtr = self.m_bufferPtr.offset(-offset);
@@ -3896,7 +3895,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             || memcmp(
                                 tag.rawName as *const c_void,
                                 rawName_0.as_ptr() as *const c_void,
-                                len as c_ulong,
+                                len as usize,
                             ) != 0
                         {
                             #[cfg(feature = "mozilla")]
