@@ -328,11 +328,10 @@ impl StringPool {
             if !self.append_char(*s) {
                 return None;
             }
-            let fresh78 = s;
-            s = s.offset(1);
-            if *fresh78 == 0 {
+            if *s == 0 {
                 break;
             }
+            s = s.offset(1);
         }
 
         Some(self.consume_current_vec())
