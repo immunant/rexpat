@@ -3842,19 +3842,20 @@ impl<'scf> XML_ParserStruct<'scf> {
                         uriLen: 0,
                         prefixLen: 0,
                     };
-                    name_0.str_0 = self.m_tempPool.storeString(
+                    let str_0 = self.m_tempPool.storeString(
                         enc,
                         rawName.with_len((*enc).nameLength(rawName.as_ptr()) as usize),
-                    ).map(|s| s.as_mut_ptr()).unwrap_or(ptr::null_mut());
-                    if name_0.str_0.is_null() {
-                        return XML_Error::NO_MEMORY;
-                    }
+                    );
+                    name_0.str_0 = match str_0 {
+                        Some(s) => s.as_ptr(),
+                        None => return XML_Error::NO_MEMORY,
+                    };
                     result_1 = self.storeAtts(enc_type, buf, &mut name_0, &mut bindings);
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
                         return result_1;
                     }
-                    self.m_tempPool.finish_string();;
+                    self.m_tempPool.finish_string();
                     let handlers = &self.m_handlers;
                     let started = handlers.startElement(name_0.str_0, &mut self.m_atts);
                     if started {
@@ -6199,7 +6200,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
-                            (*dtd).pool.finish_string();;
+                            (*dtd).pool.finish_string();
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
                             (*self.m_declEntity).is_param = false;
                             /* if we have a parent parser or are reading an internal parameter
@@ -6214,7 +6215,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                         }
                     } else {
-                        (*dtd).pool.finish_string();;
+                        (*dtd).pool.finish_string();
                         self.m_declEntity = NULL as *mut ENTITY
                     }
                     current_block = 1553878188884632965;
@@ -6237,7 +6238,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
-                            (*dtd).pool.finish_string();;
+                            (*dtd).pool.finish_string();
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
                             (*self.m_declEntity).is_param = true;
                             /* if we have a parent parser or are reading an internal parameter
@@ -6843,7 +6844,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             match current_block {
                 9007411418488376351 => {
                     if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        let mut tem = (*dtd).pool.storeString(
+                        let tem = (*dtd).pool.storeString(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
@@ -7281,7 +7282,7 @@ unsafe extern "C" fn appendAttributeValue(
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
                     */
-                    if pool as *mut _ as *mut c_void == &mut (*dtd).pool as *mut _ as *mut c_void {
+                    if ptr::eq(pool, &mut (*dtd).pool) {
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
                             && (if (*dtd).standalone {
@@ -7892,7 +7893,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         if (*id).name.name() != name.as_mut_ptr() as *mut XML_Char {
             (*dtd).pool.clear_current()
         } else {
-            (*dtd).pool.finish_string();;
+            (*dtd).pool.finish_string();
             if self.m_ns {
                 if name[0] == ASCII_x as XML_Char
                 && name[1] == ASCII_m as XML_Char
@@ -8882,7 +8883,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         if (*ret).name != name.as_ptr() {
             (*dtd).pool.clear_current();
         } else {
-            (*dtd).pool.finish_string();;
+            (*dtd).pool.finish_string();
             if self.setElementTypePrefix(ret) == 0 {
                 return NULL as *mut ELEMENT_TYPE;
             }
