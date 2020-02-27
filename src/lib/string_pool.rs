@@ -65,6 +65,9 @@ rental! {
 
 use rental_pool::InnerStringPool;
 
+/// A StringPool has the purpose of allocating distinct strings and then
+/// handing them off to be referenced either temporarily or for the entire length
+/// of the pool.
 pub(crate) struct StringPool(Option<InnerStringPool>);
 
 impl StringPool {
@@ -78,8 +81,14 @@ impl StringPool {
         ))))
     }
 
+    /// # Safety
+    ///
+    /// The inner type is only ever None in middle of the clear()
+    /// method. Therefore it is safe to use anywhere else.
     fn inner(&self) -> &InnerStringPool {
-        self.0.as_ref().unwrap()
+        self.0.as_ref().unwrap_or_else(|| unsafe {
+            std::hint::unreachable_unchecked()
+        })
     }
 
     /// Determines whether or not the current BumpVec is empty.
@@ -94,7 +103,7 @@ impl StringPool {
 
     /// Gets the current vec, converts it into a slice, and resets
     /// bookkeeping so that it will create a new vec next time.
-    pub(crate) fn consume_current_vec(&self) -> &mut [XML_Char] {
+    pub(crate) fn finish_string(&self) -> &mut [XML_Char] {
         /// # Safety
         ///
         /// Rental provides `ref_rent()`, which would do what we want here,
@@ -116,17 +125,6 @@ impl StringPool {
     /// Resets the current bump vec to the beginning
     pub(crate) fn clear_current(&self) {
         self.set_len(0)
-    }
-
-    /// Moves the start pointer to the current length so that a new bump vec region begins
-    /// REVIEW: Maybe shouldn't be necessary or just force a new vec creation..?
-    pub(crate) fn finish_current(&self) {
-        self.consume_current_vec();
-    }
-
-    // REVIEW: Not sure if necessary
-    pub(crate) fn finish_string(&self) -> &mut [XML_Char] {
-        self.consume_current_vec()
     }
 
     /// Obtains the length of the current BumpVec.
@@ -220,7 +218,7 @@ impl StringPool {
             return None;
         }
 
-        Some(self.consume_current_vec())
+        Some(self.finish_string())
     }
 
     /// Sets a new length on the current bump vec.
@@ -332,7 +330,7 @@ impl StringPool {
             s = s.offset(1);
         }
 
-        Some(self.consume_current_vec())
+        Some(self.finish_string())
     }
 
     pub(crate) unsafe fn copyStringN(
@@ -348,7 +346,7 @@ impl StringPool {
             s = s.offset(1)
         }
 
-        Some(&*self.consume_current_vec())
+        Some(&*self.finish_string())
     }
 
     /// There's currently no try_push in Bumpalo, so can't determine if
@@ -434,7 +432,7 @@ fn test_append_char() {
     pool.current_slice(|s| assert_eq!(s, [A, B]));
 
     // New BumpVec
-    pool.finish_current();
+    pool.finish_string();
 
     assert!(pool.append_char(C));
     pool.current_slice(|s| assert_eq!(s, [C]));

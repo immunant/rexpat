@@ -3849,13 +3849,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if name_0.str_0.is_null() {
                         return XML_Error::NO_MEMORY;
                     }
-                    self.m_tempPool.finish_current();
                     result_1 = self.storeAtts(enc_type, buf, &mut name_0, &mut bindings);
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
                         return result_1;
                     }
-                    self.m_tempPool.finish_current();
+                    self.m_tempPool.finish_string();;
                     let handlers = &self.m_handlers;
                     let started = handlers.startElement(name_0.str_0, &mut self.m_atts);
                     if started {
@@ -4298,7 +4297,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.consume_current_vec().as_ptr()));
+                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr()));
             } else {
                 /* the value did not need normalizing */
                 let fresh10 = match self.m_tempPool.storeString(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
@@ -4306,7 +4305,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                     None => return XML_Error::NO_MEMORY,
                 };
                 self.m_atts.push(Attribute::new((*attId).name.name(), fresh10.as_ptr()));
-                self.m_tempPool.finish_current() // REVIEW: Maybe superflous? storeString should end
             }
             /* handle prefixed attribute names */
             if !(*attId).prefix.is_null() {
@@ -4506,7 +4504,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     if ret != XML_Error::NONE { return ret; }
                     /* store expanded name in attribute list */
-                    self.m_atts[i].name = self.m_tempPool.consume_current_vec().as_ptr();
+                    self.m_atts[i].name = self.m_tempPool.finish_string().as_ptr();
                     let hk = HashKey::from(self.m_atts[i].name as KEY);
                     self.m_nsAtts.insert(hk);
                     nPrefixes -= 1;
@@ -4591,7 +4589,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
 
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.consume_current_vec().as_ptr();
+                    s = self.m_tempPool.finish_string().as_ptr();
                     self.m_atts[i].name = s;
 
                     nXMLNSDeclarations -= 1;
@@ -5231,22 +5229,19 @@ impl<'scf> XML_ParserStruct<'scf> {
                 if storedEncName.is_none() {
                     return XML_Error::NO_MEMORY;
                 }
-
-                // REVIEW: Is this necessary? Vec has already been completed
-                // self.m_temp2Pool.finish_current()
             }
             if let Some(version_buf) = version_buf {
                 storedversion = self.m_temp2Pool.storeString(
                     &*self.m_encoding,
                     version_buf,
-                ).map(|s| &*s);
+                );
                 if storedversion.is_none() {
                     return XML_Error::NO_MEMORY;
                 }
             }
             self.m_handlers.xmlDecl(
-                storedversion.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()), // REVIEW: Null default?
-                storedEncName.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()), // REVIEW: Null default?
+                storedversion.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                storedEncName.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
                 standalone,
             );
         } else if self.m_handlers.hasDefault() {
@@ -5268,19 +5263,24 @@ impl<'scf> XML_ParserStruct<'scf> {
                 self.m_encoding = newEncoding
             } else if !encodingName.is_null() {
                 let mut result: XML_Error = XML_Error::NONE;
-                if storedEncName.is_none() {
-                    storedEncName = self.m_temp2Pool.storeString(
-                        &*self.m_encoding,
-                        ExpatBufRef::new(
-                            encodingName,
-                            encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
-                        ),
-                    );
-                    if storedEncName.is_none() {
-                        return XML_Error::NO_MEMORY;
-                    }
-                }
-                result = self.m_handlers.handleUnknownEncoding(storedEncName.as_ref().unwrap().as_ptr(), self.m_ns, &mut self.m_encoding);
+                let storedEncName = match storedEncName {
+                    Some(storedEncName) => storedEncName,
+                    None => {
+                        let storedEncName = self.m_temp2Pool.storeString(
+                            &*self.m_encoding,
+                            ExpatBufRef::new(
+                                encodingName,
+                                encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
+                            ),
+                        );
+
+                        match storedEncName {
+                            Some(storedEncName) => storedEncName,
+                            None => return XML_Error::NO_MEMORY,
+                        }
+                    },
+                };
+                result = self.m_handlers.handleUnknownEncoding(storedEncName.as_ptr(), self.m_ns, &mut self.m_encoding);
                 self.m_temp2Pool.clear();
                 if result == XML_Error::UNKNOWN_ENCODING {
                     self.m_eventPtr = encodingName
@@ -5677,7 +5677,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if self.m_doctypeName.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_tempPool.finish_current();
                         self.m_doctypePubid = NULL as *const XML_Char;
                         handleDefault = false
                     }
@@ -5737,8 +5736,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             None => return XML_Error::NO_MEMORY,
                         };
                         normalizePublicId(pubId.as_mut_ptr());
-                        self.m_doctypePubid = pubId.as_ptr(); // Swapped v
-                        self.m_tempPool.finish_current(); //     Swapped ^
+                        self.m_doctypePubid = pubId.as_ptr();
                         handleDefault = false;
                         current_block = 9007411418488376351;
                     } else {
@@ -5966,7 +5964,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.consume_current_vec().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -5998,7 +5996,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if result_1 as u64 != 0 {
                             return result_1;
                         }
-                        attVal = (*dtd).pool.consume_current_vec().as_ptr();
+                        attVal = (*dtd).pool.finish_string().as_ptr();
                         /* ID attributes aren't allowed to have a default */
                         if defineAttribute(
                             self.m_declElementType,
@@ -6022,7 +6020,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.consume_current_vec().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -6049,10 +6047,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
                         if !self.m_declEntity.is_null() {
-                            let string_slice = (*dtd).entityValuePool.finish_string();
-
-                            (*self.m_declEntity).textPtr = string_slice.as_ptr();
-                            (*self.m_declEntity).textLen = string_slice.len() as c_int;
+                            (*self.m_declEntity).textLen = (*dtd).entityValuePool.len() as c_int;
+                            (*self.m_declEntity).textPtr = (*dtd).entityValuePool.finish_string().as_ptr();
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
@@ -6068,7 +6064,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 handleDefault = false
                             }
                         } else {
-                            (*dtd).entityValuePool.finish_current()
+                            (*dtd).entityValuePool.finish_string();
                         }
                         if result_2 != XML_Error::NONE {
                             return result_2;
@@ -6096,7 +6092,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
 
-                        self.m_tempPool.finish_current();
                         handleDefault = false
                     } else {
                         /* use externalSubsetName to make parser->m_doctypeSysid non-NULL
@@ -6156,7 +6151,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if (*self.m_declEntity).notation.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        (*dtd).pool.finish_current();
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
@@ -6205,7 +6199,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
-                            (*dtd).pool.finish_current();
+                            (*dtd).pool.finish_string();;
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
                             (*self.m_declEntity).is_param = false;
                             /* if we have a parent parser or are reading an internal parameter
@@ -6220,7 +6214,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                         }
                     } else {
-                        (*dtd).pool.finish_current();
+                        (*dtd).pool.finish_string();;
                         self.m_declEntity = NULL as *mut ENTITY
                     }
                     current_block = 1553878188884632965;
@@ -6243,7 +6237,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
-                            (*dtd).pool.finish_current();
+                            (*dtd).pool.finish_string();;
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
                             (*self.m_declEntity).is_param = true;
                             /* if we have a parent parser or are reading an internal parameter
@@ -6273,7 +6267,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if self.m_declNotationName.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_tempPool.finish_current();
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
@@ -6291,16 +6284,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let mut tem_0 = match tem_buf0.as_mut() {
+                        let mut tem_0 = match tem_buf0 {
                             Some(tem_0) => tem_0,
                             None => return XML_Error::NO_MEMORY,
                         };
                         normalizePublicId(tem_0.as_mut_ptr());
                         self.m_declNotationPublicId = tem_0.as_mut_ptr();
-
-                        drop(tem_buf0);
-
-                        self.m_tempPool.finish_current();
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
@@ -6766,7 +6755,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         (*self.m_declEntity).base = self.m_curBase;
-                        (*dtd).pool.finish_current();
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
                          */
@@ -6868,7 +6856,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                         };
                         normalizePublicId(tem.as_mut_ptr());
                         (*self.m_declEntity).publicId = tem.as_ptr();
-                        (*dtd).pool.finish_current();
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
                          */
@@ -7679,11 +7666,10 @@ unsafe extern "C" fn reportProcessingInstruction(
     let enc = (*parser).encoding(enc_type);
     buf = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
     let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as isize);
-    let target = (*parser).m_tempPool.storeString(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize));
-    if target.is_none() {
-        return 0;
-    }
-    (*parser).m_tempPool.finish_current();
+    let target = match (*parser).m_tempPool.storeString(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize)) {
+        Some(target) => target,
+        None => return 0,
+    };
     let data = (*parser).m_tempPool.storeString(
         enc,
         // TODO(SJC): fix this ugliness
@@ -7697,7 +7683,7 @@ unsafe extern "C" fn reportProcessingInstruction(
         None => return 0,
     };
     normalizeLines(&mut data);
-    (*parser).m_handlers.processingInstruction(target.unwrap().as_ptr(), data.as_ptr());
+    (*parser).m_handlers.processingInstruction(target.as_ptr(), data.as_ptr());
     (*parser).m_tempPool.clear();
     1
 }
@@ -7864,7 +7850,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     return 0;
                 }
                 if (*prefix).name == start {
-                    (*dtd).pool.finish_current()
+                    (*dtd).pool.finish_string();
                 } else {
                     (*dtd).pool.clear_current()
                 }
@@ -7906,7 +7892,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         if (*id).name.name() != name.as_mut_ptr() as *mut XML_Char {
             (*dtd).pool.clear_current()
         } else {
-            (*dtd).pool.finish_current();
+            (*dtd).pool.finish_string();;
             if self.m_ns {
                 if name[0] == ASCII_x as XML_Char
                 && name[1] == ASCII_m as XML_Char
@@ -7953,7 +7939,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 return NULL as *mut ATTRIBUTE_ID;
                             }
                             if (*(*id).prefix).name == tempName {
-                                (*dtd).pool.finish_current()
+                                (*dtd).pool.finish_string();
                             } else {
                                 (*dtd).pool.clear_current()
                             }
@@ -8896,7 +8882,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         if (*ret).name != name.as_ptr() {
             (*dtd).pool.clear_current();
         } else {
-            (*dtd).pool.finish_current();
+            (*dtd).pool.finish_string();;
             if self.setElementTypePrefix(ret) == 0 {
                 return NULL as *mut ELEMENT_TYPE;
             }
