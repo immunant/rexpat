@@ -35,73 +35,82 @@
 
 use super::xmlparse::ExpatBufRef;
 use libc::{c_char, c_int, c_uint};
-pub type C2RustUnnamed_0 = c_int;
 
-pub const XML_ROLE_ERROR: C2RustUnnamed_0 = -1;
-pub const XML_ROLE_NONE: C2RustUnnamed_0 = 0;
-pub const XML_ROLE_XML_DECL: C2RustUnnamed_0 = 1;
-pub const XML_ROLE_INSTANCE_START: C2RustUnnamed_0 = 2;
-pub const XML_ROLE_DOCTYPE_NONE: C2RustUnnamed_0 = 3;
-pub const XML_ROLE_DOCTYPE_NAME: C2RustUnnamed_0 = 4;
-pub const XML_ROLE_DOCTYPE_SYSTEM_ID: C2RustUnnamed_0 = 5;
-pub const XML_ROLE_DOCTYPE_PUBLIC_ID: C2RustUnnamed_0 = 6;
-pub const XML_ROLE_DOCTYPE_INTERNAL_SUBSET: C2RustUnnamed_0 = 7;
-pub const XML_ROLE_DOCTYPE_CLOSE: C2RustUnnamed_0 = 8;
-pub const XML_ROLE_GENERAL_ENTITY_NAME: C2RustUnnamed_0 = 9;
-pub const XML_ROLE_PARAM_ENTITY_NAME: C2RustUnnamed_0 = 10;
-pub const XML_ROLE_ENTITY_NONE: C2RustUnnamed_0 = 11;
-pub const XML_ROLE_ENTITY_VALUE: C2RustUnnamed_0 = 12;
-pub const XML_ROLE_ENTITY_SYSTEM_ID: C2RustUnnamed_0 = 13;
-pub const XML_ROLE_ENTITY_PUBLIC_ID: C2RustUnnamed_0 = 14;
-pub const XML_ROLE_ENTITY_COMPLETE: C2RustUnnamed_0 = 15;
-pub const XML_ROLE_ENTITY_NOTATION_NAME: C2RustUnnamed_0 = 16;
-pub const XML_ROLE_NOTATION_NONE: C2RustUnnamed_0 = 17;
-pub const XML_ROLE_NOTATION_NAME: C2RustUnnamed_0 = 18;
-pub const XML_ROLE_NOTATION_SYSTEM_ID: C2RustUnnamed_0 = 19;
-pub const XML_ROLE_NOTATION_NO_SYSTEM_ID: C2RustUnnamed_0 = 20;
-pub const XML_ROLE_NOTATION_PUBLIC_ID: C2RustUnnamed_0 = 21;
-pub const XML_ROLE_ATTRIBUTE_NAME: C2RustUnnamed_0 = 22;
-pub const XML_ROLE_ATTRIBUTE_TYPE_CDATA: C2RustUnnamed_0 = 23;
-pub const XML_ROLE_ATTRIBUTE_TYPE_ID: C2RustUnnamed_0 = 24;
-pub const XML_ROLE_ATTRIBUTE_TYPE_IDREF: C2RustUnnamed_0 = 25;
-pub const XML_ROLE_ATTRIBUTE_TYPE_IDREFS: C2RustUnnamed_0 = 26;
-pub const XML_ROLE_ATTRIBUTE_TYPE_ENTITY: C2RustUnnamed_0 = 27;
-pub const XML_ROLE_ATTRIBUTE_TYPE_ENTITIES: C2RustUnnamed_0 = 28;
-pub const XML_ROLE_ATTRIBUTE_TYPE_NMTOKEN: C2RustUnnamed_0 = 29;
-pub const XML_ROLE_ATTRIBUTE_TYPE_NMTOKENS: C2RustUnnamed_0 = 30;
-pub const XML_ROLE_ATTRIBUTE_ENUM_VALUE: C2RustUnnamed_0 = 31;
-pub const XML_ROLE_ATTRIBUTE_NOTATION_VALUE: C2RustUnnamed_0 = 32;
-pub const XML_ROLE_ATTLIST_NONE: C2RustUnnamed_0 = 33;
-pub const XML_ROLE_ATTLIST_ELEMENT_NAME: C2RustUnnamed_0 = 34;
-pub const XML_ROLE_IMPLIED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 35;
-pub const XML_ROLE_REQUIRED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 36;
-pub const XML_ROLE_DEFAULT_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 37;
-pub const XML_ROLE_FIXED_ATTRIBUTE_VALUE: C2RustUnnamed_0 = 38;
-pub const XML_ROLE_ELEMENT_NONE: C2RustUnnamed_0 = 39;
-pub const XML_ROLE_ELEMENT_NAME: C2RustUnnamed_0 = 40;
-pub const XML_ROLE_CONTENT_ANY: C2RustUnnamed_0 = 41;
-pub const XML_ROLE_CONTENT_EMPTY: C2RustUnnamed_0 = 42;
-pub const XML_ROLE_CONTENT_PCDATA: C2RustUnnamed_0 = 43;
-pub const XML_ROLE_GROUP_OPEN: C2RustUnnamed_0 = 44;
-pub const XML_ROLE_GROUP_CLOSE: C2RustUnnamed_0 = 45;
-pub const XML_ROLE_GROUP_CLOSE_REP: C2RustUnnamed_0 = 46;
-pub const XML_ROLE_GROUP_CLOSE_OPT: C2RustUnnamed_0 = 47;
-pub const XML_ROLE_GROUP_CLOSE_PLUS: C2RustUnnamed_0 = 48;
-pub const XML_ROLE_GROUP_CHOICE: C2RustUnnamed_0 = 49;
-pub const XML_ROLE_GROUP_SEQUENCE: C2RustUnnamed_0 = 50;
-pub const XML_ROLE_CONTENT_ELEMENT: C2RustUnnamed_0 = 51;
-pub const XML_ROLE_CONTENT_ELEMENT_REP: C2RustUnnamed_0 = 52;
-pub const XML_ROLE_CONTENT_ELEMENT_OPT: C2RustUnnamed_0 = 53;
-pub const XML_ROLE_CONTENT_ELEMENT_PLUS: C2RustUnnamed_0 = 54;
-pub const XML_ROLE_PI: C2RustUnnamed_0 = 55;
-pub const XML_ROLE_COMMENT: C2RustUnnamed_0 = 56;
-pub const XML_ROLE_TEXT_DECL: C2RustUnnamed_0 = 57;
-pub const XML_ROLE_IGNORE_SECT: C2RustUnnamed_0 = 58;
-pub const XML_ROLE_INNER_PARAM_ENTITY_REF: C2RustUnnamed_0 = 59;
+#[repr(i32)]
+#[derive(Clone, Copy, PartialEq)]
+pub enum XML_ROLE {
+    ERROR = -1,
+    NONE = 0,
+    XML_DECL = 1,
+    INSTANCE_START = 2,
+    DOCTYPE_NONE = 3,
+    DOCTYPE_NAME = 4,
+    DOCTYPE_SYSTEM_ID = 5,
+    DOCTYPE_PUBLIC_ID = 6,
+    DOCTYPE_INTERNAL_SUBSET = 7,
+    DOCTYPE_CLOSE = 8,
+    GENERAL_ENTITY_NAME = 9,
+    PARAM_ENTITY_NAME = 10,
+    ENTITY_NONE = 11,
+    ENTITY_VALUE = 12,
+    ENTITY_SYSTEM_ID = 13,
+    ENTITY_PUBLIC_ID = 14,
+    ENTITY_COMPLETE = 15,
+    ENTITY_NOTATION_NAME = 16,
+    NOTATION_NONE = 17,
+    NOTATION_NAME = 18,
+    NOTATION_SYSTEM_ID = 19,
+    NOTATION_NO_SYSTEM_ID = 20,
+    NOTATION_PUBLIC_ID = 21,
+    ATTRIBUTE_NAME = 22,
+    ATTRIBUTE_TYPE_CDATA = 23,
+    ATTRIBUTE_TYPE_ID = 24,
+    ATTRIBUTE_TYPE_IDREF = 25,
+    ATTRIBUTE_TYPE_IDREFS = 26,
+    ATTRIBUTE_TYPE_ENTITY = 27,
+    ATTRIBUTE_TYPE_ENTITIES = 28,
+    ATTRIBUTE_TYPE_NMTOKEN = 29,
+    ATTRIBUTE_TYPE_NMTOKENS = 30,
+    ATTRIBUTE_ENUM_VALUE = 31,
+    ATTRIBUTE_NOTATION_VALUE = 32,
+    ATTLIST_NONE = 33,
+    ATTLIST_ELEMENT_NAME = 34,
+    IMPLIED_ATTRIBUTE_VALUE = 35,
+    REQUIRED_ATTRIBUTE_VALUE = 36,
+    DEFAULT_ATTRIBUTE_VALUE = 37,
+    FIXED_ATTRIBUTE_VALUE = 38,
+    ELEMENT_NONE = 39,
+    ELEMENT_NAME = 40,
+    CONTENT_ANY = 41,
+    CONTENT_EMPTY = 42,
+    CONTENT_PCDATA = 43,
+    GROUP_OPEN = 44,
+    GROUP_CLOSE = 45,
+    GROUP_CLOSE_REP = 46,
+    GROUP_CLOSE_OPT = 47,
+    GROUP_CLOSE_PLUS = 48,
+    GROUP_CHOICE = 49,
+    GROUP_SEQUENCE = 50,
+    CONTENT_ELEMENT = 51,
+    CONTENT_ELEMENT_REP = 52,
+    CONTENT_ELEMENT_OPT = 53,
+    CONTENT_ELEMENT_PLUS = 54,
+    PI = 55,
+    COMMENT = 56,
+    TEXT_DECL = 57,
+    IGNORE_SECT = 58,
+    INNER_PARAM_ENTITY_REF = 59,
 /* XML_DTD */
 /* XML_DTD */
 
-pub const XML_ROLE_PARAM_ENTITY_REF: C2RustUnnamed_0 = 60;
+    PARAM_ENTITY_REF = 60,
+}
+
+impl Default for XML_ROLE {
+    fn default() -> Self {
+        XML_ROLE::NONE
+    }
+}
 
 pub type PROLOG_STATE = prolog_state;
 
@@ -109,10 +118,10 @@ pub type PROLOG_STATE = prolog_state;
 #[derive(Copy, Clone, Default)]
 pub struct prolog_state {
     pub handler: Option<
-        fn(_: &mut prolog_state, _: XML_TOK, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> c_int,
+        fn(_: &mut prolog_state, _: XML_TOK, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> XML_ROLE,
     >,
     pub level: c_uint,
-    pub role_none: c_int,
+    pub role_none: XML_ROLE,
     pub includeLevel: c_uint,
     pub documentEntity: c_int,
     pub inEntityValue: c_int,
@@ -133,7 +142,7 @@ use libc;
 /* not XML_DTD */
 
 pub type PROLOG_HANDLER =
-    fn(_: &mut PROLOG_STATE, _: XML_TOK, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> c_int;
+    fn(_: &mut PROLOG_STATE, _: XML_TOK, _: ExpatBufRef, _: &super::xmltok::ENCODING) -> XML_ROLE;
 /* ndef _WIN32 */
 /* Doesn't check:
 
@@ -349,37 +358,37 @@ fn prolog0(
     mut tok:XML_TOK,
     mut buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
         XML_TOK::PROLOG_S => {
             state.handler = Some(prolog1 as PROLOG_HANDLER); /* LCOV_EXCL_LINE */
-            return XML_ROLE_NONE;
+            return XML_ROLE::NONE;
         }
         super::xmltok::XML_TOK::XML_DECL => {
             state.handler = Some(prolog1 as PROLOG_HANDLER);
-            return XML_ROLE_XML_DECL;
+            return XML_ROLE::XML_DECL;
         }
         super::xmltok::XML_TOK::PI => {
             state.handler = Some(prolog1 as PROLOG_HANDLER);
-            return XML_ROLE_PI;
+            return XML_ROLE::PI;
         }
         super::xmltok::XML_TOK::COMMENT => {
             state.handler = Some(prolog1 as PROLOG_HANDLER);
-            return XML_ROLE_COMMENT;
+            return XML_ROLE::COMMENT;
         }
-        super::xmltok::XML_TOK::BOM => return XML_ROLE_NONE,
+        super::xmltok::XML_TOK::BOM => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
                 buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_DOCTYPE)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
-                return XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE::DOCTYPE_NONE;
             }
         }
         XML_TOK::INSTANCE_START => {
             state.handler = Some(error as PROLOG_HANDLER);
-            return XML_ROLE_INSTANCE_START;
+            return XML_ROLE::INSTANCE_START;
         }
         _ => {}
     }
@@ -391,11 +400,11 @@ fn prolog1(
     mut tok: XML_TOK,
     mut buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
-        super::xmltok::XML_TOK::PI => return XML_ROLE_PI,
-        super::xmltok::XML_TOK::COMMENT => return XML_ROLE_COMMENT,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
+        super::xmltok::XML_TOK::PI => return XML_ROLE::PI,
+        super::xmltok::XML_TOK::COMMENT => return XML_ROLE::COMMENT,
         super::xmltok::XML_TOK::BOM => {
             /* This case can never arise.  To reach this role function, the
              * parse must have passed through prolog0 and therefore have had
@@ -404,7 +413,7 @@ fn prolog1(
              * technically it should be interpreted as a non-breaking space),
              * so will be rejected by the tokenizing stages.
              */
-            return XML_ROLE_NONE;
+            return XML_ROLE::NONE;
         }
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
@@ -412,12 +421,12 @@ fn prolog1(
                 &KW_DOCTYPE)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
-                return XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE::DOCTYPE_NONE;
             }
         }
         XML_TOK::INSTANCE_START => {
             state.handler = Some(error as PROLOG_HANDLER);
-            return XML_ROLE_INSTANCE_START;
+            return XML_ROLE::INSTANCE_START;
         }
         _ => {}
     }
@@ -429,14 +438,14 @@ fn prolog2(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
-        XML_TOK::PI => return XML_ROLE_PI,
-        XML_TOK::COMMENT => return XML_ROLE_COMMENT,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
+        XML_TOK::PI => return XML_ROLE::PI,
+        XML_TOK::COMMENT => return XML_ROLE::COMMENT,
         XML_TOK::INSTANCE_START => {
             state.handler = Some(error as PROLOG_HANDLER);
-            return XML_ROLE_INSTANCE_START;
+            return XML_ROLE::INSTANCE_START;
         }
         _ => {}
     }
@@ -448,12 +457,12 @@ fn doctype0(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(doctype1 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_NAME;
+            return XML_ROLE::DOCTYPE_NAME;
         }
         _ => {}
     }
@@ -465,25 +474,25 @@ fn doctype1(
     mut tok: XML_TOK,
     mut buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::OPEN_BRACKET => {
             state.handler = Some(internalSubset as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
+            return XML_ROLE::DOCTYPE_INTERNAL_SUBSET;
         }
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = Some(prolog2 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE::DOCTYPE_CLOSE;
         }
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_SYSTEM) {
                 state.handler = Some(doctype3 as PROLOG_HANDLER);
-                return XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE::DOCTYPE_NONE;
             }
             if enc.nameMatchesAscii(buf, &KW_PUBLIC) {
                 state.handler = Some(doctype2 as PROLOG_HANDLER);
-                return XML_ROLE_DOCTYPE_NONE;
+                return XML_ROLE::DOCTYPE_NONE;
             }
         }
         _ => {}
@@ -496,12 +505,12 @@ fn doctype2(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(doctype3 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_PUBLIC_ID;
+            return XML_ROLE::DOCTYPE_PUBLIC_ID;
         }
         _ => {}
     }
@@ -513,12 +522,12 @@ fn doctype3(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(doctype4 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_SYSTEM_ID;
+            return XML_ROLE::DOCTYPE_SYSTEM_ID;
         }
         _ => {}
     }
@@ -530,16 +539,16 @@ fn doctype4(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::OPEN_BRACKET => {
             state.handler = Some(internalSubset as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_INTERNAL_SUBSET;
+            return XML_ROLE::DOCTYPE_INTERNAL_SUBSET;
         }
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = Some(prolog2 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE::DOCTYPE_CLOSE;
         }
         _ => {}
     }
@@ -551,12 +560,12 @@ fn doctype5(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_DOCTYPE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::DOCTYPE_NONE,
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = Some(prolog2 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_CLOSE;
+            return XML_ROLE::DOCTYPE_CLOSE;
         }
         _ => {}
     }
@@ -568,23 +577,23 @@ fn internalSubset(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
                 buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_ENTITY)
             {
                 state.handler = Some(entity0 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_ATTLIST)
             {
                 state.handler = Some(attlist0 as PROLOG_HANDLER);
-                return XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE::ATTLIST_NONE;
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2 * enc.minBytesPerChar()) as isize),
@@ -592,24 +601,24 @@ fn internalSubset(
             )
             {
                 state.handler = Some(element0 as PROLOG_HANDLER);
-                return XML_ROLE_ELEMENT_NONE;
+                return XML_ROLE::ELEMENT_NONE;
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((2 * enc.minBytesPerChar()) as isize),
                 &KW_NOTATION)
             {
                 state.handler = Some(notation0 as PROLOG_HANDLER);
-                return XML_ROLE_NOTATION_NONE;
+                return XML_ROLE::NOTATION_NONE;
             }
         }
-        super::xmltok::XML_TOK::PI => return XML_ROLE_PI,
-        super::xmltok::XML_TOK::COMMENT => return XML_ROLE_COMMENT,
-        super::xmltok::XML_TOK::PARAM_ENTITY_REF => return XML_ROLE_PARAM_ENTITY_REF,
+        super::xmltok::XML_TOK::PI => return XML_ROLE::PI,
+        super::xmltok::XML_TOK::COMMENT => return XML_ROLE::COMMENT,
+        super::xmltok::XML_TOK::PARAM_ENTITY_REF => return XML_ROLE::PARAM_ENTITY_REF,
         super::xmltok::XML_TOK::CLOSE_BRACKET => {
             state.handler = Some(doctype5 as PROLOG_HANDLER);
-            return XML_ROLE_DOCTYPE_NONE;
+            return XML_ROLE::DOCTYPE_NONE;
         }
-        super::xmltok::XML_TOK::NONE => return XML_ROLE_NONE,
+        super::xmltok::XML_TOK::NONE => return XML_ROLE::NONE,
         _ => {}
     }
     common(state, tok)
@@ -620,10 +629,10 @@ fn externalSubset0(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     state.handler = Some(externalSubset1 as PROLOG_HANDLER);
     if tok == super::xmltok::XML_TOK::XML_DECL {
-        return XML_ROLE_TEXT_DECL;
+        return XML_ROLE::TEXT_DECL;
     }
     externalSubset1(state, tok, buf, enc)
 }
@@ -633,23 +642,23 @@ fn externalSubset1(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
         super::xmltok::XML_TOK::COND_SECT_OPEN => {
             state.handler = Some(condSect0 as PROLOG_HANDLER);
-            return XML_ROLE_NONE;
+            return XML_ROLE::NONE;
         }
         super::xmltok::XML_TOK::COND_SECT_CLOSE => {
             if !(state.includeLevel == 0) {
                 state.includeLevel = state.includeLevel.wrapping_sub(1);
-                return XML_ROLE_NONE;
+                return XML_ROLE::NONE;
             }
         }
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::CLOSE_BRACKET => {}
         super::xmltok::XML_TOK::NONE => {
             if !(state.includeLevel != 0) {
-                return XML_ROLE_NONE;
+                return XML_ROLE::NONE;
             }
         }
         _ => return internalSubset(state, tok, buf, enc),
@@ -663,16 +672,16 @@ fn entity0(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::PERCENT => {
             state.handler = Some(entity1 as PROLOG_HANDLER);
-            return XML_ROLE_ENTITY_NONE;
+            return XML_ROLE::ENTITY_NONE;
         }
         super::xmltok::XML_TOK::NAME => {
             state.handler = Some(entity2 as PROLOG_HANDLER);
-            return XML_ROLE_GENERAL_ENTITY_NAME;
+            return XML_ROLE::GENERAL_ENTITY_NAME;
         }
         _ => {}
     }
@@ -684,12 +693,12 @@ fn entity1(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::NAME => {
             state.handler = Some(entity7 as PROLOG_HANDLER);
-            return XML_ROLE_PARAM_ENTITY_NAME;
+            return XML_ROLE::PARAM_ENTITY_NAME;
         }
         _ => {}
     }
@@ -701,23 +710,23 @@ fn entity2(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_SYSTEM) {
                 state.handler = Some(entity4 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
             if enc.nameMatchesAscii(buf, &KW_PUBLIC) {
                 state.handler = Some(entity3 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
         }
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ENTITY_NONE;
-            return XML_ROLE_ENTITY_VALUE;
+            state.role_none = XML_ROLE::ENTITY_NONE;
+            return XML_ROLE::ENTITY_VALUE;
         }
         _ => {}
     }
@@ -729,12 +738,12 @@ fn entity3(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(entity4 as PROLOG_HANDLER);
-            return XML_ROLE_ENTITY_PUBLIC_ID;
+            return XML_ROLE::ENTITY_PUBLIC_ID;
         }
         _ => {}
     }
@@ -746,12 +755,12 @@ fn entity4(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(entity5 as PROLOG_HANDLER);
-            return XML_ROLE_ENTITY_SYSTEM_ID;
+            return XML_ROLE::ENTITY_SYSTEM_ID;
         }
         _ => {}
     }
@@ -763,21 +772,21 @@ fn entity5(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = if state.documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return XML_ROLE_ENTITY_COMPLETE;
+            return XML_ROLE::ENTITY_COMPLETE;
         }
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_NDATA) {
                 state.handler = Some(entity6 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
         }
         _ => {}
@@ -790,13 +799,13 @@ fn entity6(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::NAME => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ENTITY_NONE;
-            return XML_ROLE_ENTITY_NOTATION_NAME;
+            state.role_none = XML_ROLE::ENTITY_NONE;
+            return XML_ROLE::ENTITY_NOTATION_NAME;
         }
         _ => {}
     }
@@ -808,23 +817,23 @@ fn entity7(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_SYSTEM) {
                 state.handler = Some(entity9 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
             if enc.nameMatchesAscii(buf, &KW_PUBLIC) {
                 state.handler = Some(entity8 as PROLOG_HANDLER);
-                return XML_ROLE_ENTITY_NONE;
+                return XML_ROLE::ENTITY_NONE;
             }
         }
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ENTITY_NONE;
-            return XML_ROLE_ENTITY_VALUE;
+            state.role_none = XML_ROLE::ENTITY_NONE;
+            return XML_ROLE::ENTITY_VALUE;
         }
         _ => {}
     }
@@ -836,12 +845,12 @@ fn entity8(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(entity9 as PROLOG_HANDLER);
-            return XML_ROLE_ENTITY_PUBLIC_ID;
+            return XML_ROLE::ENTITY_PUBLIC_ID;
         }
         _ => {}
     }
@@ -853,12 +862,12 @@ fn entity9(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(entity10 as PROLOG_HANDLER);
-            return XML_ROLE_ENTITY_SYSTEM_ID;
+            return XML_ROLE::ENTITY_SYSTEM_ID;
         }
         _ => {}
     }
@@ -870,16 +879,16 @@ fn entity10(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ENTITY_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ENTITY_NONE,
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = if state.documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return XML_ROLE_ENTITY_COMPLETE;
+            return XML_ROLE::ENTITY_COMPLETE;
         }
         _ => {}
     }
@@ -891,12 +900,12 @@ fn notation0(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NOTATION_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NOTATION_NONE,
         super::xmltok::XML_TOK::NAME => {
             state.handler = Some(notation1 as PROLOG_HANDLER);
-            return XML_ROLE_NOTATION_NAME;
+            return XML_ROLE::NOTATION_NAME;
         }
         _ => {}
     }
@@ -908,17 +917,17 @@ fn notation1(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NOTATION_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NOTATION_NONE,
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_SYSTEM) {
                 state.handler = Some(notation3 as PROLOG_HANDLER);
-                return XML_ROLE_NOTATION_NONE;
+                return XML_ROLE::NOTATION_NONE;
             }
             if enc.nameMatchesAscii(buf, &KW_PUBLIC) {
                 state.handler = Some(notation2 as PROLOG_HANDLER);
-                return XML_ROLE_NOTATION_NONE;
+                return XML_ROLE::NOTATION_NONE;
             }
         }
         _ => {}
@@ -931,12 +940,12 @@ fn notation2(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NOTATION_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NOTATION_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(notation4 as PROLOG_HANDLER);
-            return XML_ROLE_NOTATION_PUBLIC_ID;
+            return XML_ROLE::NOTATION_PUBLIC_ID;
         }
         _ => {}
     }
@@ -948,13 +957,13 @@ fn notation3(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NOTATION_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NOTATION_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_NOTATION_NONE;
-            return XML_ROLE_NOTATION_SYSTEM_ID;
+            state.role_none = XML_ROLE::NOTATION_NONE;
+            return XML_ROLE::NOTATION_SYSTEM_ID;
         }
         _ => {}
     }
@@ -966,13 +975,13 @@ fn notation4(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NOTATION_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NOTATION_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_NOTATION_NONE;
-            return XML_ROLE_NOTATION_SYSTEM_ID;
+            state.role_none = XML_ROLE::NOTATION_NONE;
+            return XML_ROLE::NOTATION_SYSTEM_ID;
         }
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = if state.documentEntity != 0 {
@@ -980,7 +989,7 @@ fn notation4(
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return XML_ROLE_NOTATION_NO_SYSTEM_ID;
+            return XML_ROLE::NOTATION_NO_SYSTEM_ID;
         }
         _ => {}
     }
@@ -992,12 +1001,12 @@ fn attlist0(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(attlist1 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_ELEMENT_NAME;
+            return XML_ROLE::ATTLIST_ELEMENT_NAME;
         }
         _ => {}
     }
@@ -1009,20 +1018,20 @@ fn attlist1(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::DECL_CLOSE => {
             state.handler = if state.documentEntity != 0 {
                 Some(internalSubset as PROLOG_HANDLER)
             } else {
                 Some(externalSubset1 as PROLOG_HANDLER)
             };
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(attlist2 as PROLOG_HANDLER);
-            return XML_ROLE_ATTRIBUTE_NAME;
+            return XML_ROLE::ATTRIBUTE_NAME;
         }
         _ => {}
     }
@@ -1034,9 +1043,9 @@ fn attlist2(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::NAME => {
             static TYPES: [&[c_char]; 8] = [
                 &KW_CDATA,
@@ -1051,17 +1060,27 @@ fn attlist2(
             for i in 0..TYPES.len() {
                 if enc.nameMatchesAscii(buf, &TYPES[i]) {
                     state.handler = Some(attlist8 as PROLOG_HANDLER);
-                    return XML_ROLE_ATTRIBUTE_TYPE_CDATA + i as c_int;
+                    return match i {
+                        0 => XML_ROLE::ATTRIBUTE_TYPE_CDATA,
+                        1 => XML_ROLE::ATTRIBUTE_TYPE_ID,
+                        2 => XML_ROLE::ATTRIBUTE_TYPE_IDREF,
+                        3 => XML_ROLE::ATTRIBUTE_TYPE_IDREFS,
+                        4 => XML_ROLE::ATTRIBUTE_TYPE_ENTITY,
+                        5 => XML_ROLE::ATTRIBUTE_TYPE_ENTITIES,
+                        6 => XML_ROLE::ATTRIBUTE_TYPE_NMTOKEN,
+                        7 => XML_ROLE::ATTRIBUTE_TYPE_NMTOKENS,
+                        _ => panic!(),
+                    };
                 }
             }
             if enc.nameMatchesAscii(buf, &KW_NOTATION) {
                 state.handler = Some(attlist5 as PROLOG_HANDLER);
-                return XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE::ATTLIST_NONE;
             }
         }
         super::xmltok::XML_TOK::OPEN_PAREN => {
             state.handler = Some(attlist3 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1073,14 +1092,14 @@ fn attlist3(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::NMTOKEN
         | super::xmltok::XML_TOK::NAME
         | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(attlist4 as PROLOG_HANDLER);
-            return XML_ROLE_ATTRIBUTE_ENUM_VALUE;
+            return XML_ROLE::ATTRIBUTE_ENUM_VALUE;
         }
         _ => {}
     }
@@ -1092,16 +1111,16 @@ fn attlist4(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::CLOSE_PAREN => {
             state.handler = Some(attlist8 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         super::xmltok::XML_TOK::OR => {
             state.handler = Some(attlist3 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1113,12 +1132,12 @@ fn attlist5(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::OPEN_PAREN => {
             state.handler = Some(attlist6 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1130,12 +1149,12 @@ fn attlist6(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::NAME => {
             state.handler = Some(attlist7 as PROLOG_HANDLER);
-            return XML_ROLE_ATTRIBUTE_NOTATION_VALUE;
+            return XML_ROLE::ATTRIBUTE_NOTATION_VALUE;
         }
         _ => {}
     }
@@ -1147,16 +1166,16 @@ fn attlist7(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::CLOSE_PAREN => {
             state.handler = Some(attlist8 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         super::xmltok::XML_TOK::OR => {
             state.handler = Some(attlist6 as PROLOG_HANDLER);
-            return XML_ROLE_ATTLIST_NONE;
+            return XML_ROLE::ATTLIST_NONE;
         }
         _ => {}
     }
@@ -1169,9 +1188,9 @@ fn attlist8(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::POUND_NAME => {
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
@@ -1179,7 +1198,7 @@ fn attlist8(
             )
             {
                 state.handler = Some(attlist1 as PROLOG_HANDLER);
-                return XML_ROLE_IMPLIED_ATTRIBUTE_VALUE;
+                return XML_ROLE::IMPLIED_ATTRIBUTE_VALUE;
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
@@ -1187,7 +1206,7 @@ fn attlist8(
             )
             {
                 state.handler = Some(attlist1 as PROLOG_HANDLER);
-                return XML_ROLE_REQUIRED_ATTRIBUTE_VALUE;
+                return XML_ROLE::REQUIRED_ATTRIBUTE_VALUE;
             }
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
@@ -1195,12 +1214,12 @@ fn attlist8(
             )
             {
                 state.handler = Some(attlist9 as PROLOG_HANDLER);
-                return XML_ROLE_ATTLIST_NONE;
+                return XML_ROLE::ATTLIST_NONE;
             }
         }
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(attlist1 as PROLOG_HANDLER);
-            return XML_ROLE_DEFAULT_ATTRIBUTE_VALUE;
+            return XML_ROLE::DEFAULT_ATTRIBUTE_VALUE;
         }
         _ => {}
     }
@@ -1212,12 +1231,12 @@ fn attlist9(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ATTLIST_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::LITERAL => {
             state.handler = Some(attlist1 as PROLOG_HANDLER);
-            return XML_ROLE_FIXED_ATTRIBUTE_VALUE;
+            return XML_ROLE::FIXED_ATTRIBUTE_VALUE;
         }
         _ => {}
     }
@@ -1229,12 +1248,12 @@ fn element0(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(element1 as PROLOG_HANDLER);
-            return XML_ROLE_ELEMENT_NAME;
+            return XML_ROLE::ELEMENT_NAME;
         }
         _ => {}
     }
@@ -1246,25 +1265,25 @@ fn element1(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_EMPTY) {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE;
-                return XML_ROLE_CONTENT_EMPTY;
+                state.role_none = XML_ROLE::ELEMENT_NONE;
+                return XML_ROLE::CONTENT_EMPTY;
             }
             if enc.nameMatchesAscii(buf, &KW_ANY) {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE;
-                return XML_ROLE_CONTENT_ANY;
+                state.role_none = XML_ROLE::ELEMENT_NONE;
+                return XML_ROLE::CONTENT_ANY;
             }
         }
         super::xmltok::XML_TOK::OPEN_PAREN => {
             state.handler = Some(element2 as PROLOG_HANDLER);
             state.level = 1;
-            return XML_ROLE_GROUP_OPEN;
+            return XML_ROLE::GROUP_OPEN;
         }
         _ => {}
     }
@@ -1276,9 +1295,9 @@ fn element2(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::POUND_NAME => {
             if enc.nameMatchesAscii(
                 buf.inc_start((enc.minBytesPerChar()) as isize),
@@ -1286,29 +1305,29 @@ fn element2(
             )
             {
                 state.handler = Some(element3 as PROLOG_HANDLER);
-                return XML_ROLE_CONTENT_PCDATA;
+                return XML_ROLE::CONTENT_PCDATA;
             }
         }
         super::xmltok::XML_TOK::OPEN_PAREN => {
             state.level = 2;
             state.handler = Some(element6 as PROLOG_HANDLER);
-            return XML_ROLE_GROUP_OPEN;
+            return XML_ROLE::GROUP_OPEN;
         }
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE::CONTENT_ELEMENT;
         }
         super::xmltok::XML_TOK::NAME_QUESTION => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_OPT;
+            return XML_ROLE::CONTENT_ELEMENT_OPT;
         }
         super::xmltok::XML_TOK::NAME_ASTERISK => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_REP;
+            return XML_ROLE::CONTENT_ELEMENT_REP;
         }
         super::xmltok::XML_TOK::NAME_PLUS => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_PLUS;
+            return XML_ROLE::CONTENT_ELEMENT_PLUS;
         }
         _ => {}
     }
@@ -1320,22 +1339,22 @@ fn element3(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::CLOSE_PAREN => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ELEMENT_NONE;
-            return XML_ROLE_GROUP_CLOSE;
+            state.role_none = XML_ROLE::ELEMENT_NONE;
+            return XML_ROLE::GROUP_CLOSE;
         }
         super::xmltok::XML_TOK::CLOSE_PAREN_ASTERISK => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ELEMENT_NONE;
-            return XML_ROLE_GROUP_CLOSE_REP;
+            state.role_none = XML_ROLE::ELEMENT_NONE;
+            return XML_ROLE::GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK::OR => {
             state.handler = Some(element4 as PROLOG_HANDLER);
-            return XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE::ELEMENT_NONE;
         }
         _ => {}
     }
@@ -1347,12 +1366,12 @@ fn element4(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(element5 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE::CONTENT_ELEMENT;
         }
         _ => {}
     }
@@ -1364,17 +1383,17 @@ fn element5(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::CLOSE_PAREN_ASTERISK => {
             state.handler = Some(declClose as PROLOG_HANDLER);
-            state.role_none = XML_ROLE_ELEMENT_NONE;
-            return XML_ROLE_GROUP_CLOSE_REP;
+            state.role_none = XML_ROLE::ELEMENT_NONE;
+            return XML_ROLE::GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK::OR => {
             state.handler = Some(element4 as PROLOG_HANDLER);
-            return XML_ROLE_ELEMENT_NONE;
+            return XML_ROLE::ELEMENT_NONE;
         }
         _ => {}
     }
@@ -1386,28 +1405,28 @@ fn element6(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::OPEN_PAREN => {
             state.level = state.level.wrapping_add(1);
-            return XML_ROLE_GROUP_OPEN;
+            return XML_ROLE::GROUP_OPEN;
         }
         super::xmltok::XML_TOK::NAME | super::xmltok::XML_TOK::PREFIXED_NAME => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT;
+            return XML_ROLE::CONTENT_ELEMENT;
         }
         super::xmltok::XML_TOK::NAME_QUESTION => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_OPT;
+            return XML_ROLE::CONTENT_ELEMENT_OPT;
         }
         super::xmltok::XML_TOK::NAME_ASTERISK => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_REP;
+            return XML_ROLE::CONTENT_ELEMENT_REP;
         }
         super::xmltok::XML_TOK::NAME_PLUS => {
             state.handler = Some(element7 as PROLOG_HANDLER);
-            return XML_ROLE_CONTENT_ELEMENT_PLUS;
+            return XML_ROLE::CONTENT_ELEMENT_PLUS;
         }
         _ => {}
     }
@@ -1419,48 +1438,48 @@ fn element7(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_ELEMENT_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::CLOSE_PAREN => {
             state.level = state.level.wrapping_sub(1);
             if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE
+                state.role_none = XML_ROLE::ELEMENT_NONE
             }
-            return XML_ROLE_GROUP_CLOSE;
+            return XML_ROLE::GROUP_CLOSE;
         }
         super::xmltok::XML_TOK::CLOSE_PAREN_ASTERISK => {
             state.level = state.level.wrapping_sub(1);
             if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE
+                state.role_none = XML_ROLE::ELEMENT_NONE
             }
-            return XML_ROLE_GROUP_CLOSE_REP;
+            return XML_ROLE::GROUP_CLOSE_REP;
         }
         super::xmltok::XML_TOK::CLOSE_PAREN_QUESTION => {
             state.level = state.level.wrapping_sub(1);
             if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE
+                state.role_none = XML_ROLE::ELEMENT_NONE
             }
-            return XML_ROLE_GROUP_CLOSE_OPT;
+            return XML_ROLE::GROUP_CLOSE_OPT;
         }
         super::xmltok::XML_TOK::CLOSE_PAREN_PLUS => {
             state.level = state.level.wrapping_sub(1);
             if state.level == 0 {
                 state.handler = Some(declClose as PROLOG_HANDLER);
-                state.role_none = XML_ROLE_ELEMENT_NONE
+                state.role_none = XML_ROLE::ELEMENT_NONE
             }
-            return XML_ROLE_GROUP_CLOSE_PLUS;
+            return XML_ROLE::GROUP_CLOSE_PLUS;
         }
         super::xmltok::XML_TOK::COMMA => {
             state.handler = Some(element6 as PROLOG_HANDLER);
-            return XML_ROLE_GROUP_SEQUENCE;
+            return XML_ROLE::GROUP_SEQUENCE;
         }
         super::xmltok::XML_TOK::OR => {
             state.handler = Some(element6 as PROLOG_HANDLER);
-            return XML_ROLE_GROUP_CHOICE;
+            return XML_ROLE::GROUP_CHOICE;
         }
         _ => {}
     }
@@ -1472,17 +1491,17 @@ fn condSect0(
     mut tok: XML_TOK,
     buf: ExpatBufRef,
     mut enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::NAME => {
             if enc.nameMatchesAscii(buf, &KW_INCLUDE) {
                 state.handler = Some(condSect1 as PROLOG_HANDLER);
-                return XML_ROLE_NONE;
+                return XML_ROLE::NONE;
             }
             if enc.nameMatchesAscii(buf, &KW_IGNORE) {
                 state.handler = Some(condSect2 as PROLOG_HANDLER);
-                return XML_ROLE_NONE;
+                return XML_ROLE::NONE;
             }
         }
         _ => {}
@@ -1495,13 +1514,13 @@ fn condSect1(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::OPEN_BRACKET => {
             state.handler = Some(externalSubset1 as PROLOG_HANDLER);
             state.includeLevel = state.includeLevel.wrapping_add(1);
-            return XML_ROLE_NONE;
+            return XML_ROLE::NONE;
         }
         _ => {}
     }
@@ -1513,12 +1532,12 @@ fn condSect2(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
-        XML_TOK::PROLOG_S => return XML_ROLE_NONE,
+        XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::OPEN_BRACKET => {
             state.handler = Some(externalSubset1 as PROLOG_HANDLER);
-            return XML_ROLE_IGNORE_SECT;
+            return XML_ROLE::IGNORE_SECT;
         }
         _ => {}
     }
@@ -1531,7 +1550,7 @@ fn declClose(
     mut tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
+) -> XML_ROLE {
     match tok {
         XML_TOK::PROLOG_S => return state.role_none,
         super::xmltok::XML_TOK::DECL_CLOSE => {
@@ -1572,17 +1591,17 @@ fn error(
     mut _tok: XML_TOK,
     mut _buf: ExpatBufRef,
     mut _enc: &super::xmltok::ENCODING,
-) -> c_int {
-    XML_ROLE_NONE
+) -> XML_ROLE {
+    XML_ROLE::NONE
 }
 /* LCOV_EXCL_STOP */
 
-fn common(mut state: &mut PROLOG_STATE, mut tok: XML_TOK) -> c_int {
+fn common(mut state: &mut PROLOG_STATE, mut tok: XML_TOK) -> XML_ROLE {
     if state.documentEntity == 0 && tok == super::xmltok::XML_TOK::PARAM_ENTITY_REF {
-        return XML_ROLE_INNER_PARAM_ENTITY_REF;
+        return XML_ROLE::INNER_PARAM_ENTITY_REF;
     }
     state.handler = Some(error as PROLOG_HANDLER);
-    XML_ROLE_ERROR
+    XML_ROLE::ERROR
 }
 #[no_mangle]
 
