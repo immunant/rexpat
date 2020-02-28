@@ -38,7 +38,7 @@ use ::libc::{exit, malloc, free, memcpy, remove, strlen, strcat, strchr, strcmp,
 use ::std::mem::transmute;
 
 pub use rexpat::*;
-use libc::{c_char, c_int, c_long, c_uint, c_void, FILE, size_t, fclose, fopen, fprintf, qsort};
+use libc::{c_char, c_int, c_long, c_uint, c_void, FILE, size_t, fclose, fopen, fputc, fprintf, qsort};
 
 pub mod codepage;
 pub mod readfilemap;
@@ -53,7 +53,7 @@ pub use crate::expat_h::{
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_UnknownEncodingHandler,
 };
-pub use crate::stdlib::{putc, stderr, stdout};
+pub use crate::stdlib::{stderr, stdout};
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 
 #[repr(C)]
@@ -104,7 +104,7 @@ unsafe extern "C" fn characterData(
                 );
             }
             _ => {
-                putc(*s as c_int, fp);
+                fputc(*s as c_int, fp);
             }
         }
         len -= 1;
@@ -113,13 +113,13 @@ unsafe extern "C" fn characterData(
 }
 
 unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
-    putc('=' as i32, fp);
-    putc('\"' as i32, fp);
+    fputc('=' as i32, fp);
+    fputc('\"' as i32, fp);
     assert!(!s.is_null());
     loop {
         match *s as c_int {
             0 | 1 => {
-                putc('\"' as i32, fp);
+                fputc('\"' as i32, fp);
                 return;
             }
             38 => {
@@ -142,7 +142,7 @@ unsafe extern "C" fn attributeValue(mut fp: *mut FILE, mut s: *const XML_Char) {
                 );
             }
             _ => {
-                putc(*s as c_int, fp);
+                fputc(*s as c_int, fp);
             }
         }
         s = s.offset(1)
@@ -166,7 +166,7 @@ unsafe extern "C" fn startElement(
     let mut nAtts: c_int = 0;
     let mut p: *mut *const XML_Char = 0 as *mut *const XML_Char;
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
-    putc('<' as i32, fp);
+    fputc('<' as i32, fp);
     fputs(name, fp);
     p = atts;
     while !(*p).is_null() {
@@ -182,22 +182,22 @@ unsafe extern "C" fn startElement(
         );
     }
     while !(*atts).is_null() {
-        putc(' ' as i32, fp);
+        fputc(' ' as i32, fp);
         let fresh0 = atts;
         atts = atts.offset(1);
         fputs(*fresh0, fp);
         attributeValue(fp, *atts);
         atts = atts.offset(1)
     }
-    putc('>' as i32, fp);
+    fputc('>' as i32, fp);
 }
 
 unsafe extern "C" fn endElement(mut userData: *mut c_void, mut name: *const XML_Char) {
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
-    putc('<' as i32, fp);
-    putc('/' as i32, fp);
+    fputc('<' as i32, fp);
+    fputc('/' as i32, fp);
     fputs(name, fp);
-    putc('>' as i32, fp);
+    fputc('>' as i32, fp);
 }
 
 unsafe extern "C" fn nsattcmp(mut p1: *const c_void, mut p2: *const c_void) -> c_int {
@@ -221,7 +221,7 @@ unsafe extern "C" fn startElementNS(
     let mut p: *mut *const XML_Char = 0 as *mut *const XML_Char;
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
     let mut sep: *const XML_Char = 0 as *const XML_Char;
-    putc('<' as i32, fp);
+    fputc('<' as i32, fp);
     sep = strrchr(name, '\u{1}' as i32);
     if !sep.is_null() {
         fputs(b"n1:\x00".as_ptr() as *const c_char, fp);
@@ -251,7 +251,7 @@ unsafe extern "C" fn startElementNS(
         atts = atts.offset(1);
         name = *fresh1;
         sep = strrchr(name, '\u{1}' as i32);
-        putc(' ' as i32, fp);
+        fputc(' ' as i32, fp);
         if !sep.is_null() {
             fprintf(fp, b"n%d:\x00".as_ptr() as *const c_char, nsi);
             fputs(sep.offset(1isize), fp);
@@ -267,14 +267,14 @@ unsafe extern "C" fn startElementNS(
         }
         atts = atts.offset(1)
     }
-    putc('>' as i32, fp);
+    fputc('>' as i32, fp);
 }
 
 unsafe extern "C" fn endElementNS(mut userData: *mut c_void, mut name: *const XML_Char) {
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
     let mut sep: *const XML_Char = 0 as *const XML_Char;
-    putc('<' as i32, fp);
-    putc('/' as i32, fp);
+    fputc('<' as i32, fp);
+    fputc('/' as i32, fp);
     sep = strrchr(name, '\u{1}' as i32);
     if !sep.is_null() {
         fputs(b"n1:\x00".as_ptr() as *const c_char, fp);
@@ -282,7 +282,7 @@ unsafe extern "C" fn endElementNS(mut userData: *mut c_void, mut name: *const XM
     } else {
         fputs(name, fp);
     }
-    putc('>' as i32, fp);
+    fputc('>' as i32, fp);
 }
 
 unsafe extern "C" fn processingInstruction(
@@ -291,13 +291,13 @@ unsafe extern "C" fn processingInstruction(
     mut data: *const XML_Char,
 ) {
     let mut fp: *mut FILE = (*(userData as *mut XmlwfUserData)).fp;
-    putc('<' as i32, fp);
-    putc('?' as i32, fp);
+    fputc('<' as i32, fp);
+    fputc('?' as i32, fp);
     fputs(target, fp);
-    putc(' ' as i32, fp);
+    fputc(' ' as i32, fp);
     fputs(data, fp);
-    putc('?' as i32, fp);
-    putc('>' as i32, fp);
+    fputc('?' as i32, fp);
+    fputc('>' as i32, fp);
 }
 
 unsafe extern "C" fn xcsdup(mut s: *const XML_Char) -> *mut XML_Char {
@@ -431,20 +431,20 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
         if !(**notations.offset(i as isize)).publicId.is_null() {
             fputs(b" PUBLIC \'\x00".as_ptr() as *const c_char, (*data).fp);
             fputs((**notations.offset(i as isize)).publicId, (*data).fp);
-            putc('\'' as i32, (*data).fp);
+            fputc('\'' as i32, (*data).fp);
             if !(**notations.offset(i as isize)).systemId.is_null() {
-                putc(' ' as i32, (*data).fp);
-                putc('\'' as i32, (*data).fp);
+                fputc(' ' as i32, (*data).fp);
+                fputc('\'' as i32, (*data).fp);
                 fputs((**notations.offset(i as isize)).systemId, (*data).fp);
-                putc('\'' as i32, (*data).fp);
+                fputc('\'' as i32, (*data).fp);
             }
         } else if !(**notations.offset(i as isize)).systemId.is_null() {
             fputs(b" SYSTEM \'\x00".as_ptr() as *const c_char, (*data).fp);
             fputs((**notations.offset(i as isize)).systemId, (*data).fp);
-            putc('\'' as i32, (*data).fp);
+            fputc('\'' as i32, (*data).fp);
         }
-        putc('>' as i32, (*data).fp);
-        putc('\n' as i32, (*data).fp);
+        fputc('>' as i32, (*data).fp);
+        fputc('\n' as i32, (*data).fp);
         i += 1
     }
     /* Finally end the DOCTYPE */
@@ -560,7 +560,7 @@ unsafe extern "C" fn nopProcessingInstruction(
 unsafe extern "C" fn markup(mut userData: *mut c_void, mut s: *const XML_Char, mut len: c_int) {
     let mut fp: *mut FILE = (*(*(userData as *mut *mut c_void) as *mut XmlwfUserData)).fp;
     while len > 0 {
-        putc(*s as c_int, fp);
+        fputc(*s as c_int, fp);
         len -= 1;
         s = s.offset(1)
     }
@@ -680,7 +680,7 @@ unsafe extern "C" fn metaProcessingInstruction(
         target,
     );
     characterData(usrData as *mut c_void, data, strlen(data) as c_int);
-    putc('\"' as i32, fp);
+    fputc('\"' as i32, fp);
     metaLocation(parser);
     fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
 }
@@ -691,7 +691,7 @@ unsafe extern "C" fn metaComment(mut userData: *mut c_void, mut data: *const XML
     let mut fp: *mut FILE = (*usrData).fp;
     fputs(b"<comment data=\"\x00".as_ptr() as *const c_char, fp);
     characterData(usrData as *mut c_void, data, strlen(data) as c_int);
-    putc('\"' as i32, fp);
+    fputc('\"' as i32, fp);
     metaLocation(parser);
     fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
 }
@@ -724,7 +724,7 @@ unsafe extern "C" fn metaCharacterData(
     let mut fp: *mut FILE = (*data).fp;
     fputs(b"<chars str=\"\x00".as_ptr() as *const c_char, fp);
     characterData(data as *mut c_void, s, len);
-    putc('\"' as i32, fp);
+    fputc('\"' as i32, fp);
     metaLocation(parser);
     fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
 }
@@ -782,7 +782,7 @@ unsafe extern "C" fn metaNotationDecl(
     if !systemId.is_null() {
         fputs(b" system=\"\x00".as_ptr() as *const c_char, fp);
         characterData(data as *mut c_void, systemId, strlen(systemId) as c_int);
-        putc('\"' as i32, fp);
+        fputc('\"' as i32, fp);
     }
     metaLocation(parser);
     fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
@@ -809,7 +809,7 @@ unsafe extern "C" fn metaEntityDecl(
             entityName,
         );
         metaLocation(parser);
-        putc('>' as i32, fp);
+        fputc('>' as i32, fp);
         characterData(data as *mut c_void, value, value_length);
         fputs(b"</entity/>\n\x00".as_ptr() as *const c_char, fp);
     } else if !notationName.is_null() {
@@ -827,7 +827,7 @@ unsafe extern "C" fn metaEntityDecl(
         }
         fputs(b" system=\"\x00".as_ptr() as *const c_char, fp);
         characterData(data as *mut c_void, systemId, strlen(systemId) as c_int);
-        putc('\"' as i32, fp);
+        fputc('\"' as i32, fp);
         fprintf(
             fp,
             b" notation=\"%s\"\x00".as_ptr() as *const c_char,
@@ -850,7 +850,7 @@ unsafe extern "C" fn metaEntityDecl(
         }
         fputs(b" system=\"\x00".as_ptr() as *const c_char, fp);
         characterData(data as *mut c_void, systemId, strlen(systemId) as c_int);
-        putc('\"' as i32, fp);
+        fputc('\"' as i32, fp);
         metaLocation(parser);
         fputs(b"/>\n\x00".as_ptr() as *const c_char, fp);
     };

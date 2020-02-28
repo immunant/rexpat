@@ -39,7 +39,6 @@ pub use crate::ascii_h::{
     ASCII_N, ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_RPAREN, ASCII_S, ASCII_SLASH,
     ASCII_T, ASCII_X, ASCII_Y,
 };
-pub use crate::expat_config_h::XML_CONTEXT_BYTES;
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
 pub use crate::expat_h::{
     XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
@@ -61,7 +60,7 @@ pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
-pub use crate::stddef_h::{NULL};
+pub use crate::stddef_h::NULL;
 pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
@@ -77,6 +76,8 @@ use std::convert::TryInto;
 use std::mem;
 use std::ops;
 use std::ptr;
+
+pub const XML_CONTEXT_BYTES: c_int = 1024;
 
 #[derive(Copy, Clone)]
 pub struct ExpatBufRef<'a, T = c_char>(&'a [T]);

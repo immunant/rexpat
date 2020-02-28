@@ -36,9 +36,6 @@ extern "C" {
     #[no_mangle]
     #[link_name = "__stdinp"]
     pub static mut stdin: *mut FILE;
-
-    #[no_mangle]
-    pub fn putc(__c: c_int, __stream: *mut FILE) -> c_int;
 }
 
 // We never touch the fields using these types, and they're all hidden behind pointers.
