@@ -1,12 +1,11 @@
 use crate::expat_external_h::XML_Char;
 use crate::lib::xmlparse::{ICHAR, ExpatBufRef, ExpatBufRefMut, XmlConvert};
-use crate::lib::xmltok::{ENCODING, XML_CONVERT_INPUT_INCOMPLETE, XML_CONVERT_COMPLETED};
-use crate::stddef_h::size_t;
+use crate::lib::xmltok::{ENCODING, XML_Convert_Result};
 
 use bumpalo::Bump;
 use bumpalo::collections::vec::Vec as BumpVec;
 use fallible_collections::FallibleBox;
-use libc::{INT_MAX, c_int, c_uint, c_ulong};
+use libc::{INT_MAX, c_int, c_uint, c_ulong, size_t};
 
 use std::cell::RefCell;
 use std::convert::TryInto;
@@ -35,18 +34,18 @@ fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
      ** For a + b * c we check b * c in isolation first, so that addition of a
      ** on top has no chance of making us accept a small non-negative number
      */
-    let stretch: size_t = ::std::mem::size_of::<XML_Char>() as c_ulong; /* can be 4 bytes */
+    let stretch = ::std::mem::size_of::<XML_Char>() as u64; /* can be 4 bytes */
     if blockSize <= 0 {
-        return 0u64;
+        return 0;
     }
     if blockSize > (INT_MAX as c_ulong).wrapping_div(stretch) as c_int {
-        return 0u64;
+        return 0;
     }
     let stretchedBlockSize: c_int = blockSize * stretch as c_int;
     let bytesToAllocate: c_int =
-        (12u64).wrapping_add(stretchedBlockSize as c_uint as c_ulong) as c_int;
+        (12 as c_ulong).wrapping_add(stretchedBlockSize as c_uint as c_ulong) as c_int;
     if bytesToAllocate < 0 {
-        return 0u64;
+        return 0;
     }
     bytesToAllocate as size_t
 }
@@ -270,7 +269,7 @@ impl StringPool {
                 convert_res
             });
 
-            if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
+            if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
                 break;
             }
         }
