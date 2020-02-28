@@ -9193,24 +9193,22 @@ impl<'scf> XML_ParserStruct<'scf> {
 unsafe extern "C" fn copyString(
     mut s: *const XML_Char,
 ) -> *mut XML_Char {
-    let mut charsRequired: c_int = 0;
-    let mut result: *mut XML_Char = 0 as *mut XML_Char;
+    let mut charsRequired = 0isize;
     /* First determine how long the string is */
-    while *s.offset(charsRequired as isize) as c_int != 0 {
+    while *s.offset(charsRequired) != 0 {
         charsRequired += 1
     }
     /* Include the terminator */
     charsRequired += 1;
     /* Now allocate space for the copy */
-    result = MALLOC![XML_Char; charsRequired];
+    let result = MALLOC![XML_Char; charsRequired];
     if result.is_null() {
         return NULL as *mut XML_Char;
     }
     /* Copy the original into place */
-    memcpy(
-        result as *mut c_void,
-        s as *const c_void,
-        (charsRequired as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
-    );
+    let n: size_t = (charsRequired as size_t)
+        .checked_mul(::std::mem::size_of::<XML_Char>())
+        .unwrap();
+    memcpy(result as *mut c_void, s as *const c_void, n);
     result
 }
