@@ -48,27 +48,22 @@
 )]
 
 use std::mem;
+use std::convert::TryInto;
 use libc::{exit, free, printf};
 use rexpat::expat_h::XML_ParserStruct;
 use rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
     XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
 };
-use rexpat::stdlib::{fread,};
 use std::ffi::CString;
 use std::ptr::null_mut;
-use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void, FILE, fclose, fopen, fprintf, malloc};
+use libc::{c_char, c_double, c_int, c_long, c_void, FILE, fclose, fopen, fread, fprintf, malloc};
 
 pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
 pub use rexpat::stddef_h::{NULL};
-pub use rexpat::stdlib::{
-    _IO_lock_t, __blkcnt_t, __blksize_t, __clock_t,
-    __dev_t, __gid_t, __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __syscall_slong_t,
-    __time_t, __uid_t, __xstat, clock_t, CLOCKS_PER_SEC, _STAT_VER, _STAT_VER_LINUX,
-};
-use rexpat::stdlib::{clock, stderr};
-pub use libc::{atoi, stat, size_t};
+use rexpat::stdlib::{clock, CLOCKS_PER_SEC, stderr};
+pub use libc::{atoi, stat, size_t, clock_t};
 
 unsafe extern "C" fn usage(mut prog: *const c_char, mut rc: c_int) {
     fprintf(
@@ -146,8 +141,8 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     XMLBuf = malloc(fileAttr.st_size as usize) as *mut c_char;
     fileSize = fread(
         XMLBuf as *mut c_void,
-        ::std::mem::size_of::<c_char>() as c_ulong,
-        fileAttr.st_size as c_ulong,
+        ::std::mem::size_of::<c_char>(),
+        fileAttr.st_size.try_into().unwrap(),
         fd as *mut FILE,
     ) as c_int;
     fclose(fd as *mut FILE);

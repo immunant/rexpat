@@ -52,7 +52,7 @@
 #[cfg(all(feature = "unicode", not(feature = "unicode_wchar_t")))]
 compile_error!("Tests are not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
 
-use crate::stdlib::{stderr, strncmp};
+use crate::stdlib::{stderr};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
@@ -82,13 +82,13 @@ use ::rexpat::lib::xmlparse::{
 use ::rexpat::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::rexpat::stdbool_h::{false_0, true_0};
 pub use ::rexpat::*;
-use ::libc::{free, printf, sprintf, fprintf, strcmp, strlen, malloc, realloc, memcmp, memcpy, EXIT_FAILURE, EXIT_SUCCESS};
+use ::libc::{free, printf, sprintf, fprintf, strcmp, strncmp, strlen, malloc, realloc, memcmp, memcpy, EXIT_FAILURE, EXIT_SUCCESS};
 use ::rexpat::lib::xmlparse::ExpatBufRef;
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::mem::transmute;
 
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, size_t, ptrdiff_t};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, size_t, ptrdiff_t, intptr_t};
 
 pub mod chardata;
 pub mod memcheck;
@@ -126,10 +126,6 @@ pub use crate::expat_h::{
 };
 pub use crate::minicheck_h::{
     tcase_setup_function, tcase_teardown_function, tcase_test_function, CK_NORMAL, CK_SILENT,
-};
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
-    uint64_t, 
 };
 
 /* Test attribute counts, indexing, etc */
@@ -741,7 +737,7 @@ unsafe extern "C" fn param_entity_match_handler(
          * going to overflow an int.
          */
         if value_length != strlen(entity_value_to_match) as c_int
-            || strncmp(value, entity_value_to_match, value_length as c_ulong) != 0
+            || strncmp(value, entity_value_to_match, value_length as usize) != 0
         {
             entity_match_flag = ENTITY_MATCH_FAIL
         } else {
@@ -10201,7 +10197,7 @@ unsafe extern "C" fn selective_aborting_default_handler(
 ) {
     let mut match_0: *const XML_Char = userData as *const XML_Char;
     if match_0.is_null()
-        || strlen(match_0) as c_int == len && strncmp(match_0, s, len as c_ulong) == 0
+        || strlen(match_0) as c_int == len && strncmp(match_0, s, len as usize) == 0
     {
         XML_StopParser(g_parser, resumable);
         XML_SetDefaultHandler(
@@ -15421,9 +15417,9 @@ unsafe extern "C" fn test_ns_double_colon_doctype() {
 /* Control variable; the number of times duff_allocator() will successfully
  * allocate */
 
-pub const ALLOC_ALWAYS_SUCCEED: c_int = -(1);
+pub const ALLOC_ALWAYS_SUCCEED: intptr_t = -(1);
 
-pub const REALLOC_ALWAYS_SUCCEED: c_int = -(1);
+pub const REALLOC_ALWAYS_SUCCEED: intptr_t = -(1);
 
 static mut allocation_count: intptr_t = ALLOC_ALWAYS_SUCCEED as intptr_t;
 
@@ -15434,7 +15430,7 @@ unsafe extern "C" fn duff_allocator(mut size: size_t) -> *mut c_void {
     if allocation_count == 0 {
         return ::rexpat::stddef_h::NULL as *mut c_void;
     }
-    if allocation_count != ALLOC_ALWAYS_SUCCEED as c_long {
+    if allocation_count != ALLOC_ALWAYS_SUCCEED {
         allocation_count -= 1
     }
     return malloc(size);
@@ -15445,7 +15441,7 @@ unsafe extern "C" fn duff_reallocator(mut ptr: *mut c_void, mut size: size_t) ->
     if reallocation_count == 0 {
         return ::rexpat::stddef_h::NULL as *mut c_void;
     }
-    if reallocation_count != REALLOC_ALWAYS_SUCCEED as c_long {
+    if reallocation_count != REALLOC_ALWAYS_SUCCEED {
         reallocation_count -= 1
     }
     return realloc(ptr, size);
@@ -16715,13 +16711,13 @@ unsafe extern "C" fn external_entity_dbl_handler(
             return XML_Status::ERROR as c_int;
         }
         /* Stash the number of calls in the user data */
-        XML_SetUserData(parser, (10000i64 - allocation_count) as *mut c_void);
+        XML_SetUserData(parser, (10000 - allocation_count) as *mut c_void);
     } else {
         text = b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         /* Try at varying levels to exercise more code paths */
         i = 0;
         while i < max_alloc_count {
-            allocation_count = callno + i as c_long;
+            allocation_count = callno + i as isize;
             new_parser = XML_ExternalEntityParserCreate(
                 parser,
                 context,

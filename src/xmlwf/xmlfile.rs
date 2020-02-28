@@ -1,6 +1,5 @@
 use crate::readfilemap::filemap;
-use crate::stdlib::{read};
-use ::libc::{close, exit, free, open, strcpy, strrchr, strlen, malloc};
+use ::libc::{close, exit, free, read, open, strcpy, strrchr, strlen, malloc};
 use libc::{c_char, c_int, c_uint, c_void, size_t};
 pub const XML_MAP_FILE: c_int = 0o1;
 
@@ -17,10 +16,7 @@ pub use crate::lib::xmlparse::{
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
 pub use crate::stddef_h::NULL;
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __ssize_t,
-    ssize_t, stderr, stdout
-};
+pub use crate::stdlib::{stderr, stdout};
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
 use ::libc;
 pub use ::libc::{perror, fprintf, O_RDONLY};

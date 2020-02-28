@@ -57,9 +57,6 @@ pub use ::rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use ::rexpat::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler,
 };
-pub use ::rexpat::stdlib::{
-    _IO_lock_t, __off64_t, __off_t,
-};
 
 /* Read an XML document from standard input and print an element
    outline on standard output.

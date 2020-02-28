@@ -1,12 +1,7 @@
 pub use crate::filemap_h::XML_MAX_CHUNK_LEN;
-pub use crate::stdlib::{
-    _IO_lock_t, __blkcnt_t, __blksize_t, __dev_t, __gid_t,
-    __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __ssize_t, __syscall_slong_t, __time_t,
-    __uid_t, ssize_t
-};
-use crate::stdlib::{read, stderr};
+use crate::stdlib::{stderr};
 pub use crate::xmltchar_h::{ftprintf, topen, tperror};
-use ::libc::{self, close, free, open, fstat, fprintf, perror, stat, malloc, S_IFREG, S_IFMT, size_t};
+use ::libc::{self, close, free, open, read, fstat, fprintf, perror, stat, malloc, S_IFREG, S_IFMT, size_t, ssize_t};
 pub use ::libc::{timespec, INT_MAX, O_RDONLY};
 use libc::{c_char, c_int, c_long, c_void};
 /*

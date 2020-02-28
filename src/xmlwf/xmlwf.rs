@@ -33,7 +33,7 @@ use ::rexpat::lib::xmlparse::{
     XML_SetNotationDeclHandler, XML_SetParamEntityParsing, XML_SetProcessingInstructionHandler,
     XML_SetUnknownEncodingHandler, XML_SetUserData, XML_UseParserAsHandlerArg,
 };
-use ::libc::{exit, malloc, free, memcpy, remove, strlen, strcat, strchr, strcmp, strcpy, strrchr, _IOFBF};
+use ::libc::{exit, malloc, free, memcpy, remove, strlen, strcat, strchr, strcmp, strcpy, strrchr, setvbuf, fputs, _IOFBF};
 
 use ::std::mem::transmute;
 
@@ -53,10 +53,7 @@ pub use crate::expat_h::{
     XML_StartCdataSectionHandler, XML_StartDoctypeDeclHandler, XML_StartElementHandler,
     XML_StartNamespaceDeclHandler, XML_UnknownEncodingHandler,
 };
-pub use crate::stdlib::{
-    _IO_lock_t, __compar_fn_t, __off64_t, __off_t, 
-    fputs, putc, setvbuf, stderr, stdout,
-};
+pub use crate::stdlib::{putc, stderr, stdout};
 pub use crate::xmltchar_h::{fputts, puttc, tcscat, tcschr, tcscmp, tfopen, tremove};
 
 #[repr(C)]

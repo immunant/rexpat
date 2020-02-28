@@ -76,8 +76,8 @@ pub struct TCase {
 
 pub use crate::stddef_h::{NULL};
 pub use crate::stdlib::{
-    _IO_lock_t, __jmp_buf, __jmp_buf_tag, __off64_t,
-    __off_t, __sigset_t, _setjmp, jmp_buf, longjmp,
+    __jmp_buf, __jmp_buf_tag,
+    __sigset_t, _setjmp, jmp_buf, longjmp,
 };
 use ::libc;
 
