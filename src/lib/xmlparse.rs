@@ -3650,24 +3650,30 @@ impl<'scf> XML_ParserStruct<'scf> {
                             reportDefault(self, enc_type, buf.with_end(next));
                         }
                     } else {
-                        let name = (*dtd).pool.store_c_string(
+                        let successful = (*dtd).pool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let name = match name {
-                            Some(name) => name,
-                            None => return XML_Error::NO_MEMORY,
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
                         };
-                        let entity = hash_lookup!((*dtd).generalEntities, name.as_ptr());
-                        (*dtd).pool.clear_current();
+                        let entity = (*dtd).pool.current_slice(|name| {
+                            hash_lookup!((*dtd).generalEntities, name.as_ptr())
+                        });
+
                         /* First, determine if a check for an existing declaration is needed;
                            if yes, check that the entity exists, and that it is internal,
                            otherwise call the skipped entity or default handler.
                         */
+                        // REXPAT: Moved `clear_current` from outside the following branches
+                        // into them to avoid a use-after-free when the 2nd branch uses the
+                        // `name` pointer again.
                         if !(*dtd).hasParamEntityRefs || (*dtd).standalone {
+                            (*dtd).pool.clear_current();
+
                             if entity.is_null() {
                                 return XML_Error::UNDEFINED_ENTITY;
                             } else {
@@ -3677,7 +3683,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                             current_block_275 = 10067844863897285902;
                         } else if entity.is_null() {
-                            let skippedHandlerRan = self.m_handlers.skippedEntity(name.as_ptr(), 0);
+                            let skippedHandlerRan = (*dtd).pool.current_slice(|name| {
+                                self.m_handlers.skippedEntity(name.as_ptr(), 0)
+                            });
+
+                            (*dtd).pool.clear_current();
 
                             if !skippedHandlerRan && self.m_handlers.hasDefault() {
                                 if !cfg!(feature = "mozilla") {
@@ -3689,6 +3699,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                             current_block_275 = 17939951368883298147;
                         } else {
+                            (*dtd).pool.clear_current();
                             current_block_275 = 10067844863897285902;
                         }
                         match current_block_275 {
@@ -3834,22 +3845,22 @@ impl<'scf> XML_ParserStruct<'scf> {
                     let mut result_1: XML_Error = XML_Error::NONE;
                     let mut bindings: *mut BINDING = NULL as *mut BINDING;
                     let mut noElmHandlers = true;
-                    let mut name_0: TAG_NAME = TAG_NAME {
-                        str_0: 0 as *const XML_Char,
+                    let mut name_0 = TAG_NAME {
+                        str_0: ptr::null(),
                         localPart: 0 as *const XML_Char,
                         prefix: 0 as *const XML_Char,
                         strLen: 0,
                         uriLen: 0,
                         prefixLen: 0,
                     };
-                    let str_0 = self.m_tempPool.store_c_string(
+                    let successful = self.m_tempPool.store_c_string(
                         enc,
                         rawName.with_len((*enc).nameLength(rawName.as_ptr()) as usize),
                     );
-                    name_0.str_0 = match str_0 {
-                        Some(s) => s.as_ptr(),
-                        None => return XML_Error::NO_MEMORY,
-                    };
+                    if !successful {
+                        return XML_Error::NO_MEMORY;
+                    }
+                    name_0.str_0 = self.m_tempPool.finish_string().as_ptr();
                     result_1 = self.storeAtts(enc_type, buf, &mut name_0, &mut bindings);
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
@@ -4293,7 +4304,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     enc_type,
                     isCdata,
                     ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd),
-                    &mut self.m_tempPool,
+                    &self.m_tempPool,
                 );
                 if result as u64 != 0 {
                     return result;
@@ -4301,11 +4312,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                 self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr()));
             } else {
                 /* the value did not need normalizing */
-                let fresh10 = match self.m_tempPool.store_c_string(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
-                    Some(string) => string,
-                    None => return XML_Error::NO_MEMORY,
-                };
-                self.m_atts.push(Attribute::new((*attId).name.name(), fresh10.as_ptr()));
+                if !self.m_tempPool.store_c_string(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
+                    return XML_Error::NO_MEMORY;
+                }
+                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr()));
             }
             /* handle prefixed attribute names */
             if !(*attId).prefix.is_null() {
@@ -5185,10 +5195,10 @@ impl<'scf> XML_ParserStruct<'scf> {
         buf: ExpatBufRef,
     ) -> XML_Error {
         let mut encodingName: *const c_char = NULL as *const c_char;
-        let mut storedEncName = None;
+        let mut storedEncName = ptr::null();
         let mut newEncoding: Option<*const ENCODING> = None;
         let mut version_buf = None;
-        let mut storedversion = None;
+        let mut storedversion = ptr::null();
         let mut standalone: c_int = -(1);
         if if self.m_ns as c_int != 0 {
             super::xmltok::XmlParseXmlDeclNS
@@ -5220,29 +5230,33 @@ impl<'scf> XML_ParserStruct<'scf> {
         }
         if self.m_handlers.hasXmlDecl() {
             if !encodingName.is_null() {
-                storedEncName = self.m_temp2Pool.store_c_string(
+                let successful = self.m_temp2Pool.store_c_string(
                     &*self.m_encoding,
                     ExpatBufRef::new(
                         encodingName,
                         encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
                     ),
                 );
-                if storedEncName.is_none() {
+                if !successful {
                     return XML_Error::NO_MEMORY;
                 }
+
+                storedEncName = self.m_temp2Pool.current_start();
             }
             if let Some(version_buf) = version_buf {
-                storedversion = self.m_temp2Pool.store_c_string(
+                let successful = self.m_temp2Pool.store_c_string(
                     &*self.m_encoding,
                     version_buf,
                 );
-                if storedversion.is_none() {
+                if !successful {
                     return XML_Error::NO_MEMORY;
                 }
+
+                storedversion = self.m_temp2Pool.current_start();
             }
             self.m_handlers.xmlDecl(
-                storedversion.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
-                storedEncName.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                storedversion,
+                storedEncName,
                 standalone,
             );
         } else if self.m_handlers.hasDefault() {
@@ -5264,24 +5278,22 @@ impl<'scf> XML_ParserStruct<'scf> {
                 self.m_encoding = newEncoding
             } else if !encodingName.is_null() {
                 let mut result: XML_Error = XML_Error::NONE;
-                let storedEncName = match storedEncName {
-                    Some(storedEncName) => storedEncName,
-                    None => {
-                        let storedEncName = self.m_temp2Pool.store_c_string(
-                            &*self.m_encoding,
-                            ExpatBufRef::new(
-                                encodingName,
-                                encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
-                            ),
-                        );
+                if storedEncName.is_null() {
+                    let successful = self.m_temp2Pool.store_c_string(
+                        &*self.m_encoding,
+                        ExpatBufRef::new(
+                            encodingName,
+                            encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
+                        ),
+                    );
 
-                        match storedEncName {
-                            Some(storedEncName) => storedEncName,
-                            None => return XML_Error::NO_MEMORY,
-                        }
-                    },
+                    if !successful {
+                        return XML_Error::NO_MEMORY;
+                    }
+
+                    storedEncName = self.m_temp2Pool.current_start();
                 };
-                result = self.m_handlers.handleUnknownEncoding(storedEncName.as_ptr(), self.m_ns, &mut self.m_encoding);
+                result = self.m_handlers.handleUnknownEncoding(storedEncName, self.m_ns, &mut self.m_encoding);
                 self.m_temp2Pool.clear();
                 if result == XML_Error::UNKNOWN_ENCODING {
                     self.m_eventPtr = encodingName
@@ -5289,7 +5301,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 return result;
             }
         }
-        if !storedEncName.is_none() || !storedversion.is_none() {
+        if !storedEncName.is_null() || !storedversion.is_null() {
             self.m_temp2Pool.clear();
         }
         XML_Error::NONE
@@ -5671,13 +5683,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::DOCTYPE_NAME => {
                     if self.m_handlers.hasStartDoctypeDecl() {
-                        self.m_doctypeName = match self.m_tempPool.store_c_string(enc, buf.with_end(next)) {
-                            Some(name) => name.as_ptr(),
-                            None => ptr::null(),
-                        };
-                        if self.m_doctypeName.is_null() {
+                        if !self.m_tempPool.store_c_string(enc, buf.with_end(next)) {
+                            self.m_doctypeName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
+                        self.m_doctypeName = self.m_tempPool.finish_string().as_ptr();
                         self.m_doctypePubid = NULL as *const XML_Char;
                         handleDefault = false
                     }
@@ -5725,19 +5735,19 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
                             return XML_Error::PUBLICID;
                         }
-                        let mut pubIdBuf = self.m_tempPool.store_c_string(
+                        let successful = self.m_tempPool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let mut pubId = match pubIdBuf {
-                            Some(id) => id,
-                            None => return XML_Error::NO_MEMORY,
-                        };
-                        normalizePublicId(pubId.as_mut_ptr());
-                        self.m_doctypePubid = pubId.as_ptr();
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        let pub_id = self.m_tempPool.finish_string();
+                        normalizePublicId(pub_id.as_mut_ptr());
+                        self.m_doctypePubid = pub_id.as_ptr();
                         handleDefault = false;
                         current_block = 9007411418488376351;
                     } else {
@@ -5992,7 +6002,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize),
-                            &mut (*dtd).pool,
+                            &(*dtd).pool,
                         );
                         if result_1 as u64 != 0 {
                             return result_1;
@@ -6078,20 +6088,18 @@ impl<'scf> XML_ParserStruct<'scf> {
                     /* XML_DTD */
                     (*dtd).hasParamEntityRefs = true;
                     if self.m_handlers.hasStartDoctypeDecl() {
-                        let sysId = self.m_tempPool.store_c_string(
+                        let successful = self.m_tempPool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        self.m_doctypeSysid = match sysId {
-                            Some(id) => id.as_ptr(),
-                            None => ptr::null(),
-                        };
-                        if self.m_doctypeSysid.is_null() {
+                        if !successful {
+                            self.m_doctypeSysid = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
+                        self.m_doctypeSysid = self.m_tempPool.finish_string().as_ptr();
 
                         handleDefault = false
                     } else {
@@ -6145,13 +6153,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::ENTITY_NOTATION_NAME => {
                     if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        (*self.m_declEntity).notation = match (*dtd).pool.store_c_string(enc, buf.with_end(next)) {
-                            Some(string) => string.as_ptr(),
-                            None => ptr::null(),
-                        };
-                        if (*self.m_declEntity).notation.is_null() {
+                        if !(*dtd).pool.store_c_string(enc, buf.with_end(next)) {
+                            (*self.m_declEntity).notation = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
+                        (*self.m_declEntity).notation = (*dtd).pool.finish_string().as_ptr();
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
@@ -6183,20 +6189,19 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if (*enc).predefinedEntityName(buf.with_end(next)) != 0 {
                         self.m_declEntity = NULL as *mut ENTITY
                     } else if (*dtd).keepProcessing {
-                        let mut name = match (*dtd).pool.store_c_string(enc, buf.with_end(next)) {
-                            Some(name) => name,
-                            None => return XML_Error::NO_MEMORY,
-                        };
-                        self.m_declEntity = hash_insert!(
+                        if !(*dtd).pool.store_c_string(enc, buf.with_end(next)) {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        self.m_declEntity = (*dtd).pool.current_slice(|name| hash_insert!(
                             &mut (*dtd).generalEntities,
                             name.as_ptr(),
                             ENTITY
-                        );
+                        ));
                         if self.m_declEntity.is_null() {
                             // FIXME: this never happens in Rust, it just panics
                             return XML_Error::NO_MEMORY;
                         }
-                        if (*self.m_declEntity).name != name.as_ptr() {
+                        if (*self.m_declEntity).name != (*dtd).pool.current_start() {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
@@ -6222,19 +6227,18 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::PARAM_ENTITY_NAME => {
                     if (*dtd).keepProcessing {
-                        let mut name_0 = match (*dtd).pool.store_c_string(enc, buf.with_end(next)) {
-                            Some(name) => name,
-                            None => return XML_Error::NO_MEMORY,
-                        };
-                        self.m_declEntity = hash_insert!(
+                        if !(*dtd).pool.store_c_string(enc, buf.with_end(next)) {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        self.m_declEntity = (*dtd).pool.current_slice(|name_0| hash_insert!(
                             &mut (*dtd).paramEntities,
                             name_0.as_ptr(),
                             ENTITY
-                        );
+                        ));
                         if self.m_declEntity.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        if (*self.m_declEntity).name != name_0.as_ptr() {
+                        if (*self.m_declEntity).name != (*dtd).pool.current_start() {
                             (*dtd).pool.clear_current();
                             self.m_declEntity = NULL as *mut ENTITY
                         } else {
@@ -6261,13 +6265,11 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declNotationPublicId = NULL as *const XML_Char;
                     self.m_declNotationName = NULL as *const XML_Char;
                     if self.m_handlers.hasNotationDecl() {
-                        self.m_declNotationName = match self.m_tempPool.store_c_string(enc, buf.with_end(next)) {
-                            Some(s) => s.as_ptr(),
-                            None => ptr::null(),
-                        };
-                        if self.m_declNotationName.is_null() {
+                        if !self.m_tempPool.store_c_string(enc, buf.with_end(next)) {
+                            self.m_declNotationName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
+                        self.m_declNotationName = self.m_tempPool.finish_string().as_ptr();
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
@@ -6278,17 +6280,17 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     if !self.m_declNotationName.is_null() {
                         /* means m_notationDeclHandler != NULL */
-                        let mut tem_buf0 = self.m_tempPool.store_c_string(
+                        let successful = self.m_tempPool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let mut tem_0 = match tem_buf0 {
-                            Some(tem_0) => tem_0,
-                            None => return XML_Error::NO_MEMORY,
-                        };
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        let tem_0 = self.m_tempPool.finish_string();
                         normalizePublicId(tem_0.as_mut_ptr());
                         self.m_declNotationPublicId = tem_0.as_mut_ptr();
                         handleDefault = false
@@ -6299,24 +6301,23 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if !self.m_declNotationName.is_null()
                         && self.m_handlers.hasNotationDecl()
                     {
-                        let mut systemId = self.m_tempPool.store_c_string(
+                        let successful = self.m_tempPool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let systemId = match systemId {
-                            Some(id) => id,
-                            None => return XML_Error::NO_MEMORY,
-                        };
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
+                        }
                         *eventEndPP = buf.as_ptr();
-                        self.m_handlers.notationDecl(
+                        self.m_tempPool.current_slice(|systemId| self.m_handlers.notationDecl(
                             self.m_declNotationName,
                             self.m_curBase,
                             systemId.as_ptr(),
                             self.m_declNotationPublicId,
-                        );
+                        ));
                         handleDefault = false
                     }
                     self.m_tempPool.clear();
@@ -6462,23 +6463,24 @@ impl<'scf> XML_ParserStruct<'scf> {
                         current_block = 10770532911212200937;
                     } else {
                         let mut entity_1: *mut ENTITY = 0 as *mut ENTITY;
-                        let name_1 = (*dtd).pool.store_c_string(
+                        let successful = (*dtd).pool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let name_1 = match name_1 {
-                            Some(name) => name,
-                            None => return XML_Error::NO_MEMORY,
-                        };
-                        entity_1 = hash_lookup!((*dtd).paramEntities, name_1.as_ptr());
-                        (*dtd).pool.clear_current();
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        entity_1 = (*dtd).pool.current_slice(|name_1| hash_lookup!((*dtd).paramEntities, name_1.as_ptr()));
                         /* first, determine if a check for an existing declaration is needed;
                         if yes, check that the entity exists, and that it is internal,
                         otherwise call the skipped entity handler
                          */
+                        // REXPAT: Moved `clear_current` from outside the following branches
+                        // into them to avoid a use-after-free when the 2nd branch uses the
+                        // `name` pointer again.
                         if self.m_prologState.documentEntity != 0
                             && (if (*dtd).standalone {
                                 self.m_openInternalEntities.is_null()
@@ -6486,6 +6488,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 !(*dtd).hasParamEntityRefs
                             })
                         {
+                            (*dtd).pool.clear_current();
                             if entity_1.is_null() {
                                 return XML_Error::UNDEFINED_ENTITY;
                             } else {
@@ -6521,11 +6524,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                             if role == super::xmlrole::XML_ROLE::PARAM_ENTITY_REF
                                 && self.m_handlers.hasSkippedEntity()
                             {
-                                self.m_handlers.skippedEntity(name_1.as_ptr(), 1);
+                                (*dtd).pool.current_slice(|name_1| self.m_handlers.skippedEntity(name_1.as_ptr(), 1));
                                 handleDefault = false
                             }
+                            (*dtd).pool.clear_current();
                             current_block = 1553878188884632965;
                         } else {
+                            (*dtd).pool.clear_current();
                             current_block = 13351260019855268589;
                         }
                         match current_block {
@@ -6745,16 +6750,18 @@ impl<'scf> XML_ParserStruct<'scf> {
                 /* fall through */
                 {
                     if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        (*self.m_declEntity).systemId = (*dtd).pool.store_c_string(
+                        let successful = (*dtd).pool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize),
-                        ).map(|s| s.as_ptr()).unwrap_or(ptr::null());
-                        if (*self.m_declEntity).systemId.is_null() {
+                        );
+                        if !successful {
+                            (*self.m_declEntity).systemId = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
+                        (*self.m_declEntity).systemId = (*dtd).pool.finish_string().as_ptr();
                         (*self.m_declEntity).base = self.m_curBase;
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
@@ -6844,17 +6851,17 @@ impl<'scf> XML_ParserStruct<'scf> {
             match current_block {
                 9007411418488376351 => {
                     if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        let tem = (*dtd).pool.store_c_string(
+                        let successful = (*dtd).pool.store_c_string(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        let mut tem = match tem {
-                            Some(tem) => tem,
-                            None => return XML_Error::NO_MEMORY,
-                        };
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        let mut tem = (*dtd).pool.finish_string();
                         normalizePublicId(tem.as_mut_ptr());
                         (*self.m_declEntity).publicId = tem.as_ptr();
                         /* Don't suppress the default handler if we fell through from
@@ -7159,7 +7166,7 @@ unsafe extern "C" fn storeAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: &mut StringPool,
+    mut pool: &StringPool,
 ) -> XML_Error {
     let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, buf, pool);
     if result as u64 != 0 {
@@ -7179,7 +7186,7 @@ unsafe extern "C" fn appendAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: &mut StringPool,
+    mut pool: &StringPool,
 ) -> XML_Error {
     let dtd: *mut DTD = (*parser).m_dtd;
     let enc = (*parser).encoding(enc_type);
@@ -7263,19 +7270,20 @@ unsafe extern "C" fn appendAttributeValue(
                         return XML_Error::NO_MEMORY;
                     }
                 } else {
-                    let name = (*parser).m_temp2Pool.store_c_string(
+                    let successful = (*parser).m_temp2Pool.store_c_string(
                         enc,
                         buf
                             .inc_start((*enc).minBytesPerChar() as isize)
                             .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
-                    let name = match name {
-                        Some(name) => name,
-                        None => return XML_Error::NO_MEMORY,
-                    };
+                    if !successful {
+                        return XML_Error::NO_MEMORY;
+                    }
 
-                    let entity = hash_lookup!((*dtd).generalEntities, name.as_ptr());
+                    let entity = (*parser).m_temp2Pool.current_slice(|name| {
+                        hash_lookup!((*dtd).generalEntities, name.as_ptr())
+                    });
 
                     (*parser).m_temp2Pool.clear_current();
 
@@ -7439,18 +7447,20 @@ unsafe extern "C" fn storeEntityValue(
             super::xmltok::XML_TOK::PARAM_ENTITY_REF => {
                 if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
                     let mut entity: *mut ENTITY = 0 as *mut ENTITY;
-                    let name = (*parser).m_tempPool.store_c_string(
+                    let successful = (*parser).m_tempPool.store_c_string(
                         enc,
                         entityTextBuf
                             .inc_start((*enc).minBytesPerChar() as isize)
                             .with_end(next)
                             .dec_end((*enc).minBytesPerChar() as usize),
                     );
-                    if name.is_none() {
+                    if !successful {
                         result = XML_Error::NO_MEMORY;
                         break;
                     } else {
-                        entity = hash_lookup!((*dtd).paramEntities, name.unwrap().as_ptr());
+                        entity = (*parser).m_tempPool.current_slice(|name| {
+                            hash_lookup!((*dtd).paramEntities, name.as_ptr())
+                        });
                         (*parser).m_tempPool.clear_current();
                         if entity.is_null() {
                             /* not a well-formedness error - see XML 1.0: WFC Entity Declared */
@@ -7667,11 +7677,13 @@ unsafe extern "C" fn reportProcessingInstruction(
     let enc = (*parser).encoding(enc_type);
     buf = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
     let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as isize);
-    let target = match (*parser).m_tempPool.store_c_string(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize)) {
-        Some(target) => target,
-        None => return 0,
-    };
-    let data = (*parser).m_tempPool.store_c_string(
+    let successful = (*parser).m_tempPool.store_c_string(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize));
+
+    if !successful {
+        return 0;
+    }
+    let target = (*parser).m_tempPool.finish_string();
+    let successful = (*parser).m_tempPool.store_c_string(
         enc,
         // TODO(SJC): fix this ugliness
         ExpatBufRef::new(
@@ -7679,12 +7691,13 @@ unsafe extern "C" fn reportProcessingInstruction(
             tem.end().offset(-(((*enc).minBytesPerChar() * 2) as isize)),
         ),
     );
-    let mut data = match data {
-        Some(data) => data,
-        None => return 0,
-    };
-    normalizeLines(&mut data);
-    (*parser).m_handlers.processingInstruction(target.as_ptr(), data.as_ptr());
+    if !successful {
+        return 0;
+    }
+    (*parser).m_tempPool.current_mut_slice(|data| {
+        normalizeLines(data);
+        (*parser).m_handlers.processingInstruction(target.as_ptr(), data.as_ptr());
+    });
     (*parser).m_tempPool.clear();
     1
 }
@@ -7701,17 +7714,18 @@ unsafe extern "C" fn reportComment(
         return 1;
     }
     let enc = (*parser).encoding(enc_type);
-    let data = (*parser).m_tempPool.store_c_string(
+    let successful = (*parser).m_tempPool.store_c_string(
         enc,
         buf.inc_start(((*enc).minBytesPerChar() * 4) as isize)
             .dec_end(((*enc).minBytesPerChar() * 3) as usize),
     );
-    let mut data = match data {
-        Some(data) => data,
-        None => return 0,
+    if !successful {
+        return 0;
     };
-    normalizeLines(&mut data);
-    (*parser).m_handlers.comment(data.as_ptr());
+    (*parser).m_tempPool.current_mut_slice(|data| {
+        normalizeLines(data);
+        (*parser).m_handlers.comment(data.as_ptr());
+    });
     (*parser).m_tempPool.clear();
     1
 }
@@ -7874,26 +7888,26 @@ impl<'scf> XML_ParserStruct<'scf> {
             return NULL as *mut ATTRIBUTE_ID;
         }
         let enc = self.encoding(enc_type);
-        let mut name = match (*dtd).pool.store_c_string(enc, buf) {
-            Some(name) => name,
-            None => return NULL as *mut ATTRIBUTE_ID,
-        };
-        let mut name = &mut *name;
+        if !(*dtd).pool.store_c_string(enc, buf) {
+            return NULL as *mut ATTRIBUTE_ID;
+        }
+        // let mut name = &mut *name;
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        let typed_name = TypedAttributeName(name.as_mut_ptr() as *mut XML_Char);
-        name = name.split_at_mut(1).1;
-        let id = hash_insert!(
-            &mut (*dtd).attributeIds,
-            typed_name,
-            ATTRIBUTE_ID
-        );
+        let id = (*dtd).pool.current_mut_slice(|name| {
+            let typed_name = TypedAttributeName(name.as_mut_ptr() as *mut XML_Char);
+            hash_insert!(
+                &mut (*dtd).attributeIds,
+                typed_name,
+                ATTRIBUTE_ID
+            )
+        });
         if id.is_null() {
             return NULL as *mut ATTRIBUTE_ID;
         }
-        if (*id).name.name() != name.as_mut_ptr() as *mut XML_Char {
+        if (*id).name.name() != (*dtd).pool.current_start().add(1) as *mut XML_Char {
             (*dtd).pool.clear_current()
         } else {
-            (*dtd).pool.finish_string();
+            let name = (*dtd).pool.finish_string().split_at_mut(1).1;
             if self.m_ns {
                 if name[0] == ASCII_x as XML_Char
                 && name[1] == ASCII_m as XML_Char
@@ -8867,20 +8881,19 @@ impl<'scf> XML_ParserStruct<'scf> {
     ) -> *mut ELEMENT_TYPE {
         let dtd: *mut DTD = self.m_dtd;
         let enc = self.encoding(enc_type);
-        let mut name = match (*dtd).pool.store_c_string(enc, buf) {
-            Some(name) => name,
-            None => return NULL as *mut ELEMENT_TYPE,
-        };
-        let ret = hash_insert!(
+        if !(*dtd).pool.store_c_string(enc, buf) {
+            return NULL as *mut ELEMENT_TYPE;
+        }
+        let ret = (*dtd).pool.current_slice(|name| hash_insert!(
             &mut (*dtd).elementTypes,
             name.as_ptr(),
             ELEMENT_TYPE,
             ELEMENT_TYPE::new
-        );
+        ));
         if ret.is_null() {
             return NULL as *mut ELEMENT_TYPE;
         }
-        if (*ret).name != name.as_ptr() {
+        if (*ret).name != (*dtd).pool.current_start() {
             (*dtd).pool.clear_current();
         } else {
             (*dtd).pool.finish_string();

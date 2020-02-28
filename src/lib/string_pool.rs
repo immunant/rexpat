@@ -1,5 +1,5 @@
 use crate::expat_external_h::XML_Char;
-use crate::lib::xmlparse::{ICHAR, ExpatBufRef, ExpatBufRefMut, XmlConvert};
+use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut, XmlConvert};
 use crate::lib::xmltok::{ENCODING, XML_Convert_Result};
 
 use bumpalo::Bump;
@@ -10,7 +10,6 @@ use libc::{INT_MAX, c_int, c_uint, c_ulong, size_t};
 use std::cell::RefCell;
 use std::convert::TryInto;
 use std::mem::swap;
-use std::ptr;
 
 pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
 
@@ -140,6 +139,15 @@ impl StringPool {
         self.inner().rent(|v| callback(v.borrow().as_slice()))
     }
 
+    /// Call callback with a mutable buffer of the current BumpVec. This must
+    /// be a callback to ensure that we don't (safely) borrow the slice for
+    /// longer than it stays vaild.
+    pub(crate) fn current_mut_slice<F, R>(&self, mut callback: F) -> R
+        where F: FnMut(&mut [XML_Char]) -> R
+    {
+        self.inner().rent(|v| callback(v.borrow_mut().as_mut_slice()))
+    }
+
     /// Unsafe temporary version of `current_slice()`. This needs to be removed
     /// when callers are made safe.
     pub(crate) unsafe fn current_start(&self) -> *const XML_Char {
@@ -209,15 +217,15 @@ impl StringPool {
         &self,
         enc: &ENCODING,
         buf: ExpatBufRef,
-    ) -> Option<&mut [XML_Char]> {
+    ) -> bool {
         if !self.append(enc, buf) {
-            return None;
+            return false;
         }
         if !self.append_char('\0' as XML_Char) {
-            return None;
+            return false;
         }
 
-        Some(self.finish_string())
+        true
     }
 
     pub(crate) fn append(
@@ -433,7 +441,9 @@ fn test_store_c_string() {
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
     };
-    let string = pool.store_c_string(enc, read_buf).unwrap();
+    assert!(pool.store_c_string(enc, read_buf));
+
+    let string = pool.finish_string();
 
     assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
@@ -451,7 +461,9 @@ fn test_store_c_string() {
     // Force reallocation:
     pool.inner().rent(|v| v.borrow_mut().resize(2, 0));
 
-    let s = pool.store_c_string(enc, read_buf).unwrap();
+    assert!(pool.store_c_string(enc, read_buf));
+
+    let s = pool.finish_string();
 
     assert_eq!(s, [A, A, C, D, D, NULL]);
 }
