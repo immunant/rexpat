@@ -179,7 +179,7 @@ impl StringPool {
     }
 
     /// Appends an entire C String to the current BumpVec.
-    pub(crate) unsafe fn appendString(&self, mut s: *const XML_Char) -> bool {
+    pub(crate) unsafe fn append_c_string(&self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
             if !self.append_char(*s) {
                 return false;
@@ -205,7 +205,7 @@ impl StringPool {
         swap(&mut self.0, &mut inner_pool);
     }
 
-    pub(crate) fn storeString(
+    pub(crate) fn store_c_string(
         &self,
         enc: &ENCODING,
         buf: ExpatBufRef,
@@ -277,11 +277,11 @@ impl StringPool {
         true
     }
 
-    pub(crate) unsafe fn copyString(
+    pub(crate) unsafe fn copy_c_string(
         &self,
         mut s: *const XML_Char,
     ) -> Option<&mut [XML_Char]> {
-        // self.appendString(s);?
+        // self.append_c_string(s);?
         loop {
             if !self.append_char(*s) {
                 return None;
@@ -295,7 +295,7 @@ impl StringPool {
         Some(self.finish_string())
     }
 
-    pub(crate) unsafe fn copyStringN(
+    pub(crate) unsafe fn copy_c_string_n(
         &self,
         mut s: *const XML_Char,
         mut n: c_int,
@@ -393,7 +393,7 @@ fn test_append_string() {
     let mut string = [A, B, C, NULL];
 
     unsafe {
-        assert!(pool.appendString(string.as_mut_ptr()));
+        assert!(pool.append_c_string(string.as_mut_ptr()));
     }
 
     pool.current_slice(|s| assert_eq!(s, [A, B, C]));
@@ -409,7 +409,7 @@ fn test_copy_string() {
     pool.current_slice(|s| assert_eq!(s, [A]));
 
     let new_string = unsafe {
-        pool.copyString(S.as_ptr())
+        pool.copy_c_string(S.as_ptr())
     };
 
     assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
@@ -417,14 +417,14 @@ fn test_copy_string() {
     pool.current_slice(|s| assert_eq!(s, [B]));
 
     let new_string2 = unsafe {
-        pool.copyStringN(S.as_ptr(), 4)
+        pool.copy_c_string_n(S.as_ptr(), 4)
     };
 
     assert_eq!(new_string2.unwrap(), [B, C, D, D, C]);
 }
 
 #[test]
-fn test_store_string() {
+fn test_store_c_string() {
     use consts::*;
     use crate::lib::xmlparse::XmlGetInternalEncoding;
 
@@ -433,7 +433,7 @@ fn test_store_string() {
     let read_buf = unsafe {
         ExpatBufRef::new(S.as_ptr(), S.as_ptr().add(3))
     };
-    let string = pool.storeString(enc, read_buf).unwrap();
+    let string = pool.store_c_string(enc, read_buf).unwrap();
 
     assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
@@ -451,7 +451,7 @@ fn test_store_string() {
     // Force reallocation:
     pool.inner().rent(|v| v.borrow_mut().resize(2, 0));
 
-    let s = pool.storeString(enc, read_buf).unwrap();
+    let s = pool.store_c_string(enc, read_buf).unwrap();
 
     assert_eq!(s, [A, A, C, D, D, NULL]);
 }
