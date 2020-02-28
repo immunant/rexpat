@@ -124,7 +124,7 @@ impl StringPool {
 
     /// Resets the current bump vec to the beginning
     pub(crate) fn clear_current(&self) {
-        self.set_len(0)
+        self.inner().rent(|v| v.borrow_mut().clear())
     }
 
     /// Obtains the length of the current BumpVec.
@@ -221,28 +221,10 @@ impl StringPool {
         Some(self.finish_string())
     }
 
-    /// Sets a new length on the current bump vec.
-    ///
-    /// # Safety
-    ///
-    /// This is always safe because:
-    /// 1) We assert the length is never greater than the capacity.
-    /// 2) We always zero the capacity buffer in grow(), so we can
-    ///    never point to uninit data.
-    fn set_len(&self, len: usize) {
-        self.inner().rent(|vec| {
-            assert!(len <= vec.borrow().capacity());
-
-            unsafe {
-                vec.borrow_mut().set_len(len);
-            }
-        })
-    }
-
     pub(crate) fn append(
         &self,
         enc: &ENCODING,
-        mut readBuf: ExpatBufRef,
+        mut read_buf: ExpatBufRef,
     ) -> bool {
         let start = self.inner().rent(|vec| vec.borrow().as_ptr());
 
@@ -251,65 +233,46 @@ impl StringPool {
             return false;
         }
 
-        let (mut start, mut cap, mut len) = self.inner().rent(|vec| {
-            let start = vec.borrow_mut().as_mut_ptr();
-            let cap = vec.borrow().capacity();
-            let len = vec.borrow().len();
-            (start, cap, len)
+        let (mut cap, mut len) = self.inner().rent(|vec| {
+            let vec = vec.borrow();
+            (vec.capacity(), vec.len())
         });
-        let mut cap_begin;
-        let mut cap_end;
 
         loop {
             debug_assert!(len <= cap);
 
             // Continue to allocate if we don't have enough space
-            while (cap - len) < readBuf.len() {
+            while (cap - len) < read_buf.len() {
                 if !self.grow() {
                     return false;
                 }
 
-                let (new_start, new_cap) = self.inner().rent(|vec| {
-                    let new_start = vec.borrow_mut().as_mut_ptr();
-                    let new_cap = vec.borrow().capacity();
-                    (new_start, new_cap)
-                });
-                start = new_start;
-                cap = new_cap;
+                cap = self.inner().rent(|vec| vec.borrow().capacity());
             }
 
-            // Should always be safe and inbounds to offset into the buffer
-            unsafe {
-                cap_begin = start.add(len);
-                cap_end = start.add(cap) as *mut ICHAR;
-            }
+            let convert_res = self.inner().rent(|v| {
+                let mut vec = v.borrow_mut();
+                let start_len = vec.len();
+                let cap = vec.capacity();
 
-            // NOTE: We avoid UB when writing to the capacity via a mutable slice by zeroing the
-            // capacity ahead of time in the grow() method
-            let mut writeBuf = ExpatBufRefMut::new(cap_begin, cap_end);
+                vec.resize(cap, 0);
 
-            let convert_res = unsafe {
-                XmlConvert!(
-                    enc,
-                    &mut readBuf,
-                    &mut writeBuf,
-                )
-            };
+                let mut write_buf = unsafe { ExpatBufRefMut::new_len(vec.as_mut_ptr().add(len), cap - start_len) };
+                let write_buf_len = write_buf.len();
+                let convert_res = unsafe {
+                    XmlConvert!(enc, &mut read_buf, &mut write_buf)
+                };
+                // The write buf shrinks by how much was written to it
+                let written_size = write_buf_len - write_buf.len();
 
-            // TODO: How to not need wrapping_offset_from here? Cast to u/isize first?
-            let new_len = writeBuf.as_ptr().wrapping_offset_from(start).try_into().unwrap();
+                vec.truncate(start_len + written_size);
 
-            self.set_len(new_len);
+                convert_res
+            });
 
             if convert_res == XML_CONVERT_COMPLETED || convert_res == XML_CONVERT_INPUT_INCOMPLETE {
                 break;
             }
-
-            // if !self.grow() {
-            //     return false;
-            // }
-
-            len = new_len;
         }
 
         true
@@ -386,21 +349,6 @@ impl StringPool {
             if buf.borrow_mut().try_reserve_exact(bytesToAllocate as usize).is_err() {
                 return false;
             };
-
-            // Zero capacity bytes
-            let start = buf.borrow_mut().as_mut_ptr();
-
-            // Safety: This is safe because we are writing to data we actually own,
-            // and don't go out of bounds of the BumpVec's capactiy
-            unsafe {
-                let mut tmp = start.add(buf.borrow().len());
-                let end = start.add(buf.borrow().capacity());
-
-                while tmp != end {
-                    ptr::write(tmp, 0);
-                    tmp = tmp.add(1);
-                }
-            }
 
             true
         })
@@ -496,4 +444,15 @@ fn test_store_string() {
 
     // No overlap between buffers:
     assert_eq!(&*string, &[C, D, D, NULL]);
+
+    assert!(pool.append_char(A));
+
+    pool.current_slice(|s| assert_eq!(s, [A, A]));
+
+    // Force reallocation:
+    pool.inner().rent(|v| v.borrow_mut().resize(2, 0));
+
+    let s = pool.storeString(enc, read_buf).unwrap();
+
+    assert_eq!(s, [A, A, C, D, D, NULL]);
 }
