@@ -48,31 +48,26 @@
 )]
 
 use std::mem;
+use std::convert::TryInto;
 use libc::{exit, free, printf};
 use rexpat::expat_h::XML_ParserStruct;
 use rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber, XML_GetErrorCode,
     XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
 };
-use rexpat::stdlib::{fclose, fopen, fprintf, fread, malloc, _IO_FILE};
 use std::ffi::CString;
 use std::ptr::null_mut;
-use libc::{c_char, c_double, c_int, c_long, c_ulong, c_void};
+use libc::{c_char, c_double, c_int, c_long, c_void, FILE, fclose, fopen, fread, fprintf, malloc};
 
 pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
-pub use rexpat::stddef_h::{size_t, NULL};
-pub use rexpat::stdlib::{
-    _IO_lock_t, __blkcnt_t, __blksize_t, __clock_t,
-    __dev_t, __gid_t, __ino_t, __mode_t, __nlink_t, __off64_t, __off_t, __syscall_slong_t,
-    __time_t, __uid_t, __xstat, clock_t, CLOCKS_PER_SEC, FILE, _STAT_VER, _STAT_VER_LINUX,
-};
-use rexpat::stdlib::{clock, stderr};
-pub use libc::{atoi, stat};
+pub use rexpat::stddef_h::{NULL};
+use rexpat::stdlib::{clock, CLOCKS_PER_SEC, stderr};
+pub use libc::{atoi, stat, size_t, clock_t};
 
 unsafe extern "C" fn usage(mut prog: *const c_char, mut rc: c_int) {
     fprintf(
-        stderr as *mut _IO_FILE,
+        stderr as *mut FILE,
         b"usage: %s [-n] filename bufferSize nr_of_loops\n\x00" as *const u8 as *const c_char,
         prog,
     );
@@ -115,7 +110,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     }
     if libc::stat(*argv.offset((j + 1 as c_int) as isize), &mut fileAttr) != 0 as c_int {
         fprintf(
-            stderr as *mut _IO_FILE,
+            stderr as *mut FILE,
             b"could not access file \'%s\'\n\x00" as *const u8 as *const c_char,
             *argv.offset((j + 1 as c_int) as isize),
         );
@@ -124,10 +119,10 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     fd = fopen(
         *argv.offset((j + 1 as c_int) as isize),
         b"r\x00" as *const u8 as *const c_char,
-    ) as *mut _IO_FILE;
+    ) as *mut FILE;
     if fd.is_null() {
         fprintf(
-            stderr as *mut _IO_FILE,
+            stderr as *mut FILE,
             b"could not open file \'%s\'\n\x00" as *const u8 as *const c_char,
             *argv.offset((j + 1 as c_int) as isize),
         );
@@ -137,20 +132,20 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     nrOfLoops = atoi(*argv.offset((j + 3 as c_int) as isize));
     if bufferSize <= 0 as c_int || nrOfLoops <= 0 as c_int {
         fprintf(
-            stderr as *mut _IO_FILE,
+            stderr as *mut FILE,
             b"buffer size and nr of loops must be greater than zero.\n\x00" as *const u8
                 as *const c_char,
         );
         exit(3 as c_int);
     }
-    XMLBuf = malloc(fileAttr.st_size as c_ulong) as *mut c_char;
+    XMLBuf = malloc(fileAttr.st_size as usize) as *mut c_char;
     fileSize = fread(
         XMLBuf as *mut c_void,
-        ::std::mem::size_of::<c_char>() as c_ulong,
-        fileAttr.st_size as c_ulong,
-        fd as *mut _IO_FILE,
+        ::std::mem::size_of::<c_char>(),
+        fileAttr.st_size.try_into().unwrap(),
+        fd as *mut FILE,
     ) as c_int;
-    fclose(fd as *mut _IO_FILE);
+    fclose(fd as *mut FILE);
     if ns != 0 {
         parser = XML_ParserCreateNS(NULL as *const XML_Char, '!' as i32 as XML_Char)
     } else {
@@ -172,7 +167,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
             }
             if XML_Parse(parser, XMLBufPtr, parseBufferSize, isFinal) as u64 == 0 {
                 fprintf(
-                    stderr as *mut _IO_FILE,
+                    stderr as *mut FILE,
                     b"error \'%s\' at line %lu character %lu\n\x00" as *const u8 as *const c_char,
                     XML_ErrorString(XML_GetErrorCode(parser)),
                     XML_GetCurrentLineNumber(parser),

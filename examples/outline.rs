@@ -16,56 +16,15 @@ use ::rexpat::lib::xmlparse::{
     XML_ParserFree, XML_SetElementHandler,
 };
 use ::rexpat::stddef_h::NULL;
-use ::rexpat::stdlib::fprintf;
-use ::libc::{exit, printf};
+use ::libc::{exit, printf, fprintf};
 
-use libc::{c_char, c_int, c_ulong, c_void};
-pub mod stdlib {
+use libc::{c_char, c_int, c_void, fread, feof, ferror};
+use ::rexpat::stdlib::{stderr, stdin};
 
-    use ::rexpat::stdlib::_IO_FILE;
-    use libc::{c_int, c_long, c_ulong, c_void};
-    extern "C" {
-        #[cfg(all(unix, not(target_os = "macos")))]
-        #[no_mangle]
-        pub static mut stderr: *mut FILE;
-
-        #[cfg(all(unix, not(target_os = "macos")))]
-        #[no_mangle]
-        pub static mut stdin: *mut FILE;
-
-        #[cfg(target_os = "macos")]
-        #[no_mangle]
-        #[link_name = "__stderrp"]
-        pub static mut stderr: *mut FILE;
-
-        #[cfg(target_os = "macos")]
-        #[no_mangle]
-        #[link_name = "__stdinp"]
-        pub static mut stdin: *mut FILE;
-
-        #[no_mangle]
-        pub fn fread(_: *mut c_void, _: c_ulong, _: c_ulong, _: *mut FILE) -> c_ulong;
-
-        #[no_mangle]
-        pub fn feof(__stream: *mut FILE) -> c_int;
-
-        #[no_mangle]
-        pub fn ferror(__stream: *mut FILE) -> c_int;
-    }
-    pub type FILE = _IO_FILE;
-    pub type _IO_lock_t = ();
-    pub type __off_t = c_long;
-
-    pub type __off64_t = c_long;
-}
 
 pub use ::rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use ::rexpat::expat_h::{
     XML_EndElementHandler, XML_Error, XML_Parser, XML_StartElementHandler,
-};
-pub use ::rexpat::stddef_h::size_t;
-pub use ::rexpat::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, FILE,
 };
 
 /* Read an XML document from standard input and print an element
@@ -103,7 +62,7 @@ pub use ::rexpat::stdlib::{
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pub const BUFFSIZE: c_int = 8192;
+pub const BUFFSIZE: usize = 8192;
 #[no_mangle]
 
 pub static mut Buff: [c_char; 8192] = [0; 8192];
@@ -144,7 +103,7 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut p: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
     if p.is_null() {
         fprintf(
-            crate::stdlib::stderr,
+            stderr,
             b"Couldn\'t allocate memory for parser\n\x00".as_ptr() as *const c_char,
         );
         exit(-(1i32));
@@ -164,23 +123,23 @@ unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     loop {
         let mut done = false;
         let mut len: c_int = 0;
-        len = crate::stdlib::fread(
+        len = fread(
             Buff.as_mut_ptr() as *mut c_void,
             1,
-            BUFFSIZE as c_ulong,
-            crate::stdlib::stdin,
+            BUFFSIZE,
+            stdin,
         ) as c_int;
-        if crate::stdlib::ferror(crate::stdlib::stdin) != 0 {
+        if ferror(stdin) != 0 {
             fprintf(
-                crate::stdlib::stderr,
+                stderr,
                 b"Read error\n\x00".as_ptr() as *const c_char,
             );
             exit(-(1i32));
         }
-        done = crate::stdlib::feof(crate::stdlib::stdin) != 0;
+        done = feof(stdin) != 0;
         if XML_Parse(p, Buff.as_mut_ptr(), len, done as c_int) == XML_Status::ERROR {
             fprintf(
-                crate::stdlib::stderr,
+                stderr,
                 b"Parse error at line %lu:\n%s\n\x00".as_ptr() as *const c_char,
                 XML_GetCurrentLineNumber(p),
                 XML_ErrorString(XML_GetErrorCode(p)),

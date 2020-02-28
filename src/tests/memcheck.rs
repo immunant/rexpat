@@ -30,10 +30,9 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-pub use crate::stddef_h::{size_t, NULL};
-use crate::stdlib::{malloc, realloc};
-use ::libc::{self, free, printf};
-use libc::{c_char, c_int, c_ulong, c_void};
+pub use crate::stddef_h::{NULL};
+use ::libc::{self, free, printf, malloc, realloc};
+use libc::{c_char, c_int, c_void, size_t};
 /* Structures to keep track of what has been allocated.  Speed isn't a
  * big issue for the tests this is required for, so we will use a
  * doubly-linked list to make deletion easier.
@@ -59,7 +58,7 @@ static mut alloc_tail: *mut AllocationEntry = NULL as *mut AllocationEntry;
 
 pub unsafe extern "C" fn tracking_malloc(mut size: size_t) -> *mut c_void {
     let mut entry: *mut AllocationEntry =
-        malloc(::std::mem::size_of::<AllocationEntry>() as c_ulong) as *mut AllocationEntry;
+        malloc(::std::mem::size_of::<AllocationEntry>()) as *mut AllocationEntry;
     if entry.is_null() {
         printf(b"Allocator failure\n\x00".as_ptr() as *const c_char);
         return NULL as *mut c_void;
@@ -135,7 +134,7 @@ pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t
         /* By definition, this is equivalent to malloc(size) */
         return tracking_malloc(size);
     }
-    if size == 0u64 {
+    if size == 0 {
         /* By definition, this is equivalent to free(ptr) */
         tracking_free(ptr);
         return NULL as *mut c_void;
@@ -147,7 +146,7 @@ pub unsafe extern "C" fn tracking_realloc(mut ptr: *mut c_void, mut size: size_t
             b"Attempting to realloc unallocated memory at %p\n\x00".as_ptr() as *const c_char,
             ptr,
         );
-        entry = malloc(::std::mem::size_of::<AllocationEntry>() as c_ulong) as *mut AllocationEntry;
+        entry = malloc(::std::mem::size_of::<AllocationEntry>()) as *mut AllocationEntry;
         if entry.is_null() {
             printf(b"Reallocator failure\n\x00".as_ptr() as *const c_char);
             return NULL as *mut c_void;

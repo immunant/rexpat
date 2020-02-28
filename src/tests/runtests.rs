@@ -52,7 +52,7 @@
 #[cfg(all(feature = "unicode", not(feature = "unicode_wchar_t")))]
 compile_error!("Tests are not compatible with feature \"unicode\" without 16-bit char support (\"unicode_wchar_t\")");
 
-use crate::stdlib::{stderr, strncmp};
+use crate::stdlib::{stderr};
 use ::rexpat::ascii_h::{ASCII_0, ASCII_9, ASCII_PERIOD};
 use ::rexpat::expat_h::{
     XML_Encoding, XML_Expat_Version, XML_Feature, XML_ParserStruct,
@@ -81,15 +81,14 @@ use ::rexpat::lib::xmlparse::{
 };
 use ::rexpat::lib::xmltok::_INTERNAL_trim_to_complete_utf8_characters;
 use ::rexpat::stdbool_h::{false_0, true_0};
-use ::rexpat::stdlib::{fprintf, malloc, memcmp, memcpy, realloc, strlen};
 pub use ::rexpat::*;
-use ::libc::{free, printf, sprintf, strcmp, EXIT_FAILURE, EXIT_SUCCESS};
+use ::libc::{free, printf, sprintf, fprintf, strcmp, strncmp, strlen, malloc, realloc, memcmp, memcpy, EXIT_FAILURE, EXIT_SUCCESS};
 use ::rexpat::lib::xmlparse::ExpatBufRef;
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::mem::transmute;
 
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void, size_t, ptrdiff_t, intptr_t};
 
 pub mod chardata;
 pub mod memcheck;
@@ -127,11 +126,6 @@ pub use crate::expat_h::{
 };
 pub use crate::minicheck_h::{
     tcase_setup_function, tcase_teardown_function, tcase_test_function, CK_NORMAL, CK_SILENT,
-};
-pub use crate::stddef_h::{ptrdiff_t, size_t};
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __uint64_t, intptr_t,
-    uint64_t, FILE,
 };
 
 /* Test attribute counts, indexing, etc */
@@ -743,7 +737,7 @@ unsafe extern "C" fn param_entity_match_handler(
          * going to overflow an int.
          */
         if value_length != strlen(entity_value_to_match) as c_int
-            || strncmp(value, entity_value_to_match, value_length as c_ulong) != 0
+            || strncmp(value, entity_value_to_match, value_length as usize) != 0
         {
             entity_match_flag = ENTITY_MATCH_FAIL
         } else {
@@ -1012,7 +1006,7 @@ unsafe extern "C" fn _run_ext_character_check(
     mut line: c_int,
 ) {
     let storage: *mut crate::chardata::CharData =
-        malloc(::std::mem::size_of::<crate::chardata::CharData>() as c_ulong)
+        malloc(::std::mem::size_of::<crate::chardata::CharData>())
             as *mut crate::chardata::CharData;
     crate::chardata::CharData_Init(storage);
     (*test_data).storage = storage;
@@ -1252,77 +1246,77 @@ unsafe extern "C" fn test_utf8_auto_align() {
     let mut cases: [TestCase; 11] = [
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: UTF8_LEAD_1.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_2.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xdf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_3.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -2i64,
+                expectedMovementInChars: -2,
                 input: b"\xef\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xef\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -1i64,
+                expectedMovementInChars: -1,
                 input: UTF8_LEAD_4.as_ptr(),
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -2i64,
+                expectedMovementInChars: -2,
                 input: b"\xf7\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: -3i64,
+                expectedMovementInChars: -3,
                 input: b"\xf7\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
         },
         {
             let mut init = TestCase {
-                expectedMovementInChars: 0i64,
+                expectedMovementInChars: 0,
                 input: b"\xf7\xbf\xbf\xbf\x00".as_ptr() as *const c_char,
             };
             init
@@ -1331,8 +1325,8 @@ unsafe extern "C" fn test_utf8_auto_align() {
     let mut i: size_t = 0;
     let mut success: bool = true_0 != 0;
     while i
-        < (::std::mem::size_of::<[TestCase; 11]>() as c_ulong)
-            .wrapping_div(::std::mem::size_of::<TestCase>() as c_ulong)
+        < (::std::mem::size_of::<[TestCase; 11]>())
+            .wrapping_div(::std::mem::size_of::<TestCase>())
     {
         let mut fromLim: *const c_char = cases[i as usize]
             .input
@@ -1342,12 +1336,12 @@ unsafe extern "C" fn test_utf8_auto_align() {
         let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
         _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
         fromLim = buf.end();
-        actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially) as c_long;
+        actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially);
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
             success = false_0 != 0;
             printf(b"[-] UTF-8 case %2u: Expected movement by %2d chars, actually moved by %2d chars: \"\x00".as_ptr() as *const c_char,
-                   i.wrapping_add(1u64) as
+                   i.wrapping_add(1) as
                        c_uint,
                    cases[i as usize].expectedMovementInChars as c_int,
                    actualMovementInChars as c_int);
@@ -2093,7 +2087,7 @@ unsafe extern "C" fn test_really_long_encoded_lines() {
         );
     }
     assert!(!buffer.is_null());
-    memcpy(buffer, text as *const c_void, parse_len as c_ulong);
+    memcpy(buffer, text as *const c_void, parse_len as usize);
     if XML_ParseBuffer(g_parser, parse_len, true as c_int) == XML_Status::ERROR {
         _xml_failure(
             g_parser,
@@ -4169,7 +4163,7 @@ unsafe extern "C" fn test_long_cdata_utf16() {
     memcpy(
         buffer,
         text.as_ptr() as *const c_void,
-        (::std::mem::size_of::<[c_char; 2197]>() as c_ulong).wrapping_sub(1u64),
+        (::std::mem::size_of::<[c_char; 2197]>()).wrapping_sub(1),
     );
     if XML_ParseBuffer(
         g_parser,
@@ -4448,8 +4442,8 @@ unsafe extern "C" fn test_bad_cdata() {
     ];
     let mut i: size_t = 0;
     while i
-        < (::std::mem::size_of::<[CaseData; 21]>() as c_ulong)
-            .wrapping_div(::std::mem::size_of::<CaseData>() as c_ulong)
+        < ::std::mem::size_of::<[CaseData; 21]>()
+            .wrapping_div(::std::mem::size_of::<CaseData>())
     {
         let actualStatus: XML_Status = _XML_Parse_SINGLE_BYTES(
             g_parser,
@@ -4497,7 +4491,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
     let mut cases: [CaseData_0; 24] = [
         {
             let mut init = CaseData_0 {
-                text_bytes: 1u64,
+                text_bytes: 1,
                 text: b"\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4505,7 +4499,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 2u64,
+                text_bytes: 2,
                 text: b"\x00<\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4513,7 +4507,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 3u64,
+                text_bytes: 3,
                 text: b"\x00<\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4521,7 +4515,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 4u64,
+                text_bytes: 4,
                 text: b"\x00<\x00!\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4529,7 +4523,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 5u64,
+                text_bytes: 5,
                 text: b"\x00<\x00!\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4537,7 +4531,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 6u64,
+                text_bytes: 6,
                 text: b"\x00<\x00!\x00[\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4545,7 +4539,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 7u64,
+                text_bytes: 7,
                 text: b"\x00<\x00!\x00[\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4553,7 +4547,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 8u64,
+                text_bytes: 8,
                 text: b"\x00<\x00!\x00[\x00C\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4561,7 +4555,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 9u64,
+                text_bytes: 9,
                 text: b"\x00<\x00!\x00[\x00C\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4569,7 +4563,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 10u64,
+                text_bytes: 10,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4577,7 +4571,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 11u64,
+                text_bytes: 11,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4585,7 +4579,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 12u64,
+                text_bytes: 12,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4593,7 +4587,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 13u64,
+                text_bytes: 13,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4601,7 +4595,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 14u64,
+                text_bytes: 14,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4609,7 +4603,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 15u64,
+                text_bytes: 15,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4617,7 +4611,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 16u64,
+                text_bytes: 16,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4625,7 +4619,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 17u64,
+                text_bytes: 17,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00\x00".as_ptr() as *const c_char,
                 expected_error: XML_Error::UNCLOSED_TOKEN,
             };
@@ -4633,7 +4627,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 18u64,
+                text_bytes: 18,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
@@ -4642,7 +4636,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 19u64,
+                text_bytes: 19,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
@@ -4651,7 +4645,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 20u64,
+                text_bytes: 20,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
@@ -4660,7 +4654,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 21u64,
+                text_bytes: 21,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd8\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
@@ -4669,7 +4663,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 22u64,
+                text_bytes: 22,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::PARTIAL_CHAR,
@@ -4678,7 +4672,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 23u64,
+                text_bytes: 23,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::PARTIAL_CHAR,
@@ -4687,7 +4681,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
         },
         {
             let mut init = CaseData_0 {
-                text_bytes: 24u64,
+                text_bytes: 24,
                 text: b"\x00<\x00!\x00[\x00C\x00D\x00A\x00T\x00A\x00[\x00Z\xd84\xdd^\x00".as_ptr()
                     as *const c_char,
                 expected_error: XML_Error::UNCLOSED_CDATA_SECTION,
@@ -4698,8 +4692,8 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
     let mut i: size_t = 0;
     i = 0;
     while i
-        < (::std::mem::size_of::<[CaseData_0; 24]>() as c_ulong)
-            .wrapping_div(::std::mem::size_of::<CaseData_0>() as c_ulong)
+        < ::std::mem::size_of::<[CaseData_0; 24]>()
+            .wrapping_div(::std::mem::size_of::<CaseData_0>())
     {
         let mut actual_status: XML_Status = XML_Status::ERROR;
         let mut actual_error: XML_Error = XML_Error::NONE;
@@ -4734,7 +4728,7 @@ unsafe extern "C" fn test_bad_cdata_utf16() {
                 XML_ErrorString(cases[i as usize].expected_error.code()),
                 actual_error,
                 XML_ErrorString(actual_error.code()),
-                i.wrapping_add(1u64),
+                i.wrapping_add(1),
             );
             crate::minicheck::_fail_unless(
                 0i32,
@@ -6586,7 +6580,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     memcpy(
         buffer,
         (*fault).parse_text as *const c_void,
-        parse_len as c_ulong,
+        parse_len as usize,
     );
     if XML_ParseBuffer(ext_parser, parse_len, false as c_int)
         != XML_Status::SUSPENDED
@@ -8108,7 +8102,7 @@ unsafe extern "C" fn test_byte_info_at_error() {
             b"Error byte count incorrect\x00".as_ptr() as *const c_char,
         );
     }
-    if XML_GetCurrentByteIndex(g_parser) as c_ulong != strlen(PRE_ERROR_STR.as_ptr()) {
+    if XML_GetCurrentByteIndex(g_parser) as usize != strlen(PRE_ERROR_STR.as_ptr()) {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -10203,7 +10197,7 @@ unsafe extern "C" fn selective_aborting_default_handler(
 ) {
     let mut match_0: *const XML_Char = userData as *const XML_Char;
     if match_0.is_null()
-        || strlen(match_0) == len as c_uint as c_ulong && strncmp(match_0, s, len as c_ulong) == 0
+        || strlen(match_0) as c_int == len && strncmp(match_0, s, len as usize) == 0
     {
         XML_StopParser(g_parser, resumable);
         XML_SetDefaultHandler(
@@ -13935,7 +13929,7 @@ unsafe extern "C" fn checking_default_handler(
             && memcmp(
                 (*data.offset(i as isize)).expected as *const c_void,
                 s as *const c_void,
-                (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                (len as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
             ) == 0
         {
             (*data.offset(i as isize)).seen = true;
@@ -15423,9 +15417,9 @@ unsafe extern "C" fn test_ns_double_colon_doctype() {
 /* Control variable; the number of times duff_allocator() will successfully
  * allocate */
 
-pub const ALLOC_ALWAYS_SUCCEED: c_int = -(1);
+pub const ALLOC_ALWAYS_SUCCEED: intptr_t = -(1);
 
-pub const REALLOC_ALWAYS_SUCCEED: c_int = -(1);
+pub const REALLOC_ALWAYS_SUCCEED: intptr_t = -(1);
 
 static mut allocation_count: intptr_t = ALLOC_ALWAYS_SUCCEED as intptr_t;
 
@@ -15436,7 +15430,7 @@ unsafe extern "C" fn duff_allocator(mut size: size_t) -> *mut c_void {
     if allocation_count == 0 {
         return ::rexpat::stddef_h::NULL as *mut c_void;
     }
-    if allocation_count != ALLOC_ALWAYS_SUCCEED as c_long {
+    if allocation_count != ALLOC_ALWAYS_SUCCEED {
         allocation_count -= 1
     }
     return malloc(size);
@@ -15447,7 +15441,7 @@ unsafe extern "C" fn duff_reallocator(mut ptr: *mut c_void, mut size: size_t) ->
     if reallocation_count == 0 {
         return ::rexpat::stddef_h::NULL as *mut c_void;
     }
-    if reallocation_count != REALLOC_ALWAYS_SUCCEED as c_long {
+    if reallocation_count != REALLOC_ALWAYS_SUCCEED {
         reallocation_count -= 1
     }
     return realloc(ptr, size);
@@ -15910,7 +15904,7 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_1() {
             end_element_issue_240 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    mydata = malloc(::std::mem::size_of::<DataIssue240>() as c_ulong) as *mut DataIssue240;
+    mydata = malloc(::std::mem::size_of::<DataIssue240>()) as *mut DataIssue240;
     (*mydata).parser = parser;
     (*mydata).deep = 0;
     XML_SetUserData(parser, mydata as *mut c_void);
@@ -15957,7 +15951,7 @@ unsafe extern "C" fn test_misc_stop_during_end_handler_issue_240_2() {
             end_element_issue_240 as unsafe extern "C" fn(_: *mut c_void, _: *const XML_Char) -> (),
         ),
     );
-    mydata = malloc(::std::mem::size_of::<DataIssue240>() as c_ulong) as *mut DataIssue240;
+    mydata = malloc(::std::mem::size_of::<DataIssue240>()) as *mut DataIssue240;
     (*mydata).parser = parser;
     (*mydata).deep = 0;
     XML_SetUserData(parser, mydata as *mut c_void);
@@ -15998,8 +15992,8 @@ unsafe extern "C" fn test_misc_deny_internal_entity_closing_doctype_issue_317() 
     let inputs: [*const c_char; 4] = [inputOne, inputTwo, inputThree, inputIssue317];
     let mut inputIndex: size_t = 0;
     while inputIndex
-        < (::std::mem::size_of::<[*const c_char; 4]>() as c_ulong)
-            .wrapping_div(::std::mem::size_of::<*const c_char>() as c_ulong)
+        < ::std::mem::size_of::<[*const c_char; 4]>()
+            .wrapping_div(::std::mem::size_of::<*const c_char>())
     {
         let mut parser: XML_Parser = 0 as *mut XML_ParserStruct;
         let mut parseResult: XML_Status = XML_Status::ERROR;
@@ -16717,13 +16711,13 @@ unsafe extern "C" fn external_entity_dbl_handler(
             return XML_Status::ERROR as c_int;
         }
         /* Stash the number of calls in the user data */
-        XML_SetUserData(parser, (10000i64 - allocation_count) as *mut c_void);
+        XML_SetUserData(parser, (10000 - allocation_count) as *mut c_void);
     } else {
         text = b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         /* Try at varying levels to exercise more code paths */
         i = 0;
         while i < max_alloc_count {
-            allocation_count = callno + i as c_long;
+            allocation_count = callno + i as isize;
             new_parser = XML_ExternalEntityParserCreate(
                 parser,
                 context,

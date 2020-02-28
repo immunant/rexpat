@@ -33,8 +33,7 @@
 use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::lib::xmlparse::XML_ParserStruct;
 use crate::lib::xmlparse::{XML_GetCurrentColumnNumber, XML_GetCurrentLineNumber};
-use crate::stddef_h::size_t;
-use libc::{c_char, c_int, c_long, c_uint, c_void};
+use libc::{c_char, c_int, c_long, c_uint, c_void, size_t};
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;

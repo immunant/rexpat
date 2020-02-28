@@ -39,7 +39,6 @@ pub use crate::ascii_h::{
     ASCII_N, ASCII_O, ASCII_PERIOD, ASCII_PIPE, ASCII_R, ASCII_RPAREN, ASCII_S, ASCII_SLASH,
     ASCII_T, ASCII_X, ASCII_Y,
 };
-pub use crate::expat_config_h::XML_CONTEXT_BYTES;
 pub use crate::expat_external_h::{XML_Char, XML_Index, XML_LChar, XML_Size};
 pub use crate::expat_h::{
     XML_AttlistDeclHandler, XML_Bool, XML_CharacterDataHandler, XML_CommentHandler, XML_Content,
@@ -61,10 +60,9 @@ pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
-pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
-use crate::stdlib::{memcmp, memcpy, memmove, memset};
+pub use crate::stddef_h::NULL;
 pub use ::libc::INT_MAX;
-use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t};
+use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, intptr_t, size_t, ptrdiff_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
 
 use fallible_collections::FallibleBox;
@@ -78,6 +76,8 @@ use std::convert::TryInto;
 use std::mem;
 use std::ops;
 use std::ptr;
+
+pub const XML_CONTEXT_BYTES: c_int = 1024;
 
 #[derive(Copy, Clone)]
 pub struct ExpatBufRef<'a, T = c_char>(&'a [T]);
@@ -1637,7 +1637,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         memset(
             &mut self.m_position as *mut super::xmltok::POSITION as *mut c_void,
             0,
-            ::std::mem::size_of::<super::xmltok::POSITION>() as c_ulong,
+            ::std::mem::size_of::<super::xmltok::POSITION>(),
         );
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = NULL as *const c_char;
@@ -2610,7 +2610,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             if buff.is_null() {
                 XML_Status::ERROR as XML_Status
             } else {
-                memcpy(buff, s as *const c_void, len as c_ulong);
+                memcpy(buff, s as *const c_void, len as usize);
                 XML_ParseBuffer(self, len, isFinal)
             }
         }
@@ -2759,8 +2759,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                             as *const c_void,
                         (self
                             .m_bufferEnd
-                            .wrapping_offset_from(self.m_bufferPtr) as c_long
-                            + keep as c_long) as c_ulong,
+                            .wrapping_offset_from(self.m_bufferPtr)
+                            + keep as isize).try_into().unwrap(),
                     );
                     self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
                     self.m_bufferPtr = self.m_bufferPtr.offset(-offset);
@@ -2790,7 +2790,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         newBuf as *mut c_void,
                         &*self.m_bufferPtr.offset(-keep as isize) as *const c_char
                             as *const c_void,
-                        (safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as c_long + keep as c_long) as c_ulong,
+                        safe_ptr_diff(self.m_bufferEnd, self.m_bufferPtr) as usize + keep as usize,
                     );
                     FREE!(self.m_buffer);
                     self.m_buffer = newBuf;
@@ -3403,7 +3403,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             memcpy(
                 rawNameBuf as *mut c_void,
                 tag.rawName as *const c_void,
-                tag.rawNameLength as c_ulong,
+                tag.rawNameLength as usize,
             );
             tag.rawName = rawNameBuf;
             tStk = &mut tag.parent;
@@ -3896,7 +3896,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             || memcmp(
                                 tag.rawName as *const c_void,
                                 rawName_0.as_ptr() as *const c_void,
-                                len as c_ulong,
+                                len as usize,
                             ) != 0
                         {
                             #[cfg(feature = "mozilla")]
@@ -4708,8 +4708,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             memcpy(
                 uri as *mut c_void,
                 (*binding).uri as *const c_void,
-                ((*binding).uriLen as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                ((*binding).uriLen as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
             );
             let mut tStk = &mut self.m_tagStack;
             while let Some(tag) = tStk {
@@ -4726,7 +4725,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         memcpy(
             uri as *mut c_void,
             localPart as *const c_void,
-            (i as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+            (i as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
         );
         /* we always have a namespace separator between localPart and prefix */
         if prefixLen != 0 {
@@ -4735,7 +4734,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             memcpy(
                 uri.offset(1) as *mut c_void,
                 (*(*binding).prefix).name as *const c_void,
-                (prefixLen as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                (prefixLen as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
             );
         }
         (*tagNamePtr).str_0 = (*binding).uri;
@@ -4850,7 +4849,7 @@ unsafe extern "C" fn addBinding(
     memcpy(
         (*b).uri as *mut c_void,
         uri as *const c_void,
-        (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+        (len as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
     );
     if (*parser).m_namespaceSeparator != 0 {
         *(*b).uri.offset((len - 1) as isize) = (*parser).m_namespaceSeparator
@@ -8948,7 +8947,7 @@ unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
      ** For a + b * c we check b * c in isolation first, so that addition of a
      ** on top has no chance of making us accept a small non-negative number
      */
-    let stretch: size_t = ::std::mem::size_of::<XML_Char>() as c_ulong; /* can be 4 bytes */
+    let stretch = ::std::mem::size_of::<XML_Char>() as u64; /* can be 4 bytes */
     if blockSize <= 0 {
         return 0;
     }
@@ -8986,8 +8985,8 @@ impl STRING_POOL {
                 memcpy(
                     (*self.blocks).s.as_mut_ptr() as *mut c_void,
                     self.start as *const c_void,
-                    (self.end.wrapping_offset_from(self.start) as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                    (self.end.wrapping_offset_from(self.start) as usize)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>()),
                 );
                 self.ptr = (*self.blocks)
                     .s
@@ -9006,7 +9005,7 @@ impl STRING_POOL {
             /* NOTE: Needs to be calculated prior to calling `realloc`
             to avoid dangling pointers: */
             let offsetInsideBlock: ptrdiff_t =
-                self.ptr.wrapping_offset_from(self.start) as c_long;
+                self.ptr.wrapping_offset_from(self.start);
             if blockSize < 0 {
                 /* This condition traps a situation where either more than
                  * INT_MAX/2 bytes have already been allocated.  This isn't
@@ -9074,8 +9073,8 @@ impl STRING_POOL {
                 memcpy(
                     (*tem_0).s.as_mut_ptr() as *mut c_void,
                     self.start as *const c_void,
-                    (self.ptr.wrapping_offset_from(self.start) as c_ulong)
-                        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+                    (self.ptr.wrapping_offset_from(self.start) as usize)
+                        .wrapping_mul(::std::mem::size_of::<XML_Char>()),
                 );
             }
             self.ptr = (*tem_0)
@@ -9211,7 +9210,7 @@ unsafe extern "C" fn copyString(
     memcpy(
         result as *mut c_void,
         s as *const c_void,
-        (charsRequired as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+        (charsRequired as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
     );
     result
 }
