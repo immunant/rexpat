@@ -3789,7 +3789,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             &mut to_buf,
                         );
                         convLen = to_buf.as_ptr().wrapping_offset_from(tag.buf as *mut XML_Char).try_into().unwrap();
-                        if fromBuf.is_empty() || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+                        if fromBuf.is_empty() || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                         {
                             tag.name.strLen = convLen;
                             break;
@@ -4120,8 +4120,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 *eventEndPP = buf.as_ptr();
                                 let data_buf = ExpatBufRef::new(self.m_dataBuf, to_buf.as_ptr());
                                 handlers.characterData(&data_buf);
-                                if convert_res_0 == super::xmltok::XML_CONVERT_COMPLETED
-                                    || convert_res_0 == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+                                if convert_res_0 == super::xmltok::XML_Convert_Result::COMPLETED
+                                    || convert_res_0 == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                                 {
                                     break;
                                 }
@@ -4992,8 +4992,8 @@ unsafe extern "C" fn doCdataSection(
                                     to_buf.as_ptr(),
                                 ),
                             );
-                            if convert_res == super::xmltok::XML_CONVERT_COMPLETED
-                                || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+                            if convert_res == super::xmltok::XML_Convert_Result::COMPLETED
+                                || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                             {
                                 break;
                             }
@@ -7831,7 +7831,7 @@ unsafe extern "C" fn reportDefault(
     let enc = (*parser).encoding(enc_type);
     if MUST_CONVERT!(enc, buf.as_ptr()) {
         let mut convert_res: super::xmltok::XML_Convert_Result =
-            super::xmltok::XML_CONVERT_COMPLETED;
+            super::xmltok::XML_Convert_Result::COMPLETED;
         let mut eventPP: *mut *const c_char = 0 as *mut *const c_char;
         let mut eventEndPP: *mut *const c_char = 0 as *mut *const c_char;
         if enc_type.is_internal() {
@@ -7877,8 +7877,8 @@ unsafe extern "C" fn reportDefault(
             }
 
             *eventPP = buf.as_ptr();
-            if !(convert_res != super::xmltok::XML_CONVERT_COMPLETED
-                && convert_res != super::xmltok::XML_CONVERT_INPUT_INCOMPLETE)
+            if !(convert_res != super::xmltok::XML_Convert_Result::COMPLETED
+                && convert_res != super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE)
             {
                 break;
             }
@@ -8836,8 +8836,8 @@ impl STRING_POOL {
                 &mut pool_buf
             );
             self.ptr = pool_buf.as_mut_ptr();
-            if convert_res == super::xmltok::XML_CONVERT_COMPLETED
-                || convert_res == super::xmltok::XML_CONVERT_INPUT_INCOMPLETE
+            if convert_res == super::xmltok::XML_Convert_Result::COMPLETED
+                || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
             {
                 break;
             }

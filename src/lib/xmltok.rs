@@ -197,10 +197,14 @@ pub struct ATTRIBUTE {
 
 pub type ENCODING = dyn XmlEncoding;
 
-pub type XML_Convert_Result = c_uint;
-pub const XML_CONVERT_COMPLETED: XML_Convert_Result = 0;
-pub const XML_CONVERT_INPUT_INCOMPLETE: XML_Convert_Result = 1;
-pub const XML_CONVERT_OUTPUT_EXHAUSTED: XML_Convert_Result = 2; /* and therefore potentially input remaining as well */
+#[repr(u32)]
+#[derive(PartialEq)]
+pub enum XML_Convert_Result {
+    COMPLETED = 0,
+    INPUT_INCOMPLETE = 1,
+    /* and therefore potentially input remaining as well */
+    OUTPUT_EXHAUSTED = 2,
+}
 
 #[macro_export]
 macro_rules! XmlUtf8Convert {
@@ -568,11 +572,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         *fromP = fromP.inc_start(from.len().try_into().unwrap());
         if output_exhausted {
             /* needs to go first */
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else if input_incomplete {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
@@ -583,7 +587,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
         let mut current_block: u64;
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         // let mut to: *mut c_ushort = *toP;
         // let mut from: *const c_char = *fromP;
         loop {
@@ -594,7 +598,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
             match T::types[from[0] as c_uchar as usize] as c_int {
                 5 => {
                     if (from.len() as c_long) < 2 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         current_block = 10086016483950629671;
                         break;
                     } else {
@@ -607,7 +611,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 }
                 6 => {
                     if (from.len() as c_long) < 3 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         current_block = 10086016483950629671;
                         break;
                     } else {
@@ -622,11 +626,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 7 => {
                     let mut n: c_ulong = 0;
                     if (to.len() as c_long) < 2 {
-                        res = XML_CONVERT_OUTPUT_EXHAUSTED;
+                        res = XML_Convert_Result::OUTPUT_EXHAUSTED;
                         current_block = 10086016483950629671;
                         break;
                     } else if (from.len() as c_long) < 4 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         current_block = 10086016483950629671;
                         break;
                     } else {
@@ -651,7 +655,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         match current_block {
             1608152415753874203 => {
                 if !from.is_empty() {
-                    res = XML_CONVERT_OUTPUT_EXHAUSTED
+                    res = XML_Convert_Result::OUTPUT_EXHAUSTED
                 }
             }
             _ => {}
@@ -720,12 +724,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
         loop {
             let mut c: c_uchar = 0;
             if from.is_empty() {
-                return XML_CONVERT_COMPLETED;
+                return XML_Convert_Result::COMPLETED;
             }
             c = from[0] as c_uchar;
             if c as c_int & 0x80 != 0 {
                 if (to.len() as c_long) < 2 {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 to[0] = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
                 to.inc_start(1);
@@ -734,7 +738,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
                 *from = from.inc_start(1);
             } else {
                 if to.is_empty() {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 to[0] = from[0];
                 to.inc_start(1);
@@ -816,9 +820,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
             *from = from.inc_start(1);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
@@ -918,7 +922,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     if (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
-                            return XML_CONVERT_OUTPUT_EXHAUSTED;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
@@ -933,11 +937,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                 216 | 217 | 218 | 219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     if (from.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_INPUT_INCOMPLETE;
+                        return XML_Convert_Result::INPUT_INCOMPLETE;
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                     to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
@@ -958,7 +962,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                 _ => {
                     if (to.len() as c_long) < 3 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                     to.inc_start(1);
@@ -973,7 +977,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                 11412679543673842523 => {
                     if (to.len() as c_long) < 2 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
                     to.inc_start(1);
@@ -986,9 +990,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
         }
         *fromP = from;
         if !from.is_empty() {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
@@ -998,13 +1002,13 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-1] as c_uchar as c_int & 0xf8 == 0xd8
         {
             *from = from.dec_end(2);
-            res = XML_CONVERT_INPUT_INCOMPLETE
+            res = XML_Convert_Result::INPUT_INCOMPLETE
         }
         while !from.is_empty() && !to.is_empty() {
             to[0] = ((from[1] as c_uchar as c_int) << 8
@@ -1013,7 +1017,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
             res
         }
@@ -1105,7 +1109,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     if (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
-                            return XML_CONVERT_OUTPUT_EXHAUSTED;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
@@ -1120,11 +1124,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                 216 | 217 | 218 | 219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     if (from.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_INPUT_INCOMPLETE;
+                        return XML_Convert_Result::INPUT_INCOMPLETE;
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                     to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
@@ -1145,7 +1149,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                 _ => {
                     if (to.len() as c_long) < 3 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                     to.inc_start(1);
@@ -1160,7 +1164,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                 11412679543673842523 => {
                     if (to.len() as c_long) < 2 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
                     to.inc_start(1);
@@ -1173,9 +1177,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
         }
         *fromP = from;
         if !from.is_empty() {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
@@ -1185,13 +1189,13 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-2] as c_uchar as c_int & 0xf8 == 0xd8
         {
             *from = from.dec_end(2);
-            res = XML_CONVERT_INPUT_INCOMPLETE
+            res = XML_Convert_Result::INPUT_INCOMPLETE
         }
         while !from.is_empty() && !to.is_empty() {
             to[0] = ((from[0] as c_uchar as c_int) << 8
@@ -1200,7 +1204,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
             res
         }
@@ -1960,9 +1964,9 @@ unsafe fn latin1_toUtf16(
         *from = from.inc_start(1);
     }
     if to.is_empty() && !from.is_empty() {
-        XML_CONVERT_OUTPUT_EXHAUSTED
+        XML_Convert_Result::OUTPUT_EXHAUSTED
     } else {
-        XML_CONVERT_COMPLETED
+        XML_Convert_Result::COMPLETED
     }
 }
 
@@ -2269,7 +2273,7 @@ impl XmlEncoding for InitEncoding {
         _from_buf: &mut ExpatBufRef<'a>,
         _to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result {
-        0
+        XML_Convert_Result::COMPLETED
     }
 
     unsafe fn utf16Convert(
@@ -2277,7 +2281,7 @@ impl XmlEncoding for InitEncoding {
         _from_buf: &mut ExpatBufRef,
         _to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        0
+        XML_Convert_Result::COMPLETED
     }
 
     fn minBytesPerChar(&self) -> c_int {
@@ -2474,7 +2478,7 @@ impl XmlEncodingImpl for UnknownEncoding {
         loop {
             let mut n: c_int = 0;
             if from_buf.is_empty() {
-                return XML_CONVERT_COMPLETED;
+                return XML_Convert_Result::COMPLETED;
             }
             let mut utf8: ExpatBufRef = self.utf8[from_buf[0] as c_uchar as usize][..].into();
             n = utf8[0] as c_int;
@@ -2484,7 +2488,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                     self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
                 n = XmlUtf8Encode(c, &mut buf);
                 if n as c_long > to.len() as c_long {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 utf8 = buf[..].into();
                 *from_buf = from_buf.inc_start(
@@ -2492,7 +2496,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                      - (ByteType::LEAD2 as c_int - 2)) as isize);
             } else {
                 if n as c_long > to.len() as c_long {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 *from_buf = from_buf.inc_start(1);
             }
@@ -2522,9 +2526,9 @@ impl XmlEncodingImpl for UnknownEncoding {
             to.inc_start(1);
         }
         if to.is_empty() && !from_buf.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 }
