@@ -163,10 +163,14 @@ impl XML_TOK {
     }
 }
 
-pub const XML_PROLOG_STATE: c_int = 0;
-pub const XML_CONTENT_STATE: c_int = 1;
-pub const XML_CDATA_SECTION_STATE: c_int = 2;
-pub const XML_IGNORE_SECTION_STATE: c_int = 3;
+#[repr(i32)]
+#[derive(PartialEq)]
+pub enum XML_STATE {
+    PROLOG = 0,
+    CONTENT = 1, 
+    CDATA_SECTION = 2,
+    IGNORE_SECTION = 3
+}
 
 pub const XML_ATTRIBUTE_VALUE_LITERAL: c_int = 0;
 pub const XML_ENTITY_VALUE_LITERAL: c_int = 1;
@@ -315,16 +319,15 @@ pub trait XmlEncoding {
     #[inline]
     unsafe fn xmlTok(
         &self,
-        state: c_int,
+        state: XML_STATE,
         buf: ExpatBufRef,
         nextTokPtr: *mut *const c_char,
     ) -> XML_TOK {
         match state {
-            XML_PROLOG_STATE => self.prologTok(buf, nextTokPtr),
-            XML_CONTENT_STATE => self.contentTok(buf, nextTokPtr),
-            XML_CDATA_SECTION_STATE => self.cdataSectionTok(buf, nextTokPtr),
-            XML_IGNORE_SECTION_STATE => self.ignoreSectionTok(buf, nextTokPtr),
-            _ => panic!("Unexpected state {}", state),
+            XML_STATE::PROLOG => self.prologTok(buf, nextTokPtr),
+            XML_STATE::CONTENT => self.contentTok(buf, nextTokPtr),
+            XML_STATE::CDATA_SECTION => self.cdataSectionTok(buf, nextTokPtr),
+            XML_STATE::IGNORE_SECTION => self.ignoreSectionTok(buf, nextTokPtr),
         }
     }
 
@@ -2013,12 +2016,12 @@ impl InitEncoding {
     /* This is what detects the encoding.  encodingTable maps from
     encoding indices to encodings; INIT_ENC_INDEX(enc) is the index of
     the external (protocol) specified encoding; state is
-    XML_CONTENT_STATE if we're parsing an external text entity, and
-    XML_PROLOG_STATE otherwise.
+    XML_STATE::CONTENT if we're parsing an external text entity, and
+    XML_STATE::PROLOG otherwise.
      */
     unsafe fn initScan(
         &self,
-        mut state: c_int,
+        mut state: XML_STATE,
         buf: ExpatBufRef,
         mut nextTokPtr: *mut *const c_char,
     ) -> XML_TOK {
@@ -2038,7 +2041,7 @@ impl InitEncoding {
             match buf[0] as c_uchar as c_int {
                 254 | 255 | 239 => {
                     /* possibly first byte of UTF-8 BOM */
-                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
+                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT {
                         current_block_5 = 17965632435239708295;
                     } else {
                         current_block_5 = 16867440708908940295;
@@ -2063,7 +2066,7 @@ impl InitEncoding {
             let mut current_block_26: u64;
             match (buf[0] as c_uchar as c_int) << 8 | buf[1] as c_uchar as c_int {
                 65279 => {
-                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
                         *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
@@ -2074,14 +2077,14 @@ impl InitEncoding {
                     /* 00 3C is handled in the default case */
                     if !((self.encoding_index as c_int == UTF_16BE_ENC
                           || self.encoding_index as c_int == UTF_16_ENC)
-                         && state == XML_CONTENT_STATE)
+                         && state == XML_STATE::CONTENT)
                     {
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
                         return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                     }
                 }
                 65534 => {
-                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
                         *nextTokPtr = buf.as_ptr().offset(2);
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
@@ -2096,7 +2099,7 @@ impl InitEncoding {
                     don't look for the BOM,
                     because it might be a legal data.
                      */
-                    if state == XML_CONTENT_STATE {
+                    if state == XML_STATE::CONTENT {
                         let mut e: c_int = self.encoding_index as c_int;
                         if e == ISO_8859_1_ENC
                             || e == UTF_16BE_ENC
@@ -2132,7 +2135,7 @@ impl InitEncoding {
                         external parsed general entity that's labelled as
                         UTF-16LE.
                          */
-                        if !(state == XML_CONTENT_STATE
+                        if !(state == XML_STATE::CONTENT
                              && self.encoding_index as c_int == UTF_16LE_ENC)
                         {
                             *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
@@ -2148,7 +2151,7 @@ impl InitEncoding {
                         presented just with a single byte, we couldn't reliably determine
                         whether we needed further bytes.
                          */
-                        if !(state == XML_CONTENT_STATE) {
+                        if !(state == XML_STATE::CONTENT) {
                             *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
                             return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                         }
@@ -2170,7 +2173,7 @@ impl XmlEncoding for InitEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> XML_TOK {
         self.initScan(
-            XML_PROLOG_STATE,
+            XML_STATE::PROLOG,
             buf,
             nextTokPtr,
         )
@@ -2181,7 +2184,7 @@ impl XmlEncoding for InitEncoding {
         nextTokPtr: *mut *const libc::c_char,
     ) -> XML_TOK {
         self.initScan(
-            XML_CONTENT_STATE,
+            XML_STATE::CONTENT,
             buf,
             nextTokPtr,
         )
