@@ -96,7 +96,11 @@ impl StringPool {
 
     /// Determines whether or not the current BumpVec is full.
     pub(crate) fn is_full(&self) -> bool {
-        self.inner().rent(|vec| vec.borrow().len() == vec.borrow().capacity())
+        self.inner().rent(|vec| self.rented_is_full(&vec.borrow()))
+    }
+
+    fn rented_is_full(&self, vec: &BumpVec<XML_Char>) -> bool {
+        vec.len() == vec.capacity()
     }
 
     /// Gets the current vec, converts it into a slice, and resets
@@ -165,6 +169,16 @@ impl StringPool {
         }
     }
 
+    pub(crate) fn rented_append_char(&self, c: XML_Char, vec: &mut BumpVec<XML_Char>) -> bool {
+        if self.rented_is_full(vec) && !self.rented_grow(vec) {
+            false
+        } else {
+            vec.push(c);
+
+            true
+        }
+    }
+
     /// Overwrites the last char in the current BumpVec.
     /// Note that this will panic if empty. This is not an insert
     /// operation as it does not shift bytes afterwards.
@@ -198,6 +212,8 @@ impl StringPool {
     }
 
     /// Resets the current Bump and deallocates its contents.
+    /// The `inner` method must never be called here as it assumes
+    /// self.0 is never `None`
     pub(crate) fn clear(&mut self) {
         let mut inner_pool = self.0.take();
 
@@ -218,14 +234,18 @@ impl StringPool {
         enc: &ENCODING,
         buf: ExpatBufRef,
     ) -> bool {
-        if !self.append(enc, buf) {
-            return false;
-        }
-        if !self.append_char('\0' as XML_Char) {
-            return false;
-        }
+        self.inner().rent(|vec| {
+            let mut vec = vec.borrow_mut();
 
-        true
+            if !self.rented_append(enc, buf, &mut *vec) {
+                return false;
+            }
+            if !self.rented_append_char('\0' as XML_Char, &mut *vec) {
+                return false;
+            }
+
+            true
+        })
     }
 
     pub(crate) fn append(
