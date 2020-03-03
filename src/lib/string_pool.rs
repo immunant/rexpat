@@ -233,49 +233,51 @@ impl StringPool {
         enc: &ENCODING,
         mut read_buf: ExpatBufRef,
     ) -> bool {
-        let start = self.inner().rent(|vec| vec.borrow().as_ptr());
+        self.inner().rent(|vec| self.rented_append(enc, read_buf, &mut *vec.borrow_mut()))
+    }
+
+    fn rented_append(
+        &self,
+        enc: &ENCODING,
+        mut read_buf: ExpatBufRef,
+        vec: &mut BumpVec<XML_Char>,
+    ) -> bool {
+        let start = vec.as_ptr();
 
         // REVIEW: Can this be replaced with self.is_empty() &&?
-        if start.is_null() && !self.grow() {
+        if start.is_null() && !self.rented_grow(vec) {
             return false;
         }
 
-        let (mut cap, mut len) = self.inner().rent(|vec| {
-            let vec = vec.borrow();
-            (vec.capacity(), vec.len())
-        });
+        let mut cap = vec.capacity();
+        let mut len = vec.len();
 
         loop {
             debug_assert!(len <= cap);
 
             // Continue to allocate if we don't have enough space
             while (cap - len) < read_buf.len() {
-                if !self.grow() {
+                if !self.rented_grow(vec) {
                     return false;
                 }
 
-                cap = self.inner().rent(|vec| vec.borrow().capacity());
+                cap = vec.capacity();
             }
 
-            let convert_res = self.inner().rent(|v| {
-                let mut vec = v.borrow_mut();
-                let start_len = vec.len();
-                let cap = vec.capacity();
+            let start_len = vec.len();
+            let cap = vec.capacity();
 
-                vec.resize(cap, 0);
+            vec.resize(cap, 0);
 
-                let mut write_buf = unsafe { ExpatBufRefMut::new_len(vec.as_mut_ptr().add(len), cap - start_len) };
-                let write_buf_len = write_buf.len();
-                let convert_res = unsafe {
-                    XmlConvert!(enc, &mut read_buf, &mut write_buf)
-                };
-                // The write buf shrinks by how much was written to it
-                let written_size = write_buf_len - write_buf.len();
+            let mut write_buf = unsafe { ExpatBufRefMut::new_len(vec.as_mut_ptr().add(len), cap - start_len) };
+            let write_buf_len = write_buf.len();
+            let convert_res = unsafe {
+                XmlConvert!(enc, &mut read_buf, &mut write_buf)
+            };
+            // The write buf shrinks by how much was written to it
+            let written_size = write_buf_len - write_buf.len();
 
-                vec.truncate(start_len + written_size);
-
-                convert_res
-            });
+            vec.truncate(start_len + written_size);
 
             if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
                 break;
@@ -319,46 +321,46 @@ impl StringPool {
         Some(&*self.finish_string())
     }
 
-    /// There's currently no try_push in Bumpalo, so can't determine if
-    /// it's possible to allocate or not
     pub(crate) fn grow(&self) -> bool {
-        self.inner().rent(|buf| {
-            let mut blockSize = buf.borrow().capacity();
-            let mut bytesToAllocate: size_t = 0;
-            // if blockSize < 0 {
-            //     /* This condition traps a situation where either more than
-            //      * INT_MAX bytes have already been allocated (which is prevented
-            //      * by various pieces of program logic, not least this one, never
-            //      * mind the unlikelihood of actually having that much memory) or
-            //      * the pool control fields have been corrupted (which could
-            //      * conceivably happen in an extremely buggy user handler
-            //      * function).  Either way it isn't readily testable, so we
-            //      * exclude it from the coverage statistics.
-            //      */
-            //     return false;
-            //     /* LCOV_EXCL_LINE */
-            // }
-            blockSize = if blockSize < INIT_BLOCK_SIZE {
-                INIT_BLOCK_SIZE
-            } else {
-                /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-                match blockSize.checked_mul(2) {
-                    Some(size) => size,
-                    None => return false,
-                }
-            };
-            bytesToAllocate = poolBytesToAllocateFor(blockSize.try_into().unwrap());
+        self.inner().rent(|vec| self.rented_grow(&mut *vec.borrow_mut()))
+    }
 
-            if bytesToAllocate == 0 {
-                return false;
+    fn rented_grow(&self, vec: &mut BumpVec<XML_Char>) -> bool {
+        let mut blockSize = vec.capacity();
+        let mut bytesToAllocate: size_t = 0;
+        // if blockSize < 0 {
+        //     /* This condition traps a situation where either more than
+        //      * INT_MAX bytes have already been allocated (which is prevented
+        //      * by various pieces of program logic, not least this one, never
+        //      * mind the unlikelihood of actually having that much memory) or
+        //      * the pool control fields have been corrupted (which could
+        //      * conceivably happen in an extremely buggy user handler
+        //      * function).  Either way it isn't readily testable, so we
+        //      * exclude it from the coverage statistics.
+        //      */
+        //     return false;
+        //     /* LCOV_EXCL_LINE */
+        // }
+        blockSize = if blockSize < INIT_BLOCK_SIZE {
+            INIT_BLOCK_SIZE
+        } else {
+            /* Detect overflow, avoiding _signed_ overflow undefined behavior */
+            match blockSize.checked_mul(2) {
+                Some(size) => size,
+                None => return false,
             }
+        };
+        bytesToAllocate = poolBytesToAllocateFor(blockSize.try_into().unwrap());
 
-            if buf.borrow_mut().try_reserve_exact(bytesToAllocate as usize).is_err() {
-                return false;
-            };
+        if bytesToAllocate == 0 {
+            return false;
+        }
 
-            true
-        })
+        if vec.try_reserve_exact(bytesToAllocate as usize).is_err() {
+            return false;
+        };
+
+        true
     }
 }
 
