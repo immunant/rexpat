@@ -160,13 +160,7 @@ impl StringPool {
 
     /// Appends a char to the current BumpVec.
     pub(crate) fn append_char(&self, c: XML_Char) -> bool {
-        if self.is_full() && !self.grow() {
-            false
-        } else {
-            self.inner().rent(|buf| buf.borrow_mut().push(c));
-
-            true
-        }
+        self.inner().rent(|vec| self.rented_append_char(c, &mut *vec.borrow_mut()))
     }
 
     pub(crate) fn rented_append_char(&self, c: XML_Char, vec: &mut BumpVec<XML_Char>) -> bool {
