@@ -163,7 +163,7 @@ impl StringPool {
         self.inner().rent(|vec| self.rented_append_char(c, &mut *vec.borrow_mut()))
     }
 
-    pub(crate) fn rented_append_char(&self, c: XML_Char, vec: &mut BumpVec<XML_Char>) -> bool {
+    fn rented_append_char(&self, c: XML_Char, vec: &mut BumpVec<XML_Char>) -> bool {
         if self.rented_is_full(vec) && !self.rented_grow(vec) {
             false
         } else {
