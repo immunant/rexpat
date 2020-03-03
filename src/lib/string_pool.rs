@@ -312,14 +312,24 @@ impl StringPool {
         mut s: *const XML_Char,
     ) -> Option<&mut [XML_Char]> {
         // self.append_c_string(s);?
-        loop {
-            if !self.append_char(*s) {
-                return None;
+        let successful = self.inner().rent(|vec| {
+            let mut vec = vec.borrow_mut();
+
+            loop {
+                if !self.rented_append_char(*s, &mut *vec) {
+                    return false;
+                }
+                if *s == 0 {
+                    break;
+                }
+                s = s.offset(1);
             }
-            if *s == 0 {
-                break;
-            }
-            s = s.offset(1);
+
+            true
+        });
+
+        if !successful {
+            return None;
         }
 
         Some(self.finish_string())
@@ -330,12 +340,22 @@ impl StringPool {
         mut s: *const XML_Char,
         mut n: c_int,
     ) -> Option<&[XML_Char]> {
-        while n > 0 {
-            if !self.append_char(*s) {
-                return None;
+        let successful = self.inner().rent(|vec| {
+            let mut vec = vec.borrow_mut();
+
+            while n > 0 {
+                if !self.rented_append_char(*s, &mut vec) {
+                    return false;
+                }
+                n -= 1;
+                s = s.offset(1)
             }
-            n -= 1;
-            s = s.offset(1)
+
+            true
+        });
+
+        if !successful {
+            return None;
         }
 
         Some(&*self.finish_string())
