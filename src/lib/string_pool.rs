@@ -202,13 +202,17 @@ impl StringPool {
 
     /// Appends an entire C String to the current BumpVec.
     pub(crate) unsafe fn append_c_string(&self, mut s: *const XML_Char) -> bool {
-        while *s != 0 {
-            if !self.append_char(*s) {
-                return false;
+        self.inner().rent(|vec| {
+            let mut vec = vec.borrow_mut();
+
+            while *s != 0 {
+                if !self.rented_append_char(*s, &mut vec) {
+                    return false;
+                }
+                s = s.offset(1)
             }
-            s = s.offset(1)
-        }
-        true
+            true
+        })
     }
 
     /// Resets the current Bump and deallocates its contents.
