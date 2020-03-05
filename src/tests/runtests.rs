@@ -276,8 +276,8 @@ pub type DefaultCheck = default_check;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct DataIssue240<'parser> {
-    pub parser: XML_Parser<'parser>,
+pub struct DataIssue240 {
+    pub parser: XML_Parser,
     pub deep: c_int,
 }
 /* ptrdiff_t */
