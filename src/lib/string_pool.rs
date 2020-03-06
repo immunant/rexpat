@@ -271,19 +271,21 @@ impl StringPool {
 
     pub(crate) unsafe fn copy_c_string_n(
         &self,
-        mut s: *const XML_Char,
-        mut n: c_int,
+        s: *const XML_Char,
+        n: c_int,
     ) -> Option<&[XML_Char]> {
         let successful = self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
+            let iter = CStrIterator(s);
+            let n = n.try_into().unwrap();
+            let cap = vec.0.capacity();
+            let new_size = vec.0.len() + n;
 
-            while n > 0 {
-                if !vec.append_char(*s) {
-                    return false;
-                }
-                n -= 1;
-                s = s.offset(1)
-            }
+            if new_size > cap && vec.0.try_reserve_exact(new_size).is_err() {
+                return false;
+            };
+
+            vec.0.extend(iter.take(n));
 
             true
         });
@@ -403,6 +405,25 @@ impl<'bump> RentedBumpVec<'bump> {
             self.0.push(c);
 
             true
+        }
+    }
+}
+
+// TODO: Move to a better location
+struct CStrIterator<T>(*const T);
+
+impl<T: Copy> Iterator for CStrIterator<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0.is_null() {
+            return None;
+        }
+
+        unsafe {
+            let ch = *self.0;
+            self.0 = self.0.offset(1);
+            Some(ch)
         }
     }
 }
