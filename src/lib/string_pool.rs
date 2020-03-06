@@ -56,7 +56,7 @@ rental! {
         #[rental(debug)]
         pub(crate) struct InnerStringPool {
             bump: Box<Bump>,
-            current_bump_vec: RefCell<BumpVec<'bump, XML_Char>>,
+            current_bump_vec: RefCell<RentedBumpVec<'bump>>,
         }
     }
 }
@@ -75,7 +75,7 @@ impl StringPool {
 
         Ok(StringPool(Some(InnerStringPool::new(
             boxed_bump,
-            |bump| RefCell::new(BumpVec::new_in(&bump)),
+            |bump| RefCell::new(RentedBumpVec(BumpVec::new_in(&bump))),
         ))))
     }
 
@@ -91,16 +91,12 @@ impl StringPool {
 
     /// Determines whether or not the current BumpVec is empty.
     pub(crate) fn is_empty(&self) -> bool {
-        self.inner().rent(|vec| vec.borrow().is_empty())
+        self.inner().rent(|vec| vec.borrow().0.is_empty())
     }
 
     /// Determines whether or not the current BumpVec is full.
     pub(crate) fn is_full(&self) -> bool {
-        self.inner().rent(|vec| self.rented_is_full(&vec.borrow()))
-    }
-
-    fn rented_is_full(&self, vec: &BumpVec<XML_Char>) -> bool {
-        vec.len() == vec.capacity()
+        self.inner().rent(|vec| vec.borrow().is_full())
     }
 
     /// Gets the current vec, converts it into a slice, and resets
@@ -120,18 +116,18 @@ impl StringPool {
         /// for the lifetime of self, and mutability is allowed because mutating
         /// a finalized string can never affect any other string in the pool.
         let pool = unsafe { self.inner().all_erased() };
-        let mut vec = BumpVec::new_in(&pool.bump);
-        pool.current_bump_vec.replace(vec).into_bump_slice_mut()
+        let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
+        pool.current_bump_vec.replace(vec).0.into_bump_slice_mut()
     }
 
     /// Resets the current bump vec to the beginning
     pub(crate) fn clear_current(&self) {
-        self.inner().rent(|v| v.borrow_mut().clear())
+        self.inner().rent(|v| v.borrow_mut().0.clear())
     }
 
     /// Obtains the length of the current BumpVec.
     pub(crate) fn len(&self) -> usize {
-        self.inner().rent(|vec| vec.borrow().len())
+        self.inner().rent(|vec| vec.borrow().0.len())
     }
 
     /// Call callback with an immutable buffer of the current BumpVec. This must
@@ -140,7 +136,7 @@ impl StringPool {
     pub(crate) fn current_slice<F, R>(&self, mut callback: F) -> R
         where F: FnMut(&[XML_Char]) -> R
     {
-        self.inner().rent(|v| callback(v.borrow().as_slice()))
+        self.inner().rent(|v| callback(v.borrow().0.as_slice()))
     }
 
     /// Call callback with a mutable buffer of the current BumpVec. This must
@@ -149,28 +145,18 @@ impl StringPool {
     pub(crate) fn current_mut_slice<F, R>(&self, mut callback: F) -> R
         where F: FnMut(&mut [XML_Char]) -> R
     {
-        self.inner().rent(|v| callback(v.borrow_mut().as_mut_slice()))
+        self.inner().rent(|v| callback(v.borrow_mut().0.as_mut_slice()))
     }
 
     /// Unsafe temporary version of `current_slice()`. This needs to be removed
     /// when callers are made safe.
     pub(crate) unsafe fn current_start(&self) -> *const XML_Char {
-        self.inner().rent(|v| v.borrow().as_ptr())
+        self.inner().rent(|v| v.borrow().0.as_ptr())
     }
 
     /// Appends a char to the current BumpVec.
     pub(crate) fn append_char(&self, c: XML_Char) -> bool {
-        self.inner().rent(|vec| self.rented_append_char(c, &mut *vec.borrow_mut()))
-    }
-
-    fn rented_append_char(&self, c: XML_Char, vec: &mut BumpVec<XML_Char>) -> bool {
-        if self.rented_is_full(vec) && !self.rented_grow(vec) {
-            false
-        } else {
-            vec.push(c);
-
-            true
-        }
+        self.inner().rent(|vec| vec.borrow_mut().append_char(c))
     }
 
     /// Overwrites the last char in the current BumpVec.
@@ -179,6 +165,7 @@ impl StringPool {
     pub(crate) fn replace_last_char(&self, c: XML_Char) {
         self.inner().rent(|buf| {
             *buf.borrow_mut()
+                .0
                 .last_mut()
                 .expect("Called replace_last_char() when string was empty") = c;
         })
@@ -186,12 +173,12 @@ impl StringPool {
 
     /// Decrements the length, panicing if len is 0
     pub(crate) fn backtrack(&self) {
-        self.inner().rent(|vec| vec.borrow_mut().pop().expect("Called backtrack() on empty BumpVec"));
+        self.inner().rent(|vec| vec.borrow_mut().0.pop().expect("Called backtrack() on empty BumpVec"));
     }
 
     /// Gets the last character, panicing if len is 0
     pub(crate) fn get_last_char(&self) -> XML_Char {
-        self.inner().rent(|buf| *buf.borrow().last().expect("Called get_last_char() when string was empty"))
+        self.inner().rent(|buf| *buf.borrow().0.last().expect("Called get_last_char() when string was empty"))
     }
 
     /// Appends an entire C String to the current BumpVec.
@@ -200,7 +187,7 @@ impl StringPool {
             let mut vec = vec.borrow_mut();
 
             while *s != 0 {
-                if !self.rented_append_char(*s, &mut vec) {
+                if !vec.append_char(*s) {
                     return false;
                 }
                 s = s.offset(1)
@@ -221,7 +208,7 @@ impl StringPool {
 
         inner_pool = Some(InnerStringPool::new(
             bump,
-            |bump| RefCell::new(BumpVec::new_in(&bump)),
+            |bump| RefCell::new(RentedBumpVec(BumpVec::new_in(&bump))),
         ));
 
         swap(&mut self.0, &mut inner_pool);
@@ -235,10 +222,10 @@ impl StringPool {
         self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
 
-            if !self.rented_append(enc, buf, &mut *vec) {
+            if !vec.append(enc, buf) {
                 return false;
             }
-            if !self.rented_append_char('\0' as XML_Char, &mut *vec) {
+            if !vec.append_char('\0' as XML_Char) {
                 return false;
             }
 
@@ -249,60 +236,9 @@ impl StringPool {
     pub(crate) fn append(
         &self,
         enc: &ENCODING,
-        mut read_buf: ExpatBufRef,
+        read_buf: ExpatBufRef,
     ) -> bool {
-        self.inner().rent(|vec| self.rented_append(enc, read_buf, &mut *vec.borrow_mut()))
-    }
-
-    fn rented_append(
-        &self,
-        enc: &ENCODING,
-        mut read_buf: ExpatBufRef,
-        vec: &mut BumpVec<XML_Char>,
-    ) -> bool {
-        let start = vec.as_ptr();
-
-        // REVIEW: Can this be replaced with self.is_empty() &&?
-        if start.is_null() && !self.rented_grow(vec) {
-            return false;
-        }
-
-        let mut cap = vec.capacity();
-        let mut len = vec.len();
-
-        loop {
-            debug_assert!(len <= cap);
-
-            // Continue to allocate if we don't have enough space
-            while (cap - len) < read_buf.len() {
-                if !self.rented_grow(vec) {
-                    return false;
-                }
-
-                cap = vec.capacity();
-            }
-
-            let start_len = vec.len();
-            let cap = vec.capacity();
-
-            vec.resize(cap, 0);
-
-            let mut write_buf = unsafe { ExpatBufRefMut::new_len(vec.as_mut_ptr().add(len), cap - start_len) };
-            let write_buf_len = write_buf.len();
-            let convert_res = unsafe {
-                XmlConvert!(enc, &mut read_buf, &mut write_buf)
-            };
-            // The write buf shrinks by how much was written to it
-            let written_size = write_buf_len - write_buf.len();
-
-            vec.truncate(start_len + written_size);
-
-            if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
-                break;
-            }
-        }
-
-        true
+        self.inner().rent(|vec| vec.borrow_mut().append(enc, read_buf))
     }
 
     pub(crate) unsafe fn copy_c_string(
@@ -314,7 +250,7 @@ impl StringPool {
             let mut vec = vec.borrow_mut();
 
             loop {
-                if !self.rented_append_char(*s, &mut *vec) {
+                if !vec.append_char(*s) {
                     return false;
                 }
                 if *s == 0 {
@@ -342,7 +278,7 @@ impl StringPool {
             let mut vec = vec.borrow_mut();
 
             while n > 0 {
-                if !self.rented_append_char(*s, &mut vec) {
+                if !vec.append_char(*s) {
                     return false;
                 }
                 n -= 1;
@@ -360,11 +296,20 @@ impl StringPool {
     }
 
     pub(crate) fn grow(&self) -> bool {
-        self.inner().rent(|vec| self.rented_grow(&mut *vec.borrow_mut()))
+        self.inner().rent(|vec| vec.borrow_mut().grow())
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct RentedBumpVec<'bump>(BumpVec<'bump, XML_Char>);
+
+impl<'bump> RentedBumpVec<'bump> {
+    fn is_full(&self) -> bool {
+        self.0.len() == self.0.capacity()
     }
 
-    fn rented_grow(&self, vec: &mut BumpVec<XML_Char>) -> bool {
-        let mut blockSize = vec.capacity();
+    fn grow(&mut self) -> bool {
+        let mut blockSize = self.0.capacity();
         let mut bytesToAllocate: size_t = 0;
         // if blockSize < 0 {
         //     /* This condition traps a situation where either more than
@@ -394,11 +339,71 @@ impl StringPool {
             return false;
         }
 
-        if vec.try_reserve_exact(bytesToAllocate as usize).is_err() {
+        if self.0.try_reserve_exact(bytesToAllocate as usize).is_err() {
             return false;
         };
 
         true
+    }
+
+    fn append(
+        &mut self,
+        enc: &ENCODING,
+        mut read_buf: ExpatBufRef,
+    ) -> bool {
+        let start = self.0.as_ptr();
+
+        // REVIEW: Can this be replaced with self.is_empty() &&?
+        if start.is_null() && !self.grow() {
+            return false;
+        }
+
+        let mut cap = self.0.capacity();
+        let mut len = self.0.len();
+
+        loop {
+            debug_assert!(len <= cap);
+
+            // Continue to allocate if we don't have enough space
+            while (cap - len) < read_buf.len() {
+                if !self.grow() {
+                    return false;
+                }
+
+                cap = self.0.capacity();
+            }
+
+            let start_len = self.0.len();
+            let cap = self.0.capacity();
+
+            self.0.resize(cap, 0);
+
+            let mut write_buf = unsafe { ExpatBufRefMut::new_len(self.0.as_mut_ptr().add(len), cap - start_len) };
+            let write_buf_len = write_buf.len();
+            let convert_res = unsafe {
+                XmlConvert!(enc, &mut read_buf, &mut write_buf)
+            };
+            // The write buf shrinks by how much was written to it
+            let written_size = write_buf_len - write_buf.len();
+
+            self.0.truncate(start_len + written_size);
+
+            if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
+                break;
+            }
+        }
+
+        true
+    }
+
+    fn append_char(&mut self, c: XML_Char) -> bool {
+        if self.is_full() && !self.grow() {
+            false
+        } else {
+            self.0.push(c);
+
+            true
+        }
     }
 }
 
@@ -499,7 +504,7 @@ fn test_store_c_string() {
     pool.current_slice(|s| assert_eq!(s, [A, A]));
 
     // Force reallocation:
-    pool.inner().rent(|v| v.borrow_mut().resize(2, 0));
+    pool.inner().rent(|v| v.borrow_mut().0.resize(2, 0));
 
     assert!(pool.store_c_string(enc, read_buf));
 
