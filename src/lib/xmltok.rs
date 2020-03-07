@@ -180,11 +180,9 @@ pub const XML_UTF8_ENCODE_MAX: c_int = 4;
 /* The size of the buffer passed to XmlUtf16Encode must be at least this. */
 pub const XML_UTF16_ENCODE_MAX: c_int = 2;
 
-pub type POSITION = position;
-
 #[repr(C)]
 #[derive(Copy, Clone, Default)]
-pub struct position {
+pub struct Position {
     /* first line and first column are 0 not 1 */
     pub lineNumber: XML_Size,
     pub columnNumber: XML_Size,
@@ -192,7 +190,7 @@ pub struct position {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct ATTRIBUTE {
+pub struct Attribute {
     pub name: *const c_char,
     pub valuePtr: *const c_char,
     pub valueEnd: *const c_char,
@@ -224,7 +222,7 @@ macro_rules! XmlUtf16Convert {
     };
 }
 
-pub type CONVERTER = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>;
+pub type Converter = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>;
 
 // =============== END xmltok_h ================
 
@@ -277,7 +275,7 @@ pub trait XmlEncoding {
     unsafe fn getAtts(
         &self,
         buf: ExpatBufRef,
-        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+        f: &mut dyn FnMut(Attribute) -> XML_Error,
     ) -> XML_Error;
 
     unsafe fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
@@ -290,7 +288,7 @@ pub trait XmlEncoding {
     unsafe fn updatePosition(
         &self,
         buf: ExpatBufRef,
-        pos: *mut POSITION,
+        pos: *mut Position,
     );
 
     unsafe fn isPublicId(
@@ -2239,7 +2237,7 @@ impl XmlEncoding for InitEncoding {
     unsafe fn getAtts(
         &self,
         _buf: ExpatBufRef,
-        _f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+        _f: &mut dyn FnMut(Attribute) -> XML_Error,
     ) -> XML_Error {
         XML_Error::NONE
     }
@@ -2258,7 +2256,7 @@ impl XmlEncoding for InitEncoding {
     unsafe fn updatePosition(
         &self,
         buf: ExpatBufRef,
-        pos: *mut POSITION,
+        pos: *mut Position,
     ) {
         utf8_encoding.updatePosition(buf, pos);
     }
@@ -2301,7 +2299,7 @@ impl XmlEncoding for InitEncoding {
 #[derive(Clone)]
 pub struct UnknownEncoding {
     types: [ByteType; 256],
-    convert: CONVERTER,
+    convert: Converter,
     userData: *mut c_void,
     utf16: [c_ushort; 256],
     utf8: [[c_char; 4]; 256],
@@ -2321,7 +2319,7 @@ impl UnknownEncoding {
     pub fn initialize(
         &mut self,
         table: *mut c_int,
-        convert: CONVERTER,
+        convert: Converter,
         userData: *mut c_void,
         is_ns: bool,
     ) -> bool {
@@ -2893,7 +2891,7 @@ unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
 unsafe fn initUpdatePosition(
     mut _enc: &ENCODING,
     buf: ExpatBufRef,
-    mut pos: *mut POSITION,
+    mut pos: *mut Position,
 ) {
     utf8_encoding.updatePosition(buf, pos);
 }

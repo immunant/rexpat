@@ -1,6 +1,6 @@
 use libc::{c_char, c_int, c_long, size_t};
 
-use super::xmltok::{checkCharRefNumber, ATTRIBUTE, POSITION};
+use super::xmltok::{checkCharRefNumber, Attribute, Position};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl, XML_TOK};
 use crate::ascii_h::*;
 use crate::expat_h::{XML_Error};
@@ -1564,7 +1564,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     unsafe fn getAtts(
         &self,
         mut buf: ExpatBufRef,
-        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+        f: &mut dyn FnMut(Attribute) -> XML_Error,
     ) -> XML_Error {
         #[derive(PartialEq)]
         enum State {
@@ -1573,7 +1573,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             InValue,
         };
         let mut state = State::InName;
-        let mut att = ATTRIBUTE {
+        let mut att = Attribute {
             name: std::ptr::null(),
             valuePtr: std::ptr::null(),
             valueEnd: std::ptr::null(),
@@ -1818,7 +1818,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     unsafe fn updatePosition(
         &self,
         mut buf: ExpatBufRef,
-        mut pos: *mut POSITION,
+        mut pos: *mut Position,
     ) {
         while HAS_CHAR!(buf, self) {
             MATCH_LEAD_CASES! {

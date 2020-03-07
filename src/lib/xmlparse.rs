@@ -823,7 +823,7 @@ pub struct XML_ParserStruct<'scf> {
     pub m_atts: Vec<Attribute>,
     typed_atts: Vec<TypedAttributeName>,
     pub m_nsAtts: HashSet<HashKey>,
-    pub m_position: super::xmltok::POSITION,
+    pub m_position: super::xmltok::Position,
     pub m_tempPool: STRING_POOL,
     pub m_temp2Pool: STRING_POOL,
     pub m_groupConnector: *mut c_char,
@@ -1515,7 +1515,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             m_atts: Vec::new(),
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
-            m_position: super::xmltok::POSITION::default(),
+            m_position: super::xmltok::Position::default(),
             m_tempPool: STRING_POOL::new(),
             m_temp2Pool: STRING_POOL::new(),
             m_groupConnector: ptr::null_mut(),
@@ -1624,9 +1624,9 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_declAttributeIsCdata = false;
         self.m_declAttributeIsId = false;
         memset(
-            &mut self.m_position as *mut super::xmltok::POSITION as *mut c_void,
+            &mut self.m_position as *mut super::xmltok::Position as *mut c_void,
             0,
-            ::std::mem::size_of::<super::xmltok::POSITION>(),
+            ::std::mem::size_of::<super::xmltok::Position>(),
         );
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = ptr::null();
@@ -4228,7 +4228,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_atts.clear();
         self.typed_atts.clear();
         /* get the attributes from the tokenizer */
-        let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::ATTRIBUTE| {
+        let res = (*enc).getAtts(attStr, &mut |currAtt: super::xmltok::Attribute| {
             if self.m_atts.try_reserve(1).is_err() {
                 return XML_Error::NO_MEMORY;
             }
