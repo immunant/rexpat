@@ -5725,7 +5725,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     (*dtd).hasParamEntityRefs = true;
                     if self.m_handlers.hasStartDoctypeDecl() {
                         let mut pubId: *mut XML_Char = ptr::null_mut();
-                        if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
+                        if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
                             return XML_Error::PUBLICID;
                         }
                         pubId = self.m_tempPool.storeString(
@@ -6319,7 +6319,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::NOTATION_PUBLIC_ID => {
-                    if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
+                    if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
                         return XML_Error::PUBLICID;
                     }
                     if !self.m_declNotationName.is_null() {
@@ -6780,7 +6780,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 926243229934402080 =>
                 /* fall through */
                 {
-                    if (*enc).isPublicId(buf.with_end(next), eventPP) == 0 {
+                    if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
                         return XML_Error::PUBLICID;
                     }
                     current_block = 9007411418488376351;
