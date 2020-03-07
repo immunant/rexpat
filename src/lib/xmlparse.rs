@@ -756,7 +756,7 @@ impl Attribute {
         }
     }
 
-    unsafe fn from_default(da: &DEFAULT_ATTRIBUTE) -> Self {
+    unsafe fn from_default(da: &DefaultAttribute) -> Self {
         Attribute {
             name: (*da.id).name.name(),
             value: da.value,
@@ -798,27 +798,27 @@ pub struct XML_ParserStruct<'scf> {
     pub m_eventPtr: *const c_char,
     pub m_eventEndPtr: *const c_char,
     pub m_positionPtr: *const c_char,
-    pub m_openInternalEntities: *mut OPEN_INTERNAL_ENTITY,
-    pub m_freeInternalEntities: *mut OPEN_INTERNAL_ENTITY,
+    pub m_openInternalEntities: *mut OpenInternalEntity,
+    pub m_freeInternalEntities: *mut OpenInternalEntity,
     pub m_defaultExpandInternalEntities: XML_Bool,
     pub m_tagLevel: c_int,
-    pub m_declEntity: *mut ENTITY,
+    pub m_declEntity: *mut Entity,
     pub m_doctypeName: *const XML_Char,
     pub m_doctypeSysid: *const XML_Char,
     pub m_doctypePubid: *const XML_Char,
     pub m_declAttributeType: *const XML_Char,
     pub m_declNotationName: *const XML_Char,
     pub m_declNotationPublicId: *const XML_Char,
-    pub m_declElementType: *mut ELEMENT_TYPE,
-    pub m_declAttributeId: *mut ATTRIBUTE_ID,
+    pub m_declElementType: *mut ElementType,
+    pub m_declAttributeId: *mut AttributeId,
     pub m_declAttributeIsCdata: XML_Bool,
     pub m_declAttributeIsId: XML_Bool,
     pub m_dtd: *mut DTD<'scf>,
     pub m_curBase: *const XML_Char,
     pub m_tagStack: Option<Box<Tag>>,
     pub m_freeTagList: Option<Box<Tag>>,
-    pub m_inheritedBindings: *mut BINDING,
-    pub m_freeBindingList: *mut BINDING,
+    pub m_inheritedBindings: *mut Binding,
+    pub m_freeBindingList: *mut Binding,
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
@@ -852,8 +852,8 @@ impl<'scf> XML_ParserStruct<'scf> {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct STRING_POOL {
-    pub blocks: *mut BLOCK,
-    pub freeBlocks: *mut BLOCK,
+    pub blocks: *mut Block,
+    pub freeBlocks: *mut Block,
     pub end: *const XML_Char,
     pub ptr: *mut XML_Char,
     pub start: *mut XML_Char,
@@ -871,25 +871,21 @@ impl STRING_POOL {
     }
 }
 
-pub type BLOCK = block;
-
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct block {
-    pub next: *mut block,
+pub struct Block {
+    pub next: *mut Block,
     pub size: c_int,
     pub s: [XML_Char; 1],
 }
 
-pub type BINDING = binding;
-
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct binding {
-    pub prefix: *mut prefix,
-    pub nextTagBinding: *mut binding,
-    pub prevPrefixBinding: *mut binding,
-    pub attId: *mut attribute_id,
+pub struct Binding {
+    pub prefix: *mut Prefix,
+    pub nextTagBinding: *mut Binding,
+    pub prevPrefixBinding: *mut Binding,
+    pub attId: *mut AttributeId,
     pub uri: *mut XML_Char,
     pub uriLen: c_int,
     pub uriAlloc: c_int,
@@ -897,9 +893,9 @@ pub struct binding {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct attribute_id {
+pub struct AttributeId {
     pub name: TypedAttributeName,
-    pub prefix: *mut PREFIX,
+    pub prefix: *mut Prefix,
     pub maybeTokenized: XML_Bool,
     pub xmlns: XML_Bool,
 }
@@ -976,13 +972,11 @@ impl From<AttributeType> for XML_Char {
     }
 }
 
-pub type PREFIX = prefix;
-
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct prefix {
+pub struct Prefix {
     pub name: *const XML_Char,
-    pub binding: *mut BINDING,
+    pub binding: *mut Binding,
 }
 
 /* TAG represents an open element.
@@ -1004,15 +998,15 @@ pub struct Tag {
     pub parent: Option<Box<Tag>>,
     pub rawName: *const c_char,
     pub rawNameLength: c_int,
-    pub name: TAG_NAME,
+    pub name: TagName,
     pub buf: *mut c_char,
     pub bufEnd: *mut c_char,
-    pub bindings: *mut BINDING,
+    pub bindings: *mut Binding,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct TAG_NAME {
+pub struct TagName {
     pub str_0: *const XML_Char,
     pub localPart: *const XML_Char,
     pub prefix: *const XML_Char,
@@ -1086,10 +1080,10 @@ pub struct DTD<'scf> {
     // TODO: get rid of the `Box`es to eliminate the extra indirection;
     // for now, we can keep them since they're equivalent to the C code's
     // structure anyway
-    pub generalEntities: HashMap<HashKey, Box<ENTITY>>,
-    pub elementTypes: HashMap<HashKey, Box<ELEMENT_TYPE>>,
-    pub attributeIds: HashMap<HashKey, Box<ATTRIBUTE_ID>>,
-    pub prefixes: HashMap<HashKey, Box<PREFIX>>,
+    pub generalEntities: HashMap<HashKey, Box<Entity>>,
+    pub elementTypes: HashMap<HashKey, Box<ElementType>>,
+    pub attributeIds: HashMap<HashKey, Box<AttributeId>>,
+    pub prefixes: HashMap<HashKey, Box<Prefix>>,
     pub pool: STRING_POOL,
     pub entityValuePool: STRING_POOL,
     pub keepProcessing: XML_Bool,
@@ -1098,8 +1092,8 @@ pub struct DTD<'scf> {
     pub paramEntityRead: XML_Bool,
     // `test_alloc_nested_entities` counts the allocations,
     // so we need to use `Box` here to pass that test
-    pub paramEntities: HashMap<HashKey, Box<ENTITY>>,
-    pub defaultPrefix: PREFIX,
+    pub paramEntities: HashMap<HashKey, Box<Entity>>,
+    pub defaultPrefix: Prefix,
     pub in_eldecl: XML_Bool,
     pub scaffold: Cow<'scf, RefCell<Scaffold>>,
     pub contentStringLen: c_uint,
@@ -1108,7 +1102,7 @@ pub struct DTD<'scf> {
 #[repr(C)]
 #[derive(Clone, Default)]
 pub struct Scaffold {
-    scaffold: Vec<CONTENT_SCAFFOLD>,
+    scaffold: Vec<ContentScaffold>,
     index: Vec<usize>,
 }
 
@@ -1139,7 +1133,7 @@ impl Scaffold {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct CONTENT_SCAFFOLD {
+pub struct ContentScaffold {
     pub type_0: XML_Content_Type,
     pub quant: XML_Content_Quant,
     pub name: *const XML_Char,
@@ -1151,7 +1145,7 @@ pub struct CONTENT_SCAFFOLD {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct NAMED {
+pub struct Named {
     pub name: KEY,
 }
 /* parent of this element */
@@ -1166,20 +1160,18 @@ pub type KEY = *const XML_Char;
 /* The XML_Char before the name is used to determine whether
 an attribute has been specified. */
 
-pub type ATTRIBUTE_ID = attribute_id;
-
 #[repr(C)]
 #[derive(Clone)]
-pub struct ELEMENT_TYPE {
+pub struct ElementType {
     pub name: *const XML_Char,
-    pub prefix: *mut PREFIX,
-    pub idAtt: *const ATTRIBUTE_ID,
-    pub defaultAtts: Vec<DEFAULT_ATTRIBUTE>,
+    pub prefix: *mut Prefix,
+    pub idAtt: *const AttributeId,
+    pub defaultAtts: Vec<DefaultAttribute>,
 }
 
-impl ELEMENT_TYPE {
+impl ElementType {
     fn new() -> Self {
-        ELEMENT_TYPE {
+        ElementType {
             name: ptr::null(),
             prefix: ptr::null_mut(),
             idAtt: ptr::null(),
@@ -1190,15 +1182,15 @@ impl ELEMENT_TYPE {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct DEFAULT_ATTRIBUTE {
-    pub id: *mut ATTRIBUTE_ID,
+pub struct DefaultAttribute {
+    pub id: *mut AttributeId,
     pub isCdata: XML_Bool,
     pub value: *const XML_Char,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct ENTITY {
+pub struct Entity {
     pub name: *const XML_Char,
     pub textPtr: *const XML_Char,
     pub textLen: c_int,
@@ -1212,15 +1204,13 @@ pub struct ENTITY {
     pub is_internal: XML_Bool,
 }
 
-pub type OPEN_INTERNAL_ENTITY = open_internal_entity;
-
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct open_internal_entity {
+pub struct OpenInternalEntity {
     pub internalEventPtr: *const c_char,
     pub internalEventEndPtr: *const c_char,
-    pub next: *mut open_internal_entity,
-    pub entity: *mut ENTITY,
+    pub next: *mut OpenInternalEntity,
+    pub entity: *mut Entity,
     pub startTagLevel: c_int,
     pub betweenDecl: XML_Bool,
 }
@@ -1301,13 +1291,13 @@ pub const INIT_ATTS_SIZE: c_int = 16;
 
 pub const INIT_ATTS_VERSION: c_uint = 0xffffffff;
 
-pub const INIT_BLOCK_SIZE: c_int = init_block_size_const();
+pub const INIT_Block_SIZE: c_int = init_block_size_const();
 
 #[cfg(feature = "mozilla")]
 const fn init_block_size_const() -> c_int {
-    // FIXME: should be `offset_of(BLOCK, s)`, but that's not supported yet,
+    // FIXME: should be `offset_of(Block, s)`, but that's not supported yet,
     // so we over-estimate its offset
-    1024 - (std::mem::size_of::<BLOCK>() / std::mem::size_of::<XML_Char>()) as c_int
+    1024 - (std::mem::size_of::<Block>() / std::mem::size_of::<XML_Char>()) as c_int
 }
 
 #[cfg(not(feature = "mozilla"))]
@@ -1578,9 +1568,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                 return ptr::null_mut();
             }
         }
-        parser.m_freeBindingList = NULL as *mut BINDING;
+        parser.m_freeBindingList = NULL as *mut Binding;
         parser.m_freeTagList = None;
-        parser.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
+        parser.m_freeInternalEntities = NULL as *mut OpenInternalEntity;
         parser.m_groupSize = 0;
         parser.m_groupConnector = NULL as *mut c_char;
         parser.m_initEncoding = None;
@@ -1623,9 +1613,9 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_bufferEnd = self.m_buffer;
         self.m_parseEndByteIndex = 0;
         self.m_parseEndPtr = NULL as *const c_char;
-        self.m_declElementType = NULL as *mut ELEMENT_TYPE;
-        self.m_declAttributeId = NULL as *mut ATTRIBUTE_ID;
-        self.m_declEntity = NULL as *mut ENTITY;
+        self.m_declElementType = NULL as *mut ElementType;
+        self.m_declAttributeId = NULL as *mut AttributeId;
+        self.m_declEntity = NULL as *mut Entity;
         self.m_doctypeName = NULL as *const XML_Char;
         self.m_doctypeSysid = NULL as *const XML_Char;
         self.m_doctypePubid = NULL as *const XML_Char;
@@ -1643,11 +1633,11 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_eventPtr = NULL as *const c_char;
         self.m_eventEndPtr = NULL as *const c_char;
         self.m_positionPtr = NULL as *const c_char;
-        self.m_openInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY;
+        self.m_openInternalEntities = NULL as *mut OpenInternalEntity;
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
         self.m_tagStack = None;
-        self.m_inheritedBindings = NULL as *mut BINDING;
+        self.m_inheritedBindings = NULL as *mut Binding;
         self.m_nSpecifiedAtts = 0;
         self.m_unknownEncoding = None;
         self.m_unknownEncodingRelease = ::std::mem::transmute::<
@@ -1663,9 +1653,9 @@ impl<'scf> XML_ParserStruct<'scf> {
     }
 
     /* moves list of bindings to m_freeBindingList */
-    unsafe fn moveToFreeBindingList(&mut self, mut bindings: *mut BINDING) {
+    unsafe fn moveToFreeBindingList(&mut self, mut bindings: *mut Binding) {
         while !bindings.is_null() {
-            let mut b: *mut BINDING = bindings;
+            let mut b: *mut Binding = bindings;
             bindings = (*bindings).nextTagBinding;
             (*b).nextTagBinding = self.m_freeBindingList;
             self.m_freeBindingList = b
@@ -1684,7 +1674,7 @@ impl<'scf> XML_ParserStruct<'scf> {
 */
 impl<'scf> XML_ParserStruct<'scf> {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
-        let mut openEntityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        let mut openEntityList: *mut OpenInternalEntity = 0 as *mut OpenInternalEntity;
         if !self.m_parentParser.is_null() {
             return false;
         }
@@ -1701,7 +1691,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         /* move m_openInternalEntities to m_freeInternalEntities */
         openEntityList = self.m_openInternalEntities;
         while !openEntityList.is_null() {
-            let mut openEntity: *mut OPEN_INTERNAL_ENTITY = openEntityList;
+            let mut openEntity: *mut OpenInternalEntity = openEntityList;
             openEntityList = (*openEntity).next;
             (*openEntity).next = self.m_freeInternalEntities;
             self.m_freeInternalEntities = openEntity
@@ -1821,7 +1811,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     let mut oldAttlistDeclHandler: XML_AttlistDeclHandler = None;
     let mut oldEntityDeclHandler: XML_EntityDeclHandler = None;
     let mut oldXmlDeclHandler: XML_XmlDeclHandler = None;
-    let mut oldDeclElementType: *mut ELEMENT_TYPE = 0 as *mut ELEMENT_TYPE;
+    let mut oldDeclElementType: *mut ElementType = 0 as *mut ElementType;
     let mut oldUserData: *mut c_void = 0 as *mut c_void;
     let mut oldHandlerArg: *mut c_void = 0 as *mut c_void;
     let mut oldDefaultExpandInternalEntities = false;
@@ -1957,9 +1947,9 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     parser
 }
 
-unsafe fn destroyBindings(mut bindings: *mut BINDING) {
+unsafe fn destroyBindings(mut bindings: *mut Binding) {
     loop {
-        let mut b: *mut BINDING = bindings;
+        let mut b: *mut Binding = bindings;
         if b.is_null() {
             break;
         }
@@ -1972,18 +1962,18 @@ unsafe fn destroyBindings(mut bindings: *mut BINDING) {
 impl<'scf> Drop for XML_ParserStruct<'scf> {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
-        let mut entityList: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        let mut entityList: *mut OpenInternalEntity = 0 as *mut OpenInternalEntity;
         unsafe {
             /* free m_openInternalEntities and m_freeInternalEntities */
             entityList = self.m_openInternalEntities;
             loop {
-                let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+                let mut openEntity: *mut OpenInternalEntity = 0 as *mut OpenInternalEntity;
                 if entityList.is_null() {
                     if self.m_freeInternalEntities.is_null() {
                         break;
                     }
                     entityList = self.m_freeInternalEntities;
-                    self.m_freeInternalEntities = NULL as *mut OPEN_INTERNAL_ENTITY
+                    self.m_freeInternalEntities = NULL as *mut OpenInternalEntity
                 }
                 openEntity = entityList;
                 entityList = (*entityList).next;
@@ -3831,9 +3821,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                     /* fall through */
                     let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
                     let mut result_1: XML_Error = XML_Error::NONE;
-                    let mut bindings: *mut BINDING = NULL as *mut BINDING;
+                    let mut bindings: *mut Binding = NULL as *mut Binding;
                     let mut noElmHandlers = true;
-                    let mut name_0: TAG_NAME = TAG_NAME {
+                    let mut name_0 = TagName {
                         str_0: 0 as *const XML_Char,
                         localPart: 0 as *const XML_Char,
                         prefix: 0 as *const XML_Char,
@@ -3983,7 +3973,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             reportDefault(self, enc_type, buf.with_end(next));
                         }
                         while !tag.bindings.is_null() {
-                            let mut b: *mut BINDING = tag.bindings;
+                            let mut b: *mut Binding = tag.bindings;
                             self.m_handlers.endNamespaceDecl((*(*b).prefix).name);
                             tag.bindings = (*tag.bindings).nextTagBinding;
                             (*b).nextTagBinding = self.m_freeBindingList;
@@ -4178,9 +4168,9 @@ impl<'scf> XML_ParserStruct<'scf> {
  * reused as appropriate.
  */
 
-    unsafe fn freeBindings(&mut self, mut bindings: *mut BINDING) {
+    unsafe fn freeBindings(&mut self, mut bindings: *mut Binding) {
         while !bindings.is_null() {
-            let mut b: *mut BINDING = bindings;
+            let mut b: *mut Binding = bindings;
             /* m_startNamespaceDeclHandler will have been called for this
             * binding in addBindings(), so call the end handler now.
             */
@@ -4206,15 +4196,15 @@ impl<'scf> XML_ParserStruct<'scf> {
         &mut self,
         enc_type: EncodingType,
         attStr: ExpatBufRef,
-        tagNamePtr: *mut TAG_NAME,
-        bindingsPtr: *mut *mut BINDING,
+        tagNamePtr: *mut TagName,
+        bindingsPtr: *mut *mut Binding,
     ) -> XML_Error {
         let dtd: *mut DTD = self.m_dtd; /* save one level of indirection */
         let mut prefixLen: c_int = 0;
         let mut uri: *mut XML_Char = 0 as *mut XML_Char;
         let mut nPrefixes: c_int = 0;
         let mut nXMLNSDeclarations: c_int = 0;
-        let mut binding: *mut BINDING = 0 as *mut BINDING;
+        let mut binding: *mut Binding = 0 as *mut Binding;
         let mut localPart: *const XML_Char = 0 as *const XML_Char;
         let enc = self.encoding(enc_type);
         /* lookup the element type name */
@@ -4228,8 +4218,8 @@ impl<'scf> XML_ParserStruct<'scf> {
             let elementType = hash_insert!(
                 &mut (*dtd).elementTypes,
                 name,
-                ELEMENT_TYPE,
-                ELEMENT_TYPE::new
+                ElementType,
+                ElementType::new
             );
             if elementType.is_null() {
                 return XML_Error::NO_MEMORY;
@@ -4251,7 +4241,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             }
 
             /* add the name and value to the attribute list */
-            let mut attId: *mut ATTRIBUTE_ID = self.getAttributeId(
+            let mut attId: *mut AttributeId = self.getAttributeId(
                 enc_type,
                 ExpatBufRef::new(
                     currAtt.name,
@@ -4424,7 +4414,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
                 if self.typed_atts[i].get_type() == AttributeType::Prefixed { // TODO: this could be a match instead
-                    let mut b: *const BINDING = 0 as *const BINDING;
+                    let mut b: *const Binding = 0 as *const Binding;
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
@@ -4748,10 +4738,10 @@ impl<'scf> XML_ParserStruct<'scf> {
 
 unsafe extern "C" fn addBinding(
     mut parser: XML_Parser,
-    mut prefix: *mut PREFIX,
-    mut attId: *mut ATTRIBUTE_ID,
+    mut prefix: *mut Prefix,
+    mut attId: *mut AttributeId,
     mut uri: *const XML_Char,
-    mut bindingsPtr: *mut *mut BINDING,
+    mut bindingsPtr: *mut *mut Binding,
 ) -> XML_Error {
     const xmlNamespace: [XML_Char; 37] = XML_STR![
         ASCII_h, ASCII_t, ASCII_t, ASCII_p, ASCII_COLON, ASCII_SLASH, ASCII_SLASH, ASCII_w,
@@ -4769,7 +4759,7 @@ unsafe extern "C" fn addBinding(
     let mut mustBeXML = false;
     let mut isXML = true;
     let mut isXMLNS = true;
-    let mut b: *mut BINDING = 0 as *mut BINDING;
+    let mut b: *mut Binding = 0 as *mut Binding;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
     if *uri as c_int == '\u{0}' as i32 && !(*prefix).name.is_null() {
         return XML_Error::UNDECLARING_PREFIX;
@@ -4834,7 +4824,7 @@ unsafe extern "C" fn addBinding(
         }
         (*parser).m_freeBindingList = (*b).nextTagBinding
     } else {
-        b = MALLOC!(@BINDING);
+        b = MALLOC!(@Binding);
         if b.is_null() {
             return XML_Error::NO_MEMORY;
         }
@@ -4858,9 +4848,9 @@ unsafe extern "C" fn addBinding(
     (*b).attId = attId;
     (*b).prevPrefixBinding = (*prefix).binding;
     /* NULL binding when default namespace undeclared */
-    if *uri == '\u{0}' as XML_Char && prefix == &mut (*(*parser).m_dtd).defaultPrefix as *mut PREFIX
+    if *uri == '\u{0}' as XML_Char && prefix == &mut (*(*parser).m_dtd).defaultPrefix as *mut Prefix
     {
-        (*prefix).binding = NULL as *mut BINDING
+        (*prefix).binding = NULL as *mut Binding
     } else {
         (*prefix).binding = b
     }
@@ -5736,7 +5726,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declEntity = hash_insert!(
                         &mut (*dtd).paramEntities,
                         externalSubsetName.as_ptr(),
-                        ENTITY
+                        Entity
                     );
                     if self.m_declEntity.is_null() {
                         return XML_Error::NO_MEMORY;
@@ -5798,7 +5788,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             let mut entity = hash_insert!(
                                 &mut (*dtd).paramEntities,
                                 externalSubsetName.as_ptr(),
-                                ENTITY
+                                Entity
                             );
                             if entity.is_null() {
                                 /* end of DTD - no need to update dtd->keepProcessing */
@@ -5855,7 +5845,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             let mut entity_0 = hash_insert!(
                                 &mut (*dtd).paramEntities,
                                 externalSubsetName.as_ptr(),
-                                ENTITY
+                                Entity
                             );
                             if entity_0.is_null() {
                                 return XML_Error::NO_MEMORY;
@@ -6178,7 +6168,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         self.m_declEntity = hash_insert!(
                             &mut (*dtd).paramEntities,
                             externalSubsetName.as_ptr(),
-                            ENTITY
+                            Entity
                         );
                         if self.m_declEntity.is_null() {
                             return XML_Error::NO_MEMORY;
@@ -6247,7 +6237,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::GENERAL_ENTITY_NAME => {
                     if (*enc).predefinedEntityName(buf.with_end(next)) != 0 {
-                        self.m_declEntity = NULL as *mut ENTITY
+                        self.m_declEntity = NULL as *mut Entity
                     } else if (*dtd).keepProcessing {
                         let mut name: *const XML_Char = (*dtd).pool.storeString(enc, buf.with_end(next));
                         if name.is_null() {
@@ -6256,7 +6246,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         self.m_declEntity = hash_insert!(
                             &mut (*dtd).generalEntities,
                             name,
-                            ENTITY
+                            Entity
                         );
                         if self.m_declEntity.is_null() {
                             // FIXME: this never happens in Rust, it just panics
@@ -6264,7 +6254,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
                         if (*self.m_declEntity).name != name {
                             (*dtd).pool.ptr = (*dtd).pool.start;
-                            self.m_declEntity = NULL as *mut ENTITY
+                            self.m_declEntity = NULL as *mut Entity
                         } else {
                             (*dtd).pool.start = (*dtd).pool.ptr;
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
@@ -6282,7 +6272,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
                     } else {
                         (*dtd).pool.ptr = (*dtd).pool.start;
-                        self.m_declEntity = NULL as *mut ENTITY
+                        self.m_declEntity = NULL as *mut Entity
                     }
                     current_block = 1553878188884632965;
                 }
@@ -6296,14 +6286,14 @@ impl<'scf> XML_ParserStruct<'scf> {
                         self.m_declEntity = hash_insert!(
                             &mut (*dtd).paramEntities,
                             name_0,
-                            ENTITY
+                            Entity
                         );
                         if self.m_declEntity.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
                         if (*self.m_declEntity).name != name_0 {
                             (*dtd).pool.ptr = (*dtd).pool.start;
-                            self.m_declEntity = NULL as *mut ENTITY
+                            self.m_declEntity = NULL as *mut Entity
                         } else {
                             (*dtd).pool.start = (*dtd).pool.ptr;
                             (*self.m_declEntity).publicId = NULL as *const XML_Char;
@@ -6320,7 +6310,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
                     } else {
                         (*dtd).pool.ptr = (*dtd).pool.start;
-                        self.m_declEntity = NULL as *mut ENTITY
+                        self.m_declEntity = NULL as *mut Entity
                     }
                     current_block = 1553878188884632965;
                 }
@@ -6527,7 +6517,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         current_block = 10770532911212200937;
                     } else {
                         let mut name_1: *const XML_Char = 0 as *const XML_Char;
-                        let mut entity_1: *mut ENTITY = 0 as *mut ENTITY;
+                        let mut entity_1: *mut Entity = 0 as *mut Entity;
                         name_1 = (*dtd).pool.storeString(
                             enc,
                             buf
@@ -7033,17 +7023,17 @@ unsafe extern "C" fn epilogProcessor(
 impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn processInternalEntity(
         &mut self,
-        mut entity: *mut ENTITY,
+        mut entity: *mut Entity,
         mut betweenDecl: XML_Bool,
     ) -> XML_Error {
         let mut next: *const c_char = 0 as *const c_char;
         let mut result: XML_Error = XML_Error::NONE;
-        let mut openEntity: *mut OPEN_INTERNAL_ENTITY = 0 as *mut OPEN_INTERNAL_ENTITY;
+        let mut openEntity: *mut OpenInternalEntity = 0 as *mut OpenInternalEntity;
         if !self.m_freeInternalEntities.is_null() {
             openEntity = self.m_freeInternalEntities;
             self.m_freeInternalEntities = (*openEntity).next
         } else {
-            openEntity = MALLOC!(@OPEN_INTERNAL_ENTITY);
+            openEntity = MALLOC!(@OpenInternalEntity);
             if openEntity.is_null() {
                 return XML_Error::NO_MEMORY;
             }
@@ -7129,10 +7119,10 @@ unsafe extern "C" fn internalEntityProcessor(
     mut buf: ExpatBufRef,
     mut nextPtr: *mut *const c_char,
 ) -> XML_Error {
-    let mut entity: *mut ENTITY = 0 as *mut ENTITY;
+    let mut entity: *mut Entity = 0 as *mut Entity;
     let mut next: *const c_char = 0 as *const c_char;
     let mut result: XML_Error = XML_Error::NONE;
-    let mut openEntity: *mut OPEN_INTERNAL_ENTITY = (*parser).m_openInternalEntities;
+    let mut openEntity: *mut OpenInternalEntity = (*parser).m_openInternalEntities;
     if openEntity.is_null() {
         return XML_Error::UNEXPECTED_STATE;
     }
@@ -7536,7 +7526,7 @@ unsafe extern "C" fn storeEntityValue(
             super::xmltok::XML_TOK::PARAM_ENTITY_REF => {
                 if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
                     let mut name: *const XML_Char = 0 as *const XML_Char;
-                    let mut entity: *mut ENTITY = 0 as *mut ENTITY;
+                    let mut entity: *mut Entity = 0 as *mut Entity;
                     name = (*parser).m_tempPool.storeString(
                         enc,
                         entityTextBuf
@@ -7893,8 +7883,8 @@ unsafe extern "C" fn reportDefault(
 }
 
 unsafe extern "C" fn defineAttribute(
-    mut type_0: *mut ELEMENT_TYPE,
-    mut attId: *mut ATTRIBUTE_ID,
+    mut type_0: *mut ElementType,
+    mut attId: *mut AttributeId,
     mut isCdata: XML_Bool,
     mut isId: XML_Bool,
     mut value: *const XML_Char,
@@ -7917,7 +7907,7 @@ unsafe extern "C" fn defineAttribute(
             (*attId).maybeTokenized = true
         }
 
-        let att = DEFAULT_ATTRIBUTE { id: attId, isCdata, value };
+        let att = DefaultAttribute { id: attId, isCdata, value };
         (*type_0).defaultAtts.push(att);
         1
     } else {
@@ -7928,7 +7918,7 @@ unsafe extern "C" fn defineAttribute(
 impl<'scf> XML_ParserStruct<'scf> {
     unsafe fn setElementTypePrefix(
         &mut self,
-        mut elementType: *mut ELEMENT_TYPE,
+        mut elementType: *mut ElementType,
     ) -> c_int {
         let dtd: *mut DTD = self.m_dtd;
         let mut name: *const XML_Char = 0 as *const XML_Char;
@@ -7969,7 +7959,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 let prefix = hash_insert!(
                     &mut (*dtd).prefixes,
                     (*dtd).pool.start as KEY,
-                    PREFIX
+                    Prefix
                 );
                 if prefix.is_null() {
                     return 0;
@@ -7992,7 +7982,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
-    ) -> *mut ATTRIBUTE_ID {
+    ) -> *mut AttributeId {
         let dtd: *mut DTD = self.m_dtd;
         let mut name: *const XML_Char = 0 as *const XML_Char;
         if if (*dtd).pool.ptr == (*dtd).pool.end as *mut XML_Char && !(*dtd).pool.grow() {
@@ -8004,12 +7994,12 @@ impl<'scf> XML_ParserStruct<'scf> {
             1
         } == 0
         {
-            return NULL as *mut ATTRIBUTE_ID;
+            return NULL as *mut AttributeId;
         }
         let enc = self.encoding(enc_type);
         name = (*dtd).pool.storeString(enc, buf);
         if name.is_null() {
-            return NULL as *mut ATTRIBUTE_ID;
+            return NULL as *mut AttributeId;
         }
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
         let typed_name = TypedAttributeName(name as *mut XML_Char);
@@ -8017,10 +8007,10 @@ impl<'scf> XML_ParserStruct<'scf> {
         let id = hash_insert!(
             &mut (*dtd).attributeIds,
             typed_name,
-            ATTRIBUTE_ID
+            AttributeId
         );
         if id.is_null() {
-            return NULL as *mut ATTRIBUTE_ID;
+            return NULL as *mut AttributeId;
         }
         if (*id).name.name() != name as *mut XML_Char {
             (*dtd).pool.ptr = (*dtd).pool.start
@@ -8041,7 +8031,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         (*id).prefix = hash_insert!(
                             &mut (*dtd).prefixes,
                             name.offset(6),
-                            PREFIX
+                            Prefix
                         );
                     }
                     (*id).xmlns = true
@@ -8065,7 +8055,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     1
                                 } == 0
                                 {
-                                    return NULL as *mut ATTRIBUTE_ID;
+                                    return NULL as *mut AttributeId;
                                 }
                                 j += 1
                             }
@@ -8080,15 +8070,15 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 1
                             } == 0
                             {
-                                return NULL as *mut ATTRIBUTE_ID;
+                                return NULL as *mut AttributeId;
                             }
                             (*id).prefix = hash_insert!(
                                 &mut (*dtd).prefixes,
                                 (*dtd).pool.start as KEY,
-                                PREFIX
+                                Prefix
                             );
                             if (*id).prefix.is_null() {
-                                return NULL as *mut ATTRIBUTE_ID;
+                                return NULL as *mut AttributeId;
                             }
                             if (*(*id).prefix).name == (*dtd).pool.start as *const XML_Char {
                                 (*dtd).pool.start = (*dtd).pool.ptr
@@ -8333,7 +8323,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 context = s;
                 self.m_tempPool.ptr = self.m_tempPool.start
             } else if *s == ASCII_EQUALS as XML_Char {
-                let mut prefix: *mut PREFIX;
+                let mut prefix: *mut Prefix;
                 if self.m_tempPool
                     .ptr
                     .wrapping_offset_from(self.m_tempPool.start) as c_long
@@ -8370,7 +8360,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         prefix = hash_insert!(
                             &mut (*dtd).prefixes,
                             prefix_name as KEY,
-                            PREFIX
+                            Prefix
                         );
                         if prefix.is_null() {
                             return false;
@@ -8487,7 +8477,7 @@ unsafe extern "C" fn dtdCreate<'scf>() -> *mut DTD<'scf> {
     std::ptr::write(&mut (*p).paramEntities, Default::default());
     /* XML_DTD */
     (*p).defaultPrefix.name = NULL as *const XML_Char;
-    (*p).defaultPrefix.binding = NULL as *mut BINDING;
+    (*p).defaultPrefix.binding = NULL as *mut Binding;
     (*p).in_eldecl = false;
     std::ptr::write(&mut (*p).scaffold, Default::default());
     (*p).contentStringLen = 0;
@@ -8509,7 +8499,7 @@ unsafe extern "C" fn dtdReset(mut p: *mut DTD) {
     (*p).pool.clear();
     (*p).entityValuePool.clear();
     (*p).defaultPrefix.name = NULL as *const XML_Char;
-    (*p).defaultPrefix.binding = NULL as *mut BINDING;
+    (*p).defaultPrefix.binding = NULL as *mut Binding;
     (*p).in_eldecl = false;
     (*p).scaffold = Default::default();
     (*p).contentStringLen = 0;
@@ -8550,7 +8540,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
         if hash_insert!(
             &mut (*newDtd).prefixes,
             name,
-            PREFIX
+            Prefix
         )
         .is_null()
         {
@@ -8583,7 +8573,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
         let newA = hash_insert!(
             &mut (*newDtd).attributeIds,
             typed_name,
-            ATTRIBUTE_ID
+            AttributeId
         );
         if newA.is_null() {
             return 0;
@@ -8591,7 +8581,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
         (*newA).maybeTokenized = (*oldA).maybeTokenized;
         if !(*oldA).prefix.is_null() {
             (*newA).xmlns = (*oldA).xmlns;
-            if (*oldA).prefix == &(*oldDtd).defaultPrefix as *const PREFIX as *mut PREFIX {
+            if (*oldA).prefix == &(*oldDtd).defaultPrefix as *const Prefix as *mut Prefix {
                 (*newA).prefix = &mut (*newDtd).defaultPrefix
             } else {
                 (*newA).prefix = hash_lookup!(
@@ -8611,8 +8601,8 @@ unsafe extern "C" fn dtdCopy<'scf>(
         let newE = hash_insert!(
             &mut (*newDtd).elementTypes,
             name_1,
-            ELEMENT_TYPE,
-            ELEMENT_TYPE::new
+            ElementType,
+            ElementType::new
         );
         if newE.is_null() {
             return 0;
@@ -8645,7 +8635,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
             } else {
                 ptr::null()
             };
-            let newAtt = DEFAULT_ATTRIBUTE { id, isCdata, value };
+            let newAtt = DefaultAttribute { id, isCdata, value };
             (*newE).defaultAtts.push(newAtt);
         }
     }
@@ -8680,9 +8670,9 @@ unsafe extern "C" fn dtdCopy<'scf>(
 /* End dtdCopy */
 
 unsafe extern "C" fn copyEntityTable(
-    mut newTable: &mut HashMap<HashKey, Box<ENTITY>>,
+    mut newTable: &mut HashMap<HashKey, Box<Entity>>,
     mut newPool: *mut STRING_POOL,
-    mut oldTable: &HashMap<HashKey, Box<ENTITY>>,
+    mut oldTable: &HashMap<HashKey, Box<Entity>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = NULL as *const XML_Char;
     let mut cachedNewBase: *const XML_Char = NULL as *const XML_Char;
@@ -8695,7 +8685,7 @@ unsafe extern "C" fn copyEntityTable(
         let newE = hash_insert!(
             &mut newTable,
             name,
-            ENTITY
+            Entity
         );
         if newE.is_null() {
             return 0;
@@ -8775,8 +8765,8 @@ impl STRING_POOL {
     unsafe fn init(
         &mut self,
     ) {
-        self.blocks = NULL as *mut BLOCK;
-        self.freeBlocks = NULL as *mut BLOCK;
+        self.blocks = NULL as *mut Block;
+        self.freeBlocks = NULL as *mut Block;
         self.start = NULL as *mut XML_Char;
         self.ptr = NULL as *mut XML_Char;
         self.end = NULL as *const XML_Char;
@@ -8786,30 +8776,30 @@ impl STRING_POOL {
         if self.freeBlocks.is_null() {
             self.freeBlocks = self.blocks
         } else {
-            let mut p: *mut BLOCK = self.blocks;
+            let mut p: *mut Block = self.blocks;
             while !p.is_null() {
-                let mut tem: *mut BLOCK = (*p).next;
+                let mut tem: *mut Block = (*p).next;
                 (*p).next = self.freeBlocks;
                 self.freeBlocks = p;
                 p = tem
             }
         }
-        self.blocks = NULL as *mut BLOCK;
+        self.blocks = NULL as *mut Block;
         self.start = NULL as *mut XML_Char;
         self.ptr = NULL as *mut XML_Char;
         self.end = NULL as *const XML_Char;
     }
 
     unsafe fn destroy(&mut self) {
-        let mut p: *mut BLOCK = self.blocks;
+        let mut p: *mut Block = self.blocks;
         while !p.is_null() {
-            let mut tem: *mut BLOCK = (*p).next;
+            let mut tem: *mut Block = (*p).next;
             FREE!(p);
             p = tem
         }
         p = self.freeBlocks;
         while !p.is_null() {
-            let mut tem_0: *mut BLOCK = (*p).next;
+            let mut tem_0: *mut Block = (*p).next;
             FREE!(p);
             p = tem_0
         }
@@ -8939,7 +8929,7 @@ impl STRING_POOL {
 
 unsafe extern "C" fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
     /* Unprotected math would be:
-     ** return offsetof(BLOCK, s) + blockSize * sizeof(XML_Char);
+     ** return offsetof(Block, s) + blockSize * sizeof(XML_Char);
      **
      ** Detect overflow, avoiding _signed_ overflow undefined behavior
      ** For a + b * c we check b * c in isolation first, so that addition of a
@@ -8967,7 +8957,7 @@ impl STRING_POOL {
             if self.start.is_null() {
                 self.blocks = self.freeBlocks;
                 self.freeBlocks = (*self.freeBlocks).next;
-                (*self.blocks).next = NULL as *mut block;
+                (*self.blocks).next = NULL as *mut Block;
                 self.start = (*self.blocks).s.as_mut_ptr();
                 self.end = self.start.offset((*self.blocks).size as isize);
                 self.ptr = self.start;
@@ -8976,7 +8966,7 @@ impl STRING_POOL {
             if (self.end.wrapping_offset_from(self.start) as c_long)
                 < (*self.freeBlocks).size as c_long
             {
-                let mut tem: *mut BLOCK = (*self.freeBlocks).next;
+                let mut tem: *mut Block = (*self.freeBlocks).next;
                 (*self.freeBlocks).next = self.blocks;
                 self.blocks = self.freeBlocks;
                 self.freeBlocks = tem;
@@ -8996,7 +8986,7 @@ impl STRING_POOL {
             }
         }
         if !self.blocks.is_null() && self.start == (*self.blocks).s.as_mut_ptr() {
-            let mut temp: *mut BLOCK = 0 as *mut BLOCK;
+            let mut temp: *mut Block = 0 as *mut Block;
             let mut blockSize: c_int =
                 (self.end.wrapping_offset_from(self.start) as c_uint).wrapping_mul(2) as c_int;
             let mut bytesToAllocate: size_t = 0;
@@ -9018,7 +9008,7 @@ impl STRING_POOL {
             if bytesToAllocate == 0 {
                 return false;
             }
-            temp = REALLOC!(self.blocks, bytesToAllocate) as *mut BLOCK;
+            temp = REALLOC!(self.blocks, bytesToAllocate) as *mut Block;
             if temp.is_null() {
                 return false;
             }
@@ -9031,7 +9021,7 @@ impl STRING_POOL {
             self.start = (*self.blocks).s.as_mut_ptr();
             self.end = self.start.offset(blockSize as isize)
         } else {
-            let mut tem_0: *mut BLOCK = 0 as *mut BLOCK;
+            let mut tem_0: *mut Block = 0 as *mut Block;
             let mut blockSize_0: c_int = self.end.wrapping_offset_from(self.start) as c_int;
             let mut bytesToAllocate_0: size_t = 0;
             if blockSize_0 < 0 {
@@ -9047,8 +9037,8 @@ impl STRING_POOL {
                 return false;
                 /* LCOV_EXCL_LINE */
             }
-            if blockSize_0 < INIT_BLOCK_SIZE {
-                blockSize_0 = INIT_BLOCK_SIZE
+            if blockSize_0 < INIT_Block_SIZE {
+                blockSize_0 = INIT_Block_SIZE
             } else {
                 /* Detect overflow, avoiding _signed_ overflow undefined behavior */
                 if ((blockSize_0 as c_uint).wrapping_mul(2) as c_int) < 0 {
@@ -9060,7 +9050,7 @@ impl STRING_POOL {
             if bytesToAllocate_0 == 0 {
                 return false;
             } /* save one level of indirection */
-            tem_0 = MALLOC!(bytesToAllocate_0) as *mut BLOCK;
+            tem_0 = MALLOC!(bytesToAllocate_0) as *mut Block;
             if tem_0.is_null() {
                 return false;
             }
@@ -9160,28 +9150,28 @@ impl<'scf> XML_ParserStruct<'scf> {
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
-    ) -> *mut ELEMENT_TYPE {
+    ) -> *mut ElementType {
         let dtd: *mut DTD = self.m_dtd;
         let enc = self.encoding(enc_type);
         let mut name: *const XML_Char = (*dtd).pool.storeString(enc, buf);
         if name.is_null() {
-            return NULL as *mut ELEMENT_TYPE;
+            return NULL as *mut ElementType;
         }
         let ret = hash_insert!(
             &mut (*dtd).elementTypes,
             name,
-            ELEMENT_TYPE,
-            ELEMENT_TYPE::new
+            ElementType,
+            ElementType::new
         );
         if ret.is_null() {
-            return NULL as *mut ELEMENT_TYPE;
+            return NULL as *mut ElementType;
         }
         if (*ret).name != name {
             (*dtd).pool.ptr = (*dtd).pool.start
         } else {
             (*dtd).pool.start = (*dtd).pool.ptr;
             if self.setElementTypePrefix(ret) == 0 {
-                return NULL as *mut ELEMENT_TYPE;
+                return NULL as *mut ElementType;
             }
         }
         ret
