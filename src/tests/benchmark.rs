@@ -56,12 +56,11 @@ use rexpat::lib::xmlparse::{
     XML_Parse, XML_ParserCreate, XML_ParserCreateNS, XML_ParserFree, XML_ParserReset,
 };
 use std::ffi::CString;
-use std::ptr::null_mut;
+use std::ptr::{self, null_mut};
 use libc::{c_char, c_double, c_int, c_long, c_void, FILE, fclose, fopen, fread, fprintf, malloc};
 
 pub use rexpat::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use rexpat::expat_h::{XML_Bool, XML_Error, XML_Parser, XML_Status};
-pub use rexpat::stddef_h::{NULL};
 use rexpat::stdlib::{clock, CLOCKS_PER_SEC, stderr};
 pub use libc::{atoi, stat, size_t, clock_t};
 
@@ -147,9 +146,9 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
     ) as c_int;
     fclose(fd as *mut FILE);
     if ns != 0 {
-        parser = XML_ParserCreateNS(NULL as *const XML_Char, '!' as i32 as XML_Char)
+        parser = XML_ParserCreateNS(ptr::null(), '!' as i32 as XML_Char)
     } else {
-        parser = XML_ParserCreate(NULL as *const XML_Char)
+        parser = XML_ParserCreate(ptr::null())
     }
     i = 0 as c_int;
     XMLBufEnd = XMLBuf.offset(fileSize as isize);
@@ -184,7 +183,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
         }
         tend = clock();
         cpuTime += (tend - tstart) as c_double / CLOCKS_PER_SEC as c_double;
-        XML_ParserReset(parser, NULL as *const XML_Char);
+        XML_ParserReset(parser, ptr::null());
         i += 1
     }
     XML_ParserFree(parser);

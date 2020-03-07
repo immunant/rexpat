@@ -100,7 +100,7 @@ unsafe extern "C" fn end(mut _data: *mut c_void, mut _el: *const XML_Char) {
 }
 
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
-    let mut p: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
+    let mut p: XML_Parser = XML_ParserCreate(ptr::null());
     if p.is_null() {
         fprintf(
             stderr,

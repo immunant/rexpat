@@ -53,7 +53,6 @@ pub struct StructData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-pub use crate::stddef_h::{NULL};
 use ::libc;
 
 pub const STRUCT_EXTENSION_COUNT: c_int = 8;
@@ -73,7 +72,7 @@ pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
     assert!(!storage.is_null());
     (*storage).count = 0;
     (*storage).max_count = 0;
-    (*storage).entries = NULL as *mut StructDataEntry;
+    (*storage).entries = std::ptr::null_mut();
 }
 /* Interface to some helper routines used to accumulate and check
    structured content.
@@ -227,5 +226,5 @@ pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
     }
     free((*storage).entries as *mut c_void);
     (*storage).count = 0;
-    (*storage).entries = NULL as *mut StructDataEntry;
+    (*storage).entries = std::ptr::null_mut();
 }
