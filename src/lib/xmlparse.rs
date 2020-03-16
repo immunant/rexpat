@@ -3540,6 +3540,56 @@ unsafe extern "C" fn externalEntityContentProcessor(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
+    unsafe fn doContent_outlined1(
+        &mut self,
+        enc_type: EncodingType,
+        entity: *mut Entity,
+        mut buf: ExpatBufRef,
+        mut next: *const c_char) -> Option<XML_Error> {
+        if (*entity).open {
+            return Some(XML_Error::RECURSIVE_ENTITY_REF);
+        }
+        if !(*entity).notation.is_null() {
+            return Some(XML_Error::BINARY_ENTITY_REF);
+        }
+        if !(*entity).textPtr.is_null() {
+            let mut result: XML_Error = XML_Error::NONE;
+            if !self.m_defaultExpandInternalEntities {
+                let skippedHandlerRan = self.m_handlers.skippedEntity((*entity).name, 0);
+
+                if !skippedHandlerRan && self.m_handlers.hasDefault() {
+                    reportDefault(self, enc_type, buf.with_end(next));
+                }
+            } else {
+                result = self.processInternalEntity(entity, false);
+                if result != XML_Error::NONE {
+                    return Some(result);
+                }
+            }
+        } else if self.m_handlers.hasExternalEntityRef() {
+            let mut context: *const XML_Char = ptr::null();
+            (*entity).open = true;
+            context = self.getContext();
+            (*entity).open = false;
+            if context.is_null() {
+                return Some(XML_Error::NO_MEMORY);
+            }
+            if self.m_handlers.externalEntityRef(
+                context,
+                (*entity).base,
+                (*entity).systemId,
+                (*entity).publicId,
+            ) == Ok(0)
+            {
+                return Some(XML_Error::EXTERNAL_ENTITY_HANDLING);
+            }
+            self.m_tempPool.ptr = self.m_tempPool.start
+        } else if self.m_handlers.hasDefault() {
+            reportDefault(self, enc_type, buf.with_end(next));
+        }
+        None
+    }
+    
     unsafe fn doContent(
         &mut self,
         startTagLevel: c_int,
@@ -3565,7 +3615,6 @@ impl<'scf> XML_ParserStruct<'scf> {
             let mut next: *const c_char = buf.as_ptr();
             let mut tok = (*enc).xmlTok(XML_STATE::CONTENT, buf, &mut next);
             *eventEndPP = next;
-            let mut current_block_275: u64;
             match tok {
                 super::xmltok::XML_TOK::TRAILING_CR => {
                     if haveMore {
@@ -3663,7 +3712,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     return XML_Error::ENTITY_DECLARED_IN_PE;
                                 }
                             }
-                            current_block_275 = 10067844863897285902;
+                            if let Some(r) = self.doContent_outlined1(enc_type, entity, buf, next) {
+                                return r;
+                            }
                         } else if entity.is_null() {
                             let skippedHandlerRan = self.m_handlers.skippedEntity(name, 0);
 
@@ -3675,54 +3726,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                             if cfg!(feature = "mozilla") {
                                 return XML_Error::UNDEFINED_ENTITY;
                             }
-                            current_block_275 = 17939951368883298147;
                         } else {
-                            current_block_275 = 10067844863897285902;
-                        }
-                        match current_block_275 {
-                            17939951368883298147 => {}
-                            _ => {
-                                if (*entity).open {
-                                    return XML_Error::RECURSIVE_ENTITY_REF;
-                                }
-                                if !(*entity).notation.is_null() {
-                                    return XML_Error::BINARY_ENTITY_REF;
-                                }
-                                if !(*entity).textPtr.is_null() {
-                                    let mut result: XML_Error = XML_Error::NONE;
-                                    if !self.m_defaultExpandInternalEntities {
-                                        let skippedHandlerRan = self.m_handlers.skippedEntity((*entity).name, 0);
-
-                                        if !skippedHandlerRan && self.m_handlers.hasDefault() {
-                                            reportDefault(self, enc_type, buf.with_end(next));
-                                        }
-                                    } else {
-                                        result = self.processInternalEntity(entity, false);
-                                        if result != XML_Error::NONE {
-                                            return result;
-                                        }
-                                    }
-                                } else if self.m_handlers.hasExternalEntityRef() {
-                                    let mut context: *const XML_Char = ptr::null();
-                                    (*entity).open = true;
-                                    context = self.getContext();
-                                    (*entity).open = false;
-                                    if context.is_null() {
-                                        return XML_Error::NO_MEMORY;
-                                    }
-                                    if self.m_handlers.externalEntityRef(
-                                        context,
-                                        (*entity).base,
-                                        (*entity).systemId,
-                                        (*entity).publicId,
-                                    ) == Ok(0)
-                                    {
-                                        return XML_Error::EXTERNAL_ENTITY_HANDLING;
-                                    }
-                                    self.m_tempPool.ptr = self.m_tempPool.start
-                                } else if self.m_handlers.hasDefault() {
-                                    reportDefault(self, enc_type, buf.with_end(next));
-                                }
+                            if let Some(r) = self.doContent_outlined1(enc_type, entity, buf, next) {
+                                return r;
                             }
                         }
                     }
