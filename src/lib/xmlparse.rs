@@ -5564,6 +5564,63 @@ unsafe extern "C" fn prologProcessor(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
+    unsafe fn doPrologHandleEntityRef(
+        &mut self,
+        mut entity: *mut Entity,
+        role: XML_ROLE,
+        handleDefault: &mut bool,
+        dtd: *mut DTD
+        ) -> Option<XML_Error> {
+        if (*entity).open {
+            return Some(XML_Error::RECURSIVE_ENTITY_REF);
+        }
+        if !(*entity).textPtr.is_null() {
+            let mut result_4 = XML_Error::NONE;
+            let mut betweenDecl =
+                if role == XML_ROLE::PARAM_ENTITY_REF {
+                    true
+                } else {
+                    false
+                };
+            result_4 = self.processInternalEntity(entity, betweenDecl);
+            if result_4 != XML_Error::NONE {
+                return Some(result_4);
+            }
+            *handleDefault = false;
+        } else if self.m_handlers.hasExternalEntityRef() {
+            (*dtd).paramEntityRead = false;
+            (*entity).open = true;
+            let entity_name = if cfg!(feature = "mozilla") {
+                (*entity).name
+            } else {
+                ptr::null()
+            };
+            if self.m_handlers.externalEntityRef(
+                entity_name,
+                (*entity).base,
+                (*entity).systemId,
+                (*entity).publicId,
+            ) == Ok(0)
+            {
+                (*entity).open = false;
+                return Some(XML_Error::EXTERNAL_ENTITY_HANDLING);
+            }
+            (*entity).open = false;
+            *handleDefault = false;
+            if !(*dtd).paramEntityRead {
+                (*dtd).keepProcessing = (*dtd).standalone;
+            } else {
+                /* XML_DTD */
+                if !(*dtd).standalone && self.m_handlers.notStandalone() == Ok(0) {
+                    return Some(XML_Error::NOT_STANDALONE);
+                }
+            }
+        } else {
+            (*dtd).keepProcessing = (*dtd).standalone;
+        }
+        None
+    }
+
     unsafe fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
@@ -6510,21 +6567,22 @@ impl<'scf> XML_ParserStruct<'scf> {
                     (*dtd).hasParamEntityRefs = true;
                     if self.m_paramEntityParsing as u64 == 0 {
                         (*dtd).keepProcessing = (*dtd).standalone;
-                        current_block = 10770532911212200937;
+                        /* XML_DTD */
+                        if !(*dtd).standalone && self.m_handlers.notStandalone() == Ok(0) {
+                            return XML_Error::NOT_STANDALONE;
+                        }
                     } else {
-                        let mut name_1: *const XML_Char = ptr::null();
-                        let mut entity_1: *mut Entity = ptr::null_mut();
-                        name_1 = (*dtd).pool.storeString(
+                        let mut name: *const XML_Char = (*dtd).pool.storeString(
                             enc,
                             buf
                                 .inc_start((*enc).minBytesPerChar() as isize)
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize)
                         );
-                        if name_1.is_null() {
+                        if name.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        entity_1 = hash_lookup!((*dtd).paramEntities, name_1);
+                        let entity = hash_lookup!((*dtd).paramEntities, name);
                         (*dtd).pool.ptr = (*dtd).pool.start;
                         /* first, determine if a check for an existing declaration is needed;
                         if yes, check that the entity exists, and that it is internal,
@@ -6537,10 +6595,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 !(*dtd).hasParamEntityRefs
                             })
                         {
-                            if entity_1.is_null() {
+                            if entity.is_null() {
                                 return XML_Error::UNDEFINED_ENTITY;
                             } else {
-                                if !(*entity_1).is_internal {
+                                if !(*entity).is_internal {
                                     /* It's hard to exhaustively search the code to be sure,
                                      * but there doesn't seem to be a way of executing the
                                      * following line.  There are two cases:
@@ -6565,83 +6623,33 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     /* LCOV_EXCL_LINE */
                                 }
                             }
-                            current_block = 13351260019855268589;
-                        } else if entity_1.is_null() {
+                            if let Some(r) = self.doPrologHandleEntityRef(entity, role, &mut handleDefault, dtd) {
+                                return r;
+                            }
+                            /* XML_DTD */
+                            if !(*dtd).standalone && self.m_handlers.notStandalone() == Ok(0) {
+                                return XML_Error::NOT_STANDALONE;
+                            }
+                        } else if entity.is_null() {
                             (*dtd).keepProcessing = (*dtd).standalone;
                             /* cannot report skipped entities in declarations */
                             if role == super::xmlrole::XML_ROLE::PARAM_ENTITY_REF
                                 && self.m_handlers.hasSkippedEntity()
                             {
-                                self.m_handlers.skippedEntity(name_1, 1);
+                                self.m_handlers.skippedEntity(name, 1);
                                 handleDefault = false
                             }
-                            current_block = 1553878188884632965;
                         } else {
-                            current_block = 13351260019855268589;
-                        }
-                        match current_block {
-                            1553878188884632965 => {}
-                            _ => {
-                                if (*entity_1).open {
-                                    return XML_Error::RECURSIVE_ENTITY_REF;
-                                }
-                                if !(*entity_1).textPtr.is_null() {
-                                    let mut result_4: XML_Error = XML_Error::NONE;
-                                    let mut betweenDecl =
-                                        if role == super::xmlrole::XML_ROLE::PARAM_ENTITY_REF {
-                                            true
-                                        } else {
-                                            false
-                                        };
-                                    result_4 = self.processInternalEntity(entity_1, betweenDecl);
-                                    if result_4 != XML_Error::NONE {
-                                        return result_4;
-                                    }
-                                    handleDefault = false;
-                                    current_block = 1553878188884632965;
-                                } else if self.m_handlers.hasExternalEntityRef() {
-                                    (*dtd).paramEntityRead = false;
-                                    (*entity_1).open = true;
-                                    let entity_1_name = if cfg!(feature = "mozilla") {
-                                        (*entity_1).name
-                                    } else {
-                                        ptr::null()
-                                    };
-                                    if self.m_handlers.externalEntityRef(
-                                        entity_1_name,
-                                        (*entity_1).base,
-                                        (*entity_1).systemId,
-                                        (*entity_1).publicId,
-                                    ) == Ok(0)
-                                    {
-                                        (*entity_1).open = false;
-                                        return XML_Error::EXTERNAL_ENTITY_HANDLING;
-                                    }
-                                    (*entity_1).open = false;
-                                    handleDefault = false;
-                                    if !(*dtd).paramEntityRead {
-                                        (*dtd).keepProcessing = (*dtd).standalone;
-                                        current_block = 1553878188884632965;
-                                    } else {
-                                        current_block = 10770532911212200937;
-                                    }
-                                } else {
-                                    (*dtd).keepProcessing = (*dtd).standalone;
-                                    current_block = 1553878188884632965;
-                                }
+                            if let Some(r) = self.doPrologHandleEntityRef(entity, role, &mut handleDefault,     dtd) {
+                                return r;
                             }
-                        }
-                    }
-                    match current_block {
-                        1553878188884632965 => {}
-                        _ => {
                             /* XML_DTD */
                             if !(*dtd).standalone && self.m_handlers.notStandalone() == Ok(0) {
                                 return XML_Error::NOT_STANDALONE;
                             }
-                            current_block = 1553878188884632965;
                         }
                     }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ELEMENT_NAME => {
                     /* Element declaration stuff */
