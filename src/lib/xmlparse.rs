@@ -7199,7 +7199,6 @@ unsafe extern "C" fn appendAttributeValue(
     loop {
         let mut next: *const c_char = ptr::null();
         let mut tok = (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, buf, &mut next);
-        let mut current_block_62: u64;
         match tok {
             XML_TOK::NONE => {
                 return XML_Error::NONE;
@@ -7227,12 +7226,13 @@ unsafe extern "C" fn appendAttributeValue(
                     }
                     return XML_Error::BAD_CHAR_REF;
                 }
+                // FIXME: simplify this if-then-else stmt
                 if !isCdata
                     && n == 0x20
                     && ((*pool).ptr.wrapping_offset_from((*pool).start) as c_long == 0
                         || *(*pool).ptr.offset(-1) as c_int == 0x20)
                 {
-                    current_block_62 = 11796148217846552555;
+                    // empty!
                 } else {
                     n = XmlEncode(n, &mut out_buf);
                     /* The XmlEncode() functions can never return 0 here.  That
@@ -7251,14 +7251,12 @@ unsafe extern "C" fn appendAttributeValue(
                         }
                         i += 1
                     }
-                    current_block_62 = 11796148217846552555;
                 }
             }
             XML_TOK::DATA_CHARS => {
                 if !(*pool).append(enc, buf.with_end(next)) {
                     return XML_Error::NO_MEMORY;
                 }
-                current_block_62 = 11796148217846552555;
             }
             XML_TOK::TRAILING_CR | 
             XML_TOK::ATTRIBUTE_VALUE_S | 
@@ -7340,77 +7338,70 @@ unsafe extern "C" fn appendAttributeValue(
                                 return XML_Error::ENTITY_DECLARED_IN_PE;
                             }
                         }
-                        current_block_62 = 11777552016271000781;
                     } else if entity.is_null() {
                         if cfg!(feature = "mozilla") {
                             return XML_Error::UNDEFINED_ENTITY;
                         }
-                        current_block_62 = 11796148217846552555;
-                    } else {
-                        current_block_62 = 11777552016271000781;
                     }
-                    match current_block_62 {
-                        11796148217846552555 => {}
-                        _ => {
-                            if (*entity).open {
-                                if !enc_type.is_internal() {
-                                    /* It does not appear that this line can be executed.
-                                     *
-                                     * The "if (entity->open)" check catches recursive entity
-                                     * definitions.  In order to be called with an open
-                                     * entity, it must have gone through this code before and
-                                     * been through the recursive call to
-                                     * appendAttributeValue() some lines below.  That call
-                                     * sets the local encoding ("enc") to the parser's
-                                     * internal encoding (internal_utf8 or internal_utf16),
-                                     * which can never be the same as the principle encoding.
-                                     * It doesn't appear there is another code path that gets
-                                     * here with entity->open being TRUE.
-                                     *
-                                     * Since it is not certain that this logic is watertight,
-                                     * we keep the line and merely exclude it from coverage
-                                     * tests.
-                                     */
-                                    (*parser).m_eventPtr = buf.as_ptr()
-                                    /* LCOV_EXCL_LINE */
-                                }
-                                return XML_Error::RECURSIVE_ENTITY_REF;
+
+                    if checkEntityDecl || !entity.is_null() {
+                        if (*entity).open {
+                            if !enc_type.is_internal() {
+                                /* It does not appear that this line can be executed.
+                                    *
+                                    * The "if (entity->open)" check catches recursive entity
+                                    * definitions.  In order to be called with an open
+                                    * entity, it must have gone through this code before and
+                                    * been through the recursive call to
+                                    * appendAttributeValue() some lines below.  That call
+                                    * sets the local encoding ("enc") to the parser's
+                                    * internal encoding (internal_utf8 or internal_utf16),
+                                    * which can never be the same as the principle encoding.
+                                    * It doesn't appear there is another code path that gets
+                                    * here with entity->open being TRUE.
+                                    *
+                                    * Since it is not certain that this logic is watertight,
+                                    * we keep the line and merely exclude it from coverage
+                                    * tests.
+                                    */
+                                (*parser).m_eventPtr = buf.as_ptr()
+                                /* LCOV_EXCL_LINE */
                             }
-                            if !(*entity).notation.is_null() {
-                                if !enc_type.is_internal() {
-                                    (*parser).m_eventPtr = buf.as_ptr()
-                                }
-                                return XML_Error::BINARY_ENTITY_REF;
+                            return XML_Error::RECURSIVE_ENTITY_REF;
+                        }
+                        if !(*entity).notation.is_null() {
+                            if !enc_type.is_internal() {
+                                (*parser).m_eventPtr = buf.as_ptr()
                             }
-                            if (*entity).textPtr.is_null() {
-                                if !enc_type.is_internal() {
-                                    (*parser).m_eventPtr = buf.as_ptr()
-                                }
-                                return XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF;
-                            } else {
-                                let mut result: XML_Error = XML_Error::NONE;
-                                let mut textEnd: *const XML_Char =
-                                    (*entity).textPtr.offset((*entity).textLen as isize);
-                                (*entity).open = true;
-                                result = appendAttributeValue(
-                                    parser,
-                                    EncodingType::Internal,
-                                    isCdata,
-                                    ExpatBufRef::new(
-                                        (*entity).textPtr as *const c_char,
-                                        textEnd as *const c_char,
-                                    ),
-                                    pool,
-                                );
-                                (*entity).open = false;
-                                if result != XML_Error::NONE {
-                                    return result;
-                                }
+                            return XML_Error::BINARY_ENTITY_REF;
+                        }
+                        if (*entity).textPtr.is_null() {
+                            if !enc_type.is_internal() {
+                                (*parser).m_eventPtr = buf.as_ptr()
+                            }
+                            return XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF;
+                        } else {
+                            let mut result: XML_Error = XML_Error::NONE;
+                            let mut textEnd: *const XML_Char =
+                                (*entity).textPtr.offset((*entity).textLen as isize);
+                            (*entity).open = true;
+                            result = appendAttributeValue(
+                                parser,
+                                EncodingType::Internal,
+                                isCdata,
+                                ExpatBufRef::new(
+                                    (*entity).textPtr as *const c_char,
+                                    textEnd as *const c_char,
+                                ),
+                                pool,
+                            );
+                            (*entity).open = false;
+                            if result != XML_Error::NONE {
+                                return result;
                             }
                         }
                     }
                 }
-                current_block_62 = 11796148217846552555;
             }
             _ => {
                 /* The only token returned by XmlAttributeValueTok() that does
