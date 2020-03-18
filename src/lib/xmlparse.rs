@@ -5955,67 +5955,40 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declAttributeIsCdata = false;
                     self.m_declAttributeType = ptr::null();
                     self.m_declAttributeIsId = false;
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_CDATA => {
                     self.m_declAttributeIsCdata = true;
                     self.m_declAttributeType = atypeCDATA.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ID => {
                     self.m_declAttributeIsId = true;
                     self.m_declAttributeType = atypeID.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_IDREF => {
                     self.m_declAttributeType = atypeIDREF.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_IDREFS => {
                     self.m_declAttributeType = atypeIDREFS.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ENTITY => {
                     self.m_declAttributeType = atypeENTITY.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ENTITIES => {
                     self.m_declAttributeType = atypeENTITIES.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_NMTOKEN => {
                     self.m_declAttributeType = atypeNMTOKEN.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_NMTOKENS => {
                     self.m_declAttributeType = atypeNMTOKENS.as_ptr();
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                     current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_ENUM_VALUE | XML_ROLE::ATTRIBUTE_NOTATION_VALUE => {
@@ -6823,20 +6796,32 @@ impl<'scf> XML_ParserStruct<'scf> {
                     current_block = 1553878188884632965;
                 }
             }
-
             match role {
+                XML_ROLE::ATTRIBUTE_NAME |
+                XML_ROLE::ATTRIBUTE_TYPE_CDATA |
+                XML_ROLE::ATTRIBUTE_TYPE_ID |
+                XML_ROLE::ATTRIBUTE_TYPE_IDREF |
+                XML_ROLE::ATTRIBUTE_TYPE_IDREFS |
+                XML_ROLE::ATTRIBUTE_TYPE_ENTITY |
+                XML_ROLE::ATTRIBUTE_TYPE_ENTITIES |
+                XML_ROLE::ATTRIBUTE_TYPE_NMTOKEN |
+                XML_ROLE::ATTRIBUTE_TYPE_NMTOKENS => {
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                },
                 XML_ROLE::CONTENT_ELEMENT | 
                 XML_ROLE::CONTENT_ELEMENT_OPT | 
                 XML_ROLE::CONTENT_ELEMENT_REP | 
                 XML_ROLE::CONTENT_ELEMENT_PLUS => {
                     if (*dtd).in_eldecl {
                         let mut scf = (*dtd).scaffold.borrow_mut();
-                        let myindex_0 = match scf.next_part() {
+                        let myindex = match scf.next_part() {
                             Some(myindex) => myindex,
                             None => return XML_Error::NO_MEMORY
                         };
-                        scf.scaffold[myindex_0].type_0 = XML_Content_Type::NAME;
-                        scf.scaffold[myindex_0].quant = quant;
+                        scf.scaffold[myindex].type_0 = XML_Content_Type::NAME;
+                        scf.scaffold[myindex].quant = quant;
 
                         let mut nxt: *const c_char = if quant == XML_Content_Quant::NONE {
                             next
@@ -6847,7 +6832,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if el.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        scf.scaffold[myindex_0].name = (*el).name;
+                        scf.scaffold[myindex].name = (*el).name;
 
                         let mut name_2 = (*el).name;
                         let mut nameLen = 0;
@@ -6901,7 +6886,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 /* XML_DTD */
                 /* fall through */
                 {
-                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                    if (*dtd).keepProcessing && !self.m_declEntity.is_null() {
                         (*self.m_declEntity).systemId = (*dtd).pool.storeString(
                             enc,
                             buf
