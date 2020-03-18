@@ -5805,19 +5805,19 @@ impl<'scf> XML_ParserStruct<'scf> {
                         self.m_tempPool.start = self.m_tempPool.ptr;
                         self.m_doctypePubid = pubId;
                         handleDefault = false;
-                        current_block = 9007411418488376351;
+                        current_block = 1553878188884632965;
                     } else {
                         if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
                             return XML_Error::PUBLICID;
                         }
-                        current_block = 9007411418488376351;
+                        current_block = 1553878188884632965;
                     }
                 }
                 XML_ROLE::ENTITY_PUBLIC_ID => {
                     if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
                         return XML_Error::PUBLICID;
                     }
-                    current_block = 9007411418488376351;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::DOCTYPE_CLOSE => {
                     if allowClosingDoctype != true {
@@ -6878,6 +6878,32 @@ impl<'scf> XML_ParserStruct<'scf> {
                         }
                     }
                 },
+                XML_ROLE::DOCTYPE_PUBLIC_ID |
+                XML_ROLE::ENTITY_PUBLIC_ID => {
+                    if (*dtd).keepProcessing && !self.m_declEntity.is_null() {
+                        let mut tem: *mut XML_Char = (*dtd).pool.storeString(
+                            enc,
+                            buf
+                                .inc_start((*enc).minBytesPerChar() as isize)
+                                .with_end(next)
+                                .dec_end((*enc).minBytesPerChar() as usize)
+                        );
+                        if tem.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        normalizePublicId(tem);
+                        (*self.m_declEntity).publicId = tem;
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        /* Don't suppress the default handler if we fell through from
+                         * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
+                         */
+                        if self.m_handlers.hasEntityDecl()
+                            && role == super::xmlrole::XML_ROLE::ENTITY_PUBLIC_ID
+                        {
+                            handleDefault = false
+                        }
+                    }
+                }
                 _ => {}
             }
 
@@ -6912,37 +6938,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 _ => {}
             }
-            match current_block {
-                9007411418488376351 => {
-                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        let mut tem: *mut XML_Char = (*dtd).pool.storeString(
-                            enc,
-                            buf
-                                .inc_start((*enc).minBytesPerChar() as isize)
-                                .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize)
-                        );
-                        if tem.is_null() {
-                            return XML_Error::NO_MEMORY;
-                        }
-                        normalizePublicId(tem);
-                        (*self.m_declEntity).publicId = tem;
-                        (*dtd).pool.start = (*dtd).pool.ptr;
-                        /* Don't suppress the default handler if we fell through from
-                         * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
-                         */
-                        if self.m_handlers.hasEntityDecl()
-                            && role == super::xmlrole::XML_ROLE::ENTITY_PUBLIC_ID
-                        {
-                            handleDefault = false
-                        }
-                    }
-                }
-                _ => {}
-            }
             /* not XML_DTD */
             /* XML_DTD */
-            if handleDefault as c_int != 0 && self.m_handlers.hasDefault() {
+            if handleDefault && self.m_handlers.hasDefault() {
                 reportDefault(self, enc_type, buf.with_end(next));
             }
             match self.m_parsingStatus.parsing {
