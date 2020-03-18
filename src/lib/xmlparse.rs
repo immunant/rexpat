@@ -6740,35 +6740,35 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::CONTENT_ELEMENT => {
                     quant = XML_Content_Quant::NONE;
-                    current_block = 4542134034984465527;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::CONTENT_ELEMENT_OPT => {
                     quant = XML_Content_Quant::OPT;
-                    current_block = 4542134034984465527;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::CONTENT_ELEMENT_REP => {
                     quant = XML_Content_Quant::REP;
-                    current_block = 4542134034984465527;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::CONTENT_ELEMENT_PLUS => {
                     quant = XML_Content_Quant::PLUS;
-                    current_block = 4542134034984465527;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::GROUP_CLOSE => {
                     quant = XML_Content_Quant::NONE;
-                    current_block = 7739131043814808354;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::GROUP_CLOSE_OPT => {
                     quant = XML_Content_Quant::OPT;
-                    current_block = 7739131043814808354;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::GROUP_CLOSE_REP => {
                     quant = XML_Content_Quant::REP;
-                    current_block = 7739131043814808354;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::GROUP_CLOSE_PLUS => {
                     quant = XML_Content_Quant::PLUS;
-                    current_block = 7739131043814808354;
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::PI => {
                     /* End element declaration stuff */
@@ -6822,40 +6822,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     current_block = 1553878188884632965;
                 }
-                // _ => {
-                //     current_block = 1553878188884632965;
-                // }
             }
-            match current_block {
-                15307276507984219638 =>
-                /* XML_DTD */
-                /* fall through */
-                {
-                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
-                        (*self.m_declEntity).systemId = (*dtd).pool.storeString(
-                            enc,
-                            buf
-                                .inc_start((*enc).minBytesPerChar() as isize)
-                                .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
-                        );
-                        if (*self.m_declEntity).systemId.is_null() {
-                            return XML_Error::NO_MEMORY;
-                        }
-                        (*self.m_declEntity).base = self.m_curBase;
-                        (*dtd).pool.start = (*dtd).pool.ptr;
-                        /* Don't suppress the default handler if we fell through from
-                         * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
-                         */
-                        if self.m_handlers.hasEntityDecl()
-                            && role == super::xmlrole::XML_ROLE::ENTITY_SYSTEM_ID
-                        {
-                            handleDefault = false
-                        }
-                    }
-                    current_block = 1553878188884632965;
-                }
-                4542134034984465527 => {
+
+            match role {
+                XML_ROLE::CONTENT_ELEMENT | 
+                XML_ROLE::CONTENT_ELEMENT_OPT | 
+                XML_ROLE::CONTENT_ELEMENT_REP | 
+                XML_ROLE::CONTENT_ELEMENT_PLUS => {
                     if (*dtd).in_eldecl {
                         let mut scf = (*dtd).scaffold.borrow_mut();
                         let myindex_0 = match scf.next_part() {
@@ -6890,10 +6863,12 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
                         }
-                    }
-                    current_block = 1553878188884632965;
+                    }                    
                 }
-                7739131043814808354 => {
+                XML_ROLE::GROUP_CLOSE |
+                XML_ROLE::GROUP_CLOSE_OPT |
+                XML_ROLE::GROUP_CLOSE_REP |
+                XML_ROLE::GROUP_CLOSE_PLUS => {
                     if (*dtd).in_eldecl {
                         if self.m_handlers.hasElementDecl() {
                             handleDefault = false
@@ -6915,6 +6890,37 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                             (*dtd).in_eldecl = false;
                             (*dtd).contentStringLen = 0
+                        }
+                    }
+                },
+                _ => {}
+            }
+
+            match current_block {
+                15307276507984219638 =>
+                /* XML_DTD */
+                /* fall through */
+                {
+                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                        (*self.m_declEntity).systemId = (*dtd).pool.storeString(
+                            enc,
+                            buf
+                                .inc_start((*enc).minBytesPerChar() as isize)
+                                .with_end(next)
+                                .dec_end((*enc).minBytesPerChar() as usize),
+                        );
+                        if (*self.m_declEntity).systemId.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        (*self.m_declEntity).base = self.m_curBase;
+                        (*dtd).pool.start = (*dtd).pool.ptr;
+                        /* Don't suppress the default handler if we fell through from
+                         * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
+                         */
+                        if self.m_handlers.hasEntityDecl()
+                            && role == super::xmlrole::XML_ROLE::ENTITY_SYSTEM_ID
+                        {
+                            handleDefault = false
                         }
                     }
                     current_block = 1553878188884632965;
