@@ -3861,7 +3861,7 @@ impl<'scf> XML_ParserStruct<'scf> {
 
                         noElmHandlers = false
                     }
-                    if noElmHandlers as c_int != 0 && self.m_handlers.hasDefault() {
+                    if noElmHandlers && self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
                     self.m_tempPool.clear();
@@ -3898,7 +3898,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 let mut prefix: *const XML_Char = ptr::null();
                                 let mut uri: *mut XML_Char = ptr::null_mut();
                                 localPart = tag.name.localPart;
-                                if self.m_ns as c_int != 0 && !localPart.is_null() {
+                                if self.m_ns && !localPart.is_null() {
                                     /* localPart and prefix may have been overwritten in
                                        tag->name.str, since this points to the binding->uri
                                        buffer which gets re-used; so we have to add them again
@@ -3914,7 +3914,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                         *fresh3 = *fresh2
                                     }
                                     prefix = tag.name.prefix as *mut XML_Char;
-                                    if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
+                                    if self.m_ns_triplets && !prefix.is_null() {
                                         let fresh4 = uri;
                                         uri = uri.offset(1);
                                         *fresh4 = self.m_namespaceSeparator;
@@ -3939,7 +3939,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             let mut prefix: *const XML_Char = ptr::null();
                             let mut uri: *mut XML_Char = ptr::null_mut();
                             localPart = tag.name.localPart;
-                            if self.m_ns as c_int != 0 && !localPart.is_null() {
+                            if self.m_ns && !localPart.is_null() {
                                 /* localPart and prefix may have been overwritten in
                                    tag->name.str, since this points to the binding->uri
                                    buffer which gets re-used; so we have to add them again
@@ -3955,7 +3955,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                     *fresh3 = *fresh2
                                 }
                                 prefix = tag.name.prefix as *mut XML_Char;
-                                if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
+                                if self.m_ns_triplets && !prefix.is_null() {
                                     let fresh4 = uri;
                                     uri = uri.offset(1);
                                     *fresh4 = self.m_namespaceSeparator;
@@ -4226,7 +4226,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             if elementType.is_null() {
                 return XML_Error::NO_MEMORY;
             }
-            if self.m_ns as c_int != 0 && self.setElementTypePrefix(elementType) == 0 {
+            if self.m_ns && self.setElementTypePrefix(elementType) == 0 {
                 return XML_Error::NO_MEMORY;
             }
             elementType
@@ -4668,7 +4668,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             return XML_Error::NONE;
         }
         prefixLen = 0;
-        if self.m_ns_triplets as c_int != 0 && !(*(*binding).prefix).name.is_null() {
+        if self.m_ns_triplets && !(*(*binding).prefix).name.is_null() {
             loop {
                 let fresh30 = prefixLen;
                 prefixLen = prefixLen + 1;
@@ -4784,8 +4784,7 @@ unsafe extern "C" fn addBinding(
     }
     let mut len = 0;
     while *uri.add(len) != 0 {
-        if isXML as c_int != 0
-            && (len >= xmlNamespace.len()
+        if isXML && (len >= xmlNamespace.len()
                 || *uri.add(len) as c_int != xmlNamespace[len] as c_int)
         {
             isXML = false
@@ -5188,7 +5187,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         } else {
             s = self.m_protocolEncodingName as *const c_char;
         }
-        let enc = if self.m_ns as c_int != 0 {
+        let enc = if self.m_ns {
             InitEncoding::new_ns(&mut self.m_encoding, s)
         } else {
             InitEncoding::new(&mut self.m_encoding, s)
@@ -5213,7 +5212,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         let mut version_buf = None;
         let mut storedversion: *const XML_Char = ptr::null();
         let mut standalone: c_int = -(1);
-        if if self.m_ns as c_int != 0 {
+        if if self.m_ns {
             super::xmltok::XmlParseXmlDeclNS
         } else {
             super::xmltok::XmlParseXmlDecl
@@ -5691,7 +5690,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         complete markup, not only for external PEs, but also for
                         internal PEs if the reference occurs between declarations.
                          */
-                        if self.m_isParamEntity as c_int != 0 || enc_type.is_internal() {
+                        if self.m_isParamEntity || enc_type.is_internal() {
                             if self
                                 .m_prologState
                                 .handler
@@ -5830,7 +5829,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     XML_ROLE::DOCTYPE_SYSTEM_ID, even if parser->m_startDoctypeDeclHandler
                     was not set, indicating an external subset
                      */
-                    if !self.m_doctypeSysid.is_null() || self.m_useForeignDTD as c_int != 0 {
+                    if !self.m_doctypeSysid.is_null() || self.m_useForeignDTD {
                         let mut hadParamEntityRefs = (*dtd).hasParamEntityRefs;
                         (*dtd).hasParamEntityRefs = true;
                         if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER
@@ -5971,7 +5970,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declAttributeType = atypeNMTOKENS.as_ptr();
                 }
                 XML_ROLE::ATTRIBUTE_ENUM_VALUE | XML_ROLE::ATTRIBUTE_NOTATION_VALUE => {
-                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
                         let mut prefix: *const XML_Char = ptr::null();
                         if !self.m_declAttributeType.is_null() {
                             prefix = enumValueSep.as_ptr()
@@ -6216,7 +6215,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 }
                 XML_ROLE::ENTITY_SYSTEM_ID => { }
                 XML_ROLE::ENTITY_COMPLETE => {
-                    if (*dtd).keepProcessing as c_int != 0
+                    if (*dtd).keepProcessing
                         && !self.m_declEntity.is_null()
                         && self.m_handlers.hasEntityDecl()
                     {
@@ -6235,7 +6234,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                 }
                 XML_ROLE::ENTITY_NOTATION_NAME => {
-                    if (*dtd).keepProcessing as c_int != 0 && !self.m_declEntity.is_null() {
+                    if (*dtd).keepProcessing && !self.m_declEntity.is_null() {
                         (*self.m_declEntity).notation =
                             (*dtd).pool.storeString(enc, buf.with_end(next));
                         if (*self.m_declEntity).notation.is_null() {
@@ -6501,7 +6500,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     *self
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize) = ASCII_COMMA;
-                    if (*dtd).in_eldecl as c_int != 0 && self.m_handlers.hasElementDecl() {
+                    if (*dtd).in_eldecl && self.m_handlers.hasElementDecl() {
                         handleDefault = false
                     }
                 }
@@ -6513,7 +6512,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     {
                         return XML_Error::SYNTAX;
                     }
-                    if (*dtd).in_eldecl as c_int != 0
+                    if (*dtd).in_eldecl
                         && *self
                         .m_groupConnector
                         .offset(self.m_prologState.level as isize)
@@ -7388,7 +7387,7 @@ unsafe extern "C" fn appendAttributeValue(
                                     pool,
                                 );
                                 (*entity).open = false;
-                                if result as u64 != 0 {
+                                if result != XML_Error::NONE {
                                     return result;
                                 }
                             }
@@ -7473,7 +7472,7 @@ unsafe extern "C" fn storeEntityValue(
         );
         match tok {
             super::xmltok::XML_TOK::PARAM_ENTITY_REF => {
-                if (*parser).m_isParamEntity as c_int != 0 || enc_type.is_internal() {
+                if (*parser).m_isParamEntity || enc_type.is_internal() {
                     let mut name: *const XML_Char = ptr::null();
                     let mut entity: *mut Entity = ptr::null_mut();
                     name = (*parser).m_tempPool.storeString(
@@ -7838,7 +7837,7 @@ unsafe extern "C" fn defineAttribute(
     mut isId: XML_Bool,
     mut value: *const XML_Char,
 ) -> c_int {
-    if !value.is_null() || isId as c_int != 0 {
+    if !value.is_null() || isId  {
         /* The handling of default attributes gets messed up if we have
         a default which duplicates a non-default. */
         /* save one level of indirection */
@@ -7846,7 +7845,7 @@ unsafe extern "C" fn defineAttribute(
         if (*type_0).defaultAtts.iter().any(|da| attId == da.id) {
             return 1;
         }
-        if isId as c_int != 0 && (*type_0).idAtt.is_null() && !(*attId).xmlns {
+        if isId && (*type_0).idAtt.is_null() && !(*attId).xmlns {
             (*type_0).idAtt = attId
         }
     }
@@ -8123,8 +8122,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             let mut len_0: c_int = 0;
             let mut s: *const XML_Char = ptr::null();
             if !(*prefix).binding.is_null() {
-                if needSep as c_int != 0
-                    && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+                if needSep && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
                         && !self.m_tempPool.grow()
                         {
                             0
@@ -8196,8 +8194,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             if !(*e).open {
                 continue;
             }
-            if needSep as c_int != 0
-                && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
+            if needSep && (if self.m_tempPool.ptr == self.m_tempPool.end as *mut XML_Char
                     && !self.m_tempPool.grow()
                     {
                         0
