@@ -5807,11 +5807,17 @@ impl<'scf> XML_ParserStruct<'scf> {
                         handleDefault = false;
                         current_block = 9007411418488376351;
                     } else {
-                        current_block = 926243229934402080;
+                        if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
+                            return XML_Error::PUBLICID;
+                        }
+                        current_block = 9007411418488376351;
                     }
                 }
                 XML_ROLE::ENTITY_PUBLIC_ID => {
-                    current_block = 926243229934402080;
+                    if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
+                        return XML_Error::PUBLICID;
+                    }
+                    current_block = 9007411418488376351;
                 }
                 XML_ROLE::DOCTYPE_CLOSE => {
                     if allowClosingDoctype != true {
@@ -5936,7 +5942,10 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if self.m_declElementType.is_null() {
                         return XML_Error::NO_MEMORY;
                     }
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_NAME => {
                     self.m_declAttributeId = self.getAttributeId(enc_type, buf.with_end(next));
@@ -5946,41 +5955,68 @@ impl<'scf> XML_ParserStruct<'scf> {
                     self.m_declAttributeIsCdata = false;
                     self.m_declAttributeType = ptr::null();
                     self.m_declAttributeIsId = false;
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_CDATA => {
                     self.m_declAttributeIsCdata = true;
                     self.m_declAttributeType = atypeCDATA.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ID => {
                     self.m_declAttributeIsId = true;
                     self.m_declAttributeType = atypeID.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_IDREF => {
                     self.m_declAttributeType = atypeIDREF.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_IDREFS => {
                     self.m_declAttributeType = atypeIDREFS.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ENTITY => {
                     self.m_declAttributeType = atypeENTITY.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_ENTITIES => {
                     self.m_declAttributeType = atypeENTITIES.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_NMTOKEN => {
                     self.m_declAttributeType = atypeNMTOKEN.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_TYPE_NMTOKENS => {
                     self.m_declAttributeType = atypeNMTOKENS.as_ptr();
-                    current_block = 6455255476181645667;
+                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
+                        handleDefault = false
+                    }
+                    current_block = 1553878188884632965;
                 }
                 XML_ROLE::ATTRIBUTE_ENUM_VALUE | XML_ROLE::ATTRIBUTE_NOTATION_VALUE => {
                     if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
@@ -6791,14 +6827,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                 // }
             }
             match current_block {
-                926243229934402080 =>
-                /* fall through */
-                {
-                    if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
-                        return XML_Error::PUBLICID;
-                    }
-                    current_block = 9007411418488376351;
-                }
                 15307276507984219638 =>
                 /* XML_DTD */
                 /* fall through */
@@ -6824,12 +6852,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                         {
                             handleDefault = false
                         }
-                    }
-                    current_block = 1553878188884632965;
-                }
-                6455255476181645667 => {
-                    if (*dtd).keepProcessing as c_int != 0 && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
                     }
                     current_block = 1553878188884632965;
                 }
