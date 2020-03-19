@@ -587,20 +587,20 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut current_block: u64;
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         // let mut to: *mut c_ushort = *toP;
         // let mut from: *const c_char = *fromP;
         loop {
             if from.is_empty() || to.is_empty() {
-                current_block = 1608152415753874203;
+                if !from.is_empty() {
+                    res = XML_Convert_Result::OUTPUT_EXHAUSTED
+                }
                 break;
             }
             match T::types[from[0] as c_uchar as usize] as c_int {
                 5 => {
                     if (from.len() as c_long) < 2 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0x1f) << 6
@@ -613,7 +613,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 6 => {
                     if (from.len() as c_long) < 3 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0xf) << 12
@@ -628,11 +627,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                     let mut n: c_ulong = 0;
                     if (to.len() as c_long) < 2 {
                         res = XML_Convert_Result::OUTPUT_EXHAUSTED;
-                        current_block = 10086016483950629671;
                         break;
                     } else if (from.len() as c_long) < 4 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         n = ((from[0] as c_int & 0x7) << 18
@@ -652,14 +649,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                     to.inc_start(1);
                 }
             }
-        }
-        match current_block {
-            1608152415753874203 => {
-                if !from.is_empty() {
-                    res = XML_Convert_Result::OUTPUT_EXHAUSTED
-                }
-            }
-            _ => {}
         }
         res
     }

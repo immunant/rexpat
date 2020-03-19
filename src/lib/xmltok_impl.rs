@@ -1114,7 +1114,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     if !HAS_CHAR!(buf, self) {
                         break;
                     }
-                    let mut current_block_32: u64;
                     let b = self.byte_type(buf.as_ptr());
                     match b {
                         ByteType::S | ByteType::LF | ByteType::CR => {
