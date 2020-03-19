@@ -1056,7 +1056,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 buf = buf.with_len(n as usize)
             }
         }
-        let mut current_block_112: u64;
         MATCH_LEAD_CASES! {
             self.byte_type(buf.as_ptr()),
             LEAD_CASE(n) => {
@@ -1073,7 +1072,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     *nextTokPtr = buf.as_ptr();
                     return XML_TOK::INVALID
                 }
-                current_block_112 = 2222055338596505704;
             }
             ByteType::QUOT => {
                 return self.scanLit(ByteType::QUOT,
@@ -1103,15 +1101,49 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 *nextTokPtr = buf.as_ptr();
                 return XML_TOK::INVALID
             }
-            ByteType::CR => {
-                if buf.len() == self.MINBPC() as usize {
+            ByteType::S | ByteType::LF | ByteType::CR => { 
+                if self.byte_type(buf.as_ptr()) == ByteType::CR && 
+                buf.len() == self.MINBPC() as usize {
                     *nextTokPtr = buf.end();
                     /* indicate that this might be part of a CR/LF pair */
                     return XML_TOK::PROLOG_S_NEG
                 }
-                current_block_112 = 1103933966285275534;
+
+                loop {
+                    buf = buf.inc_start(self.MINBPC() as isize);
+                    if !HAS_CHAR!(buf, self) {
+                        break;
+                    }
+                    let mut current_block_32: u64;
+                    match self.byte_type(buf.as_ptr()) {
+                        ByteType::S | ByteType::LF => {
+                            current_block_32 = 14072441030219150333;
+                        }
+                        ByteType::CR => {
+                            /* don't split CR/LF pair */
+                            if buf.len() != self.MINBPC() as usize {
+                                current_block_32 = 14072441030219150333;
+                            } else {
+                                current_block_32 = 11892121546066863882;
+                            }
+                        }
+                        _ => {
+                            current_block_32 = 11892121546066863882;
+                        }
+                    }
+                    match current_block_32 {
+                        14072441030219150333 => {}
+                        _ =>
+                        /* fall through */
+                        {
+                            *nextTokPtr = buf.as_ptr();
+                            return XML_TOK::PROLOG_S;
+                        }
+                    }
+                }
+                *nextTokPtr = buf.as_ptr();
+                return XML_TOK::PROLOG_S;
             }
-            ByteType::S | ByteType::LF => { current_block_112 = 1103933966285275534; }
             ByteType::PERCNT => {
                 return self.scanPercent(buf.inc_start(self.MINBPC() as isize), nextTokPtr)
             }
@@ -1184,22 +1216,18 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             ByteType::NMSTRT | ByteType::HEX => {
                 tok = XML_TOK::NAME;
                 buf = buf.inc_start(self.MINBPC() as isize);
-                current_block_112 = 2222055338596505704;
             }
             ByteType::DIGIT | ByteType::NAME | ByteType::MINUS | ByteType::COLON => {
                 tok = XML_TOK::NMTOKEN;
                 buf = buf.inc_start(self.MINBPC() as isize);
-                current_block_112 = 2222055338596505704;
             }
             ByteType::NONASCII => {
                 if self.is_nmstrt_char_minbpc(buf.as_ptr()) {
                     buf = buf.inc_start(self.MINBPC() as isize);
                     tok = XML_TOK::NAME;
-                    current_block_112 = 2222055338596505704;
                 } else if self.is_name_char_minbpc(buf.as_ptr()) {
                     buf = buf.inc_start(self.MINBPC() as isize);
                     tok = XML_TOK::NMTOKEN;
-                    current_block_112 = 2222055338596505704;
                 } else {
                     *nextTokPtr = buf.as_ptr();
                     return XML_TOK::INVALID
@@ -1208,47 +1236,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             _ => {
                 *nextTokPtr = buf.as_ptr();
                 return XML_TOK::INVALID
-            }
-        }
-        match current_block_112 {
-            2222055338596505704 => {}
-            _ =>
-            /* fall through */
-            {
-                loop {
-                    buf = buf.inc_start(self.MINBPC() as isize);
-                    if !HAS_CHAR!(buf, self) {
-                        break;
-                    }
-                    let mut current_block_32: u64;
-                    match self.byte_type(buf.as_ptr()) {
-                        ByteType::S | ByteType::LF => {
-                            current_block_32 = 14072441030219150333;
-                        }
-                        ByteType::CR => {
-                            /* don't split CR/LF pair */
-                            if buf.len() != self.MINBPC() as usize {
-                                current_block_32 = 14072441030219150333;
-                            } else {
-                                current_block_32 = 11892121546066863882;
-                            }
-                        }
-                        _ => {
-                            current_block_32 = 11892121546066863882;
-                        }
-                    }
-                    match current_block_32 {
-                        14072441030219150333 => {}
-                        _ =>
-                        /* fall through */
-                        {
-                            *nextTokPtr = buf.as_ptr();
-                            return XML_TOK::PROLOG_S;
-                        }
-                    }
-                }
-                *nextTokPtr = buf.as_ptr();
-                return XML_TOK::PROLOG_S;
             }
         }
         while HAS_CHAR!(buf, self) {
