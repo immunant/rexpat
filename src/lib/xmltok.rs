@@ -2009,7 +2009,6 @@ impl InitEncoding {
                 _ => { }
             }
         } else {
-            let mut current_block_26: u64;
             match (buf[0] as c_uchar as c_int) << 8 | buf[1] as c_uchar as c_int {
                 65279 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
@@ -2045,31 +2044,22 @@ impl InitEncoding {
                     don't look for the BOM,
                     because it might be a legal data.
                      */
-                    if state == XML_STATE::CONTENT {
-                        let mut e: c_int = self.encoding_index as c_int;
-                        if e == ISO_8859_1_ENC
-                            || e == UTF_16BE_ENC
-                            || e == UTF_16LE_ENC
-                            || e == UTF_16_ENC
-                        {
-                            current_block_26 = 10758786907990354186;
-                        } else {
-                            current_block_26 = 15925075030174552612;
+                    if state != XML_STATE::CONTENT || {
+                        match self.encoding_index {
+                            ISO_8859_1_ENC | 
+                            UTF_16BE_ENC |
+                            UTF_16LE_ENC |  
+                            UTF_16_ENC => false,
+                            _ => true 
                         }
-                    } else {
-                        current_block_26 = 15925075030174552612;
-                    }
-                    match current_block_26 {
-                        10758786907990354186 => {}
-                        _ => {
-                            if buf.len() == 2 {
-                                return XML_TOK::PARTIAL;
-                            }
-                            if buf[2] as c_uchar as c_int == 0xbf {
-                                *nextTokPtr = buf[3..].as_ptr();
-                                unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
-                                return XML_TOK::BOM;
-                            }
+                    } {
+                        if buf.len() == 2 {
+                            return XML_TOK::PARTIAL;
+                        }
+                        if buf[2] as c_uchar as c_int == 0xbf {
+                            *nextTokPtr = buf[3..].as_ptr();
+                            unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
+                            return XML_TOK::BOM;
                         }
                     }
                 }
