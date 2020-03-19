@@ -906,23 +906,25 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[0] as c_uchar;
             let mut hi: c_uchar = from[1] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
                             return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if to.len() < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
-                }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
                 }
                 216 | 217 | 218 | 219 => {
                     if (to.len() as c_long) < 4 {
@@ -947,7 +949,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
@@ -960,21 +961,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
@@ -1093,23 +1080,25 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[1] as c_uchar;
             let mut hi: c_uchar = from[0] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0| 1 | 2 | 3 | 4 | 5 | 6 | 7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
                             return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if (to.len() as c_long) < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
-                }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
                 }
                 216 | 217 | 218 | 219 => {
                     if (to.len() as c_long) < 4 {
@@ -1134,7 +1123,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
@@ -1147,21 +1135,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
