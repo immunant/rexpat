@@ -999,7 +999,6 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
             _ => { buf = buf.inc_start(self.MINBPC() as isize) }
         }
         while HAS_CHAR!(buf, self) {
-            let mut current_block_76: u64;
             MATCH_LEAD_CASES! {
                 self.byte_type(buf.as_ptr()),
                 LEAD_CASE(n) => {
@@ -1008,13 +1007,11 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         return XML_TOK::DATA_CHARS;
                     }
                     buf = buf.inc_start(n as isize);
-                    current_block_76 = 10213293998891106930;
                 }
                 ByteType::RSQB => {
                     if HAS_CHARS!(buf, 2, self) {
                         if !self.char_matches(buf.inc_start(self.MINBPC()).as_ptr(), ASCII_RSQB) {
                             buf = buf.inc_start(self.MINBPC() as isize);
-                            current_block_76 = 10213293998891106930;
                         } else if HAS_CHARS!(buf, 3, self) {
                             if !self.char_matches(buf.inc_start(2 * self.MINBPC()).as_ptr(), ASCII_GT) {
                                 buf = buf.inc_start(self.MINBPC() as isize)
@@ -1022,24 +1019,19 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                                 *nextTokPtr = buf.inc_start(2 * self.MINBPC()).as_ptr();
                                 return XML_TOK::INVALID
                             }
-                            current_block_76 = 10213293998891106930;
-                        } else { current_block_76 = 4244197895050895038; }
-                    } else { current_block_76 = 4244197895050895038; }
+                        } else { 
+                            break;
+                         }
+                    } else { 
+                        break;
+                     }
                 }
-                ByteType::AMP | ByteType::LT | ByteType::NONXML | ByteType::MALFORM | ByteType::TRAIL | ByteType::CR | ByteType::LF => {
-                    current_block_76 = 4244197895050895038;
+                ByteType::AMP | ByteType::LT | ByteType::NONXML | 
+                ByteType::MALFORM | ByteType::TRAIL | ByteType::CR | 
+                ByteType::LF => {
+                    break;
                 }
-                _ => {
-                    buf = buf.inc_start(self.MINBPC() as isize);
-                    current_block_76 = 10213293998891106930;
-                }
-            }
-            match current_block_76 {
-                10213293998891106930 => {}
-                _ => {
-                    *nextTokPtr = buf.as_ptr();
-                    return XML_TOK::DATA_CHARS;
-                }
+                _ => { buf = buf.inc_start(self.MINBPC() as isize); }
             }
         }
         *nextTokPtr = buf.as_ptr();
