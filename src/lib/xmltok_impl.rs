@@ -674,13 +674,27 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         XML_TOK::PARTIAL
     }
 
+    fn scanLtHelper(
+        &self,
+        mut buf: ExpatBufRef,
+        mut nextTokPtr: &mut *const libc::c_char,
+    ) -> XML_TOK {
+        buf = buf.inc_start((self.MINBPC()) as isize);
+        REQUIRE_CHAR!(buf, self);
+        if !self.char_matches(buf.as_ptr(), ASCII_GT) {
+            *nextTokPtr = buf.as_ptr();
+            return XML_TOK::INVALID;
+        }
+        *nextTokPtr = buf.inc_start(self.MINBPC()).as_ptr();
+        XML_TOK::EMPTY_ELEMENT_NO_ATTS
+    }
+
     /* ptr points to character following "<" */
     fn scanLt(
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: &mut *const libc::c_char,
-    ) -> XML_TOK {
-        let mut hadColon: libc::c_int = 0;
+    ) -> XML_TOK {        
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
@@ -708,21 +722,20 @@ pub trait XmlTokImpl: XmlEncodingImpl {
             }
             _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
         }
-        hadColon = 0 as libc::c_int;
+        let mut hadColon = false;
         /* we have a start-tag */
         /* we have a start-tag */
         /* we have a start-tag */
         while HAS_CHAR!(buf, self) {
-            let mut current_block_161: u64 = 0;
             CHECK_NAME_CASES! {
                 (buf, nextTokPtr, self),
                 match self.byte_type(buf.as_ptr()),
                 ByteType::COLON => {
-                    if hadColon != 0 {
+                    if hadColon {
                         *nextTokPtr = buf.as_ptr();
                         return XML_TOK::INVALID
                     }
-                    hadColon = 1 as libc::c_int;
+                    hadColon = true;
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     REQUIRE_CHAR!(buf, self);
                     CHECK_NMSTRT_CASES! {
@@ -730,25 +743,22 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         match self.byte_type(buf.as_ptr()),
                         _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
                     }
-                    current_block_161 = 12655303178690906525;
                 }
                 ByteType::S | ByteType::CR | ByteType::LF => {
                     buf = buf.inc_start((self.MINBPC()) as isize);
                     loop  {
                         if !(HAS_CHAR!(buf, self)) {
-                            current_block_161 = 13000670339742628194;
                             break ;
                         }
                         CHECK_NMSTRT_CASES! {
                             (buf, nextTokPtr, self),
                             match self.byte_type(buf.as_ptr()),
                             ByteType::GT => {
-                                current_block_161 = 15370445274224965566;
-                                break ;
+                                *nextTokPtr = buf.inc_start(self.MINBPC()).as_ptr();
+                                return XML_TOK::START_TAG_NO_ATTS;
                             }
                             ByteType::SOL => {
-                                current_block_161 = 3926109038817298867;
-                                break ;
+                                return self.scanLtHelper(buf, nextTokPtr);
                             }
                             ByteType::S | ByteType::CR | ByteType::LF => {
                                 buf = buf.inc_start((self.MINBPC()) as isize);
@@ -758,33 +768,14 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                         }
                         return self.scanAtts(buf, nextTokPtr)
                     }
-                    match current_block_161 {
-                        15370445274224965566 => { }
-                        3926109038817298867 => { }
-                        _ => { return XML_TOK::PARTIAL }
-                    }
+                    return XML_TOK::PARTIAL;
                 }
-                ByteType::GT => { current_block_161 = 15370445274224965566; }
-                ByteType::SOL => { current_block_161 = 3926109038817298867; }
-                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
-            }
-            match current_block_161 {
-                3926109038817298867 => {
-                    buf = buf.inc_start((self.MINBPC()) as isize);
-                    REQUIRE_CHAR!(buf, self);
-                    if !self.char_matches(buf.as_ptr(), ASCII_GT) {
-                        *nextTokPtr = buf.as_ptr();
-                        return XML_TOK::INVALID;
-                    }
-                    *nextTokPtr = buf.inc_start(self.MINBPC()).as_ptr();
-                    return XML_TOK::EMPTY_ELEMENT_NO_ATTS;
-                }
-                15370445274224965566 => {
+                ByteType::GT => { 
                     *nextTokPtr = buf.inc_start(self.MINBPC()).as_ptr();
                     return XML_TOK::START_TAG_NO_ATTS;
-                }
-                16331546839105579257 => buf = buf.inc_start((self.MINBPC()) as isize),
-                _ => {}
+                 }
+                ByteType::SOL => { return self.scanLtHelper(buf, nextTokPtr); }
+                _ => { *nextTokPtr = buf.as_ptr(); return XML_TOK::INVALID }
             }
         }
         XML_TOK::PARTIAL
