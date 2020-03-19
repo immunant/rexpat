@@ -1998,30 +1998,15 @@ impl InitEncoding {
                 3 | 5 | 4 => return XML_TOK::PARTIAL,
                 _ => {}
             }
-            let mut current_block_5: u64;
             match buf[0] as c_uchar as c_int {
                 254 | 255 | 239 => {
                     /* possibly first byte of UTF-8 BOM */
-                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT {
-                        current_block_5 = 17965632435239708295;
-                    } else {
-                        current_block_5 = 16867440708908940295;
+                    if self.encoding_index as c_int != ISO_8859_1_ENC || state != XML_STATE::CONTENT {
+                        return XML_TOK::PARTIAL
                     }
                 }
-                0 | 60 => {
-                    current_block_5 = 16867440708908940295;
-                }
-                _ => {
-                    current_block_5 = 17965632435239708295;
-                }
-            }
-            match current_block_5 {
-                17965632435239708295 => {}
-                _ =>
-                /* fall through */
-                {
-                    return XML_TOK::PARTIAL
-                }
+                0 | 60 => { return XML_TOK::PARTIAL }
+                _ => { }
             }
         } else {
             let mut current_block_26: u64;
