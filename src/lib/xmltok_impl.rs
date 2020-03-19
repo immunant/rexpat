@@ -1115,27 +1115,16 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         break;
                     }
                     let mut current_block_32: u64;
-                    match self.byte_type(buf.as_ptr()) {
-                        ByteType::S | ByteType::LF => {
-                            current_block_32 = 14072441030219150333;
-                        }
-                        ByteType::CR => {
-                            /* don't split CR/LF pair */
-                            if buf.len() != self.MINBPC() as usize {
-                                current_block_32 = 14072441030219150333;
-                            } else {
-                                current_block_32 = 11892121546066863882;
+                    let b = self.byte_type(buf.as_ptr());
+                    match b {
+                        ByteType::S | ByteType::LF | ByteType::CR => {
+                            if b == ByteType::CR && buf.len() == self.MINBPC() as usize {
+                                /* don't split CR/LF pair */
+                                *nextTokPtr = buf.as_ptr();
+                                return XML_TOK::PROLOG_S;
                             }
                         }
                         _ => {
-                            current_block_32 = 11892121546066863882;
-                        }
-                    }
-                    match current_block_32 {
-                        14072441030219150333 => {}
-                        _ =>
-                        /* fall through */
-                        {
                             *nextTokPtr = buf.as_ptr();
                             return XML_TOK::PROLOG_S;
                         }
