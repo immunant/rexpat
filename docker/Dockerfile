@@ -16,7 +16,10 @@ RUN useradd --create-home -u $UID -g $GID --create-home --shell /bin/bash $USER
 # cargo binary from /home/docker.cargo/bin
 RUN chmod 755 /home/docker
 
-# required to install package dependencies
+# required to install package dependencies.
+# NOTE: Ubuntu 18.04 ships with Python3.6 by defa ultwhich triggers a UnicodeException
+# in the W3C testsuite so we update the default python3 to Python3.7.
+# NOTE: we reduce the size of the image by deleting 
 RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update -qq && \    
     apt-get install -qq   \
@@ -29,13 +32,10 @@ RUN apt-get update -qq && \
     python3.7-minimal     \
     libcap-dev            \
     libtool-bin           \
-    libsqlite3-dev
-RUN apt-get build-dep -qq squid php
-# Ubuntu 18.04 ships with Python3.6 by default which triggers a UnicodeException
-# in the W3C testsuite so we update the default python3 to Python3.7.
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100
-# reduce the size of the resulting image
-RUN rm -rf /tar/lib/apt/lists/*
+    libsqlite3-dev     && \
+    apt-get build-dep -qq squid php && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100 && \
+    rm -rf /var/lib/apt/lists/*
 
 ARG RUST_VER=nightly-2020-03-21
 USER docker
