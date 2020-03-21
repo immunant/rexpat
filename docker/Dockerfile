@@ -37,7 +37,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 10
 # reduce the size of the resulting image
 RUN rm -rf /tar/lib/apt/lists/*
 
-ARG RUST_VER=nightly-2019-12-17
+ARG RUST_VER=nightly-2020-03-21
 USER docker
 WORKDIR ${HOME}
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |  \
