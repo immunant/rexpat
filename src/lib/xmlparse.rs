@@ -3540,56 +3540,6 @@ unsafe extern "C" fn externalEntityContentProcessor(
 }
 
 impl<'scf> XML_ParserStruct<'scf> {
-    unsafe fn doContent_outlined1(
-        &mut self,
-        enc_type: EncodingType,
-        entity: *mut Entity,
-        mut buf: ExpatBufRef,
-        mut next: *const c_char) -> Option<XML_Error> {
-        if (*entity).open {
-            return Some(XML_Error::RECURSIVE_ENTITY_REF);
-        }
-        if !(*entity).notation.is_null() {
-            return Some(XML_Error::BINARY_ENTITY_REF);
-        }
-        if !(*entity).textPtr.is_null() {
-            let mut result: XML_Error = XML_Error::NONE;
-            if !self.m_defaultExpandInternalEntities {
-                let skippedHandlerRan = self.m_handlers.skippedEntity((*entity).name, 0);
-
-                if !skippedHandlerRan && self.m_handlers.hasDefault() {
-                    reportDefault(self, enc_type, buf.with_end(next));
-                }
-            } else {
-                result = self.processInternalEntity(entity, false);
-                if result != XML_Error::NONE {
-                    return Some(result);
-                }
-            }
-        } else if self.m_handlers.hasExternalEntityRef() {
-            let mut context: *const XML_Char = ptr::null();
-            (*entity).open = true;
-            context = self.getContext();
-            (*entity).open = false;
-            if context.is_null() {
-                return Some(XML_Error::NO_MEMORY);
-            }
-            if self.m_handlers.externalEntityRef(
-                context,
-                (*entity).base,
-                (*entity).systemId,
-                (*entity).publicId,
-            ) == Ok(0)
-            {
-                return Some(XML_Error::EXTERNAL_ENTITY_HANDLING);
-            }
-            self.m_tempPool.ptr = self.m_tempPool.start
-        } else if self.m_handlers.hasDefault() {
-            reportDefault(self, enc_type, buf.with_end(next));
-        }
-        None
-    }
-    
     unsafe fn doContent(
         &mut self,
         startTagLevel: c_int,
@@ -3704,6 +3654,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                            if yes, check that the entity exists, and that it is internal,
                            otherwise call the skipped entity or default handler.
                         */
+                        let mut skipHandlers = false;
                         if !(*dtd).hasParamEntityRefs || (*dtd).standalone {
                             if entity.is_null() {
                                 return XML_Error::UNDEFINED_ENTITY;
@@ -3711,9 +3662,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 if !(*entity).is_internal {
                                     return XML_Error::ENTITY_DECLARED_IN_PE;
                                 }
-                            }
-                            if let Some(r) = self.doContent_outlined1(enc_type, entity, buf, next) {
-                                return r;
                             }
                         } else if entity.is_null() {
                             let skippedHandlerRan = self.m_handlers.skippedEntity(name, 0);
@@ -3725,10 +3673,52 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                             if cfg!(feature = "mozilla") {
                                 return XML_Error::UNDEFINED_ENTITY;
+                            } else {
+                                skipHandlers = true;
                             }
-                        } else {
-                            if let Some(r) = self.doContent_outlined1(enc_type, entity, buf, next) {
-                                return r;
+                        }
+
+                        if !skipHandlers {
+                            if (*entity).open {
+                                return XML_Error::RECURSIVE_ENTITY_REF;
+                            }
+                            if !(*entity).notation.is_null() {
+                                return XML_Error::BINARY_ENTITY_REF;
+                            }
+                            if !(*entity).textPtr.is_null() {
+                                let mut result: XML_Error = XML_Error::NONE;
+                                if !self.m_defaultExpandInternalEntities {
+                                    let skippedHandlerRan = self.m_handlers.skippedEntity((*entity).name, 0);
+
+                                    if !skippedHandlerRan && self.m_handlers.hasDefault() {
+                                        reportDefault(self, enc_type, buf.with_end(next));
+                                    }
+                                } else {
+                                    result = self.processInternalEntity(entity, false);
+                                    if result != XML_Error::NONE {
+                                        return result;
+                                    }
+                                }
+                            } else if self.m_handlers.hasExternalEntityRef() {
+                                let mut context: *const XML_Char = ptr::null();
+                                (*entity).open = true;
+                                context = self.getContext();
+                                (*entity).open = false;
+                                if context.is_null() {
+                                    return XML_Error::NO_MEMORY;
+                                }
+                                if self.m_handlers.externalEntityRef(
+                                    context,
+                                    (*entity).base,
+                                    (*entity).systemId,
+                                    (*entity).publicId,
+                                ) == Ok(0)
+                                {
+                                    return XML_Error::EXTERNAL_ENTITY_HANDLING;
+                                }
+                                self.m_tempPool.ptr = self.m_tempPool.start
+                            } else if self.m_handlers.hasDefault() {
+                                reportDefault(self, enc_type, buf.with_end(next));
                             }
                         }
                     }
