@@ -1290,7 +1290,7 @@ pub const INIT_ATTS_SIZE: c_int = 16;
 
 pub const INIT_ATTS_VERSION: c_uint = 0xffffffff;
 
-pub const INIT_Block_SIZE: c_int = init_block_size_const();
+pub const INIT_BLOCK_SIZE: c_int = init_block_size_const();
 
 #[cfg(feature = "mozilla")]
 const fn init_block_size_const() -> c_int {
@@ -9027,8 +9027,8 @@ impl STRING_POOL {
                 return false;
                 /* LCOV_EXCL_LINE */
             }
-            if blockSize_0 < INIT_Block_SIZE {
-                blockSize_0 = INIT_Block_SIZE
+            if blockSize_0 < INIT_BLOCK_SIZE {
+                blockSize_0 = INIT_BLOCK_SIZE
             } else {
                 /* Detect overflow, avoiding _signed_ overflow undefined behavior */
                 if ((blockSize_0 as c_uint).wrapping_mul(2) as c_int) < 0 {
