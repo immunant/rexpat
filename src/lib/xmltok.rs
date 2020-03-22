@@ -480,12 +480,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         unsafe {
             match n {
                 2 => {
-                    ((*(p as *const c_uchar) as c_int) < 0xc2
+                    (*(p as *const c_uchar) as c_int) < 0xc2
                         || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0
                 }
                 3 => {
-                    (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
+                    *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
                         || (if *(p as *const c_uchar) as c_int == 0xef
                             && *(p as *const c_uchar).offset(1) as c_int == 0xbf
                         {
@@ -505,10 +505,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                                     (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
-                        }) != 0)
+                        }) != 0
                 }
                 4 => {
-                    (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
+                    *(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
                         || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
                         || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
                         || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
@@ -524,7 +524,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                                     (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
-                        }) != 0)
+                        }) != 0
                 }
                 _ => panic!("Unexpected byte length"),
             }
