@@ -14,6 +14,8 @@
 #![feature(ptr_wrapping_offset_from)]
 #![feature(try_reserve)]
 #![feature(alloc_layout_extra)]
+// Required by !Send and !Sync
+#![feature(optin_builtin_traits)]
 
 #[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");

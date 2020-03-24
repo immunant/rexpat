@@ -16,6 +16,9 @@ pub struct Rc<T> {
     marker: PhantomData<RcInner<T>>,
 }
 
+impl<T: ?Sized> !Send for Rc<T> {}
+impl<T: ?Sized> !Sync for Rc<T> {}
+
 impl<T> Rc<T> {
     pub fn try_new(value: T) -> Result<Self, TryReserveError> {
         let inner = RcInner {
