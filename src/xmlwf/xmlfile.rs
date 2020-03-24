@@ -1,7 +1,6 @@
 use crate::readfilemap::filemap;
-use crate::stdlib::{malloc, read, strlen};
-use ::libc::{close, exit, free, open, strcpy, strrchr};
-use libc::{c_char, c_int, c_uint, c_ulong, c_void};
+use ::libc::{close, exit, free, read, open, strcpy, strrchr, strlen, malloc};
+use libc::{c_char, c_int, c_uint, c_void, size_t};
 pub const XML_MAP_FILE: c_int = 0o1;
 
 pub const XML_EXTERNAL_ENTITIES: c_int = 0o2;
@@ -16,14 +15,10 @@ pub use crate::lib::xmlparse::{
     XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetError, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
-pub use crate::stddef_h::{size_t, NULL};
-pub use crate::stdlib::{
-    _IO_lock_t, __off64_t, __off_t, __ssize_t, fprintf,
-    ssize_t, stderr, stdout, FILE, _IO_FILE,
-};
+pub use crate::stdlib::{stderr, stdout};
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
 use ::libc;
-pub use ::libc::{perror, O_RDONLY};
+pub use ::libc::{perror, fprintf, O_RDONLY};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -122,8 +117,8 @@ unsafe extern "C" fn resolveSystemId(
     *toFree = malloc(
         strlen(base)
             .wrapping_add(strlen(systemId))
-            .wrapping_add(2u64)
-            .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+            .wrapping_add(2)
+            .wrapping_mul(::std::mem::size_of::<XML_Char>()),
     ) as *mut XML_Char;
     if (*toFree).is_null() {
         return systemId;
