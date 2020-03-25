@@ -33,9 +33,8 @@
 */
 
 use crate::minicheck::_fail_unless;
-use crate::stdlib::{memcmp, memcpy};
 use ::libc::sprintf;
-use libc::{c_char, c_int, c_ulong, c_void};
+use libc::{c_char, c_int, c_ulong, c_void, memcpy, memcmp};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct CharData {
@@ -88,7 +87,7 @@ pub unsafe extern "C" fn CharData_AppendXMLChars(
                 .as_mut_ptr()
                 .offset((*storage).count as isize) as *mut c_void,
             s as *const c_void,
-            (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+            (len as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
         );
         (*storage).count += len
     };
@@ -131,7 +130,7 @@ pub unsafe extern "C" fn CharData_CheckXMLChars(
     if memcmp(
         expected as *const c_void,
         (*storage).data.as_mut_ptr() as *const c_void,
-        (len as c_ulong).wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
+        (len as usize).wrapping_mul(::std::mem::size_of::<XML_Char>()),
     ) != 0
     {
         _fail_unless(

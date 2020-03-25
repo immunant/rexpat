@@ -120,7 +120,8 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     let enc_mbpc = encoding.MINBPC();
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
-    let tok = encoding.scanRef(buf.inc_start(enc_mbpc), next);
+    let nextTokPtr = next.as_mut().unwrap();
+    let tok = encoding.scanRef(buf.inc_start(enc_mbpc), nextTokPtr);
     if tok.is_error() {
         return 0;
     }

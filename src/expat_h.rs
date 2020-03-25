@@ -32,15 +32,13 @@
 */
 use crate::expat_external_h::{XML_Char, XML_LChar, XML_Size};
 pub use crate::lib::xmlparse::XML_ParserStruct;
-use crate::lib::xmlparse::{MOZ_XML_GetCurrentColumnNumber,
-                           MOZ_XML_GetCurrentLineNumber};
-use crate::stddef_h::size_t;
-use libc::{c_char, c_int, c_long, c_uint, c_void};
+use crate::lib::xmlparse::{MOZ_XML_GetCurrentColumnNumber, MOZ_XML_GetCurrentLineNumber};
+use libc::{c_char, c_int, c_long, c_uint, c_void, size_t};
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 
-pub type XML_Parser = *mut XML_ParserStruct;
+pub type XML_Parser<'scf> = *mut XML_ParserStruct<'scf>;
 pub type XML_Bool = bool;
 /* The XML_Status enum gives the possible return values for several
    API functions.  The preprocessor #defines are included so this
@@ -57,7 +55,7 @@ pub type XML_Bool = bool;
 */
 
 #[repr(u32)]
-#[derive(PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum XML_Status {
     ERROR,
     OK,
@@ -65,7 +63,7 @@ pub enum XML_Status {
 }
 
 #[repr(u32)]
-#[derive(PartialEq, Clone, Copy, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Copy, Debug, FromPrimitive, PartialEq, ToPrimitive)]
 pub enum XML_Error {
     NONE,
     NO_MEMORY,
@@ -116,7 +114,7 @@ pub enum XML_Error {
 }
 pub type XML_ErrorCode = libc::c_uint;
 impl XML_Error {
-    pub fn code(&self) -> XML_ErrorCode { 
+    pub fn code(&self) -> XML_ErrorCode {
         // libc::c_uint is always u32 as of 0.2.66
         ToPrimitive::to_u32(self).unwrap()
     }
@@ -142,7 +140,7 @@ pub enum XML_Content_Type {
 #[repr(u32)]
 #[derive(PartialEq, Clone, Copy)]
 pub enum XML_Content_Quant {
-    NONE, 
+    NONE,
     OPT,
     REP,
     PLUS

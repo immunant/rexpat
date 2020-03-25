@@ -21,12 +21,10 @@ compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
 extern crate libc;
 
 pub mod ascii_h;
-pub mod expat_config_h;
 pub mod expat_external_h;
 pub mod expat_h;
 pub mod filemap_h;
 pub mod stdbool_h;
-pub mod stddef_h;
 pub mod stdlib;
 pub mod xmltchar_h;
 pub mod xmltok_impl_h;

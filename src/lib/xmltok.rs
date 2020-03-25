@@ -34,7 +34,7 @@
 
 /* The following token may be returned by XmlContentTok */
 
-use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, size_t};
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::convert::TryInto;
@@ -163,10 +163,14 @@ impl XML_TOK {
     }
 }
 
-pub const XML_PROLOG_STATE: c_int = 0;
-pub const XML_CONTENT_STATE: c_int = 1;
-pub const XML_CDATA_SECTION_STATE: c_int = 2;
-pub const XML_IGNORE_SECTION_STATE: c_int = 3;
+#[repr(i32)]
+#[derive(PartialEq)]
+pub enum XML_STATE {
+    PROLOG = 0,
+    CONTENT = 1, 
+    CDATA_SECTION = 2,
+    IGNORE_SECTION = 3
+}
 
 pub const XML_ATTRIBUTE_VALUE_LITERAL: c_int = 0;
 pub const XML_ENTITY_VALUE_LITERAL: c_int = 1;
@@ -176,11 +180,9 @@ pub const XML_UTF8_ENCODE_MAX: c_int = 4;
 /* The size of the buffer passed to XmlUtf16Encode must be at least this. */
 pub const XML_UTF16_ENCODE_MAX: c_int = 2;
 
-pub type POSITION = position;
-
 #[repr(C)]
 #[derive(Copy, Clone, Default)]
-pub struct position {
+pub struct Position {
     /* first line and first column are 0 not 1 */
     pub lineNumber: XML_Size,
     pub columnNumber: XML_Size,
@@ -188,7 +190,7 @@ pub struct position {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct ATTRIBUTE {
+pub struct Attribute {
     pub name: *const c_char,
     pub valuePtr: *const c_char,
     pub valueEnd: *const c_char,
@@ -197,10 +199,14 @@ pub struct ATTRIBUTE {
 
 pub type ENCODING = dyn XmlEncoding;
 
-pub type XML_Convert_Result = c_uint;
-pub const XML_CONVERT_COMPLETED: XML_Convert_Result = 0;
-pub const XML_CONVERT_INPUT_INCOMPLETE: XML_Convert_Result = 1;
-pub const XML_CONVERT_OUTPUT_EXHAUSTED: XML_Convert_Result = 2; /* and therefore potentially input remaining as well */
+#[repr(u32)]
+#[derive(PartialEq)]
+pub enum XML_Convert_Result {
+    COMPLETED = 0,
+    INPUT_INCOMPLETE = 1,
+    /* and therefore potentially input remaining as well */
+    OUTPUT_EXHAUSTED = 2,
+}
 
 #[macro_export]
 macro_rules! XmlUtf8Convert {
@@ -216,44 +222,44 @@ macro_rules! XmlUtf16Convert {
     };
 }
 
-pub type CONVERTER = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>;
+pub type Converter = Option<unsafe extern "C" fn(_: *mut c_void, _: *const c_char) -> c_int>;
 
 // =============== END xmltok_h ================
 
 // Replaces ENCODING
 pub trait XmlEncoding {
     // scanners[4]
-    unsafe fn prologTok(
+    fn prologTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
-    unsafe fn contentTok(
+    fn contentTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
-    unsafe fn cdataSectionTok(
+    fn cdataSectionTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
-    unsafe fn ignoreSectionTok(
+    fn ignoreSectionTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
 
     // literalScanners[2]
-    unsafe fn attributeValueTok(
+    fn attributeValueTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
-    unsafe fn entityValueTok(
+    fn entityValueTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK;
 
     fn nameMatchesAscii(
@@ -266,38 +272,38 @@ pub trait XmlEncoding {
 
     unsafe fn skipS(&self, ptr: *const libc::c_char) -> *const libc::c_char;
 
-    unsafe fn getAtts(
+    fn getAtts(
         &self,
         buf: ExpatBufRef,
-        f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+        f: &mut dyn FnMut(Attribute) -> XML_Error,
     ) -> XML_Error;
 
-    unsafe fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
+    fn charRefNumber(&self, buf: ExpatBufRef) -> libc::c_int;
 
-    unsafe fn predefinedEntityName(
+    fn predefinedEntityName(
         &self,
         buf: ExpatBufRef,
     ) -> libc::c_int;
 
-    unsafe fn updatePosition(
+    fn updatePosition(
         &self,
         buf: ExpatBufRef,
-        pos: *mut POSITION,
+        pos: &mut Position,
     );
 
-    unsafe fn isPublicId(
+    fn isPublicId(
         &self,
         buf: ExpatBufRef,
-        badPtr: *mut *const libc::c_char,
+        badPtr: &mut *const libc::c_char,
     ) -> libc::c_int;
 
-    unsafe fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'b, 'a: 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -309,27 +315,26 @@ pub trait XmlEncoding {
 
     // xmlTok and xmlLiteralTok were macros
     #[inline]
-    unsafe fn xmlTok(
+    fn xmlTok(
         &self,
-        state: c_int,
+        state: XML_STATE,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const c_char,
+        nextTokPtr: &mut *const c_char,
     ) -> XML_TOK {
         match state {
-            XML_PROLOG_STATE => self.prologTok(buf, nextTokPtr),
-            XML_CONTENT_STATE => self.contentTok(buf, nextTokPtr),
-            XML_CDATA_SECTION_STATE => self.cdataSectionTok(buf, nextTokPtr),
-            XML_IGNORE_SECTION_STATE => self.ignoreSectionTok(buf, nextTokPtr),
-            _ => panic!("Unexpected state {}", state),
+            XML_STATE::PROLOG => self.prologTok(buf, nextTokPtr),
+            XML_STATE::CONTENT => self.contentTok(buf, nextTokPtr),
+            XML_STATE::CDATA_SECTION => self.cdataSectionTok(buf, nextTokPtr),
+            XML_STATE::IGNORE_SECTION => self.ignoreSectionTok(buf, nextTokPtr),
         }
     }
 
     #[inline]
-    unsafe fn xmlLiteralTok(
+    fn xmlLiteralTok(
         &self,
         literal_type: c_int,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const c_char,
+        nextTokPtr: &mut *const c_char,
     ) -> XML_TOK {
         match literal_type {
             XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(buf, nextTokPtr),
@@ -353,13 +358,13 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result;
 
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -475,12 +480,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         unsafe {
             match n {
                 2 => {
-                    ((*(p as *const c_uchar) as c_int) < 0xc2
+                    (*(p as *const c_uchar) as c_int) < 0xc2
                         || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0
                 }
                 3 => {
-                    (*(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
+                    *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
                         || (if *(p as *const c_uchar) as c_int == 0xef
                             && *(p as *const c_uchar).offset(1) as c_int == 0xbf
                         {
@@ -500,10 +505,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                                     (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
-                        }) != 0)
+                        }) != 0
                 }
                 4 => {
-                    (*(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
+                    *(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
                         || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
                         || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
                         || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
@@ -519,7 +524,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                                     (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
-                        }) != 0)
+                        }) != 0
                 }
                 _ => panic!("Unexpected byte length"),
             }
@@ -542,7 +547,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -568,34 +573,28 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         *fromP = fromP.inc_start(from.len().try_into().unwrap());
         if output_exhausted {
             /* needs to go first */
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else if input_incomplete {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut current_block: u64;
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         // let mut to: *mut c_ushort = *toP;
         // let mut from: *const c_char = *fromP;
-        loop {
-            if from.is_empty() || to.is_empty() {
-                current_block = 1608152415753874203;
-                break;
-            }
+        while !from.is_empty() && !to.is_empty() {
             match T::types[from[0] as c_uchar as usize] as c_int {
                 5 => {
                     if (from.len() as c_long) < 2 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0x1f) << 6
@@ -607,8 +606,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 }
                 6 => {
                     if (from.len() as c_long) < 3 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0xf) << 12
@@ -622,12 +620,10 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 7 => {
                     let mut n: c_ulong = 0;
                     if (to.len() as c_long) < 2 {
-                        res = XML_CONVERT_OUTPUT_EXHAUSTED;
-                        current_block = 10086016483950629671;
+                        res = XML_Convert_Result::OUTPUT_EXHAUSTED;
                         break;
                     } else if (from.len() as c_long) < 4 {
-                        res = XML_CONVERT_INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
+                        res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
                         n = ((from[0] as c_int & 0x7) << 18
@@ -648,13 +644,8 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 }
             }
         }
-        match current_block {
-            1608152415753874203 => {
-                if !from.is_empty() {
-                    res = XML_CONVERT_OUTPUT_EXHAUSTED
-                }
-            }
-            _ => {}
+        if !from.is_empty() {
+            res = XML_Convert_Result::OUTPUT_EXHAUSTED
         }
         res
     }
@@ -712,7 +703,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -720,12 +711,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
         loop {
             let mut c: c_uchar = 0;
             if from.is_empty() {
-                return XML_CONVERT_COMPLETED;
+                return XML_Convert_Result::COMPLETED;
             }
             c = from[0] as c_uchar;
             if c as c_int & 0x80 != 0 {
                 if (to.len() as c_long) < 2 {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 to[0] = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
                 to.inc_start(1);
@@ -734,7 +725,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
                 *from = from.inc_start(1);
             } else {
                 if to.is_empty() {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 to[0] = from[0];
                 to.inc_start(1);
@@ -744,7 +735,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -805,7 +796,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -816,14 +807,14 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
             *from = from.inc_start(1);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to_buf: &mut ExpatBufRefMut<u16>,
@@ -856,7 +847,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
         if bytes.1 == 0 {
             T::types[bytes.0 as u8 as usize]
         } else {
-            unsafe { unicode_byte_type(bytes.1, bytes.0) }
+            unicode_byte_type(bytes.1, bytes.0)
         }
     }
 
@@ -900,7 +891,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -912,32 +903,34 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[0] as c_uchar;
             let mut hi: c_uchar = from[1] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0..=7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
-                            return XML_CONVERT_OUTPUT_EXHAUSTED;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if to.len() < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
                 }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
-                }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     if (from.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_INPUT_INCOMPLETE;
+                        return XML_Convert_Result::INPUT_INCOMPLETE;
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                     to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
@@ -953,12 +946,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                     to.inc_start(1);
@@ -966,45 +958,31 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
         *fromP = from;
         if !from.is_empty() {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-1] as c_uchar as c_int & 0xf8 == 0xd8
         {
             *from = from.dec_end(2);
-            res = XML_CONVERT_INPUT_INCOMPLETE
+            res = XML_Convert_Result::INPUT_INCOMPLETE
         }
         while !from.is_empty() && !to.is_empty() {
             to[0] = ((from[1] as c_uchar as c_int) << 8
@@ -1013,7 +991,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
             res
         }
@@ -1043,7 +1021,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
         if bytes.0 == 0 {
             T::types[bytes.1 as usize]
         } else {
-            unsafe { unicode_byte_type(bytes.0, bytes.1) }
+            unicode_byte_type(bytes.0, bytes.1)
         }
     }
 
@@ -1087,7 +1065,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -1099,32 +1077,34 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[1] as c_uchar;
             let mut hi: c_uchar = from[0] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0..=7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
-                            return XML_CONVERT_OUTPUT_EXHAUSTED;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if to.len() < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
                 }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
-                }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     if (from.len() as c_long) < 4 {
                         *fromP = from;
-                        return XML_CONVERT_INPUT_INCOMPLETE;
+                        return XML_Convert_Result::INPUT_INCOMPLETE;
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
                     to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
@@ -1140,12 +1120,11 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
                         *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
+                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
                     }
                     to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
                     to.inc_start(1);
@@ -1153,45 +1132,31 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_CONVERT_OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
         *fromP = from;
         if !from.is_empty() {
-            XML_CONVERT_INPUT_INCOMPLETE
+            XML_Convert_Result::INPUT_INCOMPLETE
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut res: XML_Convert_Result = XML_CONVERT_COMPLETED;
+        let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-2] as c_uchar as c_int & 0xf8 == 0xd8
         {
             *from = from.dec_end(2);
-            res = XML_CONVERT_INPUT_INCOMPLETE
+            res = XML_Convert_Result::INPUT_INCOMPLETE
         }
         while !from.is_empty() && !to.is_empty() {
             to[0] = ((from[0] as c_uchar as c_int) << 8
@@ -1200,7 +1165,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             *from = from.inc_start(2);
         }
         if to.is_empty() && !from.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
             res
         }
@@ -1950,7 +1915,7 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
 }
 
 // Shared between Latin1Encoding and AsciiEncoding
-unsafe fn latin1_toUtf16(
+fn latin1_toUtf16(
     mut from: &mut ExpatBufRef,
     to: &mut ExpatBufRefMut<u16>,
 ) -> XML_Convert_Result {
@@ -1960,9 +1925,9 @@ unsafe fn latin1_toUtf16(
         *from = from.inc_start(1);
     }
     if to.is_empty() && !from.is_empty() {
-        XML_CONVERT_OUTPUT_EXHAUSTED
+        XML_Convert_Result::OUTPUT_EXHAUSTED
     } else {
-        XML_CONVERT_COMPLETED
+        XML_Convert_Result::COMPLETED
     }
 }
 
@@ -1976,12 +1941,12 @@ pub struct InitEncoding {
 }
 
 impl InitEncoding {
-    unsafe fn new_impl(
+    fn new_impl(
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
         encoding_table: &'static [&'static ENCODING],
     ) -> Option<InitEncoding> {
-        let mut i: c_int = getEncodingIndex(name);
+        let mut i: c_int = unsafe { getEncodingIndex(name) };
         if i == UNKNOWN_ENC {
             return None;
         }
@@ -1992,14 +1957,14 @@ impl InitEncoding {
         })
     }
 
-    pub unsafe fn new_ns(
+    pub fn new_ns(
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
         Self::new_impl(encPtr, name, &encodingsNS)
     }
 
-    pub unsafe fn new(
+    pub fn new(
         encPtr: *mut *const ENCODING,
         mut name: *const c_char,
     ) -> Option<InitEncoding> {
@@ -2009,14 +1974,14 @@ impl InitEncoding {
     /* This is what detects the encoding.  encodingTable maps from
     encoding indices to encodings; INIT_ENC_INDEX(enc) is the index of
     the external (protocol) specified encoding; state is
-    XML_CONTENT_STATE if we're parsing an external text entity, and
-    XML_PROLOG_STATE otherwise.
+    XML_STATE::CONTENT if we're parsing an external text entity, and
+    XML_STATE::PROLOG otherwise.
      */
-    unsafe fn initScan(
+    fn initScan(
         &self,
-        mut state: c_int,
+        mut state: XML_STATE,
         buf: ExpatBufRef,
-        mut nextTokPtr: *mut *const c_char,
+        mut nextTokPtr: &mut *const c_char,
     ) -> XML_TOK {
         if buf.is_empty() {
             return XML_TOK::NONE;
@@ -2030,57 +1995,41 @@ impl InitEncoding {
                 3 | 5 | 4 => return XML_TOK::PARTIAL,
                 _ => {}
             }
-            let mut current_block_5: u64;
             match buf[0] as c_uchar as c_int {
                 254 | 255 | 239 => {
                     /* possibly first byte of UTF-8 BOM */
-                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE {
-                        current_block_5 = 17965632435239708295;
-                    } else {
-                        current_block_5 = 16867440708908940295;
+                    if self.encoding_index as c_int != ISO_8859_1_ENC || state != XML_STATE::CONTENT {
+                        return XML_TOK::PARTIAL
                     }
                 }
-                0 | 60 => {
-                    current_block_5 = 16867440708908940295;
-                }
-                _ => {
-                    current_block_5 = 17965632435239708295;
-                }
-            }
-            match current_block_5 {
-                17965632435239708295 => {}
-                _ =>
-                /* fall through */
-                {
-                    return XML_TOK::PARTIAL
-                }
+                0 | 60 => { return XML_TOK::PARTIAL }
+                _ => { }
             }
         } else {
-            let mut current_block_26: u64;
             match (buf[0] as c_uchar as c_int) << 8 | buf[1] as c_uchar as c_int {
                 65279 => {
-                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
-                        *nextTokPtr = buf.as_ptr().offset(2);
-                        *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
+                        *nextTokPtr = buf[2..].as_ptr();
+                        unsafe { *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize]; }
                         return XML_TOK::BOM;
                     }
                 }
-                15360 => {
+                15360 => unsafe {
                     /* 00 3C is handled in the default case */
                     if !((self.encoding_index as c_int == UTF_16BE_ENC
                           || self.encoding_index as c_int == UTF_16_ENC)
-                         && state == XML_CONTENT_STATE)
+                         && state == XML_STATE::CONTENT)
                     {
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
                         return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                     }
                 }
                 65534 => {
-                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_CONTENT_STATE)
+                    if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
-                        *nextTokPtr = buf.as_ptr().offset(2);
-                        *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
+                        *nextTokPtr = buf[2..].as_ptr();
+                        unsafe { *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize]; }
                         return XML_TOK::BOM;
                     }
                 }
@@ -2092,35 +2041,26 @@ impl InitEncoding {
                     don't look for the BOM,
                     because it might be a legal data.
                      */
-                    if state == XML_CONTENT_STATE {
-                        let mut e: c_int = self.encoding_index as c_int;
-                        if e == ISO_8859_1_ENC
-                            || e == UTF_16BE_ENC
-                            || e == UTF_16LE_ENC
-                            || e == UTF_16_ENC
-                        {
-                            current_block_26 = 10758786907990354186;
-                        } else {
-                            current_block_26 = 15925075030174552612;
+                    if state != XML_STATE::CONTENT || {
+                        match self.encoding_index {
+                            ISO_8859_1_ENC | 
+                            UTF_16BE_ENC |
+                            UTF_16LE_ENC |  
+                            UTF_16_ENC => false,
+                            _ => true 
                         }
-                    } else {
-                        current_block_26 = 15925075030174552612;
-                    }
-                    match current_block_26 {
-                        10758786907990354186 => {}
-                        _ => {
-                            if buf.len() == 2 {
-                                return XML_TOK::PARTIAL;
-                            }
-                            if buf[2] as c_uchar as c_int == 0xbf {
-                                *nextTokPtr = buf.as_ptr().offset(3);
-                                *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize];
-                                return XML_TOK::BOM;
-                            }
+                    } {
+                        if buf.len() == 2 {
+                            return XML_TOK::PARTIAL;
+                        }
+                        if buf[2] as c_uchar as c_int == 0xbf {
+                            *nextTokPtr = buf[3..].as_ptr();
+                            unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
+                            return XML_TOK::BOM;
                         }
                     }
                 }
-                _ => {
+                _ => unsafe {
                     if buf[0] as c_int == '\u{0}' as i32 {
                         /* 0 isn't a legal data character. Furthermore a document
                         entity can only start with ASCII characters.  So the only
@@ -2128,7 +2068,7 @@ impl InitEncoding {
                         external parsed general entity that's labelled as
                         UTF-16LE.
                          */
-                        if !(state == XML_CONTENT_STATE
+                        if !(state == XML_STATE::CONTENT
                              && self.encoding_index as c_int == UTF_16LE_ENC)
                         {
                             *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
@@ -2144,7 +2084,7 @@ impl InitEncoding {
                         presented just with a single byte, we couldn't reliably determine
                         whether we needed further bytes.
                          */
-                        if !(state == XML_CONTENT_STATE) {
+                        if !(state == XML_STATE::CONTENT) {
                             *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
                             return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
                         }
@@ -2152,63 +2092,65 @@ impl InitEncoding {
                 }
             }
         }
-        *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
-        (**self.encPtr).xmlTok(state, buf, nextTokPtr)
+        unsafe {
+            *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
+            (**self.encPtr).xmlTok(state, buf, nextTokPtr)
+        }
     }
 
 }
 
 impl XmlEncoding for InitEncoding {
     // scanners[4]
-    unsafe fn prologTok(
+    fn prologTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         self.initScan(
-            XML_PROLOG_STATE,
+            XML_STATE::PROLOG,
             buf,
             nextTokPtr,
         )
     }
-    unsafe fn contentTok(
+    fn contentTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: *mut *const libc::c_char,
+        nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         self.initScan(
-            XML_CONTENT_STATE,
+            XML_STATE::CONTENT,
             buf,
             nextTokPtr,
         )
     }
-    unsafe fn cdataSectionTok(
+    fn cdataSectionTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: *mut *const libc::c_char,
+        _nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
-    unsafe fn ignoreSectionTok(
+    fn ignoreSectionTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: *mut *const libc::c_char,
+        _nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
 
     // literalScanners[2]
-    unsafe fn attributeValueTok(
+    fn attributeValueTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: *mut *const libc::c_char,
+        _nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
-    unsafe fn entityValueTok(
+    fn entityValueTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: *mut *const libc::c_char,
+        _nextTokPtr: &mut *const libc::c_char,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
@@ -2229,55 +2171,55 @@ impl XmlEncoding for InitEncoding {
         std::ptr::null()
     }
 
-    unsafe fn getAtts(
+    fn getAtts(
         &self,
         _buf: ExpatBufRef,
-        _f: &mut dyn FnMut(ATTRIBUTE) -> XML_Error,
+        _f: &mut dyn FnMut(Attribute) -> XML_Error,
     ) -> XML_Error {
         XML_Error::NONE
     }
 
-    unsafe fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
+    fn charRefNumber(&self, _buf: ExpatBufRef) -> libc::c_int {
         0
     }
 
-    unsafe fn predefinedEntityName(
+    fn predefinedEntityName(
         &self,
         _buf: ExpatBufRef,
     ) -> libc::c_int {
         0
     }
 
-    unsafe fn updatePosition(
+    fn updatePosition(
         &self,
         buf: ExpatBufRef,
-        pos: *mut POSITION,
+        pos: &mut Position,
     ) {
         utf8_encoding.updatePosition(buf, pos);
     }
 
-    unsafe fn isPublicId(
+    fn isPublicId(
         &self,
         _buf: ExpatBufRef,
-        _badPtr: *mut *const libc::c_char,
+        _badPtr: &mut *const libc::c_char,
     ) -> libc::c_int {
         0
     }
 
-    unsafe fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'b, 'a: 'b>(
         &self,
         _from_buf: &mut ExpatBufRef<'a>,
         _to_buf: &'b mut ExpatBufRefMut<'a>,
     ) -> XML_Convert_Result {
-        0
+        XML_Convert_Result::COMPLETED
     }
 
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         _from_buf: &mut ExpatBufRef,
         _to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        0
+        XML_Convert_Result::COMPLETED
     }
 
     fn minBytesPerChar(&self) -> c_int {
@@ -2294,7 +2236,7 @@ impl XmlEncoding for InitEncoding {
 #[derive(Clone)]
 pub struct UnknownEncoding {
     types: [ByteType; 256],
-    convert: CONVERTER,
+    convert: Converter,
     userData: *mut c_void,
     utf16: [c_ushort; 256],
     utf8: [[c_char; 4]; 256],
@@ -2314,7 +2256,7 @@ impl UnknownEncoding {
     pub fn initialize(
         &mut self,
         table: *mut c_int,
-        convert: CONVERTER,
+        convert: Converter,
         userData: *mut c_void,
         is_ns: bool,
     ) -> bool {
@@ -2465,7 +2407,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    unsafe fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'a: 'b, 'b>(
         &self,
         from_buf: &'b mut ExpatBufRef<'a>,
         to: &'b mut ExpatBufRefMut<'a>,
@@ -2474,17 +2416,18 @@ impl XmlEncodingImpl for UnknownEncoding {
         loop {
             let mut n: c_int = 0;
             if from_buf.is_empty() {
-                return XML_CONVERT_COMPLETED;
+                return XML_Convert_Result::COMPLETED;
             }
             let mut utf8: ExpatBufRef = self.utf8[from_buf[0] as c_uchar as usize][..].into();
             n = utf8[0] as c_int;
             utf8 = utf8.inc_start(1);
             if n == 0 {
-                let mut c: c_int =
-                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr());
+                let mut c: c_int = unsafe {
+                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
+                };
                 n = MOZ_XmlUtf8Encode(c, &mut buf);
                 if n as c_long > to.len() as c_long {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 utf8 = buf[..].into();
                 *from_buf = from_buf.inc_start(
@@ -2492,7 +2435,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                      - (ByteType::LEAD2 as c_int - 2)) as isize);
             } else {
                 if n as c_long > to.len() as c_long {
-                    return XML_CONVERT_OUTPUT_EXHAUSTED;
+                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
                 }
                 *from_buf = from_buf.inc_start(1);
             }
@@ -2502,7 +2445,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    unsafe fn utf16Convert(
+    fn utf16Convert(
         &self,
         from_buf: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
@@ -2510,8 +2453,10 @@ impl XmlEncodingImpl for UnknownEncoding {
         while !from_buf.is_empty() && !to.is_empty() {
             let mut c: c_ushort = self.utf16[from_buf[0] as c_uchar as usize];
             if c as c_int == 0 {
-                c = self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
-                    as c_ushort;
+                c = unsafe {
+                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
+                    as c_ushort
+                };
                 *from_buf = (*from_buf).inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
                      - (ByteType::LEAD2 as c_int - 2)) as isize);
@@ -2522,35 +2467,35 @@ impl XmlEncodingImpl for UnknownEncoding {
             to.inc_start(1);
         }
         if to.is_empty() && !from_buf.is_empty() {
-            XML_CONVERT_OUTPUT_EXHAUSTED
+            XML_Convert_Result::OUTPUT_EXHAUSTED
         } else {
-            XML_CONVERT_COMPLETED
+            XML_Convert_Result::COMPLETED
         }
     }
 }
 
 
 
-static latin1_encoding: Latin1Encoding = Latin1EncodingImpl(PhantomData);
-static latin1_encoding_ns: Latin1EncodingNS = Latin1EncodingImpl(PhantomData);
-static utf8_encoding: Utf8Encoding = Utf8EncodingImpl(PhantomData);
-static utf8_encoding_ns: Utf8EncodingNS = Utf8EncodingImpl(PhantomData);
-static internal_utf8_encoding: InternalUtf8Encoding = Utf8EncodingImpl(PhantomData);
-static internal_utf8_encoding_ns: InternalUtf8EncodingNS = Utf8EncodingImpl(PhantomData);
-static ascii_encoding: AsciiEncoding = AsciiEncodingImpl(PhantomData);
-static ascii_encoding_ns: AsciiEncodingNS = AsciiEncodingImpl(PhantomData);
-static little2_encoding: Little2Encoding = Little2EncodingImpl(PhantomData);
-static little2_encoding_ns: Little2EncodingNS = Little2EncodingImpl(PhantomData);
+const latin1_encoding: Latin1Encoding = Latin1EncodingImpl(PhantomData);
+const latin1_encoding_ns: Latin1EncodingNS = Latin1EncodingImpl(PhantomData);
+const utf8_encoding: Utf8Encoding = Utf8EncodingImpl(PhantomData);
+const utf8_encoding_ns: Utf8EncodingNS = Utf8EncodingImpl(PhantomData);
+const internal_utf8_encoding: InternalUtf8Encoding = Utf8EncodingImpl(PhantomData);
+const internal_utf8_encoding_ns: InternalUtf8EncodingNS = Utf8EncodingImpl(PhantomData);
+const ascii_encoding: AsciiEncoding = AsciiEncodingImpl(PhantomData);
+const ascii_encoding_ns: AsciiEncodingNS = AsciiEncodingImpl(PhantomData);
+const little2_encoding: Little2Encoding = Little2EncodingImpl(PhantomData);
+const little2_encoding_ns: Little2EncodingNS = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static internal_little2_encoding: InternalLittle2Encoding = Little2EncodingImpl(PhantomData);
+const internal_little2_encoding: InternalLittle2Encoding = Little2EncodingImpl(PhantomData);
 #[cfg(target_endian = "little")]
-static internal_little2_encoding_ns: InternalLittle2EncodingNS = Little2EncodingImpl(PhantomData);
-static big2_encoding: Big2Encoding = Big2EncodingImpl(PhantomData);
-static big2_encoding_ns: Big2EncodingNS = Big2EncodingImpl(PhantomData);
+const internal_little2_encoding_ns: InternalLittle2EncodingNS = Little2EncodingImpl(PhantomData);
+const big2_encoding: Big2Encoding = Big2EncodingImpl(PhantomData);
+const big2_encoding_ns: Big2EncodingNS = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static internal_big2_encoding: InternalBig2Encoding = Big2EncodingImpl(PhantomData);
+const internal_big2_encoding: InternalBig2Encoding = Big2EncodingImpl(PhantomData);
 #[cfg(target_endian = "big")]
-static internal_big2_encoding_ns: InternalBig2EncodingNS = Big2EncodingImpl(PhantomData);
+const internal_big2_encoding_ns: InternalBig2EncodingNS = Big2EncodingImpl(PhantomData);
 
 pub fn MOZ_XmlGetUtf8InternalEncodingNS() -> &'static ENCODING {
     &internal_utf8_encoding_ns
@@ -2580,7 +2525,7 @@ pub fn MOZ_XmlGetUtf16InternalEncodingNS() -> &'static ENCODING {
     &internal_big2_encoding_ns
 }
 
-pub static mut encodingsNS: [&'static ENCODING; 7] = [
+pub const encodingsNS: [&'static ENCODING; 7] = [
     &latin1_encoding_ns,
     &ascii_encoding_ns,
     &utf8_encoding_ns,
@@ -2590,7 +2535,7 @@ pub static mut encodingsNS: [&'static ENCODING; 7] = [
     &utf8_encoding_ns,
 ];
 
-pub static mut encodings: [&'static ENCODING; 7] = [
+pub const encodings: [&'static ENCODING; 7] = [
     &latin1_encoding,
     &ascii_encoding,
     &utf8_encoding,
@@ -2600,7 +2545,7 @@ pub static mut encodings: [&'static ENCODING; 7] = [
     &utf8_encoding,
 ];
 
-pub unsafe fn findEncoding(
+pub fn findEncoding(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
@@ -2614,19 +2559,21 @@ pub unsafe fn findEncoding(
     if !buf.is_empty() {
         return None;
     }
-    *p.as_mut_ptr() = 0;
-    if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
-        return Some(enc.clone());
-    }
-    i = getEncodingIndex(out_buf.as_ptr());
-    if i == UNKNOWN_ENC {
-        None
-    } else {
-        Some(encodings[i as usize])
+    p[0] = 0;
+    unsafe {
+        if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+            return Some(enc.clone());
+        }
+        i = getEncodingIndex(out_buf.as_ptr());
+        if i == UNKNOWN_ENC {
+            None
+        } else {
+            Some(encodings[i as usize])
+        }
     }
 }
 
-pub unsafe fn findEncodingNS(
+pub fn findEncodingNS(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
@@ -2640,27 +2587,29 @@ pub unsafe fn findEncodingNS(
     if !buf.is_empty() {
         return None;
     }
-    *p.as_mut_ptr() = 0;
-    if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
-        return Some(enc.clone());
-    }
-    i = getEncodingIndex(out_buf.as_ptr());
-    if i == UNKNOWN_ENC {
-        None
-    } else {
-        Some(encodingsNS[i as usize])
+    p[0] = 0;
+    unsafe {
+        if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
+            return Some(enc.clone());
+        }
+        i = getEncodingIndex(out_buf.as_ptr());
+        if i == UNKNOWN_ENC {
+            None
+        } else {
+            Some(encodingsNS[i as usize])
+        }
     }
 }
 
-pub unsafe fn MOZ_XmlParseXmlDeclNS<'a>(
+pub fn MOZ_XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: *mut *const c_char,
+    mut badPtr: &mut *const c_char,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: *mut *const c_char,
+    mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
-    mut standalone: *mut c_int,
+    mut standalone: &mut c_int,
 ) -> c_int {
     return doParseXmlDecl(
         Some(findEncodingNS),
@@ -2675,15 +2624,15 @@ pub unsafe fn MOZ_XmlParseXmlDeclNS<'a>(
     );
 }
 
-pub unsafe fn MOZ_XmlParseXmlDecl<'a>(
+pub fn MOZ_XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: *mut *const c_char,
+    mut badPtr: &mut *const c_char,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: *mut *const c_char,
+    mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
-    mut standalone: *mut c_int,
+    mut standalone: &mut c_int,
 ) -> c_int {
     return doParseXmlDecl(
         Some(findEncoding),
@@ -2702,7 +2651,6 @@ pub use crate::ascii_h::*;
 pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::nametab::{namePages, namingBitmap, nmstrtPages};
 pub use crate::stdbool_h::{false_0, true_0};
-pub use crate::stddef_h::{ptrdiff_t, size_t, NULL};
 pub use crate::xmltok_impl_h::*;
 
 pub type normal_encoding = Box<dyn XmlEncoding>;
@@ -2790,7 +2738,7 @@ pub const US_ASCII_ENC: C2RustUnnamed_8 = 1;
 /* Make sure all of these are defined if they aren't already. */
 /* __GNUC__ */
 /* XML_MIN_SIZE */
-pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
+pub fn _INTERNAL_trim_to_complete_utf8_characters(
     from_buf: &mut ExpatBufRef,
 ) {
     let mut i = from_buf.len();
@@ -2831,7 +2779,7 @@ pub unsafe fn _INTERNAL_trim_to_complete_utf8_characters(
 }
 
 // Shared between Big2 and Little2 encodings
-unsafe fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> ByteType {
+fn unicode_byte_type(mut hi: c_char, mut lo: c_char) -> ByteType {
     match hi as c_uchar as c_int {
         216 | 217 | 218 | 219 => {
             /* 0xD800–0xDBFF first 16-bit code unit or high surrogate (W1) */
@@ -2884,22 +2832,22 @@ unsafe fn streqci(mut s1: *const c_char, mut s2: *const c_char) -> c_int {
     1
 }
 
-unsafe fn initUpdatePosition(
+fn initUpdatePosition(
     mut _enc: &ENCODING,
     buf: ExpatBufRef,
-    mut pos: *mut POSITION,
+    mut pos: &mut Position,
 ) {
     utf8_encoding.updatePosition(buf, pos);
 }
 
-unsafe fn toAscii(
+fn toAscii(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef,
 ) -> c_int {
     let mut out_buf: [c_char; 1] = [0; 1];
     let mut p = ExpatBufRefMut::new(
         &mut out_buf[0],
-        out_buf.as_mut_ptr().offset(1),
+        out_buf[1..].as_mut_ptr(),
     );
     (*enc).utf8Convert(&mut buf, &mut p);
     if p.as_ptr() == out_buf.as_ptr() {
@@ -2909,7 +2857,7 @@ unsafe fn toAscii(
     };
 }
 
-unsafe fn isSpace(mut c: c_int) -> c_int {
+fn isSpace(mut c: c_int) -> c_int {
     match c {
         32 | 13 | 10 | 9 => return 1,
         _ => {}
@@ -2920,12 +2868,12 @@ unsafe fn isSpace(mut c: c_int) -> c_int {
    followed by name=val.
 */
 
-unsafe fn parsePseudoAttribute<'a>(
+fn parsePseudoAttribute<'a>(
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
     mut name: &mut Option<ExpatBufRef<'a>>,
-    mut val: *mut Option<ExpatBufRef<'a>>,
-    mut nextTokPtr: *mut *const c_char,
+    mut val: &mut Option<ExpatBufRef<'a>>,
+    mut nextTokPtr: &mut *const c_char,
 ) -> c_int {
     let mut c: c_int = 0;
     let mut open: c_char = 0;
@@ -3030,7 +2978,7 @@ const KW_no: [c_char; 2] = [ASCII_n, ASCII_o];
 #[cfg(feature = "mozilla")]
 const KW_XML_1_0: [c_char; 3] = [ASCII_1, ASCII_PERIOD, ASCII_0];
 
-unsafe fn doParseXmlDecl<'a>(
+fn doParseXmlDecl<'a>(
     mut encodingFinder: Option<
         unsafe fn(
             _: &ENCODING,
@@ -3040,11 +2988,11 @@ unsafe fn doParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: *mut *const c_char,
+    mut badPtr: &mut *const c_char,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: *mut *const c_char,
-    mut encoding: *mut Option<*const ENCODING>,
-    mut standalone: *mut c_int,
+    mut encodingName: &mut *const c_char,
+    mut encoding: &mut Option<*const ENCODING>,
+    mut standalone: &mut c_int,
 ) -> c_int {
     let mut val_buf = None;
     let mut name = None;
@@ -3101,18 +3049,14 @@ unsafe fn doParseXmlDecl<'a>(
             *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
             return 0;
         }
-        if !encodingName.is_null() {
-            *encodingName = val_buf.unwrap().as_ptr();
-        }
-        if !encoding.is_null() {
-            *encoding = encodingFinder.expect("non-null function pointer")(
-                enc,
-                val_buf
-                    .unwrap()
-                    .with_end(buf.as_ptr())
-                    .dec_end(((*enc).minBytesPerChar()) as usize),
-            )
-        }
+        *encodingName = val_buf.unwrap().as_ptr();
+        *encoding = unsafe { encodingFinder.expect("non-null function pointer")(
+            enc,
+            val_buf
+                .unwrap()
+                .with_end(buf.as_ptr())
+                .dec_end(((*enc).minBytesPerChar()) as usize),
+        ) };
         let mut pseudo_ptr = buf.as_ptr();
         if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
             *badPtr = buf.as_ptr();
@@ -3137,9 +3081,7 @@ unsafe fn doParseXmlDecl<'a>(
         &KW_yes,
     )
     {
-        if !standalone.is_null() {
-            *standalone = 1
-        }
+        *standalone = 1;
     } else if (*enc).nameMatchesAscii(
         val_buf
             .unwrap()
@@ -3148,9 +3090,7 @@ unsafe fn doParseXmlDecl<'a>(
         &KW_no,
     )
     {
-        if !standalone.is_null() {
-            *standalone = 0
-        }
+        *standalone = 0;
     } else {
         *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
         return 0;
@@ -3178,7 +3118,7 @@ unsafe fn doParseXmlDecl<'a>(
 
 pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
-        216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
+        216..=223 => return -1,
         0 => {
             if Latin1EncodingTable::types[result as usize] as c_int == ByteType::NONXML as c_int {
                 return -1;
@@ -3241,7 +3181,7 @@ pub fn MOZ_XmlUtf16Encode(mut charNum: c_int, buf: &mut [c_ushort]) -> c_int {
     0
 }
 
-pub unsafe fn MOZ_XmlSizeOfUnknownEncoding() -> c_int {
+pub fn MOZ_XmlSizeOfUnknownEncoding() -> c_int {
     ::std::mem::size_of::<unknown_encoding>() as c_int
 }
 

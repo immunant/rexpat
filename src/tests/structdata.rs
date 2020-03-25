@@ -33,9 +33,8 @@
 */
 
 use crate::minicheck::_fail_unless;
-use crate::stdlib::{malloc, memcpy, realloc, strlen};
 use ::libc::{free, sprintf, strcmp};
-use libc::{c_char, c_int, c_ulong, c_void};
+use libc::{c_char, c_int, c_void, size_t, malloc, realloc, memcpy, strlen};
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct StructDataEntry {
@@ -54,15 +53,14 @@ pub struct StructData {
 }
 
 pub use crate::expat_external_h::XML_Char;
-pub use crate::stddef_h::{size_t, NULL};
 use ::libc;
 
 pub const STRUCT_EXTENSION_COUNT: c_int = 8;
 
 unsafe extern "C" fn xmlstrdup(mut s: *const XML_Char) -> *mut XML_Char {
     let mut byte_count: size_t = strlen(s)
-        .wrapping_add(1u64)
-        .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong);
+        .wrapping_add(1)
+        .wrapping_mul(::std::mem::size_of::<XML_Char>());
     let mut dup: *mut XML_Char = malloc(byte_count) as *mut XML_Char;
     assert!(!dup.is_null());
     memcpy(dup as *mut c_void, s as *const c_void, byte_count);
@@ -74,7 +72,7 @@ pub unsafe extern "C" fn StructData_Init(mut storage: *mut StructData) {
     assert!(!storage.is_null());
     (*storage).count = 0;
     (*storage).max_count = 0;
-    (*storage).entries = NULL as *mut StructDataEntry;
+    (*storage).entries = std::ptr::null_mut();
 }
 /* Interface to some helper routines used to accumulate and check
    structured content.
@@ -128,8 +126,7 @@ pub unsafe extern "C" fn StructData_AddItem(
         (*storage).max_count += STRUCT_EXTENSION_COUNT;
         new = realloc(
             (*storage).entries as *mut c_void,
-            ((*storage).max_count as c_ulong)
-                .wrapping_mul(::std::mem::size_of::<StructDataEntry>() as c_ulong),
+            ((*storage).max_count as usize).wrapping_mul(::std::mem::size_of::<StructDataEntry>()),
         ) as *mut StructDataEntry;
         assert!(!new.is_null());
         (*storage).entries = new
@@ -229,5 +226,5 @@ pub unsafe extern "C" fn StructData_Dispose(mut storage: *mut StructData) {
     }
     free((*storage).entries as *mut c_void);
     (*storage).count = 0;
-    (*storage).entries = NULL as *mut StructDataEntry;
+    (*storage).entries = std::ptr::null_mut();
 }
