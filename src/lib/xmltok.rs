@@ -590,13 +590,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         // let mut to: *mut c_ushort = *toP;
         // let mut from: *const c_char = *fromP;
-        loop {
-            if from.is_empty() || to.is_empty() {
-                if !from.is_empty() {
-                    res = XML_Convert_Result::OUTPUT_EXHAUSTED
-                }
-                break;
-            }
+        while !from.is_empty() && !to.is_empty() {
             match T::types[from[0] as c_uchar as usize] as c_int {
                 5 => {
                     if (from.len() as c_long) < 2 {
@@ -649,6 +643,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                     to.inc_start(1);
                 }
             }
+        }
+        if !from.is_empty() {
+            res = XML_Convert_Result::OUTPUT_EXHAUSTED
         }
         res
     }
