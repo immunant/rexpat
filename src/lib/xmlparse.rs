@@ -1637,7 +1637,14 @@ impl Drop for Tag {
     fn drop(&mut self) {
         unsafe {
             FREE!(self.buf);
-            destroyBindings(self.bindings.take());
+        }
+    }
+}
+
+impl Drop for Binding {
+    fn drop(&mut self) {
+        unsafe {
+            FREE!(self.uri.get());
         }
     }
 }
@@ -2153,13 +2160,6 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'op>(
     parser
 }
 
-unsafe fn destroyBindings(mut bindings: Ptr<Binding>) {
-    while let Some(b) = bindings {
-        bindings = b.nextTagBinding.take();
-        FREE!((*b).uri.get());
-    }
-}
-
 impl Drop for XML_ParserStruct {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
@@ -2180,8 +2180,6 @@ impl Drop for XML_ParserStruct {
                 entityList = (*entityList).next;
                 FREE!(openEntity);
             }
-            destroyBindings(self.m_freeBindingList.take());
-            destroyBindings(self.m_inheritedBindings.take());
             self.m_tempPool.destroy();
             self.m_temp2Pool.destroy();
             FREE!(self.m_protocolEncodingName);
@@ -5009,12 +5007,12 @@ unsafe extern "C" fn addBinding(
     let old_tag_binding = bindingsPtr.take();
     let old_prefix_binding = prefix.binding.take();
     let b = if let Some(mut b) = (*parser).m_freeBindingList.take() {
-        b.prevPrefixBinding.set(old_prefix_binding);
-        (*parser).m_freeBindingList = b.nextTagBinding.replace(old_tag_binding);
-
         let mut b_mut = Rc::get_mut(&mut b).unwrap();
         b_mut.prefix = Rc::downgrade(&prefix);
         b_mut.attId = attId;
+
+        b.prevPrefixBinding.set(old_prefix_binding);
+        (*parser).m_freeBindingList = b.nextTagBinding.replace(old_tag_binding);
 
         if len > b.uriAlloc.get() as usize {
             let mut temp: *mut XML_Char = REALLOC!(b.uri.get() => [XML_Char; len + EXPAND_SPARE]);
