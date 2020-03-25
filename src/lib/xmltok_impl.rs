@@ -1106,7 +1106,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 /* indicate that this might be part of a CR/LF pair */
                 return XML_TOK::PROLOG_S_NEG
             }
-            ByteType::S | ByteType::LF | ByteType::CR => { 
+            ByteType::S | ByteType::LF | ByteType::CR => {
                 loop {
                     buf = buf.inc_start(self.MINBPC() as isize);
                     if !HAS_CHAR!(buf, self) {
@@ -1538,7 +1538,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
 
         /* defined when state == inValue;
         initialization just to shut up compilers */
-        let mut open: ByteType = ByteType::NONXML; 
+        let mut open: ByteType = ByteType::NONXML;
 
         macro_rules! START_NAME {
             () => {
