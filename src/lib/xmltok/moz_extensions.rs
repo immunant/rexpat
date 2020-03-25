@@ -35,9 +35,9 @@ macro_rules! IS_NMSTRT_CHAR_MINBPC {
 }
 
 const MOZ_EXPAT_VALID_QNAME: c_int = 0;
-const MOZ_EXPAT_EMPTY_QNAME: c_int = (1 << 0);
-const MOZ_EXPAT_INVALID_CHARACTER: c_int = (1 << 1);
-const MOZ_EXPAT_MALFORMED: c_int = (1 << 2);
+const MOZ_EXPAT_EMPTY_QNAME: c_int = 1 << 0;
+const MOZ_EXPAT_INVALID_CHARACTER: c_int = 1 << 1;
+const MOZ_EXPAT_MALFORMED: c_int = 1 << 2;
 
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XMLCheckQName(
