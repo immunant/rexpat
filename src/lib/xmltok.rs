@@ -904,7 +904,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             let mut lo: c_uchar = from[0] as c_uchar;
             let mut hi: c_uchar = from[1] as c_uchar;
             match hi as c_int {
-                0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 => {
+                0..=7 => {
                     if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
@@ -923,7 +923,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                         to.inc_start(1);
                     }
                 }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
                         return XML_Convert_Result::OUTPUT_EXHAUSTED;
@@ -1078,7 +1078,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             let mut lo: c_uchar = from[1] as c_uchar;
             let mut hi: c_uchar = from[0] as c_uchar;
             match hi as c_int {
-                0| 1 | 2 | 3 | 4 | 5 | 6 | 7 => {
+                0..=7 => {
                     if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
@@ -1087,7 +1087,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                         to[0] = lo as c_char;
                         to.inc_start(1);
                     } else {
-                        if (to.len() as c_long) < 2 {
+                        if to.len() < 2 {
                             *fromP = from;
                             return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
@@ -1097,7 +1097,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                         to.inc_start(1);
                     }
                 }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
                         return XML_Convert_Result::OUTPUT_EXHAUSTED;
@@ -3118,7 +3118,7 @@ fn doParseXmlDecl<'a>(
 
 pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
-        216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
+        216..=223 => return -1,
         0 => {
             if Latin1EncodingTable::types[result as usize] as c_int == ByteType::NONXML as c_int {
                 return -1;

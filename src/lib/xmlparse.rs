@@ -5920,9 +5920,6 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if self.m_declElementType.is_null() {
                         return XML_Error::NO_MEMORY;
                     }
-                    if (*dtd).keepProcessing && self.m_handlers.hasAttlistDecl() {
-                        handleDefault = false
-                    }
                 }
                 XML_ROLE::ATTRIBUTE_NAME => {
                     self.m_declAttributeId = self.getAttributeId(enc_type, buf.with_end(next));
@@ -6728,6 +6725,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             }
             match role {
                 XML_ROLE::ATTRIBUTE_NAME |
+                XML_ROLE::ATTLIST_ELEMENT_NAME |
                 XML_ROLE::ATTRIBUTE_TYPE_CDATA |
                 XML_ROLE::ATTRIBUTE_TYPE_ID |
                 XML_ROLE::ATTRIBUTE_TYPE_IDREF |

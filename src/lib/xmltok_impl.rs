@@ -1101,14 +1101,12 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 *nextTokPtr = buf.as_ptr();
                 return XML_TOK::INVALID
             }
-            ByteType::S | ByteType::LF | ByteType::CR => {
-                if self.byte_type(buf.as_ptr()) == ByteType::CR &&
-                buf.len() == self.MINBPC() as usize {
-                    *nextTokPtr = buf.end();
-                    /* indicate that this might be part of a CR/LF pair */
-                    return XML_TOK::PROLOG_S_NEG
-                }
-
+            ByteType::CR if buf.len() == self.MINBPC() as usize => {
+                *nextTokPtr = buf.end();
+                /* indicate that this might be part of a CR/LF pair */
+                return XML_TOK::PROLOG_S_NEG
+            }
+            ByteType::S | ByteType::LF | ByteType::CR => { 
                 loop {
                     buf = buf.inc_start(self.MINBPC() as isize);
                     if !HAS_CHAR!(buf, self) {
@@ -1116,12 +1114,13 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     }
                     let b = self.byte_type(buf.as_ptr());
                     match b {
+                        ByteType::CR if buf.len() == self.MINBPC() as usize => {
+                            /* don't split CR/LF pair */
+                            *nextTokPtr = buf.as_ptr();
+                            return XML_TOK::PROLOG_S;
+                        }
                         ByteType::S | ByteType::LF | ByteType::CR => {
-                            if b == ByteType::CR && buf.len() == self.MINBPC() as usize {
-                                /* don't split CR/LF pair */
-                                *nextTokPtr = buf.as_ptr();
-                                return XML_TOK::PROLOG_S;
-                            }
+                            /* do nothing */
                         }
                         _ => {
                             *nextTokPtr = buf.as_ptr();
