@@ -1,7 +1,7 @@
 use libc::{c_char, c_int};
 use crate::expat_external_h::XML_Char;
 use crate::lib::xmltok::{
-    MOZ_XmlUtf16Encode,
+    XmlUtf16Encode,
     XmlEncoding,
     XmlEncodingImpl,
     XML_TOK,
@@ -120,7 +120,8 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
     let enc_mbpc = encoding.MINBPC();
     /* scanRef expects to be pointed to the char after the '&'. */
     let buf = ExpatBufRef::new(ptr, end);
-    let tok = encoding.scanRef(buf.inc_start(enc_mbpc), next);
+    let nextTokPtr = next.as_mut().unwrap();
+    let tok = encoding.scanRef(buf.inc_start(enc_mbpc), nextTokPtr);
     if tok.is_error() {
         return 0;
     }
@@ -135,7 +136,7 @@ pub unsafe extern "C" fn MOZ_XMLTranslateEntity(
                 0
             } else {
                 let result_slice = std::slice::from_raw_parts_mut(result, XML_ENCODE_MAX);
-                MOZ_XmlUtf16Encode(n, result_slice)
+                XmlUtf16Encode(n, result_slice)
             }
         }
 
