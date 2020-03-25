@@ -5558,8 +5558,8 @@ impl<'scf> XML_ParserStruct<'scf> {
         mut entity: *mut Entity,
         role: XML_ROLE,
         handleDefault: &mut bool,
-        dtd: *mut DTD
-        ) -> Option<XML_Error> {
+        dtd: *mut DTD,
+    ) -> Option<XML_Error> {
         if (*entity).open {
             return Some(XML_Error::RECURSIVE_ENTITY_REF);
         }

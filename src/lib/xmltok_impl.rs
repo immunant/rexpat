@@ -694,7 +694,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
         &self,
         mut buf: ExpatBufRef,
         mut nextTokPtr: &mut *const libc::c_char,
-    ) -> XML_TOK {        
+    ) -> XML_TOK {
         REQUIRE_CHAR!(buf, self);
         CHECK_NMSTRT_CASES! {
             (buf, nextTokPtr, self),
@@ -770,7 +770,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     }
                     return XML_TOK::PARTIAL;
                 }
-                ByteType::GT => { 
+                ByteType::GT => {
                     *nextTokPtr = buf.inc_start(self.MINBPC()).as_ptr();
                     return XML_TOK::START_TAG_NO_ATTS;
                  }
@@ -1019,15 +1019,15 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                                 *nextTokPtr = buf.inc_start(2 * self.MINBPC()).as_ptr();
                                 return XML_TOK::INVALID
                             }
-                        } else { 
+                        } else {
                             break;
                          }
-                    } else { 
+                    } else {
                         break;
                      }
                 }
-                ByteType::AMP | ByteType::LT | ByteType::NONXML | 
-                ByteType::MALFORM | ByteType::TRAIL | ByteType::CR | 
+                ByteType::AMP | ByteType::LT | ByteType::NONXML |
+                ByteType::MALFORM | ByteType::TRAIL | ByteType::CR |
                 ByteType::LF => {
                     break;
                 }
@@ -1101,8 +1101,8 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 *nextTokPtr = buf.as_ptr();
                 return XML_TOK::INVALID
             }
-            ByteType::S | ByteType::LF | ByteType::CR => { 
-                if self.byte_type(buf.as_ptr()) == ByteType::CR && 
+            ByteType::S | ByteType::LF | ByteType::CR => {
+                if self.byte_type(buf.as_ptr()) == ByteType::CR &&
                 buf.len() == self.MINBPC() as usize {
                     *nextTokPtr = buf.end();
                     /* indicate that this might be part of a CR/LF pair */
