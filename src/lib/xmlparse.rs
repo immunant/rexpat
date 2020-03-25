@@ -1962,7 +1962,6 @@ impl XML_ParserStruct {
         let mut tStk = self.m_tagStack.take();
         while let Some(mut tag) = tStk {
             self.moveToFreeBindingList(tag.bindings.take());
-            tag.bindings = None;
 
             let new_parent = self.m_freeTagList.take();
             tStk = std::mem::replace(&mut tag.parent, new_parent);
