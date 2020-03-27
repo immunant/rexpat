@@ -7399,7 +7399,7 @@ unsafe extern "C" fn storeAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: *mut STRING_POOL,
+    mut pool: &mut STRING_POOL,
 ) -> XML_Error {
     let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, buf, pool);
     if result as u64 != 0 {
@@ -7430,7 +7430,7 @@ unsafe extern "C" fn appendAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: *mut STRING_POOL,
+    mut pool: &mut STRING_POOL,
 ) -> XML_Error {
     let enc = (*parser).encoding(enc_type);
     loop {
@@ -7541,7 +7541,7 @@ unsafe extern "C" fn appendAttributeValue(
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
                     */
-                    if pool == (*parser).m_dtd.pools.as_ptr() as *mut _ { // FIXME: assumes that `pool` is at offset 0
+                    if pool as *mut _ == (*parser).m_dtd.pools.as_ptr() as *mut _ { // FIXME: assumes that `pool` is at offset 0
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
                             && (if (*parser).m_dtd.standalone.get() {
@@ -8655,7 +8655,7 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 
 unsafe extern "C" fn copyEntityTable(
     mut newTable: &mut HashMap<HashKey, Box<Entity>>,
-    mut newPool: *mut STRING_POOL,
+    mut newPool: &mut STRING_POOL,
     mut oldTable: &HashMap<HashKey, Box<Entity>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = ptr::null();
