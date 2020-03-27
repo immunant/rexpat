@@ -1085,8 +1085,25 @@ macro_rules! hash_lookup {
 
 #[repr(C)]
 pub struct DTD {
+    /// `tables` and `pools` together contain all the
+    /// non-primitive fields of `DTD`. We split them into
+    /// two structures so we can borrow them separately,
+    /// since some places borrow one of the pools much earlier
+    /// or separately from the tables.
+    ///
+    /// For examples, see calls to `copyEntityTable`
+    /// and to `appendAttributeValue` below. The latter takes a
+    /// reference to one of the string pools (potentially from here)
+    /// while internally borrowing the tables for `hash_insert!`.
+    /// The code is much simpler with the current design.
+    ///
+    /// At the opposite end, we could wrap each individual table
+    /// and pool in its own `RefCell`, but that would require more
+    /// calls to `borrow_mut`. This is the coarsest granularity
+    /// that keeps the old unsafe code almost the same.
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
+
     scaffold: Rc<RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
