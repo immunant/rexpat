@@ -1129,6 +1129,9 @@ pub struct DTDTables {
 }
 
 pub struct DTDPools {
+    // WARNING! `appendAttributeValue` expects this field to be the first
+    // so it can compare `*mut STRING_POOL` against `*mut DTDPools`
+    // to check if a given string pool is the `pool` from here
     pool: STRING_POOL,
     entityValuePool: STRING_POOL,
 }
