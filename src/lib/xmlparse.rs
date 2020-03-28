@@ -1320,7 +1320,7 @@ impl DTD {
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
                 let mut name_1: *const XML_Char = 0 as *const XML_Char;
-                name_1 = new_pools.pool.copyString((*oldE).name);
+                name_1 = new_pools.pool.copyString(oldE.name);
                 if name_1.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1334,23 +1334,23 @@ impl DTD {
                 if newE.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                if !(*oldE).idAtt.is_null() {
+                if !oldE.idAtt.is_null() {
                     (*newE).idAtt = hash_lookup!(
                         new_tables.attributeIds,
-                        (*(*oldE).idAtt).name
+                        (*oldE.idAtt).name
                     );
                 }
-                if let Some(ref old_prefix) = (*oldE).prefix {
+                if let Some(ref old_prefix) = oldE.prefix {
                     let key = HashKey::from(old_prefix.name);
                     (*newE).prefix = new_tables.prefixes
                         .get(&key)
                         .map(Rc::clone);
                 }
 
-                if (*newE).defaultAtts.try_reserve((*oldE).defaultAtts.len()).is_err() {
+                if (*newE).defaultAtts.try_reserve(oldE.defaultAtts.len()).is_err() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                for oldAtt in &(*oldE).defaultAtts {
+                for oldAtt in &oldE.defaultAtts {
                     let id = hash_lookup!(new_tables.attributeIds, (*oldAtt.id).name);
                     let isCdata = oldAtt.isCdata;
                     let value = if !oldAtt.value.is_null() {
@@ -7528,8 +7528,8 @@ unsafe extern "C" fn appendAttributeValue(
                 }
                 if !isCdata
                     && n == 0x20
-                    && ((*pool).ptr.wrapping_offset_from((*pool).start) as c_long == 0
-                        || *(*pool).ptr.offset(-1) as c_int == 0x20)
+                    && (pool.ptr.wrapping_offset_from(pool.start) as c_long == 0
+                        || *pool.ptr.offset(-1) as c_int == 0x20)
                 {
                     current_block_62 = 11796148217846552555;
                 } else {
@@ -7545,7 +7545,7 @@ unsafe extern "C" fn appendAttributeValue(
                      */
                     i = 0;
                     while i < n {
-                        if !(*pool).appendChar(out_buf[i as usize]) {
+                        if !pool.appendChar(out_buf[i as usize]) {
                             return XML_Error::NO_MEMORY;
                         }
                         i += 1
@@ -7554,7 +7554,7 @@ unsafe extern "C" fn appendAttributeValue(
                 }
             }
             super::xmltok::XML_TOK::DATA_CHARS => {
-                if !(*pool).append(enc, buf.with_end(next)) {
+                if !pool.append(enc, buf.with_end(next)) {
                     return XML_Error::NO_MEMORY;
                 }
                 current_block_62 = 11796148217846552555;
@@ -7576,11 +7576,11 @@ unsafe extern "C" fn appendAttributeValue(
                         .dec_end((*enc).minBytesPerChar() as usize)
                 ) as XML_Char;
                 if ch != 0 {
-                    if if (*pool).ptr == (*pool).end as *mut XML_Char && !(*pool).grow() {
+                    if if pool.ptr == pool.end as *mut XML_Char && !pool.grow() {
                         0
                     } else {
-                        let fresh41 = (*pool).ptr;
-                        (*pool).ptr = (*pool).ptr.offset(1);
+                        let fresh41 = pool.ptr;
+                        pool.ptr = pool.ptr.offset(1);
                         *fresh41 = ch;
                         1
                     } == 0
@@ -7718,14 +7718,14 @@ unsafe extern "C" fn appendAttributeValue(
             /* fall through */
             {
                 if !(!isCdata
-                    && ((*pool).ptr.wrapping_offset_from((*pool).start) as c_long == 0
-                        || *(*pool).ptr.offset(-1) as c_int == 0x20))
+                    && (pool.ptr.wrapping_offset_from(pool.start) as c_long == 0
+                        || *pool.ptr.offset(-1) as c_int == 0x20))
                 {
-                    if if (*pool).ptr == (*pool).end as *mut XML_Char && !(*pool).grow() {
+                    if if pool.ptr == pool.end as *mut XML_Char && !pool.grow() {
                         0
                     } else {
-                        let fresh40 = (*pool).ptr;
-                        (*pool).ptr = (*pool).ptr.offset(1);
+                        let fresh40 = pool.ptr;
+                        pool.ptr = pool.ptr.offset(1);
                         *fresh40 = 0x20;
                         1
                     } == 0
@@ -8733,7 +8733,7 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
         let mut name: *const XML_Char = ptr::null();
-        name = (*newPool).copyString((*oldE).name);
+        name = newPool.copyString(oldE.name);
         if name.is_null() {
             return 0;
         }
@@ -8746,18 +8746,18 @@ unsafe extern "C" fn copyEntityTable(
         if newE.is_null() {
             return 0;
         }
-        if !(*oldE).systemId.is_null() {
-            let mut tem: *const XML_Char = (*newPool).copyString((*oldE).systemId);
+        if !oldE.systemId.is_null() {
+            let mut tem: *const XML_Char = newPool.copyString(oldE.systemId);
             if tem.is_null() {
                 return 0;
             }
             (*newE).systemId = tem;
-            if !(*oldE).base.is_null() {
-                if (*oldE).base == cachedOldBase {
+            if !oldE.base.is_null() {
+                if oldE.base == cachedOldBase {
                     (*newE).base = cachedNewBase
                 } else {
-                    cachedOldBase = (*oldE).base;
-                    tem = (*newPool).copyString(cachedOldBase);
+                    cachedOldBase = oldE.base;
+                    tem = newPool.copyString(cachedOldBase);
                     if tem.is_null() {
                         return 0;
                     }
@@ -8765,8 +8765,8 @@ unsafe extern "C" fn copyEntityTable(
                     cachedNewBase = (*newE).base
                 }
             }
-            if !(*oldE).publicId.is_null() {
-                tem = (*newPool).copyString((*oldE).publicId);
+            if !oldE.publicId.is_null() {
+                tem = newPool.copyString(oldE.publicId);
                 if tem.is_null() {
                     return 0;
                 }
@@ -8774,22 +8774,22 @@ unsafe extern "C" fn copyEntityTable(
             }
         } else {
             let mut tem_0: *const XML_Char =
-                (*newPool).copyStringN((*oldE).textPtr, (*oldE).textLen);
+                newPool.copyStringN(oldE.textPtr, oldE.textLen);
             if tem_0.is_null() {
                 return 0;
             }
             (*newE).textPtr = tem_0;
-            (*newE).textLen = (*oldE).textLen
+            (*newE).textLen = oldE.textLen
         }
-        if !(*oldE).notation.is_null() {
-            let mut tem_1: *const XML_Char = (*newPool).copyString((*oldE).notation);
+        if !oldE.notation.is_null() {
+            let mut tem_1: *const XML_Char = newPool.copyString(oldE.notation);
             if tem_1.is_null() {
                 return 0;
             }
             (*newE).notation = tem_1
         }
-        (*newE).is_param = (*oldE).is_param;
-        (*newE).is_internal = (*oldE).is_internal
+        (*newE).is_param = oldE.is_param;
+        (*newE).is_internal = oldE.is_internal
     }
     1
 }
