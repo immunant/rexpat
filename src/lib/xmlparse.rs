@@ -1100,8 +1100,25 @@ macro_rules! hash_lookup {
 
 #[repr(C)]
 pub struct DTD {
+    /// `tables` and `pools` together contain all the
+    /// non-primitive fields of `DTD`. We split them into
+    /// two structures so we can borrow them separately,
+    /// since some places borrow one of the pools much earlier
+    /// or separately from the tables.
+    ///
+    /// For examples, see calls to `copyEntityTable`
+    /// and to `appendAttributeValue` below. The latter takes a
+    /// reference to one of the string pools (potentially from here)
+    /// while internally borrowing the tables for `hash_insert!`.
+    /// The code is much simpler with the current design.
+    ///
+    /// At the opposite end, we could wrap each individual table
+    /// and pool in its own `RefCell`, but that would require more
+    /// calls to `borrow_mut`. This is the coarsest granularity
+    /// that keeps the old unsafe code almost the same.
     tables: RefCell<DTDTables>,
     pools: RefCell<DTDPools>,
+
     scaffold: Rc<RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
@@ -1127,6 +1144,9 @@ pub struct DTDTables {
 }
 
 pub struct DTDPools {
+    // WARNING! `appendAttributeValue` expects this field to be the first
+    // so it can compare `*mut STRING_POOL` against `*mut DTDPools`
+    // to check if a given string pool is the `pool` from here
     pool: STRING_POOL,
     entityValuePool: STRING_POOL,
 }
@@ -7441,7 +7461,7 @@ unsafe extern "C" fn storeAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: *mut STRING_POOL,
+    mut pool: &mut STRING_POOL,
 ) -> XML_Error {
     let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, buf, pool);
     if result as u64 != 0 {
@@ -7472,7 +7492,7 @@ unsafe extern "C" fn appendAttributeValue(
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: *mut STRING_POOL,
+    mut pool: &mut STRING_POOL,
 ) -> XML_Error {
     let enc = (*parser).encoding(enc_type);
     loop {
@@ -7583,7 +7603,7 @@ unsafe extern "C" fn appendAttributeValue(
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
                     */
-                    if pool == (*parser).m_dtd.pools.as_ptr() as *mut _ { // FIXME: assumes that `pool` is at offset 0
+                    if pool as *mut _ == (*parser).m_dtd.pools.as_ptr() as *mut _ { // FIXME: assumes that `pool` is at offset 0
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
                             && (if (*parser).m_dtd.standalone.get() {
@@ -8706,7 +8726,7 @@ unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
 
 unsafe extern "C" fn copyEntityTable(
     mut newTable: &mut HashMap<HashKey, Box<Entity>>,
-    mut newPool: *mut STRING_POOL,
+    mut newPool: &mut STRING_POOL,
     mut oldTable: &HashMap<HashKey, Box<Entity>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = ptr::null();
