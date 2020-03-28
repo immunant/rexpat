@@ -4588,7 +4588,7 @@ impl XML_ParserStruct {
                             self,
                             Rc::clone(prefix),
                             Some(Rc::clone(&da.id)),
-                            (*da).value,
+                            da.value,
                             bindingsPtr,
                         );
                         if result_1 as u64 != 0 {
@@ -4596,21 +4596,21 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            (*da.id).name.set_type(AttributeType::Namespace);
+                            da.id.name.set_type(AttributeType::Namespace);
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
-                            self.typed_atts.push((*(*da).id).name);
+                            self.typed_atts.push(da.id.name);
                         }
                     } else {
-                        (*da.id).name.set_type(AttributeType::Prefixed);
+                        da.id.name.set_type(AttributeType::Prefixed);
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
-                        self.typed_atts.push((*(*da).id).name);
+                        self.typed_atts.push(da.id.name);
                     }
                 } else {
-                    (*da.id).name.set_type(AttributeType::Normal);
+                    da.id.name.set_type(AttributeType::Normal);
                     self.m_atts.push(Attribute::from_default(da));
-                    self.typed_atts.push((*(*da).id).name);
+                    self.typed_atts.push(da.id.name);
                 }
             }
         }
