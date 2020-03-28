@@ -1255,7 +1255,7 @@ impl DTD {
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
-                name = new_pools.pool.copyString((*oldP).name);
+                name = new_pools.pool.copyString(oldP.name);
                 if name.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1288,7 +1288,7 @@ impl DTD {
                 {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                name_0 = new_pools.pool.copyString((*oldA).name.name());
+                name_0 = new_pools.pool.copyString(oldA.name.name());
                 if name_0.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1302,9 +1302,9 @@ impl DTD {
                 if newA.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                (*newA).maybeTokenized = (*oldA).maybeTokenized;
-                if let Some(ref old_prefix) = (*oldA).prefix {
-                    (*newA).xmlns = (*oldA).xmlns;
+                (*newA).maybeTokenized = oldA.maybeTokenized;
+                if let Some(ref old_prefix) = oldA.prefix {
+                    (*newA).xmlns = oldA.xmlns;
                     if Rc::ptr_eq(old_prefix, old_tables.defaultPrefix.as_ref().unwrap()) {
                         (*newA).prefix = new_tables.defaultPrefix
                             .as_ref()
