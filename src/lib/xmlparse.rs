@@ -1955,7 +1955,7 @@ impl XML_ParserStruct {
     }
 
     /* moves list of bindings to m_freeBindingList */
-    unsafe fn moveToFreeBindingList(&mut self, mut bindings: Ptr<Binding>) {
+    fn moveToFreeBindingList(&mut self, mut bindings: Ptr<Binding>) {
         while let Some(b) = bindings {
             bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
             self.m_freeBindingList = Some(b);
@@ -4370,13 +4370,15 @@ impl XML_ParserStruct {
  * reused as appropriate.
  */
 
-    unsafe fn freeBindings(&mut self, mut bindings: Ptr<Binding>) {
+    fn freeBindings(&mut self, mut bindings: Ptr<Binding>) {
         while let Some(b) = bindings {
             /* m_startNamespaceDeclHandler will have been called for this
             * binding in addBindings(), so call the end handler now.
             */
             let prefix = b.prefix.upgrade().unwrap();
-            self.m_handlers.endNamespaceDecl(prefix.name);
+            unsafe {
+                self.m_handlers.endNamespaceDecl(prefix.name);
+            }
             prefix.binding.set(b.prevPrefixBinding.take());
             bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
             self.m_freeBindingList = Some(b);
