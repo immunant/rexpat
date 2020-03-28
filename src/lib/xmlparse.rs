@@ -1227,7 +1227,7 @@ impl DTD {
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
                 let mut name: *const XML_Char = 0 as *const XML_Char;
-                name = new_pools.pool.copyString((*oldP).name);
+                name = new_pools.pool.copyString(oldP.name);
                 if name.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1259,7 +1259,7 @@ impl DTD {
                 {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                name_0 = new_pools.pool.copyString((*oldA).name.name());
+                name_0 = new_pools.pool.copyString(oldA.name.name());
                 if name_0.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1272,15 +1272,15 @@ impl DTD {
                 if newA.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                (*newA).maybeTokenized = (*oldA).maybeTokenized;
-                if !(*oldA).prefix.is_null() {
-                    (*newA).xmlns = (*oldA).xmlns;
-                    if (*oldA).prefix == &self.defaultPrefix as *const _ as *mut _ {
+                (*newA).maybeTokenized = oldA.maybeTokenized;
+                if !oldA.prefix.is_null() {
+                    (*newA).xmlns = oldA.xmlns;
+                    if oldA.prefix == &self.defaultPrefix as *const _ as *mut _ {
                         (*newA).prefix = &newDtd.defaultPrefix as *const _ as *mut _;
                     } else {
                         (*newA).prefix = hash_lookup!(
                             new_tables.prefixes,
-                            (*(*oldA).prefix).name
+                            (*oldA.prefix).name
                         );
                     }
                 }
