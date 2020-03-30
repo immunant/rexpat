@@ -800,8 +800,8 @@ pub struct XML_ParserStruct {
     pub m_eventPtr: *const c_char,
     pub m_eventEndPtr: *const c_char,
     pub m_positionPtr: *const c_char,
-    pub m_openInternalEntities: *mut OpenInternalEntity,
-    pub m_freeInternalEntities: *mut OpenInternalEntity,
+    pub m_openInternalEntities: Option<Box<OpenInternalEntity>>,
+    pub m_freeInternalEntities: Option<Box<OpenInternalEntity>>,
     pub m_defaultExpandInternalEntities: XML_Bool,
     pub m_tagLevel: c_int,
     pub m_declEntity: *mut Entity,
@@ -1506,14 +1506,26 @@ pub struct Entity {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
 pub struct OpenInternalEntity {
     pub internalEventPtr: *const c_char,
     pub internalEventEndPtr: *const c_char,
-    pub next: *mut OpenInternalEntity,
+    pub next: Option<Box<OpenInternalEntity>>,
     pub entity: *mut Entity,
     pub startTagLevel: c_int,
     pub betweenDecl: XML_Bool,
+}
+
+impl Default for OpenInternalEntity {
+    fn default() -> OpenInternalEntity {
+        OpenInternalEntity {
+            internalEventPtr: ptr::null(),
+            internalEventEndPtr: ptr::null(),
+            next: None,
+            entity: ptr::null_mut(),
+            startTagLevel: 0,
+            betweenDecl: false,
+        }
+    }
 }
 
 pub type Processor = unsafe extern "C" fn(
@@ -1802,8 +1814,8 @@ impl XML_ParserStruct {
             m_eventPtr: ptr::null(),
             m_eventEndPtr: ptr::null(),
             m_positionPtr: ptr::null(),
-            m_openInternalEntities: ptr::null_mut(),
-            m_freeInternalEntities: ptr::null_mut(),
+            m_openInternalEntities: None,
+            m_freeInternalEntities: None,
             m_defaultExpandInternalEntities: false,
             m_tagLevel: 0,
             m_declEntity: ptr::null_mut(),
@@ -1874,7 +1886,7 @@ impl XML_ParserStruct {
         parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
         parser.m_freeBindingList = None;
         parser.m_freeTagList = None;
-        parser.m_freeInternalEntities = ptr::null_mut();
+        parser.m_freeInternalEntities = None;
         parser.m_groupSize = 0;
         parser.m_groupConnector = ptr::null_mut();
         parser.m_initEncoding = None;
@@ -1937,7 +1949,7 @@ impl XML_ParserStruct {
         self.m_eventPtr = ptr::null();
         self.m_eventEndPtr = ptr::null();
         self.m_positionPtr = ptr::null();
-        self.m_openInternalEntities = ptr::null_mut();
+        self.m_openInternalEntities = None;
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
         self.m_tagStack = None;
@@ -1973,7 +1985,6 @@ impl XML_ParserStruct {
 */
 impl XML_ParserStruct {
     pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
-        let mut openEntityList: *mut OpenInternalEntity = ptr::null_mut();
         if self.is_child_parser {
             return false;
         }
@@ -1986,14 +1997,18 @@ impl XML_ParserStruct {
             tStk = std::mem::replace(&mut tag.parent, new_parent);
             self.m_freeTagList = Some(tag);
         }
+
         /* move m_openInternalEntities to m_freeInternalEntities */
-        openEntityList = self.m_openInternalEntities;
-        while !openEntityList.is_null() {
-            let mut openEntity: *mut OpenInternalEntity = openEntityList;
-            openEntityList = (*openEntity).next;
-            (*openEntity).next = self.m_freeInternalEntities;
-            self.m_freeInternalEntities = openEntity
+        let mut openEntities = self.m_openInternalEntities.take();
+        while let Some(mut openEntity) = openEntities {
+            // oEs = oE.next; oE.next = fIE; fIE = oE (below);
+            openEntities = std::mem::replace(
+                &mut openEntity.next,
+                self.m_freeInternalEntities.take(),
+            );
+            self.m_freeInternalEntities = Some(openEntity);
         }
+
         let ib = self.m_inheritedBindings.take();
         self.moveToFreeBindingList(ib);
         let _ = self.m_unknownEncoding.take();
@@ -2184,23 +2199,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'op>(
 impl Drop for XML_ParserStruct {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
-        let mut entityList: *mut OpenInternalEntity = ptr::null_mut();
         unsafe {
-            /* free m_openInternalEntities and m_freeInternalEntities */
-            entityList = self.m_openInternalEntities;
-            loop {
-                let mut openEntity: *mut OpenInternalEntity = ptr::null_mut();
-                if entityList.is_null() {
-                    if self.m_freeInternalEntities.is_null() {
-                        break;
-                    }
-                    entityList = self.m_freeInternalEntities;
-                    self.m_freeInternalEntities = ptr::null_mut()
-                }
-                openEntity = entityList;
-                entityList = (*entityList).next;
-                FREE!(openEntity);
-            }
             self.m_tempPool.destroy();
             self.m_temp2Pool.destroy();
             FREE!(self.m_protocolEncodingName);
@@ -3346,13 +3345,13 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
         return;
     }
     if (*parser).m_handlers.hasDefault() {
-        if !(*parser).m_openInternalEntities.is_null() {
+        if let Some(openEntity) = (*parser).m_openInternalEntities.as_mut() {
             reportDefault(
                 parser,
                 EncodingType::Internal,
                 ExpatBufRef::new(
-                    (*(*parser).m_openInternalEntities).internalEventPtr,
-                    (*(*parser).m_openInternalEntities).internalEventEndPtr,
+                    openEntity.internalEventPtr,
+                    openEntity.internalEventEndPtr,
                 ),
             );
         } else {
@@ -3536,7 +3535,7 @@ pub unsafe extern "C" fn MOZ_XML_GetMismatchedTag(parser: XML_Parser) -> *const 
 #[cfg(feature = "mozilla")]
 #[no_mangle]
 pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XML_Bool {
-    !(*parser).m_openInternalEntities.is_null()
+    !(*parser).m_openInternalEntities.is_none()
 }
 
 /* Initially tag->rawName always points into the parse buffer;
@@ -3759,11 +3758,12 @@ impl XML_ParserStruct {
         let mut eventPP: *mut *const c_char = ptr::null_mut();
         let mut eventEndPP: *mut *const c_char = ptr::null_mut();
         if enc_type.is_internal() {
-            eventPP = &mut (*self.m_openInternalEntities).internalEventPtr;
-            eventEndPP = &mut (*self.m_openInternalEntities).internalEventEndPtr
+            let mut openEntity = self.m_openInternalEntities.as_deref_mut().unwrap();
+            eventPP = &mut openEntity.internalEventPtr;
+            eventEndPP = &mut openEntity.internalEventEndPtr;
         } else {
             eventPP = &mut self.m_eventPtr;
-            eventEndPP = &mut self.m_eventEndPtr
+            eventEndPP = &mut self.m_eventEndPtr;
         }
         let enc = self.encoding(enc_type);
         *eventPP = buf.as_ptr();
@@ -5163,10 +5163,11 @@ unsafe extern "C" fn doCdataSection(
     let mut eventEndPP: *mut *const c_char = ptr::null_mut();
     if !enc_type.is_internal() {
         eventPP = &mut (*parser).m_eventPtr;
-        eventEndPP = &mut (*parser).m_eventEndPtr
+        eventEndPP = &mut (*parser).m_eventEndPtr;
     } else {
-        eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
-        eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
+        let mut openEntity = (*parser).m_openInternalEntities.as_deref_mut().unwrap();
+        eventPP = &mut openEntity.internalEventPtr;
+        eventEndPP = &mut openEntity.internalEventEndPtr;
     }
     *eventPP = buf.as_ptr();
     *start_buf = None;
@@ -5329,7 +5330,7 @@ unsafe extern "C" fn doIgnoreSection(
     if !enc_type.is_internal() {
         eventPP = &mut (*parser).m_eventPtr;
         *eventPP = buf.as_ptr();
-        eventEndPP = &mut (*parser).m_eventEndPtr
+        eventEndPP = &mut (*parser).m_eventEndPtr;
     } else {
         /* It's not entirely clear, but it seems the following two lines
          * of code cannot be executed.  The only occasions on which 'enc'
@@ -5342,8 +5343,9 @@ unsafe extern "C" fn doIgnoreSection(
          *
          * LCOV_EXCL_START
          */
-        eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
-        eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
+        let mut openEntity = (*parser).m_openInternalEntities.as_deref_mut().unwrap();
+        eventPP = &mut openEntity.internalEventPtr;
+        eventEndPP = &mut openEntity.internalEventEndPtr;
         /* LCOV_EXCL_STOP */
     }
     *eventPP = buf.as_ptr();
@@ -5843,11 +5845,12 @@ impl XML_ParserStruct {
         let mut eventEndPP: *mut *const c_char = ptr::null_mut();
         let mut quant: XML_Content_Quant = XML_Content_Quant::NONE;
         if enc_type.is_internal() {
-            eventPP = &mut (*self.m_openInternalEntities).internalEventPtr;
-            eventEndPP = &mut (*self.m_openInternalEntities).internalEventEndPtr
+            let mut openEntity = self.m_openInternalEntities.as_deref_mut().unwrap();
+            eventPP = &mut openEntity.internalEventPtr;
+            eventEndPP = &mut openEntity.internalEventEndPtr;
         } else {
             eventPP = &mut self.m_eventPtr;
-            eventEndPP = &mut self.m_eventEndPtr
+            eventEndPP = &mut self.m_eventEndPtr;
         }
         let mut enc = self.encoding(enc_type);
         loop {
@@ -5870,7 +5873,7 @@ impl XML_ParserStruct {
                     XML_TOK::PROLOG_S_NEG => tok = XML_TOK::PROLOG_S,
                     super::xmltok::XML_TOK::NONE => {
                         /* for internal PE NOT referenced between declarations */
-                        if enc_type.is_internal() && !(*self.m_openInternalEntities).betweenDecl {
+                        if enc_type.is_internal() && !self.m_openInternalEntities.as_ref().unwrap().betweenDecl {
                             *nextPtr = buf.as_ptr();
                             return XML_Error::NONE;
                         }
@@ -6519,7 +6522,7 @@ impl XML_ParserStruct {
                              */
                             (*self.m_declEntity).is_internal =
                                 !(self.is_child_parser
-                                  || !self.m_openInternalEntities.is_null())
+                                  || !self.m_openInternalEntities.is_none())
                                 as XML_Bool;
                             if self.m_handlers.hasEntityDecl() {
                                 handleDefault = false
@@ -6561,7 +6564,7 @@ impl XML_ParserStruct {
                              */
                             (*self.m_declEntity).is_internal =
                                 !(self.is_child_parser
-                                  || !self.m_openInternalEntities.is_null());
+                                  || !self.m_openInternalEntities.is_none());
                             if self.m_handlers.hasEntityDecl() {
                                 handleDefault = false
                             }
@@ -6797,7 +6800,7 @@ impl XML_ParserStruct {
                          */
                         if self.m_prologState.documentEntity != 0
                             && (if self.m_dtd.standalone.get() {
-                                self.m_openInternalEntities.is_null()
+                                self.m_openInternalEntities.is_none()
                             } else {
                                 !self.m_dtd.hasParamEntityRefs.get()
                             })
@@ -7301,25 +7304,25 @@ impl XML_ParserStruct {
     ) -> XML_Error {
         let mut next: *const c_char = ptr::null();
         let mut result: XML_Error = XML_Error::NONE;
-        let mut openEntity: *mut OpenInternalEntity = ptr::null_mut();
-        if !self.m_freeInternalEntities.is_null() {
-            openEntity = self.m_freeInternalEntities;
-            self.m_freeInternalEntities = (*openEntity).next
+        let mut openEntity = if let Some(mut openEntity) = self.m_freeInternalEntities.take() {
+            self.m_freeInternalEntities = openEntity.next.take();
+            openEntity
         } else {
-            openEntity = MALLOC!(@OpenInternalEntity);
-            if openEntity.is_null() {
-                return XML_Error::NO_MEMORY;
+            match Box::try_new(Default::default()) {
+                Ok(openEntity) => openEntity,
+                Err(_) => return XML_Error::NO_MEMORY
             }
-        }
+        };
+        let openEntityPtr = openEntity.deref_mut() as *mut _;
         (*entity).open = true;
         (*entity).processed = 0;
-        (*openEntity).next = self.m_openInternalEntities;
-        self.m_openInternalEntities = openEntity;
-        (*openEntity).entity = entity;
-        (*openEntity).startTagLevel = self.m_tagLevel;
-        (*openEntity).betweenDecl = betweenDecl;
-        (*openEntity).internalEventPtr = ptr::null();
-        (*openEntity).internalEventEndPtr = ptr::null();
+        openEntity.entity = entity;
+        openEntity.startTagLevel = self.m_tagLevel;
+        openEntity.betweenDecl = betweenDecl;
+        openEntity.internalEventPtr = ptr::null();
+        openEntity.internalEventEndPtr = ptr::null();
+        openEntity.next = self.m_openInternalEntities.take();
+        self.m_openInternalEntities = Some(openEntity);
         let text_buf = ExpatBufRef::new(
             (*entity).textPtr as *mut c_char,
             (*entity).textPtr.add((*entity).textLen as usize) as *mut c_char,
@@ -7354,33 +7357,54 @@ impl XML_ParserStruct {
                 self.m_processor = Some(internalEntityProcessor as Processor)
             } else {
                 (*entity).open = false;
-                if cfg!(feature = "mozilla") {
-                    if self.m_openInternalEntities == openEntity {
-                        self.m_openInternalEntities = (*openEntity).next;
+                let openEntity = if cfg!(feature = "mozilla") {
+                    // REXPAT FIXME: the original expat code identifies the open entity
+                    // by comparing pointers; for `Rc` we'd use `Rc::ptr_eq` but
+                    // `Box` doesn't have that
+                    let opt_box_ptr = |opt_box: &mut Option<Box<OpenInternalEntity>>| {
+                        opt_box
+                            .as_mut()
+                            .map(|b| b.deref_mut() as *mut OpenInternalEntity)
+                            .unwrap_or_else(ptr::null_mut)
+                    };
+                    if opt_box_ptr(&mut self.m_openInternalEntities) == openEntityPtr {
+                        let mut openEntity = self.m_openInternalEntities.take();
+                        if let Some(openEntity) = openEntity.as_mut() {
+                            self.m_openInternalEntities = openEntity.next.take();
+                        }
+                        openEntity
                     } else {
 			/* openEntity should be closed, but it contains an inner entity that is
 			still open. Remove openEntity from the openInternalEntities linked
 			list by looking for the inner entity in the list that links to
 			openEntity and fixing up its 'next' member
 			 */
-                        let mut innerOpenEntity = self.m_openInternalEntities;
-                        loop {
-                            if (*innerOpenEntity).next == openEntity {
-                                (*innerOpenEntity).next = (*openEntity).next;
+                        let mut openEntity = None;
+                        let mut innerOpenEntities = self.m_openInternalEntities.as_mut();
+                        while let Some(innerOpenEntity) = innerOpenEntities {
+                            if opt_box_ptr(&mut innerOpenEntity.next) == openEntityPtr {
+                                openEntity = innerOpenEntity.next.take();
+                                if let Some(openEntity) = openEntity.as_mut() {
+                                    innerOpenEntity.next = openEntity.next.take();
+                                }
                                 break;
                             }
-                            innerOpenEntity = (*innerOpenEntity).next;
-                            if innerOpenEntity.is_null() {
-                                break;
-                            }
+                            innerOpenEntities = innerOpenEntity.next.as_mut();
                         }
+                        openEntity
                     }
                 } else {
-                    self.m_openInternalEntities = (*openEntity).next;
+                    let mut openEntity = self.m_openInternalEntities.take();
+                    if let Some(openEntity) = openEntity.as_mut() {
+                        self.m_openInternalEntities = openEntity.next.take();
+                    }
+                    openEntity
+                };
+                if let Some(mut openEntity) = openEntity {
+                    /* put openEntity back in list of free instances */
+                    openEntity.next = self.m_freeInternalEntities.take();
+                    self.m_freeInternalEntities = Some(openEntity);
                 }
-                /* put openEntity back in list of free instances */
-                (*openEntity).next = self.m_freeInternalEntities;
-                self.m_freeInternalEntities = openEntity
             }
         }
         result
@@ -7395,11 +7419,11 @@ unsafe extern "C" fn internalEntityProcessor(
     let mut entity: *mut Entity = ptr::null_mut();
     let mut next: *const c_char = ptr::null();
     let mut result: XML_Error = XML_Error::NONE;
-    let mut openEntity: *mut OpenInternalEntity = (*parser).m_openInternalEntities;
-    if openEntity.is_null() {
-        return XML_Error::UNEXPECTED_STATE;
-    }
-    entity = (*openEntity).entity;
+    let mut openEntity = match (*parser).m_openInternalEntities.as_mut() {
+        Some(openEntity) => openEntity,
+        None => return XML_Error::UNEXPECTED_STATE
+    };
+    entity = openEntity.entity;
     let text_buf = ExpatBufRef::new(
         ((*entity).textPtr as *mut c_char).offset((*entity).processed as isize),
         (*entity).textPtr.offset((*entity).textLen as isize) as *mut c_char,
@@ -7421,7 +7445,7 @@ unsafe extern "C" fn internalEntityProcessor(
     } else {
         /* XML_DTD */
         result = (*parser).doContent(
-            (*openEntity).startTagLevel,
+            openEntity.startTagLevel,
             EncodingType::Internal,
             text_buf,
             &mut next,
@@ -7437,10 +7461,15 @@ unsafe extern "C" fn internalEntityProcessor(
             return result;
         } else {
             (*entity).open = false;
-            (*parser).m_openInternalEntities = (*openEntity).next;
             /* put openEntity back in list of free instances */
-            (*openEntity).next = (*parser).m_freeInternalEntities;
-            (*parser).m_freeInternalEntities = openEntity
+            let next = std::mem::replace(
+                &mut openEntity.next,
+                (*parser).m_freeInternalEntities.take(),
+            );
+            (*parser).m_freeInternalEntities = std::mem::replace(
+                &mut (*parser).m_openInternalEntities,
+                next,
+            );
         }
     }
     if (*entity).is_param {
@@ -7632,7 +7661,7 @@ unsafe extern "C" fn appendAttributeValue(
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
                             && (if (*parser).m_dtd.standalone.get() {
-                                (*parser).m_openInternalEntities.is_null()
+                                (*parser).m_openInternalEntities.is_none()
                             } else {
                                 !(*parser).m_dtd.hasParamEntityRefs.get()
                             })
@@ -8115,12 +8144,13 @@ unsafe extern "C" fn reportDefault(
              *
              * LCOV_EXCL_START
              */
-            eventPP = &mut (*(*parser).m_openInternalEntities).internalEventPtr;
-            eventEndPP = &mut (*(*parser).m_openInternalEntities).internalEventEndPtr
+            let mut openEntity = (*parser).m_openInternalEntities.as_deref_mut().unwrap();
+            eventPP = &mut openEntity.internalEventPtr;
+            eventEndPP = &mut openEntity.internalEventEndPtr;
             /* LCOV_EXCL_STOP */
         } else {
             eventPP = &mut (*parser).m_eventPtr;
-            eventEndPP = &mut (*parser).m_eventEndPtr
+            eventEndPP = &mut (*parser).m_eventEndPtr;
         }
         loop {
             let mut data_buf = ExpatBufRefMut::new(
