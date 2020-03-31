@@ -7666,9 +7666,11 @@ unsafe extern "C" fn appendAttributeValue(
                         return XML_Error::NO_MEMORY;
                     }
 
-                    let mut dtd_tables = (*parser).m_dtd.tables.borrow_mut();
-                    let key = HashKey::from(name);
-                    let entity = dtd_tables.generalEntities.get(&key);
+                    let entity = {
+                        let mut dtd_tables = (*parser).m_dtd.tables.borrow_mut();
+                        let key = HashKey::from(name);
+                        dtd_tables.generalEntities.get(&key).map(Rc::clone)
+                    };
                     (*parser).m_temp2Pool.ptr = (*parser).m_temp2Pool.start;
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
@@ -7686,7 +7688,7 @@ unsafe extern "C" fn appendAttributeValue(
                         checkEntityDecl = !(*parser).m_dtd.hasParamEntityRefs.get() || (*parser).m_dtd.standalone.get()
                     }
                     if checkEntityDecl {
-                        if let Some(entity) = entity {
+                        if let Some(entity) = entity.as_ref() {
                             if !entity.is_internal.get() {
                                 return XML_Error::ENTITY_DECLARED_IN_PE;
                             }
