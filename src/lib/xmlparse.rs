@@ -1077,8 +1077,8 @@ impl TagNameLocalPart {
             }
             TagNameString::BindingUri(b) => {
                 let off = if skip_to_colon {
-                    let mut uri = b.uri.borrow();
-                    uri
+                    b.uri
+                        .borrow()
                         .iter()
                         .position(|&c| c == ASCII_COLON)
                         .map(|p| p + 1)
