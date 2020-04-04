@@ -4143,7 +4143,7 @@ impl XML_ParserStruct {
                             #[cfg(feature = "mozilla")]
                             {
                                 /* This code is copied from the |if (endElementHandler)| block below */
-                                let mut localPart = tag.name.localPart;
+                                let mut localPart = tag.name.localPart.as_ptr();
                                 let mut prefix: *const XML_Char = ptr::null();
                                 let mut uri: *mut XML_Char = ptr::null_mut();
                                 if self.m_ns as c_int != 0 && !localPart.is_null() {
