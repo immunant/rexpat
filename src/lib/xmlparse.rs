@@ -4161,9 +4161,8 @@ impl XML_ParserStruct {
                                     }
                                     prefix = tag.name.prefix as *mut XML_Char;
                                     if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
-                                        let fresh4 = uri;
+                                        *uri = self.m_namespaceSeparator;
                                         uri = uri.offset(1);
-                                        *fresh4 = self.m_namespaceSeparator;
                                         while *prefix != 0 {
                                             *uri = *prefix;
                                             prefix = prefix.offset(1);
@@ -4197,9 +4196,8 @@ impl XML_ParserStruct {
                                 }
                                 prefix = tag.name.prefix as *mut XML_Char;
                                 if self.m_ns_triplets as c_int != 0 && !prefix.is_null() {
-                                    let fresh4 = uri;
+                                    *uri = self.m_namespaceSeparator;
                                     uri = uri.offset(1);
-                                    *fresh4 = self.m_namespaceSeparator;
                                     while *prefix != 0 {
                                         *uri = *prefix;
                                         prefix = prefix.offset(1);
