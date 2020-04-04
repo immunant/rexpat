@@ -1036,6 +1036,7 @@ pub struct TagName {
 }
 
 pub enum TagNameString {
+    None,
     Ptr(*const XML_Char),
     BindingUri(Rc<Binding>),
 }
@@ -1043,6 +1044,7 @@ pub enum TagNameString {
 impl TagNameString {
     fn as_ptr(&self) -> *const XML_Char {
         match *self {
+            TagNameString::None => ptr::null(),
             TagNameString::Ptr(ptr) => ptr,
             TagNameString::BindingUri(ref b) => b.uri.borrow().as_ptr(),
         }
@@ -1066,6 +1068,7 @@ impl TagNameLocalPart {
 
     fn from_tag_name(str_0: &TagNameString, skip_to_colon: bool) -> TagNameLocalPart {
         match str_0 {
+            TagNameString::None => TagNameLocalPart::None,
             TagNameString::Ptr(mut ptr) => unsafe {
                 if skip_to_colon {
                     while *ptr != ASCII_COLON {
@@ -4218,6 +4221,11 @@ impl XML_ParserStruct {
                             tag.bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
                             self.m_freeBindingList = Some(b);
                         }
+
+                        // Clear `str_0` and `localPart` to reduce
+                        // their pointee's reference counts
+                        tag.name.str_0 = TagNameString::None;
+                        tag.name.localPart = TagNameLocalPart::None;
 
                         // Move the tag to the free list
                         tag.parent = self.m_freeTagList.take();
