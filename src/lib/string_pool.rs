@@ -278,10 +278,8 @@ impl StringPool {
             let mut vec = vec.borrow_mut();
             let iter = CStrIterator(s);
             let n = n.try_into().unwrap();
-            let cap = vec.0.capacity();
-            let new_size = vec.0.len() + n;
 
-            if new_size > cap && vec.0.try_reserve_exact(new_size).is_err() {
+            if vec.0.try_reserve_exact(n).is_err() {
                 return false;
             };
 
@@ -341,7 +339,7 @@ impl<'bump> RentedBumpVec<'bump> {
             return false;
         }
 
-        if self.0.try_reserve_exact(bytesToAllocate as usize).is_err() {
+        if self.0.try_reserve_exact(bytesToAllocate as usize - self.0.len()).is_err() {
             return false;
         };
 
