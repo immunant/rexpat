@@ -102,8 +102,8 @@ impl StringPool {
         self.inner().rent(|vec| vec.borrow().is_full())
     }
 
-    /// Gets the current vec, converts it into a slice of cells, and resets
-    /// bookkeeping so that it will create a new vec next time.
+    /// Gets the current vec, converts it into an immutable slice,
+    /// and resets bookkeeping so that it will create a new vec next time.
     pub(crate) fn finish_string(&self) -> &[XML_Char] {
         self.inner().ref_rent_all(|pool| {
             let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
@@ -111,8 +111,8 @@ impl StringPool {
         })
     }
 
-    /// Gets the current vec, converts it into a slice, and resets
-    /// bookkeeping so that it will create a new vec next time.
+    /// Gets the current vec, converts it into a slice of cells (with interior mutability),
+    /// and resets bookkeeping so that it will create a new vec next time.
     pub(crate) fn finish_string_cells(&self) -> &[Cell<XML_Char>] {
         self.inner().ref_rent_all(|pool| {
             let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
