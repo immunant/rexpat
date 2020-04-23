@@ -105,19 +105,19 @@ impl StringPool {
     /// Gets the current vec, converts it into a slice, and resets
     /// bookkeeping so that it will create a new vec next time.
     pub(crate) fn finish_string(&self) -> &mut [XML_Char] {
-        /// # Safety
-        ///
-        /// Rental provides `ref_rent()`, which would do what we want here,
-        /// except that we need to return a mutable reference with the string
-        /// pool's lifetime, not an immutable one. We can't use
-        /// `ref_rent_mut()`, which return a mutable reference, because we don't
-        /// have a mutable reference to the rental itself.
-        ///
-        /// This borrows the inner pool with a new, anonymous lifetime, allowing
-        /// us to return a mutable slice with the same lifetime as self. The
-        /// lifetime of this reference is valid because the Bump will be valid
-        /// for the lifetime of self, and mutability is allowed because mutating
-        /// a finalized string can never affect any other string in the pool.
+        // # Safety
+        //
+        // Rental provides `ref_rent()`, which would do what we want here,
+        // except that we need to return a mutable reference with the string
+        // pool's lifetime, not an immutable one. We can't use
+        // `ref_rent_mut()`, which return a mutable reference, because we don't
+        // have a mutable reference to the rental itself.
+        //
+        // This borrows the inner pool with a new, anonymous lifetime, allowing
+        // us to return a mutable slice with the same lifetime as self. The
+        // lifetime of this reference is valid because the Bump will be valid
+        // for the lifetime of self, and mutability is allowed because mutating
+        // a finalized string can never affect any other string in the pool.
         let pool = unsafe { self.inner().all_erased() };
         let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
         pool.current_bump_vec.replace(vec).0.into_bump_slice_mut()
