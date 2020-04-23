@@ -102,9 +102,18 @@ impl StringPool {
         self.inner().rent(|vec| vec.borrow().is_full())
     }
 
+    /// Gets the current vec, converts it into a slice of cells, and resets
+    /// bookkeeping so that it will create a new vec next time.
+    pub(crate) fn finish_string(&self) -> &[XML_Char] {
+        self.inner().ref_rent_all(|pool| {
+            let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
+            pool.current_bump_vec.replace(vec).0.into_bump_slice()
+        })
+    }
+
     /// Gets the current vec, converts it into a slice, and resets
     /// bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string(&self) -> &[Cell<XML_Char>] {
+    pub(crate) fn finish_string_cells(&self) -> &[Cell<XML_Char>] {
         self.inner().ref_rent_all(|pool| {
             let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
             let sl = pool.current_bump_vec.replace(vec).0.into_bump_slice_mut();
@@ -236,7 +245,7 @@ impl StringPool {
     pub(crate) unsafe fn copy_c_string(
         &self,
         mut s: *const XML_Char,
-    ) -> Option<&[Cell<XML_Char>]> {
+    ) -> Option<&[XML_Char]> {
         // self.append_c_string(s);?
         let successful = self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
@@ -265,7 +274,7 @@ impl StringPool {
         &self,
         mut s: *const XML_Char,
         mut n: c_int,
-    ) -> Option<&[Cell<XML_Char>]> {
+    ) -> Option<&[XML_Char]> {
         let successful = self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
             let mut n = n.try_into().unwrap();
