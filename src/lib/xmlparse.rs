@@ -7867,7 +7867,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                 if (*prefix).name == start {
                     (*dtd).pool.finish_string();
                 } else {
-                    (*dtd).pool.clear_current()
+                    (*dtd).pool.clear_current();
                 }
                 (*elementType).prefix = prefix;
                 break;
