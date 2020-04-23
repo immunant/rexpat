@@ -2119,7 +2119,7 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
             Some(p) => p,
             None => return XML_Status::ERROR,
         };
-        (*parser).m_curBase = p.as_ptr()
+        (*parser).m_curBase = p.as_ptr() as *mut _;
     } else {
         (*parser).m_curBase = NULL as *const XML_Char
     }
@@ -3860,7 +3860,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     if !successful {
                         return XML_Error::NO_MEMORY;
                     }
-                    name_0.str_0 = self.m_tempPool.finish_string().as_ptr();
+                    name_0.str_0 = self.m_tempPool.finish_string().as_ptr() as *mut _;
                     result_1 = self.storeAtts(enc_type, buf, &mut name_0, &mut bindings);
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
@@ -4239,7 +4239,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             };
             let elementType = hash_insert!(
                 &mut (*dtd).elementTypes,
-                name.as_ptr(),
+                name.as_ptr() as *const _,
                 ELEMENT_TYPE,
                 ELEMENT_TYPE::new
             );
@@ -4309,13 +4309,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr()));
+                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr() as *const _));
             } else {
                 /* the value did not need normalizing */
                 if !self.m_tempPool.store_c_string(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
                     return XML_Error::NO_MEMORY;
                 }
-                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr()));
+                self.m_atts.push(Attribute::new((*attId).name.name(), self.m_tempPool.finish_string().as_ptr() as *const _));
             }
             /* handle prefixed attribute names */
             if !(*attId).prefix.is_null() {
@@ -4515,7 +4515,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
                     if ret != XML_Error::NONE { return ret; }
                     /* store expanded name in attribute list */
-                    self.m_atts[i].name = self.m_tempPool.finish_string().as_ptr();
+                    self.m_atts[i].name = self.m_tempPool.finish_string().as_ptr() as *const _;
                     let hk = HashKey::from(self.m_atts[i].name as KEY);
                     self.m_nsAtts.insert(hk);
                     nPrefixes -= 1;
@@ -4600,7 +4600,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                     }
 
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.finish_string().as_ptr();
+                    s = self.m_tempPool.finish_string().as_ptr() as *const _;
                     self.m_atts[i].name = s;
 
                     nXMLNSDeclarations -= 1;
@@ -5687,7 +5687,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             self.m_doctypeName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_doctypeName = self.m_tempPool.finish_string().as_ptr();
+                        self.m_doctypeName = self.m_tempPool.finish_string().as_ptr() as *const _;
                         self.m_doctypePubid = NULL as *const XML_Char;
                         handleDefault = false
                     }
@@ -5746,8 +5746,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         let pub_id = self.m_tempPool.finish_string();
-                        normalizePublicId(pub_id.as_mut_ptr());
-                        self.m_doctypePubid = pub_id.as_ptr();
+                        normalizePublicId(pub_id.as_ptr() as *const _ as *mut _);
+                        self.m_doctypePubid = pub_id.as_ptr() as *const _;
                         handleDefault = false;
                         current_block = 9007411418488376351;
                     } else {
@@ -5975,7 +5975,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr() as *const _;
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -6007,7 +6007,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         if result_1 as u64 != 0 {
                             return result_1;
                         }
-                        attVal = (*dtd).pool.finish_string().as_ptr();
+                        attVal = (*dtd).pool.finish_string().as_ptr() as *const _;
                         /* ID attributes aren't allowed to have a default */
                         if defineAttribute(
                             self.m_declElementType,
@@ -6031,7 +6031,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr() as *const _;
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -6059,7 +6059,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                         );
                         if !self.m_declEntity.is_null() {
                             (*self.m_declEntity).textLen = (*dtd).entityValuePool.len() as c_int;
-                            (*self.m_declEntity).textPtr = (*dtd).entityValuePool.finish_string().as_ptr();
+                            (*self.m_declEntity).textPtr = (*dtd).entityValuePool.finish_string().as_ptr() as *const _;
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
@@ -6099,7 +6099,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             self.m_doctypeSysid = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_doctypeSysid = self.m_tempPool.finish_string().as_ptr();
+                        self.m_doctypeSysid = self.m_tempPool.finish_string().as_ptr() as *const _;
 
                         handleDefault = false
                     } else {
@@ -6157,7 +6157,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*self.m_declEntity).notation = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        (*self.m_declEntity).notation = (*dtd).pool.finish_string().as_ptr();
+                        (*self.m_declEntity).notation = (*dtd).pool.finish_string().as_ptr() as *const _;
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
@@ -6269,7 +6269,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             self.m_declNotationName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_declNotationName = self.m_tempPool.finish_string().as_ptr();
+                        self.m_declNotationName = self.m_tempPool.finish_string().as_ptr() as *const _;
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
@@ -6291,8 +6291,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         let tem_0 = self.m_tempPool.finish_string();
-                        normalizePublicId(tem_0.as_mut_ptr());
-                        self.m_declNotationPublicId = tem_0.as_mut_ptr();
+                        normalizePublicId(tem_0.as_ptr() as *const _ as *mut _);
+                        self.m_declNotationPublicId = tem_0.as_ptr() as *const _ as *mut _;
                         handleDefault = false
                     }
                     current_block = 1553878188884632965;
@@ -6761,7 +6761,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             (*self.m_declEntity).systemId = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        (*self.m_declEntity).systemId = (*dtd).pool.finish_string().as_ptr();
+                        (*self.m_declEntity).systemId = (*dtd).pool.finish_string().as_ptr() as *mut _;
                         (*self.m_declEntity).base = self.m_curBase;
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
@@ -6862,8 +6862,8 @@ impl<'scf> XML_ParserStruct<'scf> {
                             return XML_Error::NO_MEMORY;
                         }
                         let mut tem = (*dtd).pool.finish_string();
-                        normalizePublicId(tem.as_mut_ptr());
-                        (*self.m_declEntity).publicId = tem.as_ptr();
+                        normalizePublicId(tem.as_ptr() as *const _ as *mut _);
+                        (*self.m_declEntity).publicId = tem.as_ptr() as *const _;
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
                          */
@@ -7696,7 +7696,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     }
     (*parser).m_tempPool.current_mut_slice(|data| {
         normalizeLines(data);
-        (*parser).m_handlers.processingInstruction(target.as_ptr(), data.as_ptr());
+        (*parser).m_handlers.processingInstruction(target.as_ptr() as *mut _, data.as_ptr());
     });
     (*parser).m_tempPool.clear();
     1
@@ -7907,22 +7907,22 @@ impl<'scf> XML_ParserStruct<'scf> {
         if (*id).name.name() != (*dtd).pool.current_start().add(1) as *mut XML_Char {
             (*dtd).pool.clear_current()
         } else {
-            let name = (*dtd).pool.finish_string().split_at_mut(1).1;
+            let name = (*dtd).pool.finish_string().split_at(1).1;
             if self.m_ns {
-                if name[0] == ASCII_x as XML_Char
-                && name[1] == ASCII_m as XML_Char
-                && name[2] == ASCII_l as XML_Char
-                && name[3] == ASCII_n as XML_Char
-                && name[4] == ASCII_s as XML_Char
-                && (name[5] == '\u{0}' as XML_Char
-                || name[5] == ASCII_COLON as XML_Char)
+                if name[0].get() == ASCII_x as XML_Char
+                && name[1].get() == ASCII_m as XML_Char
+                && name[2].get() == ASCII_l as XML_Char
+                && name[3].get() == ASCII_n as XML_Char
+                && name[4].get() == ASCII_s as XML_Char
+                && (name[5].get() == '\u{0}' as XML_Char
+                || name[5].get() == ASCII_COLON as XML_Char)
                 {
-                    if name[5] == '\u{0}' as XML_Char {
+                    if name[5].get() == '\u{0}' as XML_Char {
                         (*id).prefix = &mut (*dtd).defaultPrefix
                     } else {
                         (*id).prefix = hash_insert!(
                             &mut (*dtd).prefixes,
-                            &name[6] as *const _,
+                            &name[6] as *const _ as *const _,
                             PREFIX
                         );
                     }
@@ -7930,13 +7930,13 @@ impl<'scf> XML_ParserStruct<'scf> {
                 } else {
                     let mut i: c_int = 0;
                     i = 0;
-                    while name[usize::try_from(i).unwrap()] != 0 {
+                    while name[usize::try_from(i).unwrap()].get() != 0 {
                         /* attributes without prefix are *not* in the default namespace */
-                        if name[usize::try_from(i).unwrap()] == ASCII_COLON as XML_Char {
+                        if name[usize::try_from(i).unwrap()].get() == ASCII_COLON as XML_Char {
                             let mut j: c_int = 0; /* save one level of indirection */
                             j = 0;
                             while j < i {
-                                if !(*dtd).pool.append_char(name[usize::try_from(j).unwrap()]) {
+                                if !(*dtd).pool.append_char(name[usize::try_from(j).unwrap()].get()) {
                                     return NULL as *mut ATTRIBUTE_ID;
                                 }
                                 j += 1
@@ -8122,7 +8122,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             };
                             prefix = hash_insert!(
                                 &mut (*dtd).prefixes,
-                                prefix_name.as_ptr(),
+                                prefix_name.as_ptr() as *const _,
                                 PREFIX
                             );
                         }
@@ -8282,7 +8282,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
         };
         if hash_insert!(
             &mut (*newDtd).prefixes,
-            name.as_ptr(),
+            name.as_ptr() as *const _,
             PREFIX
         )
         .is_null()
@@ -8301,7 +8301,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
             Some(name) => name,
             None => return 0,
         };
-        let typed_name = TypedAttributeName(name_0.as_mut_ptr() as *mut XML_Char);
+        let typed_name = TypedAttributeName(name_0.as_ptr() as *mut XML_Char);
         let newA = hash_insert!(
             &mut (*newDtd).attributeIds,
             typed_name,
@@ -8331,7 +8331,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
         };
         let newE = hash_insert!(
             &mut (*newDtd).elementTypes,
-            name_1.as_ptr(),
+            name_1.as_ptr() as *const _,
             ELEMENT_TYPE,
             ELEMENT_TYPE::new
         );
@@ -8359,7 +8359,7 @@ unsafe extern "C" fn dtdCopy<'scf>(
             let isCdata = oldAtt.isCdata;
             let value = if !oldAtt.value.is_null() {
                 match (*newDtd).pool.copy_c_string(oldAtt.value) {
-                    Some(s) => s.as_ptr(),
+                    Some(s) => s.as_ptr() as *const _,
                     None => return 0,
                 }
             } else {
@@ -8413,7 +8413,7 @@ unsafe extern "C" fn copyEntityTable(
         };
         let newE = hash_insert!(
             &mut newTable,
-            name.as_ptr(),
+            name.as_ptr() as *const _,
             ENTITY
         );
         if newE.is_null() {
@@ -8424,7 +8424,7 @@ unsafe extern "C" fn copyEntityTable(
                 Some(tem) => tem,
                 None => return 0,
             };
-            (*newE).systemId = tem.as_ptr();
+            (*newE).systemId = tem.as_ptr() as *const _;
             if !(*oldE).base.is_null() {
                 if (*oldE).base == cachedOldBase {
                     (*newE).base = cachedNewBase
@@ -8434,7 +8434,7 @@ unsafe extern "C" fn copyEntityTable(
                         Some(tem) => tem,
                         None => return 0,
                     };
-                    (*newE).base = tem.as_ptr();
+                    (*newE).base = tem.as_ptr() as *mut _;
                     cachedNewBase = (*newE).base
                 }
             }
@@ -8443,14 +8443,14 @@ unsafe extern "C" fn copyEntityTable(
                     Some(tem) => tem,
                     None => return 0,
                 };
-                (*newE).publicId = tem.as_ptr()
+                (*newE).publicId = tem.as_ptr() as *mut _;
             }
         } else {
             let mut tem_0 = match (*newPool).copy_c_string_n((*oldE).textPtr, (*oldE).textLen) {
                 Some(tem) => tem,
                 None => return 0,
             };
-            (*newE).textPtr = tem_0.as_ptr();
+            (*newE).textPtr = tem_0.as_ptr() as *mut _;
             (*newE).textLen = (*oldE).textLen
         }
         if !(*oldE).notation.is_null() {
@@ -8458,7 +8458,7 @@ unsafe extern "C" fn copyEntityTable(
                 Some(tem) => tem,
                 None => return 0,
             };
-            (*newE).notation = tem_1.as_ptr()
+            (*newE).notation = tem_1.as_ptr() as *mut _;
         }
         (*newE).is_param = (*oldE).is_param;
         (*newE).is_internal = (*oldE).is_internal
