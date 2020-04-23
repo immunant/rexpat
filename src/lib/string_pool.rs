@@ -55,6 +55,9 @@ rental! {
 
         #[rental(debug)]
         pub(crate) struct InnerStringPool {
+            // The rental crate requires that all fields but the last one
+            // implement `StableDeref`, which means we need to wrap it
+            // in a `Box`
             bump: Box<Bump>,
             current_bump_vec: RefCell<RentedBumpVec<'bump>>,
         }
