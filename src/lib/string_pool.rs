@@ -352,31 +352,16 @@ impl<'bump> RentedBumpVec<'bump> {
         true
     }
 
-    fn append(
+    fn append<'a>(
         &mut self,
         enc: &ENCODING,
-        mut read_buf: ExpatBufRef,
+        mut read_buf: ExpatBufRef<'a>,
     ) -> bool {
-        let start = self.0.as_ptr();
-
-        // REVIEW: Can this be replaced with self.is_empty() &&?
-        if start.is_null() && !self.grow() {
-            return false;
-        }
-
-        let mut cap = self.0.capacity();
-        let mut len = self.0.len();
-
         loop {
-            debug_assert!(len <= cap);
-
-            // Continue to allocate if we don't have enough space
-            while (cap - len) < read_buf.len() {
-                if !self.grow() {
-                    return false;
-                }
-
-                cap = self.0.capacity();
+            // REXPAT: always reserve at least 4 bytes,
+            // so at least one character gets converted every iteration
+            if self.0.try_reserve(read_buf.len().max(4)).is_err() {
+                return false;
             }
 
             let start_len = self.0.len();
@@ -384,7 +369,7 @@ impl<'bump> RentedBumpVec<'bump> {
 
             self.0.resize(cap, 0);
 
-            let mut write_buf = unsafe { ExpatBufRefMut::new_len(self.0.as_mut_ptr().add(len), cap - start_len) };
+            let mut write_buf = ExpatBufRefMut::from(&mut self.0[start_len..]);
             let write_buf_len = write_buf.len();
             let convert_res = unsafe {
                 XmlConvert!(enc, &mut read_buf, &mut write_buf)
@@ -395,11 +380,9 @@ impl<'bump> RentedBumpVec<'bump> {
             self.0.truncate(start_len + written_size);
 
             if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
-                break;
+                return true;
             }
         }
-
-        true
     }
 
     fn append_char(&mut self, c: XML_Char) -> bool {

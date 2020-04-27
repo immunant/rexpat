@@ -227,6 +227,12 @@ impl<'a, T> ops::DerefMut for ExpatBufRefMut<'a, T> {
     }
 }
 
+impl<'a, T> From<&'a mut [T]> for ExpatBufRefMut<'a, T> {
+    fn from(s: &'a mut [T]) -> ExpatBufRefMut<'a, T> {
+        ExpatBufRefMut(s)
+    }
+}
+
 /// Create a null-terminated XML_Char array from ASCII_ literals
 macro_rules! XML_STR {
     [$($char:ident),* $(,)*] => {
