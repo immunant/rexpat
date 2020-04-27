@@ -17368,7 +17368,9 @@ unsafe extern "C" fn test_alloc_set_base() {
         }
         i += 1
     }
-    if i == 0 {
+    // REXPAT: disabled since bumpalo pre-allocates a chunk of 512 bytes,
+    // so this test never allocates
+    if /*i == 0*/ false {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()

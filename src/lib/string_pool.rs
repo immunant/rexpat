@@ -403,7 +403,7 @@ impl<'bump> RentedBumpVec<'bump> {
     }
 
     fn append_char(&mut self, c: XML_Char) -> bool {
-        if self.is_full() && !self.grow() {
+        if self.0.try_reserve(1).is_err() {
             false
         } else {
             self.0.push(c);
