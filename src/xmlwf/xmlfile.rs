@@ -15,7 +15,6 @@ pub use crate::lib::xmlparse::{
     XML_GetCurrentLineNumber, XML_GetErrorCode, XML_GetError, XML_Parse, XML_ParseBuffer, XML_ParserFree,
     XML_SetBase, XML_SetExternalEntityRefHandler,
 };
-pub use crate::stddef_h::NULL;
 pub use crate::stdlib::{stderr, stdout};
 pub use crate::xmltchar_h::{ftprintf, tcscpy, tcslen, tcsrchr, topen, tperror};
 use ::libc;

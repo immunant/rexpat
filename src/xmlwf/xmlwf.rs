@@ -316,7 +316,7 @@ unsafe extern "C" fn xcsdup(mut s: *const XML_Char) -> *mut XML_Char {
         (count as usize).wrapping_mul(::std::mem::size_of::<XML_Char>());
     result = malloc(numBytes) as *mut XML_Char;
     if result.is_null() {
-        return ::rexpat::stddef_h::NULL as *mut XML_Char;
+        return std::ptr::null_mut();
     }
     memcpy(
         result as *mut c_void,
@@ -347,7 +347,7 @@ unsafe extern "C" fn freeNotations(mut data: *mut XmlwfUserData) {
         free(notationListHead as *mut c_void);
         notationListHead = next
     }
-    (*data).notationListHead = ::rexpat::stddef_h::NULL as *mut NotationList;
+    (*data).notationListHead = std::ptr::null_mut();
 }
 
 unsafe extern "C" fn xcscmp(mut xs: *const XML_Char, mut xt: *const XML_Char) -> c_int {
@@ -390,7 +390,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     if notationCount == 0 {
         /* Nothing to report */
         free((*data).currentDoctypeName as *mut c_void);
-        (*data).currentDoctypeName = ::rexpat::stddef_h::NULL as *const XML_Char;
+        (*data).currentDoctypeName = std::ptr::null();
         return;
     }
     notations = malloc(
@@ -452,7 +452,7 @@ unsafe extern "C" fn endDoctypeDecl(mut userData: *mut c_void) {
     free(notations as *mut c_void);
     freeNotations(data);
     free((*data).currentDoctypeName as *mut c_void);
-    (*data).currentDoctypeName = ::rexpat::stddef_h::NULL as *const XML_Char;
+    (*data).currentDoctypeName = std::ptr::null();
 }
 
 unsafe extern "C" fn notationDecl(
@@ -487,7 +487,7 @@ unsafe extern "C" fn notationDecl(
             return;
         }
     } else {
-        (*entry).systemId = ::rexpat::stddef_h::NULL as *const XML_Char
+        (*entry).systemId = std::ptr::null()
     }
     if !publicId.is_null() {
         (*entry).publicId = xcsdup(publicId);
@@ -499,7 +499,7 @@ unsafe extern "C" fn notationDecl(
             return;
         }
     } else {
-        (*entry).publicId = ::rexpat::stddef_h::NULL as *const XML_Char
+        (*entry).publicId = std::ptr::null()
     }
     (*entry).next = (*data).notationListHead;
     (*data).notationListHead = entry;
@@ -1012,8 +1012,8 @@ unsafe extern "C" fn usage(mut prog: *const XML_Char, mut rc: c_int) {
 unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
     let mut i: c_int = 0;
     let mut j: c_int = 0;
-    let mut outputDir: *const XML_Char = ::rexpat::stddef_h::NULL as *const XML_Char;
-    let mut encoding: *const XML_Char = ::rexpat::stddef_h::NULL as *const XML_Char;
+    let mut outputDir: *const XML_Char = std::ptr::null();
+    let mut encoding: *const XML_Char = std::ptr::null();
     let mut processFlags: c_uint = crate::xmlfile::XML_MAP_FILE as c_uint;
     let mut windowsCodePages: c_int = 0;
     let mut outputType: c_int = 0;
@@ -1024,9 +1024,9 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
     let mut useStdin: c_int = 0;
     let mut userData: XmlwfUserData = {
         let mut init = xmlwfUserData {
-            fp: ::rexpat::stddef_h::NULL as *mut FILE,
-            notationListHead: ::rexpat::stddef_h::NULL as *mut NotationList,
-            currentDoctypeName: ::rexpat::stddef_h::NULL as *const XML_Char,
+            fp: std::ptr::null_mut(),
+            notationListHead: std::ptr::null_mut(),
+            currentDoctypeName: std::ptr::null(),
         };
         init
     };
@@ -1251,7 +1251,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
             }
             setvbuf(
                 userData.fp,
-                ::rexpat::stddef_h::NULL as *mut c_char,
+                std::ptr::null_mut(),
                 _IOFBF,
                 16384,
             );
@@ -1537,7 +1537,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut XML_Char) -> c_int {
         result = crate::xmlfile::XML_ProcessFile(
             parser,
             if useStdin != 0 {
-                ::rexpat::stddef_h::NULL as *mut XML_Char
+                std::ptr::null_mut()
             } else {
                 *argv.offset(i as isize)
             },

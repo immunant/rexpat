@@ -134,7 +134,7 @@ pub use crate::ascii_h::{
 };
 pub use crate::expat_external_h::XML_Size;
 pub use crate::lib::xmltok::{
-    position, XML_Convert_Result, ATTRIBUTE, ENCODING, POSITION, XML_Convert_Result::COMPLETED,
+    Attribute, Position, XML_Convert_Result, ENCODING, XML_Convert_Result::COMPLETED,
     XML_Convert_Result::INPUT_INCOMPLETE, XML_Convert_Result::OUTPUT_EXHAUSTED, XML_TOK
 };
 use libc;

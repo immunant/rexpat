@@ -305,9 +305,7 @@ impl<'bump> RentedBumpVec<'bump> {
 
             let mut write_buf = ExpatBufRefMut::from(&mut self.0[start_len..]);
             let write_buf_len = write_buf.len();
-            let convert_res = unsafe {
-                XmlConvert!(enc, &mut read_buf, &mut write_buf)
-            };
+            let convert_res = XmlConvert!(enc, &mut read_buf, &mut write_buf);
             // The write buf shrinks by how much was written to it
             let written_size = write_buf_len - write_buf.len();
 

@@ -74,7 +74,6 @@ pub struct TCase {
     pub next_tcase: *mut TCase,
 }
 
-pub use crate::stddef_h::{NULL};
 pub use crate::stdlib::{
     __jmp_buf, __jmp_buf_tag,
     __sigset_t, _setjmp, jmp_buf, longjmp,
@@ -171,11 +170,11 @@ static mut env: jmp_buf = [__jmp_buf_tag {
     __saved_mask: __sigset_t { __val: [0; 16] },
 }; 1];
 
-static mut _check_current_function: *const c_char = NULL as *const c_char;
+static mut _check_current_function: *const c_char = std::ptr::null();
 
 static mut _check_current_lineno: c_int = -(1);
 
-static mut _check_current_filename: *const c_char = NULL as *const c_char;
+static mut _check_current_filename: *const c_char = std::ptr::null();
 /* Internal helper. */
 #[no_mangle]
 

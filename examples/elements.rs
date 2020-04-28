@@ -15,7 +15,6 @@ use ::rexpat::lib::xmlparse::{
     XML_ErrorString, XML_GetCurrentLineNumber, XML_GetErrorCode, XML_Parse, XML_ParserCreate,
     XML_ParserFree, XML_SetElementHandler, XML_SetUserData,
 };
-use ::rexpat::stddef_h::NULL;
 use ::libc::{printf, putchar, fprintf};
 
 use libc::{c_char, c_int, c_void, size_t, fread};
@@ -85,7 +84,7 @@ unsafe extern "C" fn endElement(mut userData: *mut c_void, mut _name: *const XML
 
 unsafe fn main_0(mut _argc: c_int, mut _argv: *mut *mut c_char) -> c_int {
     let mut buf: [c_char; 8192] = [0; 8192];
-    let mut parser: XML_Parser = XML_ParserCreate(NULL as *const XML_Char);
+    let mut parser: XML_Parser = XML_ParserCreate(std::ptr::null());
     let mut done = false;
     let mut depth: c_int = 0;
     XML_SetUserData(parser, &mut depth as *mut c_int as *mut c_void);
