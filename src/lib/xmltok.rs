@@ -297,10 +297,10 @@ pub trait XmlEncoding {
         badPtr: &mut *const libc::c_char,
     ) -> libc::c_int;
 
-    fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to_buf: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result;
 
     fn utf16Convert(
@@ -358,10 +358,10 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to_buf: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result;
 
     fn utf16Convert(
@@ -547,7 +547,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -703,7 +703,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -796,7 +796,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -891,7 +891,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -1065,7 +1065,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -2206,10 +2206,10 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        _from_buf: &mut ExpatBufRef<'a>,
-        _to_buf: &'b mut ExpatBufRefMut<'a>,
+        _from_buf: &'r mut ExpatBufRef<'a>,
+        _to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result {
         XML_Convert_Result::COMPLETED
     }
@@ -2407,10 +2407,10 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result {
         let mut buf: [c_char; 4] = [0; 4];
         loop {

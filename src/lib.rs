@@ -19,6 +19,8 @@
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
 
 extern crate libc;
+#[macro_use]
+extern crate rental;
 
 pub mod ascii_h;
 pub mod expat_external_h;
@@ -31,6 +33,7 @@ pub mod xmltok_impl_h;
 
 pub mod lib {
     pub mod nametab;
+    pub mod string_pool;
     pub mod xmlparse;
     pub mod xmlrole;
     pub mod xmltok;
