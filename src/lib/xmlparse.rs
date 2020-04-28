@@ -6096,7 +6096,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                                 handleDefault = false
                             }
                         } else {
-                            (*dtd).entityValuePool.finish_string();
+                            (*dtd).entityValuePool.clear_current();
                         }
                         if result_2 != XML_Error::NONE {
                             return result_2;
@@ -6236,7 +6236,7 @@ impl<'scf> XML_ParserStruct<'scf> {
                             }
                         }
                     } else {
-                        (*dtd).pool.finish_string();
+                        (*dtd).pool.clear_current();
                         self.m_declEntity = ptr::null_mut();
                     }
                 }
