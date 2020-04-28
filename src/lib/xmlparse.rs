@@ -7439,9 +7439,6 @@ unsafe extern "C" fn storeEntityValue(
     /* never return Null for the value argument in EntityDeclHandler,
     since this would indicate an external entity; therefore we
     have to make sure that entityValuePool.start is not null */
-    if pool.is_empty() && !pool.grow() {
-        return XML_Error::NO_MEMORY;
-    }
     's_41: loop {
         let mut next: *const c_char = 0 as *const c_char;
         let mut tok = (*enc).xmlLiteralTok(

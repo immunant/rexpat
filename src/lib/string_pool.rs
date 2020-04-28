@@ -300,10 +300,6 @@ impl StringPool {
 
         Some(self.finish_string())
     }
-
-    pub(crate) fn grow(&self) -> bool {
-        self.inner().rent(|vec| vec.borrow_mut().grow())
-    }
 }
 
 #[derive(Debug)]
@@ -312,44 +308,6 @@ pub(crate) struct RentedBumpVec<'bump>(BumpVec<'bump, XML_Char>);
 impl<'bump> RentedBumpVec<'bump> {
     fn is_full(&self) -> bool {
         self.0.len() == self.0.capacity()
-    }
-
-    fn grow(&mut self) -> bool {
-        let mut blockSize = self.0.capacity();
-        let mut bytesToAllocate: size_t = 0;
-        // if blockSize < 0 {
-        //     /* This condition traps a situation where either more than
-        //      * INT_MAX bytes have already been allocated (which is prevented
-        //      * by various pieces of program logic, not least this one, never
-        //      * mind the unlikelihood of actually having that much memory) or
-        //      * the pool control fields have been corrupted (which could
-        //      * conceivably happen in an extremely buggy user handler
-        //      * function).  Either way it isn't readily testable, so we
-        //      * exclude it from the coverage statistics.
-        //      */
-        //     return false;
-        //     /* LCOV_EXCL_LINE */
-        // }
-        blockSize = if blockSize < INIT_BLOCK_SIZE {
-            INIT_BLOCK_SIZE
-        } else {
-            /* Detect overflow, avoiding _signed_ overflow undefined behavior */
-            match blockSize.checked_mul(2) {
-                Some(size) => size,
-                None => return false,
-            }
-        };
-        bytesToAllocate = poolBytesToAllocateFor(blockSize.try_into().unwrap());
-
-        if bytesToAllocate == 0 {
-            return false;
-        }
-
-        if self.0.try_reserve_exact(bytesToAllocate as usize - self.0.len()).is_err() {
-            return false;
-        };
-
-        true
     }
 
     fn append<'a>(
