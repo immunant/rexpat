@@ -5,7 +5,7 @@ use crate::lib::xmltok::{ENCODING, XML_Convert_Result};
 use bumpalo::Bump;
 use bumpalo::collections::vec::Vec as BumpVec;
 use fallible_collections::FallibleBox;
-use libc::{INT_MAX, c_int, c_uint, c_ulong, size_t};
+use libc::c_int;
 
 use std::cell::{Cell, RefCell};
 use std::convert::TryInto;
@@ -23,30 +23,6 @@ const fn init_block_size_const() -> usize {
 #[cfg(not(feature = "mozilla"))]
 const fn init_block_size_const() -> usize {
     1024
-}
-
-fn poolBytesToAllocateFor(mut blockSize: c_int) -> size_t {
-    /* Unprotected math would be:
-     ** return offsetof(BLOCK, s) + blockSize * sizeof(XML_Char);
-     **
-     ** Detect overflow, avoiding _signed_ overflow undefined behavior
-     ** For a + b * c we check b * c in isolation first, so that addition of a
-     ** on top has no chance of making us accept a small non-negative number
-     */
-    let stretch = ::std::mem::size_of::<XML_Char>() as u64; /* can be 4 bytes */
-    if blockSize <= 0 {
-        return 0;
-    }
-    if blockSize > (INT_MAX as c_ulong).wrapping_div(stretch) as c_int {
-        return 0;
-    }
-    let stretchedBlockSize: c_int = blockSize * stretch as c_int;
-    let bytesToAllocate: c_int =
-        (12 as c_ulong).wrapping_add(stretchedBlockSize as c_uint as c_ulong) as c_int;
-    if bytesToAllocate < 0 {
-        return 0;
-    }
-    bytesToAllocate as size_t
 }
 
 rental! {
