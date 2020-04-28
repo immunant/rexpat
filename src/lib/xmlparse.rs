@@ -3663,6 +3663,9 @@ impl<'scf> XML_ParserStruct<'scf> {
                            otherwise call the skipped entity or default handler.
                         */
                         let mut skipHandlers = false;
+                        // REXPAT: Moved `clear_current` from outside the following branches
+                        // into them to avoid a use-after-free when the 2nd branch uses the
+                        // `name` pointer again.
                         if !(*dtd).hasParamEntityRefs || (*dtd).standalone {
                             (*dtd).pool.clear_current();
 
