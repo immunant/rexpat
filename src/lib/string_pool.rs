@@ -73,7 +73,7 @@ pub(crate) struct StringPool(Option<InnerStringPool>);
 
 impl StringPool {
     pub(crate) fn try_new() -> Result<Self, ()> {
-        let bump = Bump::try_new().map_err(|_| ())?;
+        let bump = Bump::try_with_capacity(INIT_BLOCK_SIZE).map_err(|_| ())?;
         let boxed_bump = Box::try_new(bump).map_err(|_| ())?;
 
         Ok(StringPool(Some(InnerStringPool::new(
