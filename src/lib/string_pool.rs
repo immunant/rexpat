@@ -411,11 +411,9 @@ fn test_store_c_string() {
 
     let string = pool.finish_string();
 
-    assert_eq!(pool.inner().head().allocated_bytes(), 1036);
     assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.append_char(A));
     pool.current_slice(|s| assert_eq!(s, [A]));
-    assert_eq!(pool.inner().head().allocated_bytes(), 2072);
 
     // No overlap between buffers:
     assert_eq!(&*string, &[C, D, D, NULL]);
