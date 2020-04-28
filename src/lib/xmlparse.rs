@@ -2114,9 +2114,9 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
             Some(p) => p,
             None => return XML_Status::ERROR,
         };
-        (*parser).m_curBase = p.as_ptr()
+        (*parser).m_curBase = p.as_ptr();
     } else {
-        (*parser).m_curBase = ptr::null()
+        (*parser).m_curBase = ptr::null();
     }
     XML_Status::OK
 }
