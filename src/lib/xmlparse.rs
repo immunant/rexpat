@@ -60,7 +60,7 @@ pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
-use crate::lib::string_pool::StringPool;
+use crate::string_pool::StringPool;
 pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, ptrdiff_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
