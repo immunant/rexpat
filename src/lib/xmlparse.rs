@@ -3791,22 +3791,20 @@ impl XML_ParserStruct {
                         }
                     } else {
                         let dtd_pools = self.m_dtd.pools.borrow();
-                        let entity = {
-                            let successful = dtd_pools.pool.store_c_string(
-                                enc,
-                                buf
-                                    .inc_start((*enc).minBytesPerChar() as isize)
-                                    .with_end(next)
-                                    .dec_end((*enc).minBytesPerChar() as usize)
-                            );
-                            if !successful {
-                                return XML_Error::NO_MEMORY;
-                            };
-                            dtd_pools.pool.current_slice(|name| {
-                                let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                                hash_lookup!(dtd_tables.generalEntities, name.as_ptr())
-                            })
+                        let successful = dtd_pools.pool.store_c_string(
+                            enc,
+                            buf
+                                .inc_start((*enc).minBytesPerChar() as isize)
+                                .with_end(next)
+                                .dec_end((*enc).minBytesPerChar() as usize)
+                        );
+                        if !successful {
+                            return XML_Error::NO_MEMORY;
                         };
+                        let entity = dtd_pools.pool.current_slice(|name| {
+                            let mut dtd_tables = self.m_dtd.tables.borrow_mut();
+                            hash_lookup!(dtd_tables.generalEntities, name.as_ptr())
+                        });
 
                         /* First, determine if a check for an existing declaration is needed;
                            if yes, check that the entity exists, and that it is internal,
