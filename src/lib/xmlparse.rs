@@ -7404,7 +7404,6 @@ unsafe extern "C" fn appendAttributeValue(
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
                     */
-                    // FIXME: assumes that `pool` is at offset 0
                     if ptr::eq(pool, &(*parser).m_dtd.pools.borrow().pool) {
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
