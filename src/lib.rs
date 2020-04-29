@@ -30,6 +30,7 @@ pub mod expat_h;
 pub mod filemap_h;
 pub mod stdbool_h;
 pub mod stdlib;
+pub mod string_pool;
 pub mod xmltchar_h;
 pub mod xmltok_impl_h;
 
@@ -37,7 +38,6 @@ mod fallible_rc;
 
 pub mod lib {
     pub mod nametab;
-    pub mod string_pool;
     pub mod xmlparse;
     pub mod xmlrole;
     pub mod xmltok;
