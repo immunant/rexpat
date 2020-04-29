@@ -297,10 +297,10 @@ pub trait XmlEncoding {
         badPtr: &mut *const libc::c_char,
     ) -> libc::c_int;
 
-    fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to_buf: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result;
 
     fn utf16Convert(
@@ -358,10 +358,10 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
 
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to_buf: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result;
 
     fn utf16Convert(
@@ -547,7 +547,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -587,20 +587,14 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result {
-        let mut current_block: u64;
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
         // let mut to: *mut c_ushort = *toP;
         // let mut from: *const c_char = *fromP;
-        loop {
-            if from.is_empty() || to.is_empty() {
-                current_block = 1608152415753874203;
-                break;
-            }
+        while !from.is_empty() && !to.is_empty() {
             match T::types[from[0] as c_uchar as usize] as c_int {
                 5 => {
                     if (from.len() as c_long) < 2 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0x1f) << 6
@@ -613,7 +607,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 6 => {
                     if (from.len() as c_long) < 3 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         to[0] = ((from[0] as c_int & 0xf) << 12
@@ -628,11 +621,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                     let mut n: c_ulong = 0;
                     if (to.len() as c_long) < 2 {
                         res = XML_Convert_Result::OUTPUT_EXHAUSTED;
-                        current_block = 10086016483950629671;
                         break;
                     } else if (from.len() as c_long) < 4 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
-                        current_block = 10086016483950629671;
                         break;
                     } else {
                         n = ((from[0] as c_int & 0x7) << 18
@@ -653,13 +644,8 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
                 }
             }
         }
-        match current_block {
-            1608152415753874203 => {
-                if !from.is_empty() {
-                    res = XML_Convert_Result::OUTPUT_EXHAUSTED
-                }
-            }
-            _ => {}
+        if !from.is_empty() {
+            res = XML_Convert_Result::OUTPUT_EXHAUSTED
         }
         res
     }
@@ -717,7 +703,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -810,7 +796,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         from: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -905,7 +891,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -917,25 +903,27 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[0] as c_uchar;
             let mut hi: c_uchar = from[1] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0..=7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
                             return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if to.len() < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
                 }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
-                }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
                         return XML_Convert_Result::OUTPUT_EXHAUSTED;
@@ -958,7 +946,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
@@ -971,21 +958,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
@@ -1092,7 +1065,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
         fromP: &mut ExpatBufRef,
         to: &mut ExpatBufRefMut,
@@ -1104,25 +1077,27 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
             let mut lo2: c_uchar = 0;
             let mut lo: c_uchar = from[1] as c_uchar;
             let mut hi: c_uchar = from[0] as c_uchar;
-            let mut current_block_34: u64;
             match hi as c_int {
-                0 => {
-                    if (lo as c_int) < 0x80 {
+                0..=7 => {
+                    if hi as c_int == 0 && (lo as c_int) < 0x80 {
                         if to.is_empty() {
                             *fromP = from;
                             return XML_Convert_Result::OUTPUT_EXHAUSTED;
                         }
                         to[0] = lo as c_char;
                         to.inc_start(1);
-                        current_block_34 = 18435049525520518667;
                     } else {
-                        current_block_34 = 11412679543673842523;
+                        if to.len() < 2 {
+                            *fromP = from;
+                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        }
+                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to.inc_start(1);
+                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to.inc_start(1);
                     }
                 }
-                1 | 2 | 3 | 4 | 5 | 6 | 7 => {
-                    current_block_34 = 11412679543673842523;
-                }
-                216 | 217 | 218 | 219 => {
+                216..=219 => {
                     if (to.len() as c_long) < 4 {
                         *fromP = from;
                         return XML_Convert_Result::OUTPUT_EXHAUSTED;
@@ -1145,7 +1120,6 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
                 _ => {
                     if (to.len() as c_long) < 3 {
@@ -1158,21 +1132,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
                     to.inc_start(1);
                     to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
                     to.inc_start(1);
-                    current_block_34 = 18435049525520518667;
                 }
-            }
-            match current_block_34 {
-                11412679543673842523 => {
-                    if (to.len() as c_long) < 2 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
-                    }
-                    to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
-                }
-                _ => {}
             }
             from = from.inc_start(2)
         }
@@ -2035,33 +1995,17 @@ impl InitEncoding {
                 3 | 5 | 4 => return XML_TOK::PARTIAL,
                 _ => {}
             }
-            let mut current_block_5: u64;
             match buf[0] as c_uchar as c_int {
                 254 | 255 | 239 => {
                     /* possibly first byte of UTF-8 BOM */
-                    if self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT {
-                        current_block_5 = 17965632435239708295;
-                    } else {
-                        current_block_5 = 16867440708908940295;
+                    if self.encoding_index as c_int != ISO_8859_1_ENC || state != XML_STATE::CONTENT {
+                        return XML_TOK::PARTIAL
                     }
                 }
-                0 | 60 => {
-                    current_block_5 = 16867440708908940295;
-                }
-                _ => {
-                    current_block_5 = 17965632435239708295;
-                }
-            }
-            match current_block_5 {
-                17965632435239708295 => {}
-                _ =>
-                /* fall through */
-                {
-                    return XML_TOK::PARTIAL
-                }
+                0 | 60 => { return XML_TOK::PARTIAL }
+                _ => { }
             }
         } else {
-            let mut current_block_26: u64;
             match (buf[0] as c_uchar as c_int) << 8 | buf[1] as c_uchar as c_int {
                 65279 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
@@ -2097,31 +2041,22 @@ impl InitEncoding {
                     don't look for the BOM,
                     because it might be a legal data.
                      */
-                    if state == XML_STATE::CONTENT {
-                        let mut e: c_int = self.encoding_index as c_int;
-                        if e == ISO_8859_1_ENC
-                            || e == UTF_16BE_ENC
-                            || e == UTF_16LE_ENC
-                            || e == UTF_16_ENC
-                        {
-                            current_block_26 = 10758786907990354186;
-                        } else {
-                            current_block_26 = 15925075030174552612;
+                    if state != XML_STATE::CONTENT || {
+                        match self.encoding_index {
+                            ISO_8859_1_ENC | 
+                            UTF_16BE_ENC |
+                            UTF_16LE_ENC |  
+                            UTF_16_ENC => false,
+                            _ => true 
                         }
-                    } else {
-                        current_block_26 = 15925075030174552612;
-                    }
-                    match current_block_26 {
-                        10758786907990354186 => {}
-                        _ => {
-                            if buf.len() == 2 {
-                                return XML_TOK::PARTIAL;
-                            }
-                            if buf[2] as c_uchar as c_int == 0xbf {
-                                *nextTokPtr = buf[3..].as_ptr();
-                                unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
-                                return XML_TOK::BOM;
-                            }
+                    } {
+                        if buf.len() == 2 {
+                            return XML_TOK::PARTIAL;
+                        }
+                        if buf[2] as c_uchar as c_int == 0xbf {
+                            *nextTokPtr = buf[3..].as_ptr();
+                            unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
+                            return XML_TOK::BOM;
                         }
                     }
                 }
@@ -2271,10 +2206,10 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        _from_buf: &mut ExpatBufRef<'a>,
-        _to_buf: &'b mut ExpatBufRefMut<'a>,
+        _from_buf: &'r mut ExpatBufRef<'a>,
+        _to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result {
         XML_Convert_Result::COMPLETED
     }
@@ -2472,10 +2407,10 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn utf8Convert<'a: 'b, 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &'b mut ExpatBufRef<'a>,
-        to: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result {
         let mut buf: [c_char; 4] = [0; 4];
         loop {
@@ -3183,7 +3118,7 @@ fn doParseXmlDecl<'a>(
 
 pub fn checkCharRefNumber(mut result: c_int) -> c_int {
     match result >> 8 {
-        216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 => return -1,
+        216..=223 => return -1,
         0 => {
             if Latin1EncodingTable::types[result as usize] as c_int == ByteType::NONXML as c_int {
                 return -1;

@@ -25,7 +25,9 @@ impl<T> Rc<T> {
             rc: Cell::new(1),
             value,
         };
-        let b = Box::try_new(inner)?;
+        // FIXME: the Error types should match, but for some reason
+        // it now returns the one from the hashbrown crate
+        let b = Box::try_new(inner).map_err(|_| TryReserveError::CapacityOverflow)?;
         match NonNull::new(Box::into_raw(b)) {
             Some(inner) => Ok(Rc { inner, marker: PhantomData }),
             // FIXME: error should be different
