@@ -2018,8 +2018,8 @@ pub unsafe extern "C" fn XML_SetEncoding(
    Otherwise returns a new XML_Parser object.
 */
 #[no_mangle]
-pub unsafe extern "C" fn XML_ExternalEntityParserCreate<'op>(
-    mut oldParser: Option<&'op XML_ParserStruct>,
+pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
+    mut oldParser: Option<&XML_ParserStruct>,
     mut context: *const XML_Char,
     mut encodingName: *const XML_Char,
 ) -> XML_Parser {
