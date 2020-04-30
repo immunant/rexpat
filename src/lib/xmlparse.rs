@@ -6200,8 +6200,8 @@ impl XML_ParserStruct {
                 XML_ROLE::IMPLIED_ATTRIBUTE_VALUE | XML_ROLE::REQUIRED_ATTRIBUTE_VALUE => {
                     if self.m_dtd.keepProcessing.get() {
                         if defineAttribute(
-                            Rc::clone(self.m_declElementType.as_ref().unwrap()),
-                            Rc::clone(self.m_declAttributeId.as_ref().unwrap()),
+                            self.m_declElementType.as_ref().unwrap(),
+                            self.m_declAttributeId.as_ref().unwrap(),
                             self.m_declAttributeIsCdata,
                             self.m_declAttributeIsId,
                             ptr::null(),
@@ -6256,8 +6256,8 @@ impl XML_ParserStruct {
                         attVal = dtd_pools.pool.finish_string().as_ptr();
                         /* ID attributes aren't allowed to have a default */
                         if defineAttribute(
-                            Rc::clone(self.m_declElementType.as_ref().unwrap()),
-                            Rc::clone(self.m_declAttributeId.as_ref().unwrap()),
+                            self.m_declElementType.as_ref().unwrap(),
+                            self.m_declAttributeId.as_ref().unwrap(),
                             self.m_declAttributeIsCdata,
                             false,
                             attVal,
@@ -8002,8 +8002,8 @@ unsafe extern "C" fn reportDefault(
 }
 
 unsafe extern "C" fn defineAttribute(
-    mut type_0: Rc<ElementType>,
-    mut attId: Rc<AttributeId>,
+    mut type_0: &Rc<ElementType>,
+    mut attId: &Rc<AttributeId>,
     mut isCdata: XML_Bool,
     mut isId: XML_Bool,
     mut value: *const XML_Char,
@@ -8014,11 +8014,11 @@ unsafe extern "C" fn defineAttribute(
         a default which duplicates a non-default. */
         /* save one level of indirection */
 
-        if default_atts.iter().any(|da| Rc::ptr_eq(&attId, &da.id)) {
+        if default_atts.iter().any(|da| Rc::ptr_eq(attId, &da.id)) {
             return 1;
         }
         if isId && get_cell_ptr(&type_0.idAtt).is_none() && !attId.xmlns.get() {
-            type_0.idAtt.set(Some(Rc::clone(&attId)));
+            type_0.idAtt.set(Some(Rc::clone(attId)));
         }
     }
 
@@ -8027,7 +8027,7 @@ unsafe extern "C" fn defineAttribute(
             attId.maybeTokenized.set(true);
         }
 
-        let att = DefaultAttribute { id: attId, isCdata, value };
+        let att = DefaultAttribute { id: Rc::clone(attId), isCdata, value };
         default_atts.push(att);
         1
     } else {
