@@ -4702,7 +4702,7 @@ impl XML_ParserStruct {
                     Derived from code in lookup(parser, HASH_TABLE *table, ...).
                      */
                     let ret = self.m_tempPool.current_slice(|name| {
-                        let hk = HashKey::from(name.as_ptr() as KEY);
+                        let hk = HashKey::from(name.as_ptr());
                         if self.m_nsAtts.contains(&hk) {
                             return XML_Error::DUPLICATE_ATTRIBUTE;
                         }
@@ -4729,7 +4729,7 @@ impl XML_ParserStruct {
                     if ret != XML_Error::NONE { return ret; }
                     /* store expanded name in attribute list */
                     self.m_atts[i].name = self.m_tempPool.finish_string().as_ptr();
-                    let hk = HashKey::from(self.m_atts[i].name as KEY);
+                    let hk = HashKey::from(self.m_atts[i].name);
                     self.m_nsAtts.insert(hk);
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
@@ -8286,7 +8286,7 @@ impl XML_ParserStruct {
                     return false;
                 }
                 self.m_tempPool.current_slice(|entity_name| {
-                    let key = HashKey::from(entity_name.as_ptr() as KEY);
+                    let key = HashKey::from(entity_name.as_ptr());
                     if let Some(e) = dtd_tables.generalEntities.get(&key) {
                         e.open.set(true);
                     }
