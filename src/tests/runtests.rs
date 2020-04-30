@@ -15423,7 +15423,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
     // REXPAT: String pool allocates a bit more now, was 10
-    let max_alloc_count: c_uint = 15;
+    let max_alloc_count: c_uint = 20;
     /* Something this simple shouldn't need more than 10 allocations */
     i = 0;
     while i < max_alloc_count {
