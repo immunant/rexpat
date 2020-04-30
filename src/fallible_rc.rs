@@ -21,7 +21,9 @@ impl<T> FallibleRc<T> for Rc<T> {
             weak: Cell::new(1),
             value,
         };
-        let b = Box::try_new(inner)?;
+        // FIXME: the Error types should match, but for some reason
+        // it now returns the one from the hashbrown crate
+        let b = Box::try_new(inner).map_err(|_| TryReserveError::CapacityOverflow)?;
         unsafe {
             // WARNING: really unsafe!!!
             Ok(std::mem::transmute(b))
