@@ -1312,7 +1312,7 @@ impl DTD {
                     ElementType,
                     ElementType::new
                 ) {
-                    Some(newE) => Rc::clone(newE),
+                    Some(newE) => newE,
                     None => return Err(TryReserveError::CapacityOverflow)
                 };
                 if let Some(id_att) = get_cell_ptr(&oldE.idAtt) {
@@ -5979,15 +5979,15 @@ impl XML_ParserStruct {
                         if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER
                             && self.m_handlers.hasExternalEntityRef()
                         {
-                            let mut entity = {
+                            let (base, systemId, publicId) = {
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                                match hash_insert!(
+                                let entity = match hash_insert!(
                                     &mut dtd_tables.paramEntities,
                                     externalSubsetName.as_ptr(),
                                     Rc::try_new,
                                     Entity
                                 ) {
-                                    Some(entity) => Rc::clone(entity),
+                                    Some(entity) => entity,
                                     /* end of DTD - no need to update dtd->keepProcessing */
                                     /* The external subset name "#" will have already been
                                      * inserted into the hash table at the start of the
@@ -5996,17 +5996,20 @@ impl XML_ParserStruct {
                                      */
                                     None => return XML_Error::NO_MEMORY
                                     /* LCOV_EXCL_LINE */
+                                };
+
+                                if self.m_useForeignDTD {
+                                    entity.base.set(self.m_curBase);
                                 }
+                                self.m_dtd.paramEntityRead.set(false);
+
+                                (entity.base.get(), entity.systemId.get(), entity.publicId.get())
                             };
-                            if self.m_useForeignDTD {
-                                entity.base.set(self.m_curBase);
-                            }
-                            self.m_dtd.paramEntityRead.set(false);
                             if self.m_handlers.externalEntityRef(
                                 ptr::null(),
-                                entity.base.get(),
-                                entity.systemId.get(),
-                                entity.publicId.get(),
+                                base,
+                                systemId,
+                                publicId,
                             ) == Ok(0)
                             {
                                 return XML_Error::EXTERNAL_ENTITY_HANDLING;
