@@ -1199,7 +1199,7 @@ impl DTD {
 
     fn reset(&self) {
         let mut tables = self.tables.borrow_mut();
-        tables.defaultPrefix.as_ref().unwrap().clear();
+        tables.defaultPrefix.as_deref().unwrap().clear();
         tables.generalEntities.clear();
         tables.paramEntities.clear();
         tables.elementTypes.clear();
@@ -3830,7 +3830,7 @@ impl XML_ParserStruct {
                             if entity.is_none() {
                                 return XML_Error::UNDEFINED_ENTITY;
                             } else {
-                                if !entity.as_ref().unwrap().is_internal.get() {
+                                if !entity.as_deref().unwrap().is_internal.get() {
                                     return XML_Error::ENTITY_DECLARED_IN_PE;
                                 }
                             }
@@ -4517,7 +4517,7 @@ impl XML_ParserStruct {
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         self.m_idAttIndex = -1;
-        if let Some(name) = get_cell_ptr(&elementType.idAtt).as_ref().map(|x| x.name) {
+        if let Some(name) = get_cell_ptr(&elementType.idAtt).as_deref().map(|x| x.name) {
             if name.get_type().is_set() {
                 for i in 0..self.typed_atts.len() {
                     if self.typed_atts[i] == name {
@@ -4612,7 +4612,7 @@ impl XML_ParserStruct {
                     }
                     let id = id.unwrap();
                     let prefix_ptr = get_cell_ptr(&id.prefix);
-                    let prefix = prefix_ptr.as_ref().unwrap();
+                    let prefix = prefix_ptr.as_deref().unwrap();
                     let b = match get_cell_ptr(&prefix.binding) {
                         Some(b) => b,
                         None => return XML_Error::UNBOUND_PREFIX
@@ -4801,7 +4801,7 @@ impl XML_ParserStruct {
             let dtd_tables = self.m_dtd.tables.borrow_mut();
             if let Some(b) = dtd_tables
                 .defaultPrefix
-                .as_ref()
+                .as_deref()
                 .and_then(|p| get_cell_ptr(&p.binding))
             {
                 (b, false)
@@ -5826,7 +5826,7 @@ impl XML_ParserStruct {
                     XML_TOK::PROLOG_S_NEG => tok = XML_TOK::PROLOG_S,
                     XML_TOK::NONE => {
                         /* for internal PE NOT referenced between declarations */
-                        if enc_type.is_internal() && !self.m_openInternalEntities.as_ref().unwrap().betweenDecl {
+                        if enc_type.is_internal() && !self.m_openInternalEntities.as_deref().unwrap().betweenDecl {
                             *nextPtr = buf.as_ptr();
                             return XML_Error::NONE;
                         }
@@ -7243,7 +7243,7 @@ unsafe extern "C" fn internalEntityProcessor(
         Some(openEntity) => openEntity,
         None => return XML_Error::UNEXPECTED_STATE
     };
-    let mut entity = openEntity.entity.as_ref().unwrap();
+    let mut entity = openEntity.entity.as_deref().unwrap();
     let text_buf = ExpatBufRef::new(
         (entity.textPtr.get() as *mut c_char).offset(entity.processed.get() as isize),
         entity.textPtr.get().offset(entity.textLen.get() as isize) as *mut c_char,
@@ -7477,7 +7477,7 @@ unsafe extern "C" fn appendAttributeValue(
                         checkEntityDecl = !(*parser).m_dtd.hasParamEntityRefs.get() || (*parser).m_dtd.standalone.get()
                     }
                     if checkEntityDecl {
-                        if let Some(entity) = entity.as_ref() {
+                        if let Some(entity) = entity.as_deref() {
                             if !entity.is_internal.get() {
                                 return XML_Error::ENTITY_DECLARED_IN_PE;
                             }
@@ -8121,7 +8121,7 @@ impl XML_ParserStruct {
     unsafe fn getContext(&mut self) -> bool {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
         let mut needSep = false;
-        if let Some(dpb) = get_cell_ptr(&dtd_tables.defaultPrefix.as_ref().unwrap().binding)  {
+        if let Some(dpb) = get_cell_ptr(&dtd_tables.defaultPrefix.as_deref().unwrap().binding)  {
             if !self.m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
                 return false;
             }
