@@ -60,7 +60,7 @@ pub use crate::lib::xmltok::{
     XmlParseXmlDecl, XmlParseXmlDeclNS, UnknownEncoding,
 };
 pub use crate::lib::xmltok::*;
-use crate::fallible_rc::Rc;
+use crate::fallible_rc::FallibleRc;
 use crate::string_pool::StringPool;
 pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, memcpy, memcmp, memmove, memset};
@@ -76,6 +76,7 @@ use std::convert::{TryFrom, TryInto};
 use std::mem;
 use std::ops;
 use std::ptr;
+use std::rc::Rc;
 
 pub const XML_CONTEXT_BYTES: c_int = 1024;
 
