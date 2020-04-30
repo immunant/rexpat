@@ -7191,7 +7191,7 @@ impl XML_ParserStruct {
         let openEntityPtr = openEntity.deref_mut() as *mut _;
         entity.open.set(true);
         entity.processed.set(0);
-        openEntity.entity = Some(Rc::clone(&entity));
+        openEntity.entity = Some(Rc::clone(entity));
         openEntity.startTagLevel = self.m_tagLevel;
         openEntity.betweenDecl = betweenDecl;
         openEntity.internalEventPtr = ptr::null();
