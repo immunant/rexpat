@@ -35,11 +35,11 @@ impl<T> Rc<T> {
         }
     }
 
-    pub fn get_mut(&mut self) -> Option<&mut T> {
-        let inner = unsafe { self.inner.as_ref() };
+    pub fn get_mut(this: &mut Self) -> Option<&mut T> {
+        let inner = unsafe { this.inner.as_ref() };
         if inner.rc.get() == 1 {
             unsafe {
-                Some(&mut self.inner.as_mut().value)
+                Some(&mut this.inner.as_mut().value)
             }
         } else {
             None

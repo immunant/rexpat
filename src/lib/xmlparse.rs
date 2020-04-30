@@ -1859,7 +1859,7 @@ impl XML_ParserStruct {
         FREE!(self.m_protocolEncodingName);
         self.m_protocolEncodingName = ptr::null();
         self.init(encodingName);
-        self.m_dtd.get_mut().unwrap().reset();
+        Rc::get_mut(&mut self.m_dtd).unwrap().reset();
         true
     }
 }
