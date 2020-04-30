@@ -6723,8 +6723,8 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let mut entity = dtd_pools.pool.current_slice(|name| {
-                            let key = HashKey::from(name.as_ptr());
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
+                            let key = HashKey::from(name.as_ptr());
                             dtd_tables.paramEntities.get(&key).map(Rc::clone)
                         });
 
