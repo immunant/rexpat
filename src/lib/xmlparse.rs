@@ -8298,33 +8298,32 @@ impl XML_ParserStruct {
                 self.m_tempPool.clear_current();
             } else if *s == ASCII_EQUALS as XML_Char {
                 let prefix = if self.m_tempPool.is_empty() {
-                    Rc::clone(&dtd_tables.defaultPrefix.as_ref().unwrap())
+                    Rc::clone(dtd_tables.defaultPrefix.as_ref().unwrap())
                 } else {
                     if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                         return false;
                     }
                     let prefix = match self.m_tempPool.current_slice(|prefix_name| {
                         let key = HashKey::from(prefix_name.as_ptr());
-                        match dtd_tables.prefixes.get(&key) {
-                            Some(prefix) => Some(Rc::clone(prefix)),
-                            None => {
-                                // REXPAT change: we need to copy the prefix name
-                                // into the DTD pool, since the HashMap keeps a permanent
-                                // reference to the name which we can't modify after
-                                // the call to `hash_insert!` (unlike the original C code)
-                                let dtd_pools = self.m_dtd.pools.borrow();
-                                let prefix_name = match dtd_pools.pool.copy_c_string(prefix_name.as_ptr()) {
-                                    Some(name) => name,
-                                    None => return None,
-                                };
-                                hash_insert!(
-                                    &mut dtd_tables.prefixes,
-                                    prefix_name.as_ptr(),
-                                    Rc::try_new,
-                                    Prefix
-                                ).as_deref().map(Rc::clone)
-                            }
+                        if let Some(prefix) = dtd_tables.prefixes.get(&key) {
+                            return Some(Rc::clone(prefix));
                         }
+
+                        // REXPAT change: we need to copy the prefix name
+                        // into the DTD pool, since the HashMap keeps a permanent
+                        // reference to the name which we can't modify after
+                        // the call to `hash_insert!` (unlike the original C code)
+                        let dtd_pools = self.m_dtd.pools.borrow();
+                        let prefix_name = match dtd_pools.pool.copy_c_string(prefix_name.as_ptr()) {
+                            Some(name) => name,
+                            None => return None,
+                        };
+                        hash_insert!(
+                            &mut dtd_tables.prefixes,
+                            prefix_name.as_ptr(),
+                            Rc::try_new,
+                            Prefix
+                        ).as_deref().map(Rc::clone)
                     }) {
                         Some(prefix) => prefix,
                         None => return false,
