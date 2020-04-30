@@ -7544,8 +7544,7 @@ unsafe extern "C" fn appendAttributeValue(
                         }
                     }
 
-                    if checkEntityDecl || !entity.is_none() {
-                        let entity = entity.unwrap();
+                    if let Some(entity) = entity {
                         if entity.open.get() {
                             if !enc_type.is_internal() {
                                 /* It does not appear that this line can be executed.
