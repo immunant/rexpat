@@ -4536,7 +4536,7 @@ impl XML_ParserStruct {
                     /* deal with namespace declarations here */
                     let mut result_0: XML_Error = addBinding(
                         self,
-                        Rc::clone(prefix),
+                        prefix,
                         Some(Rc::clone(&attId)),
                         self.m_atts.last().unwrap().value,
                         bindingsPtr,
@@ -4598,7 +4598,7 @@ impl XML_ParserStruct {
                     if da.id.xmlns.get() {
                         let mut result_1: XML_Error = addBinding(
                             self,
-                            Rc::clone(prefix),
+                            prefix,
                             Some(Rc::clone(&da.id)),
                             da.value,
                             bindingsPtr,
@@ -4921,7 +4921,7 @@ impl XML_ParserStruct {
 
 unsafe extern "C" fn addBinding(
     mut parser: XML_Parser,
-    mut prefix: Rc<Prefix>,
+    mut prefix: &Rc<Prefix>,
     mut attId: Ptr<AttributeId>,
     mut uri: *const XML_Char,
     mut bindingsPtr: &mut Ptr<Binding>,
@@ -4998,7 +4998,7 @@ unsafe extern "C" fn addBinding(
     let old_prefix_binding = prefix.binding.take();
     let b = if let Some(mut b) = (*parser).m_freeBindingList.take() {
         let mut b_mut = Rc::get_mut(&mut b).unwrap();
-        b_mut.prefix = Rc::downgrade(&prefix);
+        b_mut.prefix = Rc::downgrade(prefix);
 
         b.attId.set(attId);
         b.prevPrefixBinding.set(old_prefix_binding);
@@ -5009,7 +5009,7 @@ unsafe extern "C" fn addBinding(
         b
     } else {
         let b = Binding {
-            prefix: Rc::downgrade(&prefix),
+            prefix: Rc::downgrade(prefix),
             attId: Cell::new(attId),
             nextTagBinding: Cell::new(old_tag_binding),
             prevPrefixBinding: Cell::new(old_prefix_binding),
@@ -5035,7 +5035,7 @@ unsafe extern "C" fn addBinding(
     }
 
     /* NULL binding when default namespace undeclared */
-    let uri_ptr = if *uri == '\u{0}' as XML_Char && Rc::ptr_eq(&prefix, (*parser)
+    let uri_ptr = if *uri == '\u{0}' as XML_Char && Rc::ptr_eq(prefix, (*parser)
         .m_dtd
         .tables
         .borrow()
@@ -8345,7 +8345,7 @@ impl XML_ParserStruct {
                 drop(dtd_tables);
                 if addBinding(
                     self,
-                    prefix,
+                    &prefix,
                     None,
                     self.m_tempPool.current_start(),
                     &mut self.m_inheritedBindings,
