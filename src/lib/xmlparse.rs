@@ -1875,7 +1875,7 @@ impl XML_ParserStruct {
         }
         self.m_curBase = ptr::null();
         self.m_initEncoding = InitEncoding::new(&mut self.m_encoding, ptr::null());
-        self.m_encoding = &*self.m_initEncoding.as_ref().unwrap();
+        self.m_encoding = self.m_initEncoding.as_ref().unwrap();
         self.m_userData = ptr::null_mut();
         self.m_handlers = Default::default();
         self.m_handlers.m_externalEntityRefHandlerArg = self as XML_Parser;
@@ -5329,7 +5329,7 @@ impl XML_ParserStruct {
         };
         if enc.is_some() {
             self.m_initEncoding = enc;
-            self.m_encoding = &*self.m_initEncoding.as_ref().unwrap();
+            self.m_encoding = self.m_initEncoding.as_ref().unwrap();
             return XML_Error::NONE;
         }
 
