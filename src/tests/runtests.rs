@@ -20717,8 +20717,7 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20915,8 +20914,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         nsalloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
