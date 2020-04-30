@@ -4456,7 +4456,7 @@ impl XML_ParserStruct {
                 drop(dtd_tables);
                 drop(dtd_pools);
 
-                if self.m_ns as c_int != 0 && self.setElementTypePrefix(Rc::clone(&elementType)) == 0 {
+                if self.m_ns as c_int != 0 && self.setElementTypePrefix(&elementType) == 0 {
                     return XML_Error::NO_MEMORY;
                 }
 
@@ -8038,11 +8038,11 @@ unsafe extern "C" fn defineAttribute(
 impl XML_ParserStruct {
     unsafe fn setElementTypePrefix(
         &mut self,
-        mut elementType: Rc<ElementType>,
+        mut elementType: &ElementType,
     ) -> c_int {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
         let dtd_pools = self.m_dtd.pools.borrow();
-        let mut name = (*elementType).name;
+        let mut name = elementType.name;
         while *name != 0 {
             if *name == ASCII_COLON as XML_Char {
                 let mut s: *const XML_Char = ptr::null();
@@ -8892,7 +8892,7 @@ impl XML_ParserStruct {
             dtd_pools.pool.finish_string();
             drop(dtd_tables);
             drop(dtd_pools);
-            if self.setElementTypePrefix(Rc::clone(&ret)) == 0 {
+            if self.setElementTypePrefix(&ret) == 0 {
                 return None;
             }
         }
