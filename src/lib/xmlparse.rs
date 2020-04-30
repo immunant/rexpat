@@ -72,7 +72,7 @@ use std::alloc::{self, Layout};
 use std::cell::{Cell, RefCell};
 use std::cmp;
 use std::collections::{HashMap, HashSet, TryReserveError};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 use std::mem;
 use std::ops::{self, DerefMut};
 use std::ptr;
@@ -8108,7 +8108,7 @@ impl XML_ParserStruct {
                 AttributeId
             ).as_deref().map(Rc::clone)
         })?;
-        if (*id).name.name() != dtd_pools.pool.current_start().add(1) as *mut XML_Char {
+        if id.name.name() != dtd_pools.pool.current_start().add(1) as *mut XML_Char {
             dtd_pools.pool.clear_current();
         } else {
             let name = &dtd_pools.pool.finish_string()[1..];
@@ -8133,18 +8133,14 @@ impl XML_ParserStruct {
                     }
                     id.xmlns.set(true);
                 } else {
-                    let mut i: c_int = 0;
-                    i = 0;
-                    while name[usize::try_from(i).unwrap()] != 0 {
+                    let mut i = 0;
+                    while name[i] != 0 {
                         /* attributes without prefix are *not* in the default namespace */
-                        if name[usize::try_from(i).unwrap()] == ASCII_COLON as XML_Char {
-                            let mut j: c_int = 0; /* save one level of indirection */
-                            j = 0;
-                            while j < i {
-                                if !dtd_pools.pool.append_char(name[usize::try_from(j).unwrap()]) {
+                        if name[i] == ASCII_COLON as XML_Char {
+                            for j in 0..i {
+                                if !dtd_pools.pool.append_char(name[j]) {
                                     return None;
                                 }
-                                j += 1
                             }
                             if !dtd_pools.pool.append_char('\u{0}' as XML_Char) {
                                 return None;
@@ -8156,7 +8152,7 @@ impl XML_ParserStruct {
                                 Rc::try_new,
                                 Prefix
                             ).as_deref().map(Rc::clone)?;
-                            if prefix.name == tempName {
+                            if ptr::eq(prefix.name, tempName) {
                                 dtd_pools.pool.finish_string();
                             } else {
                                 dtd_pools.pool.clear_current();
