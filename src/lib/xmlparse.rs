@@ -6305,7 +6305,7 @@ impl XML_ParserStruct {
 
                         let dtd_pools = self.m_dtd.pools.borrow();
                         if !self.m_declEntity.is_none() {
-                            let mut declEntity = self.m_declEntity.as_ref().unwrap();
+                            let mut declEntity = self.m_declEntity.as_deref().unwrap();
                             declEntity.textLen.set(dtd_pools.entityValuePool.len() as c_int);
                             declEntity.textPtr.set(dtd_pools.entityValuePool.finish_string().as_ptr());
                             if self.m_handlers.hasEntityDecl() {
@@ -6370,7 +6370,7 @@ impl XML_ParserStruct {
                             Rc::try_new,
                             Entity
                         ).as_deref().map(Rc::clone);
-                        if let Some(declEntity) = self.m_declEntity.as_ref() {
+                        if let Some(declEntity) = self.m_declEntity.as_deref() {
                             declEntity.publicId.set(ptr::null());
                         } else {
                             return XML_Error::NO_MEMORY;
@@ -6385,7 +6385,7 @@ impl XML_ParserStruct {
                         && self.m_handlers.hasEntityDecl()
                     {
                         *eventEndPP = buf.as_ptr();
-                        let mut declEntity = self.m_declEntity.as_ref().unwrap();
+                        let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         self.m_handlers.entityDecl(
                             declEntity.name,
                             declEntity.is_param.get() as c_int,
@@ -6402,7 +6402,7 @@ impl XML_ParserStruct {
                 XML_ROLE::ENTITY_NOTATION_NAME => {
                     if self.m_dtd.keepProcessing.get() && !self.m_declEntity.is_none() {
                         let dtd_pools = self.m_dtd.pools.borrow();
-                        let mut declEntity = self.m_declEntity.as_ref().unwrap();
+                        let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         if !dtd_pools.pool.store_c_string(enc, buf.with_end(next)) {
                             declEntity.notation.set(ptr::null());
                             return XML_Error::NO_MEMORY;
@@ -6449,7 +6449,7 @@ impl XML_ParserStruct {
                             Rc::try_new,
                             Entity
                         ).as_deref().map(Rc::clone));
-                        let declEntity = match self.m_declEntity.as_ref() {
+                        let declEntity = match self.m_declEntity.as_deref() {
                             Some(declEntity) => declEntity,
                             None => return XML_Error::NO_MEMORY
                         };
@@ -6489,7 +6489,7 @@ impl XML_ParserStruct {
                             Rc::try_new,
                             Entity
                         ).as_deref().map(Rc::clone));
-                        let declEntity = match self.m_declEntity.as_ref() {
+                        let declEntity = match self.m_declEntity.as_deref() {
                             Some(declEntity) => declEntity,
                             None => return XML_Error::NO_MEMORY
                         };
@@ -7055,7 +7055,7 @@ impl XML_ParserStruct {
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar() as usize),
                         );
-                        let mut declEntity = self.m_declEntity.as_ref().unwrap();
+                        let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         if !successful {
                             declEntity.systemId.set(ptr::null());
                             return XML_Error::NO_MEMORY;
