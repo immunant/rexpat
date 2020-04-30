@@ -851,7 +851,6 @@ impl XML_ParserStruct {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
 pub struct Binding {
     pub prefix: Weak<Prefix>,
     pub nextTagBinding: Cell<Ptr<Binding>>,
