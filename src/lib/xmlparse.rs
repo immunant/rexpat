@@ -7997,7 +7997,7 @@ impl XML_ParserStruct {
             needSep = true
         }
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        for prefix in dtd_tables.prefixes.values_mut()
+        for (pk, prefix) in dtd_tables.prefixes.iter_mut()
         /* This test appears to be (justifiable) paranoia.  There does
             * not seem to be a way of injecting a prefix without a binding
             * that doesn't get errored long before this function is called.
@@ -8007,17 +8007,17 @@ impl XML_ParserStruct {
         {
             let mut i_0: c_int = 0; /* save one level of indirection */
             let mut len_0: c_int = 0;
-            let mut s: *const XML_Char = ptr::null();
             if !(*prefix).binding.is_null() {
                 if needSep && !self.m_tempPool.append_char(CONTEXT_SEP) {
                     return false;
                 }
-                s = (*prefix).name;
-                while *s != 0 {
+                for s in pk.0 {
+                    if *s == 0 {
+                        break;
+                    }
                     if !self.m_tempPool.append_char(*s) {
                         return false;
                     }
-                    s = s.offset(1)
                 }
                 if !self.m_tempPool.append_char(ASCII_EQUALS as XML_Char) {
                     return false;
@@ -8036,7 +8036,7 @@ impl XML_ParserStruct {
                 needSep = true
             }
         }
-        for e in dtd_tables.generalEntities.values() {
+        for (ek, e) in dtd_tables.generalEntities.iter() {
             if !(*e).open {
                 continue;
             }
@@ -8044,12 +8044,13 @@ impl XML_ParserStruct {
                 return false;
             }
             // TODO: Could the following be replaced by m_tempPool.append_c_string((*e).name)?
-            let mut s_0 = (*e).name;
-            while *s_0 != 0 {
+            for s_0 in ek.0 {
+                if *s_0 == 0 {
+                    break;
+                }
                 if !self.m_tempPool.append_char(*s_0) {
                     return false;
                 }
-                s_0 = s_0.offset(1)
             }
             needSep = true
         }
