@@ -22,8 +22,8 @@ pub use ::libc::{perror, fprintf, O_RDONLY};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct PROCESS_ARGS<'scf> {
-    pub parser: XML_Parser<'scf>,
+pub struct PROCESS_ARGS {
+    pub parser: XML_Parser,
     pub retPtr: *mut c_int,
 }
 /*
@@ -143,7 +143,7 @@ unsafe extern "C" fn externalEntityRefFilemap(
     let mut s: *mut XML_Char = 0 as *mut XML_Char;
     let mut filename: *const XML_Char = 0 as *const XML_Char;
     let mut entParser: XML_Parser =
-        XML_ExternalEntityParserCreate(parser, context, 0 as *const XML_Char);
+        XML_ExternalEntityParserCreate(parser.as_ref(), context, 0 as *const XML_Char);
     let mut filemapRes: c_int = 0;
     let mut args: PROCESS_ARGS = PROCESS_ARGS {
         parser: 0 as *mut XML_ParserStruct,
@@ -260,7 +260,7 @@ unsafe extern "C" fn externalEntityRefStream(
     let mut filename: *const XML_Char = 0 as *const XML_Char;
     let mut ret: c_int = 0;
     let mut entParser: XML_Parser =
-        XML_ExternalEntityParserCreate(parser, context, 0 as *const XML_Char);
+        XML_ExternalEntityParserCreate(parser.as_ref(), context, 0 as *const XML_Char);
     filename = resolveSystemId(base, systemId, &mut s);
     XML_SetBase(entParser, filename);
     ret = processStream(filename, entParser);

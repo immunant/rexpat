@@ -271,8 +271,8 @@ pub type DefaultCheck = default_check;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct DataIssue240<'scf> {
-    pub parser: XML_Parser<'scf>,
+pub struct DataIssue240 {
+    pub parser: XML_Parser,
     pub deep: c_int,
 }
 /* ptrdiff_t */
@@ -674,7 +674,7 @@ unsafe extern "C" fn external_entity_optioner(
         if strcmp(systemId, (*options).system_id) == 0 {
             let mut rc: XML_Status = XML_Status::ERROR;
             ext_parser = XML_ExternalEntityParserCreate(
-                parser,
+                parser.as_ref(),
                 context,
                 ptr::null(),
             );
@@ -2502,7 +2502,7 @@ unsafe extern "C" fn external_entity_loader(
     let mut test_data: *mut ExtTest = *(parser as *mut *mut c_void) as *mut ExtTest;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -2671,7 +2671,7 @@ unsafe extern "C" fn external_entity_faulter(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut fault: *mut ExtFaults = *(parser as *mut *mut c_void) as *mut ExtFaults;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6085,7 +6085,7 @@ unsafe extern "C" fn external_entity_resetter(
         finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6247,7 +6247,7 @@ unsafe extern "C" fn external_entity_suspender(
     let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6356,7 +6356,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     };
     let mut rc: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6523,7 +6523,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     let mut buffer: *mut c_void = ptr::null_mut();
     let mut parse_len: c_int = strlen((*fault).parse_text) as c_int;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6861,7 +6861,7 @@ unsafe extern "C" fn external_entity_cr_catcher(
     let mut text: *const c_char = b"\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6905,7 +6905,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     let mut text: *const c_char = b"<tag>\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7169,7 +7169,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     let mut text: *const c_char = b"<tag>]\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7280,7 +7280,7 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     crate::chardata::CharData_Init(&mut storage as *mut _);
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7451,7 +7451,7 @@ unsafe extern "C" fn external_entity_param_checker(
         b"<!-- Subordinate parser -->\n<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7636,7 +7636,7 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     }
     /* Here we use the global 'parser' variable */
     ext_parser = XML_ExternalEntityParserCreate(
-        g_parser,
+        g_parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8298,7 +8298,7 @@ unsafe extern "C" fn external_entity_param(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8441,7 +8441,7 @@ unsafe extern "C" fn external_entity_load_ignore(
         b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8577,7 +8577,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
                                  &[c_char; 73]>(b"<\x00!\x00[\x00I\x00G\x00N\x00O\x00R\x00E\x00[\x00<\x00!\x00E\x00L\x00E\x00M\x00E\x00N\x00T\x00 \x00e\x00 \x00(\x00#\x00P\x00C\x00D\x00A\x00T\x00A\x00)\x00*\x00>\x00]\x00]\x00>\x00\x00");
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8723,7 +8723,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
                                  &[c_char; 73]>(b"\x00<\x00!\x00[\x00I\x00G\x00N\x00O\x00R\x00E\x00[\x00<\x00!\x00E\x00L\x00E\x00M\x00E\x00N\x00T\x00 \x00e\x00 \x00(\x00#\x00P\x00C\x00D\x00A\x00T\x00A\x00)\x00*\x00>\x00]\x00]\x00>\x00");
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8953,7 +8953,7 @@ unsafe extern "C" fn external_entity_valuer(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9205,7 +9205,7 @@ unsafe extern "C" fn external_entity_not_standalone(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9317,7 +9317,7 @@ unsafe extern "C" fn external_entity_value_aborter(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9778,7 +9778,7 @@ unsafe extern "C" fn external_entity_public(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut parse_res: c_int = 0;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9990,7 +9990,7 @@ unsafe extern "C" fn external_entity_devaluer(
         );
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -10864,7 +10864,7 @@ unsafe extern "C" fn external_entity_oneshot_loader(
     let mut test_data: *mut ExtHdlrData = *(parser as *mut *mut c_void) as *mut ExtHdlrData;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -12286,7 +12286,7 @@ unsafe extern "C" fn external_entity_loader2(
     let mut test_data: *mut ExtTest2 = *(parser as *mut *mut c_void) as *mut ExtTest2;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -12755,7 +12755,7 @@ unsafe extern "C" fn external_entity_faulter2(
     let mut test_data: *mut ExtFaults2 = *(parser as *mut *mut c_void) as *mut ExtFaults2;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -14433,7 +14433,7 @@ unsafe extern "C" fn external_entity_handler(
     }
     XML_SetUserData(parser, callno as *mut c_void);
     p2 = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -16494,7 +16494,7 @@ unsafe extern "C" fn external_entity_duff_loader(
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16655,7 +16655,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
             .as_ptr() as *const c_char;
         allocation_count = 10000;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16678,7 +16678,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
         while i < max_alloc_count {
             allocation_count = callno + i as isize;
             new_parser = XML_ExternalEntityParserCreate(
-                parser,
+                parser.as_ref(),
                 context,
                 ptr::null(),
             );
@@ -16786,7 +16786,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
             .as_ptr() as *const c_char;
         XML_SetUserData(parser, 1i64 as *mut c_void);
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16798,7 +16798,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         /* Just run through once */
         text = b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16893,7 +16893,7 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut status: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -17416,7 +17416,7 @@ unsafe extern "C" fn external_entity_reallocator(
     let mut buffer: *mut c_void = ptr::null_mut();
     let mut status: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -17869,7 +17869,7 @@ unsafe extern "C" fn external_entity_alloc(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut parse_res: c_int = 0;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
