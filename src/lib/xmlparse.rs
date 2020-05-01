@@ -972,12 +972,22 @@ impl Default for Prefix {
 #[repr(C)]
 #[derive(Clone)]
 pub struct Tag {
+    /// parent of this element
     pub parent: Option<Box<Tag>>,
+
+    /// tagName in the original encoding
     pub rawName: *const c_char,
     pub rawNameLength: c_int,
+
+    /// tagName in the API encoding
     pub name: TagName,
+
+    /// buffer for name components
     pub buf: *mut c_char,
+
+    /// end of the buffer
     pub bufEnd: *mut c_char,
+
     pub bindings: *mut Binding,
 }
 
@@ -1326,13 +1336,6 @@ pub struct ContentScaffold {
 pub struct Named {
     pub name: KEY,
 }
-/* parent of this element */
-/* tagName in the original encoding */
-/* tagName in the API encoding */
-/* buffer for name components */
-/* end of the buffer */
-/* Round up n to be a multiple of sz, where sz is a power of 2. */
-/* Do safe (NULL-aware) pointer arithmetic */
 
 pub type KEY = *const XML_Char;
 /* The XML_Char before the name is used to determine whether
