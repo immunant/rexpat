@@ -1120,7 +1120,9 @@ pub struct DTD {
     pool: StringPool,
     entityValuePool: StringPool,
 
-    // All the hash tables merged into one structure
+    // All the hash tables merged into one structure;
+    // this is where most of the interior mutability lies
+    // that can't be stored in `Cell`s below
     tables: RefCell<DTDTables>,
 
     scaffold: Rc<RefCell<DTDScaffold>>,
