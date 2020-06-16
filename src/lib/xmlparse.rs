@@ -1129,8 +1129,8 @@ impl<'a, T> HashInsertResult<'a, T> {
 
     fn into_mut(self) -> Option<&'a mut T> {
         match self {
-            HashInsertResult::Found(r) |
-            HashInsertResult::New(r) => Some(r),
+            HashInsertResult::New(r) |
+            HashInsertResult::Found(r) => Some(r),
             HashInsertResult::Err => None,
         }
     }
