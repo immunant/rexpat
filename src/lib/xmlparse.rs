@@ -71,7 +71,7 @@ use fallible_collections::FallibleBox;
 use std::alloc::{self, Layout};
 use std::cell::{Cell, RefCell};
 use std::cmp;
-use std::collections::{HashMap, HashSet, TryReserveError};
+use std::collections::{HashMap, HashSet, TryReserveError, hash_map};
 use std::convert::{TryFrom, TryInto};
 use std::mem;
 use std::ops;
@@ -1036,17 +1036,21 @@ macro_rules! hash_insert {
         let __key = $key;
         let __hk = HashKey::from(__key);
         __map.get_mut(&__hk)
-            .map(|x| x.as_mut() as *mut $et)
+            .map(|x| (x.as_mut() as *mut $et, false))
             .unwrap_or_else(|| {
                 if __map.try_reserve(1).is_err() {
-                    return ptr::null_mut();
+                    return (ptr::null_mut(), false);
                 }
 
                 let v = $et { name: __key, ..$new_fn() };
                 if let Ok(b) = Box::try_new(v) {
-                    __map.entry(__hk).or_insert(b).as_mut() as *mut $et
+                    use hash_map::Entry::*;
+                    match __map.entry(__hk) {
+                        Occupied(_) => panic!("found Occupied hash key"),
+                        Vacant(e) => (e.insert(b).as_mut(), true),
+                    }
                 } else {
-                    ptr::null_mut()
+                    (ptr::null_mut(), false)
                 }
             })
     }};
@@ -1168,6 +1172,7 @@ impl DTD {
                     name.as_ptr(),
                     Prefix
                 )
+                .0
                 .is_null()
                 {
                     return Err(TryReserveError::CapacityOverflow);
@@ -1185,7 +1190,7 @@ impl DTD {
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
                 let typed_name = TypedAttributeName(name_0.as_ptr() as *mut XML_Char);
-                let newA = hash_insert!(
+                let (newA, inserted) = hash_insert!(
                     &mut new_tables.attributeIds,
                     typed_name,
                     AttributeId
@@ -1193,6 +1198,7 @@ impl DTD {
                 if newA.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
+                assert!(inserted);
                 (*newA).maybeTokenized = oldA.maybeTokenized;
                 if !oldA.prefix.is_null() {
                     (*newA).xmlns = oldA.xmlns;
@@ -1212,7 +1218,7 @@ impl DTD {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
-                let newE = hash_insert!(
+                let (newE, inserted) = hash_insert!(
                     &mut new_tables.elementTypes,
                     name_1.as_ptr(),
                     ElementType,
@@ -1221,6 +1227,7 @@ impl DTD {
                 if newE.is_null() {
                     return Err(TryReserveError::CapacityOverflow);
                 }
+                assert!(inserted);
                 if !oldE.idAtt.is_null() {
                     (*newE).idAtt = hash_lookup!(
                         new_tables.attributeIds,
@@ -4304,7 +4311,7 @@ impl XML_ParserStruct {
                     name.as_ptr(),
                     ElementType,
                     ElementType::new
-                );
+                ).0;
                 if elementType.is_null() {
                     return XML_Error::NO_MEMORY;
                 }
@@ -5832,7 +5839,7 @@ impl XML_ParserStruct {
                         &mut self.m_dtd.tables.borrow_mut().paramEntities,
                         externalSubsetName.as_ptr(),
                         Entity
-                    );
+                    ).0;
                     if self.m_declEntity.is_null() {
                         return XML_Error::NO_MEMORY;
                     }
@@ -5896,7 +5903,7 @@ impl XML_ParserStruct {
                                 &mut self.m_dtd.tables.borrow_mut().paramEntities,
                                 externalSubsetName.as_ptr(),
                                 Entity
-                            );
+                            ).0;
                             if entity.is_null() {
                                 /* end of DTD - no need to update dtd->keepProcessing */
                                 /* The external subset name "#" will have already been
@@ -5950,7 +5957,7 @@ impl XML_ParserStruct {
                                 &mut self.m_dtd.tables.borrow_mut().paramEntities,
                                 externalSubsetName.as_ptr(),
                                 Entity
-                            );
+                            ).0;
                             if entity.is_null() {
                                 return XML_Error::NO_MEMORY;
                             }
@@ -6214,7 +6221,7 @@ impl XML_ParserStruct {
                             &mut self.m_dtd.tables.borrow_mut().paramEntities,
                             externalSubsetName.as_ptr(),
                             Entity
-                        );
+                        ).0;
                         if self.m_declEntity.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
@@ -6282,16 +6289,17 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_declEntity = self.m_dtd.pool.current_slice(|name| hash_insert!(
+                        let (declEntity, inserted) = self.m_dtd.pool.current_slice(|name| hash_insert!(
                             &mut self.m_dtd.tables.borrow_mut().generalEntities,
                             name.as_ptr(),
                             Entity
                         ));
+                        self.m_declEntity = declEntity;
                         if self.m_declEntity.is_null() {
                             // FIXME: this never happens in Rust, it just panics
                             return XML_Error::NO_MEMORY;
                         }
-                        if (*self.m_declEntity).name != self.m_dtd.pool.current_start() {
+                        if !inserted {
                             self.m_dtd.pool.clear_current();
                             self.m_declEntity = ptr::null_mut();
                         } else {
@@ -6319,15 +6327,16 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_declEntity = self.m_dtd.pool.current_slice(|name| hash_insert!(
+                        let (declEntity, inserted) = self.m_dtd.pool.current_slice(|name| hash_insert!(
                             &mut self.m_dtd.tables.borrow_mut().paramEntities,
                             name.as_ptr(),
                             Entity
                         ));
+                        self.m_declEntity = declEntity;
                         if self.m_declEntity.is_null() {
                             return XML_Error::NO_MEMORY;
                         }
-                        if (*self.m_declEntity).name != self.m_dtd.pool.current_start() {
+                        if !inserted {
                             self.m_dtd.pool.clear_current();
                             self.m_declEntity = ptr::null_mut();
                         } else {
@@ -7838,7 +7847,7 @@ impl XML_ParserStruct {
                 }
                 // This is unsafe, start needs be very temporary
                 let start = self.m_dtd.pool.current_start();
-                let prefix = hash_insert!(
+                let (prefix, inserted) = hash_insert!(
                     &mut self.m_dtd.tables.borrow_mut().prefixes,
                     start,
                     Prefix
@@ -7846,7 +7855,7 @@ impl XML_ParserStruct {
                 if prefix.is_null() {
                     return 0;
                 }
-                if (*prefix).name == start {
+                if inserted {
                     self.m_dtd.pool.finish_string();
                 } else {
                     self.m_dtd.pool.clear_current();
@@ -7875,7 +7884,7 @@ impl XML_ParserStruct {
         }
         // let mut name = &mut *name;
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        let id = self.m_dtd.pool.current_mut_slice(|name| {
+        let (id, inserted) = self.m_dtd.pool.current_mut_slice(|name| {
             let typed_name = TypedAttributeName(name.as_mut_ptr() as *mut XML_Char);
             hash_insert!(
                 &mut dtd_tables.attributeIds,
@@ -7886,7 +7895,7 @@ impl XML_ParserStruct {
         if id.is_null() {
             return ptr::null_mut();
         }
-        if (*id).name.name() != self.m_dtd.pool.current_start().add(1) as *mut XML_Char {
+        if !inserted {
             self.m_dtd.pool.clear_current();
         } else {
             let name = self.m_dtd.pool.finish_string().split_at(1).1;
@@ -7906,7 +7915,7 @@ impl XML_ParserStruct {
                             &mut dtd_tables.prefixes,
                             &name[6] as *const _,
                             Prefix
-                        );
+                        ).0;
                     }
                     (*id).xmlns = true
                 } else {
@@ -7927,15 +7936,16 @@ impl XML_ParserStruct {
                                 return ptr::null_mut();
                             }
                             let tempName = self.m_dtd.pool.current_start();
-                            (*id).prefix = hash_insert!(
+                            let (prefix, inserted) = hash_insert!(
                                 &mut dtd_tables.prefixes,
                                 tempName,
                                 Prefix
                             );
+                            (*id).prefix = prefix;
                             if (*id).prefix.is_null() {
                                 return ptr::null_mut();
                             }
-                            if (*(*id).prefix).name == tempName {
+                            if inserted {
                                 self.m_dtd.pool.finish_string();
                             } else {
                                 self.m_dtd.pool.clear_current();
@@ -8108,7 +8118,7 @@ impl XML_ParserStruct {
                                 &mut dtd_tables.prefixes,
                                 prefix_name.as_ptr(),
                                 Prefix
-                            );
+                            ).0;
                         }
                         prefix
                     });
@@ -8190,7 +8200,7 @@ unsafe extern "C" fn copyEntityTable(
             Some(name) => name,
             None => return 0,
         };
-        let newE = hash_insert!(
+        let (newE, inserted) = hash_insert!(
             &mut newTable,
             name.as_ptr(),
             Entity
@@ -8198,6 +8208,7 @@ unsafe extern "C" fn copyEntityTable(
         if newE.is_null() {
             return 0;
         }
+        assert!(inserted);
         if !oldE.systemId.is_null() {
             let mut tem = match newPool.copy_c_string(oldE.systemId) {
                 Some(tem) => tem,
@@ -8345,7 +8356,7 @@ impl XML_ParserStruct {
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return ptr::null_mut();
         }
-        let ret = self.m_dtd.pool.current_slice(|name| hash_insert!(
+        let (ret, inserted) = self.m_dtd.pool.current_slice(|name| hash_insert!(
             &mut self.m_dtd.tables.borrow_mut().elementTypes,
             name.as_ptr(),
             ElementType,
@@ -8354,7 +8365,7 @@ impl XML_ParserStruct {
         if ret.is_null() {
             return ptr::null_mut();
         }
-        if (*ret).name != self.m_dtd.pool.current_start() {
+        if !inserted {
             self.m_dtd.pool.clear_current();
         } else {
             self.m_dtd.pool.finish_string();
