@@ -7987,8 +7987,6 @@ impl XML_ParserStruct {
         mut buf: ExpatBufRef,
     ) -> Ptr<AttributeId> {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        // Convert the RefMut manually into a &mut
-        // so the compiler can split borrows over the fields
         if !self.m_dtd.pool.append_char(AttributeType::Unset.into()) {
             return None;
         }
