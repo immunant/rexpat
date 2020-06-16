@@ -4,6 +4,3 @@
 [submodule "deps/wchar"]
 	path = deps/wchar
 	url = https://github.com/immunant/wchar-rs
-[submodule "deps/bumpalo"]
-	path = deps/bumpalo
-	url = https://github.com/immunant/bumpalo
