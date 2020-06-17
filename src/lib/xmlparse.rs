@@ -1092,6 +1092,15 @@ impl From<KEY> for HashKey {
     }
 }
 
+impl HashKey {
+    // Includes the zero terminator
+    fn from_c_string(key: KEY) -> Self {
+        unsafe {
+            HashKey(std::slice::from_raw_parts(key, 1 + keylen(key) as usize))
+        }
+    }
+}
+
 enum HashInsertResult<'a, T> {
     New(&'a mut T),
     Found(&'a mut T),
@@ -1337,13 +1346,13 @@ impl DTD {
             }
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
-                let mut name_1 = match newDtd.pool.copy_c_string(oldE.name) {
+                let mut name_1 = match newDtd.pool.copy_c_string(oldE.name.0.as_ptr()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
                 let newE = match hash_insert!(
                     &mut new_tables.elementTypes,
-                    name_1.as_ptr(),
+                    HashKey::from_c_string(name_1.as_ptr()),
                     Rc::try_new,
                     ElementType,
                     ElementType::new
@@ -1476,7 +1485,7 @@ an attribute has been specified. */
 
 #[repr(C)]
 pub struct ElementType {
-    pub name: *const XML_Char,
+    pub name: HashKey,
     pub prefix: Cell<Ptr<Prefix>>,
     pub idAtt: Cell<Ptr<AttributeId>>,
     pub defaultAtts: RefCell<Vec<DefaultAttribute>>,
@@ -1485,7 +1494,7 @@ pub struct ElementType {
 impl ElementType {
     fn new() -> Self {
         ElementType {
-            name: ptr::null(),
+            name: HashKey(&[]),
             prefix: Cell::new(None),
             idAtt: Cell::new(None),
             defaultAtts: RefCell::new(Vec::new()),
@@ -4409,7 +4418,7 @@ impl XML_ParserStruct {
                 };
                 let elementType = match hash_insert!(
                     &mut dtd_tables.elementTypes,
-                    name.as_ptr(),
+                    HashKey::from_c_string(name.as_ptr()),
                     Rc::try_new,
                     ElementType,
                     ElementType::new
@@ -6204,7 +6213,7 @@ impl XML_ParserStruct {
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name,
+                                self.m_declElementType.as_ref().unwrap().name.0.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 ptr::null(),
@@ -6259,7 +6268,7 @@ impl XML_ParserStruct {
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name,
+                                self.m_declElementType.as_ref().unwrap().name.0.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 attVal,
@@ -6823,7 +6832,9 @@ impl XML_ParserStruct {
                                 .m_declElementType
                                 .as_ref()
                                 .unwrap()
-                                .name, content);
+                                .name
+                                .0
+                                .as_ptr(), content);
                             handleDefault = false
                         }
                         self.m_dtd.in_eldecl.set(false);
@@ -6946,14 +6957,13 @@ impl XML_ParserStruct {
                         };
                         scf.scaffold[myindex].type_0 = XML_Content_Type::NAME;
                         scf.scaffold[myindex].quant = quant;
-                        scf.scaffold[myindex].name = (*el).name;
+                        scf.scaffold[myindex].name = (*el).name.0.as_ptr();
 
-                        let mut name_2 = el.name;
                         let mut nameLen = 0;
                         loop {
                             let fresh37 = nameLen;
                             nameLen = nameLen + 1;
-                            if !(*name_2.offset(fresh37 as isize) != 0) {
+                            if el.name.0[fresh37] == 0 {
                                 break;
                             }
                         }
@@ -6991,7 +7001,9 @@ impl XML_ParserStruct {
                                     .m_declElementType
                                     .as_ref()
                                     .unwrap()
-                                    .name, model);
+                                    .name
+                                    .0
+                                    .as_ptr(), model);
                             }
                             self.m_dtd.in_eldecl.set(false);
                             self.m_dtd.contentStringLen.set(0);
@@ -8016,16 +8028,15 @@ impl XML_ParserStruct {
         mut elementType: &ElementType,
     ) -> c_int {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        let mut name = elementType.name;
-        while *name != 0 {
-            if *name == ASCII_COLON as XML_Char {
-                let mut s: *const XML_Char = ptr::null();
-                s = elementType.name;
-                while s != name {
-                    if !self.m_dtd.pool.append_char(*s) {
+        let mut name = elementType.name.0;
+        while name[0] != 0 {
+            if name[0] == ASCII_COLON as XML_Char {
+                let mut s = elementType.name.0;
+                while !ptr::eq(s, name) {
+                    if !self.m_dtd.pool.append_char(s[0]) {
                         return 0;
                     }
-                    s = s.offset(1)
+                    s = &s[1..];
                 }
                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                     return 0;
@@ -8051,7 +8062,7 @@ impl XML_ParserStruct {
                 elementType.prefix.set(Some(Rc::clone(prefix)));
                 break;
             } else {
-                name = name.offset(1)
+                name = &name[1..];
             }
         }
         1
@@ -8557,7 +8568,7 @@ impl XML_ParserStruct {
         let (ret, inserted) = self.m_dtd.pool.current_slice(|name| {
             let ret = hash_insert!(
                 &mut dtd_tables.elementTypes,
-                name.as_ptr(),
+                HashKey::from_c_string(name.as_ptr()),
                 Rc::try_new,
                 ElementType,
                 ElementType::new
