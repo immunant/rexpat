@@ -869,24 +869,22 @@ pub struct AttributeId {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct TypedAttributeName(usize, HashKey);
+pub struct TypedAttributeName{
+    type_idx: usize,
+    name: HashKey,
+}
 
 impl TypedAttributeName {
     #[inline]
-    fn type_idx(&self) -> usize {
-        self.0
-    }
-
-    #[inline]
     fn name(&self) -> *const XML_Char {
-        (self.1).0.as_ptr()
+        self.name.0.as_ptr()
     }
 }
 
 impl From<TypedAttributeName> for HashKey {
     #[inline]
     fn from(typed_name: TypedAttributeName) -> Self {
-        typed_name.1
+        typed_name.name
     }
 }
 
@@ -1298,20 +1296,20 @@ impl DTD {
             for oldA in old_tables.attributeIds.values()
             /* Copy the attribute id table. */
             {
-                let att_type_idx = {
-                    let att_type_idx = new_att_types.len();
+                let type_idx = {
+                    let type_idx = new_att_types.len();
                     new_att_types.push(AttributeType::Unset);
-                    att_type_idx
+                    type_idx
                 };
                 // FIXME: should be copy_c_string_cells
                 let name_0 = match newDtd.pool.copy_c_string(oldA.name.name()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
-                let typed_name = TypedAttributeName(
-                    att_type_idx,
-                    HashKey::from(name_0.as_ptr()),
-                );
+                let typed_name = TypedAttributeName {
+                    type_idx,
+                    name: HashKey::from(name_0.as_ptr()),
+                };
                 let newA = match hash_insert!(
                     &mut new_tables.attributeIds,
                     typed_name,
@@ -4461,13 +4459,13 @@ impl XML_ParserStruct {
             */
             {
                 let mut att_types = self.m_dtd.att_types.borrow_mut();
-                if att_types[attId.name.type_idx()].is_set() {
+                if att_types[attId.name.type_idx].is_set() {
                     if !enc_type.is_internal() {
                         self.m_eventPtr = currAtt.name
                     }
                     return XML_Error::DUPLICATE_ATTRIBUTE;
                 }
-                att_types[attId.name.type_idx()] = AttributeType::Normal;
+                att_types[attId.name.type_idx] = AttributeType::Normal;
             }
             if !currAtt.normalized {
                 let mut result: XML_Error = XML_Error::NONE;
@@ -4518,7 +4516,7 @@ impl XML_ParserStruct {
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
                         let mut att_types = self.m_dtd.att_types.borrow_mut();
-                        att_types[attId.name.type_idx()] = AttributeType::Namespace;
+                        att_types[attId.name.type_idx] = AttributeType::Namespace;
                         self.typed_atts.push(attId.name);
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
@@ -4530,7 +4528,7 @@ impl XML_ParserStruct {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
                     let mut att_types = self.m_dtd.att_types.borrow_mut();
-                    att_types[attId.name.type_idx()] = AttributeType::Prefixed;
+                    att_types[attId.name.type_idx] = AttributeType::Prefixed;
                     self.typed_atts.push(attId.name);
                 }
             } else {
@@ -4549,7 +4547,7 @@ impl XML_ParserStruct {
         self.m_idAttIndex = -1;
         if let Some(name) = get_cell_ptr(&elementType.idAtt).as_deref().map(|x| x.name) {
             let att_types = self.m_dtd.att_types.borrow();
-            if att_types[name.type_idx()].is_set() {
+            if att_types[name.type_idx].is_set() {
                 for i in 0..self.typed_atts.len() {
                     if self.typed_atts[i] == name {
                         self.m_idAttIndex = 2 * i as c_int;
@@ -4567,7 +4565,7 @@ impl XML_ParserStruct {
             return XML_Error::NO_MEMORY;
         }
         for da in elementType.defaultAtts.borrow().iter() {
-            if !self.m_dtd.att_types.borrow()[da.id.name.type_idx()].is_set() && !da.value.is_null() {
+            if !self.m_dtd.att_types.borrow()[da.id.name.type_idx].is_set() && !da.value.is_null() {
                 if let Some(ref prefix) = get_cell_ptr(&da.id.prefix) {
                     if da.id.xmlns.get() {
                         let mut result_1: XML_Error = addBinding(
@@ -4583,21 +4581,21 @@ impl XML_ParserStruct {
                         #[cfg(feature = "mozilla")]
                         {
                             let mut att_types = self.m_dtd.att_types.borrow_mut();
-                            att_types[da.id.name.type_idx()] = AttributeType::Namespace;
+                            att_types[da.id.name.type_idx] = AttributeType::Namespace;
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                             self.typed_atts.push(da.id.name);
                         }
                     } else {
                         let mut att_types = self.m_dtd.att_types.borrow_mut();
-                        att_types[da.id.name.type_idx()] = AttributeType::Prefixed;
+                        att_types[da.id.name.type_idx] = AttributeType::Prefixed;
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                         self.typed_atts.push(da.id.name);
                     }
                 } else {
                     let mut att_types = self.m_dtd.att_types.borrow_mut();
-                    att_types[da.id.name.type_idx()] = AttributeType::Normal;
+                    att_types[da.id.name.type_idx] = AttributeType::Normal;
                     self.m_atts.push(Attribute::from_default(da));
                     self.typed_atts.push(da.id.name);
                 }
@@ -4621,11 +4619,11 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                if att_types[self.typed_atts[i].type_idx()] == AttributeType::Prefixed { // TODO: this could be a match instead
+                if att_types[self.typed_atts[i].type_idx] == AttributeType::Prefixed { // TODO: this could be a match instead
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset; /* clear flag */
+                    att_types[self.typed_atts[i].type_idx] = AttributeType::Unset; /* clear flag */
                     let id = dtd_tables.attributeIds.get(&HashKey::from(s));
                     if id.is_none() || get_cell_ptr(&id.unwrap().prefix).is_none() {
                         /* This code is walking through the appAtts array, dealing
@@ -4714,7 +4712,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && att_types[self.typed_atts[i].type_idx()] == AttributeType::Namespace {
+                } else if cfg!(feature = "mozilla") && att_types[self.typed_atts[i].type_idx] == AttributeType::Namespace {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
@@ -4752,7 +4750,7 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                     ];
 
-                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset; /* clear flag */
+                    att_types[self.typed_atts[i].type_idx] = AttributeType::Unset; /* clear flag */
                     if !self.m_tempPool.append_c_string(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.append_char(self.m_namespaceSeparator)
                     {
@@ -4800,14 +4798,14 @@ impl XML_ParserStruct {
                         break;
                     }
                 } else {
-                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset;
+                    att_types[self.typed_atts[i].type_idx] = AttributeType::Unset;
                 }
                 i += 1
             }
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset;
+            att_types[self.typed_atts[i].type_idx] = AttributeType::Unset;
             i += 1;
         }
 
@@ -4819,7 +4817,7 @@ impl XML_ParserStruct {
 
         let mut binding = bindingsPtr.as_ref().map(Rc::clone);
         while let Some(b) = binding {
-            att_types[get_cell_ptr(&b.attId).unwrap().name.type_idx()] = AttributeType::Unset;
+            att_types[get_cell_ptr(&b.attId).unwrap().name.type_idx] = AttributeType::Unset;
             binding = get_cell_ptr(&b.nextTagBinding);
         }
         if !self.m_ns {
@@ -8065,14 +8063,14 @@ impl XML_ParserStruct {
         mut buf: ExpatBufRef,
     ) -> Ptr<AttributeId> {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        let att_type_idx = {
+        let type_idx = {
             let mut dtd_att_types = self.m_dtd.att_types.borrow_mut();
-            let att_type_idx = dtd_att_types.len();
+            let type_idx = dtd_att_types.len();
             if dtd_att_types.try_reserve(1).is_err() {
                 return None;
             }
             dtd_att_types.push(AttributeType::Unset);
-            att_type_idx
+            type_idx
         };
         let enc = self.encoding(enc_type);
         if !self.m_dtd.pool.store_c_string(enc, buf) {
@@ -8081,10 +8079,10 @@ impl XML_ParserStruct {
         // let mut name = &mut *name;
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
         let (id, inserted) = self.m_dtd.pool.current_mut_slice(|name| {
-            let typed_name = TypedAttributeName(
-                att_type_idx,
-                HashKey::from(name.as_ptr()),
-            );
+            let typed_name = TypedAttributeName {
+                type_idx,
+                name: HashKey::from(name.as_ptr()),
+            };
             let id = hash_insert!(
                 &mut dtd_tables.attributeIds,
                 typed_name,
