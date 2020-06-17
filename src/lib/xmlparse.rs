@@ -74,7 +74,7 @@ use std::cmp;
 use std::collections::{HashMap, HashSet, TryReserveError, hash_map};
 use std::convert::TryInto;
 use std::mem;
-use std::ops::{self, DerefMut};
+use std::ops::{self, Deref, DerefMut};
 use std::ptr;
 use std::rc::{Rc, Weak};
 use std::slice;
@@ -877,7 +877,7 @@ pub struct TypedAttributeName{
 impl TypedAttributeName {
     #[inline]
     fn name(&self) -> *const XML_Char {
-        self.name.0.as_ptr()
+        self.name.as_ptr()
     }
 }
 
@@ -1101,6 +1101,13 @@ impl HashKey {
     }
 }
 
+impl Deref for HashKey {
+    type Target = [XML_Char];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 enum HashInsertResult<'a, T> {
     New(&'a mut T),
     Found(&'a mut T),
@@ -1282,7 +1289,7 @@ impl DTD {
 
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
-                let mut name = match newDtd.pool.copy_c_string(oldP.name.0.as_ptr()) {
+                let mut name = match newDtd.pool.copy_c_string(oldP.name.as_ptr()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
@@ -1346,7 +1353,7 @@ impl DTD {
             }
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
-                let mut name_1 = match newDtd.pool.copy_c_string(oldE.name.0.as_ptr()) {
+                let mut name_1 = match newDtd.pool.copy_c_string(oldE.name.as_ptr()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
@@ -3902,7 +3909,7 @@ impl XML_ParserStruct {
                             if !entity.textPtr.get().is_null() {
                                 let mut result: XML_Error = XML_Error::NONE;
                                 if !self.m_defaultExpandInternalEntities {
-                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name.0.as_ptr(), 0);
+                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name.as_ptr(), 0);
 
                                     if !skippedHandlerRan && self.m_handlers.hasDefault() {
                                         reportDefault(self, enc_type, buf.with_end(next));
@@ -4173,7 +4180,7 @@ impl XML_ParserStruct {
                         }
                         while let Some(b) = tag.bindings.take() {
                             let prefix = b.prefix.upgrade().unwrap();
-                            self.m_handlers.endNamespaceDecl(prefix.name.0.as_ptr());
+                            self.m_handlers.endNamespaceDecl(prefix.name.as_ptr());
                             prefix.binding.set(b.prevPrefixBinding.take());
                             tag.bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
                             self.m_freeBindingList = Some(b);
@@ -4378,7 +4385,7 @@ impl XML_ParserStruct {
             */
             let prefix = b.prefix.upgrade().unwrap();
             unsafe {
-                self.m_handlers.endNamespaceDecl(prefix.name.0.as_ptr());
+                self.m_handlers.endNamespaceDecl(prefix.name.as_ptr());
             }
             prefix.binding.set(b.prevPrefixBinding.take());
             bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
@@ -4699,7 +4706,7 @@ impl XML_ParserStruct {
                     if self.m_ns_triplets {
                         /* append namespace separator and prefix */
                         self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                        let mut s = b.prefix.upgrade().unwrap().name.0;
+                        let mut s = &b.prefix.upgrade().unwrap().name[..];
                         loop {
                             if !self.m_tempPool.append_char(s[0]) {
                                 return XML_Error::NO_MEMORY;
@@ -4853,8 +4860,8 @@ impl XML_ParserStruct {
         };
         let binding_prefix = binding.prefix.upgrade().unwrap();
         let mut prefixLen = 0;
-        if self.m_ns_triplets && !binding_prefix.name.0.is_empty() {
-            while binding_prefix.name.0[prefixLen] != 0 {
+        if self.m_ns_triplets && !binding_prefix.name.is_empty() {
+            while binding_prefix.name[prefixLen] != 0 {
                 prefixLen += 1;
             }
             /* prefixLen includes null terminator */
@@ -4865,7 +4872,7 @@ impl XML_ParserStruct {
             skip_to_colon,
         );
         tagNamePtr.uriLen = (*binding).uriLen.get();
-        tagNamePtr.prefix = binding_prefix.name.0.as_ptr();
+        tagNamePtr.prefix = binding_prefix.name.as_ptr();
         tagNamePtr.prefixLen = prefixLen;
 
         let localPart = tagNamePtr.localPart.as_ptr();
@@ -4887,7 +4894,7 @@ impl XML_ParserStruct {
         if prefixLen != 0 {
             /* replace null terminator */
             *uri.last_mut().unwrap() = self.m_namespaceSeparator;
-            uri.extend(&binding_prefix.name.0[..prefixLen]);
+            uri.extend(&binding_prefix.name[..prefixLen]);
         }
         drop(uri);
         tagNamePtr.str_0 = TagNameString::BindingUri(binding);
@@ -4923,22 +4930,22 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
-    if *uri as c_int == '\u{0}' as i32 && !prefix.name.0.is_empty() {
+    if *uri as c_int == '\u{0}' as i32 && !prefix.name.is_empty() {
         return XML_Error::UNDECLARING_PREFIX;
     }
-    if !prefix.name.0.is_empty()
-        && prefix.name.0[0] == ASCII_x as XML_Char
-        && prefix.name.0[1] == ASCII_m as XML_Char
-        && prefix.name.0[2] == ASCII_l as XML_Char
+    if !prefix.name.is_empty()
+        && prefix.name[0] == ASCII_x as XML_Char
+        && prefix.name[1] == ASCII_m as XML_Char
+        && prefix.name[2] == ASCII_l as XML_Char
     {
         /* Not allowed to bind xmlns */
-        if prefix.name.0[3] == ASCII_n as XML_Char
-            && prefix.name.0[4] == ASCII_s as XML_Char
-            && prefix.name.0[5] == '\u{0}' as XML_Char
+        if prefix.name[3] == ASCII_n as XML_Char
+            && prefix.name[4] == ASCII_s as XML_Char
+            && prefix.name[5] == '\u{0}' as XML_Char
         {
             return XML_Error::RESERVED_PREFIX_XMLNS;
         }
-        if prefix.name.0[3] == '\u{0}' as XML_Char {
+        if prefix.name[3] == '\u{0}' as XML_Char {
             mustBeXML = true
         }
     }
@@ -5034,7 +5041,7 @@ unsafe extern "C" fn addBinding(
     /* if attId == NULL then we are not starting a namespace scope */
     if !att_id_is_none && (*parser).m_handlers.hasStartNamespaceDecl() {
         (*parser).m_handlers.startNamespaceDecl(
-            prefix.name.0.as_ptr(),
+            prefix.name.as_ptr(),
             uri_ptr,
         );
     }
@@ -5771,7 +5778,7 @@ impl XML_ParserStruct {
             self.m_dtd.paramEntityRead.set(false);
             entity.open.set(true);
             let entity_name = if cfg!(feature = "mozilla") {
-                entity.name.0.as_ptr()
+                entity.name.as_ptr()
             } else {
                 ptr::null()
             };
@@ -6208,7 +6215,7 @@ impl XML_ParserStruct {
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name.0.as_ptr(),
+                                self.m_declElementType.as_ref().unwrap().name.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 ptr::null(),
@@ -6263,7 +6270,7 @@ impl XML_ParserStruct {
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name.0.as_ptr(),
+                                self.m_declElementType.as_ref().unwrap().name.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 attVal,
@@ -6292,7 +6299,7 @@ impl XML_ParserStruct {
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
-                                    declEntity.name.0.as_ptr(),
+                                    declEntity.name.as_ptr(),
                                     declEntity.is_param.get() as c_int,
                                     declEntity.textPtr.get(),
                                     declEntity.textLen.get(),
@@ -6368,7 +6375,7 @@ impl XML_ParserStruct {
                         *eventEndPP = buf.as_ptr();
                         let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         self.m_handlers.entityDecl(
-                            declEntity.name.0.as_ptr(),
+                            declEntity.name.as_ptr(),
                             declEntity.is_param.get() as c_int,
                             ptr::null(),
                             0,
@@ -6391,7 +6398,7 @@ impl XML_ParserStruct {
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
-                                declEntity.name.0.as_ptr(),
+                                declEntity.name.as_ptr(),
                                 declEntity.base.get(),
                                 declEntity.systemId.get(),
                                 declEntity.publicId.get(),
@@ -6401,7 +6408,7 @@ impl XML_ParserStruct {
                         } else if self.m_handlers.hasEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.entityDecl(
-                                declEntity.name.0.as_ptr(),
+                                declEntity.name.as_ptr(),
                                 0,
                                 ptr::null(),
                                 0,
@@ -6952,13 +6959,13 @@ impl XML_ParserStruct {
                         };
                         scf.scaffold[myindex].type_0 = XML_Content_Type::NAME;
                         scf.scaffold[myindex].quant = quant;
-                        scf.scaffold[myindex].name = (*el).name.0.as_ptr();
+                        scf.scaffold[myindex].name = (*el).name.as_ptr();
 
                         let mut nameLen = 0;
                         loop {
                             let fresh37 = nameLen;
                             nameLen = nameLen + 1;
-                            if el.name.0[fresh37] == 0 {
+                            if el.name[fresh37] == 0 {
                                 break;
                             }
                         }
@@ -8023,10 +8030,10 @@ impl XML_ParserStruct {
         mut elementType: &ElementType,
     ) -> c_int {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        let mut name = elementType.name.0;
+        let mut name = &elementType.name[..];
         while name[0] != 0 {
             if name[0] == ASCII_COLON as XML_Char {
-                let mut s = elementType.name.0;
+                let mut s = &elementType.name[..];
                 while !ptr::eq(s, name) {
                     if !self.m_dtd.pool.append_char(s[0]) {
                         return 0;
@@ -8398,7 +8405,7 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedOldBase: *const XML_Char = ptr::null();
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
-        let mut name = match newPool.copy_c_string((*oldE).name.0.as_ptr()) {
+        let mut name = match newPool.copy_c_string((*oldE).name.as_ptr()) {
             Some(name) => name,
             None => return 0,
         };
