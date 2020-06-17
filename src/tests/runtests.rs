@@ -19377,7 +19377,7 @@ unsafe extern "C" fn test_alloc_realloc_attributes() {
 
         b"<!DOCTYPE doc [\n  <!ATTLIST doc\n    a1  (a|b|c)   \'a\'\n    a2  (foo|bar) #IMPLIED\n    a3  NMTOKEN   #IMPLIED\n    a4  NMTOKENS  #IMPLIED\n    a5  ID        #IMPLIED\n    a6  IDREF     #IMPLIED\n    a7  IDREFS    #IMPLIED\n    a8  ENTITY    #IMPLIED\n    a9  ENTITIES  #IMPLIED\n    a10 CDATA     #IMPLIED\n  >]>\n<doc>wombat</doc>\n\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let max_realloc_count: c_int = 5;
+    let max_realloc_count: c_int = 10;
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;

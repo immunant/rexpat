@@ -869,29 +869,24 @@ pub struct AttributeId {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct TypedAttributeName(*mut XML_Char);
+pub struct TypedAttributeName(usize, HashKey);
 
 impl TypedAttributeName {
     #[inline]
-    fn get_type(&self) -> AttributeType {
-        unsafe { (*self.0).into() }
-    }
-
-    #[inline]
-    fn set_type(&self, at: AttributeType) {
-        unsafe { (*self.0) = at.into(); }
+    fn type_idx(&self) -> usize {
+        self.0
     }
 
     #[inline]
     fn name(&self) -> *const XML_Char {
-        unsafe { self.0.offset(1) }
+        (self.1).0.as_ptr()
     }
 }
 
 impl From<TypedAttributeName> for HashKey {
     #[inline]
     fn from(typed_name: TypedAttributeName) -> Self {
-        HashKey::from(typed_name.name())
+        typed_name.1
     }
 }
 
@@ -1088,7 +1083,7 @@ fn safe_ptr_diff<T>(p: *const T, q: *const T) -> isize {
 }
 
 // FIXME: add a proper lifetime
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HashKey(&'static [XML_Char]);
 
 impl From<KEY> for HashKey {
@@ -1175,6 +1170,8 @@ pub struct DTD {
     // that can't be stored in `Cell`s below
     tables: RefCell<DTDTables>,
 
+    att_types: RefCell<Vec<AttributeType>>,
+
     scaffold: Rc<RefCell<DTDScaffold>>,
     keepProcessing: Cell<XML_Bool>,
     hasParamEntityRefs: Cell<XML_Bool>,
@@ -1214,6 +1211,7 @@ impl DTD {
                 defaultPrefix,
                 ..Default::default()
             }),
+            att_types: RefCell::new(vec![]),
             keepProcessing: Cell::new(true),
             hasParamEntityRefs: Cell::new(false),
             standalone: Cell::new(false),
@@ -1240,6 +1238,8 @@ impl DTD {
         scf.scaffold.clear();
         scf.index.clear();
 
+        self.att_types.borrow_mut().clear();
+
         self.paramEntityRead.set(false);
         self.in_eldecl.set(false);
         self.contentStringLen.set(0);
@@ -1253,6 +1253,7 @@ impl DTD {
             pool: StringPool::try_new().map_err(|_| TryReserveError::CapacityOverflow)?,
             entityValuePool: StringPool::try_new().map_err(|_| TryReserveError::CapacityOverflow)?,
             tables: Default::default(),
+            att_types: Default::default(),
             keepProcessing: self.keepProcessing.clone(),
             hasParamEntityRefs: self.hasParamEntityRefs.clone(),
             standalone: self.standalone.clone(),
@@ -1289,18 +1290,28 @@ impl DTD {
                     return Err(TryReserveError::CapacityOverflow);
                 }
             }
+
+            let mut new_att_types = newDtd.att_types.get_mut();
+            if new_att_types.try_reserve(old_tables.attributeIds.len()).is_err() {
+                return Err(TryReserveError::CapacityOverflow);
+            }
             for oldA in old_tables.attributeIds.values()
             /* Copy the attribute id table. */
             {
-                if !newDtd.pool.append_char(AttributeType::Unset.into()) {
-                    return Err(TryReserveError::CapacityOverflow);
-                }
+                let att_type_idx = {
+                    let att_type_idx = new_att_types.len();
+                    new_att_types.push(AttributeType::Unset);
+                    att_type_idx
+                };
                 // FIXME: should be copy_c_string_cells
                 let name_0 = match newDtd.pool.copy_c_string(oldA.name.name()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
-                let typed_name = TypedAttributeName(name_0.as_ptr() as *mut XML_Char);
+                let typed_name = TypedAttributeName(
+                    att_type_idx,
+                    HashKey::from(name_0.as_ptr()),
+                );
                 let newA = match hash_insert!(
                     &mut new_tables.attributeIds,
                     typed_name,
@@ -4448,13 +4459,16 @@ impl XML_ParserStruct {
             namespace processing is turned on and different prefixes for the same
             namespace are used. For this case we have a check further down.
             */
-            if attId.name.get_type().is_set() {
-                if !enc_type.is_internal() {
-                    self.m_eventPtr = currAtt.name
+            {
+                let mut att_types = self.m_dtd.att_types.borrow_mut();
+                if att_types[attId.name.type_idx()].is_set() {
+                    if !enc_type.is_internal() {
+                        self.m_eventPtr = currAtt.name
+                    }
+                    return XML_Error::DUPLICATE_ATTRIBUTE;
                 }
-                return XML_Error::DUPLICATE_ATTRIBUTE;
+                att_types[attId.name.type_idx()] = AttributeType::Normal;
             }
-            attId.name.set_type(AttributeType::Normal);
             if !currAtt.normalized {
                 let mut result: XML_Error = XML_Error::NONE;
                 let mut isCdata = true;
@@ -4503,7 +4517,8 @@ impl XML_ParserStruct {
                     }
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
-                        attId.name.set_type(AttributeType::Namespace);
+                        let mut att_types = self.m_dtd.att_types.borrow_mut();
+                        att_types[attId.name.type_idx()] = AttributeType::Namespace;
                         self.typed_atts.push(attId.name);
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
@@ -4514,7 +4529,8 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    attId.name.set_type(AttributeType::Prefixed);
+                    let mut att_types = self.m_dtd.att_types.borrow_mut();
+                    att_types[attId.name.type_idx()] = AttributeType::Prefixed;
                     self.typed_atts.push(attId.name);
                 }
             } else {
@@ -4532,7 +4548,8 @@ impl XML_ParserStruct {
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         self.m_idAttIndex = -1;
         if let Some(name) = get_cell_ptr(&elementType.idAtt).as_deref().map(|x| x.name) {
-            if name.get_type().is_set() {
+            let att_types = self.m_dtd.att_types.borrow();
+            if att_types[name.type_idx()].is_set() {
                 for i in 0..self.typed_atts.len() {
                     if self.typed_atts[i] == name {
                         self.m_idAttIndex = 2 * i as c_int;
@@ -4550,7 +4567,7 @@ impl XML_ParserStruct {
             return XML_Error::NO_MEMORY;
         }
         for da in elementType.defaultAtts.borrow().iter() {
-            if !da.id.name.get_type().is_set() && !da.value.is_null() {
+            if !self.m_dtd.att_types.borrow()[da.id.name.type_idx()].is_set() && !da.value.is_null() {
                 if let Some(ref prefix) = get_cell_ptr(&da.id.prefix) {
                     if da.id.xmlns.get() {
                         let mut result_1: XML_Error = addBinding(
@@ -4565,19 +4582,22 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            da.id.name.set_type(AttributeType::Namespace);
+                            let mut att_types = self.m_dtd.att_types.borrow_mut();
+                            att_types[da.id.name.type_idx()] = AttributeType::Namespace;
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
                             self.typed_atts.push(da.id.name);
                         }
                     } else {
-                        da.id.name.set_type(AttributeType::Prefixed);
+                        let mut att_types = self.m_dtd.att_types.borrow_mut();
+                        att_types[da.id.name.type_idx()] = AttributeType::Prefixed;
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
                         self.typed_atts.push(da.id.name);
                     }
                 } else {
-                    da.id.name.set_type(AttributeType::Normal);
+                    let mut att_types = self.m_dtd.att_types.borrow_mut();
+                    att_types[da.id.name.type_idx()] = AttributeType::Normal;
                     self.m_atts.push(Attribute::from_default(da));
                     self.typed_atts.push(da.id.name);
                 }
@@ -4587,6 +4607,7 @@ impl XML_ParserStruct {
 
         /* expand prefixed attribute names, check for duplicates,
         and clear flags that say whether attributes were specified */
+        let mut att_types = self.m_dtd.att_types.borrow_mut();
         let mut i = 0; /* hash table index */
         if nPrefixes != 0 || nXMLNSDeclarations != 0 { // MOZILLA CHANGE
             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
@@ -4600,11 +4621,11 @@ impl XML_ParserStruct {
             /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
                 let mut s: *const XML_Char = self.m_atts[i].name;
-                if self.typed_atts[i].get_type() == AttributeType::Prefixed { // TODO: this could be a match instead
+                if att_types[self.typed_atts[i].type_idx()] == AttributeType::Prefixed { // TODO: this could be a match instead
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
-                    self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
+                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset; /* clear flag */
                     let id = dtd_tables.attributeIds.get(&HashKey::from(s));
                     if id.is_none() || get_cell_ptr(&id.unwrap().prefix).is_none() {
                         /* This code is walking through the appAtts array, dealing
@@ -4693,7 +4714,7 @@ impl XML_ParserStruct {
                         i += 1;
                         break;
                     }
-                } else if cfg!(feature = "mozilla") && self.typed_atts[i].get_type() == AttributeType::Namespace {
+                } else if cfg!(feature = "mozilla") && att_types[self.typed_atts[i].type_idx()] == AttributeType::Namespace {
                     const xmlnsNamespace: [XML_Char; 30] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
@@ -4731,7 +4752,7 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char, ASCII_s as XML_Char, '\u{0}' as XML_Char
                     ];
 
-                    self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
+                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset; /* clear flag */
                     if !self.m_tempPool.append_c_string(xmlnsNamespace.as_ptr()) ||
                         !self.m_tempPool.append_char(self.m_namespaceSeparator)
                     {
@@ -4779,14 +4800,14 @@ impl XML_ParserStruct {
                         break;
                     }
                 } else {
-                    self.typed_atts[i].set_type(AttributeType::Unset);
+                    att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset;
                 }
                 i += 1
             }
         }
         /* clear flags for the remaining attributes */
         while i < self.m_atts.len() {
-            self.typed_atts[i].set_type(AttributeType::Unset);
+            att_types[self.typed_atts[i].type_idx()] = AttributeType::Unset;
             i += 1;
         }
 
@@ -4798,7 +4819,7 @@ impl XML_ParserStruct {
 
         let mut binding = bindingsPtr.as_ref().map(Rc::clone);
         while let Some(b) = binding {
-            get_cell_ptr(&b.attId).unwrap().name.set_type(AttributeType::Unset);
+            att_types[get_cell_ptr(&b.attId).unwrap().name.type_idx()] = AttributeType::Unset;
             binding = get_cell_ptr(&b.nextTagBinding);
         }
         if !self.m_ns {
@@ -8044,9 +8065,15 @@ impl XML_ParserStruct {
         mut buf: ExpatBufRef,
     ) -> Ptr<AttributeId> {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        if !self.m_dtd.pool.append_char(AttributeType::Unset.into()) {
-            return None;
-        }
+        let att_type_idx = {
+            let mut dtd_att_types = self.m_dtd.att_types.borrow_mut();
+            let att_type_idx = dtd_att_types.len();
+            if dtd_att_types.try_reserve(1).is_err() {
+                return None;
+            }
+            dtd_att_types.push(AttributeType::Unset);
+            att_type_idx
+        };
         let enc = self.encoding(enc_type);
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
@@ -8054,7 +8081,10 @@ impl XML_ParserStruct {
         // let mut name = &mut *name;
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
         let (id, inserted) = self.m_dtd.pool.current_mut_slice(|name| {
-            let typed_name = TypedAttributeName(name.as_mut_ptr() as *mut XML_Char);
+            let typed_name = TypedAttributeName(
+                att_type_idx,
+                HashKey::from(name.as_ptr()),
+            );
             let id = hash_insert!(
                 &mut dtd_tables.attributeIds,
                 typed_name,
@@ -8066,9 +8096,11 @@ impl XML_ParserStruct {
         });
         let id = id?;
         if !inserted {
+            let mut dtd_att_types = self.m_dtd.att_types.borrow_mut();
+            dtd_att_types.pop();
             self.m_dtd.pool.clear_current();
         } else {
-            let name = &self.m_dtd.pool.finish_string()[1..];
+            let name = &self.m_dtd.pool.finish_string();
             if self.m_ns {
                 if name[0] == ASCII_x as XML_Char
                 && name[1] == ASCII_m as XML_Char
