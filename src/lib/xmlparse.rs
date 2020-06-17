@@ -1511,7 +1511,7 @@ pub struct DefaultAttribute {
 
 #[repr(C)]
 pub struct Entity {
-    pub name: *const XML_Char,
+    pub name: HashKey,
     pub textPtr: Cell<*const XML_Char>,
     pub textLen: Cell<c_int>,
     pub processed: Cell<c_int>,
@@ -3902,7 +3902,7 @@ impl XML_ParserStruct {
                             if !entity.textPtr.get().is_null() {
                                 let mut result: XML_Error = XML_Error::NONE;
                                 if !self.m_defaultExpandInternalEntities {
-                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name, 0);
+                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name.0.as_ptr(), 0);
 
                                     if !skippedHandlerRan && self.m_handlers.hasDefault() {
                                         reportDefault(self, enc_type, buf.with_end(next));
@@ -5771,7 +5771,7 @@ impl XML_ParserStruct {
             self.m_dtd.paramEntityRead.set(false);
             entity.open.set(true);
             let entity_name = if cfg!(feature = "mozilla") {
-                entity.name
+                entity.name.0.as_ptr()
             } else {
                 ptr::null()
             };
@@ -5953,7 +5953,7 @@ impl XML_ParserStruct {
                     self.m_useForeignDTD = false;
                     self.m_declEntity = hash_insert!(
                         &mut dtd_tables.paramEntities,
-                        externalSubsetName.as_ptr(),
+                        HashKey::from(externalSubsetName.as_ptr()),
                         Rc::try_new,
                         Entity
                     ).into_mut().as_deref().map(Rc::clone);
@@ -6020,7 +6020,7 @@ impl XML_ParserStruct {
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                                 let entity = match hash_insert!(
                                     &mut dtd_tables.paramEntities,
-                                    externalSubsetName.as_ptr(),
+                                    HashKey::from(externalSubsetName.as_ptr()),
                                     Rc::try_new,
                                     Entity
                                 ).into_mut() {
@@ -6080,7 +6080,7 @@ impl XML_ParserStruct {
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                             let mut entity = match hash_insert!(
                                 &mut dtd_tables.paramEntities,
-                                externalSubsetName.as_ptr(),
+                                HashKey::from(externalSubsetName.as_ptr()),
                                 Rc::try_new,
                                 Entity
                             ).into_mut() {
@@ -6292,7 +6292,7 @@ impl XML_ParserStruct {
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
-                                    declEntity.name,
+                                    declEntity.name.0.as_ptr(),
                                     declEntity.is_param.get() as c_int,
                                     declEntity.textPtr.get(),
                                     declEntity.textLen.get(),
@@ -6347,7 +6347,7 @@ impl XML_ParserStruct {
                         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                         self.m_declEntity = hash_insert!(
                             &mut dtd_tables.paramEntities,
-                            externalSubsetName.as_ptr(),
+                            HashKey::from(externalSubsetName.as_ptr()),
                             Rc::try_new,
                             Entity
                         ).into_mut().as_deref().map(Rc::clone);
@@ -6368,7 +6368,7 @@ impl XML_ParserStruct {
                         *eventEndPP = buf.as_ptr();
                         let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         self.m_handlers.entityDecl(
-                            declEntity.name,
+                            declEntity.name.0.as_ptr(),
                             declEntity.is_param.get() as c_int,
                             ptr::null(),
                             0,
@@ -6391,7 +6391,7 @@ impl XML_ParserStruct {
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
-                                declEntity.name,
+                                declEntity.name.0.as_ptr(),
                                 declEntity.base.get(),
                                 declEntity.systemId.get(),
                                 declEntity.publicId.get(),
@@ -6401,7 +6401,7 @@ impl XML_ParserStruct {
                         } else if self.m_handlers.hasEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.entityDecl(
-                                declEntity.name,
+                                declEntity.name.0.as_ptr(),
                                 0,
                                 ptr::null(),
                                 0,
@@ -6425,7 +6425,7 @@ impl XML_ParserStruct {
                         let (declEntity, inserted) = self.m_dtd.pool.current_slice(|name| {
                             let declEntity = hash_insert!(
                                 &mut dtd_tables.generalEntities,
-                                name.as_ptr(),
+                                HashKey::from(name.as_ptr()),
                                 Rc::try_new,
                                 Entity
                             );
@@ -6469,7 +6469,7 @@ impl XML_ParserStruct {
                         let (declEntity, inserted) = self.m_dtd.pool.current_slice(|name| {
                             let decl_entity = hash_insert!(
                                 &mut dtd_tables.paramEntities,
-                                name.as_ptr(),
+                                HashKey::from(name.as_ptr()),
                                 Rc::try_new,
                                 Entity
                             );
@@ -8398,13 +8398,13 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedOldBase: *const XML_Char = ptr::null();
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
-        let mut name = match newPool.copy_c_string((*oldE).name) {
+        let mut name = match newPool.copy_c_string((*oldE).name.0.as_ptr()) {
             Some(name) => name,
             None => return 0,
         };
         let newE = match hash_insert!(
             &mut newTable,
-            name.as_ptr(),
+            HashKey::from_c_string(name.as_ptr()),
             Rc::try_new,
             Entity
         ) {
