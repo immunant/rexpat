@@ -934,7 +934,7 @@ impl From<AttributeType> for XML_Char {
 }
 
 pub struct Prefix {
-    pub name: *const XML_Char,
+    pub name: HashKey,
     binding: Cell<Ptr<Binding>>,
 }
 
@@ -948,7 +948,7 @@ impl Prefix {
 impl Default for Prefix {
     fn default() -> Prefix {
         Prefix {
-            name: ptr::null(),
+            name: HashKey(&[]),
             binding: Cell::new(None),
         }
     }
@@ -1282,13 +1282,13 @@ impl DTD {
 
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
-                let mut name = match newDtd.pool.copy_c_string(oldP.name) {
+                let mut name = match newDtd.pool.copy_c_string(oldP.name.0.as_ptr()) {
                     Some(name) => name,
                     None => return Err(TryReserveError::CapacityOverflow),
                 };
                 if hash_insert!(
                     &mut new_tables.prefixes,
-                    name.as_ptr(),
+                    HashKey::from_c_string(name.as_ptr()),
                     Rc::try_new,
                     Prefix
                 )
@@ -4173,7 +4173,7 @@ impl XML_ParserStruct {
                         }
                         while let Some(b) = tag.bindings.take() {
                             let prefix = b.prefix.upgrade().unwrap();
-                            self.m_handlers.endNamespaceDecl(prefix.name);
+                            self.m_handlers.endNamespaceDecl(prefix.name.0.as_ptr());
                             prefix.binding.set(b.prevPrefixBinding.take());
                             tag.bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
                             self.m_freeBindingList = Some(b);
@@ -4378,7 +4378,7 @@ impl XML_ParserStruct {
             */
             let prefix = b.prefix.upgrade().unwrap();
             unsafe {
-                self.m_handlers.endNamespaceDecl(prefix.name);
+                self.m_handlers.endNamespaceDecl(prefix.name.0.as_ptr());
             }
             prefix.binding.set(b.prevPrefixBinding.take());
             bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
@@ -4699,14 +4699,14 @@ impl XML_ParserStruct {
                     if self.m_ns_triplets {
                         /* append namespace separator and prefix */
                         self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                        s = b.prefix.upgrade().unwrap().name;
+                        let mut s = b.prefix.upgrade().unwrap().name.0;
                         loop {
-                            if !self.m_tempPool.append_char(*s) {
+                            if !self.m_tempPool.append_char(s[0]) {
                                 return XML_Error::NO_MEMORY;
                             }
                             let fresh26 = s;
-                            s = s.offset(1);
-                            if !(*fresh26 != 0) {
+                            s = &s[1..];
+                            if fresh26[0] == 0 {
                                 break;
                             }
                         }
@@ -4853,8 +4853,8 @@ impl XML_ParserStruct {
         };
         let binding_prefix = binding.prefix.upgrade().unwrap();
         let mut prefixLen = 0;
-        if self.m_ns_triplets && !binding_prefix.name.is_null() {
-            while *binding_prefix.name.add(prefixLen) != 0 {
+        if self.m_ns_triplets && !binding_prefix.name.0.is_empty() {
+            while binding_prefix.name.0[prefixLen] != 0 {
                 prefixLen += 1;
             }
             /* prefixLen includes null terminator */
@@ -4865,7 +4865,7 @@ impl XML_ParserStruct {
             skip_to_colon,
         );
         tagNamePtr.uriLen = (*binding).uriLen.get();
-        tagNamePtr.prefix = binding_prefix.name;
+        tagNamePtr.prefix = binding_prefix.name.0.as_ptr();
         tagNamePtr.prefixLen = prefixLen;
 
         let localPart = tagNamePtr.localPart.as_ptr();
@@ -4887,12 +4887,7 @@ impl XML_ParserStruct {
         if prefixLen != 0 {
             /* replace null terminator */
             *uri.last_mut().unwrap() = self.m_namespaceSeparator;
-
-            let prefix_slice = slice::from_raw_parts(
-                binding_prefix.name,
-                prefixLen,
-            );
-            uri.extend(prefix_slice);
+            uri.extend(&binding_prefix.name.0[..prefixLen]);
         }
         drop(uri);
         tagNamePtr.str_0 = TagNameString::BindingUri(binding);
@@ -4928,22 +4923,22 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
-    if *uri as c_int == '\u{0}' as i32 && !prefix.name.is_null() {
+    if *uri as c_int == '\u{0}' as i32 && !prefix.name.0.is_empty() {
         return XML_Error::UNDECLARING_PREFIX;
     }
-    if !prefix.name.is_null()
-        && *prefix.name.offset(0) == ASCII_x as XML_Char
-        && *prefix.name.offset(1) == ASCII_m as XML_Char
-        && *prefix.name.offset(2) == ASCII_l as XML_Char
+    if !prefix.name.0.is_empty()
+        && prefix.name.0[0] == ASCII_x as XML_Char
+        && prefix.name.0[1] == ASCII_m as XML_Char
+        && prefix.name.0[2] == ASCII_l as XML_Char
     {
         /* Not allowed to bind xmlns */
-        if *prefix.name.offset(3) == ASCII_n as XML_Char
-            && *prefix.name.offset(4) == ASCII_s as XML_Char
-            && *prefix.name.offset(5) == '\u{0}' as XML_Char
+        if prefix.name.0[3] == ASCII_n as XML_Char
+            && prefix.name.0[4] == ASCII_s as XML_Char
+            && prefix.name.0[5] == '\u{0}' as XML_Char
         {
             return XML_Error::RESERVED_PREFIX_XMLNS;
         }
-        if *prefix.name.offset(3) == '\u{0}' as XML_Char {
+        if prefix.name.0[3] == '\u{0}' as XML_Char {
             mustBeXML = true
         }
     }
@@ -5039,7 +5034,7 @@ unsafe extern "C" fn addBinding(
     /* if attId == NULL then we are not starting a namespace scope */
     if !att_id_is_none && (*parser).m_handlers.hasStartNamespaceDecl() {
         (*parser).m_handlers.startNamespaceDecl(
-            prefix.name,
+            prefix.name.0.as_ptr(),
             uri_ptr,
         );
     }
@@ -8045,7 +8040,7 @@ impl XML_ParserStruct {
                 let start = self.m_dtd.pool.current_start();
                 let prefix = match hash_insert!(
                     &mut dtd_tables.prefixes,
-                    start,
+                    HashKey::from_c_string(start),
                     Rc::try_new,
                     Prefix
                 ) {
@@ -8124,7 +8119,7 @@ impl XML_ParserStruct {
                     } else {
                         id.prefix.set(hash_insert!(
                             &mut dtd_tables.prefixes,
-                            &name[6] as *const _,
+                            HashKey::from_c_string(name[6..].as_ptr()),
                             Rc::try_new,
                             Prefix
                         ).into_mut().as_deref().map(Rc::clone));
@@ -8146,7 +8141,7 @@ impl XML_ParserStruct {
                             let tempName = self.m_dtd.pool.current_start();
                             let prefix = hash_insert!(
                                 &mut dtd_tables.prefixes,
-                                tempName,
+                                HashKey::from_c_string(tempName),
                                 Rc::try_new,
                                 Prefix
                             );
@@ -8319,7 +8314,7 @@ impl XML_ParserStruct {
                         };
                         let prefix = hash_insert!(
                             &mut dtd_tables.prefixes,
-                            prefix_name.as_ptr(),
+                            HashKey::from_c_string(prefix_name.as_ptr()),
                             Rc::try_new,
                             Prefix
                         );
