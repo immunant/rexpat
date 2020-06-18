@@ -4705,12 +4705,11 @@ impl XML_ParserStruct {
                     }
                     if ret != XML_Error::NONE { return ret; }
                     /* store expanded name in attribute list */
-                    let att_name = self.m_tempPool.finish_string();
-                    let hk = match HashKey::try_from_slice(att_name) {
+                    let hk = match self.m_tempPool.current_slice(HashKey::try_from_slice) {
                         Ok(hk) => hk,
                         Err(_) => return XML_Error::NO_MEMORY,
                     };
-                    self.m_atts[i].name = att_name.as_ptr();
+                    self.m_atts[i].name = hk.as_ptr();
                     self.m_nsAtts.insert(hk);
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
