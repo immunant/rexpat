@@ -16,6 +16,7 @@
 #![feature(alloc_layout_extra)]
 // Required by !Send and !Sync
 #![feature(optin_builtin_traits)]
+#![feature(allocator_api)]
 
 #[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
