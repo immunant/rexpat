@@ -7,7 +7,7 @@ use bumpalo::collections::vec::Vec as BumpVec;
 use fallible_collections::FallibleBox;
 use libc::c_int;
 
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::convert::TryInto;
 use std::mem::swap;
 
@@ -84,16 +84,6 @@ impl StringPool {
         self.inner().ref_rent_all(|pool| {
             let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
             pool.current_bump_vec.replace(vec).0.into_bump_slice()
-        })
-    }
-
-    /// Gets the current vec, converts it into a slice of cells (with interior mutability),
-    /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string_cells(&self) -> &[Cell<XML_Char>] {
-        self.inner().ref_rent_all(|pool| {
-            let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
-            let sl = pool.current_bump_vec.replace(vec).0.into_bump_slice_mut();
-            Cell::from_mut(sl).as_slice_of_cells()
         })
     }
 
