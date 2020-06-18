@@ -6434,21 +6434,18 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let (declEntity, inserted) = match self.m_dtd.pool.current_slice(|name| -> Result<_, TryReserveError> {
-                            let hk = HashKey::try_from_slice(name)?;
-                            let declEntity = hash_insert!(
-                                &mut dtd_tables.generalEntities,
-                                hk,
-                                Rc::try_new,
-                                Entity
-                            );
-                            let inserted = declEntity.is_new();
-                            Ok((declEntity.into_mut().as_deref().map(Rc::clone), inserted))
-                        }) {
-                            Ok(tup) => tup,
+                        let hk = match self.m_dtd.pool.current_slice(HashKey::try_from_slice) {
+                            Ok(hk) => hk,
                             Err(_) => return XML_Error::NO_MEMORY,
                         };
-                        self.m_declEntity = declEntity;
+                        let declEntity = hash_insert!(
+                            &mut dtd_tables.generalEntities,
+                            hk,
+                            Rc::try_new,
+                            Entity
+                        );
+                        let inserted = declEntity.is_new();
+                        self.m_declEntity = declEntity.into_mut().as_deref().map(Rc::clone);
 
                         let declEntity = match self.m_declEntity.as_deref() {
                             Some(declEntity) => declEntity,
@@ -6483,21 +6480,18 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let (declEntity, inserted) = match self.m_dtd.pool.current_slice(|name| -> Result<_, TryReserveError> {
-                            let hk = HashKey::try_from_slice(name)?;
-                            let decl_entity = hash_insert!(
-                                &mut dtd_tables.paramEntities,
-                                hk,
-                                Rc::try_new,
-                                Entity
-                            );
-                            let inserted = decl_entity.is_new();
-                            Ok((decl_entity.into_mut().as_deref().map(Rc::clone), inserted))
-                        }) {
-                            Ok(tup) => tup,
+                        let hk = match self.m_dtd.pool.current_slice(HashKey::try_from_slice) {
+                            Ok(hk) => hk,
                             Err(_) => return XML_Error::NO_MEMORY,
                         };
-                        self.m_declEntity = declEntity;
+                        let declEntity = hash_insert!(
+                            &mut dtd_tables.paramEntities,
+                            hk,
+                            Rc::try_new,
+                            Entity
+                        );
+                        let inserted = declEntity.is_new();
+                        self.m_declEntity = declEntity.into_mut().as_deref().map(Rc::clone);
 
                         let declEntity = match self.m_declEntity.as_deref() {
                             Some(declEntity) => declEntity,
@@ -8107,22 +8101,16 @@ impl XML_ParserStruct {
         }
         // let mut name = &mut *name;
         /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        let (id, inserted) = self.m_dtd.pool.current_slice(|name| {
-            let hk = match HashKey::try_from_slice(name) {
-                Ok(hk) => hk,
-                Err(_) => return (None, false),
-            };
-            let typed_name = TypedAttributeName { type_idx, name: hk };
-            let id = hash_insert!(
-                &mut dtd_tables.attributeIds,
-                typed_name,
-                Rc::try_new,
-                AttributeId
-            );
-            let inserted = id.is_new();
-            (id.into_mut().as_deref().map(Rc::clone), inserted)
-        });
-        let id = id?;
+        let hk = self.m_dtd.pool.current_slice(HashKey::try_from_slice).ok()?;
+        let typed_name = TypedAttributeName { type_idx, name: hk };
+        let id = hash_insert!(
+            &mut dtd_tables.attributeIds,
+            typed_name,
+            Rc::try_new,
+            AttributeId
+        );
+        let inserted = id.is_new();
+        let id = id.into_mut().as_deref().map(Rc::clone)?;
         if !inserted {
             let mut dtd_att_types = self.m_dtd.att_types.borrow_mut();
             dtd_att_types.pop();
@@ -8584,22 +8572,16 @@ impl XML_ParserStruct {
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
         }
-        let (ret, inserted) = self.m_dtd.pool.current_slice(|name| {
-            let hk = match HashKey::try_from_slice(name) {
-                Ok(hk) => hk,
-                Err(_) => return (None, false),
-            };
-            let ret = hash_insert!(
-                &mut dtd_tables.elementTypes,
-                hk,
-                Rc::try_new,
-                ElementType,
-                ElementType::new
-            );
-            let inserted = ret.is_new();
-            (ret.into_mut().as_deref().map(Rc::clone), inserted)
-        });
-        let ret = ret?;
+        let hk = self.m_dtd.pool.current_slice(HashKey::try_from_slice).ok()?;
+        let ret = hash_insert!(
+            &mut dtd_tables.elementTypes,
+            hk,
+            Rc::try_new,
+            ElementType,
+            ElementType::new
+        );
+        let inserted = ret.is_new();
+        let ret = ret.into_mut().as_deref().map(Rc::clone)?;
         if !inserted {
             self.m_dtd.pool.clear_current();
         } else {
