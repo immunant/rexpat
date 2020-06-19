@@ -4045,7 +4045,6 @@ impl XML_ParserStruct {
                         self.freeBindings(bindings);
                         return result_1;
                     }
-                    self.m_tempPool.borrow_mut().finish_string();
                     let handlers = &self.m_handlers;
                     let started = handlers.startElement(name_0.str_0.as_ptr(), &mut self.m_atts);
                     if started {
