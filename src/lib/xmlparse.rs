@@ -4782,17 +4782,13 @@ impl XML_ParserStruct {
 
                         if self.m_ns_triplets { /* append namespace separator and prefix */
                             self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                            if !self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) ||
-                                !self.m_tempPool.append_char('\u{0}' as XML_Char)
-                            {
+                            if !self.m_tempPool.copy_c_string(xmlnsPrefix.as_ptr()) {
                                 return XML_Error::NO_MEMORY;
                             }
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if !self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) ||
-                            !self.m_tempPool.append_char('\u{0}' as XML_Char)
-                        {
+                        if !self.m_tempPool.copy_c_string(xmlnsPrefix.as_ptr()) {
                             return XML_Error::NO_MEMORY;
                         }
                     }
