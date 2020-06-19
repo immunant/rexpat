@@ -4711,6 +4711,7 @@ impl XML_ParserStruct {
                     };
                     self.m_atts[i].name = hk.as_ptr();
                     self.m_nsAtts.insert(hk);
+                    self.m_tempPool.clear_current();
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
                         i += 1;
