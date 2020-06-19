@@ -7,7 +7,6 @@ use fallible_collections::FallibleVec;
 use libc::c_int;
 
 use std::alloc::Layout;
-use std::cell::RefCell;
 use std::convert::TryInto;
 
 pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
@@ -28,8 +27,8 @@ const fn init_block_size_const() -> usize {
 /// handing them off to be referenced either temporarily or for the entire length
 /// of the pool.
 pub(crate) struct StringPool {
-    vec: RefCell<Vec<XML_Char>>,
-    finished: RefCell<Bump>,
+    vec: Vec<XML_Char>,
+    finished: Bump,
 }
 
 impl StringPool {
@@ -37,43 +36,40 @@ impl StringPool {
         let vec = Vec::try_with_capacity(INIT_BLOCK_SIZE).map_err(|_| ())?;
         let finished = Bump::try_with_capacity(INIT_BLOCK_SIZE).map_err(|_| ())?;
         Ok(StringPool {
-            vec: RefCell::new(vec),
-            finished: RefCell::new(finished),
+            vec: vec,
+            finished: finished,
         })
     }
 
     /// Determines whether or not the current BumpVec is empty.
     pub(crate) fn is_empty(&self) -> bool {
-        self.vec.borrow().is_empty()
+        self.vec.is_empty()
     }
 
     /// Gets the current vec, converts it into an immutable slice,
     /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string(&self) -> *const XML_Char {
-        let mut vec = self.vec.borrow_mut();
-        let mut finished = self.finished.borrow_mut();
-
-        let slice_layout = Layout::for_value(&vec[..]);
-        let dst = match finished.try_alloc_layout(slice_layout) {
+    pub(crate) fn finish_string(&mut self) -> *const XML_Char {
+        let slice_layout = Layout::for_value(&self.vec[..]);
+        let dst = match self.finished.try_alloc_layout(slice_layout) {
             Ok(dst) => dst.as_ptr() as *mut XML_Char,
             Err(_) => return std::ptr::null(),
         };
 
         unsafe {
-            std::ptr::copy_nonoverlapping(vec.as_ptr(), dst, vec.len());
+            std::ptr::copy_nonoverlapping(self.vec.as_ptr(), dst, self.vec.len());
         }
-        vec.clear();
+        self.vec.clear();
         dst
     }
 
     /// Resets the current bump vec to the beginning
-    pub(crate) fn clear_current(&self) {
-        self.vec.borrow_mut().clear();
+    pub(crate) fn clear_current(&mut self) {
+        self.vec.clear()
     }
 
     /// Obtains the length of the current BumpVec.
     pub(crate) fn len(&self) -> usize {
-        self.vec.borrow().len()
+        self.vec.len()
     }
 
     /// Call callback with an immutable buffer of the current BumpVec. This must
@@ -82,59 +78,57 @@ impl StringPool {
     pub(crate) fn current_slice<F, R>(&self, mut callback: F) -> R
         where F: FnMut(&[XML_Char]) -> R
     {
-        let vec = self.vec.borrow();
-        callback(&vec[..])
+        callback(&self.vec[..])
     }
 
     /// Call callback with a mutable buffer of the current BumpVec. This must
     /// be a callback to ensure that we don't (safely) borrow the slice for
     /// longer than it stays vaild.
-    pub(crate) fn current_mut_slice<F, R>(&self, mut callback: F) -> R
+    pub(crate) fn current_mut_slice<F, R>(&mut self, mut callback: F) -> R
         where F: FnMut(&mut [XML_Char]) -> R
     {
-        let mut vec = self.vec.borrow_mut();
-        callback(&mut vec[..])
+        callback(&mut self.vec[..])
     }
 
     /// Unsafe temporary version of `current_slice()`. This needs to be removed
     /// when callers are made safe.
     pub(crate) unsafe fn current_start(&self) -> *const XML_Char {
-        let vec = self.vec.borrow();
-        vec[..].as_ptr()
+        self.vec[..].as_ptr()
     }
 
     /// Appends a char to the current BumpVec.
-    pub(crate) fn append_char(&self, c: XML_Char) -> bool {
-        let mut vec = self.vec.borrow_mut();
-        Self::append_char_inner(&mut vec, c)
+    pub(crate) fn append_char(&mut self, c: XML_Char) -> bool {
+        if self.vec.try_reserve(1).is_err() {
+            false
+        } else {
+            self.vec.push(c);
+
+            true
+        }
     }
 
     /// Overwrites the last char in the current BumpVec.
     /// Note that this will panic if empty. This is not an insert
     /// operation as it does not shift bytes afterwards.
-    pub(crate) fn replace_last_char(&self, c: XML_Char) {
-        let mut vec = self.vec.borrow_mut();
-        *vec.last_mut()
+    pub(crate) fn replace_last_char(&mut self, c: XML_Char) {
+        *self.vec.last_mut()
             .expect("Called replace_last_char() when string was empty") = c;
     }
 
     /// Decrements the length, panicing if len is 0
-    pub(crate) fn backtrack(&self) {
-        let mut vec = self.vec.borrow_mut();
-        vec.pop().expect("Called backtrack() on empty StringPool");
+    pub(crate) fn backtrack(&mut self) {
+        self.vec.pop().expect("Called backtrack() on empty StringPool");
     }
 
     /// Gets the last character, panicing if len is 0
     pub(crate) fn get_last_char(&self) -> XML_Char {
-        let vec = self.vec.borrow();
-        *vec.last().expect("Called get_last_char() when string was empty")
+        *self.vec.last().expect("Called get_last_char() when string was empty")
     }
 
     /// Appends an entire C String to the current BumpVec.
-    pub(crate) unsafe fn append_c_string(&self, mut s: *const XML_Char) -> bool {
-        let mut vec = self.vec.borrow_mut();
+    pub(crate) unsafe fn append_c_string(&mut self, mut s: *const XML_Char) -> bool {
         while *s != 0 {
-            if !Self::append_char_inner(&mut vec, *s) {
+            if !self.append_char(*s) {
                 return false;
             }
             s = s.offset(1)
@@ -144,21 +138,20 @@ impl StringPool {
 
     /// Resets the current Vec and deallocates its contents.
     pub(crate) fn clear(&mut self) {
-        self.vec.get_mut().clear();
-        self.finished.get_mut().reset();
+        self.vec.clear();
+        self.finished.reset();
     }
 
     pub(crate) fn store_c_string(
-        &self,
+        &mut self,
         enc: &ENCODING,
         buf: ExpatBufRef,
     ) -> bool {
-        let mut vec = self.vec.borrow_mut();
-        if !Self::convert(&mut vec, enc, buf) {
+        if !self.append(enc, buf) {
             return false;
         }
 
-        if !Self::append_char_inner(&mut vec, '\0' as XML_Char) {
+        if !self.append_char('\0' as XML_Char) {
             return false;
         }
 
@@ -166,22 +159,43 @@ impl StringPool {
     }
 
     pub(crate) fn append(
-        &self,
+        &mut self,
         enc: &ENCODING,
-        read_buf: ExpatBufRef,
+        mut read_buf: ExpatBufRef,
     ) -> bool {
-        let mut vec = self.vec.borrow_mut();
-        Self::convert(&mut vec, enc, read_buf)
+        loop {
+            // REXPAT: always reserve at least 4 bytes,
+            // so at least one character gets converted every iteration
+            if self.vec.try_reserve(read_buf.len().max(4)).is_err() {
+                return false;
+            }
+
+            let start_len = self.vec.len();
+            let cap = self.vec.capacity();
+
+            self.vec.resize(cap, 0);
+
+            let mut write_buf = ExpatBufRefMut::from(&mut self.vec[start_len..]);
+            let write_buf_len = write_buf.len();
+            let convert_res = XmlConvert!(enc, &mut read_buf, &mut write_buf);
+            // The write buf shrinks by how much was written to it
+            let written_size = write_buf_len - write_buf.len();
+
+            self.vec.truncate(start_len + written_size);
+
+            if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
+                return true;
+            }
+        }
     }
 
     pub(crate) unsafe fn copy_c_string(
-        &self,
+        &mut self,
         mut s: *const XML_Char,
     ) -> bool {
         // self.append_c_string(s);?
-        let mut vec = self.vec.borrow_mut();
         loop {
-            if !Self::append_char_inner(&mut vec, *s) {
+            if !self.append_char(*s) {
                 return false;
             }
             if *s == 0 {
@@ -193,66 +207,24 @@ impl StringPool {
     }
 
     pub(crate) unsafe fn copy_c_string_n(
-        &self,
+        &mut self,
         mut s: *const XML_Char,
         mut n: c_int,
     ) -> bool {
-        let mut vec = self.vec.borrow_mut();
         let mut n = n.try_into().unwrap();
 
-        if vec.try_reserve_exact(n).is_err() {
+        if self.vec.try_reserve_exact(n).is_err() {
             return false;
         };
 
         while n > 0 {
-            if !Self::append_char_inner(&mut vec, *s) {
+            if !self.append_char(*s) {
                 return false;
             }
             n -= 1;
             s = s.offset(1)
         }
         true
-    }
-
-    fn convert<'a>(
-        vec: &mut Vec<XML_Char>,
-        enc: &ENCODING,
-        mut read_buf: ExpatBufRef<'a>,
-    ) -> bool {
-        loop {
-            // REXPAT: always reserve at least 4 bytes,
-            // so at least one character gets converted every iteration
-            if vec.try_reserve(read_buf.len().max(4)).is_err() {
-                return false;
-            }
-
-            let start_len = vec.len();
-            let cap = vec.capacity();
-
-            vec.resize(cap, 0);
-
-            let mut write_buf = ExpatBufRefMut::from(&mut vec[start_len..]);
-            let write_buf_len = write_buf.len();
-            let convert_res = XmlConvert!(enc, &mut read_buf, &mut write_buf);
-            // The write buf shrinks by how much was written to it
-            let written_size = write_buf_len - write_buf.len();
-
-            vec.truncate(start_len + written_size);
-
-            if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
-                return true;
-            }
-        }
-    }
-
-    fn append_char_inner(vec: &mut Vec<XML_Char>, c: XML_Char) -> bool {
-        if vec.try_reserve(1).is_err() {
-            false
-        } else {
-            vec.push(c);
-
-            true
-        }
     }
 }
 
