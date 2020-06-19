@@ -6235,7 +6235,7 @@ impl XML_ParserStruct {
                                 || !tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = tempPool.finish_string();
+                                self.m_declAttributeType = tempPool.current_start();
                                 if self.m_declAttributeType.is_null() {
                                     return XML_Error::NO_MEMORY;
                                 }
@@ -6297,7 +6297,7 @@ impl XML_ParserStruct {
                                 || !tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = tempPool.finish_string();
+                                self.m_declAttributeType = tempPool.current_start();
                                 if self.m_declAttributeType.is_null() {
                                     return XML_Error::NO_MEMORY;
                                 }
