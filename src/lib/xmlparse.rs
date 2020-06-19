@@ -1365,10 +1365,14 @@ impl DTD {
                     let id = new_tables.attributeIds.get(&oldAtt.id.name.name).unwrap();
                     let isCdata = oldAtt.isCdata;
                     let value = if !oldAtt.value.is_null() {
-                        match newDtd.pool.copy_c_string(oldAtt.value) {
-                            Some(s) => s.as_ptr(),
-                            None => return Err(TryReserveError::CapacityOverflow),
+                        if !newDtd.pool.copy_c_string(oldAtt.value) {
+                            return Err(TryReserveError::CapacityOverflow);
                         }
+                        let value = newDtd.pool.finish_string();
+                        if value.is_null() {
+                            return Err(TryReserveError::CapacityOverflow);
+                        }
+                        value
                     } else {
                         ptr::null()
                     };
@@ -2296,11 +2300,10 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
         return XML_Status::ERROR;
     }
     if !p.is_null() {
-        let p = match (*parser).m_dtd.pool.copy_c_string(p) {
-            Some(p) => p,
-            None => return XML_Status::ERROR,
-        };
-        (*parser).m_curBase = p.as_ptr();
+        if !(*parser).m_dtd.pool.copy_c_string(p) {
+            return XML_Status::ERROR;
+        }
+        (*parser).m_curBase = (*parser).m_dtd.pool.finish_string();
     } else {
         (*parser).m_curBase = ptr::null();
     }
@@ -3903,14 +3906,12 @@ impl XML_ParserStruct {
                                 if !context {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                if self.m_tempPool.current_slice(|name| {
-                                    self.m_handlers.externalEntityRef(
-                                        name.as_ptr(),
-                                        entity.base.get(),
-                                        entity.systemId.get(),
-                                        entity.publicId.get(),
-                                    )
-                                }) == Ok(0)
+                                if self.m_handlers.externalEntityRef(
+                                    self.m_tempPool.current_start(),
+                                    entity.base.get(),
+                                    entity.systemId.get(),
+                                    entity.publicId.get(),
+                                ) == Ok(0)
                                 {
                                     return XML_Error::EXTERNAL_ENTITY_HANDLING;
                                 }
@@ -4021,7 +4022,10 @@ impl XML_ParserStruct {
                     if !successful {
                         return XML_Error::NO_MEMORY;
                     }
-                    let name_0_str_0 = self.m_tempPool.finish_string().as_ptr();
+                    let name_0_str_0 = self.m_tempPool.finish_string();
+                    if name_0_str_0.is_null() {
+                        return XML_Error::NO_MEMORY;
+                    }
 
                     let mut name_0 = TagName {
                         str_0: TagNameString::Ptr(name_0_str_0),
@@ -4481,13 +4485,21 @@ impl XML_ParserStruct {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(Attribute::new(attId.name.name.as_ptr(), self.m_tempPool.finish_string().as_ptr()));
+                let value = self.m_tempPool.finish_string();
+                if value.is_null() {
+                    return XML_Error::NO_MEMORY;
+                }
+                self.m_atts.push(Attribute::new(attId.name.name.as_ptr(), value));
             } else {
                 /* the value did not need normalizing */
                 if !self.m_tempPool.store_c_string(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
                     return XML_Error::NO_MEMORY;
                 }
-                self.m_atts.push(Attribute::new(attId.name.name.as_ptr(), self.m_tempPool.finish_string().as_ptr()));
+                let value = self.m_tempPool.finish_string();
+                if value.is_null() {
+                    return XML_Error::NO_MEMORY;
+                }
+                self.m_atts.push(Attribute::new(attId.name.name.as_ptr(), value));
             }
             /* handle prefixed attribute names */
             if let Some(ref prefix) = get_cell_ptr(&attId.prefix) {
@@ -4786,7 +4798,10 @@ impl XML_ParserStruct {
                     }
 
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.finish_string().as_ptr();
+                    s = self.m_tempPool.finish_string();
+                    if s.is_null() {
+                        return XML_Error::NO_MEMORY;
+                    }
                     self.m_atts[i].name = s;
 
                     nXMLNSDeclarations -= 1;
@@ -5907,7 +5922,10 @@ impl XML_ParserStruct {
                             self.m_doctypeName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_doctypeName = self.m_tempPool.finish_string().as_ptr();
+                        self.m_doctypeName = self.m_tempPool.finish_string();
+                        if self.m_doctypeName.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
                         self.m_doctypePubid = ptr::null();
                         handleDefault = false
                     }
@@ -5969,8 +5987,11 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let pub_id = self.m_tempPool.finish_string();
-                        normalizePublicId(pub_id.as_ptr() as *mut _);
-                        self.m_doctypePubid = pub_id.as_ptr();
+                        if pub_id.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        normalizePublicId(pub_id as *mut _);
+                        self.m_doctypePubid = pub_id;
                         handleDefault = false;
                     } else {
                         if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
@@ -6204,7 +6225,10 @@ impl XML_ParserStruct {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string();
+                                if self.m_declAttributeType.is_null() {
+                                    return XML_Error::NO_MEMORY;
+                                }
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -6235,7 +6259,10 @@ impl XML_ParserStruct {
                         if result_1 as u64 != 0 {
                             return result_1;
                         }
-                        attVal = self.m_dtd.pool.finish_string().as_ptr();
+                        attVal = self.m_dtd.pool.finish_string();
+                        if attVal.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
                         /* ID attributes aren't allowed to have a default */
                         if defineAttribute(
                             self.m_declElementType.as_ref().unwrap(),
@@ -6259,7 +6286,10 @@ impl XML_ParserStruct {
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                                     return XML_Error::NO_MEMORY;
                                 }
-                                self.m_declAttributeType = self.m_tempPool.finish_string().as_ptr();
+                                self.m_declAttributeType = self.m_tempPool.finish_string();
+                                if self.m_declAttributeType.is_null() {
+                                    return XML_Error::NO_MEMORY;
+                                }
                             }
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.attlistDecl(
@@ -6288,7 +6318,10 @@ impl XML_ParserStruct {
                         if !self.m_declEntity.is_none() {
                             let mut declEntity = self.m_declEntity.as_deref().unwrap();
                             declEntity.textLen.set(self.m_dtd.entityValuePool.len() as c_int);
-                            declEntity.textPtr.set(self.m_dtd.entityValuePool.finish_string().as_ptr());
+                            declEntity.textPtr.set(self.m_dtd.entityValuePool.finish_string());
+                            if declEntity.textPtr.get().is_null() {
+                                return XML_Error::NO_MEMORY;
+                            }
                             if self.m_handlers.hasEntityDecl() {
                                 *eventEndPP = buf.as_ptr();
                                 self.m_handlers.entityDecl(
@@ -6327,7 +6360,10 @@ impl XML_ParserStruct {
                             self.m_doctypeSysid = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_doctypeSysid = self.m_tempPool.finish_string().as_ptr();
+                        self.m_doctypeSysid = self.m_tempPool.finish_string();
+                        if self.m_doctypeSysid.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
 
                         handleDefault = false
                     } else {
@@ -6391,7 +6427,10 @@ impl XML_ParserStruct {
                             declEntity.notation.set(ptr::null());
                             return XML_Error::NO_MEMORY;
                         }
-                        declEntity.notation.set(self.m_dtd.pool.finish_string().as_ptr());
+                        declEntity.notation.set(self.m_dtd.pool.finish_string());
+                        if declEntity.notation.get().is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             *eventEndPP = buf.as_ptr();
                             self.m_handlers.unparsedEntityDecl(
@@ -6515,7 +6554,10 @@ impl XML_ParserStruct {
                             self.m_declNotationName = ptr::null();
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_declNotationName = self.m_tempPool.finish_string().as_ptr();
+                        self.m_declNotationName = self.m_tempPool.finish_string();
+                        if self.m_declNotationName.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
                         handleDefault = false
                     }
                 }
@@ -6536,8 +6578,11 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let tem_0 = self.m_tempPool.finish_string();
-                        normalizePublicId(tem_0.as_ptr() as *mut _);
-                        self.m_declNotationPublicId = tem_0.as_ptr();
+                        if tem_0.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        normalizePublicId(tem_0 as *mut _);
+                        self.m_declNotationPublicId = tem_0;
                         handleDefault = false
                     }
                 }
@@ -7022,8 +7067,11 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let mut tem = self.m_dtd.pool.finish_string();
-                        normalizePublicId(tem.as_ptr() as *mut _);
-                        self.m_declEntity.as_mut().unwrap().publicId.set(tem.as_ptr() as *const _);
+                        if tem.is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
+                        normalizePublicId(tem as *mut _);
+                        self.m_declEntity.as_mut().unwrap().publicId.set(tem);
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
                          */
@@ -7049,7 +7097,10 @@ impl XML_ParserStruct {
                             declEntity.systemId.set(ptr::null());
                             return XML_Error::NO_MEMORY;
                         }
-                        declEntity.systemId.set(self.m_dtd.pool.finish_string().as_ptr());
+                        declEntity.systemId.set(self.m_dtd.pool.finish_string());
+                        if declEntity.systemId.get().is_null() {
+                            return XML_Error::NO_MEMORY;
+                        }
                         declEntity.base.set(self.m_curBase);
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_SYSTEM_ID case.
@@ -7865,6 +7916,9 @@ unsafe extern "C" fn reportProcessingInstruction(
         return 0;
     }
     let target = (*parser).m_tempPool.finish_string();
+    if target.is_null() {
+        return 0;
+    }
     let successful = (*parser).m_tempPool.store_c_string(
         enc,
         // TODO(SJC): fix this ugliness
@@ -7878,7 +7932,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     }
     (*parser).m_tempPool.current_mut_slice(|data| {
         normalizeLines(data);
-        (*parser).m_handlers.processingInstruction(target.as_ptr() as *mut _, data.as_ptr());
+        (*parser).m_handlers.processingInstruction(target as *mut _, data.as_ptr());
     });
     (*parser).m_tempPool.clear();
     1
@@ -8295,15 +8349,6 @@ impl XML_ParserStruct {
                         if let Some(prefix) = dtd_tables.prefixes.get(prefix_name) {
                             return Some(Rc::clone(prefix));
                         }
-
-                        // REXPAT change: we need to copy the prefix name
-                        // into the DTD pool, since the HashMap keeps a permanent
-                        // reference to the name which we can't modify after
-                        // the call to `hash_insert!` (unlike the original C code)
-                        let prefix_name = match self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
-                            Some(name) => name,
-                            None => return None,
-                        };
                         let hk = HashKey::try_from_slice(prefix_name).ok()?;
                         let prefix = hash_insert!(
                             &mut dtd_tables.prefixes,
@@ -8402,45 +8447,57 @@ unsafe extern "C" fn copyEntityTable(
             HashInsertResult::Err => return 0,
         };
         if !oldE.systemId.get().is_null() {
-            let mut tem = match newPool.copy_c_string(oldE.systemId.get()) {
-                Some(tem) => tem,
-                None => return 0,
-            };
-            newE.systemId.set(tem.as_ptr());
+            if !newPool.copy_c_string(oldE.systemId.get()) {
+                return 0;
+            }
+            let mut tem = newPool.finish_string();
+            if tem.is_null() {
+                return 0;
+            }
+            newE.systemId.set(tem);
             if !oldE.base.get().is_null() {
                 if oldE.base.get() == cachedOldBase {
                     newE.base.set(cachedNewBase);
                 } else {
                     cachedOldBase = oldE.base.get();
-                    tem = match newPool.copy_c_string(cachedOldBase) {
-                        Some(tem) => tem,
-                        None => return 0,
-                    };
-                    newE.base.set(tem.as_ptr());
-                    cachedNewBase = tem.as_ptr();
+                    if !newPool.copy_c_string(cachedOldBase) {
+                        return 0;
+                    }
+                    tem = newPool.finish_string();
+                    if tem.is_null() {
+                        return 0;
+                    }
+                    newE.base.set(tem);
+                    cachedNewBase = tem;
                 }
             }
             if !oldE.publicId.get().is_null() {
-                tem = match newPool.copy_c_string(oldE.publicId.get()) {
-                    Some(tem) => tem,
-                    None => return 0,
-                };
-                newE.publicId.set(tem.as_ptr());
+                if !newPool.copy_c_string(oldE.publicId.get()) {
+                    return 0;
+                }
+                newE.publicId.set(newPool.finish_string());
+                if newE.publicId.get().is_null() {
+                    return 0;
+                }
             }
         } else {
-            let mut tem_0 = match newPool.copy_c_string_n(oldE.textPtr.get(), oldE.textLen.get()) {
-                Some(tem) => tem,
-                None => return 0,
+            if !newPool.copy_c_string_n(oldE.textPtr.get(), oldE.textLen.get()) {
+                return 0;
             };
-            newE.textPtr.set(tem_0.as_ptr());
+            newE.textPtr.set(newPool.finish_string());
+            if newE.textPtr.get().is_null() {
+                return 0;
+            }
             newE.textLen.set(oldE.textLen.get());
         }
         if !oldE.notation.get().is_null() {
-            let mut tem = match newPool.copy_c_string(oldE.notation.get()) {
-                Some(tem) => tem,
-                None => return 0,
-            };
-            newE.notation.set(tem.as_ptr());
+            if !newPool.copy_c_string(oldE.notation.get()) {
+                return 0;
+            }
+            newE.notation.set(newPool.finish_string());
+            if newE.notation.get().is_null() {
+                return 0;
+            }
         }
         newE.is_param.set(oldE.is_param.get());
         newE.is_internal.set(oldE.is_internal.get());
