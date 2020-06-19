@@ -5976,8 +5976,8 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let pub_id = self.m_tempPool.finish_string();
-                        normalizePublicId(pub_id.as_ptr() as *const _ as *mut _);
-                        self.m_doctypePubid = pub_id.as_ptr() as *const _;
+                        normalizePublicId(pub_id.as_ptr() as *mut _);
+                        self.m_doctypePubid = pub_id.as_ptr();
                         handleDefault = false;
                     } else {
                         if (*enc).isPublicId(buf.with_end(next), &mut *eventPP) == 0 {
@@ -6543,8 +6543,8 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let tem_0 = self.m_tempPool.finish_string();
-                        normalizePublicId(tem_0.as_ptr() as *const _ as *mut _);
-                        self.m_declNotationPublicId = tem_0.as_ptr() as *const _;
+                        normalizePublicId(tem_0.as_ptr() as *mut _);
+                        self.m_declNotationPublicId = tem_0.as_ptr();
                         handleDefault = false
                     }
                 }
@@ -7029,7 +7029,7 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let mut tem = self.m_dtd.pool.finish_string();
-                        normalizePublicId(tem.as_ptr() as *const _ as *mut _);
+                        normalizePublicId(tem.as_ptr() as *mut _);
                         self.m_declEntity.as_mut().unwrap().publicId.set(tem.as_ptr() as *const _);
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
