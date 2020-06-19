@@ -4397,14 +4397,6 @@ impl XML_ParserStruct {
             if let Some(elementType) = dtd_tables.elementTypes.get(&hk) {
                 Rc::clone(elementType)
             } else {
-                let mut name = match self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
-                    Some(name) => name,
-                    None => return XML_Error::NO_MEMORY,
-                };
-                let hk = match HashKey::try_from_slice(name) {
-                    Ok(hk) => hk,
-                    Err(_) => return XML_Error::NO_MEMORY,
-                };
                 let elementType = match hash_insert!(
                     &mut dtd_tables.elementTypes,
                     hk,
