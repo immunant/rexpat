@@ -8045,9 +8045,7 @@ impl XML_ParserStruct {
                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                     return 0;
                 }
-                // This is unsafe, start needs be very temporary
-                let start = self.m_dtd.pool.current_start();
-                let hk = match HashKey::try_from_c_string(start) {
+                let hk = match self.m_dtd.pool.current_slice(HashKey::try_from_slice) {
                     Ok(hk) => hk,
                     Err(_) => return 0,
                 };
