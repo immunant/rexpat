@@ -42,8 +42,7 @@ pub trait FallibleRcSlice<T: Copy> {
 // until either `fallible_collections` or libstd get this feature
 impl<T: Copy> FallibleRcSlice<T> for Rc<[T]> {
     fn try_from_slice(slice: &[T]) -> Result<Self, TryReserveError> {
-        let slice_layout = Layout::array::<T>(slice.len())
-            .map_err(|_| TryReserveError::CapacityOverflow)?;
+        let slice_layout = Layout::for_value(slice);
         let box_layout = Layout::new::<RcBox<()>>()
             .extend(slice_layout)
             .map_err(|_| TryReserveError::CapacityOverflow)?
