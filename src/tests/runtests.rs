@@ -271,8 +271,8 @@ pub type DefaultCheck = default_check;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct DataIssue240<'scf> {
-    pub parser: XML_Parser<'scf>,
+pub struct DataIssue240 {
+    pub parser: XML_Parser,
     pub deep: c_int,
 }
 /* ptrdiff_t */
@@ -674,7 +674,7 @@ unsafe extern "C" fn external_entity_optioner(
         if strcmp(systemId, (*options).system_id) == 0 {
             let mut rc: XML_Status = XML_Status::ERROR;
             ext_parser = XML_ExternalEntityParserCreate(
-                parser,
+                parser.as_ref(),
                 context,
                 ptr::null(),
             );
@@ -2417,14 +2417,14 @@ unsafe extern "C" fn test_unknown_encoding_internal_entity() {
         b"<?xml version=\'1.0\' encoding=\'unsupported-encoding\'?>\n<!DOCTYPE test [<!ENTITY foo \'bar\'>]>\n<test a=\'&foo;\'/>\x00".as_ptr() as *const c_char;
     XML_SetUnknownEncodingHandler(
         g_parser,
-        transmute(Some(
+        Some(
             UnknownEncodingHandler
                 as unsafe extern "C" fn(
                     _: *mut c_void,
                     _: *const XML_Char,
                     _: *mut XML_Encoding,
                 ) -> c_int,
-        )),
+        ),
         ptr::null_mut(),
     );
     if _XML_Parse_SINGLE_BYTES(g_parser, text, strlen(text) as c_int, true)
@@ -2502,7 +2502,7 @@ unsafe extern "C" fn external_entity_loader(
     let mut test_data: *mut ExtTest = *(parser as *mut *mut c_void) as *mut ExtTest;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -2671,7 +2671,7 @@ unsafe extern "C" fn external_entity_faulter(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut fault: *mut ExtFaults = *(parser as *mut *mut c_void) as *mut ExtFaults;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6085,7 +6085,7 @@ unsafe extern "C" fn external_entity_resetter(
         finalBuffer: false,
     };
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6247,7 +6247,7 @@ unsafe extern "C" fn external_entity_suspender(
     let mut text: *const c_char = b"<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6356,7 +6356,7 @@ unsafe extern "C" fn external_entity_suspend_xmldecl(
     };
     let mut rc: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6523,7 +6523,7 @@ unsafe extern "C" fn external_entity_suspending_faulter(
     let mut buffer: *mut c_void = ptr::null_mut();
     let mut parse_len: c_int = strlen((*fault).parse_text) as c_int;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6861,7 +6861,7 @@ unsafe extern "C" fn external_entity_cr_catcher(
     let mut text: *const c_char = b"\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -6905,7 +6905,7 @@ unsafe extern "C" fn external_entity_bad_cr_catcher(
     let mut text: *const c_char = b"<tag>\r\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7169,7 +7169,7 @@ unsafe extern "C" fn external_entity_rsqb_catcher(
     let mut text: *const c_char = b"<tag>]\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7280,7 +7280,7 @@ unsafe extern "C" fn external_entity_good_cdata_ascii(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     crate::chardata::CharData_Init(&mut storage as *mut _);
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7451,7 +7451,7 @@ unsafe extern "C" fn external_entity_param_checker(
         b"<!-- Subordinate parser -->\n<!ELEMENT doc (#PCDATA)*>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -7636,7 +7636,7 @@ unsafe extern "C" fn external_entity_ref_param_checker(
     }
     /* Here we use the global 'parser' variable */
     ext_parser = XML_ExternalEntityParserCreate(
-        g_parser,
+        g_parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8298,7 +8298,7 @@ unsafe extern "C" fn external_entity_param(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8441,7 +8441,7 @@ unsafe extern "C" fn external_entity_load_ignore(
         b"<![IGNORE[<!ELEMENT e (#PCDATA)*>]]>\x00".as_ptr() as *const c_char;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8577,7 +8577,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16(
                                  &[c_char; 73]>(b"<\x00!\x00[\x00I\x00G\x00N\x00O\x00R\x00E\x00[\x00<\x00!\x00E\x00L\x00E\x00M\x00E\x00N\x00T\x00 \x00e\x00 \x00(\x00#\x00P\x00C\x00D\x00A\x00T\x00A\x00)\x00*\x00>\x00]\x00]\x00>\x00\x00");
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8723,7 +8723,7 @@ unsafe extern "C" fn external_entity_load_ignore_utf16_be(
                                  &[c_char; 73]>(b"\x00<\x00!\x00[\x00I\x00G\x00N\x00O\x00R\x00E\x00[\x00<\x00!\x00E\x00L\x00E\x00M\x00E\x00N\x00T\x00 \x00e\x00 \x00(\x00#\x00P\x00C\x00D\x00A\x00T\x00A\x00)\x00*\x00>\x00]\x00]\x00>\x00");
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -8953,7 +8953,7 @@ unsafe extern "C" fn external_entity_valuer(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9205,7 +9205,7 @@ unsafe extern "C" fn external_entity_not_standalone(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9317,7 +9317,7 @@ unsafe extern "C" fn external_entity_value_aborter(
         return XML_Status::OK as c_int;
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9778,7 +9778,7 @@ unsafe extern "C" fn external_entity_public(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut parse_res: c_int = 0;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -9990,7 +9990,7 @@ unsafe extern "C" fn external_entity_devaluer(
         );
     }
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -10864,7 +10864,7 @@ unsafe extern "C" fn external_entity_oneshot_loader(
     let mut test_data: *mut ExtHdlrData = *(parser as *mut *mut c_void) as *mut ExtHdlrData;
     let mut ext_parser: XML_Parser = ptr::null_mut();
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -12286,7 +12286,7 @@ unsafe extern "C" fn external_entity_loader2(
     let mut test_data: *mut ExtTest2 = *(parser as *mut *mut c_void) as *mut ExtTest2;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -12755,7 +12755,7 @@ unsafe extern "C" fn external_entity_faulter2(
     let mut test_data: *mut ExtFaults2 = *(parser as *mut *mut c_void) as *mut ExtFaults2;
     let mut extparser: XML_Parser = ptr::null_mut();
     extparser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -14433,7 +14433,7 @@ unsafe extern "C" fn external_entity_handler(
     }
     XML_SetUserData(parser, callno as *mut c_void);
     p2 = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -15422,7 +15422,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     );
     ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
-    let max_alloc_count: c_uint = 10;
+    // REXPAT: String pool allocates a bit more now, was 10
+    let max_alloc_count: c_uint = 15;
     /* Something this simple shouldn't need more than 10 allocations */
     i = 0;
     while i < max_alloc_count {
@@ -15473,7 +15474,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
     /* Try several levels of allocation */
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         g_parser = XML_ParserCreate_MM(
             b"us-ascii\x00".as_ptr() as *const c_char,
             None,
@@ -16493,7 +16494,7 @@ unsafe extern "C" fn external_entity_duff_loader(
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16654,7 +16655,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
             .as_ptr() as *const c_char;
         allocation_count = 10000;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16677,7 +16678,7 @@ unsafe extern "C" fn external_entity_dbl_handler(
         while i < max_alloc_count {
             allocation_count = callno + i as isize;
             new_parser = XML_ExternalEntityParserCreate(
-                parser,
+                parser.as_ref(),
                 context,
                 ptr::null(),
             );
@@ -16785,7 +16786,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
             .as_ptr() as *const c_char;
         XML_SetUserData(parser, 1i64 as *mut c_void);
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16797,7 +16798,7 @@ unsafe extern "C" fn external_entity_dbl_handler_2(
         /* Just run through once */
         text = b"<?xml version=\'1.0\' encoding=\'us-ascii\'?><e/>\x00".as_ptr() as *const c_char;
         new_parser = XML_ExternalEntityParserCreate(
-            parser,
+            parser.as_ref(),
             context,
             ptr::null(),
         );
@@ -16826,7 +16827,8 @@ unsafe extern "C" fn test_alloc_external_entity() {
 
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let alloc_test_max_repeats: c_int = 50;
+    // REXPAT: String pool allocates a bit more now, was 50
+    let alloc_test_max_repeats: c_int = 56;
     i = 0;
     while i < alloc_test_max_repeats {
         allocation_count = -1;
@@ -16891,7 +16893,7 @@ unsafe extern "C" fn external_entity_alloc_set_encoding(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut status: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -16924,7 +16926,8 @@ unsafe extern "C" fn test_alloc_ext_entity_set_encoding() {
 
         b"<!DOCTYPE doc [\n  <!ENTITY en SYSTEM \'http://example.org/dummy.ent\'>\n]>\n<doc>&en;</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let max_allocation_count: c_int = 30;
+    // REXPAT: String pool allocates a bit more now, was 30
+    let max_allocation_count: c_int = 36;
     i = 0;
     while i < max_allocation_count {
         XML_SetExternalEntityRefHandler(
@@ -17320,7 +17323,9 @@ unsafe extern "C" fn test_alloc_set_base() {
         }
         i += 1
     }
-    if i == 0 {
+    // REXPAT: disabled since bumpalo pre-allocates a chunk of 512 bytes,
+    // so this test never allocates
+    if /*i == 0*/ false {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -17411,7 +17416,7 @@ unsafe extern "C" fn external_entity_reallocator(
     let mut buffer: *mut c_void = ptr::null_mut();
     let mut status: XML_Status = XML_Status::ERROR;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -17696,16 +17701,17 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8459i32,
-            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -17863,7 +17869,7 @@ unsafe extern "C" fn external_entity_alloc(
     let mut ext_parser: XML_Parser = ptr::null_mut();
     let mut parse_res: c_int = 0;
     ext_parser = XML_ExternalEntityParserCreate(
-        parser,
+        parser.as_ref(),
         context,
         ptr::null(),
     );
@@ -18097,16 +18103,17 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8689i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18165,16 +18172,17 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8739i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18233,16 +18241,17 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8789i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -18678,7 +18687,7 @@ unsafe extern "C" fn test_alloc_large_group() {
     let max_alloc_count: c_int = 50;
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         XML_SetElementDeclHandler(
             g_parser,
             transmute(Some(
@@ -18954,16 +18963,17 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9202i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -19268,16 +19278,17 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9421i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse required reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i > max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -19333,16 +19344,17 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
         alloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9467i32,
-            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
+            b"Parse requireed reallocation\x00".as_ptr() as *const c_char,
         );
     }
-    if i == max_realloc_count {
+    if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -19464,7 +19476,7 @@ unsafe extern "C" fn test_alloc_long_base() {
     let max_alloc_count: c_int = 25;
     i = 0;
     while i < max_alloc_count {
-        allocation_count = i as intptr_t;
+        allocation_count = (i * 2) as intptr_t;
         XML_SetUserData(g_parser, entity_text.as_mut_ptr() as *mut c_void);
         XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
         XML_SetExternalEntityRefHandler(
@@ -20599,7 +20611,8 @@ unsafe extern "C" fn test_nsalloc_long_context() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 70;
+    // REXPAT: String pool allocates a bit more now, was 70
+    let max_alloc_count: c_int = 76;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -20704,15 +20717,16 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             10649i32,
-            b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
+            b"Parsing required reallocation\x00".as_ptr() as *const c_char,
         );
-    } else if i == max_realloc_count {
+    } else if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20901,7 +20915,8 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         nsalloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We no longer need to reallocate
+    if i > 0 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20909,7 +20924,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
             10932i32,
             b"Parsing worked despite failing reallocations\x00".as_ptr() as *const c_char,
         );
-    } else if i == max_realloc_count {
+    } else if i >= max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -21038,7 +21053,8 @@ unsafe extern "C" fn test_nsalloc_long_default_in_ext() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 50;
+    // REXPAT: String pool allocates a bit more now, was 50
+    let max_alloc_count: c_int = 56;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21127,7 +21143,8 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 55;
+    // REXPAT: String pool allocates a bit more now, was 55
+    let max_alloc_count: c_int = 60;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21213,7 +21230,8 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 70;
+    // REXPAT: String pool allocates a bit more now, was 70
+    let max_alloc_count: c_int = 76;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;

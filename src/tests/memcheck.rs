@@ -113,7 +113,7 @@ pub unsafe extern "C" fn tracking_free(mut ptr: *mut c_void) {
         if !(*entry).next.is_null() {
             (*(*entry).next).prev = (*entry).prev
         } else {
-            alloc_tail = (*entry).next
+            alloc_tail = (*entry).prev
         }
         free(entry as *mut c_void);
     } else {

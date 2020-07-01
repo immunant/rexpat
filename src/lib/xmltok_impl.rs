@@ -1802,10 +1802,10 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
     }
 
-    fn utf8Convert<'b, 'a: 'b>(
+    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
-        from_buf: &mut ExpatBufRef<'a>,
-        to_buf: &'b mut ExpatBufRefMut<'a>,
+        from_buf: &'r mut ExpatBufRef<'a>,
+        to_buf: &'r mut ExpatBufRefMut<'b>,
     ) -> XML_Convert_Result {
         self.utf8Convert(from_buf, to_buf)
     }

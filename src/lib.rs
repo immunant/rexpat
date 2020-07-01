@@ -14,11 +14,15 @@
 #![feature(ptr_wrapping_offset_from)]
 #![feature(try_reserve)]
 #![feature(alloc_layout_extra)]
+// Required by !Send and !Sync
+#![feature(optin_builtin_traits)]
 
 #[cfg(all(feature = "unicode_wchar_t", not(target_os = "windows")))]
 compile_error!("Feature \"unicode_wchar_t\" is only supported on windows");
 
 extern crate libc;
+#[macro_use]
+extern crate rental;
 
 pub mod ascii_h;
 pub mod expat_external_h;
@@ -26,8 +30,11 @@ pub mod expat_h;
 pub mod filemap_h;
 pub mod stdbool_h;
 pub mod stdlib;
+pub mod string_pool;
 pub mod xmltchar_h;
 pub mod xmltok_impl_h;
+
+mod fallible_rc;
 
 pub mod lib {
     pub mod nametab;
