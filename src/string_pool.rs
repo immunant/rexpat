@@ -11,19 +11,7 @@ use std::cell::{Cell, RefCell};
 use std::convert::TryInto;
 use std::mem::swap;
 
-pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
-
-#[cfg(feature = "mozilla")]
-const fn init_block_size_const() -> usize {
-    // FIXME: should be `offset_of(BLOCK, s)`, but that's not supported yet,
-    // so we over-estimate its offset
-    1024 - (std::mem::size_of::<BLOCK>() / std::mem::size_of::<XML_Char>())
-}
-
-#[cfg(not(feature = "mozilla"))]
-const fn init_block_size_const() -> usize {
-    1024
-}
+pub const INIT_BLOCK_SIZE: usize = 1024;
 
 rental! {
     mod rental_pool {
