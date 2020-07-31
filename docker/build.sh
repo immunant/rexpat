@@ -15,7 +15,12 @@ REPO_NAME=immunant/rexpat
 DATE_TAG=$(date +'%Y%m%d')
 SCRIPT_DIR="$(dirname "$0")"
 
+# pull the rust version out of ../rust-toolchain to keep things synched
+RUST_TOOLCHAIN_FILE="$SCRIPT_DIR/../rust-toolchain"
+RUST_VER=$(cat $RUST_TOOLCHAIN_FILE | tr -d '\n')
+
  docker build \
     --tag "$REPO_NAME:$DATE_TAG" \
     --tag "$REPO_NAME:latest" \
+    --build-arg RUST_VER=$RUST_VER \
     "$SCRIPT_DIR"
