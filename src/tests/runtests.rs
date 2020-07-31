@@ -42,7 +42,6 @@
 #![register_tool(c2rust)]
 #![feature(
     const_raw_ptr_to_usize_cast,
-    const_transmute,
     label_break_value,
     main,
     ptr_wrapping_offset_from,
