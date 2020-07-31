@@ -2718,6 +2718,7 @@ impl XML_ParserStruct {
         }
         /* fall through */
         self.m_parsingStatus.parsing = XML_Parsing::PARSING;
+        // convert in-out parameter `start` from index to pointer
         // TODO(SJC): is signed overflow an issue here?
         start = self.m_buffer.as_ptr().add(self.m_bufferStart);
         self.m_positionIdx = self.m_bufferStart;
@@ -2730,7 +2731,7 @@ impl XML_ParserStruct {
             self.m_buffer[self.m_bufferStart..self.m_bufferEnd].into(),
             &mut start,
         );
-
+        // convert in-out parameter `start` from pointer back to index
         self.m_bufferStart = start.wrapping_offset_from(self.m_buffer.as_ptr()) as usize;
         if self.m_errorCode != XML_Error::NONE {
             self.m_eventEndPtr = self.m_eventPtr;
