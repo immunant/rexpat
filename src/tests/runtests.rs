@@ -15422,7 +15422,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
     // REXPAT: String pool allocates a bit more now, was 10
-    let max_alloc_count: c_uint = 15;
+    let max_alloc_count: c_uint = 20;
     /* Something this simple shouldn't need more than 10 allocations */
     i = 0;
     while i < max_alloc_count {
@@ -20716,8 +20716,7 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
@@ -20914,8 +20913,7 @@ unsafe extern "C" fn test_nsalloc_realloc_long_ge_name() {
         nsalloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
