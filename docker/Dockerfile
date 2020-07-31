@@ -37,7 +37,7 @@ RUN apt-get update -qq && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100 && \
     rm -rf /var/lib/apt/lists/*
 
-ARG RUST_VER=nightly-2020-03-21
+ARG RUST_VER=nightly-2020-07-30
 USER docker
 WORKDIR ${HOME}
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |  \
