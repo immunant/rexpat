@@ -796,7 +796,7 @@ pub struct XML_ParserStruct {
     pub m_errorCode: XML_Error,
     pub m_eventPtr: *const c_char,
     pub m_eventEndPtr: *const c_char,
-    pub m_positionIdx: usize,
+    pub m_positionIdx: Option<usize>,
     pub m_openInternalEntities: *mut OpenInternalEntity,
     pub m_freeInternalEntities: *mut OpenInternalEntity,
     pub m_defaultExpandInternalEntities: XML_Bool,
@@ -1686,7 +1686,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             m_errorCode: XML_Error::NONE,
             m_eventPtr: ptr::null(),
             m_eventEndPtr: ptr::null(),
-            m_positionIdx: 0,
+            m_positionIdx: None,
             m_openInternalEntities: ptr::null_mut(),
             m_freeInternalEntities: ptr::null_mut(),
             m_defaultExpandInternalEntities: false,
@@ -1801,7 +1801,7 @@ impl<'scf> XML_ParserStruct<'scf> {
         self.m_errorCode = XML_Error::NONE;
         self.m_eventPtr = ptr::null();
         self.m_eventEndPtr = ptr::null();
-        self.m_positionIdx = 0;
+        self.m_positionIdx = Some(0);
         self.m_openInternalEntities = ptr::null_mut();
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
@@ -2620,7 +2620,7 @@ impl XML_ParserStruct {
             if isFinal == 0 {
                 return XML_Status::OK;
             }
-            self.m_positionIdx = self.m_bufferStart;
+            self.m_positionIdx = Some(self.m_bufferStart);
             self.m_parseEndIdx = self.m_bufferEnd;
             /* If data are left over from last buffer, and we now know that these
             data are the final chunk of input, then we have to check them again
@@ -2649,10 +2649,10 @@ impl XML_ParserStruct {
                         * LCOV_EXCL_START
                         */
                         (*self.m_encoding).updatePosition(
-                            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
+                            self.m_buffer[self.m_positionIdx.unwrap()..self.m_bufferStart].into(),
                             &mut self.m_position,
                         );
-                        self.m_positionIdx = self.m_bufferStart;
+                        self.m_positionIdx = Some(self.m_bufferStart);
                         return XML_Status::SUSPENDED;
                     }
                     XML_Parsing::INITIALIZED | XML_Parsing::PARSING => {
@@ -2721,7 +2721,7 @@ impl XML_ParserStruct {
         // convert in-out parameter `start` from index to pointer
         // TODO(SJC): is signed overflow an issue here?
         start = self.m_buffer.as_ptr().add(self.m_bufferStart);
-        self.m_positionIdx = self.m_bufferStart;
+        self.m_positionIdx = Some(self.m_bufferStart);
         self.m_bufferEnd += len as usize;
         self.m_parseEndIdx = self.m_bufferEnd;
         self.m_parseEndByteIndex += len as usize;
@@ -2753,10 +2753,10 @@ impl XML_ParserStruct {
             }
         }
         (*self.m_encoding).updatePosition(
-            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
+            self.m_buffer[self.m_positionIdx.unwrap()..self.m_bufferStart].into(),
             &mut self.m_position,
         );
-        self.m_positionIdx = self.m_bufferStart;
+        self.m_positionIdx = Some(self.m_bufferStart);
         result
     }
 }
@@ -2846,7 +2846,7 @@ impl <'scf> XML_ParserStruct<'scf> {
             }
             self.m_eventEndPtr = ptr::null();
             self.m_eventPtr = ptr::null();
-            self.m_positionIdx = 0;
+            self.m_positionIdx = None;
         }
         Some(&mut self.m_buffer[self.m_bufferEnd..])
     }
@@ -2975,10 +2975,10 @@ impl XML_ParserStruct {
             }
         }
         (*self.m_encoding).updatePosition(
-            self.m_buffer[self.m_positionIdx..self.m_bufferStart].into(),
+            self.m_buffer[self.m_positionIdx.unwrap()..self.m_bufferStart].into(),
             &mut self.m_position,
         );
-        self.m_positionIdx = self.m_bufferStart;
+        self.m_positionIdx = Some(self.m_bufferStart);
 
         #[cfg(feature = "mozilla")]
         {
@@ -3112,7 +3112,7 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
     if parser.is_null() {
         return 0;
     }
-    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx);
+    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx.unwrap());
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
@@ -3121,7 +3121,9 @@ pub unsafe extern "C" fn XML_GetCurrentLineNumber(mut parser: XML_Parser) -> XML
             ),
             &mut (*parser).m_position,
         );
-        (*parser).m_positionIdx = (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize;
+        (*parser).m_positionIdx = Some(
+            (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize
+        );
     }
     (*parser).m_position.lineNumber.wrapping_add(1)
 }
@@ -3130,7 +3132,7 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
     if parser.is_null() {
         return 0;
     }
-    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx);
+    let positionPtr = (*parser).m_buffer.as_ptr().wrapping_add((*parser).m_positionIdx.unwrap());
     if !(*parser).m_eventPtr.is_null() && (*parser).m_eventPtr >= positionPtr {
         (*(*parser).m_encoding).updatePosition(
             ExpatBufRef::new(
@@ -3139,7 +3141,9 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
             ),
             &mut (*parser).m_position,
         );
-        (*parser).m_positionIdx = (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize;
+        (*parser).m_positionIdx = Some(
+            (*parser).m_eventPtr.wrapping_offset_from((*parser).m_buffer.as_ptr()) as usize
+        );
     }
     (*parser).m_position.columnNumber
 }
