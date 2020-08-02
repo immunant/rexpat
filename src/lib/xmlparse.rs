@@ -2671,7 +2671,7 @@ impl<'scf> XML_ParserStruct<'scf> {
             /* not defined XML_CONTEXT_BYTES */
             if let Some(buff) = self.getBuffer(len) {
                 buff[..len as usize].copy_from_slice(std::slice::from_raw_parts(s, len as usize));
-                XML_ParseBuffer(self, len, isFinal)
+                self.parseBuffer(len, isFinal)
             } else {
                 XML_Status::ERROR
             }
