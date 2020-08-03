@@ -2776,7 +2776,7 @@ pub unsafe extern "C" fn XML_ParseBuffer(
 
 
 impl <'scf> XML_ParserStruct<'scf> {
-    pub unsafe fn getBuffer(&mut self, len: c_int) -> Option<&mut [c_char]> {
+    pub fn getBuffer(&mut self, len: c_int) -> Option<&mut [c_char]> {
         if len < 0 {
             self.m_errorCode = XML_Error::NO_MEMORY;
             return None;
@@ -2854,16 +2854,13 @@ impl <'scf> XML_ParserStruct<'scf> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
-    if parser.is_null() {
-        return ptr::null_mut();
-    }
-
-    if let Some(buf) = (*parser).getBuffer(len) {
-        buf.as_mut_ptr() as *mut c_void
-    } else {
-        ptr::null_mut()
-    }
+pub extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut c_void {
+    if let Some(parser) = unsafe{ parser.as_mut() } {
+        if let Some(buf) = parser.getBuffer(len) {
+            return buf.as_mut_ptr() as *mut c_void;
+        }
+    };
+    ptr::null_mut()
 }
 /* Stops parsing, causing XML_Parse() or XML_ParseBuffer() to return.
    Must be called from within a call-back handler, except when aborting
