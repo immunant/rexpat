@@ -2895,7 +2895,7 @@ pub extern "C" fn XML_GetBuffer(mut parser: XML_Parser, mut len: c_int) -> *mut 
 */
 
 impl<'scf> XML_ParserStruct<'scf> {
-    pub unsafe fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
+    pub fn stopParser(&mut self, resumable: XML_Bool) -> XML_Status {
         match self.m_parsingStatus.parsing {
             XML_Parsing::SUSPENDED => {
                 if resumable {
