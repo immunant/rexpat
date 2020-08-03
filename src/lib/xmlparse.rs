@@ -2829,7 +2829,8 @@ impl <'scf> XML_ParserStruct<'scf> {
                         }
                     }
                 }
-                if self.m_buffer.try_reserve(bufferSize as usize).is_err() {
+                let additional = bufferSize as usize - self.m_buffer.capacity();
+                if self.m_buffer.try_reserve_exact(additional).is_err() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
                     return None;
                 }
