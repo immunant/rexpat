@@ -12,7 +12,6 @@
     const_raw_ptr_to_usize_cast,
     label_break_value,
     main,
-    ptr_wrapping_offset_from,
     register_tool
 )]
 
@@ -171,7 +170,7 @@ unsafe extern "C" fn startElement(
     while !(*p).is_null() {
         p = p.offset(1)
     }
-    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1) as c_int;
+    nAtts = ((p as isize) - (atts as isize) as c_long >> 1) as c_int;
     if nAtts > 1 {
         qsort(
             atts as *mut c_void,
@@ -236,7 +235,7 @@ unsafe extern "C" fn startElementNS(
     while !(*p).is_null() {
         p = p.offset(1)
     }
-    nAtts = (p.wrapping_offset_from(atts) as c_long >> 1) as c_int;
+    nAtts = (p as isize - (atts as isize) as c_long >> 1) as c_int;
     if nAtts > 1 {
         qsort(
             atts as *mut c_void,
@@ -921,7 +920,7 @@ unsafe extern "C" fn unknownEncoding(
             return 0i32;
         }
         cp *= 10;
-        cp += s.wrapping_offset_from(digits.as_ptr()) as c_int;
+        cp += (s as isize) - (digits.as_ptr() as isize) as c_int;
         if cp >= 0x10000 {
             return 0i32;
         }

@@ -43,7 +43,6 @@
 #![feature(
     const_raw_ptr_to_usize_cast,
     main,
-    ptr_wrapping_offset_from,
     register_tool
 )]
 
@@ -158,7 +157,7 @@ unsafe fn main_0(mut argc: c_int, mut argv: *mut *mut c_char) -> c_int {
         tstart = clock();
         loop {
             let mut parseBufferSize: c_int =
-                XMLBufEnd.wrapping_offset_from(XMLBufPtr) as c_long as c_int;
+                XMLBufEnd as isize - (XMLBufPtr as isize) as c_long as c_int;
             if parseBufferSize <= bufferSize {
                 isFinal = 1 as c_int
             } else {
