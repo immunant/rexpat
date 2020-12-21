@@ -10,7 +10,6 @@
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(main)]
 #![feature(const_in_array_repeat_expressions)]
-#![feature(ptr_wrapping_offset_from)]
 #![feature(try_reserve)]
 #![feature(alloc_layout_extra)]
 // Required by !Send and !Sync
