@@ -1757,7 +1757,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                     ptr = ptr.offset(self.MINBPC())
                 }
                 _ => {
-                    return ptr.wrapping_offset_from(start) as libc::c_long as
+                    return (ptr as usize - (start as usize)) as libc::c_long as
                                libc::c_int
                 }
             }

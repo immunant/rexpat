@@ -84,7 +84,7 @@ pub const XML_CONTEXT_BYTES: c_int = 1024;
 pub struct ExpatBufRef<'a, T = c_char>(&'a [T]);
 impl<'a, T> ExpatBufRef<'a, T> {
     pub fn new<'new>(start: *const T, end: *const T) -> ExpatBufRef<'new, T> {
-        unsafe { ExpatBufRef(std::slice::from_raw_parts(start, end.wrapping_offset_from(start) as usize)) }
+        unsafe { ExpatBufRef(std::slice::from_raw_parts(start, end as usize - start as usize)) }
     }
     pub fn new_len<'new>(start: *const T, len: usize) -> ExpatBufRef<'new, T> {
         unsafe { ExpatBufRef(std::slice::from_raw_parts(start, len)) }
@@ -160,7 +160,7 @@ impl<'a> From<ExpatBufRef<'a, c_char>> for ExpatBufRef<'a, c_ushort> {
 pub struct ExpatBufRefMut<'a, T = c_char>(&'a mut [T]);
 impl<'a, T> ExpatBufRefMut<'a, T> {
     pub fn new<'new>(start: *mut T, end: *mut T) -> ExpatBufRefMut<'new, T> {
-        unsafe { ExpatBufRefMut(std::slice::from_raw_parts_mut(start, end.wrapping_offset_from(start) as usize)) }
+        unsafe { ExpatBufRefMut(std::slice::from_raw_parts_mut(start, end as usize - start as usize)) }
     }
     pub fn new_len<'new>(start: *mut T, len: usize) -> ExpatBufRefMut<'new, T> {
         unsafe { ExpatBufRefMut(std::slice::from_raw_parts_mut(start, len)) }
@@ -177,7 +177,7 @@ impl<'a, T> ExpatBufRefMut<'a, T> {
         if new_start < self.as_mut_ptr() || new_start > self.end() {
             panic!("Attempted to move the start of an ExpatBufRefMut to an invalid pointer: {:?}", new_start);
         }
-        let offset = new_start.wrapping_offset_from(self.0.as_ptr());
+        let offset: isize = (new_start as usize - self.0.as_ptr() as usize).try_into().unwrap();
         let new_start = unsafe { self.0.as_mut_ptr().offset(offset) };
         *self = ExpatBufRefMut::new(new_start, self.end());
     }
@@ -1014,7 +1014,7 @@ fn safe_ptr_diff<T>(p: *const T, q: *const T) -> isize {
     if p.is_null() || q.is_null() {
         0
     } else {
-        p.wrapping_offset_from(q)
+        (p as usize - (q as usize)) as isize
     }
 }
 
@@ -2826,9 +2826,9 @@ impl XML_ParserStruct {
                         self.m_buffer as *mut c_void,
                         &mut *self.m_buffer.offset(offset as isize) as *mut c_char
                             as *const c_void,
-                        (self
-                            .m_bufferEnd
-                            .wrapping_offset_from(self.m_bufferPtr)
+                        ((self
+                            .m_bufferEnd as usize
+                            - (self.m_bufferPtr as usize)) as isize
                             + keep as isize).try_into().unwrap(),
                     );
                     self.m_bufferEnd = self.m_bufferEnd.offset(-offset);
@@ -3066,9 +3066,9 @@ pub unsafe extern "C" fn XML_GetCurrentByteIndex(mut parser: XML_Parser) -> XML_
     }
     if !(*parser).m_eventPtr.is_null() {
         return (*parser).m_parseEndByteIndex
-            - (*parser)
-                .m_parseEndPtr
-                .wrapping_offset_from((*parser).m_eventPtr) as c_long;
+            - ((*parser)
+                .m_parseEndPtr as usize
+                - ((*parser).m_eventPtr as usize)) as c_long;
     }
     if cfg!(feature = "mozilla") {
         return (*parser).m_parseEndByteIndex;
@@ -3084,9 +3084,9 @@ pub unsafe extern "C" fn XML_GetCurrentByteCount(mut parser: XML_Parser) -> c_in
         return 0;
     }
     if !(*parser).m_eventEndPtr.is_null() && !(*parser).m_eventPtr.is_null() {
-        return (*parser)
-            .m_eventEndPtr
-            .wrapping_offset_from((*parser).m_eventPtr) as c_int;
+        return ((*parser)
+            .m_eventEndPtr as usize
+            - ((*parser).m_eventPtr as usize)) as c_int;
     }
     0
 }
@@ -3111,14 +3111,14 @@ pub unsafe extern "C" fn XML_GetInputContext(
     }
     if !(*parser).m_eventPtr.is_null() && !(*parser).m_buffer.is_null() {
         if !offset.is_null() {
-            *offset = (*parser)
-                .m_eventPtr
-                .wrapping_offset_from((*parser).m_buffer) as c_int
+            *offset = ((*parser)
+                .m_eventPtr as usize
+                - ((*parser).m_buffer as usize )) as c_int
         }
         if !size.is_null() {
-            *size = (*parser)
-                .m_bufferEnd
-                .wrapping_offset_from((*parser).m_buffer) as c_int
+            *size = ((*parser)
+                .m_bufferEnd as usize
+                - ((*parser).m_buffer as usize)) as c_int
         }
         return (*parser).m_buffer;
     }
@@ -3443,7 +3443,7 @@ impl XML_ParserStruct {
             bufSize = (nameLen as c_ulong).wrapping_add(
                 round_up(tag.rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
             ) as c_int;
-            if bufSize as c_long > tag.bufEnd.wrapping_offset_from(tag.buf) as c_long {
+            if bufSize as c_long > ((tag.bufEnd as usize - (tag.buf as usize)) as c_long) {
                 let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
                 if temp.is_null() {
                     return false;
@@ -3459,10 +3459,10 @@ impl XML_ParserStruct {
                 */
                 if !tag.name.localPart.is_null() {
                     tag.name.localPart = (temp).offset(
-                        tag
+                        (tag
                             .name
-                            .localPart
-                            .wrapping_offset_from(tag.buf as *const XML_Char),
+                            .localPart as usize
+                            - (tag.buf as *const XML_Char as usize)).try_into().unwrap()
                     ) as *const XML_Char
                 } /* XmlContentTok doesn't always set the last arg */
                 tag.buf = temp;
@@ -3868,13 +3868,13 @@ impl XML_ParserStruct {
                             &mut fromBuf,
                             &mut to_buf,
                         );
-                        convLen = to_buf.as_ptr().wrapping_offset_from(tag.buf as *mut XML_Char).try_into().unwrap();
+                        convLen = (to_buf.as_ptr() as usize - (tag.buf as *mut XML_Char as usize)).try_into().unwrap();
                         if fromBuf.is_empty() || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                         {
                             tag.name.strLen = convLen;
                             break;
                         } else {
-                            bufSize = (tag.bufEnd.wrapping_offset_from(tag.buf) as c_int) << 1;
+                            bufSize = ((tag.bufEnd as usize - (tag.buf as usize)) as c_int) << 1;
                             let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
                             if temp.is_null() {
                                 return XML_Error::NO_MEMORY;
@@ -7054,7 +7054,7 @@ impl XML_ParserStruct {
         }
         if result == XML_Error::NONE {
             if text_buf.end() != next && self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
-                (*entity).processed = next.wrapping_offset_from(text_buf.as_ptr()) as i32;
+                (*entity).processed = (next as usize - (text_buf.as_ptr() as usize)).try_into().unwrap();
                 self.m_processor = Some(internalEntityProcessor as Processor)
             } else {
                 (*entity).open = false;
@@ -7137,7 +7137,7 @@ unsafe extern "C" fn internalEntityProcessor(
     } else {
         if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
             (*entity).processed =
-                next.wrapping_offset_from((*entity).textPtr as *mut c_char) as c_int;
+                (next as usize - ((*entity).textPtr as *mut c_char as usize)) as c_int;
             return result;
         } else {
             (*entity).open = false;
@@ -7767,7 +7767,7 @@ unsafe extern "C" fn reportDefault(
 
             let defaultRan = (*parser).m_handlers.default(
                 (*parser).m_dataBuf,
-                data_buf.as_ptr().wrapping_offset_from((*parser).m_dataBuf).try_into().unwrap(),
+                (data_buf.as_ptr() as usize - ((*parser).m_dataBuf as usize)).try_into().unwrap(),
             );
 
             // Previously unwrapped an Option

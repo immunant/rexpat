@@ -44,7 +44,6 @@
     const_raw_ptr_to_usize_cast,
     label_break_value,
     main,
-    ptr_wrapping_offset_from,
     register_tool
 )]
 
@@ -85,6 +84,7 @@ use ::libc::{free, printf, sprintf, fprintf, strcmp, strncmp, strlen, malloc, re
 use ::rexpat::lib::xmlparse::ExpatBufRef;
 
 use std::alloc::{GlobalAlloc, Layout, System};
+use std::convert::TryInto;
 use std::mem::transmute;
 use std::ptr;
 
@@ -1336,7 +1336,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
         _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
         fromLim = buf.end();
-        actualMovementInChars = fromLim.wrapping_offset_from(fromLimInitially);
+        actualMovementInChars = isize::wrapping_sub(fromLim as _, fromLimInitially as _);
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
             success = false_0 != 0;
