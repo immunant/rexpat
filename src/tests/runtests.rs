@@ -1336,7 +1336,7 @@ unsafe extern "C" fn test_utf8_auto_align() {
         let mut buf = ExpatBufRef::new(cases[i as usize].input, fromLim);
         _INTERNAL_trim_to_complete_utf8_characters(&mut buf);
         fromLim = buf.end();
-        actualMovementInChars = (fromLim as usize - (fromLimInitially as usize)).try_into().unwrap();
+        actualMovementInChars = isize::wrapping_sub(fromLim as _, fromLimInitially as _);
         if actualMovementInChars != cases[i as usize].expectedMovementInChars {
             let mut j: size_t = 0;
             success = false_0 != 0;
