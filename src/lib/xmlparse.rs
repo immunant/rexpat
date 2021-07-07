@@ -1009,6 +1009,20 @@ pub struct Tag {
     pub bindings: Ptr<Binding>,
 }
 
+impl Default for Tag {
+    fn default() -> Tag {
+        Tag {
+            parent: None,
+            rawName: ptr::null(),
+            rawNameLength: 0,
+            name: TagName::default(),
+            buf: ptr::null_mut(),
+            bufEnd: ptr::null_mut(),
+            bindings: None,
+        }
+    }
+}
+
 #[repr(C)]
 pub struct TagName {
     pub str_0: TagNameString,
@@ -1017,6 +1031,19 @@ pub struct TagName {
     pub strLen: c_int,
     pub uriLen: usize,
     pub prefixLen: usize,
+}
+
+impl Default for TagName {
+    fn default() -> TagName {
+        TagName {
+            str_0: TagNameString::None,
+            localPart: TagNameLocalPart::None,
+            prefix: ptr::null(),
+            strLen: 0,
+            uriLen: 0,
+            prefixLen: 0,
+        }
+    }
 }
 
 pub enum TagNameString {
@@ -3972,7 +3999,7 @@ impl XML_ParserStruct {
                             tag
                         }
                         None => {
-                            let mut tag = match Box::try_new(std::mem::zeroed::<Tag>()) {
+                            let mut tag = match Box::try_new(Tag::default()) {
                                 Ok(tag) => tag,
                                 Err(_) => return XML_Error::NO_MEMORY
                             };
