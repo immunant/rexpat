@@ -1598,7 +1598,7 @@ impl Default for OpenInternalEntity {
 pub type Processor = unsafe extern "C" fn(
     _: XML_Parser,
     _: ExpatBufRef,
-    _: *mut *const c_char,
+    _: &mut *const c_char,
 ) -> XML_Error;
 
 #[cfg(feature = "unicode")]
@@ -3648,7 +3648,7 @@ impl XML_ParserStruct {
 unsafe extern "C" fn contentProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).doContent(
         0,
@@ -3668,7 +3668,7 @@ unsafe extern "C" fn contentProcessor(
 unsafe extern "C" fn externalEntityInitProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_Error::NONE {
@@ -3681,7 +3681,7 @@ unsafe extern "C" fn externalEntityInitProcessor(
 unsafe extern "C" fn externalEntityInitProcessor2(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = buf.as_ptr();
     let mut tok = (*(*parser).m_encoding).xmlTok(XML_STATE::CONTENT, buf, &mut next);
@@ -3723,7 +3723,7 @@ unsafe extern "C" fn externalEntityInitProcessor2(
 unsafe extern "C" fn externalEntityInitProcessor3(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = buf.as_ptr();
     (*parser).m_eventPtr = buf.as_ptr();
@@ -3769,7 +3769,7 @@ unsafe extern "C" fn externalEntityInitProcessor3(
 unsafe extern "C" fn externalEntityContentProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).doContent(
         1,
@@ -3792,7 +3792,7 @@ impl XML_ParserStruct {
         startTagLevel: c_int,
         enc_type: EncodingType,
         mut buf: ExpatBufRef,
-        nextPtr: *mut *const c_char,
+        nextPtr: &mut *const c_char,
         haveMore: XML_Bool,
     ) -> XML_Error {
         /* XmlContentTok doesn't always set the last arg */
@@ -5088,7 +5088,7 @@ unsafe extern "C" fn addBinding(
 unsafe extern "C" fn cdataSectionProcessor(
     mut parser: XML_Parser,
     buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut opt_buf = Some(buf);
     let mut result: XML_Error = doCdataSection(
@@ -5121,7 +5121,7 @@ unsafe extern "C" fn doCdataSection(
     mut parser: XML_Parser,
     mut enc_type: EncodingType,
     start_buf: &mut Option<ExpatBufRef>,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
     mut haveMore: XML_Bool,
 ) -> XML_Error {
     let mut buf = start_buf.unwrap().clone();
@@ -5259,7 +5259,7 @@ unsafe extern "C" fn doCdataSection(
 unsafe extern "C" fn ignoreSectionProcessor(
     mut parser: XML_Parser,
     buf: ExpatBufRef,
-    mut endPtr: *mut *const c_char,
+    mut endPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut opt_buf = Some(buf);
     let mut result: XML_Error = doIgnoreSection(
@@ -5286,7 +5286,7 @@ unsafe extern "C" fn doIgnoreSection(
     mut parser: XML_Parser,
     mut enc_type: EncodingType,
     start_buf: &mut Option<ExpatBufRef>,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
     mut haveMore: XML_Bool,
 ) -> XML_Error {
     let mut next: *const c_char = ptr::null();
@@ -5595,7 +5595,7 @@ impl CXmlHandlers {
 unsafe extern "C" fn prologInitProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_Error::NONE {
@@ -5608,7 +5608,7 @@ unsafe extern "C" fn prologInitProcessor(
 unsafe extern "C" fn externalParEntInitProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut result: XML_Error = (*parser).initializeEncoding();
     if result != XML_Error::NONE {
@@ -5629,7 +5629,7 @@ unsafe extern "C" fn externalParEntInitProcessor(
 unsafe extern "C" fn entityValueInitProcessor(
     mut parser: XML_Parser,
     init_buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut buf = init_buf.clone();
     let mut next: *const c_char = buf.as_ptr();
@@ -5703,7 +5703,7 @@ unsafe extern "C" fn entityValueInitProcessor(
 unsafe extern "C" fn externalParEntProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = buf.as_ptr();
     let mut tok = (*(*parser).m_encoding).xmlTok(XML_STATE::PROLOG, buf, &mut next);
@@ -5737,7 +5737,7 @@ unsafe extern "C" fn externalParEntProcessor(
 unsafe extern "C" fn entityValueProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = buf.as_ptr();
     let mut enc: &ENCODING = &*(*parser).m_encoding;
@@ -5770,7 +5770,7 @@ unsafe extern "C" fn entityValueProcessor(
 unsafe extern "C" fn prologProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = buf.as_ptr();
     let mut tok = (*(*parser).m_encoding).xmlTok(XML_STATE::PROLOG, buf, &mut next);
@@ -5848,7 +5848,7 @@ impl XML_ParserStruct {
         mut buf: ExpatBufRef,
         mut tok: XML_TOK,
         mut next: *const c_char,
-        mut nextPtr: *mut *const c_char,
+        mut nextPtr: &mut *const c_char,
         mut haveMore: XML_Bool,
         mut allowClosingDoctype: XML_Bool,
     ) -> XML_Error {
@@ -7123,7 +7123,7 @@ impl XML_ParserStruct {
 unsafe extern "C" fn epilogProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     (*parser).m_processor = Some(epilogProcessor as Processor);
     (*parser).m_eventPtr = buf.as_ptr();
@@ -7313,7 +7313,7 @@ impl XML_ParserStruct {
 unsafe extern "C" fn internalEntityProcessor(
     mut parser: XML_Parser,
     mut buf: ExpatBufRef,
-    mut nextPtr: *mut *const c_char,
+    mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = ptr::null();
     let mut result: XML_Error = XML_Error::NONE;
@@ -7403,7 +7403,7 @@ unsafe extern "C" fn internalEntityProcessor(
 unsafe extern "C" fn errorProcessor(
     mut parser: XML_Parser,
     mut _buf: ExpatBufRef,
-    mut _nextPtr: *mut *const c_char,
+    mut _nextPtr: &mut *const c_char,
 ) -> XML_Error {
     (*parser).m_errorCode
 }
