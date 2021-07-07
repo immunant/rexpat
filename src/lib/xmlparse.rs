@@ -1426,7 +1426,7 @@ impl DTDScaffold {
         }
 
         let next = self.scaffold.len();
-        self.scaffold.push(unsafe { std::mem::zeroed() });
+        self.scaffold.push(Default::default());
 
         if !self.index.is_empty() {
             let idx = self.index.last().unwrap();
@@ -1460,6 +1460,20 @@ pub struct ContentScaffold {
     pub lastchild: usize,
     pub childcnt: usize,
     pub nextsib: usize,
+}
+
+impl Default for ContentScaffold {
+    fn default() -> ContentScaffold {
+        ContentScaffold {
+            type_0: XML_Content_Type::EMPTY,
+            quant: XML_Content_Quant::NONE,
+            name: ptr::null(),
+            firstchild: 0,
+            lastchild: 0,
+            childcnt: 0,
+            nextsib: 0,
+        }
+    }
 }
 
 #[repr(C)]
