@@ -265,29 +265,29 @@ trait XmlHandlers {
     fn hasUnknownEncoding(&self) -> bool;
     fn hasUnparsedEntityDecl(&self) -> bool;
     fn hasXmlDecl(&self) -> bool;
-    unsafe fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn characterData(&self, _: &[XML_Char]) -> bool;
-    unsafe fn comment(&self, b: *const XML_Char) -> bool;
-    unsafe fn default(&self, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
-    unsafe fn endCDataSection(&self) -> bool;
-    unsafe fn endDoctypeDecl(&self) -> bool;
-    unsafe fn endElement(&self, _: *const XML_Char) -> bool;
-    unsafe fn endNamespaceDecl(&self, _: *const XML_Char) -> bool;
-    unsafe fn entityDecl(&self, _: *const XML_Char, _: c_int, _: *const XML_Char, _: c_int, _: *const XML_Char,
+    fn attlistDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
+    fn characterData(&self, _: &[XML_Char]) -> bool;
+    fn comment(&self, b: *const XML_Char) -> bool;
+    fn default(&self, _: *const XML_Char, _: c_int) -> bool;
+    fn elementDecl(&self, _: *const XML_Char, _: *mut XML_Content) -> bool;
+    fn endCDataSection(&self) -> bool;
+    fn endDoctypeDecl(&self) -> bool;
+    fn endElement(&self, _: *const XML_Char) -> bool;
+    fn endNamespaceDecl(&self, _: *const XML_Char) -> bool;
+    fn entityDecl(&self, _: *const XML_Char, _: c_int, _: *const XML_Char, _: c_int, _: *const XML_Char,
                                 _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
-    unsafe fn externalEntityRef(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> Result<c_int, ()>;
-    unsafe fn notationDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
-    unsafe fn notStandalone(&self) -> Result<c_int, ()>;
-    unsafe fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
-    unsafe fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
-    unsafe fn startCDataSection(&self) -> bool;
-    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
-    unsafe fn startElement(&self, _: *const XML_Char, _: &mut [Attribute]) -> bool;
-    unsafe fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
-    unsafe fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
-    unsafe fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
-    unsafe fn xmlDecl(&self, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
+    fn externalEntityRef(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> Result<c_int, ()>;
+    fn notationDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
+    fn notStandalone(&self) -> Result<c_int, ()>;
+    fn processingInstruction(&self, b: *const XML_Char, c: *const XML_Char) -> bool;
+    fn skippedEntity(&self, _: *const XML_Char, _: c_int) -> bool;
+    fn startCDataSection(&self) -> bool;
+    fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool;
+    fn startElement(&self, _: *const XML_Char, _: &mut [Attribute]) -> bool;
+    fn startNamespaceDecl(&self, _: *const XML_Char, b: *const XML_Char) -> bool;
+    fn unknownEncoding(&self, _: *const XML_Char, _: *mut XML_Encoding) -> Result<c_int, ()>;
+    fn unparsedEntityDecl(&self, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char, _: *const XML_Char) -> bool;
+    fn xmlDecl(&self, _: *const XML_Char, _: *const XML_Char, _: c_int) -> bool;
 }
 
 #[repr(C)]
@@ -464,117 +464,117 @@ impl CXmlHandlers {
 }
 
 impl XmlHandlers for CXmlHandlers {
-    unsafe fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
-        self.m_startElementHandler.map(|handler| {
+    fn startElement(&self, a: *const XML_Char, b: &mut [Attribute]) -> bool {
+        self.m_startElementHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b.as_mut_ptr() as *mut *const XML_Char);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn endElement(&self, a: *const XML_Char) -> bool {
-        self.m_endElementHandler.map(|handler| {
+    fn endElement(&self, a: *const XML_Char) -> bool {
+        self.m_endElementHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn characterData(&self, buf: &[XML_Char]) -> bool {
-        self.m_characterDataHandler.map(|handler| {
+    fn characterData(&self, buf: &[XML_Char]) -> bool {
+        self.m_characterDataHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, buf.as_ptr(), buf.len().try_into().unwrap());
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn externalEntityRef(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: *const XML_Char) -> Result<c_int, ()> {
+    fn externalEntityRef(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: *const XML_Char) -> Result<c_int, ()> {
         self.m_externalEntityRefHandler
-            .map(|handler| Ok(handler(self.m_externalEntityRefHandlerArg, a, b, c, d)))
+            .map(|handler| unsafe { Ok(handler(self.m_externalEntityRefHandlerArg, a, b, c, d)) })
             .unwrap_or(Err(()))
     }
 
-    unsafe fn processingInstruction(&self, a: *const XML_Char, b: *const XML_Char) -> bool {
-        self.m_processingInstructionHandler.map(|handler| {
+    fn processingInstruction(&self, a: *const XML_Char, b: *const XML_Char) -> bool {
+        self.m_processingInstructionHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn comment(&self, a: *const XML_Char) -> bool {
-        self.m_commentHandler.map(|handler| {
+    fn comment(&self, a: *const XML_Char) -> bool {
+        self.m_commentHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn startCDataSection(&self) -> bool {
-        self.m_startCdataSectionHandler.map(|handler| {
+    fn startCDataSection(&self) -> bool {
+        self.m_startCdataSectionHandler.map(|handler| unsafe {
             handler(self.m_handlerArg);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn endCDataSection(&self) -> bool {
-        self.m_endCdataSectionHandler.map(|handler| {
+    fn endCDataSection(&self) -> bool {
+        self.m_endCdataSectionHandler.map(|handler| unsafe {
             handler(self.m_handlerArg);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool {
-        self.m_startDoctypeDeclHandler.map(|handler| {
+    fn startDoctypeDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: c_int) -> bool {
+        self.m_startDoctypeDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c, d);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn endDoctypeDecl(&self) -> bool {
-        self.m_endDoctypeDeclHandler.map(|handler| {
+    fn endDoctypeDecl(&self) -> bool {
+        self.m_endDoctypeDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn startNamespaceDecl(&self, a: *const XML_Char, b: *const XML_Char) -> bool {
-        self.m_startNamespaceDeclHandler.map(|handler| {
+    fn startNamespaceDecl(&self, a: *const XML_Char, b: *const XML_Char) -> bool {
+        self.m_startNamespaceDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn endNamespaceDecl(&self, a: *const XML_Char) -> bool {
-        self.m_endNamespaceDeclHandler.map(|handler| {
+    fn endNamespaceDecl(&self, a: *const XML_Char) -> bool {
+        self.m_endNamespaceDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn elementDecl(&self, a: *const XML_Char, b: *mut XML_Content) -> bool {
-        self.m_elementDeclHandler.map(|handler| {
+    fn elementDecl(&self, a: *const XML_Char, b: *mut XML_Content) -> bool {
+        self.m_elementDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn attlistDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: *const XML_Char, e: c_int) -> bool {
-        self.m_attlistDeclHandler.map(|handler| {
+    fn attlistDecl(&self, a: *const XML_Char, b: *const XML_Char, c: *const XML_Char, d: *const XML_Char, e: c_int) -> bool {
+        self.m_attlistDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c, d, e);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn entityDecl(
+    fn entityDecl(
         &self,
         a: *const XML_Char,
         b: c_int,
@@ -585,36 +585,36 @@ impl XmlHandlers for CXmlHandlers {
         g: *const XML_Char,
         h: *const XML_Char,
     ) -> bool {
-        self.m_entityDeclHandler.map(|handler| {
+        self.m_entityDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c, d, e, f, g, h);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn xmlDecl(&self, a: *const XML_Char, b: *const XML_Char, c: c_int) -> bool {
-        self.m_xmlDeclHandler.map(|handler| {
+    fn xmlDecl(&self, a: *const XML_Char, b: *const XML_Char, c: c_int) -> bool {
+        self.m_xmlDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn unknownEncoding(&self, a: *const XML_Char, b: *mut XML_Encoding) -> Result<c_int, ()> {
+    fn unknownEncoding(&self, a: *const XML_Char, b: *mut XML_Encoding) -> Result<c_int, ()> {
         self.m_unknownEncodingHandler
-            .map(|handler| Ok(handler(self.m_unknownEncodingHandlerData, a, b)))
+            .map(|handler| unsafe { Ok(handler(self.m_unknownEncodingHandlerData, a, b)) })
             .unwrap_or(Err(()))
     }
 
-    unsafe fn skippedEntity(&self, a: *const XML_Char, b: c_int) -> bool {
-        self.m_skippedEntityHandler.map(|handler| {
+    fn skippedEntity(&self, a: *const XML_Char, b: c_int) -> bool {
+        self.m_skippedEntityHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn unparsedEntityDecl(
+    fn unparsedEntityDecl(
         &self,
         a: *const XML_Char,
         b: *const XML_Char,
@@ -622,35 +622,35 @@ impl XmlHandlers for CXmlHandlers {
         d: *const XML_Char,
         e: *const XML_Char,
     ) -> bool {
-        self.m_unparsedEntityDeclHandler.map(|handler| {
+        self.m_unparsedEntityDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c, d, e);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn notationDecl(
+    fn notationDecl(
         &self,
         a: *const XML_Char,
         b: *const XML_Char,
         c: *const XML_Char,
         d: *const XML_Char,
     ) -> bool {
-        self.m_notationDeclHandler.map(|handler| {
+        self.m_notationDeclHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, a, b, c, d);
 
             true
         }).unwrap_or(false)
     }
 
-    unsafe fn notStandalone(&self) -> Result<c_int, ()> {
+    fn notStandalone(&self) -> Result<c_int, ()> {
         self.m_notStandaloneHandler
-            .map(|handler| Ok(handler(self.m_handlerArg)))
+            .map(|handler| unsafe { Ok(handler(self.m_handlerArg)) })
             .unwrap_or(Err(()))
     }
 
-    unsafe fn default(&self, s: *const XML_Char, next: c_int) -> bool {
-        self.m_defaultHandler.map(|handler| {
+    fn default(&self, s: *const XML_Char, next: c_int) -> bool {
+        self.m_defaultHandler.map(|handler| unsafe {
             handler(self.m_handlerArg, s, next);
 
             true
@@ -4359,9 +4359,7 @@ impl XML_ParserStruct {
             * binding in addBindings(), so call the end handler now.
             */
             let prefix = b.prefix.upgrade().unwrap();
-            unsafe {
-                self.m_handlers.endNamespaceDecl(prefix.name);
-            }
+            self.m_handlers.endNamespaceDecl(prefix.name);
             prefix.binding.set(b.prevPrefixBinding.take());
             bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
             self.m_freeBindingList = Some(b);
