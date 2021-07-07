@@ -861,6 +861,7 @@ pub struct Binding {
 }
 
 #[repr(C)]
+#[derive(Default)]
 pub struct AttributeId {
     pub name: TypedAttributeName,
     pub prefix: Cell<Ptr<Prefix>>,
@@ -870,6 +871,12 @@ pub struct AttributeId {
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct TypedAttributeName(*mut XML_Char);
+
+impl Default for TypedAttributeName {
+    fn default() -> TypedAttributeName {
+        TypedAttributeName(ptr::null_mut())
+    }
+}
 
 impl TypedAttributeName {
     #[inline]
@@ -1160,7 +1167,7 @@ macro_rules! hash_insert {
         }
     }};
     ($map:expr, $key:expr, $alloc:expr, $et:ident) => {
-        hash_insert!($map, $key, $alloc, $et, std::mem::zeroed)
+        hash_insert!($map, $key, $alloc, $et, $et::default)
     };
 }
 
@@ -1504,6 +1511,24 @@ pub struct Entity {
     pub open: Cell<XML_Bool>,
     pub is_param: Cell<XML_Bool>,
     pub is_internal: Cell<XML_Bool>,
+}
+
+impl Default for Entity {
+    fn default() -> Self {
+        Entity {
+            name: ptr::null(),
+            textPtr: Cell::new(ptr::null()),
+            textLen: Cell::new(0),
+            processed: Cell::new(0),
+            systemId: Cell::new(ptr::null()),
+            base: Cell::new(ptr::null()),
+            publicId: Cell::new(ptr::null()),
+            notation: Cell::new(ptr::null()),
+            open: Cell::new(false),
+            is_param: Cell::new(false),
+            is_internal: Cell::new(false),
+        }
+    }
 }
 
 #[repr(C)]
