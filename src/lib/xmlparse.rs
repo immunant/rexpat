@@ -7747,7 +7747,6 @@ unsafe extern "C" fn storeEntityValue(
             }
             XML_TOK::CHAR_REF => {
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(entityTextBuf);
                 if n < 0 {
                     if !enc_type.is_internal() {
@@ -7766,13 +7765,11 @@ unsafe extern "C" fn storeEntityValue(
                      * XmlEncode() is never passed a value it might return an
                      * error for.
                      */
-                    i = 0;
-                    while i < n {
-                        if !(*parser).m_dtd.entityValuePool.append_char(out_buf[i as usize]) {
+                    let n = n.try_into().unwrap();
+                    for &c in &out_buf[..n] {
+                        if !(*parser).m_dtd.entityValuePool.append_char(c) {
                             result = XML_Error::NO_MEMORY;
                             break 's_41;
-                        } else {
-                            i += 1
                         }
                     }
                 }
