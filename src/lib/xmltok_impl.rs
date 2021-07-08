@@ -1,5 +1,5 @@
 use libc::{c_char, c_int, c_long, size_t};
-
+use std::cell::Cell;
 use super::xmltok::{checkCharRefNumber, Attribute, Position};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl, XML_TOK};
 use crate::ascii_h::*;
@@ -1482,7 +1482,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     fn isPublicId(
         &self,
         mut buf: ExpatBufRef,
-        mut badPtr: &mut *const libc::c_char,
+        mut badPtr: &Cell<*const libc::c_char>,
     ) -> libc::c_int {
         buf = buf.inc_start(self.MINBPC() as isize)
             .dec_end(self.MINBPC() as usize);
@@ -1492,7 +1492,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 | ByteType::PERCNT | ByteType::NUM | ByteType::COLON => { }
                 ByteType::S => {
                     if self.char_matches(buf.as_ptr(), ASCII_TAB) {
-                        *badPtr = buf.as_ptr();
+                        badPtr.set(buf.as_ptr());
                         return 0 as libc::c_int;
                     }
                 }
@@ -1502,7 +1502,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                         0x24 => {} /* $ */
                         0x40 => {} /* @ */
                         _ => {
-                            *badPtr = buf.as_ptr();
+                            badPtr.set(buf.as_ptr());
                             return 0 as libc::c_int;
                         }
                     }

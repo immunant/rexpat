@@ -37,6 +37,7 @@
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, size_t};
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
+use std::cell::Cell;
 use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::ptr;
@@ -294,7 +295,7 @@ pub trait XmlEncoding {
     fn isPublicId(
         &self,
         buf: ExpatBufRef,
-        badPtr: &mut *const libc::c_char,
+        badPtr: &Cell<*const libc::c_char>,
     ) -> libc::c_int;
 
     fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
@@ -2201,7 +2202,7 @@ impl XmlEncoding for InitEncoding {
     fn isPublicId(
         &self,
         _buf: ExpatBufRef,
-        _badPtr: &mut *const libc::c_char,
+        _badPtr: &Cell<*const libc::c_char>,
     ) -> libc::c_int {
         0
     }
@@ -2605,7 +2606,7 @@ pub fn XmlParseXmlDeclNS<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: &mut *const c_char,
+    mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
@@ -2628,7 +2629,7 @@ pub fn XmlParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: &mut *const c_char,
+    mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
@@ -2988,7 +2989,7 @@ fn doParseXmlDecl<'a>(
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
     mut buf: ExpatBufRef<'a>,
-    mut badPtr: &mut *const c_char,
+    mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
@@ -3003,13 +3004,13 @@ fn doParseXmlDecl<'a>(
     if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
         || name.is_none()
     {
-        *badPtr = pseudo_ptr;
+        badPtr.set(pseudo_ptr);
         return 0;
     }
     buf = buf.with_start(pseudo_ptr);
     if !(*enc).nameMatchesAscii(name.unwrap(), &KW_version) {
         if isGeneralTextEntity == 0 {
-            *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
+            badPtr.set(name.map_or(ptr::null(), |x| x.as_ptr()));
             return 0;
         }
     } else {
@@ -3022,20 +3023,20 @@ fn doParseXmlDecl<'a>(
                                        .dec_end((*enc).minBytesPerChar() as usize),
                                        &KW_XML_1_0)
             {
-                *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
+                badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
                 return 0;
             }
         }
         let mut pseudo_ptr = buf.as_ptr();
         if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
-            *badPtr = pseudo_ptr;
+            badPtr.set(pseudo_ptr);
             return 0;
         }
         buf = buf.with_start(pseudo_ptr);
         if name.is_none() {
             if isGeneralTextEntity != 0 {
                 /* a TextDecl must have an EncodingDecl */
-                *badPtr = buf.as_ptr();
+                badPtr.set(buf.as_ptr());
                 return 0;
             }
             return 1;
@@ -3046,7 +3047,7 @@ fn doParseXmlDecl<'a>(
         if !((ASCII_a as c_int) <= c && c <= (ASCII_z as c_int))
             && !((ASCII_A as c_int) <= c && c <= (ASCII_Z as c_int))
         {
-            *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
+            badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
             return 0;
         }
         *encodingName = val_buf.unwrap().as_ptr();
@@ -3059,7 +3060,7 @@ fn doParseXmlDecl<'a>(
         ) };
         let mut pseudo_ptr = buf.as_ptr();
         if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
-            *badPtr = buf.as_ptr();
+            badPtr.set(buf.as_ptr());
             return 0;
         }
         buf = buf.with_start(pseudo_ptr);
@@ -3070,7 +3071,7 @@ fn doParseXmlDecl<'a>(
     if !(*enc).nameMatchesAscii(name.unwrap(), &KW_standalone)
         || isGeneralTextEntity != 0
     {
-        *badPtr = name.map_or(ptr::null(), |x| x.as_ptr());
+        badPtr.set(name.map_or(ptr::null(), |x| x.as_ptr()));
         return 0;
     }
     if (*enc).nameMatchesAscii(
@@ -3092,7 +3093,7 @@ fn doParseXmlDecl<'a>(
     {
         *standalone = 0;
     } else {
-        *badPtr = val_buf.map_or(ptr::null(), |x| x.as_ptr());
+        badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
         return 0;
     }
     // TODO(SJC): make toAscii take a buf
@@ -3100,7 +3101,7 @@ fn doParseXmlDecl<'a>(
         buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
     }
     if !buf.is_empty() {
-        *badPtr = buf.as_ptr();
+        badPtr.set(buf.as_ptr());
         return 0;
     }
     1
