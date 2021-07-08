@@ -7427,7 +7427,7 @@ unsafe extern "C" fn appendAttributeValue(
             XML_TOK::CHAR_REF => {
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
-                let mut n: c_int = (*enc).charRefNumber(ExpatBufRef(&buf));
+                let mut n: c_int = (*enc).charRefNumber(buf);
                 if n < 0 {
                     if !enc_type.is_internal() {
                         (*parser).m_eventPtr.set(buf.as_ptr());
