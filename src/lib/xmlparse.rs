@@ -818,8 +818,8 @@ pub struct XML_ParserStruct {
     pub m_curBase: *const XML_Char,
     pub m_tagStack: Option<Box<Tag>>,
     pub m_freeTagList: Option<Box<Tag>>,
-    pub m_inheritedBindings: Ptr<Binding>,
-    pub m_freeBindingList: Ptr<Binding>,
+    m_inheritedBindings: RefCell<Ptr<Binding>>,
+    m_freeBindingList: RefCell<Ptr<Binding>>,
     pub m_nSpecifiedAtts: c_int,
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
@@ -1873,8 +1873,8 @@ impl XML_ParserStruct {
             m_curBase: ptr::null(),
             m_tagStack: None,
             m_freeTagList: None,
-            m_inheritedBindings: None,
-            m_freeBindingList: None,
+            m_inheritedBindings: RefCell::new(None),
+            m_freeBindingList: RefCell::new(None),
             m_nSpecifiedAtts: 0,
             m_idAttIndex: 0,
             m_atts: Vec::new(),
@@ -1927,7 +1927,7 @@ impl XML_ParserStruct {
             return ptr::null_mut();
         }
         parser.m_dataBufEnd = parser.m_dataBuf.offset(INIT_DATA_BUF_SIZE as isize);
-        parser.m_freeBindingList = None;
+        *parser.m_freeBindingList.borrow_mut() = None;
         parser.m_freeTagList = None;
         parser.m_freeInternalEntities = None;
         parser.m_groupSize = 0;
@@ -1994,7 +1994,7 @@ impl XML_ParserStruct {
         self.m_defaultExpandInternalEntities = true;
         self.m_tagLevel = 0;
         self.m_tagStack = None;
-        self.m_inheritedBindings = None;
+        *self.m_inheritedBindings.borrow_mut() = None;
         self.m_nSpecifiedAtts = 0;
         self.m_handlers.m_unknownEncoding = None;
         self.m_handlers.m_unknownEncodingRelease = None;
@@ -2008,9 +2008,10 @@ impl XML_ParserStruct {
 
     /* moves list of bindings to m_freeBindingList */
     fn moveToFreeBindingList(&mut self, mut bindings: Ptr<Binding>) {
+        let mut fbl = self.m_freeBindingList.borrow_mut();
         while let Some(b) = bindings {
-            bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
-            self.m_freeBindingList = Some(b);
+            bindings = b.nextTagBinding.replace(fbl.take());
+            *fbl = Some(b);
         }
     }
 }
@@ -2050,7 +2051,7 @@ impl XML_ParserStruct {
             self.m_freeInternalEntities = Some(openEntity);
         }
 
-        let ib = self.m_inheritedBindings.take();
+        let ib = self.m_inheritedBindings.borrow_mut().take();
         self.moveToFreeBindingList(ib);
         let _ = self.m_handlers.m_unknownEncoding.take();
         if self.m_handlers.m_unknownEncodingRelease.is_some() {
@@ -4234,12 +4235,16 @@ impl XML_ParserStruct {
                         } else if self.m_handlers.hasDefault() {
                             reportDefault(self, enc_type, buf.with_end(next));
                         }
-                        while let Some(b) = tag.bindings.take() {
-                            let prefix = b.prefix.upgrade().unwrap();
-                            self.m_handlers.endNamespaceDecl(prefix.name);
-                            prefix.binding.set(b.prevPrefixBinding.take());
-                            tag.bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
-                            self.m_freeBindingList = Some(b);
+
+                        {
+                            let mut fbl = self.m_freeBindingList.borrow_mut();
+                            while let Some(b) = tag.bindings.take() {
+                                let prefix = b.prefix.upgrade().unwrap();
+                                self.m_handlers.endNamespaceDecl(prefix.name);
+                                prefix.binding.set(b.prevPrefixBinding.take());
+                                tag.bindings = b.nextTagBinding.replace(fbl.take());
+                                *fbl = Some(b);
+                            }
                         }
 
                         // Clear `str_0` and `localPart` to reduce
@@ -4434,6 +4439,7 @@ impl XML_ParserStruct {
  */
 
     fn freeBindings(&mut self, mut bindings: Ptr<Binding>) {
+        let mut fbl = self.m_freeBindingList.borrow_mut();
         while let Some(b) = bindings {
             /* m_startNamespaceDeclHandler will have been called for this
             * binding in addBindings(), so call the end handler now.
@@ -4441,8 +4447,8 @@ impl XML_ParserStruct {
             let prefix = b.prefix.upgrade().unwrap();
             self.m_handlers.endNamespaceDecl(prefix.name);
             prefix.binding.set(b.prevPrefixBinding.take());
-            bindings = b.nextTagBinding.replace(self.m_freeBindingList.take());
-            self.m_freeBindingList = Some(b);
+            bindings = b.nextTagBinding.replace(fbl.take());
+            *fbl = Some(b);
         }
     }
 /* Precondition: all arguments must be non-NULL;
@@ -4955,7 +4961,7 @@ impl XML_ParserStruct {
 */
 
 unsafe extern "C" fn addBinding(
-    mut parser: XML_Parser,
+    mut parser: &XML_ParserStruct,
     mut prefix: &Rc<Prefix>,
     mut attId: Ptr<AttributeId>,
     mut uri: *const XML_Char,
@@ -5025,19 +5031,20 @@ unsafe extern "C" fn addBinding(
     if isXMLNS {
         return XML_Error::RESERVED_NAMESPACE_URI;
     }
-    if (*parser).m_namespaceSeparator != 0 {
+    if parser.m_namespaceSeparator != 0 {
         len += 1;
     }
     let att_id_is_none = attId.is_none();
     let old_tag_binding = bindingsPtr.take();
     let old_prefix_binding = prefix.binding.take();
-    let b = if let Some(mut b) = (*parser).m_freeBindingList.take() {
+    let mut fbl = parser.m_freeBindingList.borrow_mut();
+    let b = if let Some(mut b) = fbl.take() {
         let mut b_mut = Rc::get_mut(&mut b).unwrap();
         b_mut.prefix = Rc::downgrade(prefix);
 
         b.attId.set(attId);
         b.prevPrefixBinding.set(old_prefix_binding);
-        (*parser).m_freeBindingList = b.nextTagBinding.replace(old_tag_binding);
+        *fbl = b.nextTagBinding.replace(old_tag_binding);
 
         b.uriLen.set(len);
 
@@ -5065,12 +5072,12 @@ unsafe extern "C" fn addBinding(
     }
     let uri_slice = slice::from_raw_parts(uri, len);
     uri_vec.extend(uri_slice);
-    if (*parser).m_namespaceSeparator != 0 {
-        uri_vec[len - 1] = (*parser).m_namespaceSeparator;
+    if parser.m_namespaceSeparator != 0 {
+        uri_vec[len - 1] = parser.m_namespaceSeparator;
     }
 
     /* NULL binding when default namespace undeclared */
-    let uri_ptr = if *uri == '\u{0}' as XML_Char && Rc::ptr_eq(prefix, (*parser)
+    let uri_ptr = if *uri == '\u{0}' as XML_Char && Rc::ptr_eq(prefix, parser
         .m_dtd
         .tables
         .borrow()
@@ -5087,8 +5094,8 @@ unsafe extern "C" fn addBinding(
     *bindingsPtr = Some(b);
 
     /* if attId == NULL then we are not starting a namespace scope */
-    if !att_id_is_none && (*parser).m_handlers.hasStartNamespaceDecl() {
-        (*parser).m_handlers.startNamespaceDecl(
+    if !att_id_is_none && parser.m_handlers.hasStartNamespaceDecl() {
+        parser.m_handlers.startNamespaceDecl(
             prefix.name,
             uri_ptr,
         );
@@ -8308,13 +8315,15 @@ impl XML_ParserStruct {
                     return false;
                 }
                 drop(dtd_tables);
-                if addBinding(
+
+                let err = self.m_tempPool.current_slice(|uri| addBinding(
                     self,
                     &prefix,
                     None,
-                    self.m_tempPool.current_start(),
-                    &mut self.m_inheritedBindings,
-                ) != XML_Error::NONE {
+                    uri.as_ptr(),
+                    &mut *self.m_inheritedBindings.borrow_mut(),
+                ));
+                if err != XML_Error::NONE {
                     return false;
                 }
                 self.m_tempPool.clear_current();
