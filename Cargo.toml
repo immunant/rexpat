@@ -39,6 +39,7 @@ num-traits = "0.2"
 num-derive = "0.2"
 bumpalo = { version = "3.3", features = ["collections"] }
 rental = "0.5"
+owning_ref = "0.4"
 
 [features]
 unicode = []

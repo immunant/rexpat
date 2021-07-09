@@ -4,12 +4,18 @@ use crate::lib::xmltok::{ENCODING, XML_Convert_Result};
 
 use bumpalo::Bump;
 use bumpalo::collections::vec::Vec as BumpVec;
+use crate::fallible_rc::FallibleRc;
 use fallible_collections::FallibleBox;
 use libc::c_int;
+use owning_ref::{OwningRef, RcRef};
 
 use std::cell::{Cell, RefCell};
 use std::convert::TryInto;
-use std::mem::swap;
+use std::rc::Rc;
+
+pub(crate) type StringPoolPtr = Rc<Option<InnerStringPool>>;
+pub(crate) type StringPoolSlice = OwningRef<StringPoolPtr, [XML_Char]>;
+pub(crate) type StringPoolCellSlice = OwningRef<StringPoolPtr, [Cell<XML_Char>]>;
 
 pub const INIT_BLOCK_SIZE: usize = init_block_size_const();
 
@@ -32,8 +38,7 @@ rental! {
         #[rental(debug)]
         pub(crate) struct InnerStringPool {
             // The rental crate requires that all fields but the last one
-            // implement `StableDeref`, which means we need to wrap it
-            // in a `Box`
+            // implement `StableDeref`, which means we need to box it
             bump: Box<Bump>,
             current_bump_vec: RefCell<RentedBumpVec<'bump>>,
         }
@@ -45,17 +50,20 @@ use rental_pool::InnerStringPool;
 /// A StringPool has the purpose of allocating distinct strings and then
 /// handing them off to be referenced either temporarily or for the entire length
 /// of the pool.
-pub(crate) struct StringPool(Option<InnerStringPool>);
+pub(crate) struct StringPool(StringPoolPtr);
 
 impl StringPool {
     pub(crate) fn try_new() -> Result<Self, ()> {
         let bump = Bump::try_with_capacity(INIT_BLOCK_SIZE).map_err(|_| ())?;
         let boxed_bump = Box::try_new(bump).map_err(|_| ())?;
 
-        Ok(StringPool(Some(InnerStringPool::new(
+        let pool = InnerStringPool::new(
             boxed_bump,
             |bump| RefCell::new(RentedBumpVec(BumpVec::new_in(&bump))),
-        ))))
+        );
+        let rc_pool = Rc::try_new(Some(pool)).map_err(|_| ())?;
+
+        Ok(StringPool(rc_pool))
     }
 
     /// # Safety
@@ -63,7 +71,7 @@ impl StringPool {
     /// The inner type is only ever None in middle of the clear()
     /// method. Therefore it is safe to use anywhere else.
     fn inner(&self) -> &InnerStringPool {
-        self.0.as_ref().unwrap_or_else(|| unsafe {
+        (*self.0).as_ref().unwrap_or_else(|| unsafe {
             std::hint::unreachable_unchecked()
         })
     }
@@ -80,20 +88,24 @@ impl StringPool {
 
     /// Gets the current vec, converts it into an immutable slice,
     /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string(&self) -> &[XML_Char] {
-        self.inner().ref_rent_all(|pool| {
-            let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
-            pool.current_bump_vec.replace(vec).0.into_bump_slice()
+    pub(crate) fn finish_string(&self) -> StringPoolSlice {
+        RcRef::new(Rc::clone(&self.0)).map(|inner| {
+            inner.as_ref().unwrap().ref_rent_all(|pool| {
+                let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
+                pool.current_bump_vec.replace(vec).0.into_bump_slice()
+            })
         })
     }
 
     /// Gets the current vec, converts it into a slice of cells (with interior mutability),
     /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string_cells(&self) -> &[Cell<XML_Char>] {
-        self.inner().ref_rent_all(|pool| {
-            let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
-            let sl = pool.current_bump_vec.replace(vec).0.into_bump_slice_mut();
-            Cell::from_mut(sl).as_slice_of_cells()
+    pub(crate) fn finish_string_cells(&self) -> StringPoolCellSlice {
+        RcRef::new(Rc::clone(&self.0)).map(|inner| {
+            inner.as_ref().unwrap().ref_rent_all(|pool| {
+                let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
+                let sl = pool.current_bump_vec.replace(vec).0.into_bump_slice_mut();
+                Cell::from_mut(sl).as_slice_of_cells()
+            })
         })
     }
 
@@ -177,18 +189,15 @@ impl StringPool {
     /// The `inner` method must never be called here as it assumes
     /// self.0 is never `None`
     pub(crate) fn clear(&mut self) {
-        let mut inner_pool = self.0.take();
+        let pool_ref = Rc::get_mut(&mut self.0).unwrap();
 
-        let mut bump = inner_pool.unwrap().into_head();
-
+        let mut bump = pool_ref.take().unwrap().into_head();
         bump.reset();
 
-        inner_pool = Some(InnerStringPool::new(
+        *pool_ref = Some(InnerStringPool::new(
             bump,
             |bump| RefCell::new(RentedBumpVec(BumpVec::new_in(&bump))),
         ));
-
-        swap(&mut self.0, &mut inner_pool);
     }
 
     pub(crate) fn store_c_string(
@@ -221,7 +230,7 @@ impl StringPool {
     pub(crate) unsafe fn copy_c_string(
         &self,
         mut s: *const XML_Char,
-    ) -> Option<&[XML_Char]> {
+    ) -> Option<StringPoolSlice> {
         // self.append_c_string(s);?
         let successful = self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
@@ -250,7 +259,7 @@ impl StringPool {
         &self,
         mut s: *const XML_Char,
         mut n: c_int,
-    ) -> Option<&[XML_Char]> {
+    ) -> Option<StringPoolSlice> {
         let successful = self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
             let mut n = n.try_into().unwrap();
@@ -386,7 +395,7 @@ fn test_copy_string() {
         pool.copy_c_string(S.as_ptr())
     };
 
-    assert_eq!(new_string.unwrap(), [A, C, D, D, C, NULL]);
+    assert_eq!(*new_string.unwrap(), [A, C, D, D, C, NULL]);
     assert!(pool.append_char(B));
     pool.current_slice(|s| assert_eq!(s, [B]));
 
@@ -394,7 +403,7 @@ fn test_copy_string() {
         pool.copy_c_string_n(S.as_ptr(), 4)
     };
 
-    assert_eq!(new_string2.unwrap(), [B, C, D, D, C]);
+    assert_eq!(*new_string2.unwrap(), [B, C, D, D, C]);
 }
 
 #[test]
@@ -429,5 +438,5 @@ fn test_store_c_string() {
 
     let s = pool.finish_string();
 
-    assert_eq!(s, [A, A, C, D, D, NULL]);
+    assert_eq!(*s, [A, A, C, D, D, NULL]);
 }

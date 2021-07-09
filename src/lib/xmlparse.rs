@@ -61,7 +61,7 @@ pub use crate::lib::xmltok::{
 };
 pub use crate::lib::xmltok::*;
 use crate::fallible_rc::FallibleRc;
-use crate::string_pool::StringPool;
+use crate::string_pool::{StringPool, StringPoolSlice, StringPoolCellSlice};
 pub use ::libc::INT_MAX;
 use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, memcpy, memcmp, memmove, memset};
 use num_traits::{ToPrimitive,FromPrimitive};
@@ -804,7 +804,7 @@ pub struct XML_ParserStruct {
     pub m_defaultExpandInternalEntities: XML_Bool,
     pub m_tagLevel: c_int,
     pub m_declEntity: Ptr<Entity>,
-    pub m_doctypeName: *const XML_Char,
+    m_doctypeName: Option<StringPoolSlice>,
     pub m_doctypeSysid: *const XML_Char,
     pub m_doctypePubid: *const XML_Char,
     pub m_declAttributeType: *const XML_Char,
@@ -1859,7 +1859,7 @@ impl XML_ParserStruct {
             m_defaultExpandInternalEntities: false,
             m_tagLevel: 0,
             m_declEntity: None,
-            m_doctypeName: ptr::null(),
+            m_doctypeName: None,
             m_doctypeSysid: ptr::null(),
             m_doctypePubid: ptr::null(),
             m_declAttributeType: ptr::null(),
@@ -1973,7 +1973,7 @@ impl XML_ParserStruct {
         self.m_declElementType = None;
         self.m_declAttributeId = None;
         self.m_declEntity = None;
-        self.m_doctypeName = ptr::null();
+        self.m_doctypeName = None;
         self.m_doctypeSysid = ptr::null();
         self.m_doctypePubid = ptr::null();
         self.m_declAttributeType = ptr::null();
@@ -2057,6 +2057,9 @@ impl XML_ParserStruct {
             self.m_handlers.m_unknownEncodingRelease
                 .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
         }
+
+        self.m_doctypeName = None;
+
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
         FREE!(self.m_protocolEncodingName);
@@ -4308,7 +4311,7 @@ impl XML_ParserStruct {
                     }
                     let mut new_buf = Some(buf.with_start(next));
                     result_2 = doCdataSection(self, enc_type, &mut new_buf, nextPtr, haveMore);
-                    next = new_buf.map_or(ptr::null(), |x| x.as_ptr());
+                    next = new_buf.map_or_else(ptr::null, |x| x.as_ptr());
                     if result_2 != XML_Error::NONE {
                         return result_2;
                     } else if next.is_null() {
@@ -5925,10 +5928,10 @@ impl XML_ParserStruct {
                 XML_ROLE::DOCTYPE_NAME => {
                     if self.m_handlers.hasStartDoctypeDecl() {
                         if !self.m_tempPool.store_c_string(enc, buf.with_end(next)) {
-                            self.m_doctypeName = ptr::null();
+                            self.m_doctypeName = None;
                             return XML_Error::NO_MEMORY;
                         }
-                        self.m_doctypeName = self.m_tempPool.finish_string().as_ptr();
+                        self.m_doctypeName = Some(self.m_tempPool.finish_string());
                         self.m_doctypePubid = ptr::null();
                         handleDefault = false
                     }
@@ -5936,14 +5939,14 @@ impl XML_ParserStruct {
                 }
                 XML_ROLE::DOCTYPE_INTERNAL_SUBSET => {
                     let startHandlerRan = self.m_handlers.startDoctypeDecl(
-                        self.m_doctypeName,
+                        self.m_doctypeName.as_ref().map_or_else(ptr::null, |x| x.as_ptr()),
                         self.m_doctypeSysid,
                         self.m_doctypePubid,
                         1,
                     );
 
                     if startHandlerRan {
-                        self.m_doctypeName = ptr::null();
+                        self.m_doctypeName = None;
                         self.m_tempPool.clear();
                         handleDefault = false
                     }
@@ -5986,7 +5989,7 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let pub_id = self.m_tempPool.finish_string_cells();
-                        normalizePublicId(pub_id.as_ptr() as *const _ as *mut _);
+                        normalizePublicId(&pub_id);
                         self.m_doctypePubid = pub_id.as_ptr() as *const _;
                         handleDefault = false;
                     } else {
@@ -6005,13 +6008,14 @@ impl XML_ParserStruct {
                         /* Must not close doctype from within expanded parameter entities */
                         return XML_Error::INVALID_TOKEN;
                     }
-                    if !self.m_doctypeName.is_null() {
+                    if !self.m_doctypeName.is_none() {
                         self.m_handlers.startDoctypeDecl(
-                            self.m_doctypeName,
+                            self.m_doctypeName.as_ref().map_or_else(ptr::null, |x| x.as_ptr()),
                             self.m_doctypeSysid,
                             self.m_doctypePubid,
                             0,
                         );
+                        self.m_doctypeName = None;
                         self.m_tempPool.clear();
                         handleDefault = false
                     }
@@ -6185,7 +6189,8 @@ impl XML_ParserStruct {
                         }
                         // This gets finalized later, not exactly the safest
                         // idiom though.
-                        self.m_declAttributeType = self.m_tempPool.current_start();
+                        //REXPAT: disable this for safety
+                        //self.m_declAttributeType = self.m_tempPool.current_start();
                         handleDefault = false
                     }
                 }
@@ -6541,7 +6546,7 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let tem_0 = self.m_tempPool.finish_string_cells();
-                        normalizePublicId(tem_0.as_ptr() as *const _ as *mut _);
+                        normalizePublicId(&tem_0);
                         self.m_declNotationPublicId = tem_0.as_ptr() as *const _;
                         handleDefault = false
                     }
@@ -7025,7 +7030,7 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let mut tem = self.m_dtd.pool.finish_string_cells();
-                        normalizePublicId(tem.as_ptr() as *const _ as *mut _);
+                        normalizePublicId(&tem);
                         self.m_declEntity.as_mut().unwrap().publicId.set(tem.as_ptr() as *const _);
                         /* Don't suppress the default handler if we fell through from
                          * the XML_ROLE::DOCTYPE_PUBLIC_ID case.
@@ -7866,7 +7871,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     if !successful {
         return 0;
     }
-    let target = (*parser).m_tempPool.finish_string_cells();
+    let target = (*parser).m_tempPool.finish_string_cells().as_ptr();
     let successful = (*parser).m_tempPool.store_c_string(
         enc,
         // TODO(SJC): fix this ugliness
@@ -7880,7 +7885,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     }
     (*parser).m_tempPool.current_mut_slice(|data| {
         normalizeLines(data);
-        (*parser).m_handlers.processingInstruction(target.as_ptr() as *mut _, data.as_ptr());
+        (*parser).m_handlers.processingInstruction(target as *mut _, data.as_ptr());
     });
     (*parser).m_tempPool.clear();
     1
@@ -8328,32 +8333,36 @@ impl XML_ParserStruct {
     }
 }
 
-// TODO: Good candidate for safeification
-unsafe extern "C" fn normalizePublicId(mut publicId: *mut XML_Char) {
-    let mut p: *mut XML_Char = publicId;
-    let mut s: *mut XML_Char = ptr::null_mut();
-    s = publicId;
-    while *s != 0 {
-        match *s as c_int {
+fn normalizePublicId(publicId: &StringPoolCellSlice) {
+    let mut p = &publicId[..];
+    let mut s = &publicId[..];
+    let mut last_p: Option<&Cell<XML_Char>> = None;
+    while s[0].get() != 0 {
+        match s[0].get() {
             32 | 13 | 10 => {
-                if p != publicId && *p.offset(-1) as c_int != 0x20 {
-                    let fresh66 = p;
-                    p = p.offset(1);
-                    *fresh66 = 0x20
+                if last_p.map_or(false, |x| x.get() != 0x20) {
+                    p[0].set(0x20);
+
+                    last_p = Some(&p[0]);
+                    p = &p[1..];
                 }
             }
             _ => {
-                let fresh67 = p;
-                p = p.offset(1);
-                *fresh67 = *s
+                p[0].set(s[0].get());
+
+                last_p = Some(&p[0]);
+                p = &p[1..];
             }
         }
-        s = s.offset(1)
+        s = &s[1..];
     }
-    if p != publicId && *p.offset(-1) as c_int == 0x20 {
-        p = p.offset(-1)
+    if let Some(last_p) = last_p {
+        if last_p.get() == 0x20 {
+            last_p.set('\u{0}' as XML_Char);
+            return;
+        }
     }
-    *p = '\u{0}' as XML_Char;
+    p[0].set('\u{0}' as XML_Char);
 }
 
 unsafe extern "C" fn copyEntityTable(

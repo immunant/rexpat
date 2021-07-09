@@ -15470,7 +15470,8 @@ unsafe extern "C" fn test_misc_alloc_create_parser_with_encoding() {
     );
     ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
-    let max_alloc_count: c_uint = 10;
+    // REXPAT: String pool allocates a bit more now, was 10
+    let max_alloc_count: c_uint = 20;
     /* Try several levels of allocation */
     i = 0;
     while i < max_alloc_count {
@@ -16488,7 +16489,7 @@ unsafe extern "C" fn external_entity_duff_loader(
 ) -> c_int {
     let mut new_parser: XML_Parser = ptr::null_mut();
     let mut i: c_uint = 0;
-    let max_alloc_count: c_uint = 10;
+    let max_alloc_count: c_uint = 20;
     /* Try a few different allocation levels */
     i = 0;
     while i < max_alloc_count {
@@ -19207,7 +19208,7 @@ unsafe extern "C" fn test_alloc_nested_entities() {
         init
     };
     /* Causes an allocation error in a nested storeEntityValue() */
-    allocation_count = 12;
+    allocation_count = 16;
     XML_SetUserData(g_parser, &mut test_data as *mut ExtFaults as *mut c_void);
     XML_SetParamEntityParsing(g_parser, XML_ParamEntityParsing::ALWAYS);
     XML_SetExternalEntityRefHandler(
