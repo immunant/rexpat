@@ -1233,15 +1233,10 @@ pub struct DTD {
 #[derive(Default)]
 pub struct DTDTables {
     defaultPrefix: Ptr<Prefix>,
-    // TODO: get rid of the `Box`es to eliminate the extra indirection;
-    // for now, we can keep them since they're equivalent to the C code's
-    // structure anyway
     generalEntities: HashMap<HashKey, Rc<Entity>>,
     elementTypes: HashMap<HashKey, Rc<ElementType>>,
     attributeIds: HashMap<HashKey, Rc<AttributeId>>,
     prefixes: HashMap<HashKey, Rc<Prefix>>,
-    // `test_alloc_nested_entities` counts the allocations,
-    // so we need to use `Box` here to pass that test
     paramEntities: HashMap<HashKey, Rc<Entity>>,
 }
 
