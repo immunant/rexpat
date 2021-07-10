@@ -67,6 +67,7 @@ use libc::{c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, size_t, mem
 use num_traits::{ToPrimitive,FromPrimitive};
 
 use fallible_collections::FallibleBox;
+use owning_ref::OwningRef;
 
 use std::alloc::{self, Layout};
 use std::cell::{Cell, RefCell};
@@ -1266,6 +1267,7 @@ pub struct DTD {
 #[derive(Default)]
 pub struct DTDTables {
     defaultPrefix: Ptr<Prefix>,
+    externalSubsetSlice: Option<StringPoolSlice>,
     generalEntities: HashMap<HashKey, Rc<Entity>>,
     elementTypes: HashMap<HashKey, Rc<ElementType>>,
     attributeIds: HashMap<HashKey, Rc<AttributeId>>,
@@ -1299,16 +1301,17 @@ impl DTD {
     }
 
     fn reset(&mut self) {
-        self.pool.clear();
-        self.entityValuePool.clear();
-
         let mut tables = self.tables.get_mut();
         tables.defaultPrefix.as_deref().unwrap().clear();
+        tables.externalSubsetSlice = None;
         tables.generalEntities.clear();
         tables.paramEntities.clear();
         tables.elementTypes.clear();
         tables.attributeIds.clear();
         tables.prefixes.clear();
+
+        self.pool.clear();
+        self.entityValuePool.clear();
 
         let mut scf = self.scaffold.borrow_mut();
         scf.scaffold.clear();
@@ -1320,6 +1323,26 @@ impl DTD {
         self.keepProcessing.set(true);
         self.hasParamEntityRefs.set(false);
         self.standalone.set(false);
+    }
+
+    // Get a copy of externalSubsetName interned in `self.pool`
+    fn intern_external_subset(&self) -> Result<StringPoolSlice, TryReserveError> {
+        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH];
+        if let Some(ess) = self.tables.borrow().externalSubsetSlice.as_ref() {
+            return Ok(OwningRef::clone(ess));
+        }
+
+        for &c in &externalSubsetName {
+            if !self.pool.append_char(c) {
+                return Err(TryReserveError::CapacityOverflow);
+            }
+        }
+        let sl = self.pool.finish();
+        Ok(OwningRef::clone(self
+            .tables
+            .borrow_mut()
+            .externalSubsetSlice
+            .get_or_insert(sl)))
     }
 
     fn try_clone(&self) -> Result<DTD, TryReserveError> {
@@ -5873,7 +5896,6 @@ impl XML_ParserStruct {
         mut haveMore: XML_Bool,
         mut allowClosingDoctype: XML_Bool,
     ) -> XML_Error {
-        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH];
         const atypeCDATA: [XML_Char; 6] = XML_STR![ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A];
         const atypeID: [XML_Char; 3] = XML_STR![ASCII_I, ASCII_D];
         const atypeIDREF: [XML_Char; 6] = XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F];
@@ -6000,12 +6022,17 @@ impl XML_ParserStruct {
                     handleDefault = false;
                 }
                 XML_ROLE::DOCTYPE_PUBLIC_ID => {
+                    let ess = match self.m_dtd.intern_external_subset() {
+                        Ok(ess) => ess.as_ptr(),
+                        Err(_) => return XML_Error::NO_MEMORY
+                    };
+
                     let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                     /* XML_DTD */
                     self.m_useForeignDTD = false;
                     self.m_declEntity = hash_insert!(
                         &mut dtd_tables.paramEntities,
-                        externalSubsetName.as_ptr(),
+                        ess,
                         Rc::try_new,
                         Entity
                     ).cloned().into();
@@ -6070,10 +6097,15 @@ impl XML_ParserStruct {
                             && self.m_handlers.hasExternalEntityRef()
                         {
                             let (base, systemId, publicId) = {
+                                let ess = match self.m_dtd.intern_external_subset() {
+                                    Ok(ess) => ess.as_ptr(),
+                                    Err(_) => return XML_Error::NO_MEMORY
+                                };
+
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                                 let entity: &Rc<Entity> = match hash_insert!(
                                     &mut dtd_tables.paramEntities,
-                                    externalSubsetName.as_ptr(),
+                                    ess,
                                     Rc::try_new,
                                     Entity
                                 ).into() {
@@ -6130,10 +6162,15 @@ impl XML_ParserStruct {
                         let mut hadParamEntityRefs = self.m_dtd.hasParamEntityRefs.get();
                         self.m_dtd.hasParamEntityRefs.set(true);
                         if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER && self.m_handlers.hasExternalEntityRef() {
+                            let ess = match self.m_dtd.intern_external_subset() {
+                                Ok(ess) => ess.as_ptr(),
+                                Err(_) => return XML_Error::NO_MEMORY
+                            };
+
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                             let mut entity: &Rc<Entity> = match hash_insert!(
                                 &mut dtd_tables.paramEntities,
-                                externalSubsetName.as_ptr(),
+                                ess,
                                 Rc::try_new,
                                 Entity
                             ).into() {
@@ -6387,7 +6424,10 @@ impl XML_ParserStruct {
                     } else {
                         /* use externalSubsetName to make parser->m_doctypeSysid non-NULL
                         for the case where no parser->m_startDoctypeDeclHandler is set */
-                        self.m_doctypeSysid = externalSubsetName.as_ptr()
+                        self.m_doctypeSysid = match self.m_dtd.intern_external_subset() {
+                            Ok(ess) => ess.as_ptr(),
+                            Err(_) => return XML_Error::NO_MEMORY
+                        };
                     }
                     /* XML_DTD */
                     if !self.m_dtd.standalone.get()
@@ -6398,10 +6438,15 @@ impl XML_ParserStruct {
                     }
                     /* XML_DTD */
                     if self.m_declEntity.is_none() {
+                        let ess = match self.m_dtd.intern_external_subset() {
+                            Ok(ess) => ess.as_ptr(),
+                            Err(_) => return XML_Error::NO_MEMORY
+                        };
+
                         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                         self.m_declEntity = hash_insert!(
                             &mut dtd_tables.paramEntities,
-                            externalSubsetName.as_ptr(),
+                            ess,
                             Rc::try_new,
                             Entity
                         ).cloned().into();
