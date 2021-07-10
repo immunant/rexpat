@@ -824,7 +824,7 @@ pub struct XML_ParserStruct {
     pub m_idAttIndex: c_int,
     pub m_atts: Vec<Attribute>,
     typed_atts: Vec<TypedAttributeName>,
-    pub m_nsAtts: HashSet<HashKey>,
+    m_nsAtts: HashSet<StringPoolSlice>,
     pub m_position: super::xmltok::Position,
     m_tempPool: StringPool,
     m_temp2Pool: StringPool,
@@ -4116,6 +4116,8 @@ impl XML_ParserStruct {
                     if !started && handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
+
+                    self.m_nsAtts.clear();
                     self.m_tempPool.clear();
 
                     // FIXME: do we need to update m_tagStack when returning an error?
@@ -4170,6 +4172,8 @@ impl XML_ParserStruct {
                     if noElmHandlers && self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.with_end(next));
                     }
+
+                    self.m_nsAtts.clear();
                     self.m_tempPool.clear();
                     self.freeBindings(bindings);
                     if self.m_tagLevel == 0 && self.m_parsingStatus.parsing != XML_Parsing::FINISHED {
@@ -4773,8 +4777,7 @@ impl XML_ParserStruct {
                     Derived from code in lookup(parser, HASH_TABLE *table, ...).
                      */
                     let ret = self.m_tempPool.with_current_slice(|name| {
-                        let hk = HashKey::from(name.as_ptr());
-                        if self.m_nsAtts.contains(&hk) {
+                        if self.m_nsAtts.contains(name) {
                             return XML_Error::DUPLICATE_ATTRIBUTE;
                         }
                         XML_Error::NONE
@@ -4799,9 +4802,9 @@ impl XML_ParserStruct {
                     }
                     if ret != XML_Error::NONE { return ret; }
                     /* store expanded name in attribute list */
-                    self.m_atts[i].name = self.m_tempPool.finish().as_ptr();
-                    let hk = HashKey::from(self.m_atts[i].name);
-                    self.m_nsAtts.insert(hk);
+                    let name_slice = self.m_tempPool.finish();
+                    self.m_atts[i].name = name_slice.as_ptr();
+                    self.m_nsAtts.insert(name_slice);
                     nPrefixes -= 1;
                     if nPrefixes == 0 && nXMLNSDeclarations == 0 {
                         i += 1;
