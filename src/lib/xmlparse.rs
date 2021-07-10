@@ -1183,7 +1183,7 @@ impl<T> From<HashInsertResult<T>> for Option<T> {
 }
 
 macro_rules! hash_insert {
-    ($map:expr, $key:expr, $alloc:expr, $et:ident, $new_fn:expr) => {{
+    ($map:expr, $key:expr, $alloc:expr, $et:ident) => {{
         let __map = $map;
         let __key = $key;
         let __hk = HashKey::from(__key);
@@ -1193,7 +1193,7 @@ macro_rules! hash_insert {
         } else if __map.try_reserve(1).is_err() {
             HashInsertResult::Err
         } else {
-            let v = $et { name: __key, ..$new_fn() };
+            let v = $et { name: __key, ..$et::default() };
             if let Ok(b) = $alloc(v) {
                 use hash_map::Entry::*;
                 match __map.entry(__hk) {
@@ -1205,9 +1205,6 @@ macro_rules! hash_insert {
             }
         }
     }};
-    ($map:expr, $key:expr, $alloc:expr, $et:ident) => {
-        hash_insert!($map, $key, $alloc, $et, $et::default)
-    };
 }
 
 #[repr(C)]
@@ -1377,8 +1374,7 @@ impl DTD {
                     &mut new_tables.elementTypes,
                     name_1.as_ptr(),
                     Rc::try_new,
-                    ElementType,
-                    ElementType::new
+                    ElementType
                 ) {
                     HashInsertResult::New(newE) => newE,
                     HashInsertResult::Found(_) => panic!("ElementType already found"),
@@ -1528,8 +1524,8 @@ pub struct ElementType {
     pub defaultAtts: RefCell<Vec<DefaultAttribute>>,
 }
 
-impl ElementType {
-    fn new() -> Self {
+impl Default for ElementType {
+    fn default() -> Self {
         ElementType {
             name: ptr::null(),
             prefix: Cell::new(None),
@@ -4493,8 +4489,7 @@ impl XML_ParserStruct {
                     &mut dtd_tables.elementTypes,
                     name.as_ptr(),
                     Rc::try_new,
-                    ElementType,
-                    ElementType::new
+                    ElementType
                 ).cloned().into() {
                     Some(elementType) => elementType,
                     None => return XML_Error::NO_MEMORY
@@ -8561,8 +8556,7 @@ impl XML_ParserStruct {
                 &mut dtd_tables.elementTypes,
                 name.as_ptr(),
                 Rc::try_new,
-                ElementType,
-                ElementType::new
+                ElementType
             ).cloned()
         });
         match ret {
