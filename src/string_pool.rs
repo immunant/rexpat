@@ -230,9 +230,9 @@ impl StringPool {
     pub(crate) unsafe fn copy_c_string(
         &self,
         mut s: *const XML_Char,
-    ) -> Option<StringPoolSlice> {
+    ) -> bool {
         // self.append_c_string(s);?
-        let successful = self.inner().rent(|vec| {
+        self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
 
             loop {
@@ -246,21 +246,15 @@ impl StringPool {
             }
 
             true
-        });
-
-        if !successful {
-            return None;
-        }
-
-        Some(self.finish())
+        })
     }
 
     pub(crate) unsafe fn copy_c_string_n(
         &self,
         mut s: *const XML_Char,
         mut n: c_int,
-    ) -> Option<StringPoolSlice> {
-        let successful = self.inner().rent(|vec| {
+    ) -> bool {
+        self.inner().rent(|vec| {
             let mut vec = vec.borrow_mut();
             let mut n = n.try_into().unwrap();
 
@@ -277,13 +271,7 @@ impl StringPool {
             }
 
             true
-        });
-
-        if !successful {
-            return None;
-        }
-
-        Some(self.finish())
+        })
     }
 }
 

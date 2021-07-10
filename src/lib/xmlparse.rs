@@ -861,7 +861,6 @@ pub struct Binding {
 }
 
 #[repr(C)]
-#[derive(Default)]
 pub struct AttributeId {
     pub name: TypedAttributeName,
     pub prefix: Cell<Ptr<Prefix>>,
@@ -869,14 +868,19 @@ pub struct AttributeId {
     pub xmlns: Cell<XML_Bool>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub struct TypedAttributeName(*mut XML_Char);
-
-impl Default for TypedAttributeName {
-    fn default() -> TypedAttributeName {
-        TypedAttributeName(ptr::null_mut())
+impl AttributeId {
+    fn new(name: TypedAttributeName) -> AttributeId {
+        AttributeId {
+            name: name,
+            prefix: Cell::new(None),
+            maybeTokenized: Cell::new(false),
+            xmlns: Cell::new(false),
+        }
     }
 }
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct TypedAttributeName(*mut XML_Char);
 
 impl TypedAttributeName {
     #[inline]
@@ -953,6 +957,13 @@ pub struct Prefix {
 }
 
 impl Prefix {
+    fn new(name: *const XML_Char) -> Prefix {
+        Prefix {
+            name,
+            binding: Cell::new(None),
+        }
+    }
+
     fn clear(&self) {
         // FIXME(rexpat): reset `name` too?
         self.binding.set(None);
@@ -960,11 +971,8 @@ impl Prefix {
 }
 
 impl Default for Prefix {
-    fn default() -> Prefix {
-        Prefix {
-            name: ptr::null(),
-            binding: Cell::new(None),
-        }
+    fn default() -> Self {
+        Self::new(ptr::null())
     }
 }
 
@@ -1193,7 +1201,36 @@ macro_rules! hash_insert {
         } else if __map.try_reserve(1).is_err() {
             HashInsertResult::Err
         } else {
-            let v = $et { name: __key, ..$et::default() };
+            let v = $et::new(__key);
+            if let Ok(b) = $alloc(v) {
+                use hash_map::Entry::*;
+                match __map.entry(__hk) {
+                    Occupied(_) => panic!("found Occupied hash key"),
+                    Vacant(e) => HashInsertResult::New(e.insert(b)),
+                }
+            } else {
+                HashInsertResult::Err
+            }
+        }
+    }};
+}
+
+macro_rules! hash_insert_pool {
+    ($map:expr, $pool:expr, $alloc:expr, $et:ident) => {{
+        let __map = $map;
+        let __pool = $pool;
+        let __key = __pool.with_current_slice(|__key| __key.as_ptr());
+        let __hk = HashKey::from(__key);
+        let __res = __map.get_mut(&__hk);
+        if let Some(__res) = __res {
+            __pool.discard();
+            HashInsertResult::Found(__res)
+        } else if __map.try_reserve(1).is_err() {
+            HashInsertResult::Err
+        } else {
+            let __key = __pool.finish().as_ptr();
+            let __hk = HashKey::from(__key);
+            let v = $et::new(__key);
             if let Ok(b) = $alloc(v) {
                 use hash_map::Entry::*;
                 match __map.entry(__hk) {
@@ -1312,13 +1349,12 @@ impl DTD {
 
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
-                let mut name = match newDtd.pool.copy_c_string(oldP.name) {
-                    Some(name) => name,
-                    None => return Err(TryReserveError::CapacityOverflow),
-                };
-                if hash_insert!(
+                if !newDtd.pool.copy_c_string(oldP.name) {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                if hash_insert_pool!(
                     &mut new_tables.prefixes,
-                    name.as_ptr(),
+                    &newDtd.pool,
                     Rc::try_new,
                     Prefix
                 )
@@ -1334,11 +1370,10 @@ impl DTD {
                     return Err(TryReserveError::CapacityOverflow);
                 }
                 // FIXME: should be copy_c_string_cells
-                let name_0 = match newDtd.pool.copy_c_string(oldA.name.name()) {
-                    Some(name) => name,
-                    None => return Err(TryReserveError::CapacityOverflow),
-                };
-                let typed_name = TypedAttributeName(name_0.as_ptr() as *mut XML_Char);
+                if !newDtd.pool.copy_c_string(oldA.name.name()) {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                let typed_name = TypedAttributeName(newDtd.pool.finish().as_ptr() as *mut XML_Char);
                 let newA = match hash_insert!(
                     &mut new_tables.attributeIds,
                     typed_name,
@@ -1366,13 +1401,12 @@ impl DTD {
             }
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
-                let mut name_1 = match newDtd.pool.copy_c_string(oldE.name) {
-                    Some(name) => name,
-                    None => return Err(TryReserveError::CapacityOverflow),
+                if !newDtd.pool.copy_c_string(oldE.name) {
+                    return Err(TryReserveError::CapacityOverflow);
                 };
-                let newE = match hash_insert!(
+                let newE = match hash_insert_pool!(
                     &mut new_tables.elementTypes,
-                    name_1.as_ptr(),
+                    &newDtd.pool,
                     Rc::try_new,
                     ElementType
                 ) {
@@ -1402,10 +1436,10 @@ impl DTD {
                     let id = new_tables.attributeIds.get(&key).unwrap();
                     let isCdata = oldAtt.isCdata;
                     let value = if !oldAtt.value.is_null() {
-                        match newDtd.pool.copy_c_string(oldAtt.value) {
-                            Some(s) => s.as_ptr(),
-                            None => return Err(TryReserveError::CapacityOverflow),
-                        }
+                        if !newDtd.pool.copy_c_string(oldAtt.value) {
+                            return Err(TryReserveError::CapacityOverflow);
+                        };
+                        newDtd.pool.finish().as_ptr()
                     } else {
                         ptr::null()
                     };
@@ -1524,10 +1558,10 @@ pub struct ElementType {
     pub defaultAtts: RefCell<Vec<DefaultAttribute>>,
 }
 
-impl Default for ElementType {
-    fn default() -> Self {
+impl ElementType {
+    fn new(name: *const XML_Char) -> Self {
         ElementType {
-            name: ptr::null(),
+            name,
             prefix: Cell::new(None),
             idAtt: Cell::new(None),
             defaultAtts: RefCell::new(Vec::new()),
@@ -1557,10 +1591,10 @@ pub struct Entity {
     pub is_internal: Cell<XML_Bool>,
 }
 
-impl Default for Entity {
-    fn default() -> Self {
+impl Entity {
+    fn new(name: *const XML_Char) -> Self {
         Entity {
-            name: ptr::null(),
+            name,
             textPtr: Cell::new(ptr::null()),
             textLen: Cell::new(0),
             processed: Cell::new(0),
@@ -2369,11 +2403,10 @@ pub unsafe extern "C" fn XML_SetBase(mut parser: XML_Parser, mut p: *const XML_C
         return XML_Status::ERROR;
     }
     if !p.is_null() {
-        let p = match (*parser).m_dtd.pool.copy_c_string(p) {
-            Some(p) => p,
-            None => return XML_Status::ERROR,
-        };
-        (*parser).m_curBase = p.as_ptr();
+        if !(*parser).m_dtd.pool.copy_c_string(p) {
+            return XML_Status::ERROR;
+        }
+        (*parser).m_curBase = (*parser).m_dtd.pool.finish().as_ptr();
     } else {
         (*parser).m_curBase = ptr::null();
     }
@@ -4481,13 +4514,12 @@ impl XML_ParserStruct {
             if let Some(elementType) = dtd_tables.elementTypes.get(&HashKey::from(tagNamePtr.str_0.as_ptr())) {
                 Rc::clone(elementType)
             } else {
-                let mut name = match self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
-                    Some(name) => name,
-                    None => return XML_Error::NO_MEMORY,
-                };
-                let elementType: Rc<ElementType> = match hash_insert!(
+                if !self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
+                    return XML_Error::NO_MEMORY;
+                }
+                let elementType: Rc<ElementType> = match hash_insert_pool!(
                     &mut dtd_tables.elementTypes,
-                    name.as_ptr(),
+                    &self.m_dtd.pool,
                     Rc::try_new,
                     ElementType
                 ).cloned().into() {
@@ -6445,21 +6477,17 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = self.m_dtd.pool.with_current_slice(|name| {
-                            hash_insert!(
-                                &mut dtd_tables.generalEntities,
-                                name.as_ptr(),
-                                Rc::try_new,
-                                Entity
-                            ).cloned()
-                        });
+                        let declEntity = hash_insert_pool!(
+                            &mut dtd_tables.generalEntities,
+                            &self.m_dtd.pool,
+                            Rc::try_new,
+                            Entity
+                        ).cloned();
                         match declEntity {
                             HashInsertResult::Found(_) => {
-                                self.m_dtd.pool.discard();
                                 self.m_declEntity = None;
                             }
                             HashInsertResult::New(declEntity) => {
-                                self.m_dtd.pool.finish();
                                 declEntity.publicId.set(ptr::null());
                                 declEntity.is_param.set(false);
                                 /* if we have a parent parser or are reading an internal parameter
@@ -6487,21 +6515,17 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = self.m_dtd.pool.with_current_slice(|name| {
-                            hash_insert!(
-                                &mut dtd_tables.paramEntities,
-                                name.as_ptr(),
-                                Rc::try_new,
-                                Entity
-                            ).cloned()
-                        });
+                        let declEntity = hash_insert_pool!(
+                            &mut dtd_tables.paramEntities,
+                            &self.m_dtd.pool,
+                            Rc::try_new,
+                            Entity
+                        ).cloned();
                         match declEntity {
                             HashInsertResult::Found(_) => {
-                                self.m_dtd.pool.discard();
                                 self.m_declEntity = None;
                             }
                             HashInsertResult::New(declEntity) => {
-                                self.m_dtd.pool.finish();
                                 declEntity.publicId.set(ptr::null());
                                 declEntity.is_param.set(true);
                                 /* if we have a parent parser or are reading an internal parameter
@@ -8024,25 +8048,17 @@ impl XML_ParserStruct {
                     return 0;
                 }
                 // This is unsafe, start needs be very temporary
-                let prefix = self.m_dtd.pool.with_current_slice(|name| {
-                    hash_insert!(
-                        &mut dtd_tables.prefixes,
-                        name.as_ptr(),
-                        Rc::try_new,
-                        Prefix
-                    ).cloned()
-                });
-                match prefix {
-                    HashInsertResult::New(prefix) => {
-                        self.m_dtd.pool.finish();
-                        elementType.prefix.set(Some(prefix));
-                    }
-                    HashInsertResult::Found(prefix) => {
-                        self.m_dtd.pool.discard();
-                        elementType.prefix.set(Some(prefix));
-                    }
-                    HashInsertResult::Err => return 0
-                };
+                let prefix: Option<Rc<Prefix>> = hash_insert_pool!(
+                    &mut dtd_tables.prefixes,
+                    &self.m_dtd.pool,
+                    Rc::try_new,
+                    Prefix
+                ).cloned().into();
+                if prefix.is_some() {
+                    elementType.prefix.set(prefix);
+                } else {
+                    return 0;
+                }
                 break;
             } else {
                 name = name.offset(1)
@@ -8293,13 +8309,12 @@ impl XML_ParserStruct {
                         // into the DTD pool, since the HashMap keeps a permanent
                         // reference to the name which we can't modify after
                         // the call to `hash_insert!` (unlike the original C code)
-                        let prefix_name = match self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
-                            Some(name) => name,
-                            None => return HashInsertResult::Err
-                        };
-                        hash_insert!(
+                        if !self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
+                            return HashInsertResult::Err;
+                        }
+                        hash_insert_pool!(
                             &mut dtd_tables.prefixes,
-                            prefix_name.as_ptr(),
+                            &self.m_dtd.pool,
                             Rc::try_new,
                             Prefix
                         ).cloned()
@@ -8389,13 +8404,12 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedOldBase: *const XML_Char = ptr::null();
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
-        let mut name = match newPool.copy_c_string((*oldE).name) {
-            Some(name) => name,
-            None => return 0,
-        };
-        let newE = match hash_insert!(
+        if !newPool.copy_c_string((*oldE).name) {
+            return 0;
+        }
+        let newE = match hash_insert_pool!(
             &mut newTable,
-            name.as_ptr(),
+            &newPool,
             Rc::try_new,
             Entity
         ) {
@@ -8404,44 +8418,44 @@ unsafe extern "C" fn copyEntityTable(
             HashInsertResult::Err => return 0,
         };
         if !oldE.systemId.get().is_null() {
-            let mut tem = match newPool.copy_c_string(oldE.systemId.get()) {
-                Some(tem) => tem,
-                None => return 0,
-            };
+            if !newPool.copy_c_string(oldE.systemId.get()) {
+                return 0;
+            }
+            let tem = newPool.finish();
             newE.systemId.set(tem.as_ptr());
             if !oldE.base.get().is_null() {
                 if oldE.base.get() == cachedOldBase {
                     newE.base.set(cachedNewBase);
                 } else {
                     cachedOldBase = oldE.base.get();
-                    tem = match newPool.copy_c_string(cachedOldBase) {
-                        Some(tem) => tem,
-                        None => return 0,
-                    };
+                    if !newPool.copy_c_string(cachedOldBase) {
+                        return 0;
+                    }
+                    let tem = newPool.finish();
                     newE.base.set(tem.as_ptr());
                     cachedNewBase = tem.as_ptr();
                 }
             }
             if !oldE.publicId.get().is_null() {
-                tem = match newPool.copy_c_string(oldE.publicId.get()) {
-                    Some(tem) => tem,
-                    None => return 0,
-                };
+                if !newPool.copy_c_string(oldE.publicId.get()) {
+                    return 0;
+                }
+                let tem = newPool.finish();
                 newE.publicId.set(tem.as_ptr());
             }
         } else {
-            let mut tem_0 = match newPool.copy_c_string_n(oldE.textPtr.get(), oldE.textLen.get()) {
-                Some(tem) => tem,
-                None => return 0,
-            };
+            if !newPool.copy_c_string_n(oldE.textPtr.get(), oldE.textLen.get()) {
+                return 0;
+            }
+            let tem_0 = newPool.finish();
             newE.textPtr.set(tem_0.as_ptr());
             newE.textLen.set(oldE.textLen.get());
         }
         if !oldE.notation.get().is_null() {
-            let mut tem = match newPool.copy_c_string(oldE.notation.get()) {
-                Some(tem) => tem,
-                None => return 0,
-            };
+            if !newPool.copy_c_string(oldE.notation.get()) {
+                return 0;
+            }
+            let tem = newPool.finish();
             newE.notation.set(tem.as_ptr());
         }
         newE.is_param.set(oldE.is_param.get());
@@ -8551,23 +8565,18 @@ impl XML_ParserStruct {
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
         }
-        let ret = self.m_dtd.pool.with_current_slice(|name| {
-            hash_insert!(
-                &mut dtd_tables.elementTypes,
-                name.as_ptr(),
-                Rc::try_new,
-                ElementType
-            ).cloned()
-        });
+        let ret = hash_insert_pool!(
+            &mut dtd_tables.elementTypes,
+            &self.m_dtd.pool,
+            Rc::try_new,
+            ElementType
+        ).cloned();
         match ret {
             HashInsertResult::Found(ret) => {
-                self.m_dtd.pool.discard();
                 Some(ret)
             }
             HashInsertResult::New(ret) => {
-                self.m_dtd.pool.finish();
                 drop(dtd_tables);
-
                 if self.setElementTypePrefix(&ret) == 0 {
                     return None;
                 }
