@@ -1216,24 +1216,23 @@ macro_rules! hash_insert {
 }
 
 macro_rules! hash_insert_pool {
-    ($map:expr, $pool:expr, $alloc:expr, $et:ident) => {{
-        let __map = $map;
-        let __pool = $pool;
-        let __key = __pool.with_current_slice(|__key| __key.as_ptr());
-        let __hk = HashKey::from(__key);
-        let __res = __map.get(&__hk);
+    ($map:expr, $pool:expr, $et:ident) => {{
+        let __res = $pool.with_current_slice(|__key| {
+            let __hk = HashKey::from(__key.as_ptr());
+            $map.get(&__hk)
+        });
         if let Some(__res) = __res {
-            __pool.discard();
+            $pool.discard();
             HashInsertResult::Found(__res)
-        } else if __map.try_reserve(1).is_err() {
+        } else if $map.try_reserve(1).is_err() {
             HashInsertResult::Err
         } else {
-            let __key = __pool.finish().as_ptr();
+            let __key = $pool.finish().as_ptr();
             let __hk = HashKey::from(__key);
             let v = $et::new(__key);
-            if let Ok(b) = $alloc(v) {
+            if let Ok(b) = Rc::try_new(v) {
                 use hash_map::Entry::*;
-                match __map.entry(__hk) {
+                match $map.entry(__hk) {
                     Occupied(_) => panic!("found Occupied hash key"),
                     Vacant(e) => HashInsertResult::New(&*e.insert(b)),
                 }
@@ -1353,9 +1352,8 @@ impl DTD {
                     return Err(TryReserveError::CapacityOverflow);
                 }
                 if hash_insert_pool!(
-                    &mut new_tables.prefixes,
+                    new_tables.prefixes,
                     &newDtd.pool,
-                    Rc::try_new,
                     Prefix
                 )
                 .is_err()
@@ -1405,9 +1403,8 @@ impl DTD {
                     return Err(TryReserveError::CapacityOverflow);
                 };
                 let newE = match hash_insert_pool!(
-                    &mut new_tables.elementTypes,
+                    new_tables.elementTypes,
                     &newDtd.pool,
-                    Rc::try_new,
                     ElementType
                 ) {
                     HashInsertResult::New(newE) => newE,
@@ -4518,9 +4515,8 @@ impl XML_ParserStruct {
                     return XML_Error::NO_MEMORY;
                 }
                 let elementType: Rc<ElementType> = match hash_insert_pool!(
-                    &mut dtd_tables.elementTypes,
+                    dtd_tables.elementTypes,
                     &self.m_dtd.pool,
-                    Rc::try_new,
                     ElementType
                 ).cloned().into() {
                     Some(elementType) => elementType,
@@ -6478,9 +6474,8 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let declEntity = hash_insert_pool!(
-                            &mut dtd_tables.generalEntities,
+                            dtd_tables.generalEntities,
                             &self.m_dtd.pool,
-                            Rc::try_new,
                             Entity
                         ).cloned();
                         match declEntity {
@@ -6516,9 +6511,8 @@ impl XML_ParserStruct {
                             return XML_Error::NO_MEMORY;
                         }
                         let declEntity = hash_insert_pool!(
-                            &mut dtd_tables.paramEntities,
+                            dtd_tables.paramEntities,
                             &self.m_dtd.pool,
-                            Rc::try_new,
                             Entity
                         ).cloned();
                         match declEntity {
@@ -8049,9 +8043,8 @@ impl XML_ParserStruct {
                 }
                 // This is unsafe, start needs be very temporary
                 let prefix: Option<Rc<Prefix>> = hash_insert_pool!(
-                    &mut dtd_tables.prefixes,
+                    dtd_tables.prefixes,
                     &self.m_dtd.pool,
-                    Rc::try_new,
                     Prefix
                 ).cloned().into();
                 if prefix.is_some() {
@@ -8313,9 +8306,8 @@ impl XML_ParserStruct {
                             return HashInsertResult::Err;
                         }
                         hash_insert_pool!(
-                            &mut dtd_tables.prefixes,
+                            dtd_tables.prefixes,
                             &self.m_dtd.pool,
-                            Rc::try_new,
                             Prefix
                         ).cloned()
                     }) {
@@ -8408,9 +8400,8 @@ unsafe extern "C" fn copyEntityTable(
             return 0;
         }
         let newE = match hash_insert_pool!(
-            &mut newTable,
+            newTable,
             &newPool,
-            Rc::try_new,
             Entity
         ) {
             HashInsertResult::New(newE) => newE,
@@ -8566,9 +8557,8 @@ impl XML_ParserStruct {
             return None;
         }
         let ret = hash_insert_pool!(
-            &mut dtd_tables.elementTypes,
+            dtd_tables.elementTypes,
             &self.m_dtd.pool,
-            Rc::try_new,
             ElementType
         ).cloned();
         match ret {
