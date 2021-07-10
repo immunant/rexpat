@@ -122,7 +122,7 @@ impl StringPool {
     /// Call callback with an immutable buffer of the current BumpVec. This must
     /// be a callback to ensure that we don't (safely) borrow the slice for
     /// longer than it stays vaild.
-    pub(crate) fn current_slice<F, R>(&self, mut callback: F) -> R
+    pub(crate) fn with_current_slice<F, R>(&self, mut callback: F) -> R
         where F: FnMut(&[XML_Char]) -> R
     {
         self.inner().rent(|v| callback(v.borrow().0.as_slice()))
@@ -131,7 +131,7 @@ impl StringPool {
     /// Call callback with a mutable buffer of the current BumpVec. This must
     /// be a callback to ensure that we don't (safely) borrow the slice for
     /// longer than it stays vaild.
-    pub(crate) fn current_mut_slice<F, R>(&self, mut callback: F) -> R
+    pub(crate) fn with_current_mut_slice<F, R>(&self, mut callback: F) -> R
         where F: FnMut(&mut [XML_Char]) -> R
     {
         self.inner().rent(|v| callback(v.borrow_mut().0.as_mut_slice()))
@@ -356,16 +356,16 @@ fn test_append_char() {
     let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.append_char(A));
-    pool.current_slice(|s| assert_eq!(s, [A]));
+    pool.with_current_slice(|s| assert_eq!(s, [A]));
 
     assert!(pool.append_char(B));
-    pool.current_slice(|s| assert_eq!(s, [A, B]));
+    pool.with_current_slice(|s| assert_eq!(s, [A, B]));
 
     // New BumpVec
     pool.finish_string();
 
     assert!(pool.append_char(C));
-    pool.current_slice(|s| assert_eq!(s, [C]));
+    pool.with_current_slice(|s| assert_eq!(s, [C]));
 }
 
 #[test]
@@ -379,7 +379,7 @@ fn test_append_string() {
         assert!(pool.append_c_string(string.as_mut_ptr()));
     }
 
-    pool.current_slice(|s| assert_eq!(s, [A, B, C]));
+    pool.with_current_slice(|s| assert_eq!(s, [A, B, C]));
 }
 
 #[test]
@@ -389,7 +389,7 @@ fn test_copy_string() {
     let mut pool = StringPool::try_new().unwrap();
 
     assert!(pool.append_char(A));
-    pool.current_slice(|s| assert_eq!(s, [A]));
+    pool.with_current_slice(|s| assert_eq!(s, [A]));
 
     let new_string = unsafe {
         pool.copy_c_string(S.as_ptr())
@@ -397,7 +397,7 @@ fn test_copy_string() {
 
     assert_eq!(*new_string.unwrap(), [A, C, D, D, C, NULL]);
     assert!(pool.append_char(B));
-    pool.current_slice(|s| assert_eq!(s, [B]));
+    pool.with_current_slice(|s| assert_eq!(s, [B]));
 
     let new_string2 = unsafe {
         pool.copy_c_string_n(S.as_ptr(), 4)
@@ -422,14 +422,14 @@ fn test_store_c_string() {
 
     assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.append_char(A));
-    pool.current_slice(|s| assert_eq!(s, [A]));
+    pool.with_current_slice(|s| assert_eq!(s, [A]));
 
     // No overlap between buffers:
     assert_eq!(&*string, &[C, D, D, NULL]);
 
     assert!(pool.append_char(A));
 
-    pool.current_slice(|s| assert_eq!(s, [A, A]));
+    pool.with_current_slice(|s| assert_eq!(s, [A, A]));
 
     // Force reallocation:
     pool.inner().rent(|v| v.borrow_mut().0.resize(2, 0));
