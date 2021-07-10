@@ -88,7 +88,7 @@ impl StringPool {
 
     /// Gets the current vec, converts it into an immutable slice,
     /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string(&self) -> StringPoolSlice {
+    pub(crate) fn finish(&self) -> StringPoolSlice {
         RcRef::new(Rc::clone(&self.0)).map(|inner| {
             inner.as_ref().unwrap().ref_rent_all(|pool| {
                 let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
@@ -99,7 +99,7 @@ impl StringPool {
 
     /// Gets the current vec, converts it into a slice of cells (with interior mutability),
     /// and resets bookkeeping so that it will create a new vec next time.
-    pub(crate) fn finish_string_cells(&self) -> StringPoolCellSlice {
+    pub(crate) fn finish_cells(&self) -> StringPoolCellSlice {
         RcRef::new(Rc::clone(&self.0)).map(|inner| {
             inner.as_ref().unwrap().ref_rent_all(|pool| {
                 let mut vec = RentedBumpVec(BumpVec::new_in(&pool.bump));
@@ -110,7 +110,7 @@ impl StringPool {
     }
 
     /// Resets the current bump vec to the beginning
-    pub(crate) fn clear_current(&self) {
+    pub(crate) fn discard(&self) {
         self.inner().rent(|v| v.borrow_mut().0.clear())
     }
 
@@ -252,7 +252,7 @@ impl StringPool {
             return None;
         }
 
-        Some(self.finish_string())
+        Some(self.finish())
     }
 
     pub(crate) unsafe fn copy_c_string_n(
@@ -283,7 +283,7 @@ impl StringPool {
             return None;
         }
 
-        Some(self.finish_string())
+        Some(self.finish())
     }
 }
 
@@ -362,7 +362,7 @@ fn test_append_char() {
     pool.with_current_slice(|s| assert_eq!(s, [A, B]));
 
     // New BumpVec
-    pool.finish_string();
+    pool.finish();
 
     assert!(pool.append_char(C));
     pool.with_current_slice(|s| assert_eq!(s, [C]));
@@ -418,7 +418,7 @@ fn test_store_c_string() {
     };
     assert!(pool.store_c_string(enc, read_buf));
 
-    let string = pool.finish_string();
+    let string = pool.finish();
 
     assert_eq!(&*string, &[C, D, D, NULL]);
     assert!(pool.append_char(A));
@@ -436,7 +436,7 @@ fn test_store_c_string() {
 
     assert!(pool.store_c_string(enc, read_buf));
 
-    let s = pool.finish_string();
+    let s = pool.finish();
 
     assert_eq!(*s, [A, A, C, D, D, NULL]);
 }
