@@ -1216,6 +1216,30 @@ macro_rules! hash_insert {
     }};
 }
 
+macro_rules! hash_insert_safe {
+    ($map:expr, $key:expr, $alloc:expr, $et:ident) => {{
+        let __map = $map;
+        let __key = $key;
+        let __res = __map.get(&__key);
+        if let Some(__res) = __res {
+            HashInsertResult::Found(__res)
+        } else if __map.try_reserve(1).is_err() {
+            HashInsertResult::Err
+        } else {
+            let v = $et::new(OwningRef::clone(&__key));
+            if let Ok(b) = $alloc(v) {
+                use hash_map::Entry::*;
+                match __map.entry(__key) {
+                    Occupied(_) => panic!("found Occupied hash key"),
+                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
+                }
+            } else {
+                HashInsertResult::Err
+            }
+        }
+    }};
+}
+
 macro_rules! hash_insert_pool {
     ($map:expr, $pool:expr, $et:ident) => {{
         let __res = $pool.with_current_slice(|__key| {
@@ -1234,6 +1258,32 @@ macro_rules! hash_insert_pool {
             if let Ok(b) = Rc::try_new(v) {
                 use hash_map::Entry::*;
                 match $map.entry(__hk) {
+                    Occupied(_) => panic!("found Occupied hash key"),
+                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
+                }
+            } else {
+                HashInsertResult::Err
+            }
+        }
+    }};
+}
+
+macro_rules! hash_insert_pool_safe {
+    ($map:expr, $pool:expr, $et:ident) => {{
+        let __res = $pool.with_current_slice(|__key| {
+            $map.get(__key)
+        });
+        if let Some(__res) = __res {
+            $pool.discard();
+            HashInsertResult::Found(__res)
+        } else if $map.try_reserve(1).is_err() {
+            HashInsertResult::Err
+        } else {
+            let __key = $pool.finish();
+            let v = $et::new(OwningRef::clone(&__key));
+            if let Ok(b) = Rc::try_new(v) {
+                use hash_map::Entry::*;
+                match $map.entry(__key) {
                     Occupied(_) => panic!("found Occupied hash key"),
                     Vacant(e) => HashInsertResult::New(&*e.insert(b)),
                 }
@@ -1268,11 +1318,11 @@ pub struct DTD {
 pub struct DTDTables {
     defaultPrefix: Ptr<Prefix>,
     externalSubsetSlice: Option<StringPoolSlice>,
-    generalEntities: HashMap<HashKey, Rc<Entity>>,
+    generalEntities: HashMap<StringPoolSlice, Rc<Entity>>,
     elementTypes: HashMap<HashKey, Rc<ElementType>>,
     attributeIds: HashMap<HashKey, Rc<AttributeId>>,
     prefixes: HashMap<HashKey, Rc<Prefix>>,
-    paramEntities: HashMap<HashKey, Rc<Entity>>,
+    paramEntities: HashMap<StringPoolSlice, Rc<Entity>>,
 }
 
 impl DTD {
@@ -1598,7 +1648,8 @@ pub struct DefaultAttribute {
 
 #[repr(C)]
 pub struct Entity {
-    pub name: *const XML_Char,
+    // TODO: get rid of the RefCell
+    name: RefCell<Option<StringPoolSlice>>,
     pub textPtr: Cell<*const XML_Char>,
     pub textLen: Cell<c_int>,
     pub processed: Cell<c_int>,
@@ -1612,9 +1663,9 @@ pub struct Entity {
 }
 
 impl Entity {
-    fn new(name: *const XML_Char) -> Self {
+    fn new(name: StringPoolSlice) -> Self {
         Entity {
-            name,
+            name: RefCell::new(Some(name)),
             textPtr: Cell::new(ptr::null()),
             textLen: Cell::new(0),
             processed: Cell::new(0),
@@ -2087,6 +2138,11 @@ impl XML_ParserStruct {
         if self.is_child_parser {
             return false;
         }
+
+        // Clear any references to the string pools before clearing the latter
+        self.m_doctypeName = None;
+        self.m_declEntity = None;
+
         /* move m_tagStack to m_freeTagList */
         let mut tStk = self.m_tagStack.take();
         while let Some(mut tag) = tStk {
@@ -2108,6 +2164,15 @@ impl XML_ParserStruct {
             self.m_freeInternalEntities = Some(openEntity);
         }
 
+        // Drop the Rc's for all the free entity names
+        let mut freeEntities = self.m_freeInternalEntities.as_mut();
+        while let Some(freeEntity) = freeEntities {
+            if let Some(ref mut entity) = freeEntity.entity {
+                *entity.name.borrow_mut() = None;
+            }
+            freeEntities = freeEntity.next.as_mut();
+        }
+
         let ib = self.m_inheritedBindings.borrow_mut().take();
         self.moveToFreeBindingList(ib);
         let _ = self.m_handlers.m_unknownEncoding.take();
@@ -2115,8 +2180,6 @@ impl XML_ParserStruct {
             self.m_handlers.m_unknownEncodingRelease
                 .expect("non-null function pointer")(self.m_handlers.m_unknownEncodingData);
         }
-
-        self.m_doctypeName = None;
 
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
@@ -3966,10 +4029,9 @@ impl XML_ParserStruct {
                         if !successful {
                             return XML_Error::NO_MEMORY;
                         };
-                        let entity = self.m_dtd.pool.with_current_slice(|name| {
+                        let entity = self.m_dtd.pool.with_current_slice(|key| {
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                            let key = HashKey::from(name.as_ptr());
-                            dtd_tables.generalEntities.get(&key).map(Rc::clone)
+                            dtd_tables.generalEntities.get(key).map(Rc::clone)
                         });
 
                         /* First, determine if a check for an existing declaration is needed;
@@ -4022,7 +4084,7 @@ impl XML_ParserStruct {
                             if !entity.textPtr.get().is_null() {
                                 let mut result: XML_Error = XML_Error::NONE;
                                 if !self.m_defaultExpandInternalEntities {
-                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name, 0);
+                                    let skippedHandlerRan = self.m_handlers.skippedEntity(entity.name.borrow().as_ref().unwrap().as_ptr(), 0);
 
                                     if !skippedHandlerRan && self.m_handlers.hasDefault() {
                                         reportDefault(self, enc_type, buf.with_end(next));
@@ -5856,7 +5918,7 @@ impl XML_ParserStruct {
             self.m_dtd.paramEntityRead.set(false);
             entity.open.set(true);
             let entity_name = if cfg!(feature = "mozilla") {
-                entity.name
+                entity.name.borrow().as_ref().unwrap().as_ptr()
             } else {
                 ptr::null()
             };
@@ -6023,14 +6085,14 @@ impl XML_ParserStruct {
                 }
                 XML_ROLE::DOCTYPE_PUBLIC_ID => {
                     let ess = match self.m_dtd.intern_external_subset() {
-                        Ok(ess) => ess.as_ptr(),
+                        Ok(ess) => ess,
                         Err(_) => return XML_Error::NO_MEMORY
                     };
 
                     let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                     /* XML_DTD */
                     self.m_useForeignDTD = false;
-                    self.m_declEntity = hash_insert!(
+                    self.m_declEntity = hash_insert_safe!(
                         &mut dtd_tables.paramEntities,
                         ess,
                         Rc::try_new,
@@ -6098,12 +6160,12 @@ impl XML_ParserStruct {
                         {
                             let (base, systemId, publicId) = {
                                 let ess = match self.m_dtd.intern_external_subset() {
-                                    Ok(ess) => ess.as_ptr(),
+                                    Ok(ess) => ess,
                                     Err(_) => return XML_Error::NO_MEMORY
                                 };
 
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                                let entity: &Rc<Entity> = match hash_insert!(
+                                let entity: &Rc<Entity> = match hash_insert_safe!(
                                     &mut dtd_tables.paramEntities,
                                     ess,
                                     Rc::try_new,
@@ -6163,12 +6225,12 @@ impl XML_ParserStruct {
                         self.m_dtd.hasParamEntityRefs.set(true);
                         if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER && self.m_handlers.hasExternalEntityRef() {
                             let ess = match self.m_dtd.intern_external_subset() {
-                                Ok(ess) => ess.as_ptr(),
+                                Ok(ess) => ess,
                                 Err(_) => return XML_Error::NO_MEMORY
                             };
 
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                            let mut entity: &Rc<Entity> = match hash_insert!(
+                            let mut entity: &Rc<Entity> = match hash_insert_safe!(
                                 &mut dtd_tables.paramEntities,
                                 ess,
                                 Rc::try_new,
@@ -6383,7 +6445,7 @@ impl XML_ParserStruct {
                             if self.m_handlers.hasEntityDecl() {
                                 self.eventEndPP(enc_type).set(buf.as_ptr());
                                 self.m_handlers.entityDecl(
-                                    declEntity.name,
+                                    declEntity.name.borrow().as_ref().unwrap().as_ptr(),
                                     declEntity.is_param.get() as c_int,
                                     declEntity.textPtr.get(),
                                     declEntity.textLen.get(),
@@ -6439,12 +6501,12 @@ impl XML_ParserStruct {
                     /* XML_DTD */
                     if self.m_declEntity.is_none() {
                         let ess = match self.m_dtd.intern_external_subset() {
-                            Ok(ess) => ess.as_ptr(),
+                            Ok(ess) => ess,
                             Err(_) => return XML_Error::NO_MEMORY
                         };
 
                         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                        self.m_declEntity = hash_insert!(
+                        self.m_declEntity = hash_insert_safe!(
                             &mut dtd_tables.paramEntities,
                             ess,
                             Rc::try_new,
@@ -6467,7 +6529,7 @@ impl XML_ParserStruct {
                         self.eventEndPP(enc_type).set(buf.as_ptr());
                         let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         self.m_handlers.entityDecl(
-                            declEntity.name,
+                            declEntity.name.borrow().as_ref().unwrap().as_ptr(),
                             declEntity.is_param.get() as c_int,
                             ptr::null(),
                             0,
@@ -6490,7 +6552,7 @@ impl XML_ParserStruct {
                         if self.m_handlers.hasUnparsedEntityDecl() {
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.unparsedEntityDecl(
-                                declEntity.name,
+                                declEntity.name.borrow().as_ref().unwrap().as_ptr(),
                                 declEntity.base.get(),
                                 declEntity.systemId.get(),
                                 declEntity.publicId.get(),
@@ -6500,7 +6562,7 @@ impl XML_ParserStruct {
                         } else if self.m_handlers.hasEntityDecl() {
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.entityDecl(
-                                declEntity.name,
+                                declEntity.name.borrow().as_ref().unwrap().as_ptr(),
                                 0,
                                 ptr::null(),
                                 0,
@@ -6521,7 +6583,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = hash_insert_pool!(
+                        let declEntity = hash_insert_pool_safe!(
                             dtd_tables.generalEntities,
                             &self.m_dtd.pool,
                             Entity
@@ -6558,7 +6620,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = hash_insert_pool!(
+                        let declEntity = hash_insert_pool_safe!(
                             dtd_tables.paramEntities,
                             &self.m_dtd.pool,
                             Entity
@@ -6794,10 +6856,9 @@ impl XML_ParserStruct {
                         if !successful {
                             return XML_Error::NO_MEMORY;
                         }
-                        let mut entity = self.m_dtd.pool.with_current_slice(|name| {
+                        let mut entity = self.m_dtd.pool.with_current_slice(|key| {
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                            let key = HashKey::from(name.as_ptr());
-                            dtd_tables.paramEntities.get(&key).map(Rc::clone)
+                            dtd_tables.paramEntities.get(key).map(Rc::clone)
                         });
 
                         /* first, determine if a check for an existing declaration is needed;
@@ -7575,10 +7636,9 @@ unsafe extern "C" fn appendAttributeValue(
                         return XML_Error::NO_MEMORY;
                     }
 
-                    let entity = (*parser).m_temp2Pool.with_current_slice(|name| {
+                    let entity = (*parser).m_temp2Pool.with_current_slice(|key| {
                         let mut dtd_tables = (*parser).m_dtd.tables.borrow_mut();
-                        let key = HashKey::from(name.as_ptr());
-                        dtd_tables.generalEntities.get(&key).map(Rc::clone)
+                        dtd_tables.generalEntities.get(key).map(Rc::clone)
                     });
 
                     (*parser).m_temp2Pool.discard();
@@ -7728,10 +7788,9 @@ unsafe extern "C" fn storeEntityValue(
                         result = XML_Error::NO_MEMORY;
                         break;
                     } else {
-                        let mut entity = match (*parser).m_tempPool.with_current_slice(|name| {
+                        let mut entity = match (*parser).m_tempPool.with_current_slice(|key| {
                             let mut dtd_tables = (*parser).m_dtd.tables.borrow_mut();
-                            let key = HashKey::from(name.as_ptr());
-                            dtd_tables.paramEntities.get(&key).map(Rc::clone)
+                            dtd_tables.paramEntities.get(key).map(Rc::clone)
                         }) {
                             Some(entity) => entity,
                             None => {
@@ -8293,11 +8352,11 @@ impl XML_ParserStruct {
                 return false;
             }
             // TODO: Could the following be replaced by m_tempPool.append_c_string((*e).name)?
-            for s_0 in ek.0 {
-                if *s_0 == 0 {
+            for &ck_0 in &ek[..] {
+                if ck_0 == 0 {
                     break;
                 }
-                if !self.m_tempPool.append_char(*s_0) {
+                if !self.m_tempPool.append_char(ck_0) {
                     return false;
                 }
             }
@@ -8322,9 +8381,8 @@ impl XML_ParserStruct {
                 if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
                     return false;
                 }
-                self.m_tempPool.with_current_slice(|entity_name| {
-                    let key = HashKey::from(entity_name.as_ptr());
-                    if let Some(e) = dtd_tables.generalEntities.get(&key) {
+                self.m_tempPool.with_current_slice(|key| {
+                    if let Some(e) = dtd_tables.generalEntities.get(key) {
                         e.open.set(true);
                     }
                     if *s != '\u{0}' as XML_Char {
@@ -8437,17 +8495,18 @@ fn normalizePublicId(publicId: &StringPoolCellSlice) {
 }
 
 unsafe extern "C" fn copyEntityTable(
-    mut newTable: &mut HashMap<HashKey, Rc<Entity>>,
+    mut newTable: &mut HashMap<StringPoolSlice, Rc<Entity>>,
     mut newPool: &StringPool,
-    mut oldTable: &HashMap<HashKey, Rc<Entity>>,
+    mut oldTable: &HashMap<StringPoolSlice, Rc<Entity>>,
 ) -> c_int {
     let mut cachedOldBase: *const XML_Char = ptr::null();
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
-        if !newPool.copy_c_string((*oldE).name) {
+        // TODO: direct safe copy instead of as_ptr()
+        if !newPool.copy_c_string((*oldE).name.borrow().as_ref().unwrap().as_ptr()) {
             return 0;
         }
-        let newE = match hash_insert_pool!(
+        let newE = match hash_insert_pool_safe!(
             newTable,
             &newPool,
             Entity
