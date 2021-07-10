@@ -1170,7 +1170,7 @@ impl<T> HashInsertResult<T> {
     }
 }
 
-impl<'a, T> HashInsertResult<&'a mut Rc<T>> {
+impl<'a, T> HashInsertResult<&'a Rc<T>> {
     fn cloned(&self) -> HashInsertResult<Rc<T>> {
         match self {
             HashInsertResult::New(r) => HashInsertResult::New(Rc::clone(r)),
@@ -1195,7 +1195,7 @@ macro_rules! hash_insert {
         let __map = $map;
         let __key = $key;
         let __hk = HashKey::from(__key);
-        let __res = __map.get_mut(&__hk);
+        let __res = __map.get(&__hk);
         if let Some(__res) = __res {
             HashInsertResult::Found(__res)
         } else if __map.try_reserve(1).is_err() {
@@ -1206,7 +1206,7 @@ macro_rules! hash_insert {
                 use hash_map::Entry::*;
                 match __map.entry(__hk) {
                     Occupied(_) => panic!("found Occupied hash key"),
-                    Vacant(e) => HashInsertResult::New(e.insert(b)),
+                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
                 }
             } else {
                 HashInsertResult::Err
@@ -1221,7 +1221,7 @@ macro_rules! hash_insert_pool {
         let __pool = $pool;
         let __key = __pool.with_current_slice(|__key| __key.as_ptr());
         let __hk = HashKey::from(__key);
-        let __res = __map.get_mut(&__hk);
+        let __res = __map.get(&__hk);
         if let Some(__res) = __res {
             __pool.discard();
             HashInsertResult::Found(__res)
@@ -1235,7 +1235,7 @@ macro_rules! hash_insert_pool {
                 use hash_map::Entry::*;
                 match __map.entry(__hk) {
                     Occupied(_) => panic!("found Occupied hash key"),
-                    Vacant(e) => HashInsertResult::New(e.insert(b)),
+                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
                 }
             } else {
                 HashInsertResult::Err
@@ -6072,7 +6072,7 @@ impl XML_ParserStruct {
                         {
                             let (base, systemId, publicId) = {
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                                let entity: &mut Rc<Entity> = match hash_insert!(
+                                let entity: &Rc<Entity> = match hash_insert!(
                                     &mut dtd_tables.paramEntities,
                                     externalSubsetName.as_ptr(),
                                     Rc::try_new,
@@ -6132,7 +6132,7 @@ impl XML_ParserStruct {
                         self.m_dtd.hasParamEntityRefs.set(true);
                         if self.m_paramEntityParsing != XML_ParamEntityParsing::NEVER && self.m_handlers.hasExternalEntityRef() {
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                            let mut entity: &mut Rc<Entity> = match hash_insert!(
+                            let mut entity: &Rc<Entity> = match hash_insert!(
                                 &mut dtd_tables.paramEntities,
                                 externalSubsetName.as_ptr(),
                                 Rc::try_new,
