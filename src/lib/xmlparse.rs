@@ -1061,6 +1061,7 @@ impl Default for TagName {
 
 pub enum TagNameString {
     None,
+    // TODO(rexpat): get rid of this one
     Ptr(*const XML_Char),
     BindingUri(Rc<Binding>),
 }
@@ -1071,6 +1072,24 @@ impl TagNameString {
             TagNameString::None => ptr::null(),
             TagNameString::Ptr(ptr) => ptr,
             TagNameString::BindingUri(ref b) => b.uri.borrow().as_ptr(),
+        }
+    }
+
+    fn with_slice<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&[XML_Char]) -> T,
+    {
+        match *self {
+            TagNameString::None => f(&[]),
+            TagNameString::Ptr(ptr) => unsafe {
+                let len = keylen(ptr) as usize;
+                let sl = std::slice::from_raw_parts(ptr, len);
+                f(sl)
+            }
+            TagNameString::BindingUri(ref b) => {
+                let r = b.uri.borrow();
+                f(&r[..])
+            }
         }
     }
 }
@@ -1244,34 +1263,6 @@ macro_rules! hash_insert_safe {
     }};
 }
 
-macro_rules! hash_insert_pool {
-    ($map:expr, $pool:expr, $et:ident) => {{
-        let __res = $pool.with_current_slice(|__key| {
-            let __hk = HashKey::from(__key.as_ptr());
-            $map.get(&__hk)
-        });
-        if let Some(__res) = __res {
-            $pool.discard();
-            HashInsertResult::Found(__res)
-        } else if $map.try_reserve(1).is_err() {
-            HashInsertResult::Err
-        } else {
-            let __key = $pool.finish().as_ptr();
-            let __hk = HashKey::from(__key);
-            let v = $et::new(__key);
-            if let Ok(b) = Rc::try_new(v) {
-                use hash_map::Entry::*;
-                match $map.entry(__hk) {
-                    Occupied(_) => panic!("found Occupied hash key"),
-                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
-                }
-            } else {
-                HashInsertResult::Err
-            }
-        }
-    }};
-}
-
 macro_rules! hash_insert_pool_safe {
     ($map:expr, $pool:expr, $et:ident) => {{
         let __res = $pool.with_current_slice(|__key| {
@@ -1323,7 +1314,7 @@ pub struct DTDTables {
     defaultPrefix: Ptr<Prefix>,
     externalSubsetSlice: Option<StringPoolSlice>,
     generalEntities: HashMap<StringPoolSlice, Rc<Entity>>,
-    elementTypes: HashMap<HashKey, Rc<ElementType>>,
+    elementTypes: HashMap<StringPoolSlice, Rc<ElementType>>,
     attributeIds: HashMap<HashKey, Rc<AttributeId>>,
     prefixes: HashMap<StringPoolSlice, Rc<Prefix>>,
     paramEntities: HashMap<StringPoolSlice, Rc<Entity>>,
@@ -1476,10 +1467,11 @@ impl DTD {
             }
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
-                if !newDtd.pool.copy_c_string(oldE.name) {
+                // TODO(rexpat): pass in the name as a StringPoolSlice
+                if !newDtd.pool.copy_c_string(oldE.name.as_ptr()) {
                     return Err(TryReserveError::CapacityOverflow);
                 };
-                let newE = match hash_insert_pool!(
+                let newE = match hash_insert_pool_safe!(
                     new_tables.elementTypes,
                     &newDtd.pool,
                     ElementType
@@ -1592,6 +1584,7 @@ impl Clone for DTDScaffold {
 pub struct ContentScaffold {
     pub type_0: XML_Content_Type,
     pub quant: XML_Content_Quant,
+    // TODO(rexpat): StringPoolSlice here
     pub name: *const XML_Char,
     pub firstchild: usize,
     pub lastchild: usize,
@@ -1625,14 +1618,14 @@ an attribute has been specified. */
 
 #[repr(C)]
 pub struct ElementType {
-    pub name: *const XML_Char,
+    name: StringPoolSlice,
     pub prefix: Cell<Ptr<Prefix>>,
     pub idAtt: Cell<Ptr<AttributeId>>,
     pub defaultAtts: RefCell<Vec<DefaultAttribute>>,
 }
 
 impl ElementType {
-    fn new(name: *const XML_Char) -> Self {
+    fn new(name: StringPoolSlice) -> Self {
         ElementType {
             name,
             prefix: Cell::new(None),
@@ -4603,13 +4596,16 @@ impl XML_ParserStruct {
         /* lookup the element type name */
         let elementType = {
             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-            if let Some(elementType) = dtd_tables.elementTypes.get(&HashKey::from(tagNamePtr.str_0.as_ptr())) {
-                Rc::clone(elementType)
+            let elementType = tagNamePtr.str_0.with_slice(|tag_name| {
+                dtd_tables.elementTypes.get(tag_name).map(Rc::clone)
+            });
+            if let Some(elementType) = elementType {
+                elementType
             } else {
                 if !self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
                     return XML_Error::NO_MEMORY;
                 }
-                let elementType: Rc<ElementType> = match hash_insert_pool!(
+                let elementType: Rc<ElementType> = match hash_insert_pool_safe!(
                     dtd_tables.elementTypes,
                     &self.m_dtd.pool,
                     ElementType
@@ -6369,7 +6365,7 @@ impl XML_ParserStruct {
                             }
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name,
+                                self.m_declElementType.as_ref().unwrap().name.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 ptr::null(),
@@ -6424,7 +6420,7 @@ impl XML_ParserStruct {
                             }
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.attlistDecl(
-                                self.m_declElementType.as_ref().unwrap().name,
+                                self.m_declElementType.as_ref().unwrap().name.as_ptr(),
                                 self.m_declAttributeId.as_ref().unwrap().name.name(),
                                 self.m_declAttributeType,
                                 attVal,
@@ -6981,7 +6977,8 @@ impl XML_ParserStruct {
                                 .m_declElementType
                                 .as_ref()
                                 .unwrap()
-                                .name, content);
+                                .name
+                                .as_ptr(), content);
                             handleDefault = false
                         }
                         self.m_dtd.in_eldecl.set(false);
@@ -7104,14 +7101,13 @@ impl XML_ParserStruct {
                         };
                         scf.scaffold[myindex].type_0 = XML_Content_Type::NAME;
                         scf.scaffold[myindex].quant = quant;
-                        scf.scaffold[myindex].name = (*el).name;
+                        scf.scaffold[myindex].name = (*el).name.as_ptr();
 
-                        let mut name_2 = el.name;
+                        let mut name_2 = &el.name[..];
                         let mut nameLen = 0;
                         loop {
-                            let fresh37 = nameLen;
                             nameLen = nameLen + 1;
-                            if !(*name_2.offset(fresh37 as isize) != 0) {
+                            if name_2[nameLen - 1] == 0 {
                                 break;
                             }
                         }
@@ -7149,7 +7145,8 @@ impl XML_ParserStruct {
                                     .m_declElementType
                                     .as_ref()
                                     .unwrap()
-                                    .name, model);
+                                    .name
+                                    .as_ptr(), model);
                             }
                             self.m_dtd.in_eldecl.set(false);
                             self.m_dtd.contentStringLen.set(0);
@@ -8142,16 +8139,15 @@ impl XML_ParserStruct {
         mut elementType: &ElementType,
     ) -> c_int {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        let mut name = elementType.name;
-        while *name != 0 {
-            if *name == ASCII_COLON as XML_Char {
-                let mut s: *const XML_Char = ptr::null();
-                s = elementType.name;
-                while s != name {
-                    if !self.m_dtd.pool.append_char(*s) {
+        let mut name = &elementType.name[..];
+        while name[0] != 0 {
+            if name[0] == ASCII_COLON as XML_Char {
+                let mut s = &elementType.name[..];
+                while s.as_ptr() != name.as_ptr() {
+                    if !self.m_dtd.pool.append_char(s[0]) {
                         return 0;
                     }
-                    s = s.offset(1)
+                    s = &s[1..];
                 }
                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                     return 0;
@@ -8168,7 +8164,7 @@ impl XML_ParserStruct {
                 elementType.prefix.set(prefix.into());
                 break;
             } else {
-                name = name.offset(1)
+                name = &name[1..];
             }
         }
         1
@@ -8666,7 +8662,7 @@ impl XML_ParserStruct {
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
         }
-        let ret = hash_insert_pool!(
+        let ret = hash_insert_pool_safe!(
             dtd_tables.elementTypes,
             &self.m_dtd.pool,
             ElementType
