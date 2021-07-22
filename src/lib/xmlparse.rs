@@ -1083,7 +1083,7 @@ impl TagNameString {
             TagNameString::None => f(&[]),
             TagNameString::Ptr(ptr) => unsafe {
                 let len = keylen(ptr) as usize;
-                let sl = std::slice::from_raw_parts(ptr, len);
+                let sl = std::slice::from_raw_parts(ptr, len + 1);
                 f(sl)
             }
             TagNameString::BindingUri(ref b) => {
@@ -1580,12 +1580,11 @@ impl Clone for DTDScaffold {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct ContentScaffold {
     pub type_0: XML_Content_Type,
     pub quant: XML_Content_Quant,
-    // TODO(rexpat): StringPoolSlice here
-    pub name: *const XML_Char,
+    name: Option<StringPoolSlice>,
     pub firstchild: usize,
     pub lastchild: usize,
     pub childcnt: usize,
@@ -1597,7 +1596,7 @@ impl Default for ContentScaffold {
         ContentScaffold {
             type_0: XML_Content_Type::EMPTY,
             quant: XML_Content_Quant::NONE,
-            name: ptr::null(),
+            name: None,
             firstchild: 0,
             lastchild: 0,
             childcnt: 0,
@@ -7101,7 +7100,7 @@ impl XML_ParserStruct {
                         };
                         scf.scaffold[myindex].type_0 = XML_Content_Type::NAME;
                         scf.scaffold[myindex].quant = quant;
-                        scf.scaffold[myindex].name = (*el).name.as_ptr();
+                        scf.scaffold[myindex].name = Some(el.name.clone());
 
                         let mut name_2 = &el.name[..];
                         let mut nameLen = 0;
@@ -8600,14 +8599,14 @@ impl XML_ParserStruct {
             dest.numchildren = 0;
             dest.children = ptr::null_mut();
 
-            let mut src = scf.scaffold[src_node].name;
+            let mut src = &scf.scaffold[src_node].name.as_ref().unwrap()[..];
             loop {
                 let (first, rest) = strpos.split_first_mut().unwrap();
-                *first = unsafe { *src };
+                *first = src[0];
                 if *first == 0 {
                     return (contpos, rest);
                 }
-                unsafe { src = src.offset(1) };
+                src = &src[1..];
                 strpos = rest;
             }
         } else {
