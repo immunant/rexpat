@@ -761,7 +761,7 @@ impl Attribute {
         }
     }
 
-    unsafe fn from_default(da: &DefaultAttribute) -> Self {
+    fn from_default(da: &DefaultAttribute) -> Self {
         Attribute {
             name: da.id.name().as_ptr(),
             value: da.value,
@@ -8117,7 +8117,7 @@ unsafe extern "C" fn defineAttribute(
 }
 
 impl XML_ParserStruct {
-    unsafe fn setElementTypePrefix(
+    fn setElementTypePrefix(
         &mut self,
         mut elementType: &ElementType,
     ) -> c_int {
@@ -8246,7 +8246,7 @@ impl XML_ParserStruct {
 const CONTEXT_SEP: XML_Char = ASCII_FF as XML_Char;
 
 impl XML_ParserStruct {
-    unsafe fn getContext(&mut self) -> bool {
+    fn getContext(&mut self) -> bool {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
         let mut needSep = false;
         if let Some(dpb) = get_cell_ptr(&dtd_tables.defaultPrefix.as_deref().unwrap().binding)  {
@@ -8630,7 +8630,7 @@ impl XML_ParserStruct {
         ret
     }
 
-    unsafe fn getElementType(
+    fn getElementType(
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
