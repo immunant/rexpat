@@ -864,7 +864,8 @@ pub struct Binding {
 #[repr(C)]
 pub struct AttributeId {
     pub name: TypedAttributeName,
-    pub prefix: Cell<Ptr<Prefix>>,
+    // TODO(rexpat): Cell or RefCell?
+    pub prefix: RefCell<Option<Weak<Prefix>>>,
     pub maybeTokenized: Cell<XML_Bool>,
     pub xmlns: Cell<XML_Bool>,
 }
@@ -873,7 +874,7 @@ impl AttributeId {
     fn new(name: TypedAttributeName) -> AttributeId {
         AttributeId {
             name: name,
-            prefix: Cell::new(None),
+            prefix: RefCell::new(None),
             maybeTokenized: Cell::new(false),
             xmlns: Cell::new(false),
         }
@@ -953,19 +954,19 @@ impl From<AttributeType> for XML_Char {
 }
 
 pub struct Prefix {
-    pub name: *const XML_Char,
+    name: Option<StringPoolSlice>,
     binding: Cell<Ptr<Binding>>,
 }
 
 impl Prefix {
-    fn new(name: *const XML_Char) -> Prefix {
+    fn new(name: StringPoolSlice) -> Prefix {
         Prefix {
-            name,
+            name: Some(name),
             binding: Cell::new(None),
         }
     }
 
-    fn clear(&self) {
+    fn reset(&self) {
         // FIXME(rexpat): reset `name` too?
         self.binding.set(None);
     }
@@ -973,7 +974,10 @@ impl Prefix {
 
 impl Default for Prefix {
     fn default() -> Self {
-        Self::new(ptr::null())
+        Prefix {
+            name: None,
+            binding: Cell::new(None),
+        }
     }
 }
 
@@ -1321,7 +1325,7 @@ pub struct DTDTables {
     generalEntities: HashMap<StringPoolSlice, Rc<Entity>>,
     elementTypes: HashMap<HashKey, Rc<ElementType>>,
     attributeIds: HashMap<HashKey, Rc<AttributeId>>,
-    prefixes: HashMap<HashKey, Rc<Prefix>>,
+    prefixes: HashMap<StringPoolSlice, Rc<Prefix>>,
     paramEntities: HashMap<StringPoolSlice, Rc<Entity>>,
 }
 
@@ -1352,7 +1356,7 @@ impl DTD {
 
     fn reset(&mut self) {
         let mut tables = self.tables.get_mut();
-        tables.defaultPrefix.as_deref().unwrap().clear();
+        tables.defaultPrefix.as_ref().unwrap().reset();
         tables.externalSubsetSlice = None;
         tables.generalEntities.clear();
         tables.paramEntities.clear();
@@ -1421,10 +1425,11 @@ impl DTD {
 
             /* Copy the prefix table. */
             for oldP in old_tables.prefixes.values() {
-                if !newDtd.pool.copy_c_string(oldP.name) {
+                // TODO(rexpat): pass the StringPoolSlice directly
+                if !newDtd.pool.copy_c_string(oldP.name.as_ref().unwrap().as_ptr()) {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                if hash_insert_pool!(
+                if hash_insert_pool_safe!(
                     new_tables.prefixes,
                     &newDtd.pool,
                     Prefix
@@ -1456,17 +1461,16 @@ impl DTD {
                     HashInsertResult::Err => return Err(TryReserveError::CapacityOverflow)
                 };
                 newA.maybeTokenized.set(oldA.maybeTokenized.get());
-                if let Some(ref old_prefix) = get_cell_ptr(&oldA.prefix) {
+                if let Some(old_prefix) = oldA.prefix.borrow().as_ref().and_then(Weak::upgrade) {
                     newA.xmlns.set(oldA.xmlns.get());
-                    if Rc::ptr_eq(old_prefix, old_tables.defaultPrefix.as_ref().unwrap()) {
-                        newA.prefix.set(new_tables.defaultPrefix
+                    if Rc::ptr_eq(&old_prefix, old_tables.defaultPrefix.as_ref().unwrap()) {
+                        *newA.prefix.borrow_mut() = new_tables.defaultPrefix
                             .as_ref()
-                            .map(Rc::clone));
+                            .map(Rc::downgrade);
                     } else {
-                        let key = HashKey::from(old_prefix.name);
-                        newA.prefix.set(new_tables.prefixes
-                            .get(&key)
-                            .map(Rc::clone));
+                        *newA.prefix.borrow_mut() = new_tables.prefixes
+                            .get(old_prefix.name.as_ref().unwrap())
+                            .map(Rc::downgrade);
                     }
                 }
             }
@@ -1490,9 +1494,8 @@ impl DTD {
                     newE.idAtt.set(id_att);
                 }
                 if let Some(ref old_prefix) = get_cell_ptr(&oldE.prefix) {
-                    let key = HashKey::from(old_prefix.name);
                     newE.prefix.set(new_tables.prefixes
-                        .get(&key)
+                        .get(old_prefix.name.as_ref().unwrap())
                         .map(Rc::clone));
                 }
 
@@ -2142,6 +2145,8 @@ impl XML_ParserStruct {
         // Clear any references to the string pools before clearing the latter
         self.m_doctypeName = None;
         self.m_declEntity = None;
+        self.m_declElementType = None;
+        self.m_declAttributeId = None;
 
         /* move m_tagStack to m_freeTagList */
         let mut tStk = self.m_tagStack.take();
@@ -4362,7 +4367,7 @@ impl XML_ParserStruct {
                             let mut fbl = self.m_freeBindingList.borrow_mut();
                             while let Some(b) = tag.bindings.take() {
                                 let prefix = b.prefix.upgrade().unwrap();
-                                self.m_handlers.endNamespaceDecl(prefix.name);
+                                self.m_handlers.endNamespaceDecl(prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr()));
                                 prefix.binding.set(b.prevPrefixBinding.take());
                                 tag.bindings = b.nextTagBinding.replace(fbl.take());
                                 *fbl = Some(b);
@@ -4567,8 +4572,9 @@ impl XML_ParserStruct {
             * binding in addBindings(), so call the end handler now.
             */
             let prefix = b.prefix.upgrade().unwrap();
-            self.m_handlers.endNamespaceDecl(prefix.name);
+            self.m_handlers.endNamespaceDecl(prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr()));
             prefix.binding.set(b.prevPrefixBinding.take());
+            b.attId.set(None);
             bindings = b.nextTagBinding.replace(fbl.take());
             *fbl = Some(b);
         }
@@ -4691,12 +4697,12 @@ impl XML_ParserStruct {
                 self.m_atts.push(Attribute::new(attId.name.name(), self.m_tempPool.finish().as_ptr()));
             }
             /* handle prefixed attribute names */
-            if let Some(ref prefix) = get_cell_ptr(&attId.prefix) {
+            if let Some(prefix) = attId.prefix.borrow().as_ref().and_then(Weak::upgrade) {
                 if attId.xmlns.get() {
                     /* deal with namespace declarations here */
                     let mut result_0: XML_Error = addBinding(
                         self,
-                        prefix,
+                        &prefix,
                         Some(Rc::clone(&attId)),
                         self.m_atts.last().unwrap().value,
                         bindingsPtr,
@@ -4754,11 +4760,11 @@ impl XML_ParserStruct {
         }
         for da in elementType.defaultAtts.borrow().iter() {
             if !da.id.name.get_type().is_set() && !da.value.is_null() {
-                if let Some(ref prefix) = get_cell_ptr(&da.id.prefix) {
+                if let Some(prefix) = da.id.prefix.borrow().as_ref().and_then(Weak::upgrade) {
                     if da.id.xmlns.get() {
                         let mut result_1: XML_Error = addBinding(
                             self,
-                            prefix,
+                            &prefix,
                             Some(Rc::clone(&da.id)),
                             da.value,
                             bindingsPtr,
@@ -4809,7 +4815,7 @@ impl XML_ParserStruct {
                     /* prefixed */
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
                     let id = dtd_tables.attributeIds.get(&HashKey::from(s));
-                    if id.is_none() || get_cell_ptr(&id.unwrap().prefix).is_none() {
+                    if id.is_none() || id.unwrap().prefix.borrow().is_none() {
                         /* This code is walking through the appAtts array, dealing
                         * with (in this case) a prefixed attribute name.  To be in
                         * the array, the attribute must have already been bound, so
@@ -4828,8 +4834,11 @@ impl XML_ParserStruct {
                         /* LCOV_EXCL_LINE */
                     }
                     let id = id.unwrap();
-                    let prefix_ptr = get_cell_ptr(&id.prefix);
-                    let prefix = prefix_ptr.as_deref().unwrap();
+                    let prefix = id.prefix
+                        .borrow()
+                        .as_ref()
+                        .and_then(Weak::upgrade)
+                        .unwrap();
                     let b = match get_cell_ptr(&prefix.binding) {
                         Some(b) => b,
                         None => return XML_Error::UNBOUND_PREFIX
@@ -4873,15 +4882,14 @@ impl XML_ParserStruct {
                     if self.m_ns_triplets {
                         /* append namespace separator and prefix */
                         self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                        s = b.prefix.upgrade().unwrap().name;
-                        loop {
-                            if !self.m_tempPool.append_char(*s) {
-                                return XML_Error::NO_MEMORY;
-                            }
-                            let fresh26 = s;
-                            s = s.offset(1);
-                            if !(*fresh26 != 0) {
-                                break;
+                        if let Some(ref name) = b.prefix.upgrade().unwrap().name {
+                            for &c in name.iter() {
+                                if !self.m_tempPool.append_char(c) {
+                                    return XML_Error::NO_MEMORY;
+                                }
+                                if c == 0 {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -5027,19 +5035,21 @@ impl XML_ParserStruct {
         };
         let binding_prefix = binding.prefix.upgrade().unwrap();
         let mut prefixLen = 0;
-        if self.m_ns_triplets && !binding_prefix.name.is_null() {
-            while *binding_prefix.name.add(prefixLen) != 0 {
+        if self.m_ns_triplets {
+            if let Some(ref name) = binding_prefix.name {
+                while name[prefixLen] != 0 {
+                    prefixLen += 1;
+                }
+                /* prefixLen includes null terminator */
                 prefixLen += 1;
             }
-            /* prefixLen includes null terminator */
-            prefixLen += 1;
         }
         tagNamePtr.localPart = TagNameLocalPart::from_tag_name(
             &tagNamePtr.str_0,
             skip_to_colon,
         );
         tagNamePtr.uriLen = (*binding).uriLen.get();
-        tagNamePtr.prefix = binding_prefix.name;
+        tagNamePtr.prefix = binding_prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr());
         tagNamePtr.prefixLen = prefixLen;
 
         let localPart = tagNamePtr.localPart.as_ptr();
@@ -5062,10 +5072,7 @@ impl XML_ParserStruct {
             /* replace null terminator */
             *uri.last_mut().unwrap() = self.m_namespaceSeparator;
 
-            let prefix_slice = slice::from_raw_parts(
-                binding_prefix.name,
-                prefixLen,
-            );
+            let prefix_slice = &binding_prefix.name.as_ref().unwrap()[..prefixLen];
             uri.extend(prefix_slice);
         }
         drop(uri);
@@ -5102,23 +5109,24 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
-    if *uri as c_int == '\u{0}' as i32 && !prefix.name.is_null() {
+    if *uri as c_int == '\u{0}' as i32 && !prefix.name.is_none() {
         return XML_Error::UNDECLARING_PREFIX;
     }
-    if !prefix.name.is_null()
-        && *prefix.name.offset(0) == ASCII_x as XML_Char
-        && *prefix.name.offset(1) == ASCII_m as XML_Char
-        && *prefix.name.offset(2) == ASCII_l as XML_Char
-    {
-        /* Not allowed to bind xmlns */
-        if *prefix.name.offset(3) == ASCII_n as XML_Char
-            && *prefix.name.offset(4) == ASCII_s as XML_Char
-            && *prefix.name.offset(5) == '\u{0}' as XML_Char
+    if let Some(ref name) = prefix.name {
+        if name[0] == ASCII_x as XML_Char
+            && name[1] == ASCII_m as XML_Char
+            && name[2] == ASCII_l as XML_Char
         {
-            return XML_Error::RESERVED_PREFIX_XMLNS;
-        }
-        if *prefix.name.offset(3) == '\u{0}' as XML_Char {
-            mustBeXML = true
+            /* Not allowed to bind xmlns */
+            if name[3] == ASCII_n as XML_Char
+                && name[4] == ASCII_s as XML_Char
+                && name[5] == '\u{0}' as XML_Char
+            {
+                return XML_Error::RESERVED_PREFIX_XMLNS;
+            }
+            if name[3] == '\u{0}' as XML_Char {
+                mustBeXML = true;
+            }
         }
     }
     let mut len = 0;
@@ -5214,7 +5222,7 @@ unsafe extern "C" fn addBinding(
     /* if attId == NULL then we are not starting a namespace scope */
     if !att_id_is_none && parser.m_handlers.hasStartNamespaceDecl() {
         parser.m_handlers.startNamespaceDecl(
-            prefix.name,
+            prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr()),
             uri_ptr,
         );
     }
@@ -8149,16 +8157,15 @@ impl XML_ParserStruct {
                     return 0;
                 }
                 // This is unsafe, start needs be very temporary
-                let prefix: Option<Rc<Prefix>> = hash_insert_pool!(
+                let prefix = hash_insert_pool_safe!(
                     dtd_tables.prefixes,
                     &self.m_dtd.pool,
                     Prefix
-                ).cloned().into();
-                if prefix.is_some() {
-                    elementType.prefix.set(prefix);
-                } else {
+                ).cloned();
+                if prefix.is_err() {
                     return 0;
                 }
+                elementType.prefix.set(prefix.into());
                 break;
             } else {
                 name = name.offset(1)
@@ -8198,7 +8205,7 @@ impl XML_ParserStruct {
                 Some(id)
             }
             HashInsertResult::New(id) => {
-                let name = &self.m_dtd.pool.finish()[1..];
+                let name = self.m_dtd.pool.finish().map(|s| &s[1..]);
                 if self.m_ns {
                     if name[0] == ASCII_x as XML_Char
                     && name[1] == ASCII_m as XML_Char
@@ -8209,15 +8216,19 @@ impl XML_ParserStruct {
                     || name[5] == ASCII_COLON as XML_Char)
                     {
                         if name[5] == '\u{0}' as XML_Char {
-                            id.prefix.set(dtd_tables.defaultPrefix.as_ref().map(Rc::clone));
+                            *id.prefix.borrow_mut() = dtd_tables
+                                .defaultPrefix
+                                .as_ref()
+                                .map(Rc::downgrade);
                         } else {
-                            let prefix = hash_insert!(
+                            let prefix = hash_insert_safe!(
                                 &mut dtd_tables.prefixes,
-                                &name[6] as *const _,
+                                name.map(|s| &s[6..]),
                                 Rc::try_new,
                                 Prefix
-                            ).cloned();
-                            id.prefix.set(prefix.into());
+                            );
+                            *id.prefix.borrow_mut() = Option::from(prefix)
+                                .map(Rc::downgrade);
                         }
                         id.xmlns.set(true);
                     } else {
@@ -8233,22 +8244,15 @@ impl XML_ParserStruct {
                                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                                     return None;
                                 }
-                                let prefix = self.m_dtd.pool.with_current_slice(|name| {
-                                    hash_insert!(
-                                        &mut dtd_tables.prefixes,
-                                        name.as_ptr(),
-                                        Rc::try_new,
-                                        Prefix
-                                    ).cloned()
-                                });
+                                let prefix = hash_insert_pool_safe!(
+                                    dtd_tables.prefixes,
+                                    &self.m_dtd.pool,
+                                    Prefix
+                                );
                                 match prefix {
-                                    HashInsertResult::New(prefix) => {
-                                        self.m_dtd.pool.finish();
-                                        id.prefix.set(Some(prefix));
-                                    }
+                                    HashInsertResult::New(prefix) |
                                     HashInsertResult::Found(prefix) => {
-                                        self.m_dtd.pool.discard();
-                                        id.prefix.set(Some(prefix));
+                                        *id.prefix.borrow_mut() = Some(Rc::downgrade(prefix));
                                     }
                                     HashInsertResult::Err => return None
                                 }
@@ -8320,11 +8324,11 @@ impl XML_ParserStruct {
                 if needSep && !self.m_tempPool.append_char(CONTEXT_SEP) {
                     return false;
                 }
-                for s in pk.0 {
-                    if *s == 0 {
+                for &c in pk.iter() {
+                    if c == 0 {
                         break;
                     }
-                    if !self.m_tempPool.append_char(*s) {
+                    if !self.m_tempPool.append_char(c) {
                         return false;
                     }
                 }
@@ -8399,8 +8403,7 @@ impl XML_ParserStruct {
                         return false;
                     }
                     let prefix = match self.m_tempPool.with_current_slice(|prefix_name| {
-                        let key = HashKey::from(prefix_name.as_ptr());
-                        if let Some(prefix) = dtd_tables.prefixes.get(&key) {
+                        if let Some(prefix) = dtd_tables.prefixes.get(prefix_name) {
                             return HashInsertResult::Found(Rc::clone(prefix));
                         }
 
@@ -8411,7 +8414,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
                             return HashInsertResult::Err;
                         }
-                        hash_insert_pool!(
+                        hash_insert_pool_safe!(
                             dtd_tables.prefixes,
                             &self.m_dtd.pool,
                             Prefix
