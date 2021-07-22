@@ -763,7 +763,7 @@ impl Attribute {
 
     unsafe fn from_default(da: &DefaultAttribute) -> Self {
         Attribute {
-            name: da.id.name.name(),
+            name: da.id.name().as_ptr(),
             value: da.value,
         }
     }
@@ -863,7 +863,8 @@ pub struct Binding {
 
 #[repr(C)]
 pub struct AttributeId {
-    pub name: TypedAttributeName,
+    name: Option<StringPoolSlice>,
+    r#type: RefCell<Option<StringPoolCellSlice>>,
     // TODO(rexpat): Cell or RefCell?
     pub prefix: RefCell<Option<Weak<Prefix>>>,
     pub maybeTokenized: Cell<XML_Bool>,
@@ -871,40 +872,52 @@ pub struct AttributeId {
 }
 
 impl AttributeId {
-    fn new(name: TypedAttributeName) -> AttributeId {
+    fn new(name: StringPoolSlice) -> AttributeId {
         AttributeId {
-            name: name,
+            name: Some(name),
+            r#type: RefCell::new(None),
             prefix: RefCell::new(None),
             maybeTokenized: Cell::new(false),
             xmlns: Cell::new(false),
         }
     }
+
+    fn typed_name(&self) -> TypedAttributeName {
+        TypedAttributeName {
+            name: self.name.as_ref().unwrap().clone(),
+            r#type: self.r#type.borrow().as_ref().unwrap().clone(),
+        }
+    }
+
+    fn get_type(&self) -> AttributeType {
+        self.r#type.borrow().as_ref().unwrap()[0].get().into()
+    }
+
+    fn set_type(&self, r#type: AttributeType) {
+        self.r#type.borrow().as_ref().unwrap()[0].set(r#type.into());
+    }
+
+    fn name(&self) -> &StringPoolSlice {
+        self.name.as_ref().unwrap()
+    }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub struct TypedAttributeName(*mut XML_Char);
+struct TypedAttributeName {
+    name: StringPoolSlice,
+    r#type: StringPoolCellSlice,
+}
 
 impl TypedAttributeName {
     #[inline]
     fn get_type(&self) -> AttributeType {
-        unsafe { (*self.0).into() }
+        assert!(self.r#type.len() == 1);
+        self.r#type[0].get().into()
     }
 
     #[inline]
     fn set_type(&self, at: AttributeType) {
-        unsafe { (*self.0) = at.into(); }
-    }
-
-    #[inline]
-    fn name(&self) -> *const XML_Char {
-        unsafe { self.0.offset(1) }
-    }
-}
-
-impl From<TypedAttributeName> for HashKey {
-    #[inline]
-    fn from(typed_name: TypedAttributeName) -> Self {
-        HashKey::from(typed_name.name())
+        assert!(self.r#type.len() == 1);
+        self.r#type[0].set(at.into())
     }
 }
 
@@ -1153,18 +1166,6 @@ fn safe_ptr_diff<T>(p: *const T, q: *const T) -> isize {
     }
 }
 
-// FIXME: add a proper lifetime
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct HashKey(&'static [XML_Char]);
-
-impl From<KEY> for HashKey {
-    fn from(key: KEY) -> Self {
-        unsafe {
-            HashKey(std::slice::from_raw_parts(key, keylen(key) as usize))
-        }
-    }
-}
-
 enum HashInsertResult<T> {
     New(T),
     Found(T),
@@ -1218,31 +1219,6 @@ macro_rules! hash_insert {
     ($map:expr, $key:expr, $alloc:expr, $et:ident) => {{
         let __map = $map;
         let __key = $key;
-        let __hk = HashKey::from(__key);
-        let __res = __map.get(&__hk);
-        if let Some(__res) = __res {
-            HashInsertResult::Found(__res)
-        } else if __map.try_reserve(1).is_err() {
-            HashInsertResult::Err
-        } else {
-            let v = $et::new(__key);
-            if let Ok(b) = $alloc(v) {
-                use hash_map::Entry::*;
-                match __map.entry(__hk) {
-                    Occupied(_) => panic!("found Occupied hash key"),
-                    Vacant(e) => HashInsertResult::New(&*e.insert(b)),
-                }
-            } else {
-                HashInsertResult::Err
-            }
-        }
-    }};
-}
-
-macro_rules! hash_insert_safe {
-    ($map:expr, $key:expr, $alloc:expr, $et:ident) => {{
-        let __map = $map;
-        let __key = $key;
         let __res = __map.get(&__key);
         if let Some(__res) = __res {
             HashInsertResult::Found(__res)
@@ -1263,7 +1239,7 @@ macro_rules! hash_insert_safe {
     }};
 }
 
-macro_rules! hash_insert_pool_safe {
+macro_rules! hash_insert_pool {
     ($map:expr, $pool:expr, $et:ident) => {{
         let __res = $pool.with_current_slice(|__key| {
             $map.get(__key)
@@ -1315,7 +1291,7 @@ pub struct DTDTables {
     externalSubsetSlice: Option<StringPoolSlice>,
     generalEntities: HashMap<StringPoolSlice, Rc<Entity>>,
     elementTypes: HashMap<StringPoolSlice, Rc<ElementType>>,
-    attributeIds: HashMap<HashKey, Rc<AttributeId>>,
+    attributeIds: HashMap<StringPoolSlice, Rc<AttributeId>>,
     prefixes: HashMap<StringPoolSlice, Rc<Prefix>>,
     paramEntities: HashMap<StringPoolSlice, Rc<Entity>>,
 }
@@ -1355,9 +1331,6 @@ impl DTD {
         tables.attributeIds.clear();
         tables.prefixes.clear();
 
-        self.pool.clear();
-        self.entityValuePool.clear();
-
         let mut scf = self.scaffold.borrow_mut();
         scf.scaffold.clear();
         scf.index.clear();
@@ -1368,6 +1341,9 @@ impl DTD {
         self.keepProcessing.set(true);
         self.hasParamEntityRefs.set(false);
         self.standalone.set(false);
+
+        self.pool.clear();
+        self.entityValuePool.clear();
     }
 
     // Get a copy of externalSubsetName interned in `self.pool`
@@ -1420,7 +1396,7 @@ impl DTD {
                 if !newDtd.pool.copy_c_string(oldP.name.as_ref().unwrap().as_ptr()) {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                if hash_insert_pool_safe!(
+                if hash_insert_pool!(
                     new_tables.prefixes,
                     &newDtd.pool,
                     Prefix
@@ -1433,24 +1409,26 @@ impl DTD {
             for oldA in old_tables.attributeIds.values()
             /* Copy the attribute id table. */
             {
-                if !newDtd.pool.append_char(AttributeType::Unset.into()) {
+                if !newDtd.pool.copy_c_string(oldA.name().as_ptr()) {
                     return Err(TryReserveError::CapacityOverflow);
                 }
-                // FIXME: should be copy_c_string_cells
-                if !newDtd.pool.copy_c_string(oldA.name.name()) {
-                    return Err(TryReserveError::CapacityOverflow);
-                }
-                let typed_name = TypedAttributeName(newDtd.pool.finish().as_ptr() as *mut XML_Char);
-                let newA = match hash_insert!(
-                    &mut new_tables.attributeIds,
-                    typed_name,
-                    Rc::try_new,
+                let newA = match hash_insert_pool!(
+                    new_tables.attributeIds,
+                    &newDtd.pool,
                     AttributeId
                 ) {
                     HashInsertResult::New(newA) => newA,
                     HashInsertResult::Found(_) => panic!("AttributeId already found"),
                     HashInsertResult::Err => return Err(TryReserveError::CapacityOverflow)
                 };
+
+                if !newDtd.pool.append_char(AttributeType::Unset.into()) {
+                    return Err(TryReserveError::CapacityOverflow);
+                }
+                let r#type = newDtd.pool.finish_cells();
+                assert!(r#type.len() == 1);
+                *newA.r#type.borrow_mut() = Some(r#type);
+
                 newA.maybeTokenized.set(oldA.maybeTokenized.get());
                 if let Some(old_prefix) = oldA.prefix.borrow().as_ref().and_then(Weak::upgrade) {
                     newA.xmlns.set(oldA.xmlns.get());
@@ -1471,7 +1449,7 @@ impl DTD {
                 if !newDtd.pool.copy_c_string(oldE.name.as_ptr()) {
                     return Err(TryReserveError::CapacityOverflow);
                 };
-                let newE = match hash_insert_pool_safe!(
+                let newE = match hash_insert_pool!(
                     new_tables.elementTypes,
                     &newDtd.pool,
                     ElementType
@@ -1481,8 +1459,7 @@ impl DTD {
                     HashInsertResult::Err => return Err(TryReserveError::CapacityOverflow)
                 };
                 if let Some(id_att) = get_cell_ptr(&oldE.idAtt) {
-                    let key = HashKey::from(id_att.name);
-                    let id_att = new_tables.attributeIds.get(&key).map(Rc::clone);
+                    let id_att = new_tables.attributeIds.get(id_att.name()).map(Rc::clone);
                     newE.idAtt.set(id_att);
                 }
                 if let Some(ref old_prefix) = get_cell_ptr(&oldE.prefix) {
@@ -1497,8 +1474,7 @@ impl DTD {
                     return Err(TryReserveError::CapacityOverflow);
                 }
                 for oldAtt in old_default_atts.iter() {
-                    let key = HashKey::from(oldAtt.id.name);
-                    let id = new_tables.attributeIds.get(&key).unwrap();
+                    let id = new_tables.attributeIds.get(oldAtt.id.name()).unwrap();
                     let isCdata = oldAtt.isCdata;
                     let value = if !oldAtt.value.is_null() {
                         if !newDtd.pool.copy_c_string(oldAtt.value) {
@@ -2113,6 +2089,8 @@ impl XML_ParserStruct {
     fn moveToFreeBindingList(&mut self, mut bindings: Ptr<Binding>) {
         let mut fbl = self.m_freeBindingList.borrow_mut();
         while let Some(b) = bindings {
+            // Release the Rc's inside attId
+            b.attId.set(None);
             bindings = b.nextTagBinding.replace(fbl.take());
             *fbl = Some(b);
         }
@@ -2139,6 +2117,8 @@ impl XML_ParserStruct {
         self.m_declEntity = None;
         self.m_declElementType = None;
         self.m_declAttributeId = None;
+        self.typed_atts.clear();
+        self.m_nsAtts.clear();
 
         /* move m_tagStack to m_freeTagList */
         let mut tStk = self.m_tagStack.take();
@@ -4361,6 +4341,8 @@ impl XML_ParserStruct {
                                 let prefix = b.prefix.upgrade().unwrap();
                                 self.m_handlers.endNamespaceDecl(prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr()));
                                 prefix.binding.set(b.prevPrefixBinding.take());
+                                // Release the Rc's inside attId
+                                b.attId.set(None);
                                 tag.bindings = b.nextTagBinding.replace(fbl.take());
                                 *fbl = Some(b);
                             }
@@ -4566,6 +4548,7 @@ impl XML_ParserStruct {
             let prefix = b.prefix.upgrade().unwrap();
             self.m_handlers.endNamespaceDecl(prefix.name.as_ref().map_or_else(ptr::null, |x| x.as_ptr()));
             prefix.binding.set(b.prevPrefixBinding.take());
+            // Release the Rc's inside attId
             b.attId.set(None);
             bindings = b.nextTagBinding.replace(fbl.take());
             *fbl = Some(b);
@@ -4604,7 +4587,7 @@ impl XML_ParserStruct {
                 if !self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
                     return XML_Error::NO_MEMORY;
                 }
-                let elementType: Rc<ElementType> = match hash_insert_pool_safe!(
+                let elementType: Rc<ElementType> = match hash_insert_pool!(
                     dtd_tables.elementTypes,
                     &self.m_dtd.pool,
                     ElementType
@@ -4652,13 +4635,13 @@ impl XML_ParserStruct {
             namespace processing is turned on and different prefixes for the same
             namespace are used. For this case we have a check further down.
             */
-            if attId.name.get_type().is_set() {
+            if attId.get_type().is_set() {
                 if !enc_type.is_internal() {
                     self.m_eventPtr.set(currAtt.name);
                 }
                 return XML_Error::DUPLICATE_ATTRIBUTE;
             }
-            attId.name.set_type(AttributeType::Normal);
+            attId.set_type(AttributeType::Normal);
             if !currAtt.normalized {
                 let mut result: XML_Error = XML_Error::NONE;
                 let mut isCdata = true;
@@ -4683,13 +4666,13 @@ impl XML_ParserStruct {
                 if result as u64 != 0 {
                     return result;
                 }
-                self.m_atts.push(Attribute::new(attId.name.name(), self.m_tempPool.finish().as_ptr()));
+                self.m_atts.push(Attribute::new(attId.name().as_ptr(), self.m_tempPool.finish().as_ptr()));
             } else {
                 /* the value did not need normalizing */
                 if !self.m_tempPool.store_c_string(enc, ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd)) {
                     return XML_Error::NO_MEMORY;
                 }
-                self.m_atts.push(Attribute::new(attId.name.name(), self.m_tempPool.finish().as_ptr()));
+                self.m_atts.push(Attribute::new(attId.name().as_ptr(), self.m_tempPool.finish().as_ptr()));
             }
             /* handle prefixed attribute names */
             if let Some(prefix) = attId.prefix.borrow().as_ref().and_then(Weak::upgrade) {
@@ -4707,8 +4690,8 @@ impl XML_ParserStruct {
                     }
                     if cfg!(feature = "mozilla") {
                         nXMLNSDeclarations += 1;
-                        attId.name.set_type(AttributeType::Namespace);
-                        self.typed_atts.push(attId.name);
+                        attId.set_type(AttributeType::Namespace);
+                        self.typed_atts.push(attId.typed_name());
                     } else {
                         // Mozilla code replaces `--attIndex` with `attIndex++`,
                         // the former being equivalent to popping the last
@@ -4718,11 +4701,11 @@ impl XML_ParserStruct {
                 } else {
                     /* deal with other prefixed names later */
                     nPrefixes += 1;
-                    attId.name.set_type(AttributeType::Prefixed);
-                    self.typed_atts.push(attId.name);
+                    attId.set_type(AttributeType::Prefixed);
+                    self.typed_atts.push(attId.typed_name());
                 }
             } else {
-                self.typed_atts.push(attId.name);
+                self.typed_atts.push(attId.typed_name());
             }
 
             XML_Error::NONE
@@ -4735,10 +4718,10 @@ impl XML_ParserStruct {
         /* set-up for XML_GetSpecifiedAttributeCount and XML_GetIdAttributeIndex */
         self.m_nSpecifiedAtts = 2 * self.m_atts.len() as c_int;
         self.m_idAttIndex = -1;
-        if let Some(name) = get_cell_ptr(&elementType.idAtt).as_deref().map(|x| x.name) {
-            if name.get_type().is_set() {
+        if let Some(attId) = get_cell_ptr(&elementType.idAtt).as_deref() {
+            if attId.get_type().is_set() {
                 for i in 0..self.typed_atts.len() {
-                    if self.typed_atts[i] == name {
+                    if self.typed_atts[i].name.as_ptr() == attId.name().as_ptr() {
                         self.m_idAttIndex = 2 * i as c_int;
                         break;
                     }
@@ -4754,7 +4737,7 @@ impl XML_ParserStruct {
             return XML_Error::NO_MEMORY;
         }
         for da in elementType.defaultAtts.borrow().iter() {
-            if !da.id.name.get_type().is_set() && !da.value.is_null() {
+            if !da.id.get_type().is_set() && !da.value.is_null() {
                 if let Some(prefix) = da.id.prefix.borrow().as_ref().and_then(Weak::upgrade) {
                     if da.id.xmlns.get() {
                         let mut result_1: XML_Error = addBinding(
@@ -4769,21 +4752,21 @@ impl XML_ParserStruct {
                         }
                         #[cfg(feature = "mozilla")]
                         {
-                            da.id.name.set_type(AttributeType::Namespace);
+                            da.id.set_type(AttributeType::Namespace);
                             nXMLNSDeclarations += 1;
                             self.m_atts.push(Attribute::from_default(da));
-                            self.typed_atts.push(da.id.name);
+                            self.typed_atts.push(da.id.typed_name());
                         }
                     } else {
-                        da.id.name.set_type(AttributeType::Prefixed);
+                        da.id.set_type(AttributeType::Prefixed);
                         nPrefixes += 1;
                         self.m_atts.push(Attribute::from_default(da));
-                        self.typed_atts.push(da.id.name);
+                        self.typed_atts.push(da.id.typed_name());
                     }
                 } else {
-                    da.id.name.set_type(AttributeType::Normal);
+                    da.id.set_type(AttributeType::Normal);
                     self.m_atts.push(Attribute::from_default(da));
-                    self.typed_atts.push(da.id.name);
+                    self.typed_atts.push(da.id.typed_name());
                 }
             }
         }
@@ -4809,7 +4792,8 @@ impl XML_ParserStruct {
                     /* not prefixed */
                     /* prefixed */
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
-                    let id = dtd_tables.attributeIds.get(&HashKey::from(s));
+                    let key = slice::from_raw_parts(s, keylen(s) + 1);
+                    let id = dtd_tables.attributeIds.get(key);
                     if id.is_none() || id.unwrap().prefix.borrow().is_none() {
                         /* This code is walking through the appAtts array, dealing
                         * with (in this case) a prefixed attribute name.  To be in
@@ -5003,7 +4987,7 @@ impl XML_ParserStruct {
 
         let mut binding = bindingsPtr.as_ref().map(Rc::clone);
         while let Some(b) = binding {
-            get_cell_ptr(&b.attId).unwrap().name.set_type(AttributeType::Unset);
+            get_cell_ptr(&b.attId).unwrap().set_type(AttributeType::Unset);
             binding = get_cell_ptr(&b.nextTagBinding);
         }
         if !self.m_ns {
@@ -6095,7 +6079,7 @@ impl XML_ParserStruct {
                     let mut dtd_tables = self.m_dtd.tables.borrow_mut();
                     /* XML_DTD */
                     self.m_useForeignDTD = false;
-                    self.m_declEntity = hash_insert_safe!(
+                    self.m_declEntity = hash_insert!(
                         &mut dtd_tables.paramEntities,
                         ess,
                         Rc::try_new,
@@ -6168,7 +6152,7 @@ impl XML_ParserStruct {
                                 };
 
                                 let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                                let entity: &Rc<Entity> = match hash_insert_safe!(
+                                let entity: &Rc<Entity> = match hash_insert!(
                                     &mut dtd_tables.paramEntities,
                                     ess,
                                     Rc::try_new,
@@ -6233,7 +6217,7 @@ impl XML_ParserStruct {
                             };
 
                             let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                            let mut entity: &Rc<Entity> = match hash_insert_safe!(
+                            let mut entity: &Rc<Entity> = match hash_insert!(
                                 &mut dtd_tables.paramEntities,
                                 ess,
                                 Rc::try_new,
@@ -6365,7 +6349,7 @@ impl XML_ParserStruct {
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.attlistDecl(
                                 self.m_declElementType.as_ref().unwrap().name.as_ptr(),
-                                self.m_declAttributeId.as_ref().unwrap().name.name(),
+                                self.m_declAttributeId.as_ref().unwrap().name().as_ptr(),
                                 self.m_declAttributeType,
                                 ptr::null(),
                                 (role == super::xmlrole::XML_ROLE::REQUIRED_ATTRIBUTE_VALUE) as c_int,
@@ -6420,7 +6404,7 @@ impl XML_ParserStruct {
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.attlistDecl(
                                 self.m_declElementType.as_ref().unwrap().name.as_ptr(),
-                                self.m_declAttributeId.as_ref().unwrap().name.name(),
+                                self.m_declAttributeId.as_ref().unwrap().name().as_ptr(),
                                 self.m_declAttributeType,
                                 attVal,
                                 (role == super::xmlrole::XML_ROLE::FIXED_ATTRIBUTE_VALUE) as c_int,
@@ -6509,7 +6493,7 @@ impl XML_ParserStruct {
                         };
 
                         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-                        self.m_declEntity = hash_insert_safe!(
+                        self.m_declEntity = hash_insert!(
                             &mut dtd_tables.paramEntities,
                             ess,
                             Rc::try_new,
@@ -6586,7 +6570,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = hash_insert_pool_safe!(
+                        let declEntity = hash_insert_pool!(
                             dtd_tables.generalEntities,
                             &self.m_dtd.pool,
                             Entity
@@ -6623,7 +6607,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.store_c_string(enc, buf.with_end(next)) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let declEntity = hash_insert_pool_safe!(
+                        let declEntity = hash_insert_pool!(
                             dtd_tables.paramEntities,
                             &self.m_dtd.pool,
                             Entity
@@ -8152,7 +8136,7 @@ impl XML_ParserStruct {
                     return 0;
                 }
                 // This is unsafe, start needs be very temporary
-                let prefix = hash_insert_pool_safe!(
+                let prefix = hash_insert_pool!(
                     dtd_tables.prefixes,
                     &self.m_dtd.pool,
                     Prefix
@@ -8169,38 +8153,33 @@ impl XML_ParserStruct {
         1
     }
 
-    unsafe fn getAttributeId(
+    fn getAttributeId(
         &mut self,
         mut enc_type: EncodingType,
         mut buf: ExpatBufRef,
     ) -> Ptr<AttributeId> {
         let mut dtd_tables = self.m_dtd.tables.borrow_mut();
-        if !self.m_dtd.pool.append_char(AttributeType::Unset.into()) {
-            return None;
-        }
         let enc = self.encoding(enc_type);
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
         }
-        // let mut name = &mut *name;
-        /* skip quotation mark - its storage will be re-used (like in name[-1]) */
-        let id = self.m_dtd.pool.with_current_mut_slice(|name| {
-            let typed_name = TypedAttributeName(name.as_mut_ptr() as *mut XML_Char);
-            hash_insert!(
-                &mut dtd_tables.attributeIds,
-                typed_name,
-                Rc::try_new,
-                AttributeId
-            ).cloned()
-        });
+        let id = hash_insert_pool!(
+            dtd_tables.attributeIds,
+            &self.m_dtd.pool,
+            AttributeId
+        ).cloned();
         match id {
             HashInsertResult::Err => None,
-            HashInsertResult::Found(id) => {
-                self.m_dtd.pool.discard();
-                Some(id)
-            }
+            HashInsertResult::Found(id) => Some(id),
             HashInsertResult::New(id) => {
-                let name = self.m_dtd.pool.finish().map(|s| &s[1..]);
+                if !self.m_dtd.pool.append_char(AttributeType::Unset.into()) {
+                    return None;
+                }
+                let r#type = self.m_dtd.pool.finish_cells();
+                assert!(r#type.len() == 1);
+                *id.r#type.borrow_mut() = Some(r#type);
+
+                let name = id.name();
                 if self.m_ns {
                     if name[0] == ASCII_x as XML_Char
                     && name[1] == ASCII_m as XML_Char
@@ -8216,9 +8195,9 @@ impl XML_ParserStruct {
                                 .as_ref()
                                 .map(Rc::downgrade);
                         } else {
-                            let prefix = hash_insert_safe!(
+                            let prefix = hash_insert!(
                                 &mut dtd_tables.prefixes,
-                                name.map(|s| &s[6..]),
+                                name.clone().map(|s| &s[6..]),
                                 Rc::try_new,
                                 Prefix
                             );
@@ -8239,7 +8218,7 @@ impl XML_ParserStruct {
                                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                                     return None;
                                 }
-                                let prefix = hash_insert_pool_safe!(
+                                let prefix = hash_insert_pool!(
                                     dtd_tables.prefixes,
                                     &self.m_dtd.pool,
                                     Prefix
@@ -8409,7 +8388,7 @@ impl XML_ParserStruct {
                         if !self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
                             return HashInsertResult::Err;
                         }
-                        hash_insert_pool_safe!(
+                        hash_insert_pool!(
                             dtd_tables.prefixes,
                             &self.m_dtd.pool,
                             Prefix
@@ -8504,7 +8483,7 @@ unsafe extern "C" fn copyEntityTable(
         if !newPool.copy_c_string((*oldE).name.borrow().as_ref().unwrap().as_ptr()) {
             return 0;
         }
-        let newE = match hash_insert_pool_safe!(
+        let newE = match hash_insert_pool!(
             newTable,
             &newPool,
             Entity
@@ -8661,7 +8640,7 @@ impl XML_ParserStruct {
         if !self.m_dtd.pool.store_c_string(enc, buf) {
             return None;
         }
-        let ret = hash_insert_pool_safe!(
+        let ret = hash_insert_pool!(
             dtd_tables.elementTypes,
             &self.m_dtd.pool,
             ElementType
