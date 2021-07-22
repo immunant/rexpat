@@ -7933,41 +7933,36 @@ unsafe extern "C" fn storeEntityValue(
     result
 }
 
-unsafe fn normalizeLines(mut s: &mut [XML_Char]) {
-    // TODO: Safeify this
-    let mut s = s.as_mut_ptr();
-    let mut p: *mut XML_Char = ptr::null_mut();
+fn normalizeLines(s: &mut [XML_Char]) {
+    let mut i = 0;
     loop {
-        if *s == '\u{0}' as XML_Char {
+        if s[i] == '\u{0}' as XML_Char {
             return;
         }
-        if *s as c_int == 0xd {
+        if s[i] as c_int == 0xd {
             break;
         }
-        s = s.offset(1)
+        i += 1;
     }
-    p = s;
+    let mut j = i;
     loop {
-        if *s as c_int == 0xd {
-            let fresh44 = p;
-            p = p.offset(1);
-            *fresh44 = 0xa;
-            s = s.offset(1);
-            if *s as c_int == 0xa {
-                s = s.offset(1)
+        if s[i] as c_int == 0xd {
+            s[j] = 0xa;
+            i += 1;
+            j += 1;
+            if s[i] as c_int == 0xa {
+                i += 1;
             }
         } else {
-            let fresh45 = s;
-            s = s.offset(1);
-            let fresh46 = p;
-            p = p.offset(1);
-            *fresh46 = *fresh45
+            s[j] = s[i];
+            i += 1;
+            j += 1;
         }
-        if !(*s != 0) {
+        if s[i] == 0 {
             break;
         }
     }
-    *p = '\u{0}' as XML_Char;
+    s[j] = '\u{0}' as XML_Char;
 }
 
 unsafe extern "C" fn reportProcessingInstruction(
