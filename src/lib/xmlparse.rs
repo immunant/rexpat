@@ -829,8 +829,7 @@ pub struct XML_ParserStruct {
     pub m_position: super::xmltok::Position,
     m_tempPool: StringPool,
     m_temp2Pool: StringPool,
-    pub m_groupConnector: *mut c_char,
-    pub m_groupSize: c_uint,
+    pub m_groupConnector: Vec<c_char>,
     pub m_namespaceSeparator: XML_Char,
     is_child_parser: bool,
     pub m_parsingStatus: XML_ParsingStatus,
@@ -1963,8 +1962,7 @@ impl XML_ParserStruct {
             m_position: super::xmltok::Position::default(),
             m_tempPool: StringPool::try_new()?,
             m_temp2Pool: StringPool::try_new()?,
-            m_groupConnector: ptr::null_mut(),
-            m_groupSize: 0,
+            m_groupConnector: Vec::new(),
             m_namespaceSeparator: 0,
             is_child_parser: false,
             m_parsingStatus: XML_ParsingStatus::default(),
@@ -2010,8 +2008,7 @@ impl XML_ParserStruct {
         *parser.m_freeBindingList.borrow_mut() = None;
         parser.m_freeTagList = None;
         parser.m_freeInternalEntities = None;
-        parser.m_groupSize = 0;
-        parser.m_groupConnector = ptr::null_mut();
+        parser.m_groupConnector.clear();
         parser.m_initEncoding = None;
         parser.m_handlers.m_unknownEncoding = None;
         parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
@@ -2345,7 +2342,6 @@ impl Drop for XML_ParserStruct {
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
             */
-            FREE!(self.m_groupConnector);
             FREE!(self.m_buffer);
             FREE!(self.m_dataBuf);
             if self.m_handlers.m_unknownEncodingRelease.is_some() {
@@ -6749,28 +6745,15 @@ impl XML_ParserStruct {
                 }
                 XML_ROLE::GROUP_OPEN => {
                     /* XML_DTD */
-                    if self.m_prologState.level >= self.m_groupSize {
-                        if self.m_groupSize != 0 {
-                            self.m_groupSize = self.m_groupSize.wrapping_mul(2);
-                            let new_connector = REALLOC!(
-                                self.m_groupConnector => [c_char; self.m_groupSize]);
-                            if new_connector.is_null() {
-                                self.m_groupSize = self.m_groupSize.wrapping_div(2);
-                                return XML_Error::NO_MEMORY;
-                            }
-                            self.m_groupConnector = new_connector;
-                        } else {
-                            self.m_groupSize = 32;
-                            self.m_groupConnector = MALLOC![c_char; self.m_groupSize];
-                            if self.m_groupConnector.is_null() {
-                                self.m_groupSize = 0;
-                                return XML_Error::NO_MEMORY;
-                            }
+                    if self.m_prologState.level as usize >= self.m_groupConnector.len() {
+                        let new_len = self.m_prologState.level as usize + 1;
+                        let extra = new_len - self.m_groupConnector.len();
+                        if self.m_groupConnector.try_reserve(extra).is_err() {
+                            return XML_Error::NO_MEMORY;
                         }
+                        self.m_groupConnector.resize(new_len, 0);
                     }
-                    *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize) = 0;
+                    self.m_groupConnector[self.m_prologState.level as usize] = 0;
                     if self.m_dtd.in_eldecl.get() {
                         let mut scf = self.m_dtd.scaffold.borrow_mut();
                         if scf.index.try_reserve(1).is_err() {
@@ -6789,33 +6772,20 @@ impl XML_ParserStruct {
                     }
                 }
                 XML_ROLE::GROUP_SEQUENCE => {
-                    if *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize)
-                        == ASCII_PIPE
-                    {
+                    if self.m_groupConnector[self.m_prologState.level as usize] == ASCII_PIPE {
                         return XML_Error::SYNTAX;
                     }
-                    *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize) = ASCII_COMMA;
+                    self.m_groupConnector[self.m_prologState.level as usize] = ASCII_COMMA;
                     if self.m_dtd.in_eldecl.get() && self.m_handlers.hasElementDecl() {
                         handleDefault = false
                     }
                 }
                 XML_ROLE::GROUP_CHOICE => {
-                    if *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize)
-                        == ASCII_COMMA
-                    {
+                    if self.m_groupConnector[self.m_prologState.level as usize] == ASCII_COMMA {
                         return XML_Error::SYNTAX;
                     }
                     if self.m_dtd.in_eldecl.get()
-                        && *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize)
-                        == 0
+                        && self.m_groupConnector[self.m_prologState.level as usize] == 0
                     {
                         let mut scf = self.m_dtd.scaffold.borrow_mut();
                         let idx = scf.index.last().copied().unwrap();
@@ -6827,9 +6797,7 @@ impl XML_ParserStruct {
                             }
                         }
                     }
-                    *self
-                        .m_groupConnector
-                        .offset(self.m_prologState.level as isize) = ASCII_PIPE;
+                    self.m_groupConnector[self.m_prologState.level as usize] = ASCII_PIPE;
                 }
                 XML_ROLE::PARAM_ENTITY_REF | XML_ROLE::INNER_PARAM_ENTITY_REF => {
                     self.m_dtd.hasParamEntityRefs.set(true);

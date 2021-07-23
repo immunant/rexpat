@@ -18598,7 +18598,7 @@ unsafe extern "C" fn test_alloc_realloc_nested_groups() {
         data: [0; 2048],
     };
     let mut i: c_int = 0;
-    let max_realloc_count: c_int = 15;
+    let max_realloc_count: c_int = 18;
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
