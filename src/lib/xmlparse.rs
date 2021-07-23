@@ -791,7 +791,7 @@ pub struct XML_ParserStruct {
     pub m_encoding: *const ENCODING,
     pub m_initEncoding: Option<InitEncoding>,
     pub m_internalEncoding: &'static super::xmltok::ENCODING,
-    pub m_protocolEncodingName: *const XML_Char,
+    pub m_protocolEncodingName: Option<Vec<XML_Char>>,
     pub m_ns: XML_Bool,
     pub m_ns_triplets: XML_Bool,
     pub m_prologState: super::xmlrole::PROLOG_STATE,
@@ -1095,7 +1095,7 @@ impl TagNameString {
         match *self {
             TagNameString::None => f(&[]),
             TagNameString::Ptr(ptr) => unsafe {
-                let len = keylen(ptr) as usize;
+                let len = strlen(ptr) as usize;
                 let sl = std::slice::from_raw_parts(ptr, len + 1);
                 f(sl)
             }
@@ -1886,6 +1886,7 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
         Ok(dtd) => dtd,
         Err(_) => return ptr::null_mut()
     };
+    let encodingName = slice_from_c_string(encodingName);
     XML_ParserStruct::create(encodingName, nameSep, dtd)
 }
 
@@ -1924,7 +1925,7 @@ impl XML_ParserStruct {
                 }
             },
 
-            m_protocolEncodingName: ptr::null(),
+            m_protocolEncodingName: None,
             m_ns: false,
             m_ns_triplets: false,
             m_prologState: super::xmlrole::PROLOG_STATE::default(),
@@ -1977,7 +1978,7 @@ impl XML_ParserStruct {
     }
 
     unsafe fn create(
-        mut encodingName: *const XML_Char,
+        mut encodingName: Option<&[XML_Char]>,
         mut nameSep: *const XML_Char,
         mut dtd: Rc<DTD>,
     ) -> XML_Parser {
@@ -2016,9 +2017,9 @@ impl XML_ParserStruct {
         parser.m_namespaceSeparator = ASCII_EXCL as XML_Char;
         parser.m_ns = false;
         parser.m_ns_triplets = false;
-        parser.m_protocolEncodingName = ptr::null();
+        parser.m_protocolEncodingName = None;
         parser.init(encodingName);
-        if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
+        if !encodingName.is_none() && parser.m_protocolEncodingName.is_none() {
             return ptr::null_mut();
         }
         if !nameSep.is_null() {
@@ -2033,12 +2034,10 @@ impl XML_ParserStruct {
         Box::into_raw(parser)
     }
 
-    unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
+    unsafe fn init(&mut self, encodingName: Option<&[XML_Char]>) {
         self.m_processor = Some(prologInitProcessor as Processor);
         super::xmlrole::XmlPrologStateInit(&mut self.m_prologState);
-        if !encodingName.is_null() {
-            self.m_protocolEncodingName = copy_c_string(encodingName);
-        }
+        self.m_protocolEncodingName = copy_c_string(encodingName);
         self.m_curBase = ptr::null();
         self.m_initEncoding = InitEncoding::new(&mut self.m_encoding, ptr::null());
         self.m_encoding = self.m_initEncoding.as_ref().unwrap();
@@ -2107,7 +2106,7 @@ impl XML_ParserStruct {
    Added in Expat 1.95.3.
 */
 impl XML_ParserStruct {
-    pub unsafe fn reset(&mut self, encodingName: *const XML_Char) -> XML_Bool {
+    pub unsafe fn reset(&mut self, encodingName: Option<&[XML_Char]>) -> XML_Bool {
         if self.is_child_parser {
             return false;
         }
@@ -2160,8 +2159,7 @@ impl XML_ParserStruct {
 
         self.m_tempPool.clear();
         self.m_temp2Pool.clear();
-        FREE!(self.m_protocolEncodingName);
-        self.m_protocolEncodingName = ptr::null();
+        self.m_protocolEncodingName = None;
         self.init(encodingName);
         Rc::get_mut(&mut self.m_dtd).unwrap().reset();
         true
@@ -2173,6 +2171,7 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
     if parser.is_null() {
         return false;
     }
+    let encodingName = slice_from_c_string(encodingName);
     (*parser).reset(encodingName)
 }
 /* Returns the last value set by XML_SetUserData or NULL. */
@@ -2184,7 +2183,7 @@ pub unsafe extern "C" fn XML_ParserReset(parser: XML_Parser, encodingName: *cons
 */
 
 impl XML_ParserStruct {
-    pub unsafe fn setEncoding(&mut self, encodingName: *const XML_Char) -> XML_Status {
+    pub fn setEncoding(&mut self, encodingName: Option<&[XML_Char]>) -> XML_Status {
         /* Block after XML_Parse()/XML_ParseBuffer() has been called.
         XXX There's no way for the caller to determine which of the
         XXX possible error cases caused the XML_Status::ERROR return.
@@ -2196,14 +2195,13 @@ impl XML_ParserStruct {
         }
 
         /* Get rid of any previous encoding name */
-        FREE!(self.m_protocolEncodingName);
-        if encodingName.is_null() {
+        if encodingName.is_none() {
             /* No new encoding name */
-            self.m_protocolEncodingName = ptr::null()
+            self.m_protocolEncodingName = None;
         } else {
             /* Copy the new encoding name into allocated memory */
             self.m_protocolEncodingName = copy_c_string(encodingName);
-            if self.m_protocolEncodingName.is_null() {
+            if self.m_protocolEncodingName.is_none() {
                 return XML_Status::ERROR;
             }
         }
@@ -2220,6 +2218,7 @@ pub unsafe extern "C" fn XML_SetEncoding(
         return XML_Status::ERROR;
     }
 
+    let encodingName = slice_from_c_string(encodingName);
     (*parser).setEncoding(encodingName)
 }
 /* Creates an XML_Parser object that can parse an external general
@@ -2263,6 +2262,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
        here.  This makes this function more painful to follow than it
        would be otherwise.
     */
+    let encodingName = slice_from_c_string(encodingName);
     let mut parser = if oldParser.m_ns {
         let mut tmp: [XML_Char; 2] = [0; 2];
         *tmp.as_mut_ptr() = oldParser.m_namespaceSeparator;
@@ -2342,7 +2342,6 @@ impl Drop for XML_ParserStruct {
     /* Frees memory used by the parser. */
     fn drop(&mut self) {
         unsafe {
-            FREE!(self.m_protocolEncodingName);
             /* external parameter entity parsers share the DTD structure
             parser->m_dtd with the root parser, so we must not destroy it
             */
@@ -4792,7 +4791,7 @@ impl XML_ParserStruct {
                     /* not prefixed */
                     /* prefixed */
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
-                    let key = slice::from_raw_parts(s, keylen(s) + 1);
+                    let key = slice::from_raw_parts(s, strlen(s) + 1);
                     let id = dtd_tables.attributeIds.get(key);
                     if id.is_none() || id.unwrap().prefix.borrow().is_none() {
                         /* This code is walking through the appAtts array, dealing
@@ -5466,32 +5465,36 @@ impl XML_ParserStruct {
         if cfg!(feature = "unicode") {
             let mut encodingBuf: [libc::c_char; 128] = [0; 128];
             /* See comments abount `protoclEncodingName` in parserInit() */
-            if self.m_protocolEncodingName.is_null() {
-                s = ptr::null();
-            } else {
-                let mut i: libc::c_int = 0;
-                i = 0 as libc::c_int;
-                while *self.m_protocolEncodingName.offset(i as isize) != 0 {
-                    if i as libc::c_ulong
-                        == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
-                        .wrapping_sub(1 as libc::c_int as libc::c_ulong)
-                        || *self.m_protocolEncodingName.offset(i as isize) as libc::c_int
-                        & !(0x7f as libc::c_int)
-                        != 0 as libc::c_int
-                    {
-                        encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
-                        break;
-                    } else {
-                        encodingBuf[i as usize] =
-                            *self.m_protocolEncodingName.offset(i as isize) as libc::c_char;
-                        i += 1
-                    }
+            match self.m_protocolEncodingName {
+                None => {
+                    s = ptr::null();
                 }
-                encodingBuf[i as usize] = '\u{0}' as i32 as libc::c_char;
-                s = encodingBuf.as_mut_ptr();
+                Some(ref protocol_encoding_name) => {
+                    let mut i = 0;
+                    i = 0;
+                    while protocol_encoding_name[i] != 0 {
+                        if i as libc::c_ulong
+                            == (::std::mem::size_of::<[libc::c_char; 128]>() as libc::c_ulong)
+                            .wrapping_sub(1 as libc::c_int as libc::c_ulong)
+                            || protocol_encoding_name[i] as libc::c_int & !(0x7f as libc::c_int)
+                            != 0 as libc::c_int
+                        {
+                            encodingBuf[0 as libc::c_int as usize] = '\u{0}' as i32 as libc::c_char;
+                            break;
+                        } else {
+                            encodingBuf[i as usize] = protocol_encoding_name[i] as libc::c_char;
+                            i += 1;
+                        }
+                    }
+                    encodingBuf[i as usize] = '\u{0}' as i32 as libc::c_char;
+                    s = encodingBuf.as_mut_ptr();
+                }
             }
         } else {
-            s = self.m_protocolEncodingName as *const c_char;
+            s = self
+                .m_protocolEncodingName
+                .as_ref()
+                .map_or_else(ptr::null, |x| x.as_ptr());
         }
         let enc = if self.m_ns {
             InitEncoding::new_ns(&mut self.m_encoding, s)
@@ -5504,7 +5507,11 @@ impl XML_ParserStruct {
             return XML_Error::NONE;
         }
 
-        self.m_handlers.handleUnknownEncoding(self.m_protocolEncodingName, self.m_ns, &mut self.m_encoding)
+        let protocol_encoding_name = self
+            .m_protocolEncodingName
+            .as_ref()
+            .map_or_else(ptr::null, |x| x.as_ptr());
+        self.m_handlers.handleUnknownEncoding(protocol_encoding_name, self.m_ns, &mut self.m_encoding)
     }
 
     unsafe fn processXmlDecl(
@@ -5580,7 +5587,7 @@ impl XML_ParserStruct {
         } else if self.m_handlers.hasDefault() {
             reportDefault(self, EncodingType::Normal, buf);
         }
-        if self.m_protocolEncodingName.is_null() {
+        if self.m_protocolEncodingName.is_none() {
             if let Some(newEncoding) = newEncoding {
                 /* Check that the specified encoding does not conflict with what
                  * the parser has already deduced.  Do we have the same number
@@ -8547,11 +8554,11 @@ unsafe extern "C" fn keyeq(mut s1: KEY, mut s2: KEY) -> XML_Bool {
     false
 }
 
-unsafe extern "C" fn keylen(mut s: KEY) -> size_t {
+unsafe fn strlen(mut s: *const XML_Char) -> size_t {
     let mut len: size_t = 0;
     while *s != 0 {
         s = s.offset(1);
-        len = len.wrapping_add(1)
+        len = len.wrapping_add(1);
     }
     len
 }
@@ -8656,25 +8663,23 @@ impl XML_ParserStruct {
     }
 }
 
-unsafe extern "C" fn copy_c_string(
-    mut s: *const XML_Char,
-) -> *mut XML_Char {
-    let mut charsRequired = 0isize;
-    /* First determine how long the string is */
-    while *s.offset(charsRequired) != 0 {
-        charsRequired += 1
+unsafe fn slice_from_c_string<'a>(s: *const XML_Char) -> Option<&'a [XML_Char]> {
+    if s.is_null() {
+        return None;
     }
-    /* Include the terminator */
-    charsRequired += 1;
-    /* Now allocate space for the copy */
-    let result = MALLOC![XML_Char; charsRequired];
-    if result.is_null() {
-        return ptr::null_mut();
-    }
-    /* Copy the original into place */
-    let n: size_t = (charsRequired as size_t)
-        .checked_mul(::std::mem::size_of::<XML_Char>())
-        .unwrap();
-    memcpy(result as *mut c_void, s as *const c_void, n);
-    result
+
+    let len = strlen(s);
+    let sl = slice::from_raw_parts(s, len + 1);
+    Some(sl)
+}
+
+fn copy_c_string(mut s: Option<&[XML_Char]>) -> Option<Vec<XML_Char>> {
+    s.and_then(|s| {
+        let mut result = Vec::new();
+        if result.try_reserve_exact(s.len()).is_err() {
+            return None;
+        }
+        result.extend_from_slice(s);
+        Some(result)
+    })
 }
