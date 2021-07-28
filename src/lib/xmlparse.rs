@@ -1491,7 +1491,7 @@ pub const INIT_ATTS_SIZE: c_int = 16;
 
 pub const INIT_ATTS_VERSION: c_uint = 0xffffffff;
 
-pub const INIT_BUFFER_SIZE: usize = 1024;
+pub const INIT_BUFFER_SIZE: c_int = 1024;
 
 pub const EXPAND_SPARE: usize = 24;
 
@@ -2816,12 +2816,12 @@ impl  XML_ParserStruct {
                     self.m_bufferStart -= offset;
                 }
             } else {
-                let mut bufferSize = match self.m_buffer.len() - self.m_bufferStart {
+                let mut bufferSize: c_int = match self.m_buffer.len() - self.m_bufferStart {
                     0 => INIT_BUFFER_SIZE,
-                    size => size,
+                    size => size.try_into().unwrap(),
                 };
-                while bufferSize < neededSize {
-                    bufferSize = match 2usize.checked_mul(bufferSize) {
+                while (bufferSize as usize) < neededSize {
+                    bufferSize = match 2i32.checked_mul(bufferSize) {
                         Some(s) => s,
                         None => {
                             self.m_errorCode = XML_Error::NO_MEMORY;
@@ -2829,6 +2829,8 @@ impl  XML_ParserStruct {
                         }
                     }
                 }
+
+                let bufferSize = bufferSize.try_into().unwrap();
                 let additional = bufferSize - self.m_buffer.capacity();
                 if self.m_buffer.try_reserve_exact(additional).is_err() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
