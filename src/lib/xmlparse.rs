@@ -1491,7 +1491,7 @@ pub const INIT_ATTS_SIZE: c_int = 16;
 
 pub const INIT_ATTS_VERSION: c_uint = 0xffffffff;
 
-pub const INIT_BUFFER_SIZE: c_int = 1024;
+pub const INIT_BUFFER_SIZE: usize = 1024;
 
 pub const EXPAND_SPARE: usize = 24;
 
@@ -2806,8 +2806,8 @@ impl  XML_ParserStruct {
                 self.m_bufferStart,
             );
             neededSize += keep;
-            if (neededSize as usize) <= self.m_buffer.len() {
-                if (keep as usize) < self.m_bufferStart {
+            if neededSize <= self.m_buffer.len() {
+                if keep < self.m_bufferStart {
                     let offset = self.m_bufferStart - keep as usize;
                     /* The buffer pointers cannot be NULL here; we have at least some bytes
                      * in the buffer */
@@ -2816,12 +2816,12 @@ impl  XML_ParserStruct {
                     self.m_bufferStart -= offset;
                 }
             } else {
-                let mut bufferSize: c_int = match self.m_buffer.len() - self.m_bufferStart {
+                let mut bufferSize = match self.m_buffer.len() - self.m_bufferStart {
                     0 => INIT_BUFFER_SIZE,
-                    size => size.try_into().unwrap(),
+                    size => size,
                 };
-                while (bufferSize as usize) < neededSize {
-                    bufferSize = match 2i32.checked_mul(bufferSize) {
+                while bufferSize < neededSize {
+                    bufferSize = match 2usize.checked_mul(bufferSize) {
                         Some(s) => s,
                         None => {
                             self.m_errorCode = XML_Error::NO_MEMORY;
@@ -2829,12 +2829,12 @@ impl  XML_ParserStruct {
                         }
                     }
                 }
-                let additional = bufferSize as usize - self.m_buffer.capacity();
+                let additional = bufferSize - self.m_buffer.capacity();
                 if self.m_buffer.try_reserve_exact(additional).is_err() {
                     self.m_errorCode = XML_Error::NO_MEMORY;
                     return None;
                 }
-                self.m_buffer.resize(bufferSize as usize, 0);
+                self.m_buffer.resize(bufferSize, 0);
                 if self.m_bufferStart < self.m_bufferEnd {
                     self.m_buffer.copy_within(self.m_bufferStart-keep..self.m_bufferEnd, 0);
                     self.m_bufferEnd = self.m_bufferEnd - self.m_bufferStart + keep;
