@@ -1630,23 +1630,22 @@ pub unsafe extern "C" fn XML_ParserCreate_MM(
         Ok(dtd) => dtd,
         Err(_) => return ptr::null_mut()
     };
-    XML_ParserStruct::create(encodingName, nameSep, dtd)
+    XML_ParserStruct::try_new(encodingName, nameSep, dtd)
+        .map_or(ptr::null_mut(), Box::into_raw)
 }
 
     // fn try_new(use_namespaces: bool, dtd: Rc<DTD>) -> Result<Self, ()> {
     // fn new(use_namespaces: bool) -> Result<Self, TryReserveError> {
 impl XML_ParserStruct {
-    unsafe fn create(
+    unsafe fn try_new(
         mut encodingName: *const XML_Char,
         mut nameSep: *const XML_Char,
         mut dtd: Rc<DTD>,
-    ) -> XML_Parser {
+    ) -> Result<Box<Self>, ()> {
         let use_namespaces = !nameSep.is_null();
 
-        let m_dataBuf = match Box::try_new([0; INIT_DATA_BUF_SIZE as usize]) {
-            Ok(b) => b,
-            Err(_) => return ptr::null_mut(),
-        };
+        let m_dataBuf = Box::try_new([0; INIT_DATA_BUF_SIZE as usize])
+            .map_err(|_| ())?;
 
         let parser = Self {
             m_userData: ptr::null_mut(),
@@ -1714,14 +1713,8 @@ impl XML_ParserStruct {
             typed_atts: Vec::new(),
             m_nsAtts: HashSet::new(),
             m_position: super::xmltok::Position::default(),
-            m_tempPool: match StringPool::try_new() {
-                Ok(sp) => sp,
-                Err(_) => return ptr::null_mut(),
-            },
-            m_temp2Pool: match StringPool::try_new() {
-                Ok(sp) => sp,
-                Err(_) => return ptr::null_mut(),
-            },
+            m_tempPool: StringPool::try_new()?,
+            m_temp2Pool: StringPool::try_new()?,
             m_groupConnector: ptr::null_mut(),
             m_groupSize: 0,
             is_child_parser: false,
@@ -1736,29 +1729,27 @@ impl XML_ParserStruct {
             m_mismatch: ptr::null(),
         };
 
-        let mut parser = match Box::try_new(parser) {
-            Ok(p) => p,
-            Err(_) => return ptr::null_mut(),
-        };
+        let mut parser = Box::try_new(parser)
+            .map_err(|_| ())?;
 
         // TODO: Move initialization into XML_ParserStruct::new
         if parser.m_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
-            return ptr::null_mut();
+            return Err(());
         }
         if parser.typed_atts.try_reserve(INIT_ATTS_SIZE as usize).is_err() {
-            return ptr::null_mut();
+            return Err(());
         }
 
         parser.init(encodingName);
         if !encodingName.is_null() && parser.m_protocolEncodingName.is_null() {
-            return ptr::null_mut();
+            return Err(());
         }
         if !nameSep.is_null() {
             parser.m_ns = true;
             parser.m_namespaceSeparator = *nameSep
         }
 
-        Box::into_raw(parser)
+        Ok(parser)
     }
 
     unsafe fn init(&mut self, mut encodingName: *const XML_Char) {
@@ -1968,20 +1959,21 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
        here.  This makes this function more painful to follow than it
        would be otherwise.
     */
-    let mut parser: XML_Parser = if oldParser.m_ns {
+    let mut parser = if oldParser.m_ns {
         let mut tmp: [XML_Char; 2] = [0; 2];
         *tmp.as_mut_ptr() = oldParser.m_namespaceSeparator;
-        XML_ParserStruct::create(encodingName, tmp.as_mut_ptr(), newDtd)
+        XML_ParserStruct::try_new(encodingName, tmp.as_mut_ptr(), newDtd)
     } else {
-        XML_ParserStruct::create(
+        XML_ParserStruct::try_new(
             encodingName,
             ptr::null(),
             newDtd,
         )
     };
-    if parser.is_null() {
-        return ptr::null_mut();
-    }
+    let mut parser = match parser {
+        Ok(parser) => parser,
+        Err(_) => return ptr::null_mut(),
+    };
     (*parser).m_handlers.setStartElement(oldParser.m_handlers.m_startElementHandler);
     (*parser).m_handlers.setEndElement(oldParser.m_handlers.m_endElementHandler);
     (*parser).m_handlers.setCharacterData(oldParser.m_handlers.m_characterDataHandler);
@@ -2007,7 +1999,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if oldParser.m_userData == oldParser.m_handlers.m_handlerArg {
         (*parser).m_handlers.m_handlerArg = (*parser).m_userData;
     } else {
-        (*parser).m_handlers.m_handlerArg = parser as *mut c_void;
+        (*parser).m_handlers.m_handlerArg = parser.as_mut() as *mut _ as *mut _;
     }
     if oldParser.m_handlers.m_externalEntityRefHandlerArg != oldParser as *const _ as *mut _ {
         (*parser).m_handlers.m_externalEntityRefHandlerArg = oldParser.m_handlers.m_externalEntityRefHandlerArg;
@@ -2020,7 +2012,6 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
     if !context.is_null() {
         /* XML_DTD */
         if !(*parser).setContext(context) {
-            XML_ParserFree(parser);
             return ptr::null_mut();
         }
         (*parser).m_processor = Some(externalEntityInitProcessor as Processor);
@@ -2037,7 +2028,7 @@ pub unsafe extern "C" fn XML_ExternalEntityParserCreate(
         (*parser).m_processor = Some(externalParEntInitProcessor as Processor);
     }
     /* XML_DTD */
-    parser
+    Box::into_raw(parser)
 }
 
 unsafe fn destroyBindings(mut bindings: *mut Binding) {
