@@ -42,7 +42,6 @@
 #![register_tool(c2rust)]
 #![feature(
     const_raw_ptr_to_usize_cast,
-    const_transmute,
     label_break_value,
     main,
     ptr_wrapping_offset_from,
@@ -17702,14 +17701,13 @@ unsafe extern "C" fn test_alloc_realloc_subst_public_entity_value() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8459i32,
-            b"Parsing required reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -18104,14 +18102,13 @@ unsafe extern "C" fn test_alloc_realloc_attribute_enum_value() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8689i32,
-            b"Parse required reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing worked despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -18173,14 +18170,13 @@ unsafe extern "C" fn test_alloc_realloc_implied_attribute() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8739i32,
-            b"Parse required reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -18242,14 +18238,13 @@ unsafe extern "C" fn test_alloc_realloc_default_attribute() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             8789i32,
-            b"Parse required reallocation\x00".as_ptr() as *const c_char,
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -18964,14 +18959,13 @@ unsafe extern "C" fn test_alloc_realloc_long_attribute_value() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9202i32,
-            b"Parse required reallocation\x00".as_ptr() as *const c_char,
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -19279,14 +19273,13 @@ unsafe extern "C" fn test_alloc_realloc_param_entity_newline() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9421i32,
-            b"Parse required reallocation\x00".as_ptr() as *const c_char,
+            b"Parse succeeded despite failing reallocator\x00".as_ptr() as *const c_char,
         );
     }
     if i > max_realloc_count {
@@ -19345,14 +19338,13 @@ unsafe extern "C" fn test_alloc_realloc_ce_extends_pe() {
         alloc_setup();
         i += 1
     }
-    // We no longer need to reallocate
-    if i > 0 && i < max_realloc_count {
+    if i == 0 {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
                 as *const c_char,
             9467i32,
-            b"Parse requireed reallocation\x00".as_ptr() as *const c_char,
+            b"Parsing worked despite failing reallocation\x00".as_ptr() as *const c_char,
         );
     }
     if i >= max_realloc_count {
@@ -20396,7 +20388,10 @@ unsafe extern "C" fn test_nsalloc_realloc_long_prefix() {
 
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let max_realloc_count: c_int = 12;
+
+    // REXPAT: max_realloc_count was 12. We realloc the main buffer rather than allocing, so
+    // that adds two reallocs to the parse.
+    let max_realloc_count: c_int = 13;
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
@@ -20444,7 +20439,10 @@ unsafe extern "C" fn test_nsalloc_realloc_longer_prefix() {
 
         b"<ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo xmlns:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ=\'http://example.org/\'></ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789AZQ:foo>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
-    let max_realloc_count: c_int = 12;
+
+    // REXPAT: max_realloc_count was 12. We realloc the main buffer rather than allocing, so
+    // that adds two reallocs to the parse.
+    let max_realloc_count: c_int = 13;
     i = 0;
     while i < max_realloc_count {
         reallocation_count = i as intptr_t;
@@ -20718,7 +20716,8 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    if i == 0 {
+    // We only reallocate once in xmlparse.rs:getBuffer->try_reserve_exact
+    if i > 1 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
