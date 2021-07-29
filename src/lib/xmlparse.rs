@@ -1758,11 +1758,6 @@ impl XML_ParserStruct {
             parser.m_namespaceSeparator = *nameSep
         }
 
-        #[cfg(feature = "mozilla")]
-        {
-            parser.m_mismatch = ptr::null();
-        }
-
         Box::into_raw(parser)
     }
 
