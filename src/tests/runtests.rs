@@ -20716,8 +20716,8 @@ unsafe extern "C" fn context_realloc_test(mut text: *const c_char) {
         nsalloc_setup();
         i += 1
     }
-    // We only reallocate once in xmlparse.rs:getBuffer->try_reserve_exact
-    if i > 1 && i < max_realloc_count {
+    // We reallocate a few times
+    if i > 4 && i < max_realloc_count {
         crate::minicheck::_fail_unless(
             0i32,
             b"/home/sjcrane/projects/c2rust/libexpat/upstream/expat/tests/runtests.c\x00".as_ptr()
