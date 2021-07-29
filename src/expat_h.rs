@@ -173,6 +173,19 @@ pub struct XML_cp {
     pub numchildren: c_uint,
     pub children: *mut XML_Content,
 }
+
+impl Default for XML_Content {
+    fn default() -> Self {
+        Self {
+            type_0: XML_Content_Type::EMPTY,
+            quant: XML_Content_Quant::NONE,
+            name: std::ptr::null_mut(),
+            numchildren: 0,
+            children: std::ptr::null_mut(),
+        }
+    }
+}
+
 /* This is called for an element declaration. See above for
    description of the model argument. It's the caller's responsibility
    to free model when finished with it.

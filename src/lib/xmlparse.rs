@@ -1729,6 +1729,23 @@ impl Default for ContentScaffold {
     }
 }
 
+/// Data structure that gets passed to elementDecl wrapped in a `Box`.
+struct ContentModel {
+    root: XML_Content,
+    nodes: Vec<XML_Content>,
+    strings: Vec<XML_Char>,
+}
+
+impl ContentModel {
+    fn new(root: XML_Content) -> Self {
+        Self {
+            root,
+            nodes: vec![],
+            strings: vec![],
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Named {
@@ -3604,12 +3621,11 @@ pub unsafe extern "C" fn XML_GetCurrentColumnNumber(mut parser: XML_Parser) -> X
     }
     (*parser).m_position.columnNumber
 }
-/* For backwards compatibility with previous versions. */
 /* Frees the content model passed to the element declaration handler */
 #[no_mangle]
 pub unsafe extern "C" fn XML_FreeContentModel(mut parser: XML_Parser, mut model: *mut XML_Content) {
     if !parser.is_null() {
-        FREE!(model);
+        let _ = Box::from_raw(model as *mut ContentModel);
     };
 }
 /* Exposing the memory handling functions used in Expat */
@@ -7187,23 +7203,27 @@ impl XML_ParserStruct {
                 XML_ROLE::CONTENT_ANY | XML_ROLE::CONTENT_EMPTY => {
                     if self.m_dtd.in_eldecl.get() {
                         if self.m_handlers.hasElementDecl() {
-                            let mut content: *mut XML_Content = MALLOC!(@XML_Content);
-                            if content.is_null() {
-                                return XML_Error::NO_MEMORY;
-                            }
-                            (*content).quant = XML_Content_Quant::NONE;
-                            (*content).name = ptr::null_mut();
-                            (*content).numchildren = 0;
-                            (*content).children = ptr::null_mut();
-                            (*content).type_0 = if role == super::xmlrole::XML_ROLE::CONTENT_ANY {
-                                XML_Content_Type::ANY
-                            } else {
-                                XML_Content_Type::EMPTY
+                            let content = XML_Content {
+                                quant: XML_Content_Quant::NONE,
+                                name: ptr::null_mut(),
+                                numchildren: 0,
+                                children: ptr::null_mut(),
+                                type_0: if role == super::xmlrole::XML_ROLE::CONTENT_ANY {
+                                    XML_Content_Type::ANY
+                                } else {
+                                    XML_Content_Type::EMPTY
+                                },
                             };
+                            let content = ContentModel::new(content);
+                            let mut content = match Box::try_new(content) {
+                                Ok(content) => content,
+                                Err(_) => return XML_Error::NO_MEMORY,
+                            };
+
                             self.eventEndPP(enc_type).set(buf.as_ptr());
                             self.m_handlers.elementDecl(
                                 self.m_declElementType.as_ref().unwrap().name.as_ptr(),
-                                content,
+                                Box::into_raw(content) as *mut _,
                             );
                             handleDefault = false
                         }
@@ -7362,14 +7382,14 @@ impl XML_ParserStruct {
                         };
                         if empty_scaffold {
                             if !handleDefault {
-                                let mut model: *mut XML_Content = self.build_model();
-                                if model.is_null() {
-                                    return XML_Error::NO_MEMORY;
-                                }
+                                let mut model = match self.build_model() {
+                                    Ok(model) => model,
+                                    Err(_) => return XML_Error::NO_MEMORY,
+                                };
                                 self.eventEndPP(enc_type).set(buf.as_ptr());
                                 self.m_handlers.elementDecl(
                                     self.m_declElementType.as_ref().unwrap().name.as_ptr(),
-                                    model,
+                                    Box::into_raw(model) as *mut _,
                                 );
                             }
                             self.m_dtd.in_eldecl.set(false);
@@ -8846,29 +8866,33 @@ impl XML_ParserStruct {
         (contpos, strpos)
     }
 
-    unsafe fn build_model(&mut self) -> *mut XML_Content {
-        let mut ret: *mut XML_Content = ptr::null_mut();
+    fn build_model(&mut self) -> Result<Box<ContentModel>, ()> {
+        let mut ret = ContentModel::new(Default::default());
+
         let scaffold_len = self.m_dtd.scaffold.borrow().scaffold.len();
-        let mut allocsize: c_int = (scaffold_len as c_ulong)
-            .wrapping_mul(::std::mem::size_of::<XML_Content>() as c_ulong)
-            .wrapping_add(
-                (self.m_dtd.contentStringLen.get() as c_ulong)
-                    .wrapping_mul(::std::mem::size_of::<XML_Char>() as c_ulong),
-            ) as c_int;
-        ret = MALLOC!(allocsize as size_t) as *mut XML_Content;
-        if ret.is_null() {
-            return ptr::null_mut();
+        if scaffold_len > 0 {
+            // The root is outside the Vec, so we need one less node
+            let nodes_len = scaffold_len - 1;
+            ret.nodes.try_reserve_exact(nodes_len).map_err(|_| ())?;
+            ret.nodes.resize_with(nodes_len, Default::default);
         }
-        let str = std::slice::from_raw_parts_mut(
-            ret.add(scaffold_len) as *mut XML_Char,
-            self.m_dtd.contentStringLen.get() as usize,
+
+        let strings_len: usize = self.m_dtd.contentStringLen.get()
+            .try_into()
+            .unwrap();
+        if strings_len > 0 {
+            ret.strings.try_reserve_exact(strings_len).map_err(|_| ())?;
+            ret.strings.resize(strings_len, 0);
+        }
+
+        self.build_node(
+            0,
+            &mut ret.root,
+            &mut ret.nodes[..],
+            &mut ret.strings[..],
         );
-        let cpos = std::slice::from_raw_parts_mut(
-            ret.offset(1) as *mut XML_Content,
-            scaffold_len as usize - 1,
-        );
-        self.build_node(0, &mut *ret, cpos, str);
-        ret
+
+        Box::try_new(ret).map_err(|_| ())
     }
 
     fn getElementType(
