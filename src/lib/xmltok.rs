@@ -310,7 +310,7 @@ pub trait XmlEncoding {
         to_buf: &mut ExpatBufRefMut<u16>,
     ) -> XML_Convert_Result;
 
-    fn minBytesPerChar(&self) -> c_int;
+    fn minBytesPerChar(&self) -> usize;
     fn isUtf8(&self) -> bool;
     fn isUtf16(&self) -> bool;
 
@@ -346,15 +346,15 @@ pub trait XmlEncoding {
 }
 
 pub trait XmlEncodingImpl {
-    fn MINBPC(&self) -> isize;
+    fn MINBPC(&self) -> usize;
     fn isUtf8(&self) -> bool;
     fn isUtf16(&self) -> bool;
 
     fn byte_type(&self, p: *const c_char) -> ByteType;
     fn byte_to_ascii(&self, p: *const c_char) -> c_char;
-    fn is_name_char(&self, p: *const c_char, n: isize) -> bool;
-    fn is_nmstrt_char(&self, p: *const c_char, n: isize) -> bool;
-    fn is_invalid_char(&self, p: *const c_char, n: isize) -> bool;
+    fn is_name_char(&self, p: *const c_char, n: usize) -> bool;
+    fn is_nmstrt_char(&self, p: *const c_char, n: usize) -> bool;
+    fn is_invalid_char(&self, p: *const c_char, n: usize) -> bool;
     fn is_name_char_minbpc(&self, p: *const c_char) -> bool;
     fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
     fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
@@ -397,7 +397,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     fn isUtf8(&self) -> bool { true }
     fn isUtf16(&self) -> bool { false }
 
-    fn MINBPC(&self) -> isize { 1 }
+    fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
     fn byte_type(&self, p: *const c_char) -> ByteType {
@@ -411,7 +411,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char(&self, p: *const c_char, n: isize) -> bool {
+    fn is_name_char(&self, p: *const c_char, n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -443,7 +443,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         }
     }
     #[inline]
-    fn is_nmstrt_char(&self, p: *const c_char, n: isize) -> bool {
+    fn is_nmstrt_char(&self, p: *const c_char, n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -477,7 +477,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_invalid_char(&self, p: *const c_char, n: isize) -> bool {
+    fn is_invalid_char(&self, p: *const c_char, n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
@@ -661,7 +661,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     fn isUtf8(&self) -> bool { false }
     fn isUtf16(&self) -> bool { false }
 
-    fn MINBPC(&self) -> isize { 1 }
+    fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
     fn byte_type(&self, p: *const c_char) -> ByteType {
@@ -675,16 +675,16 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
@@ -754,7 +754,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     fn isUtf8(&self) -> bool { true }
     fn isUtf16(&self) -> bool { false }
 
-    fn MINBPC(&self) -> isize { 1 }
+    fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
     fn byte_type(&self, p: *const c_char) -> ByteType {
@@ -768,16 +768,16 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
@@ -840,7 +840,7 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     #[cfg(not(target_endian = "little"))]
     fn isUtf16(&self) -> bool { false }
 
-    fn MINBPC(&self) -> isize { 2 }
+    fn MINBPC(&self) -> usize { 2 }
 
     #[inline]
     fn byte_type(&self, p: *const c_char) -> ByteType {
@@ -863,16 +863,16 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
@@ -1007,7 +1007,7 @@ type InternalBig2Encoding = Big2EncodingImpl<InternalLatin1EncodingTable>;
 type InternalBig2EncodingNS = Big2EncodingImpl<InternalLatin1EncodingTableNS>;
 
 impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
-    fn MINBPC(&self) -> isize { 2 }
+    fn MINBPC(&self) -> usize { 2 }
     fn isUtf8(&self) -> bool { false }
 
     #[cfg(target_endian = "big")]
@@ -1037,16 +1037,16 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: isize) -> bool {
+    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
         false
     }
 
@@ -2223,7 +2223,7 @@ impl XmlEncoding for InitEncoding {
         XML_Convert_Result::COMPLETED
     }
 
-    fn minBytesPerChar(&self) -> c_int {
+    fn minBytesPerChar(&self) -> usize {
         0
     }
     fn isUtf8(&self) -> bool {
@@ -2344,7 +2344,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     fn isUtf8(&self) -> bool { false }
     fn isUtf16(&self) -> bool { false }
 
-    fn MINBPC(&self) -> isize { 1 }
+    fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
     fn byte_type(&self, p: *const c_char) -> ByteType {
@@ -2358,7 +2358,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn is_name_char(&self, p: *const c_char, _n: isize) -> bool {
+    fn is_name_char(&self, p: *const c_char, _n: usize) -> bool {
         if let Some(convert) = self.convert {
             let mut c: c_int = unsafe { convert(self.userData, p) };
             if c & !(0xffff) != 0 {
@@ -2370,7 +2370,7 @@ impl XmlEncodingImpl for UnknownEncoding {
         }
     }
     #[inline]
-    fn is_nmstrt_char(&self, p: *const c_char, _n: isize) -> bool {
+    fn is_nmstrt_char(&self, p: *const c_char, _n: usize) -> bool {
         if let Some(convert) = self.convert {
             let mut c: c_int = unsafe { convert(self.userData, p) };
             if c & !(0xffff) != 0 {
@@ -2383,7 +2383,7 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn is_invalid_char(&self, p: *const c_char, _n: isize) -> bool {
+    fn is_invalid_char(&self, p: *const c_char, _n: usize) -> bool {
         if let Some(convert) = self.convert {
             let mut c: c_int = unsafe { convert(self.userData, p) };
             (c & !(0xffff)) != 0 || checkCharRefNumber(c) < 0
@@ -2433,7 +2433,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                 utf8 = buf[..].into();
                 *from_buf = from_buf.inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (ByteType::LEAD2 as c_int - 2)) as isize);
+                     - (ByteType::LEAD2 as c_int - 2)) as usize);
             } else {
                 if n as c_long > to.len() as c_long {
                     return XML_Convert_Result::OUTPUT_EXHAUSTED;
@@ -2460,7 +2460,7 @@ impl XmlEncodingImpl for UnknownEncoding {
                 };
                 *from_buf = (*from_buf).inc_start(
                     (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (ByteType::LEAD2 as c_int - 2)) as isize);
+                     - (ByteType::LEAD2 as c_int - 2)) as usize);
             } else {
                 *from_buf = (*from_buf).inc_start(1)
             }
@@ -2887,7 +2887,7 @@ fn parsePseudoAttribute<'a>(
         return 0;
     }
     loop {
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        buf = buf.inc_start((*enc).minBytesPerChar());
         if !(isSpace(toAscii(enc, buf)) != 0) {
             break;
         }
@@ -2909,7 +2909,7 @@ fn parsePseudoAttribute<'a>(
         } else if isSpace(c) != 0 {
             *name = name.map(|name| name.with_end(buf.as_ptr()));
             loop {
-                buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+                buf = buf.inc_start((*enc).minBytesPerChar());
                 c = toAscii(enc, buf);
                 if !(isSpace(c) != 0) {
                     break;
@@ -2921,17 +2921,17 @@ fn parsePseudoAttribute<'a>(
             }
             break;
         } else {
-            buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+            buf = buf.inc_start((*enc).minBytesPerChar());
         }
     }
     if buf.as_ptr() == name.unwrap().as_ptr() {
         *nextTokPtr = buf.as_ptr();
         return 0;
     }
-    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+    buf = buf.inc_start((*enc).minBytesPerChar());
     c = toAscii(enc, buf);
     while isSpace(c) != 0 {
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        buf = buf.inc_start((*enc).minBytesPerChar());
         c = toAscii(enc, buf)
     }
     if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
@@ -2939,7 +2939,7 @@ fn parsePseudoAttribute<'a>(
         return 0;
     }
     open = c as c_char;
-    buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+    buf = buf.inc_start((*enc).minBytesPerChar());
     *val = Some(buf.clone());
     loop {
         c = toAscii(enc, buf);
@@ -2956,9 +2956,9 @@ fn parsePseudoAttribute<'a>(
             *nextTokPtr = buf.as_ptr();
             return 0;
         }
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        buf = buf.inc_start((*enc).minBytesPerChar());
     }
-    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar() as isize).as_ptr();
+    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar()).as_ptr();
     1
 }
 
@@ -2998,8 +2998,8 @@ fn doParseXmlDecl<'a>(
     let mut val_buf = None;
     let mut name = None;
     buf = buf
-        .inc_start((5 * (*enc).minBytesPerChar()) as isize)
-        .dec_end((2 * (*enc).minBytesPerChar()) as usize);
+        .inc_start(5 * (*enc).minBytesPerChar())
+        .dec_end(2 * (*enc).minBytesPerChar());
     let mut pseudo_ptr = buf.as_ptr();
     if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
         || name.is_none()
@@ -3098,7 +3098,7 @@ fn doParseXmlDecl<'a>(
     }
     // TODO(SJC): make toAscii take a buf
     while isSpace(toAscii(enc, buf)) != 0 {
-        buf = buf.inc_start(((*enc).minBytesPerChar()) as isize);
+        buf = buf.inc_start((*enc).minBytesPerChar());
     }
     if !buf.is_empty() {
         badPtr.set(buf.as_ptr());

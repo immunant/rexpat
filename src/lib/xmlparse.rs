@@ -133,17 +133,14 @@ impl<'a, T> ExpatBufRef<'a, T> {
         ExpatBufRef(&self.0[..len])
     }
 
-    pub fn inc_start(&self, offset: isize) -> ExpatBufRef<'a, T> {
-        if offset < 0 {
-            panic!("Attempted to decrement the start of an ExpatBufRef");
-        }
-        if offset as usize > self.len() {
+    pub fn inc_start(&self, offset: usize) -> ExpatBufRef<'a, T> {
+        if offset > self.len() {
             panic!(
                 "Attempted to increment the start of an ExpatBufRef by too much: {:?}",
                 offset
             );
         }
-        ExpatBufRef(&self.0[(offset as usize)..])
+        ExpatBufRef(&self.0[offset..])
     }
 
     pub fn dec_end(&self, offset: usize) -> ExpatBufRef<'a, T> {
@@ -4163,9 +4160,9 @@ impl XML_ParserStruct {
                 }
                 XML_TOK::ENTITY_REF => {
                     let mut ch: XML_Char = (*enc).predefinedEntityName(
-                        buf.inc_start((*enc).minBytesPerChar() as isize)
+                        buf.inc_start((*enc).minBytesPerChar())
                             .with_end(next)
-                            .dec_end((*enc).minBytesPerChar() as usize),
+                            .dec_end((*enc).minBytesPerChar()),
                     ) as XML_Char;
                     if ch != 0 {
                         let hasCharacterData = self.m_handlers.characterData(&[ch]);
@@ -4176,9 +4173,9 @@ impl XML_ParserStruct {
                     } else {
                         let successful = self.m_dtd.pool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -4306,7 +4303,7 @@ impl XML_ParserStruct {
                     tag.bindings = None;
                     tag.name.localPart = TagNameLocalPart::None;
                     tag.name.prefix = ptr::null();
-                    let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
+                    let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar());
                     tag.rawName = fromBuf.as_ptr();
                     tag.rawNameLength = (*enc).nameLength(tag.rawName);
                     fromBuf = fromBuf.with_len(tag.rawNameLength as usize);
@@ -4369,7 +4366,7 @@ impl XML_ParserStruct {
                 }
                 XML_TOK::EMPTY_ELEMENT_NO_ATTS | XML_TOK::EMPTY_ELEMENT_WITH_ATTS => {
                     /* fall through */
-                    let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar() as isize);
+                    let mut rawName: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar());
                     let mut result_1: XML_Error = XML_Error::NONE;
                     let mut bindings = None;
                     let mut noElmHandlers = true;
@@ -4435,7 +4432,7 @@ impl XML_ParserStruct {
                         let mut tag = self.m_tagStack.take().unwrap();
                         self.m_tagStack = tag.parent.take();
 
-                        let rawName_0 = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
+                        let rawName_0 = buf.inc_start((*enc).minBytesPerChar() * 2);
                         let len = (*enc).nameLength(rawName_0.as_ptr());
                         if len != tag.rawNameLength
                             || memcmp(
@@ -6371,9 +6368,9 @@ impl XML_ParserStruct {
                         }
                         let successful = self.m_tempPool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -6655,9 +6652,9 @@ impl XML_ParserStruct {
                             self,
                             enc_type,
                             self.m_declAttributeIsCdata,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                             &self.m_dtd.pool,
                         );
                         if result_1 as u64 != 0 {
@@ -6706,9 +6703,9 @@ impl XML_ParserStruct {
                         let mut result_2: XML_Error = storeEntityValue(
                             self,
                             enc_type,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
 
                         if !self.m_declEntity.is_none() {
@@ -6748,9 +6745,9 @@ impl XML_ParserStruct {
                     if self.m_handlers.hasStartDoctypeDecl() {
                         let successful = self.m_tempPool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             self.m_doctypeSysid = ptr::null();
@@ -6941,9 +6938,9 @@ impl XML_ParserStruct {
                         /* means m_notationDeclHandler != NULL */
                         let successful = self.m_tempPool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -6958,9 +6955,9 @@ impl XML_ParserStruct {
                     if !self.m_declNotationName.is_null() && self.m_handlers.hasNotationDecl() {
                         let successful = self.m_tempPool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -7087,9 +7084,9 @@ impl XML_ParserStruct {
                     } else {
                         let successful = self.m_dtd.pool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -7401,9 +7398,9 @@ impl XML_ParserStruct {
                     if self.m_dtd.keepProcessing.get() && !self.m_declEntity.is_none() {
                         let successful = self.m_dtd.pool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         if !successful {
                             return XML_Error::NO_MEMORY;
@@ -7429,9 +7426,9 @@ impl XML_ParserStruct {
                     if self.m_dtd.keepProcessing.get() && !self.m_declEntity.is_none() {
                         let successful = self.m_dtd.pool.store_c_string(
                             enc,
-                            buf.inc_start((*enc).minBytesPerChar() as isize)
+                            buf.inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
-                                .dec_end((*enc).minBytesPerChar() as usize),
+                                .dec_end((*enc).minBytesPerChar()),
                         );
                         let mut declEntity = self.m_declEntity.as_deref().unwrap();
                         if !successful {
@@ -7867,9 +7864,9 @@ unsafe extern "C" fn appendAttributeValue(
             XML_TOK::ENTITY_REF => {
                 let mut checkEntityDecl = false;
                 let mut ch: XML_Char = (*enc).predefinedEntityName(
-                    buf.inc_start((*enc).minBytesPerChar() as isize)
+                    buf.inc_start((*enc).minBytesPerChar())
                         .with_end(next)
-                        .dec_end((*enc).minBytesPerChar() as usize),
+                        .dec_end((*enc).minBytesPerChar()),
                 ) as XML_Char;
                 if ch != 0 {
                     if !pool.append_char(ch) {
@@ -7878,9 +7875,9 @@ unsafe extern "C" fn appendAttributeValue(
                 } else {
                     let successful = (*parser).m_temp2Pool.store_c_string(
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar() as isize)
+                        buf.inc_start((*enc).minBytesPerChar())
                             .with_end(next)
-                            .dec_end((*enc).minBytesPerChar() as usize),
+                            .dec_end((*enc).minBytesPerChar()),
                     );
                     if !successful {
                         return XML_Error::NO_MEMORY;
@@ -8027,9 +8024,9 @@ unsafe extern "C" fn storeEntityValue(
                     let successful = (*parser).m_tempPool.store_c_string(
                         enc,
                         entityTextBuf
-                            .inc_start((*enc).minBytesPerChar() as isize)
+                            .inc_start((*enc).minBytesPerChar())
                             .with_end(next)
-                            .dec_end((*enc).minBytesPerChar() as usize),
+                            .dec_end((*enc).minBytesPerChar()),
                     );
                     if !successful {
                         result = XML_Error::NO_MEMORY;
@@ -8252,8 +8249,8 @@ unsafe extern "C" fn reportProcessingInstruction(
         return 1;
     }
     let enc = (*parser).encoding(enc_type);
-    buf = buf.inc_start(((*enc).minBytesPerChar() * 2) as isize);
-    let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as isize);
+    buf = buf.inc_start((*enc).minBytesPerChar() * 2);
+    let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as usize);
     let successful = (*parser)
         .m_tempPool
         .store_c_string(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize));
@@ -8297,7 +8294,7 @@ unsafe extern "C" fn reportComment(
     let enc = (*parser).encoding(enc_type);
     let successful = (*parser).m_tempPool.store_c_string(
         enc,
-        buf.inc_start(((*enc).minBytesPerChar() * 4) as isize)
+        buf.inc_start((*enc).minBytesPerChar() * 4)
             .dec_end(((*enc).minBytesPerChar() * 3) as usize),
     );
     if !successful {

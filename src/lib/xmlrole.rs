@@ -379,7 +379,7 @@ fn prolog0(
         super::xmltok::XML_TOK::BOM => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_DOCTYPE)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
@@ -417,7 +417,7 @@ fn prolog1(
         }
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_DOCTYPE)
             {
                 state.handler = Some(doctype0 as PROLOG_HANDLER);
@@ -582,21 +582,21 @@ fn internalSubset(
         XML_TOK::PROLOG_S => return XML_ROLE::NONE,
         super::xmltok::XML_TOK::DECL_OPEN => {
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_ENTITY)
             {
                 state.handler = Some(entity0 as PROLOG_HANDLER);
                 return XML_ROLE::ENTITY_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_ATTLIST)
             {
                 state.handler = Some(attlist0 as PROLOG_HANDLER);
                 return XML_ROLE::ATTLIST_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_ELEMENT,
             )
             {
@@ -604,7 +604,7 @@ fn internalSubset(
                 return XML_ROLE::ELEMENT_NONE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((2 * enc.minBytesPerChar()) as isize),
+                buf.inc_start(2 * enc.minBytesPerChar()),
                 &KW_NOTATION)
             {
                 state.handler = Some(notation0 as PROLOG_HANDLER);
@@ -1193,7 +1193,7 @@ fn attlist8(
         XML_TOK::PROLOG_S => return XML_ROLE::ATTLIST_NONE,
         super::xmltok::XML_TOK::POUND_NAME => {
             if enc.nameMatchesAscii(
-                buf.inc_start((enc.minBytesPerChar()) as isize),
+                buf.inc_start(enc.minBytesPerChar()),
                 &KW_IMPLIED,
             )
             {
@@ -1201,7 +1201,7 @@ fn attlist8(
                 return XML_ROLE::IMPLIED_ATTRIBUTE_VALUE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((enc.minBytesPerChar()) as isize),
+                buf.inc_start(enc.minBytesPerChar()),
                 &KW_REQUIRED,
             )
             {
@@ -1209,7 +1209,7 @@ fn attlist8(
                 return XML_ROLE::REQUIRED_ATTRIBUTE_VALUE;
             }
             if enc.nameMatchesAscii(
-                buf.inc_start((enc.minBytesPerChar()) as isize),
+                buf.inc_start(enc.minBytesPerChar()),
                 &KW_FIXED,
             )
             {
@@ -1300,7 +1300,7 @@ fn element2(
         XML_TOK::PROLOG_S => return XML_ROLE::ELEMENT_NONE,
         super::xmltok::XML_TOK::POUND_NAME => {
             if enc.nameMatchesAscii(
-                buf.inc_start((enc.minBytesPerChar()) as isize),
+                buf.inc_start(enc.minBytesPerChar()),
                 &KW_PCDATA,
             )
             {
