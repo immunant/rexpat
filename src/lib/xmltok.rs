@@ -350,14 +350,14 @@ pub trait XmlEncodingImpl {
     fn isUtf8(&self) -> bool;
     fn isUtf16(&self) -> bool;
 
-    fn byte_type(&self, p: *const c_char) -> ByteType;
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char;
-    fn is_name_char(&self, p: *const c_char, n: usize) -> bool;
-    fn is_nmstrt_char(&self, p: *const c_char, n: usize) -> bool;
-    fn is_invalid_char(&self, p: *const c_char, n: usize) -> bool;
-    fn is_name_char_minbpc(&self, p: *const c_char) -> bool;
-    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool;
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool;
+    fn byte_type(&self, p: &[c_char]) -> ByteType;
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char;
+    fn is_name_char(&self, p: &[c_char], n: usize) -> bool;
+    fn is_nmstrt_char(&self, p: &[c_char], n: usize) -> bool;
+    fn is_invalid_char(&self, p: &[c_char], n: usize) -> bool;
+    fn is_name_char_minbpc(&self, p: &[c_char]) -> bool;
+    fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool;
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool;
 
     fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
         &self,
@@ -400,41 +400,41 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let idx = unsafe { *(p as *const u8) } as usize;
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        let idx = p[0] as u8 as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        unsafe { *p }
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        p[0]
     }
 
     #[inline]
-    fn is_name_char(&self, p: *const c_char, n: usize) -> bool {
+    fn is_name_char(&self, p: &[c_char], n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
                     (namingBitmap[(((namePages
-                        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+                        [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
                         as c_int)
                         << 3)
-                        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-                        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
+                        + ((p[0] as c_uchar as c_int & 3) << 1)
+                        + (p[1] as c_uchar as c_int >> 5 & 1))
                         as usize]
-                        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
+                        & (1) << (p[1] as c_uchar as c_int & 0x1f))
                         != 0
                 }
                 3 => {
-                    (namingBitmap[(((namePages[(((*(p as *const c_uchar).offset(0) as c_int & 0xf)
+                    (namingBitmap[(((namePages[(((p[0] as c_uchar as c_int & 0xf)
                         << 4)
-                        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+                        + (p[1] as c_uchar as c_int >> 2 & 0xf))
                         as usize] as c_int)
                         << 3)
-                        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-                        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
+                        + ((p[1] as c_uchar as c_int & 3) << 1)
+                        + (p[2] as c_uchar as c_int >> 5 & 1))
                         as usize]
-                        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
+                        & (1) << (p[2] as c_uchar as c_int & 0x1f))
                         != 0
                 }
                 4 => false,
@@ -443,31 +443,31 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
         }
     }
     #[inline]
-    fn is_nmstrt_char(&self, p: *const c_char, n: usize) -> bool {
+    fn is_nmstrt_char(&self, p: &[c_char], n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
                     (namingBitmap[(((nmstrtPages
-                        [(*(p as *const c_uchar).offset(0) as c_int >> 2 & 7) as usize]
+                        [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
                         as c_int)
                         << 3)
-                        + ((*(p as *const c_uchar).offset(0) as c_int & 3) << 1)
-                        + (*(p as *const c_uchar).offset(1) as c_int >> 5 & 1))
+                        + ((p[0] as c_uchar as c_int & 3) << 1)
+                        + (p[1] as c_uchar as c_int >> 5 & 1))
                         as usize]
-                        & (1) << (*(p as *const c_uchar).offset(1) as c_int & 0x1f))
+                        & (1) << (p[1] as c_uchar as c_int & 0x1f))
                         != 0
                 }
                 3 => {
-                    (namingBitmap[(((nmstrtPages[(((*(p as *const c_uchar).offset(0) as c_int
+                    (namingBitmap[(((nmstrtPages[(((p[0] as c_uchar as c_int
                         & 0xf)
                         << 4)
-                        + (*(p as *const c_uchar).offset(1) as c_int >> 2 & 0xf))
+                        + (p[1] as c_uchar as c_int >> 2 & 0xf))
                         as usize] as c_int)
                         << 3)
-                        + ((*(p as *const c_uchar).offset(1) as c_int & 3) << 1)
-                        + (*(p as *const c_uchar).offset(2) as c_int >> 5 & 1))
+                        + ((p[1] as c_uchar as c_int & 3) << 1)
+                        + (p[2] as c_uchar as c_int >> 5 & 1))
                         as usize]
-                        & (1) << (*(p as *const c_uchar).offset(2) as c_int & 0x1f))
+                        & (1) << (p[2] as c_uchar as c_int & 0x1f))
                         != 0
                 }
                 4 => false,
@@ -477,52 +477,52 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_invalid_char(&self, p: *const c_char, n: usize) -> bool {
+    fn is_invalid_char(&self, p: &[c_char], n: usize) -> bool {
         unsafe {
             match n {
                 2 => {
-                    (*(p as *const c_uchar) as c_int) < 0xc2
-                        || *(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                        || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0
+                    (p[0] as c_uchar as c_int) < 0xc2
+                        || p[1] as c_uchar as c_int & 0x80 == 0
+                        || p[1] as c_uchar as c_int & 0xc0 == 0xc0
                 }
                 3 => {
-                    *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-                        || (if *(p as *const c_uchar) as c_int == 0xef
-                            && *(p as *const c_uchar).offset(1) as c_int == 0xbf
+                    p[2] as c_uchar as c_int & 0x80 == 0
+                        || (if p[0] as c_uchar as c_int == 0xef
+                            && p[1] as c_uchar as c_int == 0xbf
                         {
-                            (*(p as *const c_uchar).offset(2) as c_int > 0xbd) as c_int
+                            (p[2] as c_uchar as c_int > 0xbd) as c_int
                         } else {
-                            (*(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0) as c_int
+                            (p[2] as c_uchar as c_int & 0xc0 == 0xc0) as c_int
                         }) != 0
-                        || (if *(p as *const c_uchar) as c_int == 0xe0 {
-                            ((*(p as *const c_uchar).offset(1) as c_int) < 0xa0
-                                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                        || (if p[0] as c_uchar as c_int == 0xe0 {
+                            ((p[1] as c_uchar as c_int) < 0xa0
+                                || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
                                 as c_int
                         } else {
-                            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                                || (if *(p as *const c_uchar) as c_int == 0xed {
-                                    (*(p as *const c_uchar).offset(1) as c_int > 0x9f) as c_int
+                            (p[1] as c_uchar as c_int & 0x80 == 0
+                                || (if p[0] as c_uchar as c_int == 0xed {
+                                    (p[1] as c_uchar as c_int > 0x9f) as c_int
                                 } else {
-                                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                    (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
                         }) != 0
                 }
                 4 => {
-                    *(p as *const c_uchar).offset(3) as c_int & 0x80 == 0
-                        || *(p as *const c_uchar).offset(3) as c_int & 0xc0 == 0xc0
-                        || *(p as *const c_uchar).offset(2) as c_int & 0x80 == 0
-                        || *(p as *const c_uchar).offset(2) as c_int & 0xc0 == 0xc0
-                        || (if *(p as *const c_uchar) as c_int == 0xf0 {
-                            ((*(p as *const c_uchar).offset(1) as c_int) < 0x90
-                                || *(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                    p[3] as c_uchar as c_int & 0x80 == 0
+                        || p[3] as c_uchar as c_int & 0xc0 == 0xc0
+                        || p[2] as c_uchar as c_int & 0x80 == 0
+                        || p[2] as c_uchar as c_int & 0xc0 == 0xc0
+                        || (if p[0] as c_uchar as c_int == 0xf0 {
+                            ((p[1] as c_uchar as c_int) < 0x90
+                                || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
                                 as c_int
                         } else {
-                            (*(p as *const c_uchar).offset(1) as c_int & 0x80 == 0
-                                || (if *(p as *const c_uchar) as c_int == 0xf4 {
-                                    (*(p as *const c_uchar).offset(1) as c_int > 0x8f) as c_int
+                            (p[1] as c_uchar as c_int & 0x80 == 0
+                                || (if p[0] as c_uchar as c_int == 0xf4 {
+                                    (p[1] as c_uchar as c_int > 0x8f) as c_int
                                 } else {
-                                    (*(p as *const c_uchar).offset(1) as c_int & 0xc0 == 0xc0)
+                                    (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
                                         as c_int
                                 }) != 0) as c_int
                         }) != 0
@@ -533,18 +533,18 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p == c }
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[0] == c
     }
 
     #[inline]
@@ -664,43 +664,43 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let idx = unsafe { *(p as *const u8) } as usize;
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        let idx = p[0] as u8 as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        unsafe { *p }
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        p[0]
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_name_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_nmstrt_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p == c }
+    fn is_nmstrt_char_minbpc(&self, _p: &[c_char]) -> bool {
+        false
+    }
+
+    #[inline]
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[0] == c
     }
 
     #[inline]
@@ -757,43 +757,43 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let idx = unsafe { *(p as *const u8) } as usize;
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        let idx = p[0] as u8 as usize;
         T::types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        unsafe { *p }
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        p[0]
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_name_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_nmstrt_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_invalid_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p == c }
+    fn is_nmstrt_char_minbpc(&self, _p: &[c_char]) -> bool {
+        false
+    }
+
+    #[inline]
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[0] == c
     }
 
     #[inline]
@@ -843,52 +843,50 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     fn MINBPC(&self) -> usize { 2 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let bytes = unsafe { (*p, *p.offset(1)) };
-        if bytes.1 == 0 {
-            T::types[bytes.0 as u8 as usize]
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        if p[1] == 0 {
+            T::types[p[0] as u8 as usize]
         } else {
-            unicode_byte_type(bytes.1, bytes.0)
+            unicode_byte_type(p[1], p[0])
         }
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        let bytes = unsafe { (*p, *p.offset(1)) };
-        if bytes.1 == 0 {
-            bytes.0
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        if p[1] == 0 {
+            p[0]
         } else {
             -1
         }
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_name_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_nmstrt_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, p: *const c_char) -> bool {
-        unsafe { UCS2_GET_NAMING!(namePages, *p.offset(1), *p) != 0 }
+    fn is_invalid_char(&self, _p: &[c_char], _n: usize) -> bool {
+        false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool {
-        unsafe { UCS2_GET_NAMING!(nmstrtPages, *p.offset(1), *p) != 0 }
+    fn is_name_char_minbpc(&self, p: &[c_char]) -> bool {
+        unsafe { UCS2_GET_NAMING!(namePages, p[1], p[0]) != 0 }
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p.offset(1) == 0 && *p == c }
+    fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool {
+        unsafe { UCS2_GET_NAMING!(nmstrtPages, p[1], p[0]) != 0 }
+    }
+
+    #[inline]
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[1] == 0 && p[0] == c
     }
 
     #[inline]
@@ -1017,52 +1015,50 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     fn isUtf16(&self) -> bool { false }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let bytes = unsafe { (*p, *p.offset(1)) };
-        if bytes.0 == 0 {
-            T::types[bytes.1 as usize]
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        if p[0] == 0 {
+            T::types[p[1] as usize]
         } else {
-            unicode_byte_type(bytes.0, bytes.1)
+            unicode_byte_type(p[0], p[1])
         }
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        let bytes = unsafe { (*p, *p.offset(1)) };
-        if bytes.0 == 0 {
-            bytes.1
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        if p[0] == 0 {
+            p[1]
         } else {
             -1
         }
     }
 
     #[inline]
-    fn is_name_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_name_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
     #[inline]
-    fn is_nmstrt_char(&self, _p: *const c_char, _n: usize) -> bool {
-        false
-    }
-
-    #[inline]
-    fn is_invalid_char(&self, _p: *const c_char, _n: usize) -> bool {
+    fn is_nmstrt_char(&self, _p: &[c_char], _n: usize) -> bool {
         false
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, p: *const c_char) -> bool {
-        unsafe { UCS2_GET_NAMING!(namePages, *p, *p.offset(1)) != 0 }
+    fn is_invalid_char(&self, _p: &[c_char], _n: usize) -> bool {
+        false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, p: *const c_char) -> bool {
-        unsafe { UCS2_GET_NAMING!(nmstrtPages, *p, *p.offset(1)) != 0 }
+    fn is_name_char_minbpc(&self, p: &[c_char]) -> bool {
+        unsafe { UCS2_GET_NAMING!(namePages, p[0], p[1]) != 0 }
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p == 0 && *p.offset(1) == c }
+    fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool {
+        unsafe { UCS2_GET_NAMING!(nmstrtPages, p[0], p[1]) != 0 }
+    }
+
+    #[inline]
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[0] == 0 && p[1] == c
     }
 
     #[inline]
@@ -2347,20 +2343,20 @@ impl XmlEncodingImpl for UnknownEncoding {
     fn MINBPC(&self) -> usize { 1 }
 
     #[inline]
-    fn byte_type(&self, p: *const c_char) -> ByteType {
-        let idx = unsafe { *(p as *const u8) } as usize;
+    fn byte_type(&self, p: &[c_char]) -> ByteType {
+        let idx = p[0] as u8 as usize;
         self.types[idx]
     }
 
     #[inline]
-    fn byte_to_ascii(&self, p: *const c_char) -> c_char {
-        unsafe { *p }
+    fn byte_to_ascii(&self, p: &[c_char]) -> c_char {
+        p[0]
     }
 
     #[inline]
-    fn is_name_char(&self, p: *const c_char, _n: usize) -> bool {
+    fn is_name_char(&self, p: &[c_char], _n: usize) -> bool {
         if let Some(convert) = self.convert {
-            let mut c: c_int = unsafe { convert(self.userData, p) };
+            let mut c: c_int = unsafe { convert(self.userData, p.as_ptr()) };
             if c & !(0xffff) != 0 {
                 return false;
             }
@@ -2370,9 +2366,9 @@ impl XmlEncodingImpl for UnknownEncoding {
         }
     }
     #[inline]
-    fn is_nmstrt_char(&self, p: *const c_char, _n: usize) -> bool {
+    fn is_nmstrt_char(&self, p: &[c_char], _n: usize) -> bool {
         if let Some(convert) = self.convert {
-            let mut c: c_int = unsafe { convert(self.userData, p) };
+            let mut c: c_int = unsafe { convert(self.userData, p.as_ptr()) };
             if c & !(0xffff) != 0 {
                 return false;
             }
@@ -2383,9 +2379,9 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn is_invalid_char(&self, p: *const c_char, _n: usize) -> bool {
+    fn is_invalid_char(&self, p: &[c_char], _n: usize) -> bool {
         if let Some(convert) = self.convert {
-            let mut c: c_int = unsafe { convert(self.userData, p) };
+            let mut c: c_int = unsafe { convert(self.userData, p.as_ptr()) };
             (c & !(0xffff)) != 0 || checkCharRefNumber(c) < 0
         } else {
             false
@@ -2393,18 +2389,18 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn is_name_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_name_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn is_nmstrt_char_minbpc(&self, _p: *const c_char) -> bool {
+    fn is_nmstrt_char_minbpc(&self, _p: &[c_char]) -> bool {
         false
     }
 
     #[inline]
-    fn char_matches(&self, p: *const c_char, c: c_char) -> bool {
-        unsafe { *p == c }
+    fn char_matches(&self, p: &[c_char], c: c_char) -> bool {
+        p[0] == c
     }
 
     #[inline]
