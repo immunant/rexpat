@@ -4794,6 +4794,9 @@ impl XML_ParserStruct {
             }
 
             /* add the name and value to the attribute list */
+            // REXPAT: we assume that the name of the attribute will end
+            // somewhere before the value, so we use the start of the latter
+            // as the upper bound for nameLength
             let att_name_buf = ExpatBufRef::new(currAtt.name, currAtt.valuePtr);
             let mut attId = match self.getAttributeId(
                 enc_type,
