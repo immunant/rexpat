@@ -2861,84 +2861,85 @@ fn isSpace(mut c: c_int) -> c_int {
     }
     0
 }
+
 /* Return 1 if there's just optional white space or there's an S
    followed by name=val.
 */
-
 fn parsePseudoAttribute<'a>(
-    mut enc: &ENCODING,
-    mut buf: ExpatBufRef<'a>,
-    mut name: &mut Option<ExpatBufRef<'a>>,
-    mut val: &mut Option<ExpatBufRef<'a>>,
-    mut nextTokPtr: &mut *const c_char,
+    enc: &ENCODING,
+    buf: ExpatBufRef<'a>,
+    name: &mut Option<ExpatBufRef<'a>>,
+    val: &mut Option<ExpatBufRef<'a>>,
+    nextTokIdx: &mut usize,
 ) -> c_int {
+    let mut idx = 0;
     let mut c: c_int = 0;
     let mut open: c_char = 0;
     if buf.is_empty() {
         *name = None;
         return 1;
     }
-    if isSpace(toAscii(enc, buf)) == 0 {
-        *nextTokPtr = buf.as_ptr();
+    if isSpace(toAscii(enc, buf.inc_start(idx))) == 0 {
+        *nextTokIdx = idx;
         return 0;
     }
     loop {
-        buf = buf.inc_start((*enc).minBytesPerChar());
-        if !(isSpace(toAscii(enc, buf)) != 0) {
+        idx += (*enc).minBytesPerChar();
+        if isSpace(toAscii(enc, buf.inc_start(idx))) == 0 {
             break;
         }
     }
-    if buf.is_empty() {
+    if buf[idx..].is_empty() {
         *name = None;
         return 1;
     }
-    *name = Some(buf.clone());
+    *name = Some(buf.inc_start(idx));
     loop {
-        c = toAscii(enc, buf);
+        c = toAscii(enc, buf.inc_start(idx));
         if c == -1 {
-            *nextTokPtr = buf.as_ptr();
+            *nextTokIdx = idx;
             return 0;
         }
         if c == ASCII_EQUALS as c_int {
-            *name = name.map(|name| name.with_end(buf.as_ptr()));
+            *name = name.map(|name| name.with_end(buf[idx..].as_ptr()));
             break;
         } else if isSpace(c) != 0 {
-            *name = name.map(|name| name.with_end(buf.as_ptr()));
+            *name = name.map(|name| name.with_end(buf[idx..].as_ptr()));
             loop {
-                buf = buf.inc_start((*enc).minBytesPerChar());
-                c = toAscii(enc, buf);
+                idx += (*enc).minBytesPerChar();
+                c = toAscii(enc, buf.inc_start(idx));
                 if !(isSpace(c) != 0) {
                     break;
                 }
             }
             if c != ASCII_EQUALS as c_int {
-                *nextTokPtr = buf.as_ptr();
+                *nextTokIdx = idx;
                 return 0;
             }
             break;
         } else {
-            buf = buf.inc_start((*enc).minBytesPerChar());
+            idx += (*enc).minBytesPerChar();
         }
     }
-    if buf.as_ptr() == name.unwrap().as_ptr() {
-        *nextTokPtr = buf.as_ptr();
+    if buf[idx..].as_ptr() == name.unwrap().as_ptr() {
+        *nextTokIdx = idx;
         return 0;
     }
-    buf = buf.inc_start((*enc).minBytesPerChar());
-    c = toAscii(enc, buf);
+    idx += (*enc).minBytesPerChar();
+    c = toAscii(enc, buf.inc_start(idx));
     while isSpace(c) != 0 {
-        buf = buf.inc_start((*enc).minBytesPerChar());
-        c = toAscii(enc, buf)
+        idx += (*enc).minBytesPerChar();
+        c = toAscii(enc, buf.inc_start(idx));
     }
     if c != ASCII_QUOT as c_int && c != ASCII_APOS as c_int {
-        *nextTokPtr = buf.as_ptr();
+        *nextTokIdx = idx;
         return 0;
     }
     open = c as c_char;
-    buf = buf.inc_start((*enc).minBytesPerChar());
-    *val = Some(buf.clone());
+    idx += (*enc).minBytesPerChar();
+    *val = Some(buf.inc_start(idx));
     loop {
-        c = toAscii(enc, buf);
+        c = toAscii(enc, buf.inc_start(idx));
         if c == open as c_int {
             break;
         }
@@ -2949,12 +2950,12 @@ fn parsePseudoAttribute<'a>(
             && c != ASCII_MINUS as c_int
             && c != ASCII_UNDERSCORE as c_int
         {
-            *nextTokPtr = buf.as_ptr();
+            *nextTokIdx = idx;
             return 0;
         }
-        buf = buf.inc_start((*enc).minBytesPerChar());
+        idx += (*enc).minBytesPerChar();
     }
-    *nextTokPtr = buf.inc_start((*enc).minBytesPerChar()).as_ptr();
+    *nextTokIdx = idx + (*enc).minBytesPerChar();
     1
 }
 
@@ -2984,26 +2985,26 @@ fn doParseXmlDecl<'a>(
     >,
     mut isGeneralTextEntity: c_int,
     mut enc: &ENCODING,
-    mut buf: ExpatBufRef<'a>,
+    buf: ExpatBufRef<'a>,
     mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
     mut encodingName: &mut *const c_char,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: &mut c_int,
 ) -> c_int {
+    let mut idx = 5 * (*enc).minBytesPerChar();
     let mut val_buf = None;
     let mut name = None;
-    buf = buf
-        .inc_start(5 * (*enc).minBytesPerChar())
+    let buf = buf
         .dec_end(2 * (*enc).minBytesPerChar());
-    let mut pseudo_ptr = buf.as_ptr();
-    if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0
+    let mut pseudo_idx = 0;
+    if parsePseudoAttribute(enc, buf.inc_start(idx), &mut name, &mut val_buf, &mut pseudo_idx) == 0
         || name.is_none()
     {
-        badPtr.set(pseudo_ptr);
+        badPtr.set(buf[idx + pseudo_idx..].as_ptr());
         return 0;
     }
-    buf = buf.with_start(pseudo_ptr);
+    idx += pseudo_idx;
     if !(*enc).nameMatchesAscii(name.unwrap(), &KW_version) {
         if isGeneralTextEntity == 0 {
             badPtr.set(name.map_or(ptr::null(), |x| x.as_ptr()));
@@ -3015,24 +3016,24 @@ fn doParseXmlDecl<'a>(
         {
             if !(*enc).nameMatchesAscii(val_buf
                                        .unwrap()
-                                       .with_end(pseudo_ptr)
-                                       .dec_end((*enc).minBytesPerChar() as usize),
+                                       .with_end(buf[idx..].as_ptr())
+                                       .dec_end((*enc).minBytesPerChar()),
                                        &KW_XML_1_0)
             {
                 badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
                 return 0;
             }
         }
-        let mut pseudo_ptr = buf.as_ptr();
-        if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
-            badPtr.set(pseudo_ptr);
+        let mut pseudo_idx = 0;
+        if parsePseudoAttribute(enc, buf.inc_start(idx), &mut name, &mut val_buf, &mut pseudo_idx) == 0 {
+            badPtr.set(buf[idx + pseudo_idx..].as_ptr());
             return 0;
         }
-        buf = buf.with_start(pseudo_ptr);
+        idx += pseudo_idx;
         if name.is_none() {
             if isGeneralTextEntity != 0 {
                 /* a TextDecl must have an EncodingDecl */
-                badPtr.set(buf.as_ptr());
+                badPtr.set(buf[idx..].as_ptr());
                 return 0;
             }
             return 1;
@@ -3051,15 +3052,15 @@ fn doParseXmlDecl<'a>(
             enc,
             val_buf
                 .unwrap()
-                .with_end(buf.as_ptr())
-                .dec_end(((*enc).minBytesPerChar()) as usize),
+                .with_end(buf[idx..].as_ptr())
+                .dec_end((*enc).minBytesPerChar()),
         ) };
-        let mut pseudo_ptr = buf.as_ptr();
-        if parsePseudoAttribute(enc, buf, &mut name, &mut val_buf, &mut pseudo_ptr) == 0 {
-            badPtr.set(buf.as_ptr());
+        let mut pseudo_idx = 0;
+        if parsePseudoAttribute(enc, buf.inc_start(idx), &mut name, &mut val_buf, &mut pseudo_idx) == 0 {
+            badPtr.set(buf[idx + pseudo_idx..].as_ptr());
             return 0;
         }
-        buf = buf.with_start(pseudo_ptr);
+        idx += pseudo_idx;
         if name.is_none() {
             return 1;
         }
@@ -3073,8 +3074,8 @@ fn doParseXmlDecl<'a>(
     if (*enc).nameMatchesAscii(
         val_buf
             .unwrap()
-            .with_end(buf.as_ptr())
-            .dec_end(((*enc).minBytesPerChar()) as usize),
+            .with_end(buf[idx..].as_ptr())
+            .dec_end((*enc).minBytesPerChar()),
         &KW_yes,
     )
     {
@@ -3082,7 +3083,7 @@ fn doParseXmlDecl<'a>(
     } else if (*enc).nameMatchesAscii(
         val_buf
             .unwrap()
-            .with_end(buf.as_ptr())
+            .with_end(buf[idx..].as_ptr())
             .dec_end(((*enc).minBytesPerChar()) as usize),
         &KW_no,
     )
@@ -3092,12 +3093,11 @@ fn doParseXmlDecl<'a>(
         badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
         return 0;
     }
-    // TODO(SJC): make toAscii take a buf
-    while isSpace(toAscii(enc, buf)) != 0 {
-        buf = buf.inc_start((*enc).minBytesPerChar());
+    while isSpace(toAscii(enc, buf.inc_start(idx))) != 0 {
+        idx += (*enc).minBytesPerChar();
     }
-    if !buf.is_empty() {
-        badPtr.set(buf.as_ptr());
+    if !buf[idx..].is_empty() {
+        badPtr.set(buf[idx..].as_ptr());
         return 0;
     }
     1
