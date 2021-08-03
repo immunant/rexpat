@@ -1814,29 +1814,28 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
         buf[idx..].is_empty()
     }
-    unsafe fn nameLength(&self, mut ptr: *const libc::c_char) -> libc::c_int {
-        let mut start: *const libc::c_char = ptr;
+    fn nameLength(&self, buf: ExpatBufRef) -> libc::c_int {
+        let mut idx = 0;
         loop {
             MATCH_LEAD_CASES! {
-                self.byte_type(std::slice::from_raw_parts(ptr, self.MINBPC().max(4))),
+                self.byte_type(&buf[idx..]),
                 LEAD_CASE(n) => {
-                    ptr = ptr.add(n);
+                    idx += n;
                 }
                 ByteType::NONASCII | ByteType::NMSTRT | ByteType::COLON | ByteType::HEX | ByteType::DIGIT | ByteType::NAME | ByteType::MINUS => {
-                    ptr = ptr.add(self.MINBPC());
+                    idx += self.MINBPC();
                 }
                 _ => {
-                    return ptr.wrapping_offset_from(start) as libc::c_long as
-                               libc::c_int;
+                    return idx as libc::c_long as libc::c_int;
                 }
             }
         }
     }
-    unsafe fn skipS(&self, mut ptr: *const libc::c_char) -> *const libc::c_char {
+    fn skipS<'a>(&self, mut buf: ExpatBufRef<'a>) -> ExpatBufRef<'a> {
         loop {
-            match self.byte_type(std::slice::from_raw_parts(ptr, self.MINBPC().max(4))) {
-                ByteType::LF | ByteType::CR | ByteType::S => ptr = ptr.add(self.MINBPC()),
-                _ => return ptr,
+            match self.byte_type(&buf[..]) {
+                ByteType::LF | ByteType::CR | ByteType::S => buf = buf.inc_start(self.MINBPC()),
+                _ => return buf,
             }
         }
     }

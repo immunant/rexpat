@@ -4308,7 +4308,7 @@ impl XML_ParserStruct {
                     tag.name.prefix = ptr::null();
                     let mut fromBuf: ExpatBufRef = buf.inc_start((*enc).minBytesPerChar());
                     tag.rawName = fromBuf.as_ptr();
-                    tag.rawNameLength = (*enc).nameLength(tag.rawName);
+                    tag.rawNameLength = (*enc).nameLength(fromBuf);
                     fromBuf = fromBuf.with_len(tag.rawNameLength as usize);
                     self.m_tagLevel += 1;
                     // let mut rawNameEnd: *const c_char =
@@ -4376,7 +4376,7 @@ impl XML_ParserStruct {
 
                     let successful = self.m_tempPool.store_c_string(
                         enc,
-                        rawName.with_len((*enc).nameLength(rawName.as_ptr()) as usize),
+                        rawName.with_len((*enc).nameLength(rawName) as usize),
                     );
                     if !successful {
                         return XML_Error::NO_MEMORY;
@@ -4436,7 +4436,7 @@ impl XML_ParserStruct {
                         self.m_tagStack = tag.parent.take();
 
                         let rawName_0 = buf.inc_start((*enc).minBytesPerChar() * 2);
-                        let len = (*enc).nameLength(rawName_0.as_ptr());
+                        let len = (*enc).nameLength(rawName_0);
                         if len != tag.rawNameLength
                             || memcmp(
                                 tag.rawName as *const c_void,
@@ -4794,14 +4794,10 @@ impl XML_ParserStruct {
             }
 
             /* add the name and value to the attribute list */
+            let att_name_buf = ExpatBufRef::new(currAtt.name, currAtt.valuePtr);
             let mut attId = match self.getAttributeId(
                 enc_type,
-                ExpatBufRef::new(
-                    currAtt.name,
-                    currAtt
-                        .name
-                        .offset((*enc).nameLength(currAtt.name) as isize),
-                ),
+                att_name_buf.with_len((*enc).nameLength(att_name_buf) as usize),
             ) {
                 Some(attId) => attId,
                 None => return XML_Error::NO_MEMORY,
@@ -5780,7 +5776,7 @@ impl XML_ParserStruct {
         mut isGeneralTextEntity: c_int,
         buf: ExpatBufRef,
     ) -> XML_Error {
-        let mut encodingName: *const c_char = ptr::null();
+        let mut encodingName = None;
         let mut storedEncName = ptr::null();
         let mut newEncoding: Option<*const ENCODING> = None;
         let mut version_buf = None;
@@ -5815,13 +5811,10 @@ impl XML_ParserStruct {
             /* XML_DTD */
         }
         if self.m_handlers.hasXmlDecl() {
-            if !encodingName.is_null() {
+            if let Some(encodingName) = encodingName {
                 let successful = self.m_temp2Pool.store_c_string(
                     &*self.m_encoding,
-                    ExpatBufRef::new(
-                        encodingName,
-                        encodingName.offset((*self.m_encoding).nameLength(encodingName) as isize),
-                    ),
+                    encodingName.with_len((*self.m_encoding).nameLength(encodingName) as usize),
                 );
                 if !successful {
                     return XML_Error::NO_MEMORY;
@@ -5855,20 +5848,16 @@ impl XML_ParserStruct {
                     || (*newEncoding).minBytesPerChar() == 2
                         && !ptr::eq(newEncoding, self.m_encoding)
                 {
-                    self.m_eventPtr.set(encodingName);
+                    self.m_eventPtr.set(encodingName.map_or_else(ptr::null, |x| x.as_ptr()));
                     return XML_Error::INCORRECT_ENCODING;
                 }
-                self.m_encoding = newEncoding
-            } else if !encodingName.is_null() {
+                self.m_encoding = newEncoding;
+            } else if let Some(encodingName) = encodingName {
                 let mut result: XML_Error = XML_Error::NONE;
                 if storedEncName.is_null() {
                     let successful = self.m_temp2Pool.store_c_string(
                         &*self.m_encoding,
-                        ExpatBufRef::new(
-                            encodingName,
-                            encodingName
-                                .offset((*self.m_encoding).nameLength(encodingName) as isize),
-                        ),
+                        encodingName.with_len((*self.m_encoding).nameLength(encodingName) as usize),
                     );
 
                     if !successful {
@@ -5884,7 +5873,7 @@ impl XML_ParserStruct {
                 );
                 self.m_temp2Pool.clear();
                 if result == XML_Error::UNKNOWN_ENCODING {
-                    self.m_eventPtr.set(encodingName);
+                    self.m_eventPtr.set(encodingName.as_ptr());
                 }
                 return result;
             }
@@ -8279,10 +8268,11 @@ unsafe extern "C" fn reportProcessingInstruction(
     }
     let enc = (*parser).encoding(enc_type);
     buf = buf.inc_start((*enc).minBytesPerChar() * 2);
-    let tem = buf.inc_start((*enc).nameLength(buf.as_ptr()) as usize);
+    let buf_name_len = (*enc).nameLength(buf).try_into().unwrap();
+    let tem = buf.inc_start(buf_name_len);
     let successful = (*parser)
         .m_tempPool
-        .store_c_string(enc, buf.with_len((*enc).nameLength(buf.as_ptr()) as usize));
+        .store_c_string(enc, buf.with_len(buf_name_len));
 
     if !successful {
         return 0;
@@ -8291,9 +8281,8 @@ unsafe extern "C" fn reportProcessingInstruction(
     let successful = (*parser).m_tempPool.store_c_string(
         enc,
         // TODO(SJC): fix this ugliness
-        ExpatBufRef::new(
-            (*enc).skipS(tem.as_ptr()),
-            tem.end().offset(-(((*enc).minBytesPerChar() * 2) as isize)),
+        (*enc).skipS(tem).with_end(
+            tem.end().offset(-(((*enc).minBytesPerChar() * 2) as isize))
         ),
     );
     if !successful {

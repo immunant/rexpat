@@ -269,9 +269,9 @@ pub trait XmlEncoding {
         ptr2: &[libc::c_char],
     ) -> bool;
 
-    unsafe fn nameLength(&self, ptr: *const libc::c_char) -> libc::c_int;
+    fn nameLength(&self, buf: ExpatBufRef) -> libc::c_int;
 
-    unsafe fn skipS(&self, ptr: *const libc::c_char) -> *const libc::c_char;
+    fn skipS<'a>(&self, buf: ExpatBufRef<'a>) -> ExpatBufRef<'a>;
 
     fn getAtts(
         &self,
@@ -2160,12 +2160,12 @@ impl XmlEncoding for InitEncoding {
         false
     }
 
-    unsafe fn nameLength(&self, _ptr: *const libc::c_char) -> libc::c_int {
+    fn nameLength(&self, _ptr: ExpatBufRef) -> libc::c_int {
         0
     }
 
-    unsafe fn skipS(&self, _ptr: *const libc::c_char) -> *const libc::c_char {
-        std::ptr::null()
+    fn skipS<'a>(&self, _buf: ExpatBufRef<'a>) -> ExpatBufRef<'a> {
+        ExpatBufRef::empty()
     }
 
     fn getAtts(
@@ -2604,7 +2604,7 @@ pub fn XmlParseXmlDeclNS<'a>(
     mut buf: ExpatBufRef<'a>,
     mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: &mut *const c_char,
+    mut encodingName: &mut Option<ExpatBufRef<'a>>,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: &mut c_int,
 ) -> c_int {
@@ -2627,7 +2627,7 @@ pub fn XmlParseXmlDecl<'a>(
     mut buf: ExpatBufRef<'a>,
     mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: &mut *const c_char,
+    mut encodingName: &mut Option<ExpatBufRef<'a>>,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: &mut c_int,
 ) -> c_int {
@@ -2988,7 +2988,7 @@ fn doParseXmlDecl<'a>(
     buf: ExpatBufRef<'a>,
     mut badPtr: &Cell<*const c_char>,
     mut versionBuf: &mut Option<ExpatBufRef<'a>>,
-    mut encodingName: &mut *const c_char,
+    mut encodingName: &mut Option<ExpatBufRef<'a>>,
     mut encoding: &mut Option<*const ENCODING>,
     mut standalone: &mut c_int,
 ) -> c_int {
@@ -3047,7 +3047,7 @@ fn doParseXmlDecl<'a>(
             badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
             return 0;
         }
-        *encodingName = val_buf.unwrap().as_ptr();
+        *encodingName = val_buf;
         *encoding = unsafe { encodingFinder.expect("non-null function pointer")(
             enc,
             val_buf
