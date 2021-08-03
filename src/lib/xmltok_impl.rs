@@ -1,6 +1,5 @@
 use libc::{c_char, c_int, c_long, size_t};
 use std::cell::Cell;
-use std::convert::TryInto;
 use super::xmltok::{checkCharRefNumber, Attribute, Position};
 use super::xmltok::{XML_Convert_Result, XmlEncoding, XmlEncodingImpl, XML_TOK};
 use crate::ascii_h::*;

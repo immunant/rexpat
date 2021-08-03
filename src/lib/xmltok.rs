@@ -876,12 +876,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
 
     #[inline]
     fn is_name_char_minbpc(&self, p: &[c_char]) -> bool {
-        unsafe { UCS2_GET_NAMING!(namePages, p[1], p[0]) != 0 }
+        UCS2_GET_NAMING!(namePages, p[1], p[0]) != 0
     }
 
     #[inline]
     fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool {
-        unsafe { UCS2_GET_NAMING!(nmstrtPages, p[1], p[0]) != 0 }
+        UCS2_GET_NAMING!(nmstrtPages, p[1], p[0]) != 0
     }
 
     #[inline]
@@ -1048,12 +1048,12 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
 
     #[inline]
     fn is_name_char_minbpc(&self, p: &[c_char]) -> bool {
-        unsafe { UCS2_GET_NAMING!(namePages, p[0], p[1]) != 0 }
+        UCS2_GET_NAMING!(namePages, p[0], p[1]) != 0
     }
 
     #[inline]
     fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool {
-        unsafe { UCS2_GET_NAMING!(nmstrtPages, p[0], p[1]) != 0 }
+        UCS2_GET_NAMING!(nmstrtPages, p[0], p[1]) != 0
     }
 
     #[inline]

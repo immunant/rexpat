@@ -61,7 +61,7 @@ pub use crate::lib::xmltok::*;
 use crate::string_pool::{StringPool, StringPoolCellSlice, StringPoolSlice};
 pub use libc::INT_MAX;
 use libc::{
-    c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, memcmp, memcpy, memmove, memset,
+    c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, memcmp, memcpy, memset,
     size_t,
 };
 use num_traits::{FromPrimitive, ToPrimitive};
