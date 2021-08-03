@@ -1783,8 +1783,7 @@ pub struct DefaultAttribute {
 pub struct Entity {
     // TODO: get rid of the RefCell
     name: RefCell<Option<StringPoolSlice>>,
-    pub textPtr: Cell<*const XML_Char>,
-    pub textLen: Cell<c_int>,
+    textPtr: RefCell<Option<StringPoolSlice>>,
     pub processed: Cell<c_int>,
     pub systemId: Cell<*const XML_Char>,
     pub base: Cell<*const XML_Char>,
@@ -1799,8 +1798,7 @@ impl Entity {
     fn new(name: StringPoolSlice) -> Self {
         Entity {
             name: RefCell::new(Some(name)),
-            textPtr: Cell::new(ptr::null()),
-            textLen: Cell::new(0),
+            textPtr: RefCell::new(None),
             processed: Cell::new(0),
             systemId: Cell::new(ptr::null()),
             base: Cell::new(ptr::null()),
@@ -2312,6 +2310,7 @@ impl XML_ParserStruct {
         while let Some(freeEntity) = freeEntities {
             if let Some(ref mut entity) = freeEntity.entity {
                 *entity.name.borrow_mut() = None;
+                *entity.textPtr.borrow_mut() = None;
             }
             freeEntities = freeEntity.next.as_mut();
         }
@@ -4235,7 +4234,7 @@ impl XML_ParserStruct {
                             if !entity.notation.get().is_null() {
                                 return XML_Error::BINARY_ENTITY_REF;
                             }
-                            if !entity.textPtr.get().is_null() {
+                            if !entity.textPtr.borrow().is_none() {
                                 let mut result: XML_Error = XML_Error::NONE;
                                 if !self.m_defaultExpandInternalEntities {
                                     let skippedHandlerRan = self.m_handlers.skippedEntity(
@@ -6156,7 +6155,7 @@ impl XML_ParserStruct {
         if entity.open.get() {
             return Some(XML_Error::RECURSIVE_ENTITY_REF);
         }
-        if !entity.textPtr.get().is_null() {
+        if !entity.textPtr.borrow().is_none() {
             let mut result_4 = XML_Error::NONE;
             let mut betweenDecl = if role == XML_ROLE::PARAM_ENTITY_REF {
                 true
@@ -6718,25 +6717,21 @@ impl XML_ParserStruct {
 
                         if !self.m_declEntity.is_none() {
                             let mut declEntity = self.m_declEntity.as_deref().unwrap();
-                            declEntity
-                                .textLen
-                                .set(self.m_dtd.entityValuePool.len() as c_int);
-                            declEntity
-                                .textPtr
-                                .set(self.m_dtd.entityValuePool.finish().as_ptr());
+                            let text_slice = self.m_dtd.entityValuePool.finish();
+                            *declEntity.textPtr.borrow_mut() = Some(text_slice.clone());
                             if self.m_handlers.hasEntityDecl() {
                                 self.eventEndPP(enc_type).set(buf.as_ptr());
                                 self.m_handlers.entityDecl(
                                     declEntity.name.borrow().as_ref().unwrap().as_ptr(),
                                     declEntity.is_param.get() as c_int,
-                                    declEntity.textPtr.get(),
-                                    declEntity.textLen.get(),
+                                    text_slice.as_ptr(),
+                                    text_slice.len().try_into().unwrap(),
                                     self.m_curBase,
                                     ptr::null(),
                                     ptr::null(),
                                     ptr::null(),
                                 );
-                                handleDefault = false
+                                handleDefault = false;
                             }
                         } else {
                             self.m_dtd.entityValuePool.discard();
@@ -7587,10 +7582,8 @@ impl XML_ParserStruct {
         openEntity.internalEventEndPtr.set(ptr::null());
         openEntity.next = self.m_openInternalEntities.take();
         self.m_openInternalEntities = Some(openEntity);
-        let text_buf = ExpatBufRef::new(
-            entity.textPtr.get() as *mut c_char,
-            entity.textPtr.get().add(entity.textLen.get() as usize) as *mut c_char,
-        );
+        let text_slice = entity.textPtr.borrow();
+        let text_buf = ExpatBufRef::from(text_slice.as_deref().unwrap());
         /* Set a safe default value in case 'next' does not get set */
         next = text_buf.as_ptr();
         if entity.is_param.get() {
@@ -7691,10 +7684,9 @@ unsafe extern "C" fn internalEntityProcessor(
         None => return XML_Error::UNEXPECTED_STATE,
     };
     let mut entity = openEntity.entity.as_deref().unwrap();
-    let text_buf = ExpatBufRef::new(
-        (entity.textPtr.get() as *mut c_char).offset(entity.processed.get() as isize),
-        entity.textPtr.get().offset(entity.textLen.get() as isize) as *mut c_char,
-    );
+    let text_slice = entity.textPtr.borrow();
+    let text_buf = ExpatBufRef::from(text_slice.as_deref().unwrap())
+        .inc_start(entity.processed.get().try_into().unwrap());
     /* Set a safe default value in case 'next' does not get set */
     next = text_buf.as_ptr();
     if entity.is_param.get() {
@@ -7727,7 +7719,7 @@ unsafe extern "C" fn internalEntityProcessor(
         if text_buf.end() != next && (*parser).m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
             entity
                 .processed
-                .set(next.wrapping_offset_from(entity.textPtr.get() as *mut c_char) as c_int);
+                .set(next.wrapping_offset_from(entity.textPtr.borrow().as_deref().unwrap().as_ptr()) as i32);
             return result;
         } else {
             entity.open.set(false);
@@ -7971,24 +7963,20 @@ unsafe extern "C" fn appendAttributeValue(
                             }
                             return XML_Error::BINARY_ENTITY_REF;
                         }
-                        if entity.textPtr.get().is_null() {
+                        if entity.textPtr.borrow().is_none() {
                             if !enc_type.is_internal() {
                                 (*parser).m_eventPtr.set(buf.as_ptr());
                             }
                             return XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF;
                         } else {
                             let mut result: XML_Error = XML_Error::NONE;
-                            let mut textEnd: *const XML_Char =
-                                entity.textPtr.get().offset(entity.textLen.get() as isize);
+                            let text_slice = entity.textPtr.borrow();
                             entity.open.set(true);
                             result = appendAttributeValue(
                                 parser,
                                 EncodingType::Internal,
                                 isCdata,
-                                ExpatBufRef::new(
-                                    entity.textPtr.get() as *const c_char,
-                                    textEnd as *const c_char,
-                                ),
+                                text_slice.as_deref().unwrap().into(),
                                 pool,
                             );
                             entity.open.set(false);
@@ -8109,15 +8097,12 @@ unsafe extern "C" fn storeEntityValue(
                                     .set((*parser).m_dtd.standalone.get());
                             }
                         } else {
+                            let text_slice = entity.textPtr.borrow();
                             entity.open.set(true);
                             result = storeEntityValue(
                                 parser,
                                 EncodingType::Internal,
-                                ExpatBufRef::new(
-                                    entity.textPtr.get() as *mut c_char,
-                                    entity.textPtr.get().offset(entity.textLen.get() as isize)
-                                        as *mut c_char,
-                                ),
+                                text_slice.as_deref().unwrap().into(),
                             );
                             entity.open.set(false);
                             if result as u64 != 0 {
@@ -8797,12 +8782,15 @@ unsafe extern "C" fn copyEntityTable(
                 newE.publicId.set(tem.as_ptr());
             }
         } else {
-            if !newPool.copy_c_string_n(oldE.textPtr.get(), oldE.textLen.get()) {
+            let text_slice_ref = oldE.textPtr.borrow();
+            let text_slice = text_slice_ref.as_deref().unwrap();
+            if !newPool.copy_c_string_n(
+                text_slice.as_ptr(),
+                text_slice.len().try_into().unwrap(),
+            ) {
                 return 0;
             }
-            let tem_0 = newPool.finish();
-            newE.textPtr.set(tem_0.as_ptr());
-            newE.textLen.set(oldE.textLen.get());
+            *newE.textPtr.borrow_mut() = Some(newPool.finish());
         }
         if !oldE.notation.get().is_null() {
             if !newPool.copy_c_string(oldE.notation.get()) {
