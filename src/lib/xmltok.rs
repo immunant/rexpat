@@ -233,34 +233,34 @@ pub trait XmlEncoding {
     fn prologTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
     fn contentTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
     fn cdataSectionTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
     fn ignoreSectionTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
 
     // literalScanners[2]
     fn attributeValueTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
     fn entityValueTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK;
 
     fn nameMatchesAscii(
@@ -320,13 +320,13 @@ pub trait XmlEncoding {
         &self,
         state: XML_STATE,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK {
         match state {
-            XML_STATE::PROLOG => self.prologTok(buf, nextTokPtr),
-            XML_STATE::CONTENT => self.contentTok(buf, nextTokPtr),
-            XML_STATE::CDATA_SECTION => self.cdataSectionTok(buf, nextTokPtr),
-            XML_STATE::IGNORE_SECTION => self.ignoreSectionTok(buf, nextTokPtr),
+            XML_STATE::PROLOG => self.prologTok(buf, nextTokIdx),
+            XML_STATE::CONTENT => self.contentTok(buf, nextTokIdx),
+            XML_STATE::CDATA_SECTION => self.cdataSectionTok(buf, nextTokIdx),
+            XML_STATE::IGNORE_SECTION => self.ignoreSectionTok(buf, nextTokIdx),
         }
     }
 
@@ -335,11 +335,11 @@ pub trait XmlEncoding {
         &self,
         literal_type: c_int,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK {
         match literal_type {
-            XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(buf, nextTokPtr),
-            XML_ENTITY_VALUE_LITERAL => self.entityValueTok(buf, nextTokPtr),
+            XML_ATTRIBUTE_VALUE_LITERAL => self.attributeValueTok(buf, nextTokIdx),
+            XML_ENTITY_VALUE_LITERAL => self.entityValueTok(buf, nextTokIdx),
             _ => panic!("Unexpected literal type {}", literal_type),
         }
     }
@@ -1978,7 +1978,7 @@ impl InitEncoding {
         &self,
         mut state: XML_STATE,
         buf: ExpatBufRef,
-        mut nextTokPtr: &mut *const c_char,
+        mut nextTokIdx: &mut usize,
     ) -> XML_TOK {
         if buf.is_empty() {
             return XML_TOK::NONE;
@@ -2007,7 +2007,7 @@ impl InitEncoding {
                 65279 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
-                        *nextTokPtr = buf[2..].as_ptr();
+                        *nextTokIdx = 2;
                         unsafe { *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize]; }
                         return XML_TOK::BOM;
                     }
@@ -2019,13 +2019,13 @@ impl InitEncoding {
                          && state == XML_STATE::CONTENT)
                     {
                         *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
-                        return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
+                        return (**self.encPtr).xmlTok(state, buf, nextTokIdx);
                     }
                 }
                 65534 => {
                     if !(self.encoding_index as c_int == ISO_8859_1_ENC && state == XML_STATE::CONTENT)
                     {
-                        *nextTokPtr = buf[2..].as_ptr();
+                        *nextTokIdx = 2;
                         unsafe { *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize]; }
                         return XML_TOK::BOM;
                     }
@@ -2051,7 +2051,7 @@ impl InitEncoding {
                             return XML_TOK::PARTIAL;
                         }
                         if buf[2] as c_uchar as c_int == 0xbf {
-                            *nextTokPtr = buf[3..].as_ptr();
+                            *nextTokIdx = 3;
                             unsafe { *self.encPtr = &*self.encoding_table[UTF_8_ENC as usize]; }
                             return XML_TOK::BOM;
                         }
@@ -2069,7 +2069,7 @@ impl InitEncoding {
                              && self.encoding_index as c_int == UTF_16LE_ENC)
                         {
                             *self.encPtr = &*self.encoding_table[UTF_16BE_ENC as usize];
-                            return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
+                            return (**self.encPtr).xmlTok(state, buf, nextTokIdx);
                         }
                     } else if buf[1] as c_int == '\u{0}' as i32 {
                         /* We could recover here in the case:
@@ -2083,7 +2083,7 @@ impl InitEncoding {
                          */
                         if !(state == XML_STATE::CONTENT) {
                             *self.encPtr = &*self.encoding_table[UTF_16LE_ENC as usize];
-                            return (**self.encPtr).xmlTok(state, buf, nextTokPtr);
+                            return (**self.encPtr).xmlTok(state, buf, nextTokIdx);
                         }
                     }
                 }
@@ -2091,7 +2091,7 @@ impl InitEncoding {
         }
         unsafe {
             *self.encPtr = &*self.encoding_table[self.encoding_index as c_int as usize];
-            (**self.encPtr).xmlTok(state, buf, nextTokPtr)
+            (**self.encPtr).xmlTok(state, buf, &mut nextTokIdx)
         }
     }
 
@@ -2102,36 +2102,36 @@ impl XmlEncoding for InitEncoding {
     fn prologTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK {
         self.initScan(
             XML_STATE::PROLOG,
             buf,
-            nextTokPtr,
+            nextTokIdx,
         )
     }
     fn contentTok(
         &self,
         buf: ExpatBufRef,
-        nextTokPtr: &mut *const libc::c_char,
+        nextTokIdx: &mut usize,
     ) -> XML_TOK {
         self.initScan(
             XML_STATE::CONTENT,
             buf,
-            nextTokPtr,
+            nextTokIdx,
         )
     }
     fn cdataSectionTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: &mut *const libc::c_char,
+        _nextTokIdx: &mut usize,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
     fn ignoreSectionTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: &mut *const libc::c_char,
+        _nextTokIdx: &mut usize,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
@@ -2140,14 +2140,14 @@ impl XmlEncoding for InitEncoding {
     fn attributeValueTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: &mut *const libc::c_char,
+        _nextTokIdx: &mut usize,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
     fn entityValueTok(
         &self,
         _buf: ExpatBufRef,
-        _nextTokPtr: &mut *const libc::c_char,
+        _nextTokIdx: &mut usize,
     ) -> XML_TOK {
         XML_TOK::INVALID
     }
