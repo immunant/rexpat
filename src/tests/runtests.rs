@@ -15422,7 +15422,7 @@ unsafe extern "C" fn test_misc_alloc_create_parser() {
     ALLOCATOR_MODE = AllocatorMode::Duff;
     let mut i: c_uint = 0;
     // REXPAT: String pool allocates a bit more now, was 10
-    let max_alloc_count: c_uint = 20;
+    let max_alloc_count: c_uint = 22;
     /* Something this simple shouldn't need more than 10 allocations */
     i = 0;
     while i < max_alloc_count {
@@ -16828,7 +16828,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     // REXPAT: String pool allocates a bit more now, was 50
-    let alloc_test_max_repeats: c_int = 56;
+    let alloc_test_max_repeats: c_int = 58;
     i = 0;
     while i < alloc_test_max_repeats {
         allocation_count = -1;
