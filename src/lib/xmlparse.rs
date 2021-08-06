@@ -3980,7 +3980,7 @@ pub unsafe extern "C" fn MOZ_XML_ProcessingEntityValue(parser: XML_Parser) -> XM
    permanent location, since the parse buffer is about to be discarded.
 */
 impl XML_ParserStruct {
-    unsafe fn storeRawNames(&mut self) -> XML_Bool {
+    fn storeRawNames(&mut self) -> XML_Bool {
         let mut tStk = &mut self.m_tagStack;
         while let Some(tag) = tStk {
             /* Stop if already stored.  Since m_tagStack is a stack, we can stop
@@ -4018,7 +4018,7 @@ fn contentProcessor(
         !(*parser).m_parsingStatus.finalBuffer,
     ) };
     if result == XML_Error::NONE {
-        if !unsafe { (*parser).storeRawNames() } {
+        if !(*parser).storeRawNames() {
             return XML_Error::NO_MEMORY;
         }
     }
@@ -4145,7 +4145,7 @@ fn externalEntityContentProcessor(
         !(*parser).m_parsingStatus.finalBuffer,
     ) };
     if result == XML_Error::NONE {
-        if !unsafe { (*parser).storeRawNames() } {
+        if !(*parser).storeRawNames() {
             return XML_Error::NO_MEMORY;
         }
     }
