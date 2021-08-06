@@ -355,6 +355,11 @@ impl From<OwningRef<Rc<Vec<c_char>>, [c_char]>> for ExpatSliceRc<c_char> {
         ExpatSliceRc(or.erase_owner())
     }
 }
+impl From<Rc<Vec<c_char>>> for ExpatSliceRc<c_char> {
+    fn from(rc: Rc<Vec<c_char>>) -> ExpatSliceRc<c_char> {
+        ExpatSliceRc(RcRef::new(rc).map(Vec::as_slice).erase_owner())
+    }
+}
 
 /// Create a null-terminated XML_Char array from ASCII_ literals
 macro_rules! XML_STR {
@@ -1308,8 +1313,7 @@ impl Default for TagName {
 
 pub enum TagNameString {
     None,
-    // TODO(rexpat): get rid of this one
-    Ptr(*const XML_Char),
+    Rc(ExpatSliceRc),
     BindingUri(Rc<Binding>),
 }
 
@@ -1317,7 +1321,7 @@ impl TagNameString {
     fn as_ptr(&self) -> *const XML_Char {
         match *self {
             TagNameString::None => ptr::null(),
-            TagNameString::Ptr(ptr) => ptr,
+            TagNameString::Rc(ref rc) => rc.as_ptr(),
             TagNameString::BindingUri(ref b) => b.uri.borrow().as_ptr(),
         }
     }
@@ -1328,10 +1332,8 @@ impl TagNameString {
     {
         match *self {
             TagNameString::None => f(&[]),
-            TagNameString::Ptr(ptr) => unsafe {
-                let len = strlen(ptr) as usize;
-                let sl = std::slice::from_raw_parts(ptr, len + 1);
-                f(sl)
+            TagNameString::Rc(ref rc) => {
+                f(&rc[..])
             },
             TagNameString::BindingUri(ref b) => {
                 let r = b.uri.borrow();
@@ -1343,7 +1345,7 @@ impl TagNameString {
 
 pub enum TagNameLocalPart {
     None,
-    Ptr(*const XML_Char),
+    Rc(ExpatSliceRc),
     BindingUri(Rc<Binding>, usize),
 }
 
@@ -1351,7 +1353,7 @@ impl TagNameLocalPart {
     fn as_ptr(&self) -> *const XML_Char {
         match *self {
             TagNameLocalPart::None => ptr::null(),
-            TagNameLocalPart::Ptr(ptr) => ptr,
+            TagNameLocalPart::Rc(ref rc) => rc.as_ptr(),
             TagNameLocalPart::BindingUri(ref b, off) => b.uri.borrow()[off..].as_ptr(),
         }
     }
@@ -1359,14 +1361,15 @@ impl TagNameLocalPart {
     fn from_tag_name(str_0: &TagNameString, skip_to_colon: bool) -> TagNameLocalPart {
         match str_0 {
             TagNameString::None => TagNameLocalPart::None,
-            TagNameString::Ptr(mut ptr) => unsafe {
+            TagNameString::Rc(ref rc) => {
+                let mut offset = 0;
                 if skip_to_colon {
-                    while *ptr != ASCII_COLON {
-                        ptr = ptr.add(1);
+                    while rc[offset] != ASCII_COLON {
+                        offset += 1;
                     }
-                    ptr = ptr.add(1);
+                    offset += 1;
                 }
-                TagNameLocalPart::Ptr(ptr)
+                TagNameLocalPart::Rc(rc.clone().map(|sl| &sl[offset..]))
             },
             TagNameString::BindingUri(b) => {
                 let off = if skip_to_colon {
@@ -2373,6 +2376,11 @@ impl XML_ParserStruct {
         let mut tStk = self.m_tagStack.take();
         while let Some(mut tag) = tStk {
             self.moveToFreeBindingList(tag.bindings.take());
+
+            // Clear `str_0` and `localPart` to reduce
+            // their pointees' reference counts
+            tag.name.str_0 = TagNameString::None;
+            tag.name.localPart = TagNameLocalPart::None;
 
             let new_parent = self.m_freeTagList.take();
             tStk = std::mem::replace(&mut tag.parent, new_parent);
@@ -4388,7 +4396,7 @@ impl XML_ParserStruct {
                     }
                     tag_buf[convLen] = '\u{0}' as XML_Char;
                     tag_buf.truncate(convLen + 1);
-                    tag.name.str_0 = TagNameString::Ptr(tag_buf.as_ptr());
+                    tag.name.str_0 = TagNameString::Rc(ExpatSliceRc::from(Rc::clone(&tag.buf)));
                     result_0 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings);
                     if result_0 as u64 != 0 {
                         return result_0;
@@ -4422,10 +4430,10 @@ impl XML_ParserStruct {
                     if !successful {
                         return XML_Error::NO_MEMORY;
                     }
-                    let name_0_str_0 = self.m_tempPool.finish().as_ptr();
+                    let name_0_str_0 = self.m_tempPool.finish();
 
                     let mut name_0 = TagName {
-                        str_0: TagNameString::Ptr(name_0_str_0),
+                        str_0: TagNameString::Rc(name_0_str_0.into()),
                         localPart: TagNameLocalPart::None,
                         prefix: ptr::null(),
                         strLen: 0,
@@ -4455,6 +4463,9 @@ impl XML_ParserStruct {
                     if noElmHandlers && self.m_handlers.hasDefault() {
                         reportDefault(self, enc_type, buf.as_buf_ref().with_end(next));
                     }
+
+                    // Drop active Rc's to m_tempPool
+                    drop(name_0);
 
                     self.m_nsAtts.clear();
                     self.m_tempPool.clear();
@@ -4573,7 +4584,7 @@ impl XML_ParserStruct {
                         }
 
                         // Clear `str_0` and `localPart` to reduce
-                        // their pointee's reference counts
+                        // their pointees' reference counts
                         tag.name.str_0 = TagNameString::None;
                         tag.name.localPart = TagNameLocalPart::None;
 
