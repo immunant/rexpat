@@ -1259,25 +1259,27 @@ pub struct Tag {
     /// tagName in the API encoding
     pub name: TagName,
 
-    /// buffer for name components
-    pub buf: *mut c_char,
+    /// buffers for name components
+    pub buf: Rc<Vec<XML_Char>>,
+    pub rawNameBuf: Rc<Vec<c_char>>,
 
-    /// end of the buffer
-    pub bufEnd: *mut c_char,
     pub bindings: Ptr<Binding>,
 }
 
-impl Default for Tag {
-    fn default() -> Tag {
-        Tag {
+impl Tag {
+    fn try_new() -> Result<Tag, ()> {
+        let mut buf = vec![];
+        buf.try_reserve(INIT_TAG_BUF_SIZE).map_err(|_| ())?;
+
+        Ok(Tag {
             parent: None,
             rawName: ptr::null(),
             rawNameLength: 0,
             name: TagName::default(),
-            buf: ptr::null_mut(),
-            bufEnd: ptr::null_mut(),
+            buf: Rc::try_new(buf).map_err(|_| ())?,
+            rawNameBuf: Rc::try_new(vec![]).map_err(|_| ())?,
             bindings: None,
-        }
+        })
     }
 }
 
@@ -1987,7 +1989,7 @@ pub(crate) use unicode_defines::*;
 
 /* WFC: PE Between Declarations */
 
-pub const INIT_TAG_BUF_SIZE: c_int = 32; /* must be a multiple of sizeof(XML_Char) */
+pub const INIT_TAG_BUF_SIZE: usize = 32; /* must be a multiple of sizeof(XML_Char) */
 
 pub const INIT_DATA_BUF_SIZE: c_int = 1024;
 
@@ -2033,16 +2035,6 @@ macro_rules! FREE {
         // FIXME: get the actual layout somehow
         alloc::dealloc($ptr as *mut u8, Layout::new::<u8>())
     };
-}
-
-// TODO: move this closer to the definition of `tag`,
-// it's only here because it needs the definition of `FREE`
-impl Drop for Tag {
-    fn drop(&mut self) {
-        unsafe {
-            FREE!(self.buf);
-        }
-    }
 }
 
 /* Constructs a new parser; encoding is the encoding specified by the
@@ -3958,60 +3950,22 @@ impl XML_ParserStruct {
     unsafe fn storeRawNames(&mut self) -> XML_Bool {
         let mut tStk = &mut self.m_tagStack;
         while let Some(tag) = tStk {
-            let mut bufSize: c_int = 0;
-            let mut nameLen: c_int = (::std::mem::size_of::<XML_Char>() as c_ulong)
-                .wrapping_mul((tag.name.strLen + 1) as c_ulong)
-                as c_int;
-            let mut rawNameBuf: *mut c_char = tag.buf.offset(nameLen as isize);
             /* Stop if already stored.  Since m_tagStack is a stack, we can stop
             at the first entry that has already been copied; everything
             below it in the stack is already been accounted for in a
             previous call to this function.
             */
-            if tag.rawName == rawNameBuf as *const c_char {
+            if !tag.rawNameBuf.is_empty() {
                 break;
             }
-            /* For re-use purposes we need to ensure that the
-            size of tag->buf is a multiple of sizeof(XML_Char).
-            */
-            bufSize = (nameLen as c_ulong)
-                .wrapping_add(
-                    round_up(tag.rawNameLength as usize, mem::size_of::<XML_Char>()) as c_ulong,
-                ) as c_int;
-            if bufSize as c_long > tag.bufEnd.wrapping_offset_from(tag.buf) as c_long {
-                let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
-                if temp.is_null() {
-                    return false;
-                }
-                /* if tag->name.str points to tag->buf (only when namespace
-                processing is off) then we have to update it
-                */
-                if tag.name.str_0.as_ptr() == tag.buf as *const XML_Char {
-                    tag.name.str_0 = TagNameString::Ptr(temp as *const XML_Char);
-                }
-                /* if tag->name.localPart is set (when namespace processing is on)
-                then update it as well, since it will always point into tag->buf
-                */
-                if !tag.name.localPart.as_ptr().is_null() {
-                    tag.name.localPart = TagNameLocalPart::Ptr(
-                        temp.offset(
-                            tag.name
-                                .localPart
-                                .as_ptr()
-                                .wrapping_offset_from(tag.buf as *const XML_Char),
-                        ) as *const XML_Char,
-                    );
-                } /* XmlContentTok doesn't always set the last arg */
-                tag.buf = temp;
-                tag.bufEnd = temp.offset(bufSize as isize);
-                rawNameBuf = temp.offset(nameLen as isize)
+
+            let mut raw_name_buf = Rc::get_mut(&mut tag.rawNameBuf).unwrap();
+            let raw_name_length = tag.rawNameLength.try_into().unwrap();
+            if raw_name_buf.try_reserve(raw_name_length).is_err() {
+                return false;
             }
-            memcpy(
-                rawNameBuf as *mut c_void,
-                tag.rawName as *const c_void,
-                tag.rawNameLength as usize,
-            );
-            tag.rawName = rawNameBuf;
+            raw_name_buf.extend_from_slice(slice::from_raw_parts(tag.rawName, raw_name_length));
+            tag.rawName = raw_name_buf.as_ptr();
             tStk = &mut tag.parent;
         }
         true
@@ -4385,19 +4339,17 @@ impl XML_ParserStruct {
                     let mut tag = match self.m_freeTagList.take() {
                         Some(mut tag) => {
                             self.m_freeTagList = tag.parent.take();
+
+                            // Clear the raw name buffer to mark that it's not in use
+                            Rc::get_mut(&mut tag.rawNameBuf).unwrap().clear();
+
                             tag
                         }
                         None => {
-                            let mut tag = match Box::try_new(Tag::default()) {
+                            let mut tag = match Tag::try_new().and_then(|x| Box::try_new(x).map_err(|_| ())) {
                                 Ok(tag) => tag,
                                 Err(_) => return XML_Error::NO_MEMORY,
                             };
-
-                            tag.buf = MALLOC![c_char; INIT_TAG_BUF_SIZE];
-                            if tag.buf.is_null() {
-                                return XML_Error::NO_MEMORY;
-                            }
-                            tag.bufEnd = tag.buf.offset(INIT_TAG_BUF_SIZE as isize);
 
                             tag
                         }
@@ -4410,41 +4362,33 @@ impl XML_ParserStruct {
                     tag.rawNameLength = (*enc).nameLength(fromBuf);
                     fromBuf = fromBuf.with_len(tag.rawNameLength as usize);
                     self.m_tagLevel += 1;
-                    // let mut rawNameEnd: *const c_char =
-                    //     tag.rawName.offset(tag.rawNameLength as isize);
-                    to_buf = ExpatBufRefMut::new(
-                        tag.buf as *mut ICHAR,
-                        (tag.bufEnd as *mut ICHAR).offset(-1),
-                    );
+
+                    let mut tag_buf = Rc::get_mut(&mut tag.buf).unwrap();
+                    let mut tag_buf_len = tag_buf.capacity();
+                    tag_buf.resize(tag_buf_len, 0);
                     let mut convLen = 0;
                     loop {
                         let mut bufSize: c_int = 0;
-                        let (convert_res, from_count, to_count) =
-                            XmlConvert!(enc, fromBuf, &mut to_buf[..]);
+                        let (convert_res, from_count, to_count)  =
+                            XmlConvert!(enc, fromBuf, &mut tag_buf[convLen..tag_buf_len - 1]);
                         fromBuf = fromBuf.inc_start(from_count);
-                        to_buf.inc_start(to_count);
-                        convLen += c_int::try_from(to_count).unwrap();
+                        convLen += to_count;
                         if fromBuf.is_empty()
                             || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                         {
-                            tag.name.strLen = convLen;
+                            tag.name.strLen = convLen.try_into().unwrap();
                             break;
                         } else {
-                            bufSize = (tag.bufEnd.wrapping_offset_from(tag.buf) as c_int) << 1;
-                            let mut temp = REALLOC!(tag.buf => [c_char; bufSize]);
-                            if temp.is_null() {
+                            if tag_buf.try_reserve(tag_buf.capacity()).is_err() {
                                 return XML_Error::NO_MEMORY;
                             }
-                            tag.buf = temp;
-                            tag.bufEnd = temp.offset(bufSize as isize);
-                            to_buf = ExpatBufRefMut::new(
-                                (temp as *mut XML_Char).offset(convLen as isize),
-                                (tag.bufEnd as *mut XML_Char).offset(-1),
-                            );
+                            tag_buf_len = tag_buf.capacity();
+                            tag_buf.resize(tag_buf_len, 0);
                         }
                     }
-                    tag.name.str_0 = TagNameString::Ptr(tag.buf as *const XML_Char);
-                    *to_buf.as_mut_ptr() = '\u{0}' as XML_Char;
+                    tag_buf[convLen] = '\u{0}' as XML_Char;
+                    tag_buf.truncate(convLen + 1);
+                    tag.name.str_0 = TagNameString::Ptr(tag_buf.as_ptr());
                     result_0 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings);
                     if result_0 as u64 != 0 {
                         return result_0;

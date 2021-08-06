@@ -16828,7 +16828,7 @@ unsafe extern "C" fn test_alloc_external_entity() {
         b"<?xml version=\'1.0\'?>\n<!DOCTYPE doc SYSTEM \'http://example.org/doc.dtd\' [\n  <!ENTITY en SYSTEM \'http://example.org/entity.ent\'>\n]>\n<doc xmlns=\'http://example.org/ns1\'>\n&en;\n</doc>\x00".as_ptr() as *const c_char;
     let mut i: c_int = 0;
     // REXPAT: String pool allocates a bit more now, was 50
-    let alloc_test_max_repeats: c_int = 58;
+    let alloc_test_max_repeats: c_int = 60;
     i = 0;
     while i < alloc_test_max_repeats {
         allocation_count = -1;
@@ -19677,7 +19677,7 @@ unsafe extern "C" fn test_alloc_long_notation() {
         },
     ];
     let mut i: c_int = 0;
-    let max_alloc_count: c_int = 40;
+    let max_alloc_count: c_int = 42;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21142,7 +21142,7 @@ unsafe extern "C" fn test_nsalloc_long_systemid_in_ext() {
     ];
     let mut i: c_int = 0;
     // REXPAT: String pool allocates a bit more now, was 55
-    let max_alloc_count: c_int = 60;
+    let max_alloc_count: c_int = 64;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
@@ -21229,7 +21229,7 @@ unsafe extern "C" fn test_nsalloc_prefixed_element() {
     ];
     let mut i: c_int = 0;
     // REXPAT: String pool allocates a bit more now, was 70
-    let max_alloc_count: c_int = 76;
+    let max_alloc_count: c_int = 80;
     i = 0;
     while i < max_alloc_count {
         allocation_count = i as intptr_t;
