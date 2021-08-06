@@ -1372,14 +1372,6 @@ pub enum TagNameLocalPart {
 }
 
 impl TagNameLocalPart {
-    fn as_ptr(&self) -> *const XML_Char {
-        match *self {
-            TagNameLocalPart::None => ptr::null(),
-            TagNameLocalPart::Rc(ref rc) => rc.as_ptr(),
-            TagNameLocalPart::BindingUri(ref b, off) => b.uri.borrow()[off..].as_ptr(),
-        }
-    }
-
     fn with_slice<F, T>(&self, f: F) -> T
     where
         F: FnOnce(&[XML_Char]) -> T,
