@@ -411,123 +411,117 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
 
     #[inline]
     fn is_name_char(&self, p: &[c_char], n: usize) -> bool {
-        unsafe {
-            match n {
-                2 => {
-                    (namingBitmap[(((namePages
-                        [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
-                        as c_int)
-                        << 3)
-                        + ((p[0] as c_uchar as c_int & 3) << 1)
-                        + (p[1] as c_uchar as c_int >> 5 & 1))
-                        as usize]
-                        & (1) << (p[1] as c_uchar as c_int & 0x1f))
-                        != 0
-                }
-                3 => {
-                    (namingBitmap[(((namePages[(((p[0] as c_uchar as c_int & 0xf)
-                        << 4)
-                        + (p[1] as c_uchar as c_int >> 2 & 0xf))
-                        as usize] as c_int)
-                        << 3)
-                        + ((p[1] as c_uchar as c_int & 3) << 1)
-                        + (p[2] as c_uchar as c_int >> 5 & 1))
-                        as usize]
-                        & (1) << (p[2] as c_uchar as c_int & 0x1f))
-                        != 0
-                }
-                4 => false,
-                _ => panic!("Unexpected byte length"),
+        match n {
+            2 => {
+                (namingBitmap[(((namePages
+                    [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
+                    as c_int)
+                    << 3)
+                    + ((p[0] as c_uchar as c_int & 3) << 1)
+                    + (p[1] as c_uchar as c_int >> 5 & 1))
+                    as usize]
+                    & (1) << (p[1] as c_uchar as c_int & 0x1f))
+                    != 0
             }
+            3 => {
+                (namingBitmap[(((namePages[(((p[0] as c_uchar as c_int & 0xf)
+                    << 4)
+                    + (p[1] as c_uchar as c_int >> 2 & 0xf))
+                    as usize] as c_int)
+                    << 3)
+                    + ((p[1] as c_uchar as c_int & 3) << 1)
+                    + (p[2] as c_uchar as c_int >> 5 & 1))
+                    as usize]
+                    & (1) << (p[2] as c_uchar as c_int & 0x1f))
+                    != 0
+            }
+            4 => false,
+            _ => panic!("Unexpected byte length"),
         }
     }
     #[inline]
     fn is_nmstrt_char(&self, p: &[c_char], n: usize) -> bool {
-        unsafe {
-            match n {
-                2 => {
-                    (namingBitmap[(((nmstrtPages
-                        [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
-                        as c_int)
-                        << 3)
-                        + ((p[0] as c_uchar as c_int & 3) << 1)
-                        + (p[1] as c_uchar as c_int >> 5 & 1))
-                        as usize]
-                        & (1) << (p[1] as c_uchar as c_int & 0x1f))
-                        != 0
-                }
-                3 => {
-                    (namingBitmap[(((nmstrtPages[(((p[0] as c_uchar as c_int
-                        & 0xf)
-                        << 4)
-                        + (p[1] as c_uchar as c_int >> 2 & 0xf))
-                        as usize] as c_int)
-                        << 3)
-                        + ((p[1] as c_uchar as c_int & 3) << 1)
-                        + (p[2] as c_uchar as c_int >> 5 & 1))
-                        as usize]
-                        & (1) << (p[2] as c_uchar as c_int & 0x1f))
-                        != 0
-                }
-                4 => false,
-                _ => panic!("Unexpected byte length"),
+        match n {
+            2 => {
+                (namingBitmap[(((nmstrtPages
+                    [(p[0] as c_uchar as c_int >> 2 & 7) as usize]
+                    as c_int)
+                    << 3)
+                    + ((p[0] as c_uchar as c_int & 3) << 1)
+                    + (p[1] as c_uchar as c_int >> 5 & 1))
+                    as usize]
+                    & (1) << (p[1] as c_uchar as c_int & 0x1f))
+                    != 0
             }
+            3 => {
+                (namingBitmap[(((nmstrtPages[(((p[0] as c_uchar as c_int
+                    & 0xf)
+                    << 4)
+                    + (p[1] as c_uchar as c_int >> 2 & 0xf))
+                    as usize] as c_int)
+                    << 3)
+                    + ((p[1] as c_uchar as c_int & 3) << 1)
+                    + (p[2] as c_uchar as c_int >> 5 & 1))
+                    as usize]
+                    & (1) << (p[2] as c_uchar as c_int & 0x1f))
+                    != 0
+            }
+            4 => false,
+            _ => panic!("Unexpected byte length"),
         }
     }
 
     #[inline]
     fn is_invalid_char(&self, p: &[c_char], n: usize) -> bool {
-        unsafe {
-            match n {
-                2 => {
-                    (p[0] as c_uchar as c_int) < 0xc2
-                        || p[1] as c_uchar as c_int & 0x80 == 0
-                        || p[1] as c_uchar as c_int & 0xc0 == 0xc0
-                }
-                3 => {
-                    p[2] as c_uchar as c_int & 0x80 == 0
-                        || (if p[0] as c_uchar as c_int == 0xef
-                            && p[1] as c_uchar as c_int == 0xbf
-                        {
-                            (p[2] as c_uchar as c_int > 0xbd) as c_int
-                        } else {
-                            (p[2] as c_uchar as c_int & 0xc0 == 0xc0) as c_int
-                        }) != 0
-                        || (if p[0] as c_uchar as c_int == 0xe0 {
-                            ((p[1] as c_uchar as c_int) < 0xa0
-                                || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
-                                as c_int
-                        } else {
-                            (p[1] as c_uchar as c_int & 0x80 == 0
-                                || (if p[0] as c_uchar as c_int == 0xed {
-                                    (p[1] as c_uchar as c_int > 0x9f) as c_int
-                                } else {
-                                    (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
-                                        as c_int
-                                }) != 0) as c_int
-                        }) != 0
-                }
-                4 => {
-                    p[3] as c_uchar as c_int & 0x80 == 0
-                        || p[3] as c_uchar as c_int & 0xc0 == 0xc0
-                        || p[2] as c_uchar as c_int & 0x80 == 0
-                        || p[2] as c_uchar as c_int & 0xc0 == 0xc0
-                        || (if p[0] as c_uchar as c_int == 0xf0 {
-                            ((p[1] as c_uchar as c_int) < 0x90
-                                || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
-                                as c_int
-                        } else {
-                            (p[1] as c_uchar as c_int & 0x80 == 0
-                                || (if p[0] as c_uchar as c_int == 0xf4 {
-                                    (p[1] as c_uchar as c_int > 0x8f) as c_int
-                                } else {
-                                    (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
-                                        as c_int
-                                }) != 0) as c_int
-                        }) != 0
-                }
-                _ => panic!("Unexpected byte length"),
+        match n {
+            2 => {
+                (p[0] as c_uchar as c_int) < 0xc2
+                    || p[1] as c_uchar as c_int & 0x80 == 0
+                    || p[1] as c_uchar as c_int & 0xc0 == 0xc0
             }
+            3 => {
+                p[2] as c_uchar as c_int & 0x80 == 0
+                    || (if p[0] as c_uchar as c_int == 0xef
+                        && p[1] as c_uchar as c_int == 0xbf
+                    {
+                        (p[2] as c_uchar as c_int > 0xbd) as c_int
+                    } else {
+                        (p[2] as c_uchar as c_int & 0xc0 == 0xc0) as c_int
+                    }) != 0
+                    || (if p[0] as c_uchar as c_int == 0xe0 {
+                        ((p[1] as c_uchar as c_int) < 0xa0
+                            || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
+                            as c_int
+                    } else {
+                        (p[1] as c_uchar as c_int & 0x80 == 0
+                            || (if p[0] as c_uchar as c_int == 0xed {
+                                (p[1] as c_uchar as c_int > 0x9f) as c_int
+                            } else {
+                                (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
+                                    as c_int
+                            }) != 0) as c_int
+                    }) != 0
+            }
+            4 => {
+                p[3] as c_uchar as c_int & 0x80 == 0
+                    || p[3] as c_uchar as c_int & 0xc0 == 0xc0
+                    || p[2] as c_uchar as c_int & 0x80 == 0
+                    || p[2] as c_uchar as c_int & 0xc0 == 0xc0
+                    || (if p[0] as c_uchar as c_int == 0xf0 {
+                        ((p[1] as c_uchar as c_int) < 0x90
+                            || p[1] as c_uchar as c_int & 0xc0 == 0xc0)
+                            as c_int
+                    } else {
+                        (p[1] as c_uchar as c_int & 0x80 == 0
+                            || (if p[0] as c_uchar as c_int == 0xf4 {
+                                (p[1] as c_uchar as c_int > 0x8f) as c_int
+                            } else {
+                                (p[1] as c_uchar as c_int & 0xc0 == 0xc0)
+                                    as c_int
+                            }) != 0) as c_int
+                    }) != 0
+            }
+            _ => panic!("Unexpected byte length"),
         }
     }
 
