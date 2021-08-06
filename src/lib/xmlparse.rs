@@ -1957,7 +1957,7 @@ impl Default for OpenInternalEntity {
 }
 
 pub type Processor =
-    unsafe extern "C" fn(_: XML_Parser, _: ExpatSliceRc, _: &mut *const c_char) -> XML_Error;
+    unsafe extern "C" fn(_: &mut XML_ParserStruct, _: ExpatSliceRc, _: &mut *const c_char) -> XML_Error;
 
 #[cfg(feature = "unicode")]
 #[macro_use]
@@ -3784,7 +3784,7 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
     if (*parser).m_handlers.hasDefault() {
         if let Some(openEntity) = (*parser).m_openInternalEntities.as_mut() {
             reportDefault(
-                parser,
+                &mut *parser,
                 EncodingType::Internal,
                 ExpatBufRef::new(
                     openEntity.internalEventPtr.get(),
@@ -3793,7 +3793,7 @@ pub unsafe extern "C" fn XML_DefaultCurrent(mut parser: XML_Parser) {
             );
         } else {
             reportDefault(
-                parser,
+                &mut *parser,
                 EncodingType::Normal,
                 ExpatBufRef::new((*parser).m_eventPtr.get(), (*parser).m_eventEndPtr.get()),
             );
@@ -4006,7 +4006,7 @@ impl XML_ParserStruct {
 }
 
 unsafe extern "C" fn contentProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -4026,7 +4026,7 @@ unsafe extern "C" fn contentProcessor(
 }
 
 unsafe extern "C" fn externalEntityInitProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -4039,7 +4039,7 @@ unsafe extern "C" fn externalEntityInitProcessor(
 }
 
 unsafe extern "C" fn externalEntityInitProcessor2(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -4082,7 +4082,7 @@ unsafe extern "C" fn externalEntityInitProcessor2(
 }
 
 unsafe extern "C" fn externalEntityInitProcessor3(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -4129,7 +4129,7 @@ unsafe extern "C" fn externalEntityInitProcessor3(
 }
 
 unsafe extern "C" fn externalEntityContentProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -4918,7 +4918,7 @@ impl XML_ParserStruct {
                     enc_type,
                     isCdata,
                     ExpatBufRef::new(currAtt.valuePtr, currAtt.valueEnd),
-                    &self.m_tempPool,
+                    true,
                 );
                 if result as u64 != 0 {
                     return result;
@@ -5559,7 +5559,7 @@ unsafe extern "C" fn addBinding(
 */
 
 unsafe extern "C" fn cdataSectionProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -5591,7 +5591,7 @@ unsafe extern "C" fn cdataSectionProcessor(
 */
 
 unsafe extern "C" fn doCdataSection(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     start_buf: &mut Option<ExpatSliceRc>,
     mut nextPtr: &mut *const c_char,
@@ -5711,7 +5711,7 @@ unsafe extern "C" fn doCdataSection(
    the whole file is parsed with one call.
 */
 unsafe extern "C" fn ignoreSectionProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     buf: ExpatSliceRc,
     mut endPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -5737,7 +5737,7 @@ unsafe extern "C" fn ignoreSectionProcessor(
 */
 
 unsafe extern "C" fn doIgnoreSection(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     start_buf: &mut Option<ExpatSliceRc>,
     mut nextPtr: &mut *const c_char,
@@ -6029,7 +6029,7 @@ impl CXmlHandlers {
 }
 
 unsafe extern "C" fn prologInitProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6042,7 +6042,7 @@ unsafe extern "C" fn prologInitProcessor(
 }
 
 unsafe extern "C" fn externalParEntInitProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6063,7 +6063,7 @@ unsafe extern "C" fn externalParEntInitProcessor(
 }
 
 unsafe extern "C" fn entityValueInitProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     init_buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6140,7 +6140,7 @@ unsafe extern "C" fn entityValueInitProcessor(
 }
 
 unsafe extern "C" fn externalParEntProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6177,7 +6177,7 @@ unsafe extern "C" fn externalParEntProcessor(
 }
 
 unsafe extern "C" fn entityValueProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6213,7 +6213,7 @@ unsafe extern "C" fn entityValueProcessor(
 /* XML_DTD */
 
 unsafe extern "C" fn prologProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -6750,7 +6750,7 @@ impl XML_ParserStruct {
                                 .inc_start((*enc).minBytesPerChar())
                                 .with_end(next)
                                 .dec_end((*enc).minBytesPerChar()),
-                            &self.m_dtd.pool,
+                            false,
                         );
                         if result_1 as u64 != 0 {
                             return result_1;
@@ -7572,7 +7572,7 @@ impl XML_ParserStruct {
 /* XML_DTD */
 
 unsafe extern "C" fn epilogProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -7768,18 +7768,20 @@ impl XML_ParserStruct {
 }
 
 unsafe extern "C" fn internalEntityProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut buf: ExpatSliceRc,
     mut nextPtr: &mut *const c_char,
 ) -> XML_Error {
     let mut next: *const c_char = ptr::null();
     let mut next_idx;
     let mut result: XML_Error = XML_Error::NONE;
-    let mut openEntity = match (*parser).m_openInternalEntities.as_mut() {
-        Some(openEntity) => openEntity,
-        None => return XML_Error::UNEXPECTED_STATE,
+    let (mut entity, startTagLevel) = {
+        let openEntity = match (*parser).m_openInternalEntities.as_mut() {
+            Some(openEntity) => openEntity,
+            None => return XML_Error::UNEXPECTED_STATE,
+        };
+        (openEntity.entity.as_ref().cloned().unwrap(), openEntity.startTagLevel)
     };
-    let mut entity = openEntity.entity.as_deref().unwrap();
     let text_slice_ref = entity.textPtr.borrow();
     let text_slice = text_slice_ref.as_ref().unwrap().clone();
     let text_slice = ExpatSliceRc::from(text_slice)
@@ -7804,7 +7806,7 @@ unsafe extern "C" fn internalEntityProcessor(
     } else {
         /* XML_DTD */
         result = (*parser).doContent(
-            openEntity.startTagLevel,
+            startTagLevel,
             EncodingType::Internal,
             text_slice,
             &mut next,
@@ -7822,12 +7824,12 @@ unsafe extern "C" fn internalEntityProcessor(
         } else {
             entity.open.set(false);
             /* put openEntity back in list of free instances */
-            let next = std::mem::replace(
+            let mut openEntity = (*parser).m_openInternalEntities.take().unwrap();
+            (*parser).m_openInternalEntities = std::mem::replace(
                 &mut openEntity.next,
                 (*parser).m_freeInternalEntities.take(),
             );
-            (*parser).m_freeInternalEntities =
-                std::mem::replace(&mut (*parser).m_openInternalEntities, next);
+            (*parser).m_freeInternalEntities = Some(openEntity);
         }
     }
     if entity.is_param.get() {
@@ -7863,7 +7865,7 @@ unsafe extern "C" fn internalEntityProcessor(
 }
 
 unsafe extern "C" fn errorProcessor(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut _buf: ExpatSliceRc,
     mut _nextPtr: &mut *const c_char,
 ) -> XML_Error {
@@ -7871,13 +7873,19 @@ unsafe extern "C" fn errorProcessor(
 }
 
 unsafe extern "C" fn storeAttributeValue(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: &StringPool,
+    use_temp_pool: bool,
 ) -> XML_Error {
-    let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, buf, pool);
+    let mut result: XML_Error = appendAttributeValue(parser, enc_type, isCdata, buf, use_temp_pool);
+
+    let pool = if use_temp_pool {
+        &parser.m_tempPool
+    } else {
+        &parser.m_dtd.pool
+    };
     if result as u64 != 0 {
         return result;
     }
@@ -7891,11 +7899,11 @@ unsafe extern "C" fn storeAttributeValue(
 }
 
 unsafe extern "C" fn appendAttributeValue(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
     mut buf: ExpatBufRef,
-    mut pool: &StringPool,
+    use_temp_pool: bool,
 ) -> XML_Error {
     let enc = (*parser).encoding(enc_type);
     loop {
@@ -7920,6 +7928,11 @@ unsafe extern "C" fn appendAttributeValue(
                 return XML_Error::INVALID_TOKEN;
             }
             XML_TOK::CHAR_REF => {
+                let pool = if use_temp_pool {
+                    &parser.m_tempPool
+                } else {
+                    &parser.m_dtd.pool
+                };
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(buf);
@@ -7956,6 +7969,11 @@ unsafe extern "C" fn appendAttributeValue(
                 }
             }
             XML_TOK::DATA_CHARS => {
+                let pool = if use_temp_pool {
+                    &parser.m_tempPool
+                } else {
+                    &parser.m_dtd.pool
+                };
                 if !pool.append(enc, buf.with_end(next)) {
                     return XML_Error::NO_MEMORY;
                 }
@@ -7965,6 +7983,11 @@ unsafe extern "C" fn appendAttributeValue(
                     next = buf.as_ptr().offset((*enc).minBytesPerChar() as isize);
                 }
 
+                let pool = if use_temp_pool {
+                    &parser.m_tempPool
+                } else {
+                    &parser.m_dtd.pool
+                };
                 if !(!isCdata && (pool.is_empty() || pool.get_last_char() as c_int == 0x20)) {
                     if !pool.append_char(0x20) {
                         return XML_Error::NO_MEMORY;
@@ -7972,6 +7995,11 @@ unsafe extern "C" fn appendAttributeValue(
                 }
             }
             XML_TOK::ENTITY_REF => {
+                let pool = if use_temp_pool {
+                    &parser.m_tempPool
+                } else {
+                    &parser.m_dtd.pool
+                };
                 let mut checkEntityDecl = false;
                 let mut ch: XML_Char = (*enc).predefinedEntityName(
                     buf.inc_start((*enc).minBytesPerChar())
@@ -8003,7 +8031,7 @@ unsafe extern "C" fn appendAttributeValue(
                     /* First, determine if a check for an existing declaration is needed;
                        if yes, check that the entity exists, and that it is internal.
                     */
-                    if ptr::eq(pool, &(*parser).m_dtd.pool) {
+                    if !use_temp_pool {
                         /* are we called from prolog? */
                         checkEntityDecl = (*parser).m_prologState.documentEntity != 0
                             && (if (*parser).m_dtd.standalone.get() {
@@ -8075,7 +8103,7 @@ unsafe extern "C" fn appendAttributeValue(
                                 EncodingType::Internal,
                                 isCdata,
                                 text_slice.as_deref().unwrap().into(),
-                                pool,
+                                use_temp_pool,
                             );
                             entity.open.set(false);
                             if result != XML_Error::NONE {
@@ -8109,7 +8137,7 @@ unsafe extern "C" fn appendAttributeValue(
 }
 
 unsafe extern "C" fn storeEntityValue(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut entityTextBuf: ExpatBufRef,
 ) -> XML_Error {
@@ -8342,7 +8370,7 @@ fn normalizeLines(s: &mut [XML_Char]) {
 }
 
 unsafe extern "C" fn reportProcessingInstruction(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
 ) -> c_int {
@@ -8385,7 +8413,7 @@ unsafe extern "C" fn reportProcessingInstruction(
 }
 
 unsafe extern "C" fn reportComment(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
 ) -> c_int {
@@ -8413,7 +8441,7 @@ unsafe extern "C" fn reportComment(
 }
 
 unsafe extern "C" fn reportDefault(
-    mut parser: XML_Parser,
+    parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
 ) {
