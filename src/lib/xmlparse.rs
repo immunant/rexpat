@@ -1350,6 +1350,19 @@ impl TagNameString {
             }
         }
     }
+
+    fn with_mut_slice<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&mut [XML_Char]) -> T,
+    {
+        match *self {
+            TagNameString::BindingUri(ref b) => {
+                let mut r = b.uri.borrow_mut();
+                f(&mut r[..])
+            }
+            _ => panic!("TagNameString::with_mut_slice requires a BindingUri")
+        }
+    }
 }
 
 pub enum TagNameLocalPart {
@@ -4519,69 +4532,81 @@ impl XML_ParserStruct {
                             #[cfg(feature = "mozilla")]
                             {
                                 /* This code is copied from the |if (endElementHandler)| block below */
-                                let mut localPart = tag.name.localPart.as_ptr();
-                                let mut prefix: *const XML_Char = ptr::null();
-                                let mut uri: *mut XML_Char = ptr::null_mut();
-                                if self.m_ns && !localPart.is_null() {
-                                    /* localPart and prefix may have been overwritten in
-                                       tag->name.str, since this points to the binding->uri
-                                       buffer which gets re-used; so we have to add them again
-                                    */
-                                    uri = (tag.name.str_0.as_ptr() as *mut XML_Char)
-                                        .add(tag.name.uriLen.get());
-                                    /* don't need to check for space - already done in storeAtts() */
-                                    while *localPart != 0 {
-                                        *uri = *localPart;
-                                        localPart = localPart.offset(1);
-                                        uri = uri.offset(1);
+                                tag.name.localPart.with_slice(|localPart| {
+                                    if localPart.is_empty() {
+                                        return;
                                     }
-                                    prefix = tag.name.prefix as *mut XML_Char;
-                                    if self.m_ns_triplets && !prefix.is_null() {
-                                        *uri = self.m_namespaceSeparator;
-                                        uri = uri.offset(1);
-                                        while *prefix != 0 {
-                                            *uri = *prefix;
-                                            prefix = prefix.offset(1);
-                                            uri = uri.offset(1);
+
+                                    tag.name.str_0.with_mut_slice(|str_0| {
+                                        /* don't need to check for space - already done in storeAtts() */
+                                        let mut si = tag.name.uriLen;
+                                        let mut lpi = 0;
+                                        while localPart[lpi] != 0 {
+                                            str_0[si] = localPart[lpi];
+                                            lpi += 1;
+                                            si += 1;
                                         }
-                                    }
-                                    *uri = '\u{0}' as XML_Char
-                                }
+
+                                        if self.m_ns_triplets {
+                                            if let Some(ref prefix) = tag.name.prefix {
+                                                str_0[si] = self.m_namespaceSeparator;
+                                                si += 1;
+
+                                                let mut pi = 0;
+                                                while prefix[pi] != 0 {
+                                                    str_0[si] = prefix[pi];
+                                                    pi += 1;
+                                                    si += 1;
+                                                }
+                                            }
+                                        }
+                                        str_0[si] = '\u{0}' as XML_Char;
+                                    });
+                                });
                                 self.m_mismatch = tag.name.str_0.as_ptr();
                             }
+
                             self.eventPP(enc_type).set(rawName_0.as_ptr());
                             return XML_Error::TAG_MISMATCH;
                         }
                         self.m_tagLevel -= 1;
                         if self.m_handlers.hasEndElement() {
-                            let mut localPart = tag.name.localPart.as_ptr();
-                            let mut uri: *mut XML_Char = ptr::null_mut();
-                            if self.m_ns && !localPart.is_null() {
+                            if self.m_ns {
                                 /* localPart and prefix may have been overwritten in
                                    tag->name.str, since this points to the binding->uri
                                    buffer which gets re-used; so we have to add them again
                                 */
-                                uri =
-                                    (tag.name.str_0.as_ptr() as *mut XML_Char).add(tag.name.uriLen);
-                                /* don't need to check for space - already done in storeAtts() */
-                                while *localPart != 0 {
-                                    *uri = *localPart;
-                                    localPart = localPart.offset(1);
-                                    uri = uri.offset(1);
-                                }
-                                if self.m_ns_triplets {
-                                    if let Some(ref prefix) = tag.name.prefix {
-                                        *uri = self.m_namespaceSeparator;
-                                        uri = uri.offset(1);
-                                        let mut pi = 0;
-                                        while prefix[pi] != 0 {
-                                            *uri = prefix[pi];
-                                            uri = uri.offset(1);
-                                            pi += 1;
-                                        }
+                                tag.name.localPart.with_slice(|localPart| {
+                                    if localPart.is_empty() {
+                                        return;
                                     }
-                                }
-                                *uri = '\u{0}' as XML_Char
+
+                                    tag.name.str_0.with_mut_slice(|str_0| {
+                                        /* don't need to check for space - already done in storeAtts() */
+                                        let mut si = tag.name.uriLen;
+                                        let mut lpi = 0;
+                                        while localPart[lpi] != 0 {
+                                            str_0[si] = localPart[lpi];
+                                            lpi += 1;
+                                            si += 1;
+                                        }
+
+                                        if self.m_ns_triplets {
+                                            if let Some(ref prefix) = tag.name.prefix {
+                                                str_0[si] = self.m_namespaceSeparator;
+                                                si += 1;
+
+                                                let mut pi = 0;
+                                                while prefix[pi] != 0 {
+                                                    str_0[si] = prefix[pi];
+                                                    pi += 1;
+                                                    si += 1;
+                                                }
+                                            }
+                                        }
+                                        str_0[si] = '\u{0}' as XML_Char;
+                                    });
+                                });
                             }
 
                             self.m_handlers.endElement(tag.name.str_0.as_ptr());
