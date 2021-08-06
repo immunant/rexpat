@@ -355,6 +355,7 @@ impl From<OwningRef<Rc<Vec<c_char>>, [c_char]>> for ExpatSliceRc<c_char> {
         ExpatSliceRc(or.erase_owner())
     }
 }
+
 impl From<Rc<Vec<c_char>>> for ExpatSliceRc<c_char> {
     fn from(rc: Rc<Vec<c_char>>) -> ExpatSliceRc<c_char> {
         ExpatSliceRc(RcRef::new(rc).map(Vec::as_slice).erase_owner())
@@ -1258,8 +1259,7 @@ pub struct Tag {
     pub parent: Option<Box<Tag>>,
 
     /// tagName in the original encoding
-    pub rawName: *const c_char,
-    pub rawNameLength: c_int,
+    pub rawName: ExpatSliceRc,
 
     /// tagName in the API encoding
     pub name: TagName,
@@ -1272,14 +1272,13 @@ pub struct Tag {
 }
 
 impl Tag {
-    fn try_new() -> Result<Tag, ()> {
+    fn try_new(rawName: ExpatSliceRc) -> Result<Tag, ()> {
         let mut buf = vec![];
         buf.try_reserve(INIT_TAG_BUF_SIZE).map_err(|_| ())?;
 
         Ok(Tag {
             parent: None,
-            rawName: ptr::null(),
-            rawNameLength: 0,
+            rawName,
             name: TagName::default(),
             buf: Rc::try_new(buf).map_err(|_| ())?,
             rawNameBuf: Rc::try_new(vec![]).map_err(|_| ())?,
@@ -3968,12 +3967,12 @@ impl XML_ParserStruct {
             }
 
             let mut raw_name_buf = Rc::get_mut(&mut tag.rawNameBuf).unwrap();
-            let raw_name_length = tag.rawNameLength.try_into().unwrap();
-            if raw_name_buf.try_reserve(raw_name_length).is_err() {
+            if raw_name_buf.try_reserve(tag.rawName.len()).is_err() {
                 return false;
             }
-            raw_name_buf.extend_from_slice(slice::from_raw_parts(tag.rawName, raw_name_length));
-            tag.rawName = raw_name_buf.as_ptr();
+            raw_name_buf.extend_from_slice(&tag.rawName[..]);
+
+            tag.rawName = tag.rawNameBuf.clone().into();
             tStk = &mut tag.parent;
         }
         true
@@ -4342,11 +4341,20 @@ impl XML_ParserStruct {
                 }
                 XML_TOK::START_TAG_NO_ATTS | XML_TOK::START_TAG_WITH_ATTS => {
                     /* fall through */
+                    let mut fromBuf = buf.clone().inc_start((*enc).minBytesPerChar());
+                    let rawNameLength = (*enc).nameLength(fromBuf.as_buf_ref());
+                    fromBuf = fromBuf.with_len(rawNameLength as usize);
+
                     let mut result_0: XML_Error = XML_Error::NONE;
                     let mut to_buf: ExpatBufRefMut<XML_Char>;
                     let mut tag = match self.m_freeTagList.take() {
                         Some(mut tag) => {
                             self.m_freeTagList = tag.parent.take();
+
+                            // Set the new raw name; need to do this before
+                            // clearing rawNameBuf below because they might
+                            // both point to the same `Rc`
+                            tag.rawName = fromBuf.clone();
 
                             // Clear the raw name buffer to mark that it's not in use
                             Rc::get_mut(&mut tag.rawNameBuf).unwrap().clear();
@@ -4354,7 +4362,7 @@ impl XML_ParserStruct {
                             tag
                         }
                         None => {
-                            let mut tag = match Tag::try_new().and_then(|x| Box::try_new(x).map_err(|_| ())) {
+                            let mut tag = match Tag::try_new(fromBuf.clone()).and_then(|x| Box::try_new(x).map_err(|_| ())) {
                                 Ok(tag) => tag,
                                 Err(_) => return XML_Error::NO_MEMORY,
                             };
@@ -4365,10 +4373,6 @@ impl XML_ParserStruct {
                     tag.bindings = None;
                     tag.name.localPart = TagNameLocalPart::None;
                     tag.name.prefix = ptr::null();
-                    let mut fromBuf = buf.as_buf_ref().inc_start((*enc).minBytesPerChar());
-                    tag.rawName = fromBuf.as_ptr();
-                    tag.rawNameLength = (*enc).nameLength(fromBuf);
-                    fromBuf = fromBuf.with_len(tag.rawNameLength as usize);
                     self.m_tagLevel += 1;
 
                     let mut tag_buf = Rc::get_mut(&mut tag.buf).unwrap();
@@ -4378,7 +4382,7 @@ impl XML_ParserStruct {
                     loop {
                         let mut bufSize: c_int = 0;
                         let (convert_res, from_count, to_count)  =
-                            XmlConvert!(enc, fromBuf, &mut tag_buf[convLen..tag_buf_len - 1]);
+                            XmlConvert!(enc, fromBuf.as_buf_ref(), &mut tag_buf[convLen..tag_buf_len - 1]);
                         fromBuf = fromBuf.inc_start(from_count);
                         convLen += to_count;
                         if fromBuf.is_empty()
@@ -4489,13 +4493,7 @@ impl XML_ParserStruct {
 
                         let rawName_0 = buf.as_buf_ref().inc_start((*enc).minBytesPerChar() * 2);
                         let len = (*enc).nameLength(rawName_0);
-                        if len != tag.rawNameLength
-                            || memcmp(
-                                tag.rawName as *const c_void,
-                                rawName_0.as_ptr() as *const c_void,
-                                len as usize,
-                            ) != 0
-                        {
+                        if rawName_0[..len.try_into().unwrap()] != tag.rawName[..] {
                             #[cfg(feature = "mozilla")]
                             {
                                 /* This code is copied from the |if (endElementHandler)| block below */
