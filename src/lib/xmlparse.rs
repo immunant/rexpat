@@ -1357,6 +1357,22 @@ impl TagNameLocalPart {
         }
     }
 
+    fn with_slice<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&[XML_Char]) -> T,
+    {
+        match *self {
+            TagNameLocalPart::None => f(&[]),
+            TagNameLocalPart::Rc(ref rc) => {
+                f(&rc[..])
+            },
+            TagNameLocalPart::BindingUri(ref b, off) => {
+                let r = b.uri.borrow();
+                f(&r[off..])
+            }
+        }
+    }
+
     fn from_tag_name(str_0: &TagNameString, skip_to_colon: bool) -> TagNameLocalPart {
         match str_0 {
             TagNameString::None => TagNameLocalPart::None,
@@ -5287,20 +5303,25 @@ impl XML_ParserStruct {
             .map_or_else(ptr::null, |x| x.as_ptr());
         tagNamePtr.prefixLen = prefixLen;
 
-        let localPart = tagNamePtr.localPart.as_ptr();
-        let mut i = 0;
-        while *localPart.add(i) != 0 {
-            i += 1;
-        }
-        /* i includes null terminator */
-        i += 1;
-
         let mut uri = binding.uri.borrow_mut();
-        uri.truncate(binding.uriLen.get());
-        if uri.try_reserve(i + prefixLen).is_err() {
+        if !tagNamePtr.localPart.with_slice(|localPart| {
+            let mut i = 0;
+            while localPart[i] != 0 {
+                i += 1;
+            }
+            /* i includes null terminator */
+            i += 1;
+
+            uri.truncate(binding.uriLen.get());
+            if uri.try_reserve(i + prefixLen).is_err() {
+                return false;
+            }
+            uri.extend(&localPart[..i]);
+
+            true
+        }) {
             return XML_Error::NO_MEMORY;
         }
-        uri.extend(slice::from_raw_parts(tagNamePtr.localPart.as_ptr(), i));
 
         /* we always have a namespace separator between localPart and prefix */
         if prefixLen != 0 {
