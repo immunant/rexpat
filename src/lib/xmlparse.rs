@@ -61,7 +61,7 @@ pub use crate::lib::xmltok::*;
 use crate::string_pool::{StringPool, StringPoolCellSlice, StringPoolSlice};
 pub use libc::INT_MAX;
 use libc::{
-    c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, memcmp, memcpy, memset,
+    c_char, c_int, c_long, c_uint, c_ulong, c_ushort, c_void, memset,
     size_t,
 };
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -73,8 +73,7 @@ use std::alloc::{self, Layout};
 use std::cell::{Cell, RefCell};
 use std::cmp;
 use std::collections::{hash_map, HashMap, HashSet, TryReserveError};
-use std::convert::{TryInto, TryFrom};
-use std::mem;
+use std::convert::TryInto;
 use std::ops::{self, DerefMut};
 use std::ptr;
 use std::rc::{Rc, Weak};
@@ -4373,7 +4372,6 @@ impl XML_ParserStruct {
                     fromBuf = fromBuf.with_len(rawNameLength as usize);
 
                     let mut result_0: XML_Error = XML_Error::NONE;
-                    let mut to_buf: ExpatBufRefMut<XML_Char>;
                     let mut tag = match self.m_freeTagList.take() {
                         Some(mut tag) => {
                             self.m_freeTagList = tag.parent.take();
@@ -4407,7 +4405,6 @@ impl XML_ParserStruct {
                     tag_buf.resize(tag_buf_len, 0);
                     let mut convLen = 0;
                     loop {
-                        let mut bufSize: c_int = 0;
                         let (convert_res, from_count, to_count)  =
                             XmlConvert!(enc, fromBuf.as_buf_ref(), &mut tag_buf[convLen..tag_buf_len - 1]);
                         fromBuf = fromBuf.inc_start(from_count);

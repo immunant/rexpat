@@ -6,7 +6,7 @@ use crate::ascii_h::*;
 use crate::expat_h::{XML_Error};
 pub use crate::expat_external_h::XML_Size;
 use crate::xmltok_impl_h::ByteType;
-use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut};
+use crate::lib::xmlparse::ExpatBufRef;
 
 macro_rules! MATCH_LEAD_CASES {
     {$e:expr, LEAD_CASE($n:ident) => $case:block $($tail:tt)*} => {
