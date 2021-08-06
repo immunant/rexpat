@@ -1291,10 +1291,20 @@ impl Tag {
 pub struct TagName {
     pub str_0: TagNameString,
     pub localPart: TagNameLocalPart,
-    pub prefix: *const XML_Char,
+    prefix: Option<StringPoolSlice>,
     pub strLen: c_int,
     pub uriLen: usize,
     pub prefixLen: usize,
+}
+
+impl TagName {
+    /// Clear all the reference counted pointers inside
+    /// this object
+    fn clear(&mut self) {
+        self.str_0 = TagNameString::None;
+        self.localPart = TagNameLocalPart::None;
+        self.prefix = None;
+    }
 }
 
 impl Default for TagName {
@@ -1302,7 +1312,7 @@ impl Default for TagName {
         TagName {
             str_0: TagNameString::None,
             localPart: TagNameLocalPart::None,
-            prefix: ptr::null(),
+            prefix: None,
             strLen: 0,
             uriLen: 0,
             prefixLen: 0,
@@ -2392,13 +2402,9 @@ impl XML_ParserStruct {
         while let Some(mut tag) = tStk {
             self.moveToFreeBindingList(tag.bindings.take());
 
-            // Clear `str_0` and `localPart` to reduce
-            // their pointees' reference counts
-            tag.name.str_0 = TagNameString::None;
-            tag.name.localPart = TagNameLocalPart::None;
-
             let new_parent = self.m_freeTagList.take();
             tStk = std::mem::replace(&mut tag.parent, new_parent);
+            tag.name.clear();
             self.m_freeTagList = Some(tag);
         }
 
@@ -4388,7 +4394,7 @@ impl XML_ParserStruct {
                     };
                     tag.bindings = None;
                     tag.name.localPart = TagNameLocalPart::None;
-                    tag.name.prefix = ptr::null();
+                    tag.name.prefix = None;
                     self.m_tagLevel += 1;
 
                     let mut tag_buf = Rc::get_mut(&mut tag.buf).unwrap();
@@ -4455,7 +4461,7 @@ impl XML_ParserStruct {
                     let mut name_0 = TagName {
                         str_0: TagNameString::Rc(name_0_str_0.into()),
                         localPart: TagNameLocalPart::None,
-                        prefix: ptr::null(),
+                        prefix: None,
                         strLen: 0,
                         uriLen: 0,
                         prefixLen: 0,
@@ -4549,7 +4555,6 @@ impl XML_ParserStruct {
                         self.m_tagLevel -= 1;
                         if self.m_handlers.hasEndElement() {
                             let mut localPart = tag.name.localPart.as_ptr();
-                            let mut prefix: *const XML_Char = ptr::null();
                             let mut uri: *mut XML_Char = ptr::null_mut();
                             if self.m_ns && !localPart.is_null() {
                                 /* localPart and prefix may have been overwritten in
@@ -4564,14 +4569,16 @@ impl XML_ParserStruct {
                                     localPart = localPart.offset(1);
                                     uri = uri.offset(1);
                                 }
-                                prefix = tag.name.prefix as *mut XML_Char;
-                                if self.m_ns_triplets && !prefix.is_null() {
-                                    *uri = self.m_namespaceSeparator;
-                                    uri = uri.offset(1);
-                                    while *prefix != 0 {
-                                        *uri = *prefix;
-                                        prefix = prefix.offset(1);
+                                if self.m_ns_triplets {
+                                    if let Some(ref prefix) = tag.name.prefix {
+                                        *uri = self.m_namespaceSeparator;
                                         uri = uri.offset(1);
+                                        let mut pi = 0;
+                                        while prefix[pi] != 0 {
+                                            *uri = prefix[pi];
+                                            uri = uri.offset(1);
+                                            pi += 1;
+                                        }
                                     }
                                 }
                                 *uri = '\u{0}' as XML_Char
@@ -4597,13 +4604,9 @@ impl XML_ParserStruct {
                             }
                         }
 
-                        // Clear `str_0` and `localPart` to reduce
-                        // their pointees' reference counts
-                        tag.name.str_0 = TagNameString::None;
-                        tag.name.localPart = TagNameLocalPart::None;
-
                         // Move the tag to the free list
                         tag.parent = self.m_freeTagList.take();
+                        tag.name.clear();
                         self.m_freeTagList = Some(tag);
 
                         if self.m_tagLevel == 0
@@ -5300,7 +5303,7 @@ impl XML_ParserStruct {
         tagNamePtr.prefix = binding_prefix
             .name
             .as_ref()
-            .map_or_else(ptr::null, |x| x.as_ptr());
+            .cloned();
         tagNamePtr.prefixLen = prefixLen;
 
         let mut uri = binding.uri.borrow_mut();
