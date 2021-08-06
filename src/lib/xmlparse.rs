@@ -8903,17 +8903,6 @@ unsafe extern "C" fn copyEntityTable(
 
 pub const INIT_POWER: c_int = 6;
 
-unsafe extern "C" fn keyeq(mut s1: KEY, mut s2: KEY) -> XML_Bool {
-    while *s1 as c_int == *s2 as c_int {
-        if *s1 as c_int == 0 {
-            return true;
-        }
-        s1 = s1.offset(1);
-        s2 = s2.offset(1)
-    }
-    false
-}
-
 unsafe fn strlen(mut s: *const XML_Char) -> size_t {
     let mut len: size_t = 0;
     while *s != 0 {
