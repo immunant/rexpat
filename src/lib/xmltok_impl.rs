@@ -1870,19 +1870,19 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
         }
     }
 
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from_buf: &'r mut ExpatBufRef<'a>,
-        to_buf: &'r mut ExpatBufRefMut<'b>,
-    ) -> XML_Convert_Result {
+        from_buf: ExpatBufRef,
+        to_buf: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
         self.utf8Convert(from_buf, to_buf)
     }
 
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from_buf: ExpatBufRef,
+        to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         self.utf16Convert(from_buf, to_buf)
     }
 

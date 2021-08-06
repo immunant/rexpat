@@ -288,13 +288,11 @@ impl<'bump> RentedBumpVec<'bump> {
 
             self.0.resize(cap, 0);
 
-            let mut write_buf = ExpatBufRefMut::from(&mut self.0[start_len..]);
-            let write_buf_len = write_buf.len();
-            let convert_res = XmlConvert!(enc, &mut read_buf, &mut write_buf);
-            // The write buf shrinks by how much was written to it
-            let written_size = write_buf_len - write_buf.len();
+            let (convert_res, read_count, write_count) =
+                XmlConvert!(enc, read_buf, &mut self.0[start_len..]);
 
-            self.0.truncate(start_len + written_size);
+            read_buf = read_buf.inc_start(read_count);
+            self.0.truncate(start_len + write_count);
 
             if convert_res == XML_Convert_Result::COMPLETED || convert_res == XML_Convert_Result::INPUT_INCOMPLETE {
                 return true;

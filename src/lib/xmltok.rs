@@ -38,7 +38,6 @@ use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, si
 use crate::expat_h::{XML_Error};
 use super::xmlparse::{ExpatBufRef, ExpatBufRefMut};
 use std::cell::Cell;
-use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::ptr;
 use crate::xmltok_impl_h::ByteType;
@@ -298,17 +297,17 @@ pub trait XmlEncoding {
         badPtr: &Cell<*const libc::c_char>,
     ) -> libc::c_int;
 
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from_buf: &'r mut ExpatBufRef<'a>,
-        to_buf: &'r mut ExpatBufRefMut<'b>,
-    ) -> XML_Convert_Result;
+        from_buf: ExpatBufRef,
+        to_buf: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize);
 
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result;
+        from_buf: ExpatBufRef,
+        to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize);
 
     fn minBytesPerChar(&self) -> usize;
     fn isUtf8(&self) -> bool;
@@ -359,17 +358,17 @@ pub trait XmlEncodingImpl {
     fn is_nmstrt_char_minbpc(&self, p: &[c_char]) -> bool;
     fn char_matches(&self, p: &[c_char], c: c_char) -> bool;
 
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from_buf: &'r mut ExpatBufRef<'a>,
-        to_buf: &'r mut ExpatBufRefMut<'b>,
-    ) -> XML_Convert_Result;
+        from_buf: ExpatBufRef,
+        to_buf: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize);
 
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result;
+        from_buf: ExpatBufRef,
+        to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize);
 }
 
 struct NormalEncoding<T: NormalEncodingTable> {
@@ -548,107 +547,106 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Utf8EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        fromP: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut,
-    ) -> XML_Convert_Result {
-        let mut from = fromP.clone();
-        let mut input_incomplete: bool = false_0 != 0;
-        let mut output_exhausted: bool = false_0 != 0;
+        mut from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
+        let mut input_incomplete: bool = false;
+        let mut output_exhausted: bool = false;
         /* Avoid copying partial characters (due to limited space). */
         let bytesAvailable = from.len();
         let bytesStorable = to.len();
         if bytesAvailable > bytesStorable {
             from = from.with_len(bytesStorable);
-            output_exhausted = true_0 != 0
+            output_exhausted = true;
         }
         /* Avoid copying partial characters (from incomplete input). */
         let len_before = from.len();
         _INTERNAL_trim_to_complete_utf8_characters(&mut from);
         if from.len() < len_before {
-            input_incomplete = true_0 != 0
+            input_incomplete = true;
         }
         to[..from.len()].copy_from_slice(&from);
-        to.inc_start(from.len());
-        *fromP = fromP.inc_start(from.len().try_into().unwrap());
+
+        let converted = from.len();
         if output_exhausted {
             /* needs to go first */
-            XML_Convert_Result::OUTPUT_EXHAUSTED
+            (XML_Convert_Result::OUTPUT_EXHAUSTED, converted, converted)
         } else if input_incomplete {
-            XML_Convert_Result::INPUT_INCOMPLETE
+            (XML_Convert_Result::INPUT_INCOMPLETE, converted, converted)
         } else {
-            XML_Convert_Result::COMPLETED
+            (XML_Convert_Result::COMPLETED, converted, converted)
         }
     }
 
     #[inline]
     fn utf16Convert(
         &self,
-        from: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from: ExpatBufRef,
+        to: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
-        // let mut to: *mut c_ushort = *toP;
-        // let mut from: *const c_char = *fromP;
-        while !from.is_empty() && !to.is_empty() {
-            match T::types[from[0] as c_uchar as usize] as c_int {
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() && !to[to_idx..].is_empty() {
+            match T::types[from[from_idx] as c_uchar as usize] as c_int {
                 5 => {
-                    if (from.len() as c_long) < 2 {
+                    if (from[from_idx..].len() as c_long) < 2 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
-                        to[0] = ((from[0] as c_int & 0x1f) << 6
-                                 | from[1] as c_int & 0x3f)
+                        to[to_idx] = ((from[from_idx + 0] as c_int & 0x1f) << 6
+                                 | from[from_idx + 1] as c_int & 0x3f)
                             as c_ushort;
-                        to.inc_start(1);
-                        from.inc_start(2);
+                        to_idx += 1;
+                        from_idx += 2;
                     }
                 }
                 6 => {
-                    if (from.len() as c_long) < 3 {
+                    if (from[from_idx..].len() as c_long) < 3 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
-                        to[0] = ((from[0] as c_int & 0xf) << 12
-                                 | (from[1] as c_int & 0x3f) << 6
-                                 | from[2] as c_int & 0x3f)
+                        to[to_idx] = ((from[from_idx + 0] as c_int & 0xf) << 12
+                                 | (from[from_idx + 1] as c_int & 0x3f) << 6
+                                 | from[from_idx + 2] as c_int & 0x3f)
                             as c_ushort;
-                        to.inc_start(1);
-                        from.inc_start(3);
+                        to_idx += 1;
+                        from_idx += 3;
                     }
                 }
                 7 => {
                     let mut n: c_ulong = 0;
-                    if (to.len() as c_long) < 2 {
+                    if (to[to_idx..].len() as c_long) < 2 {
                         res = XML_Convert_Result::OUTPUT_EXHAUSTED;
                         break;
-                    } else if (from.len() as c_long) < 4 {
+                    } else if (from[from_idx..].len() as c_long) < 4 {
                         res = XML_Convert_Result::INPUT_INCOMPLETE;
                         break;
                     } else {
-                        n = ((from[0] as c_int & 0x7) << 18
-                             | (from[1] as c_int & 0x3f) << 12
-                             | (from[2] as c_int & 0x3f) << 6
-                             | from[3] as c_int & 0x3f) as c_ulong;
+                        n = ((from[from_idx + 0] as c_int & 0x7) << 18
+                             | (from[from_idx + 1] as c_int & 0x3f) << 12
+                             | (from[from_idx + 2] as c_int & 0x3f) << 6
+                             | from[from_idx + 3] as c_int & 0x3f) as c_ulong;
                         n = n.wrapping_sub(0x10000);
-                        to[0] = (n >> 10 | 0xd800) as c_ushort;
-                        to[1] = (n & 0x3ff | 0xdc00) as c_ushort;
-                        to.inc_start(2);
-                        *from = from.inc_start(4)
+                        to[to_idx + 0] = (n >> 10 | 0xd800) as c_ushort;
+                        to[to_idx + 1] = (n & 0x3ff | 0xdc00) as c_ushort;
+                        to_idx += 2;
+                        from_idx += 4;
                     }
                 }
                 _ => {
-                    to[0] = from[0] as u16;
-                    *from = from.inc_start(1);
-                    to.inc_start(1);
+                    to[to_idx] = from[from_idx] as u16;
+                    to_idx += 1;
+                    from_idx += 1;
                 }
             }
         }
-        if !from.is_empty() {
-            res = XML_Convert_Result::OUTPUT_EXHAUSTED
+        if !from[from_idx..].is_empty() {
+            res = XML_Convert_Result::OUTPUT_EXHAUSTED;
         }
-        res
+        (res, from_idx, to_idx)
     }
 }
 
@@ -704,33 +702,34 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut,
-    ) -> XML_Convert_Result {
+        from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
+        let mut from_idx = 0;
+        let mut to_idx = 0;
         loop {
             let mut c: c_uchar = 0;
-            if from.is_empty() {
-                return XML_Convert_Result::COMPLETED;
+            if from[from_idx..].is_empty() {
+                return (XML_Convert_Result::COMPLETED, from_idx, to_idx);
             }
-            c = from[0] as c_uchar;
+            c = from[from_idx] as c_uchar;
             if c as c_int & 0x80 != 0 {
-                if (to.len() as c_long) < 2 {
-                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                if (to[to_idx..].len() as c_long) < 2 {
+                    return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                 }
-                to[0] = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
-                to.inc_start(1);
-                to[0] = (c as c_int & 0x3f | 0x80) as c_char;
-                to.inc_start(1);
-                *from = from.inc_start(1);
+                to[to_idx + 0] = (c as c_int >> 6 | UTF8_cval2 as c_int) as c_char;
+                to[to_idx + 1] = (c as c_int & 0x3f | 0x80) as c_char;
+                to_idx += 2;
+                from_idx += 1;
             } else {
-                if to.is_empty() {
-                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                if to[to_idx..].is_empty() {
+                    return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                 }
-                to[0] = from[0];
-                to.inc_start(1);
-                *from = from.inc_start(1);
+                to[to_idx] = from[from_idx];
+                to_idx += 1;
+                from_idx += 1;
             }
         }
     }
@@ -738,9 +737,9 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Latin1EncodingImpl<T> {
     #[inline]
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from_buf: ExpatBufRef,
+        to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         latin1_toUtf16(from_buf, to_buf)
     }
 }
@@ -797,29 +796,29 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for AsciiEncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut,
-    ) -> XML_Convert_Result {
-        while !from.is_empty() && !to.is_empty() {
-            to[0] = from[0];
-            to.inc_start(1);
-            *from = from.inc_start(1);
+        from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
+        let mut idx = 0;
+        while !from[idx..].is_empty() && !to[idx..].is_empty() {
+            to[idx] = from[idx];
+            idx += 1;
         }
-        if to.is_empty() && !from.is_empty() {
-            XML_Convert_Result::OUTPUT_EXHAUSTED
+        if to[idx..].is_empty() && !from[idx..].is_empty() {
+            (XML_Convert_Result::OUTPUT_EXHAUSTED, idx, idx)
         } else {
-            XML_Convert_Result::COMPLETED
+            (XML_Convert_Result::COMPLETED, idx, idx)
         }
     }
 
     #[inline]
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from_buf: ExpatBufRef,
+        to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         latin1_toUtf16(from_buf, to_buf)
     }
 }
@@ -890,109 +889,101 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Little2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        fromP: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut,
-    ) -> XML_Convert_Result {
-        let mut from = *fromP;
-        from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
-        while !from.is_empty() {
+        from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
+        let from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() {
             let mut plane: c_int = 0;
             let mut lo2: c_uchar = 0;
-            let mut lo: c_uchar = from[0] as c_uchar;
-            let mut hi: c_uchar = from[1] as c_uchar;
+            let mut lo: c_uchar = from[from_idx + 0] as c_uchar;
+            let mut hi: c_uchar = from[from_idx + 1] as c_uchar;
             match hi as c_int {
                 0..=7 => {
                     if hi as c_int == 0 && (lo as c_int) < 0x80 {
-                        if to.is_empty() {
-                            *fromP = from;
-                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        if to[to_idx..].is_empty() {
+                            return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                         }
-                        to[0] = lo as c_char;
-                        to.inc_start(1);
+                        to[to_idx] = lo as c_char;
+                        to_idx += 1;
                     } else {
-                        if to.len() < 2 {
-                            *fromP = from;
-                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        if to[to_idx..].len() < 2 {
+                            return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                         }
-                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                        to.inc_start(1);
-                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                        to.inc_start(1);
+                        to[to_idx + 0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to[to_idx + 1] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to_idx += 2;
                     }
                 }
                 216..=219 => {
-                    if (to.len() as c_long) < 4 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                    if (to[to_idx..].len() as c_long) < 4 {
+                        return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                     }
-                    if (from.len() as c_long) < 4 {
-                        *fromP = from;
-                        return XML_Convert_Result::INPUT_INCOMPLETE;
+                    if (from[from_idx..].len() as c_long) < 4 {
+                        return (XML_Convert_Result::INPUT_INCOMPLETE, from_idx, to_idx);
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
-                    to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
-                    to.inc_start(1);
-                    from = from.inc_start(2);
-                    lo2 = from[0] as c_uchar;
-                    to[0] = ((lo as c_int & 0x3) << 4
-                             | (from[1] as c_uchar as c_int & 0x3) << 2
+                    to[to_idx + 0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
+                    to[to_idx + 1] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
+                    from_idx += 2;
+                    lo2 = from[from_idx + 0] as c_uchar;
+                    to[to_idx + 2] = ((lo as c_int & 0x3) << 4
+                             | (from[from_idx + 1] as c_uchar as c_int & 0x3) << 2
                              | lo2 as c_int >> 6
                              | 0x80) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
+                    to[to_idx + 3] = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                    to_idx += 4;
                 }
                 _ => {
-                    if (to.len() as c_long) < 3 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                    if (to[to_idx..].len() as c_long) < 3 {
+                        return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                     }
-                    to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
+                    to[to_idx + 0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
+                    to[to_idx + 1] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
+                    to[to_idx + 2] = (lo as c_int & 0x3f | 0x80) as c_char;
+                    to_idx += 3;
                 }
             }
-            from = from.inc_start(2)
+            from_idx += 2;
         }
-        *fromP = from;
-        if !from.is_empty() {
-            XML_Convert_Result::INPUT_INCOMPLETE
+        if !from[from_idx..].is_empty() {
+            (XML_Convert_Result::INPUT_INCOMPLETE, from_idx, to_idx)
         } else {
-            XML_Convert_Result::COMPLETED
+            (XML_Convert_Result::COMPLETED, from_idx, to_idx)
         }
     }
 
     #[inline]
     fn utf16Convert(
         &self,
-        from: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from: ExpatBufRef,
+        to: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
-        *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+        let mut from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-1] as c_uchar as c_int & 0xf8 == 0xd8
         {
-            *from = from.dec_end(2);
-            res = XML_Convert_Result::INPUT_INCOMPLETE
+            from = from.dec_end(2);
+            res = XML_Convert_Result::INPUT_INCOMPLETE;
         }
-        while !from.is_empty() && !to.is_empty() {
-            to[0] = ((from[1] as c_uchar as c_int) << 8
-                     | from[0] as c_uchar as c_int) as c_ushort;
-            to.inc_start(1);
-            *from = from.inc_start(2);
+
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() && !to[to_idx..].is_empty() {
+            to[to_idx] = ((from[from_idx + 1] as c_uchar as c_int) << 8
+                     | from[from_idx + 0] as c_uchar as c_int) as c_ushort;
+            to_idx += 1;
+            from_idx += 2;
         }
-        if to.is_empty() && !from.is_empty() {
-            XML_Convert_Result::OUTPUT_EXHAUSTED
+        if to[to_idx..].is_empty() && !from[from_idx..].is_empty() {
+            (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx)
         } else {
-            res
+            (res, from_idx, to_idx)
         }
     }
 }
@@ -1062,109 +1053,102 @@ impl<T: NormalEncodingTable> XmlEncodingImpl for Big2EncodingImpl<T> {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        fromP: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut,
-    ) -> XML_Convert_Result {
-        let mut from = *fromP;
+        mut from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
         from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
-        while !from.is_empty() {
+
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() {
             let mut plane: c_int = 0;
             let mut lo2: c_uchar = 0;
-            let mut lo: c_uchar = from[1] as c_uchar;
-            let mut hi: c_uchar = from[0] as c_uchar;
+            let mut lo: c_uchar = from[from_idx + 1] as c_uchar;
+            let mut hi: c_uchar = from[from_idx + 0] as c_uchar;
             match hi as c_int {
                 0..=7 => {
                     if hi as c_int == 0 && (lo as c_int) < 0x80 {
-                        if to.is_empty() {
-                            *fromP = from;
-                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        if to[to_idx..].is_empty() {
+                            return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                         }
-                        to[0] = lo as c_char;
-                        to.inc_start(1);
+                        to[to_idx] = lo as c_char;
+                        to_idx += 1;
                     } else {
-                        if to.len() < 2 {
-                            *fromP = from;
-                            return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                        if to[to_idx..].len() < 2 {
+                            return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                         }
-                        to[0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
-                        to.inc_start(1);
-                        to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                        to.inc_start(1);
+                        to[to_idx + 0] = (lo as c_int >> 6 | (hi as c_int) << 2 | UTF8_cval2 as c_int) as c_char;
+                        to[to_idx + 1] = (lo as c_int & 0x3f | 0x80) as c_char;
+                        to_idx += 2;
                     }
                 }
                 216..=219 => {
-                    if (to.len() as c_long) < 4 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                    if (to[to_idx..].len() as c_long) < 4 {
+                        return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                     }
-                    if (from.len() as c_long) < 4 {
-                        *fromP = from;
-                        return XML_Convert_Result::INPUT_INCOMPLETE;
+                    if (from[from_idx..].len() as c_long) < 4 {
+                        return (XML_Convert_Result::INPUT_INCOMPLETE, from_idx, to_idx);
                     }
                     plane = ((hi as c_int & 0x3) << 2 | lo as c_int >> 6 & 0x3) + 1;
-                    to[0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
-                    to.inc_start(1);
-                    from = from.inc_start(2);
-                    lo2 = from[1] as c_uchar;
-                    to[0] = ((lo as c_int & 0x3) << 4
-                             | (from[0] as c_uchar as c_int & 0x3) << 2
+                    to[to_idx + 0] = (plane >> 2 | UTF8_cval4 as c_int) as c_char;
+                    to[to_idx + 1] = (lo as c_int >> 2 & 0xf | (plane & 0x3) << 4 | 0x80) as c_char;
+                    from_idx += 2;
+                    lo2 = from[from_idx + 1] as c_uchar;
+                    to[to_idx + 2] = ((lo as c_int & 0x3) << 4
+                             | (from[from_idx + 0] as c_uchar as c_int & 0x3) << 2
                              | lo2 as c_int >> 6
                              | 0x80) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo2 as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
+                    to[to_idx + 3] = (lo2 as c_int & 0x3f | 0x80) as c_char;
+                    to_idx += 4;
                 }
                 _ => {
-                    if (to.len() as c_long) < 3 {
-                        *fromP = from;
-                        return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                    if (to[to_idx..].len() as c_long) < 3 {
+                        return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                     }
-                    to[0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
-                    to.inc_start(1);
-                    to[0] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
-                    to.inc_start(1);
-                    to[0] = (lo as c_int & 0x3f | 0x80) as c_char;
-                    to.inc_start(1);
+                    to[to_idx + 0] = (hi as c_int >> 4 | UTF8_cval3 as c_int) as c_char;
+                    to[to_idx + 1] = ((hi as c_int & 0xf) << 2 | lo as c_int >> 6 | 0x80) as c_char;
+                    to[to_idx + 2] = (lo as c_int & 0x3f | 0x80) as c_char;
+                    to_idx += 3;
                 }
             }
-            from = from.inc_start(2)
+            from_idx += 2;
         }
-        *fromP = from;
-        if !from.is_empty() {
-            XML_Convert_Result::INPUT_INCOMPLETE
+        if !from[from_idx..].is_empty() {
+            (XML_Convert_Result::INPUT_INCOMPLETE, from_idx, to_idx)
         } else {
-            XML_Convert_Result::COMPLETED
+            (XML_Convert_Result::COMPLETED, from_idx, to_idx)
         }
     }
 
     #[inline]
     fn utf16Convert(
         &self,
-        from: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
+        from: ExpatBufRef,
+        to: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
         let mut res: XML_Convert_Result = XML_Convert_Result::COMPLETED;
-        *from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
+        let mut from = from.with_len(((from.len() as c_long >> 1) << 1) as usize);
         if from.len() as c_long > ((to.len() as c_long) << 1)
             && from[from.len()-2] as c_uchar as c_int & 0xf8 == 0xd8
         {
-            *from = from.dec_end(2);
+            from = from.dec_end(2);
             res = XML_Convert_Result::INPUT_INCOMPLETE
         }
-        while !from.is_empty() && !to.is_empty() {
-            to[0] = ((from[0] as c_uchar as c_int) << 8
-                     | from[1] as c_uchar as c_int) as c_ushort;
-            to.inc_start(1);
-            *from = from.inc_start(2);
+
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() && !to[to_idx..].is_empty() {
+            to[to_idx] = ((from[from_idx + 0] as c_uchar as c_int) << 8
+                     | from[from_idx + 1] as c_uchar as c_int) as c_ushort;
+            to_idx += 1;
+            from_idx += 2;
         }
-        if to.is_empty() && !from.is_empty() {
-            XML_Convert_Result::OUTPUT_EXHAUSTED
+        if to[to_idx..].is_empty() && !from[from_idx..].is_empty() {
+            (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx)
         } else {
-            res
+            (res, from_idx, to_idx)
         }
     }
 }
@@ -1913,18 +1897,18 @@ impl NormalEncodingTable for AsciiEncodingTableNS {
 
 // Shared between Latin1Encoding and AsciiEncoding
 fn latin1_toUtf16(
-    mut from: &mut ExpatBufRef,
-    to: &mut ExpatBufRefMut<u16>,
-) -> XML_Convert_Result {
-    while !from.is_empty() && to.is_empty() {
-        to[0] = from[0] as u16;
-        to.inc_start(1);
-        *from = from.inc_start(1);
+    mut from: ExpatBufRef,
+    to: &mut [u16],
+) -> (XML_Convert_Result, usize, usize) {
+    let mut idx = 0;
+    while !from[idx..].is_empty() && to[idx..].is_empty() {
+        to[idx] = from[idx] as u16;
+        idx += 1;
     }
-    if to.is_empty() && !from.is_empty() {
-        XML_Convert_Result::OUTPUT_EXHAUSTED
+    if to[idx..].is_empty() && !from[idx..].is_empty() {
+        (XML_Convert_Result::OUTPUT_EXHAUSTED, idx, idx)
     } else {
-        XML_Convert_Result::COMPLETED
+        (XML_Convert_Result::COMPLETED, idx, idx)
     }
 }
 
@@ -2203,20 +2187,20 @@ impl XmlEncoding for InitEncoding {
         0
     }
 
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        _from_buf: &'r mut ExpatBufRef<'a>,
-        _to_buf: &'r mut ExpatBufRefMut<'b>,
-    ) -> XML_Convert_Result {
-        XML_Convert_Result::COMPLETED
+        _from_buf: ExpatBufRef,
+        _to_buf: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
+        (XML_Convert_Result::COMPLETED, 0, 0)
     }
 
     fn utf16Convert(
         &self,
-        _from_buf: &mut ExpatBufRef,
-        _to_buf: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
-        XML_Convert_Result::COMPLETED
+        _from_buf: ExpatBufRef,
+        _to_buf: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
+        (XML_Convert_Result::COMPLETED, 0, 0)
     }
 
     fn minBytesPerChar(&self) -> usize {
@@ -2404,69 +2388,73 @@ impl XmlEncodingImpl for UnknownEncoding {
     }
 
     #[inline]
-    fn utf8Convert<'r, 'a: 'r, 'b: 'r>(
+    fn utf8Convert(
         &self,
-        from_buf: &'r mut ExpatBufRef<'a>,
-        to: &'r mut ExpatBufRefMut<'b>,
-    ) -> XML_Convert_Result {
+        from: ExpatBufRef,
+        to: &mut [c_char],
+    ) -> (XML_Convert_Result, usize, usize) {
         let mut buf: [c_char; 4] = [0; 4];
+        let mut from_idx = 0;
+        let mut to_idx = 0;
         loop {
             let mut n: c_int = 0;
-            if from_buf.is_empty() {
-                return XML_Convert_Result::COMPLETED;
+            if from[from_idx..].is_empty() {
+                return (XML_Convert_Result::COMPLETED, from_idx, to_idx);
             }
-            let mut utf8: ExpatBufRef = self.utf8[from_buf[0] as c_uchar as usize][..].into();
+            let mut utf8: ExpatBufRef = self.utf8[from[from_idx] as c_uchar as usize][..].into();
             n = utf8[0] as c_int;
             utf8 = utf8.inc_start(1);
             if n == 0 {
                 let mut c: c_int = unsafe {
-                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
+                    self.convert.expect("non-null function pointer")(self.userData, from[from_idx..].as_ptr())
                 };
                 n = XmlUtf8Encode(c, &mut buf);
-                if n as c_long > to.len() as c_long {
-                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                if n as c_long > to[to_idx..].len() as c_long {
+                    return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                 }
                 utf8 = buf[..].into();
-                *from_buf = from_buf.inc_start(
-                    (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (ByteType::LEAD2 as c_int - 2)) as usize);
+                from_idx +=
+                    (self.types[from[from_idx] as c_uchar as usize] as c_int
+                     - (ByteType::LEAD2 as c_int - 2)) as usize;
             } else {
-                if n as c_long > to.len() as c_long {
-                    return XML_Convert_Result::OUTPUT_EXHAUSTED;
+                if n as c_long > to[to_idx..].len() as c_long {
+                    return (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx);
                 }
-                *from_buf = from_buf.inc_start(1);
+                from_idx += 1;
             }
-            to[..n as usize].copy_from_slice(&utf8[..n as usize]);
-            to.inc_start(n as usize);
+            to[to_idx..][..n as usize].copy_from_slice(&utf8[..n as usize]);
+            to_idx += n as usize;
         }
     }
 
     #[inline]
     fn utf16Convert(
         &self,
-        from_buf: &mut ExpatBufRef,
-        to: &mut ExpatBufRefMut<u16>,
-    ) -> XML_Convert_Result {
-        while !from_buf.is_empty() && !to.is_empty() {
-            let mut c: c_ushort = self.utf16[from_buf[0] as c_uchar as usize];
+        from: ExpatBufRef,
+        to: &mut [u16],
+    ) -> (XML_Convert_Result, usize, usize) {
+        let mut from_idx = 0;
+        let mut to_idx = 0;
+        while !from[from_idx..].is_empty() && !to[to_idx..].is_empty() {
+            let mut c: c_ushort = self.utf16[from[from_idx] as c_uchar as usize];
             if c as c_int == 0 {
                 c = unsafe {
-                    self.convert.expect("non-null function pointer")(self.userData, from_buf.as_ptr())
+                    self.convert.expect("non-null function pointer")(self.userData, from[from_idx..].as_ptr())
                     as c_ushort
                 };
-                *from_buf = (*from_buf).inc_start(
-                    (self.types[from_buf[0] as c_uchar as usize] as c_int
-                     - (ByteType::LEAD2 as c_int - 2)) as usize);
+                from_idx +=
+                    (self.types[from[from_idx] as c_uchar as usize] as c_int
+                     - (ByteType::LEAD2 as c_int - 2)) as usize;
             } else {
-                *from_buf = (*from_buf).inc_start(1)
+                from_idx += 1;
             }
-            to[0] = c;
-            to.inc_start(1);
+            to[to_idx] = c;
+            to_idx += 1;
         }
-        if to.is_empty() && !from_buf.is_empty() {
-            XML_Convert_Result::OUTPUT_EXHAUSTED
+        if to[to_idx..].is_empty() && !from[from_idx..].is_empty() {
+            (XML_Convert_Result::OUTPUT_EXHAUSTED, from_idx, to_idx)
         } else {
-            XML_Convert_Result::COMPLETED
+            (XML_Convert_Result::COMPLETED, from_idx, to_idx)
         }
     }
 }
@@ -2544,19 +2532,15 @@ pub const encodings: [&'static ENCODING; 7] = [
 
 pub fn findEncoding(
     mut enc: &ENCODING,
-    mut buf: ExpatBufRef,
+    buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
     let mut out_buf: [c_char; 128] = [0; 128];
-    let mut p = ExpatBufRefMut::new(
-        out_buf.as_mut_ptr(),
-        &mut out_buf[127],
-    );
     let mut i: c_int = 0;
-    (*enc).utf8Convert(&mut buf, &mut p);
-    if !buf.is_empty() {
+    let (_, from_len, to_len) = (*enc).utf8Convert(buf, &mut out_buf[0..127]);
+    if !buf[from_len..].is_empty() {
         return None;
     }
-    p[0] = 0;
+    out_buf[to_len] = 0;
     unsafe {
         if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
             return Some(enc.clone());
@@ -2572,19 +2556,15 @@ pub fn findEncoding(
 
 pub fn findEncodingNS(
     mut enc: &ENCODING,
-    mut buf: ExpatBufRef,
+    buf: ExpatBufRef,
 ) -> Option<*const ENCODING> {
     let mut out_buf: [c_char; 128] = [0; 128];
-    let mut p = ExpatBufRefMut::new(
-        out_buf.as_mut_ptr(),
-        &mut out_buf[127],
-    );
     let mut i: c_int = 0;
-    (*enc).utf8Convert(&mut buf, &mut p);
-    if !buf.is_empty() {
+    let (_, from_len, to_len) = (*enc).utf8Convert(buf, &mut out_buf[0..127]);
+    if !buf[from_len..].is_empty() {
         return None;
     }
-    p[0] = 0;
+    out_buf[to_len] = 0;
     unsafe {
         if streqci(out_buf.as_ptr(), KW_UTF_16.as_ptr()) != 0 && (*enc).minBytesPerChar() == 2 {
             return Some(enc.clone());
@@ -2839,15 +2819,11 @@ fn initUpdatePosition(
 
 fn toAscii(
     mut enc: &ENCODING,
-    mut buf: ExpatBufRef,
+    buf: ExpatBufRef,
 ) -> c_int {
     let mut out_buf: [c_char; 1] = [0; 1];
-    let mut p = ExpatBufRefMut::new(
-        &mut out_buf[0],
-        out_buf[1..].as_mut_ptr(),
-    );
-    (*enc).utf8Convert(&mut buf, &mut p);
-    if p.as_ptr() == out_buf.as_ptr() {
+    let (_, _, to_len) = (*enc).utf8Convert(buf, &mut out_buf[0..1]);
+    if to_len == 0 {
         return -1;
     } else {
         return out_buf[0] as c_int;

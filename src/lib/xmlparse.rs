@@ -73,7 +73,7 @@ use std::alloc::{self, Layout};
 use std::cell::{Cell, RefCell};
 use std::cmp;
 use std::collections::{hash_map, HashMap, HashSet, TryReserveError};
-use std::convert::TryInto;
+use std::convert::{TryInto, TryFrom};
 use std::mem;
 use std::ops::{self, DerefMut};
 use std::ptr;
@@ -4416,16 +4416,14 @@ impl XML_ParserStruct {
                         tag.buf as *mut ICHAR,
                         (tag.bufEnd as *mut ICHAR).offset(-1),
                     );
+                    let mut convLen = 0;
                     loop {
                         let mut bufSize: c_int = 0;
-                        let mut convLen: c_int = 0;
-                        let convert_res: super::xmltok::XML_Convert_Result =
-                            XmlConvert!(enc, &mut fromBuf, &mut to_buf,);
-                        convLen = to_buf
-                            .as_ptr()
-                            .wrapping_offset_from(tag.buf as *mut XML_Char)
-                            .try_into()
-                            .unwrap();
+                        let (convert_res, from_count, to_count) =
+                            XmlConvert!(enc, fromBuf, &mut to_buf[..]);
+                        fromBuf = fromBuf.inc_start(from_count);
+                        to_buf.inc_start(to_count);
+                        convLen += c_int::try_from(to_count).unwrap();
                         if fromBuf.is_empty()
                             || convert_res == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
                         {
@@ -4714,13 +4712,12 @@ impl XML_ParserStruct {
                     }
                     if self.m_handlers.hasCharacterData() {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
-                            let dataStart = self.m_dataBuf.as_ptr();
-                            let mut dataPtr = (&mut self.m_dataBuf[..]).into();
                             let mut bufRef = buf.as_buf_ref();
-                            XmlConvert!(enc, &mut bufRef, &mut dataPtr);
-                            buf = buf.clone().with_start(bufRef.as_ptr());
+                            let (_, buf_count, data_count) =
+                                XmlConvert!(enc, bufRef, &mut self.m_dataBuf[..]);
+                            buf = buf.clone().inc_start(buf_count);
                             self.m_handlers
-                                .characterData(&ExpatBufRef::new(dataStart, dataPtr.as_ptr()));
+                                .characterData(&ExpatBufRef::from(&self.m_dataBuf[..data_count]));
                         } else {
                             self.m_handlers
                                 .characterData(&ExpatBufRef::<XML_Char>::from(buf.as_buf_ref()));
@@ -4747,13 +4744,11 @@ impl XML_ParserStruct {
                         if MUST_CONVERT!(enc, buf.as_ptr()) {
                             loop {
                                 let mut from_buf = buf.as_buf_ref().with_end(next);
-                                let dataStart = self.m_dataBuf.as_ptr();
-                                let mut to_buf = (&mut self.m_dataBuf[..]).into();
-                                let convert_res_0: super::xmltok::XML_Convert_Result =
-                                    XmlConvert!(enc, &mut from_buf, &mut to_buf);
-                                buf = buf.clone().with_start(from_buf.as_ptr());
+                                let (convert_res_0, buf_count, data_count) =
+                                    XmlConvert!(enc, from_buf, &mut self.m_dataBuf[..]);
+                                buf = buf.clone().inc_start(buf_count);
 
-                                let data_buf = ExpatBufRef::new(dataStart, to_buf.as_ptr());
+                                let data_buf = ExpatBufRef::from(&self.m_dataBuf[..data_count]);
                                 self.eventEndPP(enc_type).set(buf.as_ptr());
                                 self.m_handlers.characterData(&data_buf);
                                 if convert_res_0 == super::xmltok::XML_Convert_Result::COMPLETED
@@ -5656,16 +5651,12 @@ unsafe extern "C" fn doCdataSection(
                     if MUST_CONVERT!(enc, buf.as_ptr()) {
                         loop {
                             let mut from_buf = buf.as_buf_ref().with_end(next);
-                            let mut to_buf = (&mut (*parser).m_dataBuf[..]).into();
-                            let convert_res: super::xmltok::XML_Convert_Result =
-                                XmlConvert!(enc, &mut from_buf, &mut to_buf);
-                            buf = buf.clone().with_start(from_buf.as_ptr());
+                            let (convert_res, buf_count, data_count) =
+                                XmlConvert!(enc, from_buf, &mut (*parser).m_dataBuf[..]);
+                            buf = buf.clone().inc_start(buf_count);
 
                             (*parser).eventEndPP(enc_type).set(next);
-                            handlers.characterData(&ExpatBufRef::new(
-                                (*parser).m_dataBuf.as_ptr(),
-                                to_buf.as_ptr(),
-                            ));
+                            handlers.characterData(&ExpatBufRef::from(&(*parser).m_dataBuf[..data_count]));
                             if convert_res == super::xmltok::XML_Convert_Result::COMPLETED
                                 || convert_res
                                     == super::xmltok::XML_Convert_Result::INPUT_INCOMPLETE
@@ -8437,20 +8428,15 @@ unsafe extern "C" fn reportDefault(
 ) {
     let enc = (*parser).encoding(enc_type);
     if MUST_CONVERT!(enc, buf.as_ptr()) {
-        let mut convert_res: super::xmltok::XML_Convert_Result =
-            super::xmltok::XML_Convert_Result::COMPLETED;
         loop {
-            let mut data_buf = (&mut (*parser).m_dataBuf[..]).into();
-            convert_res = XmlConvert!(enc, &mut buf, &mut data_buf);
+            let (convert_res, buf_count, data_count) =
+                XmlConvert!(enc, buf, &mut (*parser).m_dataBuf[..]);
+            buf = buf.inc_start(buf_count);
             (*parser).eventEndPP(enc_type).set(buf.as_ptr());
 
             let defaultRan = (*parser).m_handlers.default(
                 (*parser).m_dataBuf.as_ptr(),
-                data_buf
-                    .as_ptr()
-                    .wrapping_offset_from((*parser).m_dataBuf.as_ptr())
-                    .try_into()
-                    .unwrap(),
+                data_count.try_into().unwrap(),
             );
 
             // Previously unwrapped an Option
