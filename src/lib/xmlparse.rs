@@ -4020,13 +4020,13 @@ fn contentProcessor(
     buf: ExpatSliceRc,
     endIdx: &mut usize,
 ) -> XML_Error {
-    let mut result: XML_Error = unsafe { (*parser).doContent(
+    let mut result: XML_Error = (*parser).doContent(
         0,
         EncodingType::Normal,
         buf,
         endIdx,
         !(*parser).m_parsingStatus.finalBuffer,
-    ) };
+    );
     if result == XML_Error::NONE {
         if !(*parser).storeRawNames() {
             return XML_Error::NO_MEMORY;
@@ -4109,7 +4109,7 @@ fn externalEntityInitProcessor3(
     match tok {
         XML_TOK::XML_DECL => {
             let mut result: XML_Error = XML_Error::NONE;
-            result = unsafe { (*parser).processXmlDecl(1, buf.as_buf_ref().with_len(next_idx)) };
+            result = (*parser).processXmlDecl(1, buf.as_buf_ref().with_len(next_idx));
             if result != XML_Error::NONE {
                 return result;
             }
@@ -4148,13 +4148,13 @@ fn externalEntityContentProcessor(
     buf: ExpatSliceRc,
     endIdx: &mut usize,
 ) -> XML_Error {
-    let mut result: XML_Error = unsafe { (*parser).doContent(
+    let mut result: XML_Error = (*parser).doContent(
         1,
         EncodingType::Normal,
         buf,
         endIdx,
         !(*parser).m_parsingStatus.finalBuffer,
-    ) };
+    );
     if result == XML_Error::NONE {
         if !(*parser).storeRawNames() {
             return XML_Error::NO_MEMORY;
@@ -4697,9 +4697,7 @@ impl XML_ParserStruct {
                     }
                     let mut cdata_start_idx = None;
                     let mut cdata_next_idx = usize::MAX;
-                    result_2 = unsafe {
-                        doCdataSection(self, enc_type, buf.clone().inc_start(idx + next_idx), &mut cdata_start_idx, &mut cdata_next_idx, haveMore)
-                    };
+                    result_2 = doCdataSection(self, enc_type, buf.clone().inc_start(idx + next_idx), &mut cdata_start_idx, &mut cdata_next_idx, haveMore);
                     if cdata_next_idx != usize::MAX {
                         *nextIdx = idx + next_idx + cdata_next_idx;
                     }
@@ -5585,14 +5583,14 @@ fn cdataSectionProcessor(
     endIdx: &mut usize,
 ) -> XML_Error {
     let mut start_idx = None;
-    let mut result: XML_Error = unsafe { doCdataSection(
+    let mut result: XML_Error = doCdataSection(
         parser,
         EncodingType::Normal,
         buf.clone(),
         &mut start_idx,
         endIdx,
         !(*parser).m_parsingStatus.finalBuffer,
-    ) };
+    );
     if result != XML_Error::NONE {
         return result;
     }
@@ -6113,11 +6111,11 @@ fn entityValueInitProcessor(
                 XML_TOK::NONE | _ => {}
             }
             /* found end of entity value - can store it now */
-            return unsafe { storeEntityValue(parser, EncodingType::Normal, init_buf.as_buf_ref()) };
+            return storeEntityValue(parser, EncodingType::Normal, init_buf.as_buf_ref());
         } else {
             if tok == XML_TOK::XML_DECL {
                 let mut result: XML_Error = XML_Error::NONE;
-                result = unsafe { (*parser).processXmlDecl(0, tok_buf) };
+                result = (*parser).processXmlDecl(0, tok_buf);
                 if result != XML_Error::NONE {
                     return result;
                 }
@@ -6238,7 +6236,7 @@ fn entityValueProcessor(
                as valid, and report a syntax error, so we have to skip the BOM
             */
             /* found end of entity value - can store it now */
-            return unsafe { storeEntityValue(parser, EncodingType::Normal, buf.as_buf_ref().inc_start(idx)) };
+            return storeEntityValue(parser, EncodingType::Normal, buf.as_buf_ref().inc_start(idx));
         }
         idx += next_idx;
     }
@@ -6466,9 +6464,7 @@ impl XML_ParserStruct {
                     }
                 }
                 XML_ROLE::TEXT_DECL => {
-                    let mut result_0: XML_Error = unsafe {
-                        self.processXmlDecl(1, tok_buf)
-                    };
+                    let mut result_0: XML_Error = self.processXmlDecl(1, tok_buf);
                     if result_0 != XML_Error::NONE {
                         return result_0;
                     }
@@ -7143,7 +7139,7 @@ impl XML_ParserStruct {
                         &mut ignore_next_idx,
                         haveMore
                     );
-                    if (ignore_next_idx != usize::MAX) {
+                    if ignore_next_idx != usize::MAX {
                         *nextIdx = idx + next_idx + ignore_next_idx;
                     }
                     if result_3 != XML_Error::NONE {
@@ -7631,7 +7627,7 @@ fn epilogProcessor(
         let mut next = buf.clone().inc_start(idx + next_idx).as_ptr();
         (*parser).m_eventEndPtr.set(next);
         match tok {
-            XML_TOK::PROLOG_S_NEG => unsafe {
+            XML_TOK::PROLOG_S_NEG => {
                 /* report partial linebreak - it might be the last token */
                 if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, EncodingType::Normal, tok_buf);
@@ -7646,19 +7642,19 @@ fn epilogProcessor(
                 *nextIdx = idx;
                 return XML_Error::NONE;
             }
-            XML_TOK::PROLOG_S => unsafe {
+            XML_TOK::PROLOG_S => {
                 if (*parser).m_handlers.hasDefault() {
                     reportDefault(parser, EncodingType::Normal, tok_buf);
                 }
             }
-            XML_TOK::PI => unsafe {
+            XML_TOK::PI => {
                 if reportProcessingInstruction(parser, EncodingType::Normal, tok_buf)
                     == 0
                 {
                     return XML_Error::NO_MEMORY;
                 }
             }
-            XML_TOK::COMMENT => unsafe {
+            XML_TOK::COMMENT => {
                 if reportComment(parser, EncodingType::Normal, tok_buf) == 0 {
                     return XML_Error::NO_MEMORY;
                 }
@@ -7740,13 +7736,13 @@ impl XML_ParserStruct {
             );
         } else {
             /* XML_DTD */
-            result = unsafe { self.doContent(
+            result = self.doContent(
                 self.m_tagLevel,
                 EncodingType::Internal,
                 RcRef::clone(text_slice).into(),
                 &mut next_idx,
                 false,
-            ) }
+            );
         }
         if result == XML_Error::NONE {
             if text_slice.len() != next_idx && self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
@@ -7815,7 +7811,6 @@ fn internalEntityProcessor(
     buf: ExpatSliceRc,
     nextIdx: &mut usize,
 ) -> XML_Error {
-    let mut next: *const c_char = ptr::null();
     let mut next_idx = 0;
     let mut result: XML_Error = XML_Error::NONE;
     let (mut entity, startTagLevel) = {
@@ -7844,13 +7839,13 @@ fn internalEntityProcessor(
         );
     } else {
         /* XML_DTD */
-        result = unsafe { (*parser).doContent(
+        result = (*parser).doContent(
             startTagLevel,
             EncodingType::Internal,
             text_slice,
             &mut next_idx,
             false,
-        ) };
+        );
     }
     if result != XML_Error::NONE {
         return result;
@@ -7891,7 +7886,7 @@ fn internalEntityProcessor(
         /* XML_DTD */
         (*parser).m_processor = Some(contentProcessor as Processor);
         /* see externalEntityContentProcessor vs contentProcessor */
-        unsafe { (*parser).doContent(
+        (*parser).doContent(
             if (*parser).is_child_parser {
                 1i32
             } else {
@@ -7901,7 +7896,7 @@ fn internalEntityProcessor(
             buf,
             nextIdx,
             !(*parser).m_parsingStatus.finalBuffer,
-        ) }
+        )
     } /* save one level of indirection */
 }
 

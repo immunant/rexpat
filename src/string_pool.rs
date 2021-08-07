@@ -1,5 +1,5 @@
 use crate::expat_external_h::XML_Char;
-use crate::lib::xmlparse::{ExpatBufRef, ExpatBufRefMut, XmlConvert, BufferBoundsOps};
+use crate::lib::xmlparse::{ExpatBufRef, XmlConvert, BufferBoundsOps};
 use crate::lib::xmltok::{ENCODING, XML_Convert_Result};
 
 use bumpalo::Bump;
