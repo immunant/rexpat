@@ -102,9 +102,6 @@ impl<'a, T> ExpatBufRef<'a, T> {
             ))
         }
     }
-    pub fn new_len<'new>(start: *const T, len: usize) -> ExpatBufRef<'new, T> {
-        unsafe { ExpatBufRef(std::slice::from_raw_parts(start, len)) }
-    }
     pub fn empty<'new>() -> ExpatBufRef<'new, T> {
         ExpatBufRef(&[])
     }
