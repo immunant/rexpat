@@ -4185,7 +4185,7 @@ impl XML_ParserStruct {
         }
     }
 
-    unsafe fn doContent(
+    fn doContent(
         &mut self,
         startTagLevel: c_int,
         enc_type: EncodingType,
@@ -4439,7 +4439,7 @@ impl XML_ParserStruct {
                     tag_buf[convLen] = '\u{0}' as XML_Char;
                     tag_buf.truncate(convLen + 1);
                     tag.name.str_0 = TagNameString::Rc(ExpatSliceRc::from(Rc::clone(&tag.buf)));
-                    result_0 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings);
+                    result_0 = unsafe { self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings) };
                     if result_0 as u64 != 0 {
                         return result_0;
                     }
@@ -4482,7 +4482,7 @@ impl XML_ParserStruct {
                         uriLen: 0,
                         prefixLen: 0,
                     };
-                    result_1 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut name_0, &mut bindings);
+                    result_1 = unsafe { self.storeAtts(enc_type, buf.as_buf_ref(), &mut name_0, &mut bindings) };
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
                         return result_1;
@@ -4833,6 +4833,7 @@ impl XML_ParserStruct {
             *fbl = Some(b);
         }
     }
+
     /* Precondition: all arguments must be non-NULL;
        Purpose:
        - normalize attributes
@@ -4843,7 +4844,6 @@ impl XML_ParserStruct {
        - process namespace declarations (check and report them)
        - generate namespace aware element name (URI, prefix)
     */
-
     unsafe fn storeAtts(
         &mut self,
         enc_type: EncodingType,
@@ -5612,7 +5612,7 @@ fn cdataSectionProcessor(
 /* startIdx gets set to Some if the section is closed, and to None if
    the section is not yet closed.
 */
-unsafe extern "C" fn doCdataSection(
+fn doCdataSection(
     parser: &mut XML_ParserStruct,
     enc_type: EncodingType,
     buf: ExpatSliceRc,
@@ -5735,14 +5735,14 @@ fn ignoreSectionProcessor(
     mut endIdx: &mut usize,
 ) -> XML_Error {
     let mut start_idx = Some(0);
-    let mut result: XML_Error = unsafe { doIgnoreSection(
+    let mut result: XML_Error = doIgnoreSection(
         parser,
         EncodingType::Normal,
         buf.clone(),
         &mut start_idx,
         endIdx,
         !(*parser).m_parsingStatus.finalBuffer,
-    ) };
+    );
     if result != XML_Error::NONE {
         return result;
     }
@@ -5756,7 +5756,7 @@ fn ignoreSectionProcessor(
 /* startPtr gets set to non-null is the section is closed, and to null
    if the section is not yet closed.
 */
-unsafe extern "C" fn doIgnoreSection(
+fn doIgnoreSection(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     buf: ExpatSliceRc,
@@ -5880,7 +5880,7 @@ impl XML_ParserStruct {
         )
     }
 
-    unsafe fn processXmlDecl(
+    fn processXmlDecl(
         &mut self,
         mut isGeneralTextEntity: c_int,
         buf: ExpatBufRef,
@@ -5897,7 +5897,7 @@ impl XML_ParserStruct {
             super::xmltok::XmlParseXmlDecl
         }(
             isGeneralTextEntity,
-            &*self.m_encoding,
+            unsafe { &*self.m_encoding },
             buf,
             &self.m_eventPtr,
             &mut version_buf,
@@ -5921,25 +5921,25 @@ impl XML_ParserStruct {
         }
         if self.m_handlers.hasXmlDecl() {
             if let Some(encodingName) = encodingName {
-                let successful = self.m_temp2Pool.store_c_string(
+                let successful = unsafe { self.m_temp2Pool.store_c_string(
                     &*self.m_encoding,
                     encodingName.with_len((*self.m_encoding).nameLength(encodingName) as usize),
-                );
+                ) };
                 if !successful {
                     return XML_Error::NO_MEMORY;
                 }
 
-                storedEncName = self.m_temp2Pool.current_start();
+                storedEncName = unsafe { self.m_temp2Pool.current_start() };
             }
             if let Some(version_buf) = version_buf {
-                let successful = self
+                let successful = unsafe { self
                     .m_temp2Pool
-                    .store_c_string(&*self.m_encoding, version_buf);
+                    .store_c_string(&*self.m_encoding, version_buf) };
                 if !successful {
                     return XML_Error::NO_MEMORY;
                 }
 
-                storedversion = self.m_temp2Pool.current_start();
+                storedversion = unsafe { self.m_temp2Pool.current_start() };
             }
             self.m_handlers
                 .xmlDecl(storedversion, storedEncName, standalone);
@@ -5953,9 +5953,9 @@ impl XML_ParserStruct {
                  * of bytes in the smallest representation of a character?  If
                  * this is UTF-16, is it the same endianness?
                  */
-                if (*newEncoding).minBytesPerChar() != (*self.m_encoding).minBytesPerChar()
+                if unsafe { (*newEncoding).minBytesPerChar() != (*self.m_encoding).minBytesPerChar()
                     || (*newEncoding).minBytesPerChar() == 2
-                        && !ptr::eq(newEncoding, self.m_encoding)
+                        && !ptr::eq(newEncoding, self.m_encoding) }
                 {
                     self.m_eventPtr.set(encodingName.map_or_else(ptr::null, |x| x.as_ptr()));
                     return XML_Error::INCORRECT_ENCODING;
@@ -5964,22 +5964,22 @@ impl XML_ParserStruct {
             } else if let Some(encodingName) = encodingName {
                 let mut result: XML_Error = XML_Error::NONE;
                 if storedEncName.is_null() {
-                    let successful = self.m_temp2Pool.store_c_string(
+                    let successful = unsafe { self.m_temp2Pool.store_c_string(
                         &*self.m_encoding,
                         encodingName.with_len((*self.m_encoding).nameLength(encodingName) as usize),
-                    );
+                    ) };
 
                     if !successful {
                         return XML_Error::NO_MEMORY;
                     }
 
-                    storedEncName = self.m_temp2Pool.current_start();
+                    storedEncName = unsafe { self.m_temp2Pool.current_start() };
                 };
-                result = self.m_handlers.handleUnknownEncoding(
+                result = unsafe { self.m_handlers.handleUnknownEncoding(
                     storedEncName,
                     self.m_ns,
                     &mut self.m_encoding,
-                );
+                ) };
                 self.m_temp2Pool.clear();
                 if result == XML_Error::UNKNOWN_ENCODING {
                     self.m_eventPtr.set(encodingName.as_ptr());
@@ -6195,7 +6195,7 @@ fn externalParEntProcessor(
     (*parser).m_processor = Some(prologProcessor as Processor);
 
     let mut next_idx2 = usize::MAX;
-    let result = unsafe { (*parser).doProlog(
+    let result = (*parser).doProlog(
         EncodingType::Normal,
         buf.inc_start(idx),
         tok,
@@ -6203,7 +6203,7 @@ fn externalParEntProcessor(
         &mut next_idx2,
         !(*parser).m_parsingStatus.finalBuffer,
         true,
-    ) };
+    );
     if next_idx2 != usize::MAX {
         *nextIdx = idx + next_idx2;
     }
@@ -6254,7 +6254,7 @@ fn prologProcessor(
     let mut tok = unsafe {
         (*parser.m_encoding).xmlTok(XML_STATE::PROLOG, buf.as_buf_ref(), &mut next_idx)
     };
-    return unsafe { (*parser).doProlog(
+    (*parser).doProlog(
         EncodingType::Normal,
         buf,
         tok,
@@ -6262,11 +6262,11 @@ fn prologProcessor(
         nextIdx,
         !(*parser).m_parsingStatus.finalBuffer,
         true,
-    ) };
+    )
 }
 
 impl XML_ParserStruct {
-    unsafe fn doPrologHandleEntityRef(
+    fn doPrologHandleEntityRef(
         &mut self,
         mut entity: &Rc<Entity>,
         role: XML_ROLE,
@@ -6321,7 +6321,7 @@ impl XML_ParserStruct {
         None
     }
 
-    unsafe fn doProlog(
+    fn doProlog(
         &mut self,
         mut enc_type: EncodingType,
         buf: ExpatSliceRc,
@@ -6724,7 +6724,7 @@ impl XML_ParserStruct {
                                 enumValueStart.as_ptr()
                             }
                         }
-                        if !self.m_tempPool.append_c_string(prefix) {
+                        if !unsafe { self.m_tempPool.append_c_string(prefix) } {
                             return XML_Error::NO_MEMORY;
                         }
                         if !self.m_tempPool.append(enc, tok_buf) {
@@ -6737,7 +6737,7 @@ impl XML_ParserStruct {
                         handleDefault = false
                     }
                 }
-                XML_ROLE::IMPLIED_ATTRIBUTE_VALUE | XML_ROLE::REQUIRED_ATTRIBUTE_VALUE => {
+                XML_ROLE::IMPLIED_ATTRIBUTE_VALUE | XML_ROLE::REQUIRED_ATTRIBUTE_VALUE => unsafe {
                     if self.m_dtd.keepProcessing.get() {
                         if defineAttribute(
                             self.m_declElementType.as_ref().unwrap(),
@@ -6776,7 +6776,7 @@ impl XML_ParserStruct {
                         }
                     }
                 }
-                XML_ROLE::DEFAULT_ATTRIBUTE_VALUE | XML_ROLE::FIXED_ATTRIBUTE_VALUE => {
+                XML_ROLE::DEFAULT_ATTRIBUTE_VALUE | XML_ROLE::FIXED_ATTRIBUTE_VALUE => unsafe {
                     if self.m_dtd.keepProcessing.get() {
                         let mut attVal: *const XML_Char = ptr::null();
                         let mut result_1: XML_Error = storeAttributeValue(
@@ -7697,7 +7697,7 @@ fn epilogProcessor(
 }
 
 impl XML_ParserStruct {
-    unsafe fn processInternalEntity(
+    fn processInternalEntity(
         &mut self,
         mut entity: &Rc<Entity>,
         mut betweenDecl: XML_Bool,
@@ -7729,7 +7729,7 @@ impl XML_ParserStruct {
         /* Set a safe default value in case 'next' does not get set */
         if entity.is_param.get() {
             let mut tok = (*self.m_internalEncoding).xmlTok(XML_STATE::PROLOG, text_buf, &mut next_idx);
-            result = unsafe { self.doProlog(
+            result = self.doProlog(
                 EncodingType::Internal,
                 RcRef::clone(text_slice).into(),
                 tok,
@@ -7737,16 +7737,16 @@ impl XML_ParserStruct {
                 &mut next_idx,
                 false,
                 false,
-            ) };
+            );
         } else {
             /* XML_DTD */
-            result = self.doContent(
+            result = unsafe { self.doContent(
                 self.m_tagLevel,
                 EncodingType::Internal,
                 RcRef::clone(text_slice).into(),
                 &mut next_idx,
                 false,
-            )
+            ) }
         }
         if result == XML_Error::NONE {
             if text_slice.len() != next_idx && self.m_parsingStatus.parsing == XML_Parsing::SUSPENDED {
@@ -7833,7 +7833,7 @@ fn internalEntityProcessor(
     if entity.is_param.get() {
         let mut tok =
             (*(*parser).m_internalEncoding).xmlTok(XML_STATE::PROLOG, text_slice.as_buf_ref(), &mut next_idx);
-        result = unsafe { (*parser).doProlog(
+        result = (*parser).doProlog(
             EncodingType::Internal,
             text_slice,
             tok,
@@ -7841,7 +7841,7 @@ fn internalEntityProcessor(
             &mut next_idx,
             false,
             true,
-        ) };
+        );
     } else {
         /* XML_DTD */
         result = unsafe { (*parser).doContent(
@@ -7878,7 +7878,7 @@ fn internalEntityProcessor(
         let tok_0 = unsafe {
             (*(*parser).m_encoding).xmlTok(XML_STATE::PROLOG, buf.as_buf_ref(), &mut next_idx)
         };
-        unsafe { (*parser).doProlog(
+        (*parser).doProlog(
             EncodingType::Normal,
             buf,
             tok_0,
@@ -7886,7 +7886,7 @@ fn internalEntityProcessor(
             nextIdx,
             !(*parser).m_parsingStatus.finalBuffer,
             true,
-        ) }
+        )
     } else {
         /* XML_DTD */
         (*parser).m_processor = Some(contentProcessor as Processor);
