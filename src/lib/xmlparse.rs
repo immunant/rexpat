@@ -7913,7 +7913,7 @@ fn errorProcessor(
     (*parser).m_errorCode
 }
 
-unsafe extern "C" fn storeAttributeValue(
+fn storeAttributeValue(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
@@ -7939,17 +7939,19 @@ unsafe extern "C" fn storeAttributeValue(
     XML_Error::NONE
 }
 
-unsafe extern "C" fn appendAttributeValue(
+fn appendAttributeValue(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut isCdata: XML_Bool,
-    mut buf: ExpatBufRef,
+    buf: ExpatBufRef,
     use_temp_pool: bool,
 ) -> XML_Error {
+    let mut idx = 0;
     let enc = (*parser).encoding(enc_type);
     loop {
         let mut next_idx = 0;
-        let mut tok = (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, buf, &mut next_idx);
+        let mut tok = (*enc).xmlLiteralTok(XML_ATTRIBUTE_VALUE_LITERAL, buf.inc_start(idx), &mut next_idx);
+        let tok_buf = ExpatBufRef::from(&buf[idx..idx + next_idx]);
         let mut next = buf.clone().inc_start(next_idx).as_ptr();
         match tok {
             XML_TOK::NONE => {
@@ -7964,7 +7966,7 @@ unsafe extern "C" fn appendAttributeValue(
             }
             XML_TOK::PARTIAL => {
                 if !enc_type.is_internal() {
-                    (*parser).m_eventPtr.set(buf.as_ptr());
+                    (*parser).m_eventPtr.set(tok_buf.as_ptr());
                 }
                 return XML_Error::INVALID_TOKEN;
             }
@@ -7976,7 +7978,7 @@ unsafe extern "C" fn appendAttributeValue(
                 };
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
                 let mut i: c_int = 0;
-                let mut n: c_int = (*enc).charRefNumber(buf);
+                let mut n: c_int = (*enc).charRefNumber(tok_buf);
                 if n < 0 {
                     if !enc_type.is_internal() {
                         (*parser).m_eventPtr.set(buf.as_ptr());
@@ -8015,13 +8017,13 @@ unsafe extern "C" fn appendAttributeValue(
                 } else {
                     &parser.m_dtd.pool
                 };
-                if !pool.append(enc, buf.with_end(next)) {
+                if !pool.append(enc, tok_buf) {
                     return XML_Error::NO_MEMORY;
                 }
             }
             XML_TOK::TRAILING_CR | XML_TOK::ATTRIBUTE_VALUE_S | XML_TOK::DATA_NEWLINE => {
                 if tok == XML_TOK::TRAILING_CR {
-                    next = buf.as_ptr().offset((*enc).minBytesPerChar() as isize);
+                    next_idx = (*enc).minBytesPerChar();
                 }
 
                 let pool = if use_temp_pool {
@@ -8043,8 +8045,8 @@ unsafe extern "C" fn appendAttributeValue(
                 };
                 let mut checkEntityDecl = false;
                 let mut ch: XML_Char = (*enc).predefinedEntityName(
-                    buf.inc_start((*enc).minBytesPerChar())
-                        .with_end(next)
+                    tok_buf
+                        .inc_start((*enc).minBytesPerChar())
                         .dec_end((*enc).minBytesPerChar()),
                 ) as XML_Char;
                 if ch != 0 {
@@ -8054,8 +8056,8 @@ unsafe extern "C" fn appendAttributeValue(
                 } else {
                     let successful = (*parser).m_temp2Pool.store_c_string(
                         enc,
-                        buf.inc_start((*enc).minBytesPerChar())
-                            .with_end(next)
+                        tok_buf
+                            .inc_start((*enc).minBytesPerChar())
                             .dec_end((*enc).minBytesPerChar()),
                     );
                     if !successful {
@@ -8119,20 +8121,20 @@ unsafe extern "C" fn appendAttributeValue(
                                  * we keep the line and merely exclude it from coverage
                                  * tests.
                                  */
-                                (*parser).m_eventPtr.set(buf.as_ptr());
+                                (*parser).m_eventPtr.set(tok_buf.as_ptr());
                                 /* LCOV_EXCL_LINE */
                             }
                             return XML_Error::RECURSIVE_ENTITY_REF;
                         }
                         if !entity.notation.get().is_null() {
                             if !enc_type.is_internal() {
-                                (*parser).m_eventPtr.set(buf.as_ptr());
+                                (*parser).m_eventPtr.set(tok_buf.as_ptr());
                             }
                             return XML_Error::BINARY_ENTITY_REF;
                         }
                         if entity.textPtr.borrow().is_none() {
                             if !enc_type.is_internal() {
-                                (*parser).m_eventPtr.set(buf.as_ptr());
+                                (*parser).m_eventPtr.set(tok_buf.as_ptr());
                             }
                             return XML_Error::ATTRIBUTE_EXTERNAL_ENTITY_REF;
                         } else {
@@ -8167,12 +8169,12 @@ unsafe extern "C" fn appendAttributeValue(
                  * LCOV_EXCL_START
                  */
                 if !enc_type.is_internal() {
-                    (*parser).m_eventPtr.set(buf.as_ptr());
+                    (*parser).m_eventPtr.set(tok_buf.as_ptr());
                 }
                 return XML_Error::UNEXPECTED_STATE;
             }
         }
-        buf = buf.with_start(next);
+        idx += next_idx;
     }
     /* not reached */
 }
