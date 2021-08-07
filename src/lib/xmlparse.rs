@@ -4439,7 +4439,7 @@ impl XML_ParserStruct {
                     tag_buf[convLen] = '\u{0}' as XML_Char;
                     tag_buf.truncate(convLen + 1);
                     tag.name.str_0 = TagNameString::Rc(ExpatSliceRc::from(Rc::clone(&tag.buf)));
-                    result_0 = unsafe { self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings) };
+                    result_0 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut tag.name, &mut tag.bindings);
                     if result_0 as u64 != 0 {
                         return result_0;
                     }
@@ -4482,7 +4482,7 @@ impl XML_ParserStruct {
                         uriLen: 0,
                         prefixLen: 0,
                     };
-                    result_1 = unsafe { self.storeAtts(enc_type, buf.as_buf_ref(), &mut name_0, &mut bindings) };
+                    result_1 = self.storeAtts(enc_type, buf.as_buf_ref(), &mut name_0, &mut bindings);
                     if result_1 != XML_Error::NONE {
                         self.freeBindings(bindings);
                         return result_1;
@@ -4842,7 +4842,7 @@ impl XML_ParserStruct {
        - process namespace declarations (check and report them)
        - generate namespace aware element name (URI, prefix)
     */
-    unsafe fn storeAtts(
+    fn storeAtts(
         &mut self,
         enc_type: EncodingType,
         attStr: ExpatBufRef,
@@ -4861,7 +4861,7 @@ impl XML_ParserStruct {
             if let Some(elementType) = elementType {
                 elementType
             } else {
-                if !self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) {
+                if !unsafe { self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) } {
                     return XML_Error::NO_MEMORY;
                 }
                 let elementType: Rc<ElementType> =
@@ -5085,15 +5085,15 @@ impl XML_ParserStruct {
             } // MOZILLA CHANGE
               /* expand prefixed names and check for duplicates */
             while i < self.m_atts.len() {
-                let mut s: *const XML_Char = self.m_atts[i].name;
+                let s = self.m_atts[i].name;
+                let mut s = unsafe { slice::from_raw_parts(s, strlen(s) + 1) };
                 if self.typed_atts[i].get_type() == AttributeType::Prefixed {
                     // TODO: this could be a match instead
                     /* clear flag */
                     /* not prefixed */
                     /* prefixed */
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
-                    let key = slice::from_raw_parts(s, strlen(s) + 1);
-                    let id = dtd_tables.attributeIds.get(key);
+                    let id = dtd_tables.attributeIds.get(s);
                     if id.is_none() || id.unwrap().prefix.borrow().is_none() {
                         /* This code is walking through the appAtts array, dealing
                          * with (in this case) a prefixed attribute name.  To be in
@@ -5125,20 +5125,20 @@ impl XML_ParserStruct {
                         }
                     }
                     loop {
-                        let fresh22 = s;
-                        s = s.offset(1);
-                        if !(*fresh22 != ASCII_COLON as XML_Char) {
+                        let fresh22 = s[0];
+                        s = &s[1..];
+                        if fresh22 == ASCII_COLON as XML_Char {
                             break;
                         }
                     }
                     loop {
                         /* copies null terminator */
-                        if !self.m_tempPool.append_char(*s) {
+                        if !self.m_tempPool.append_char(s[0]) {
                             return XML_Error::NO_MEMORY;
                         }
-                        let fresh24 = s;
-                        s = s.offset(1);
-                        if !(*fresh24 != 0) {
+                        let fresh24 = s[0];
+                        s = &s[1..];
+                        if fresh24 == 0 {
                             break;
                         }
                     }
@@ -5225,31 +5225,31 @@ impl XML_ParserStruct {
                     ];
 
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
-                    if !self.m_tempPool.append_c_string(xmlnsNamespace.as_ptr())
+                    if !unsafe { self.m_tempPool.append_c_string(xmlnsNamespace.as_ptr()) }
                         || !self.m_tempPool.append_char(self.m_namespaceSeparator)
                     {
                         return XML_Error::NO_MEMORY;
                     }
 
-                    s = s.offset(xmlnsPrefix.len() as isize - 1);
-                    if *s == ':' as XML_Char {
-                        s = s.offset(1);
+                    s = &s[xmlnsPrefix.len() - 1..];
+                    if s[0] == ':' as XML_Char {
+                        s = &s[1..];
                         loop {
                             /* copies null terminator */
-                            if !self.m_tempPool.append_char(*s) {
+                            if !self.m_tempPool.append_char(s[0]) {
                                 return XML_Error::NO_MEMORY;
                             }
-                            if *s == '\u{0}' as XML_Char {
-                                s = s.offset(1);
+                            if s[0] == '\u{0}' as XML_Char {
+                                s = &s[1..];
                                 break;
                             }
-                            s = s.offset(1);
+                            s = &s[1..];
                         }
 
                         if self.m_ns_triplets {
                             /* append namespace separator and prefix */
                             self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                            if !self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr())
+                            if !unsafe { self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) }
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char)
                             {
                                 return XML_Error::NO_MEMORY;
@@ -5257,7 +5257,7 @@ impl XML_ParserStruct {
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if !self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr())
+                        if !unsafe { self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) }
                             || !self.m_tempPool.append_char('\u{0}' as XML_Char)
                         {
                             return XML_Error::NO_MEMORY;
@@ -5265,8 +5265,7 @@ impl XML_ParserStruct {
                     }
 
                     /* store expanded name in attribute list */
-                    s = self.m_tempPool.finish().as_ptr();
-                    self.m_atts[i].name = s;
+                    self.m_atts[i].name = self.m_tempPool.finish().as_ptr();
 
                     nXMLNSDeclarations -= 1;
                     if nXMLNSDeclarations == 0 && nPrefixes == 0 {
