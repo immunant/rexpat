@@ -5118,10 +5118,8 @@ impl XML_ParserStruct {
                         None => return XML_Error::UNBOUND_PREFIX,
                     };
                     let uri = b.uri.borrow();
-                    for &c in &uri[..b.uriLen.get()] {
-                        if !self.m_tempPool.append_char(c) {
-                            return XML_Error::NO_MEMORY;
-                        }
+                    if !self.m_tempPool.extend_from_slice(&uri[..b.uriLen.get()]) {
+                        return XML_Error::NO_MEMORY;
                     }
                     loop {
                         let fresh22 = s[0];
@@ -7967,7 +7965,6 @@ fn appendAttributeValue(
                     &parser.m_dtd.pool
                 };
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                let mut i: c_int = 0;
                 let mut n: c_int = (*enc).charRefNumber(tok_buf);
                 if n < 0 {
                     if !enc_type.is_internal() {
@@ -7992,12 +7989,8 @@ fn appendAttributeValue(
                      * XmlEncode() is never passed a value it might return an
                      * error for.
                      */
-                    i = 0;
-                    while i < n {
-                        if !pool.append_char(out_buf[i as usize]) {
-                            return XML_Error::NO_MEMORY;
-                        }
-                        i += 1
+                    if !pool.extend_from_slice(&out_buf[..n as usize]) {
+                        return XML_Error::NO_MEMORY;
                     }
                 }
             }
@@ -8325,11 +8318,9 @@ fn storeEntityValue(
                      * error for.
                      */
                     let n = n.try_into().unwrap();
-                    for &c in &out_buf[..n] {
-                        if !(*parser).m_dtd.entityValuePool.append_char(c) {
-                            result = XML_Error::NO_MEMORY;
-                            break 's_41;
-                        }
+                    if !(*parser).m_dtd.entityValuePool.extend_from_slice(&out_buf[..n]) {
+                        result = XML_Error::NO_MEMORY;
+                        break 's_41;
                     }
                 }
             }
@@ -8630,10 +8621,8 @@ impl XML_ParserStruct {
                         while name[i] != 0 {
                             /* attributes without prefix are *not* in the default namespace */
                             if name[i] == ASCII_COLON as XML_Char {
-                                for j in 0..i {
-                                    if !self.m_dtd.pool.append_char(name[j]) {
-                                        return None;
-                                    }
+                                if !self.m_dtd.pool.extend_from_slice(&name[..i]) {
+                                    return None;
                                 }
                                 if !self.m_dtd.pool.append_char('\u{0}' as XML_Char) {
                                     return None;
