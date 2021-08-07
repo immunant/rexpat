@@ -1622,7 +1622,7 @@ impl DTD {
 
     // Get a copy of externalSubsetName interned in `self.pool`
     fn intern_external_subset(&self) -> Result<StringPoolSlice, TryReserveError> {
-        const externalSubsetName: [XML_Char; 1] = XML_STR![ASCII_HASH];
+        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH, 0];
         if let Some(ess) = self.tables.borrow().externalSubsetSlice.as_ref() {
             return Ok(OwningRef::clone(ess));
         }
