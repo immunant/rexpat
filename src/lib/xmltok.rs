@@ -36,7 +36,7 @@
 
 use libc::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void, size_t};
 use crate::expat_h::{XML_Error};
-use super::xmlparse::ExpatBufRef;
+use super::xmlparse::{ExpatBufRef, BufferBoundsOps};
 use std::cell::Cell;
 use std::marker::PhantomData;
 use std::ptr;

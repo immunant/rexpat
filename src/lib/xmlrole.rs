@@ -33,7 +33,7 @@
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-use super::xmlparse::ExpatBufRef;
+use super::xmlparse::{ExpatBufRef, BufferBoundsOps};
 use libc::{c_char, c_int, c_uint};
 
 #[repr(i32)]

@@ -83,6 +83,14 @@ type Ptr<T> = Option<Rc<T>>;
 
 pub const XML_CONTEXT_BYTES: c_int = 1024;
 
+/// Trait for the most common operations we need to perform
+/// on buffer and slice bounds
+pub(crate) trait BufferBoundsOps {
+    fn inc_start(self, offset: usize) -> Self;
+    fn dec_end(self, offset: usize) -> Self;
+    fn with_len(self, offset: usize) -> Self;
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct ExpatBufRef<'a, T = c_char>(&'a [T]);
 impl<'a, T> ExpatBufRef<'a, T> {
@@ -124,15 +132,10 @@ impl<'a, T> ExpatBufRef<'a, T> {
         }
         ExpatBufRef::new(self.0.as_ptr(), new_end)
     }
+}
 
-    pub fn with_len(&self, len: usize) -> ExpatBufRef<'a, T> {
-        if len > self.len() {
-            panic!("Attempted to expand an ExpatBufRef to lenth: {:?}", len);
-        }
-        ExpatBufRef(&self.0[..len])
-    }
-
-    pub fn inc_start(&self, offset: usize) -> ExpatBufRef<'a, T> {
+impl<'a, T> BufferBoundsOps for ExpatBufRef<'a, T> {
+    fn inc_start(self, offset: usize) -> ExpatBufRef<'a, T> {
         if offset > self.len() {
             panic!(
                 "Attempted to increment the start of an ExpatBufRef by too much: {:?}",
@@ -142,7 +145,7 @@ impl<'a, T> ExpatBufRef<'a, T> {
         ExpatBufRef(&self.0[offset..])
     }
 
-    pub fn dec_end(&self, offset: usize) -> ExpatBufRef<'a, T> {
+    fn dec_end(self, offset: usize) -> ExpatBufRef<'a, T> {
         if offset > self.len() {
             panic!(
                 "Attempted to decrement the end of an ExpatBufRef by too much: {:?}",
@@ -150,6 +153,13 @@ impl<'a, T> ExpatBufRef<'a, T> {
             );
         }
         ExpatBufRef(&self.0[..(self.len() - offset)])
+    }
+
+    fn with_len(self, len: usize) -> ExpatBufRef<'a, T> {
+        if len > self.len() {
+            panic!("Attempted to expand an ExpatBufRef to lenth: {:?}", len);
+        }
+        ExpatBufRef(&self.0[..len])
     }
 }
 
@@ -298,14 +308,17 @@ impl<T> ExpatSliceRc<T> {
         self.with_len(new_len)
     }
 
-    pub fn with_len(self, len: usize) -> ExpatSliceRc<T> {
-        if len > self.len() {
-            panic!("Attempted to expand an ExpatSliceRc to lenth: {:?}", len);
-        }
-        ExpatSliceRc(self.0.map(|sl| &sl[..len]))
+    pub fn map<F: FnOnce(&[T]) -> &[T]>(self, f: F) -> Self {
+        ExpatSliceRc(self.0.map(f))
     }
 
-    pub fn inc_start(self, offset: usize) -> ExpatSliceRc<T> {
+    fn as_buf_ref<'a>(&'a self) -> ExpatBufRef<'a, T> {
+        ExpatBufRef::from(&self.0[..])
+    }
+}
+
+impl<T> BufferBoundsOps for ExpatSliceRc<T> {
+    fn inc_start(self, offset: usize) -> ExpatSliceRc<T> {
         if offset > self.len() {
             panic!(
                 "Attempted to increment the start of an ExpatSliceRc by too much: {:?}",
@@ -315,7 +328,7 @@ impl<T> ExpatSliceRc<T> {
         ExpatSliceRc(self.0.map(|sl| &sl[offset..]))
     }
 
-    pub fn dec_end(self, offset: usize) -> ExpatSliceRc<T> {
+    fn dec_end(self, offset: usize) -> ExpatSliceRc<T> {
         if offset > self.len() {
             panic!(
                 "Attempted to decrement the end of an ExpatSliceRc by too much: {:?}",
@@ -326,12 +339,11 @@ impl<T> ExpatSliceRc<T> {
         ExpatSliceRc(self.0.map(|sl| &sl[..self_len - offset]))
     }
 
-    pub fn map<F: FnOnce(&[T]) -> &[T]>(self, f: F) -> Self {
-        ExpatSliceRc(self.0.map(f))
-    }
-
-    fn as_buf_ref<'a>(&'a self) -> ExpatBufRef<'a, T> {
-        ExpatBufRef::from(&self.0[..])
+    fn with_len(self, len: usize) -> ExpatSliceRc<T> {
+        if len > self.len() {
+            panic!("Attempted to expand an ExpatSliceRc to lenth: {:?}", len);
+        }
+        ExpatSliceRc(self.0.map(|sl| &sl[..len]))
     }
 }
 
