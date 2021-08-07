@@ -5544,7 +5544,7 @@ fn addBinding(
     }
 
     /* NULL binding when default namespace undeclared */
-    let uri_ptr = if unsafe { *uri == '\u{0}' as XML_Char }
+    let uri_ptr = if uri_slice[0] == '\u{0}' as XML_Char
         && Rc::ptr_eq(
             prefix,
             parser.m_dtd.tables.borrow().defaultPrefix.as_ref().unwrap(),
