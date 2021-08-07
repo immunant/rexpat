@@ -8525,7 +8525,7 @@ unsafe extern "C" fn reportDefault(
     };
 }
 
-unsafe extern "C" fn defineAttribute(
+fn defineAttribute(
     mut type_0: &Rc<ElementType>,
     mut attId: &Rc<AttributeId>,
     mut isCdata: XML_Bool,
