@@ -2863,7 +2863,7 @@ fn parsePseudoAttribute<'a>(
         *name = None;
         return 1;
     }
-    *name = Some(buf.inc_start(idx));
+    let name_idx = idx;
     loop {
         c = toAscii(enc, buf.inc_start(idx));
         if c == -1 {
@@ -2871,10 +2871,10 @@ fn parsePseudoAttribute<'a>(
             return 0;
         }
         if c == ASCII_EQUALS as c_int {
-            *name = name.map(|name| name.with_end(buf[idx..].as_ptr()));
+            *name = Some(buf.inc_start(name_idx).with_len(idx - name_idx));
             break;
         } else if isSpace(c) != 0 {
-            *name = name.map(|name| name.with_end(buf[idx..].as_ptr()));
+            *name = Some(buf.inc_start(name_idx).with_len(idx - name_idx));
             loop {
                 idx += (*enc).minBytesPerChar();
                 c = toAscii(enc, buf.inc_start(idx));
@@ -2907,7 +2907,7 @@ fn parsePseudoAttribute<'a>(
     }
     open = c as c_char;
     idx += (*enc).minBytesPerChar();
-    *val = Some(buf.inc_start(idx));
+    let val_idx = idx;
     loop {
         c = toAscii(enc, buf.inc_start(idx));
         if c == open as c_int {
@@ -2925,6 +2925,7 @@ fn parsePseudoAttribute<'a>(
         }
         idx += (*enc).minBytesPerChar();
     }
+    *val = Some(buf.inc_start(val_idx).with_len(idx - val_idx));
     *nextTokIdx = idx + (*enc).minBytesPerChar();
     1
 }
@@ -2985,9 +2986,7 @@ fn doParseXmlDecl<'a>(
         #[cfg(feature = "mozilla")]
         {
             if !(*enc).nameMatchesAscii(val_buf
-                                       .unwrap()
-                                       .with_end(buf[idx..].as_ptr())
-                                       .dec_end((*enc).minBytesPerChar()),
+                                       .unwrap(),
                                        &KW_XML_1_0)
             {
                 badPtr.set(val_buf.map_or(ptr::null(), |x| x.as_ptr()));
@@ -3020,10 +3019,7 @@ fn doParseXmlDecl<'a>(
         *encodingName = val_buf;
         *encoding = unsafe { encodingFinder.expect("non-null function pointer")(
             enc,
-            val_buf
-                .unwrap()
-                .with_end(buf[idx..].as_ptr())
-                .dec_end((*enc).minBytesPerChar()),
+            val_buf.unwrap(),
         ) };
         let mut pseudo_idx = 0;
         if parsePseudoAttribute(enc, buf.inc_start(idx), &mut name, &mut val_buf, &mut pseudo_idx) == 0 {
@@ -3042,19 +3038,13 @@ fn doParseXmlDecl<'a>(
         return 0;
     }
     if (*enc).nameMatchesAscii(
-        val_buf
-            .unwrap()
-            .with_end(buf[idx..].as_ptr())
-            .dec_end((*enc).minBytesPerChar()),
+        val_buf.unwrap(),
         &KW_yes,
     )
     {
         *standalone = 1;
     } else if (*enc).nameMatchesAscii(
-        val_buf
-            .unwrap()
-            .with_end(buf[idx..].as_ptr())
-            .dec_end(((*enc).minBytesPerChar()) as usize),
+        val_buf.unwrap(),
         &KW_no,
     )
     {

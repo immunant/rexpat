@@ -112,26 +112,6 @@ impl<'a, T> ExpatBufRef<'a, T> {
     pub fn end(&self) -> *const T {
         unsafe { self.as_ptr().offset(self.len().try_into().unwrap()) }
     }
-
-    pub fn with_start(&self, new_start: *const T) -> ExpatBufRef<'a, T> {
-        if new_start < self.as_ptr() || new_start > self.end() {
-            panic!(
-                "Attempted to move the start of an ExpatBufRef to an invalid pointer: {:?}",
-                new_start
-            );
-        }
-        ExpatBufRef::new(new_start, self.end())
-    }
-
-    pub fn with_end(&self, new_end: *const T) -> ExpatBufRef<'a, T> {
-        if new_end < self.as_ptr() || new_end > self.end() {
-            panic!(
-                "Attempted to move the end of an ExpatBufRef to an invalid pointer: {:?}",
-                new_end
-            );
-        }
-        ExpatBufRef::new(self.0.as_ptr(), new_end)
-    }
 }
 
 impl<'a, T> BufferBoundsOps for ExpatBufRef<'a, T> {

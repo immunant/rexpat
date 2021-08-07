@@ -277,7 +277,6 @@ pub trait XmlTokImpl: XmlEncodingImpl {
     ) -> XML_TOK {
         let mut idx = 0;
         let mut tok = XML_TOK::INVALID;
-        let target = buf.clone();
         REQUIRE_CHAR!(buf, idx, self);
         CHECK_NMSTRT_CASES! {
             (buf, idx, nextTokIdx, self),
@@ -289,7 +288,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                 (buf, idx, nextTokIdx, self),
                 match self.byte_type(&buf[idx..]),
                 ByteType::S | ByteType::CR | ByteType::LF => {
-                    if self.checkPiTarget(target.with_end(buf[idx..].as_ptr()), &mut tok) == 0
+                    if self.checkPiTarget(buf.with_len(idx), &mut tok) == 0
                     {
                         *nextTokIdx = idx;
                         return XML_TOK::INVALID;
@@ -313,7 +312,7 @@ pub trait XmlTokImpl: XmlEncodingImpl {
                     return XML_TOK::PARTIAL
                 }
                 ByteType::QUEST => {
-                    if self.checkPiTarget(target.with_end(buf[idx..].as_ptr()), &mut tok) == 0
+                    if self.checkPiTarget(buf.with_len(idx), &mut tok) == 0
                     {
                         *nextTokIdx = idx;
                         return XML_TOK::INVALID
@@ -1795,7 +1794,7 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
     }
     fn nameLength(&self, buf: ExpatBufRef) -> libc::c_int {
         let mut idx = 0;
-        loop {
+        while !buf[idx..].is_empty() {
             MATCH_LEAD_CASES! {
                 self.byte_type(&buf[idx..]),
                 LEAD_CASE(n) => {
@@ -1809,14 +1808,16 @@ impl<T: XmlEncodingImpl+XmlTokImpl> XmlEncoding for T {
                 }
             }
         }
+        idx as libc::c_long as libc::c_int
     }
     fn skipS<'a>(&self, mut buf: ExpatBufRef<'a>) -> ExpatBufRef<'a> {
-        loop {
+        while !buf.is_empty() {
             match self.byte_type(&buf[..]) {
                 ByteType::LF | ByteType::CR | ByteType::S => buf = buf.inc_start(self.MINBPC()),
                 _ => return buf,
             }
         }
+        buf
     }
     fn updatePosition(
         &self,
