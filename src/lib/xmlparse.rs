@@ -8411,7 +8411,7 @@ fn normalizeLines(s: &mut [XML_Char]) {
     s[j] = '\u{0}' as XML_Char;
 }
 
-unsafe extern "C" fn reportProcessingInstruction(
+fn reportProcessingInstruction(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
@@ -8436,10 +8436,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     let target = (*parser).m_tempPool.finish_cells().as_ptr();
     let successful = (*parser).m_tempPool.store_c_string(
         enc,
-        // TODO(SJC): fix this ugliness
-        (*enc).skipS(tem).with_end(
-            tem.end().offset(-(((*enc).minBytesPerChar() * 2) as isize))
-        ),
+        (*enc).skipS(tem).dec_end((*enc).minBytesPerChar() * 2),
     );
     if !successful {
         return 0;
@@ -8454,7 +8451,7 @@ unsafe extern "C" fn reportProcessingInstruction(
     1
 }
 
-unsafe extern "C" fn reportComment(
+fn reportComment(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
@@ -8482,7 +8479,7 @@ unsafe extern "C" fn reportComment(
     1
 }
 
-unsafe extern "C" fn reportDefault(
+fn reportDefault(
     parser: &mut XML_ParserStruct,
     mut enc_type: EncodingType,
     mut buf: ExpatBufRef,
