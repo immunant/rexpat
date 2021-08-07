@@ -280,35 +280,11 @@ impl<'a, T> From<&'a mut [T]> for ExpatBufRefMut<'a, T> {
 #[derive(Clone, Debug)]
 pub struct ExpatSliceRc<T = c_char>(OwningRef<Rc<dyn Erased>, [T]>);
 impl<T> ExpatSliceRc<T> {
-    pub fn end(&self) -> *const T {
+    fn end(&self) -> *const T {
         self.0[self.0.len()..].as_ptr()
     }
 
-    // TODO: get rid of this
-    pub fn with_start(self, new_start: *const T) -> ExpatSliceRc<T> {
-        if new_start < self.as_ptr() || new_start > self.end() {
-            panic!(
-                "Attempted to move the start of an ExpatSliceRc to an invalid pointer: {:?}",
-                new_start
-            );
-        }
-        let offset = new_start.wrapping_offset_from(self.as_ptr()) as usize;
-        self.inc_start(offset)
-    }
-
-    // TODO: get rid of this
-    pub fn with_end(self, new_end: *const T) -> ExpatSliceRc<T> {
-        if new_end < self.as_ptr() || new_end > self.end() {
-            panic!(
-                "Attempted to move the end of an ExpatSliceRc to an invalid pointer: {:?}",
-                new_end
-            );
-        }
-        let new_len = new_end.wrapping_offset_from(self.as_ptr()) as usize;
-        self.with_len(new_len)
-    }
-
-    pub fn map<F: FnOnce(&[T]) -> &[T]>(self, f: F) -> Self {
+    fn map<F: FnOnce(&[T]) -> &[T]>(self, f: F) -> Self {
         ExpatSliceRc(self.0.map(f))
     }
 
