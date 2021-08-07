@@ -5376,8 +5376,7 @@ impl XML_ParserStruct {
 /* addBinding() overwrites the value of prefix->binding without checking.
    Therefore one must keep track of the old value outside of addBinding().
 */
-
-unsafe extern "C" fn addBinding(
+fn addBinding(
     mut parser: &XML_ParserStruct,
     mut prefix: &Rc<Prefix>,
     mut attId: Ptr<AttributeId>,
@@ -5457,7 +5456,7 @@ unsafe extern "C" fn addBinding(
     let mut isXML = true;
     let mut isXMLNS = true;
     /* empty URI is only valid for default namespace per XML NS 1.0 (not 1.1) */
-    if *uri as c_int == '\u{0}' as i32 && !prefix.name.is_none() {
+    if unsafe { *uri as c_int == '\u{0}' as i32 } && !prefix.name.is_none() {
         return XML_Error::UNDECLARING_PREFIX;
     }
     if let Some(ref name) = prefix.name {
@@ -5478,16 +5477,16 @@ unsafe extern "C" fn addBinding(
         }
     }
     let mut len = 0;
-    while *uri.add(len) != 0 {
+    while unsafe { *uri.add(len) != 0 } {
         if isXML
-            && (len >= xmlNamespace.len() || *uri.add(len) as c_int != xmlNamespace[len] as c_int)
+            && (len >= xmlNamespace.len() || unsafe { *uri.add(len) as c_int != xmlNamespace[len] as c_int })
         {
             isXML = false
         }
         if !mustBeXML
             && isXMLNS
             && (len >= xmlnsNamespace.len()
-                || *uri.add(len) as c_int != xmlnsNamespace[len] as c_int)
+                || unsafe { *uri.add(len) as c_int != xmlnsNamespace[len] as c_int })
         {
             isXMLNS = false
         }
@@ -5544,14 +5543,14 @@ unsafe extern "C" fn addBinding(
     if uri_vec.try_reserve(len).is_err() {
         return XML_Error::NO_MEMORY;
     }
-    let uri_slice = slice::from_raw_parts(uri, len);
+    let uri_slice = unsafe { slice::from_raw_parts(uri, len) };
     uri_vec.extend(uri_slice);
     if parser.m_namespaceSeparator != 0 {
         uri_vec[len - 1] = parser.m_namespaceSeparator;
     }
 
     /* NULL binding when default namespace undeclared */
-    let uri_ptr = if *uri == '\u{0}' as XML_Char
+    let uri_ptr = if unsafe { *uri == '\u{0}' as XML_Char }
         && Rc::ptr_eq(
             prefix,
             parser.m_dtd.tables.borrow().defaultPrefix.as_ref().unwrap(),
