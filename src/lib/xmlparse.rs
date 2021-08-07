@@ -8179,10 +8179,10 @@ fn appendAttributeValue(
     /* not reached */
 }
 
-unsafe extern "C" fn storeEntityValue(
+fn storeEntityValue(
     parser: &mut XML_ParserStruct,
-    mut enc_type: EncodingType,
-    mut entityTextBuf: ExpatBufRef,
+    enc_type: EncodingType,
+    entityTextBuf: ExpatBufRef,
 ) -> XML_Error {
     let mut result: XML_Error = XML_Error::NONE;
     let mut oldInEntityValue: c_int = (*parser).m_prologState.inEntityValue;
@@ -8192,18 +8192,19 @@ unsafe extern "C" fn storeEntityValue(
     /* never return Null for the value argument in EntityDeclHandler,
     since this would indicate an external entity; therefore we
     have to make sure that entityValuePool.start is not null */
+    let mut idx = 0;
     's_41: loop {
         let mut next_idx = 0;
-        let mut tok = (*enc).xmlLiteralTok(XML_ENTITY_VALUE_LITERAL, entityTextBuf, &mut next_idx);
+        let mut tok = (*enc).xmlLiteralTok(XML_ENTITY_VALUE_LITERAL, entityTextBuf.inc_start(idx), &mut next_idx);
+        let tok_buf = ExpatBufRef::from(&entityTextBuf[idx..idx + next_idx]);
         let mut next = entityTextBuf[next_idx..].as_ptr();
         match tok {
             XML_TOK::PARAM_ENTITY_REF => {
                 if (*parser).m_isParamEntity || enc_type.is_internal() {
                     let successful = (*parser).m_tempPool.store_c_string(
                         enc,
-                        entityTextBuf
+                        tok_buf
                             .inc_start((*enc).minBytesPerChar())
-                            .with_end(next)
                             .dec_end((*enc).minBytesPerChar()),
                     );
                     if !successful {
@@ -8232,7 +8233,7 @@ unsafe extern "C" fn storeEntityValue(
                         (*parser).m_tempPool.discard();
                         if entity.open.get() {
                             if !enc_type.is_internal() {
-                                (*parser).m_eventPtr.set(entityTextBuf.as_ptr());
+                                (*parser).m_eventPtr.set(tok_buf.as_ptr());
                             }
                             result = XML_Error::RECURSIVE_ENTITY_REF;
                             break;
@@ -8283,7 +8284,7 @@ unsafe extern "C" fn storeEntityValue(
                     /* XML_DTD */
                     /* In the internal subset, PE references are not legal
                     within markup declarations, e.g entity values in this case. */
-                    (*parser).m_eventPtr.set(entityTextBuf.as_ptr());
+                    (*parser).m_eventPtr.set(tok_buf.as_ptr());
                     result = XML_Error::PARAM_ENTITY_REF;
                     break;
                 }
@@ -8297,7 +8298,7 @@ unsafe extern "C" fn storeEntityValue(
                 if !(*parser)
                     .m_dtd
                     .entityValuePool
-                    .append(enc, entityTextBuf.with_end(next))
+                    .append(enc, tok_buf)
                 {
                     result = XML_Error::NO_MEMORY;
                     break;
@@ -8305,9 +8306,7 @@ unsafe extern "C" fn storeEntityValue(
             }
             XML_TOK::TRAILING_CR | XML_TOK::DATA_NEWLINE => {
                 if tok == XML_TOK::TRAILING_CR {
-                    next = entityTextBuf
-                        .as_ptr()
-                        .offset((*enc).minBytesPerChar() as isize);
+                    next_idx = (*enc).minBytesPerChar();
                 }
 
                 if !(*parser).m_dtd.entityValuePool.append_char(0xa) {
@@ -8317,10 +8316,10 @@ unsafe extern "C" fn storeEntityValue(
             }
             XML_TOK::CHAR_REF => {
                 let mut out_buf: [XML_Char; XML_ENCODE_MAX] = [0; XML_ENCODE_MAX];
-                let mut n: c_int = (*enc).charRefNumber(entityTextBuf);
+                let mut n: c_int = (*enc).charRefNumber(tok_buf);
                 if n < 0 {
                     if !enc_type.is_internal() {
-                        (*parser).m_eventPtr.set(entityTextBuf.as_ptr());
+                        (*parser).m_eventPtr.set(tok_buf.as_ptr());
                     }
                     result = XML_Error::BAD_CHAR_REF;
                     break;
@@ -8346,7 +8345,7 @@ unsafe extern "C" fn storeEntityValue(
             }
             XML_TOK::PARTIAL => {
                 if !enc_type.is_internal() {
-                    (*parser).m_eventPtr.set(entityTextBuf.as_ptr());
+                    (*parser).m_eventPtr.set(tok_buf.as_ptr());
                 }
                 result = XML_Error::INVALID_TOKEN;
                 break;
@@ -8367,13 +8366,13 @@ unsafe extern "C" fn storeEntityValue(
                  * LCOV_EXCL_START
                  */
                 if !enc_type.is_internal() {
-                    (*parser).m_eventPtr.set(entityTextBuf.as_ptr());
+                    (*parser).m_eventPtr.set(tok_buf.as_ptr());
                 }
                 result = XML_Error::UNEXPECTED_STATE;
                 break;
             }
         }
-        entityTextBuf = entityTextBuf.with_start(next);
+        idx += next_idx;
     }
     (*parser).m_prologState.inEntityValue = oldInEntityValue;
     /* XML_DTD */
