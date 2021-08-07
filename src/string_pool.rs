@@ -158,21 +158,6 @@ impl StringPool {
         self.inner().rent(|buf| *buf.borrow().0.last().expect("Called get_last_char() when string was empty"))
     }
 
-    /// Appends an entire C String to the current BumpVec.
-    pub(crate) unsafe fn append_c_string(&self, mut s: *const XML_Char) -> bool {
-        self.inner().rent(|vec| {
-            let mut vec = vec.borrow_mut();
-
-            while *s != 0 {
-                if !vec.append_char(*s) {
-                    return false;
-                }
-                s = s.offset(1)
-            }
-            true
-        })
-    }
-
     /// Resets the current Bump and deallocates its contents.
     /// The `inner` method must never be called here as it assumes
     /// self.0 is never `None`
@@ -213,6 +198,15 @@ impl StringPool {
         read_buf: ExpatBufRef,
     ) -> bool {
         self.inner().rent(|vec| vec.borrow_mut().append(enc, read_buf))
+    }
+
+    pub(crate) fn extend_from_slice(
+        &self,
+        other: &[XML_Char],
+    ) -> bool {
+        self.inner().rent(|vec| {
+            vec.borrow_mut().extend_from_slice(other)
+        })
     }
 
     pub(crate) unsafe fn copy_c_string(
@@ -269,6 +263,18 @@ pub(crate) struct RentedBumpVec<'bump>(BumpVec<'bump, XML_Char>);
 impl<'bump> RentedBumpVec<'bump> {
     fn is_full(&self) -> bool {
         self.0.len() == self.0.capacity()
+    }
+
+    fn extend_from_slice(
+        &mut self,
+        other: &[XML_Char],
+    ) -> bool {
+        if self.0.try_reserve_exact(other.len()).is_ok() {
+            self.0.extend_from_slice(other);
+            true
+        } else {
+            false
+        }
     }
 
     fn append<'a>(

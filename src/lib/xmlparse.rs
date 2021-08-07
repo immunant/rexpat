@@ -373,8 +373,8 @@ where
 
 /// Create a null-terminated XML_Char array from ASCII_ literals
 macro_rules! XML_STR {
-    [$($char:ident),* $(,)*] => {
-        [$( $char as XML_Char, )* 0,]
+    [$($char:expr),* $(,)*] => {
+        [$( $char as XML_Char, )*]
     };
 }
 
@@ -1622,15 +1622,13 @@ impl DTD {
 
     // Get a copy of externalSubsetName interned in `self.pool`
     fn intern_external_subset(&self) -> Result<StringPoolSlice, TryReserveError> {
-        const externalSubsetName: [XML_Char; 2] = XML_STR![ASCII_HASH];
+        const externalSubsetName: [XML_Char; 1] = XML_STR![ASCII_HASH];
         if let Some(ess) = self.tables.borrow().externalSubsetSlice.as_ref() {
             return Ok(OwningRef::clone(ess));
         }
 
-        for &c in &externalSubsetName {
-            if !self.pool.append_char(c) {
-                return Err(TryReserveError::CapacityOverflow);
-            }
+        if !self.pool.extend_from_slice(&externalSubsetName[..]) {
+            return Err(TryReserveError::CapacityOverflow);
         }
         let sl = self.pool.finish();
         Ok(OwningRef::clone(
@@ -1671,7 +1669,7 @@ impl DTD {
                 // TODO(rexpat): pass the StringPoolSlice directly
                 if !newDtd
                     .pool
-                    .copy_c_string(oldP.name.as_ref().unwrap().as_ptr())
+                    .extend_from_slice(oldP.name.as_deref().unwrap())
                 {
                     return Err(TryReserveError::CapacityOverflow);
                 }
@@ -1682,7 +1680,7 @@ impl DTD {
             for oldA in old_tables.attributeIds.values()
             /* Copy the attribute id table. */
             {
-                if !newDtd.pool.copy_c_string(oldA.name().as_ptr()) {
+                if !newDtd.pool.extend_from_slice(&oldA.name()[..]) {
                     return Err(TryReserveError::CapacityOverflow);
                 }
                 let newA =
@@ -1716,7 +1714,7 @@ impl DTD {
             /* Copy the element type table. */
             for oldE in old_tables.elementTypes.values() {
                 // TODO(rexpat): pass in the name as a StringPoolSlice
-                if !newDtd.pool.copy_c_string(oldE.name.as_ptr()) {
+                if !newDtd.pool.extend_from_slice(&oldE.name[..]) {
                     return Err(TryReserveError::CapacityOverflow);
                 };
                 let newE =
@@ -2148,6 +2146,7 @@ const implicitContext: [XML_Char; 41] = XML_STR![
     ASCII_a,
     ASCII_c,
     ASCII_e,
+    0
 ];
 
 /* To avoid warnings about unused functions: */
@@ -4861,7 +4860,7 @@ impl XML_ParserStruct {
             if let Some(elementType) = elementType {
                 elementType
             } else {
-                if !unsafe { self.m_dtd.pool.copy_c_string(tagNamePtr.str_0.as_ptr()) } {
+                if !tagNamePtr.str_0.with_slice(|str_0| self.m_dtd.pool.extend_from_slice(str_0)) {
                     return XML_Error::NO_MEMORY;
                 }
                 let elementType: Rc<ElementType> =
@@ -5183,7 +5182,7 @@ impl XML_ParserStruct {
                 } else if cfg!(feature = "mozilla")
                     && self.typed_atts[i].get_type() == AttributeType::Namespace
                 {
-                    const xmlnsNamespace: [XML_Char; 30] = [
+                    const xmlnsNamespace: [XML_Char; 29] = [
                         ASCII_h as XML_Char,
                         ASCII_t as XML_Char,
                         ASCII_t as XML_Char,
@@ -5213,19 +5212,17 @@ impl XML_ParserStruct {
                         ASCII_n as XML_Char,
                         ASCII_s as XML_Char,
                         ASCII_SLASH as XML_Char,
-                        '\u{0}' as XML_Char,
                     ];
-                    const xmlnsPrefix: [XML_Char; 6] = [
+                    const xmlnsPrefix: [XML_Char; 5] = [
                         ASCII_x as XML_Char,
                         ASCII_m as XML_Char,
                         ASCII_l as XML_Char,
                         ASCII_n as XML_Char,
                         ASCII_s as XML_Char,
-                        '\u{0}' as XML_Char,
                     ];
 
                     self.typed_atts[i].set_type(AttributeType::Unset); /* clear flag */
-                    if !unsafe { self.m_tempPool.append_c_string(xmlnsNamespace.as_ptr()) }
+                    if !self.m_tempPool.extend_from_slice(&xmlnsNamespace[..])
                         || !self.m_tempPool.append_char(self.m_namespaceSeparator)
                     {
                         return XML_Error::NO_MEMORY;
@@ -5249,7 +5246,7 @@ impl XML_ParserStruct {
                         if self.m_ns_triplets {
                             /* append namespace separator and prefix */
                             self.m_tempPool.replace_last_char(self.m_namespaceSeparator);
-                            if !unsafe { self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) }
+                            if !self.m_tempPool.extend_from_slice(&xmlnsPrefix[..])
                                 || !self.m_tempPool.append_char('\u{0}' as XML_Char)
                             {
                                 return XML_Error::NO_MEMORY;
@@ -5257,7 +5254,7 @@ impl XML_ParserStruct {
                         }
                     } else {
                         /* xlmns attribute without a prefix. */
-                        if !unsafe { self.m_tempPool.append_c_string(xmlnsPrefix.as_ptr()) }
+                        if !self.m_tempPool.extend_from_slice(&xmlnsPrefix[..])
                             || !self.m_tempPool.append_char('\u{0}' as XML_Char)
                         {
                             return XML_Error::NO_MEMORY;
@@ -5382,7 +5379,7 @@ fn addBinding(
     mut uri: *const XML_Char,
     mut bindingsPtr: &mut Ptr<Binding>,
 ) -> XML_Error {
-    const xmlNamespace: [XML_Char; 37] = XML_STR![
+    const xmlNamespace: [XML_Char; 36] = XML_STR![
         ASCII_h,
         ASCII_t,
         ASCII_t,
@@ -5420,7 +5417,7 @@ fn addBinding(
         ASCII_c,
         ASCII_e,
     ];
-    const xmlnsNamespace: [XML_Char; 30] = XML_STR![
+    const xmlnsNamespace: [XML_Char; 29] = XML_STR![
         ASCII_h,
         ASCII_t,
         ASCII_t,
@@ -5491,8 +5488,8 @@ fn addBinding(
         }
         len += 1;
     }
-    isXML = isXML && len == (xmlNamespace.len() - 1);
-    isXMLNS = isXMLNS && len == (xmlnsNamespace.len() - 1);
+    isXML = isXML && len == xmlNamespace.len();
+    isXMLNS = isXMLNS && len == xmlnsNamespace.len();
     if mustBeXML != isXML {
         return if mustBeXML {
             XML_Error::RESERVED_PREFIX_XML
@@ -6327,20 +6324,20 @@ impl XML_ParserStruct {
         haveMore: XML_Bool,
         allowClosingDoctype: XML_Bool,
     ) -> XML_Error {
-        const atypeCDATA: [XML_Char; 6] = XML_STR![ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A];
-        const atypeID: [XML_Char; 3] = XML_STR![ASCII_I, ASCII_D];
-        const atypeIDREF: [XML_Char; 6] = XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F];
+        const atypeCDATA: [XML_Char; 6] = XML_STR![ASCII_C, ASCII_D, ASCII_A, ASCII_T, ASCII_A, 0];
+        const atypeID: [XML_Char; 3] = XML_STR![ASCII_I, ASCII_D, 0];
+        const atypeIDREF: [XML_Char; 6] = XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F, 0];
         const atypeIDREFS: [XML_Char; 7] =
-            XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F, ASCII_S];
+            XML_STR![ASCII_I, ASCII_D, ASCII_R, ASCII_E, ASCII_F, ASCII_S, 0];
         const atypeENTITY: [XML_Char; 7] =
-            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_Y];
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_Y, 0];
         const atypeENTITIES: [XML_Char; 9] =
-            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_I, ASCII_E, ASCII_S];
+            XML_STR![ASCII_E, ASCII_N, ASCII_T, ASCII_I, ASCII_T, ASCII_I, ASCII_E, ASCII_S, 0];
         const atypeNMTOKEN: [XML_Char; 8] =
-            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N];
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N, 0];
         const atypeNMTOKENS: [XML_Char; 9] =
-            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N, ASCII_S];
-        const notationPrefix: [XML_Char; 10] = XML_STR![
+            XML_STR![ASCII_N, ASCII_M, ASCII_T, ASCII_O, ASCII_K, ASCII_E, ASCII_N, ASCII_S, 0];
+        const notationPrefix: [XML_Char; 9] = XML_STR![
             ASCII_N,
             ASCII_O,
             ASCII_T,
@@ -6349,10 +6346,10 @@ impl XML_ParserStruct {
             ASCII_I,
             ASCII_O,
             ASCII_N,
-            ASCII_LPAREN
+            ASCII_LPAREN,
         ];
-        const enumValueSep: [XML_Char; 2] = XML_STR![ASCII_PIPE];
-        const enumValueStart: [XML_Char; 2] = XML_STR![ASCII_LPAREN];
+        const enumValueSep: [XML_Char; 1] = XML_STR![ASCII_PIPE];
+        const enumValueStart: [XML_Char; 1] = XML_STR![ASCII_LPAREN];
         /* save one level of indirection */
         let mut quant: XML_Content_Quant = XML_Content_Quant::NONE;
         let mut enc = self.encoding(enc_type);
@@ -6708,17 +6705,17 @@ impl XML_ParserStruct {
                 }
                 XML_ROLE::ATTRIBUTE_ENUM_VALUE | XML_ROLE::ATTRIBUTE_NOTATION_VALUE => {
                     if self.m_dtd.keepProcessing.get() && self.m_handlers.hasAttlistDecl() {
-                        let mut prefix: *const XML_Char = ptr::null();
+                        let mut prefix;
                         if !self.m_declAttributeType.is_null() {
-                            prefix = enumValueSep.as_ptr()
+                            prefix = &enumValueSep[..];
                         } else {
-                            prefix = if role == super::xmlrole::XML_ROLE::ATTRIBUTE_NOTATION_VALUE {
-                                notationPrefix.as_ptr()
+                            if role == super::xmlrole::XML_ROLE::ATTRIBUTE_NOTATION_VALUE {
+                                prefix = &notationPrefix[..];
                             } else {
-                                enumValueStart.as_ptr()
+                                prefix = &enumValueStart[..];
                             }
                         }
-                        if !unsafe { self.m_tempPool.append_c_string(prefix) } {
+                        if !self.m_tempPool.extend_from_slice(prefix) {
                             return XML_Error::NO_MEMORY;
                         }
                         if !self.m_tempPool.append(enc, tok_buf) {
@@ -8737,12 +8734,10 @@ impl XML_ParserStruct {
                     len_0 -= 1;
                 }
                 let uri_vec = binding.uri.borrow();
-                for &c in &uri_vec[..len_0] {
-                    if !self.m_tempPool.append_char(c) {
-                        return false;
-                    }
+                if !self.m_tempPool.extend_from_slice(&uri_vec[..len_0]) {
+                    return false;
                 }
-                needSep = true
+                needSep = true;
             }
         }
         for (ek, e) in dtd_tables.generalEntities.iter() {
@@ -8752,16 +8747,10 @@ impl XML_ParserStruct {
             if needSep && !self.m_tempPool.append_char(CONTEXT_SEP) {
                 return false;
             }
-            // TODO: Could the following be replaced by m_tempPool.append_c_string((*e).name)?
-            for &ck_0 in &ek[..] {
-                if ck_0 == 0 {
-                    break;
-                }
-                if !self.m_tempPool.append_char(ck_0) {
-                    return false;
-                }
+            if !self.m_tempPool.extend_from_slice(&ek[..]) {
+                return false;
             }
-            needSep = true
+            needSep = true;
         }
         if !self.m_tempPool.append_char('\u{0}' as XML_Char) {
             return false;
@@ -8808,7 +8797,7 @@ impl XML_ParserStruct {
                         // into the DTD pool, since the HashMap keeps a permanent
                         // reference to the name which we can't modify after
                         // the call to `hash_insert!` (unlike the original C code)
-                        if !self.m_dtd.pool.copy_c_string(prefix_name.as_ptr()) {
+                        if !self.m_dtd.pool.extend_from_slice(prefix_name) {
                             return HashInsertResult::Err;
                         }
                         hash_insert_pool!(dtd_tables.prefixes, &self.m_dtd.pool, Prefix).cloned()
@@ -8899,8 +8888,7 @@ unsafe extern "C" fn copyEntityTable(
     let mut cachedOldBase: *const XML_Char = ptr::null();
     let mut cachedNewBase: *const XML_Char = ptr::null();
     for oldE in oldTable.values() {
-        // TODO: direct safe copy instead of as_ptr()
-        if !newPool.copy_c_string((*oldE).name.borrow().as_ref().unwrap().as_ptr()) {
+        if !newPool.extend_from_slice((*oldE).name.borrow().as_deref().unwrap()) {
             return 0;
         }
         let newE = match hash_insert_pool!(newTable, &newPool, Entity) {
@@ -8937,10 +8925,7 @@ unsafe extern "C" fn copyEntityTable(
         } else {
             let text_slice_ref = oldE.textPtr.borrow();
             let text_slice = text_slice_ref.as_deref().unwrap();
-            if !newPool.copy_c_string_n(
-                text_slice.as_ptr(),
-                text_slice.len().try_into().unwrap(),
-            ) {
+            if !newPool.extend_from_slice(&text_slice[..]) {
                 return 0;
             }
             *newE.textPtr.borrow_mut() = Some(newPool.finish());
